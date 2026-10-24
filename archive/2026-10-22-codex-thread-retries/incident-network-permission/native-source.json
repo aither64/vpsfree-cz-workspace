@@ -1,0 +1,148 @@
+{
+  "capturedAtUTC": "2026-10-24T11:07:58.768873+00:00",
+  "tag": "rust-v0.163.0",
+  "note": "Upstream tag-pinned source used to explain observed native0.163 diagnostic. This is source inspection, not a native execution/reproduction or proof of the initiating reload.",
+  "sources": [
+    {
+      "path": "codex-rs/http-client/src/network_policy.rs",
+      "url": "https://raw.githubusercontent.com/openai/codex/rust-v0.163.0/codex-rs/http-client/src/network_policy.rs",
+      "sha256": "65569bcb7f943980ab0ff8f75352d3de4f738bd369c527cff0018a03c30bd8bf",
+      "lines": 363,
+      "excerpts": [
+        {
+          "from": 41,
+          "to": 51,
+          "text": "41: /// A deterministic denial, distinct from retryable network failures.\n42: #[derive(Clone, Copy, Debug, PartialEq, Eq, thiserror::Error)]\n43: pub enum NetworkPolicyDenied {\n44:     #[error(\"application network policy is unavailable\")]\n45:     Unavailable,\n46:     #[error(\"destination denied by application network policy\")]\n47:     Destination,\n48:     #[error(\"application network permission was revoked\")]\n49:     Revoked,\n50:     #[error(\"this SDK transport is disabled by application network restrictions\")]\n51:     UnsupportedTransport,"
+        },
+        {
+          "from": 150,
+          "to": 187,
+          "text": "150:     /// Fails a requirements load without changing the current account identity.\n151:     pub fn unavailable(&self, revision: NetworkPolicyRevision) {\n152:         let mut state = lock_state(&self.state);\n153:         if state.revision != revision.0 {\n154:             return;\n155:         }\n156:         if state.policy.take().is_some() {\n157:             state.changes.send_replace(());\n158:         }\n159:         for permit in state\n160:             .permits\n161:             .drain(..)\n162:             .filter_map(|permit| permit.upgrade())\n163:         {\n164:             permit.revoked.send_replace(/*value*/ true);\n165:         }\n166:     }\n167: \n168:     /// Publishes a successful load only if its account/configuration generation is still current.\n169:     pub fn publish(&self, revision: NetworkPolicyRevision, policy: DestinationPolicy) -> bool {\n170:         let mut state = lock_state(&self.state);\n171:         if state.revision != revision.0 {\n172:             return false;\n173:         }\n174:         state.permits.retain(|permit| {\n175:             let Some(permit) = permit.upgrade() else {\n176:                 return false;\n177:             };\n178:             if !permit.destination.allowed_by(&policy) {\n179:                 permit.revoked.send_replace(/*value*/ true);\n180:             }\n181:             true\n182:         });\n183:         if state.policy.as_ref() != Some(&policy) {\n184:             state.policy = Some(policy);\n185:             state.changes.send_replace(());\n186:         }\n187:         true"
+        },
+        {
+          "from": 237,
+          "to": 253,
+          "text": "237:     /// Revokes outstanding operations before an account change or a failed requirements load.\n238:     /// This read-side operation can only remove access; publication stays with the controller.\n239:     pub fn invalidate(&self) {\n240:         if let Some(state) = &self.state {\n241:             let mut state = lock_state(state);\n242:             state.revision += 1;\n243:             state.account += 1;\n244:             state.policy = None;\n245:             state.changes.send_replace(());\n246:             for permit in state\n247:                 .permits\n248:                 .drain(..)\n249:                 .filter_map(|permit| permit.upgrade())\n250:             {\n251:                 permit.revoked.send_replace(/*value*/ true);\n252:             }\n253:         }"
+        },
+        {
+          "from": 323,
+          "to": 357,
+          "text": "323: impl NetworkPermit {\n324:     pub fn check(&self) -> Result<(), NetworkPolicyDenied> {\n325:         if self\n326:             .inner\n327:             .as_ref()\n328:             .is_some_and(|permit| *permit.revoked.borrow())\n329:         {\n330:             Err(NetworkPolicyDenied::Revoked)\n331:         } else {\n332:             Ok(())\n333:         }\n334:     }\n335: \n336:     pub async fn revoked(&self) {\n337:         match &self.inner {\n338:             Some(permit) => {\n339:                 let _ = permit\n340:                     .revoked\n341:                     .subscribe()\n342:                     .wait_for(|revoked| *revoked)\n343:                     .await;\n344:             }\n345:             None => std::future::pending().await,\n346:         }\n347:     }\n348: \n349:     pub async fn run<T>(\n350:         &self,\n351:         operation: impl Future<Output = T>,\n352:     ) -> Result<T, NetworkPolicyDenied> {\n353:         tokio::select! {\n354:             biased;\n355:             _ = self.revoked() => Err(NetworkPolicyDenied::Revoked),\n356:             result = operation => Ok(result),\n357:         }"
+        }
+      ]
+    },
+    {
+      "path": "codex-rs/app-server/src/application_network.rs",
+      "url": "https://raw.githubusercontent.com/openai/codex/rust-v0.163.0/codex-rs/app-server/src/application_network.rs",
+      "sha256": "901e9ed497146dc95c0ad1f61b0461d335ebc63183b526a9ac06941bf899f785",
+      "lines": 160,
+      "excerpts": [
+        {
+          "from": 44,
+          "to": 65,
+          "text": "44:     async fn load_local_network_policy(\n45:         &self,\n46:         application_revision: codex_http_client::NetworkPolicyRevision,\n47:     ) -> io::Result<codex_config::loader::LocalApplicationRequirements> {\n48:         let local_revision = self.local_network_policy.policy().revision();\n49:         let result = async {\n50:             let sources = codex_config::loader::load_local_application_requirements(\n51:                 codex_exec_server::LOCAL_FS.as_ref(),\n52:                 &self.loader_overrides,\n53:             )\n54:             .await?;\n55:             let application = sources.compose(Default::default())?;\n56:             self.local_network_policy\n57:                 .publish(local_revision, destination_policy(application.as_ref()));\n58:             Ok(sources)\n59:         }\n60:         .await;\n61:         if result.is_err() {\n62:             self.local_network_policy.unavailable(local_revision);\n63:             self.fail_application_policy(application_revision)?;\n64:         }\n65:         result"
+        },
+        {
+          "from": 68,
+          "to": 103,
+          "text": "68:     pub(crate) async fn refresh_application_network_policy(\n69:         &self,\n70:     ) -> io::Result<ApplicationPolicyLoad> {\n71:         let _reload = self\n72:             .network_policy_reload\n73:             .acquire()\n74:             .await\n75:             .map_err(io::Error::other)?;\n76:         let revision = self.network_policy.policy().revision();\n77:         let local_sources = self.load_local_network_policy(revision).await?;\n78:         let cloud_config = self.current_cloud_config_bundle();\n79:         let result = async {\n80:             let cloud_snapshot = cloud_config.get_snapshot().await;\n81:             let cloud = cloud_snapshot.bundle.clone().map_err(io::Error::other)?;\n82:             let application = local_sources.compose(\n83:                 cloud\n84:                     .as_ref()\n85:                     .map(|bundle| bundle.requirements_toml.clone())\n86:                     .unwrap_or_default(),\n87:             )?;\n88:             Ok::<_, io::Error>((\n89:                 destination_policy(application.as_ref()),\n90:                 cloud,\n91:                 cloud_snapshot,\n92:             ))\n93:         }\n94:         .await;\n95:         match result {\n96:             Ok((policy, cloud, cloud_snapshot)) => {\n97:                 let mut current = self.network_policy_snapshot.write().map_err(|_| {\n98:                     io::Error::other(\"application network policy snapshot lock poisoned\")\n99:                 })?;\n100:                 if !self.network_policy.publish(revision, policy.clone()) {\n101:                     *current = None;\n102:                     return Err(io::Error::other(NetworkPolicyDenied::Revoked));\n103:                 }"
+        },
+        {
+          "from": 123,
+          "to": 158,
+          "text": "123:             Err(error) => {\n124:                 self.fail_application_policy(revision)?;\n125:                 Err(error)\n126:             }\n127:         }\n128:     }\n129: \n130:     pub(super) fn check_application_policy_load(\n131:         &self,\n132:         load: &ApplicationPolicyLoad,\n133:     ) -> io::Result<()> {\n134:         let current = self\n135:             .network_policy_snapshot\n136:             .read()\n137:             .map_err(|_| io::Error::other(\"application network policy snapshot lock poisoned\"))?;\n138:         if self.network_policy.policy().revision() != load.snapshot.revision\n139:             || !current\n140:                 .as_ref()\n141:                 .is_some_and(|snapshot| Arc::ptr_eq(snapshot, &load.snapshot))\n142:         {\n143:             return Err(io::Error::other(NetworkPolicyDenied::Revoked));\n144:         }\n145:         Ok(())\n146:     }\n147: \n148:     fn fail_application_policy(\n149:         &self,\n150:         revision: codex_http_client::NetworkPolicyRevision,\n151:     ) -> io::Result<()> {\n152:         let mut current = self\n153:             .network_policy_snapshot\n154:             .write()\n155:             .map_err(|_| io::Error::other(\"application network policy snapshot lock poisoned\"))?;\n156:         self.network_policy.unavailable(revision);\n157:         *current = None;\n158:         Ok(())"
+        }
+      ]
+    },
+    {
+      "path": "codex-rs/app-server/src/config_manager.rs",
+      "url": "https://raw.githubusercontent.com/openai/codex/rust-v0.163.0/codex-rs/app-server/src/config_manager.rs",
+      "sha256": "cd7d306ed71f7945ee4792f7de0b6b1d0ac317ae22f200de2a93744094171593",
+      "lines": 638,
+      "excerpts": [
+        {
+          "from": 276,
+          "to": 294,
+          "text": "276:     /// Checks the retained session route against current managed provider requirements.\n277:     pub(crate) async fn check_thread_model_provider(\n278:         &self,\n279:         current: &Config,\n280:     ) -> std::io::Result<()> {\n281:         let policy_load = self.refresh_application_network_policy().await?;\n282:         // Existing threads retain their session route; only managed\n283:         // requirements can invalidate it.\n284:         let requirements = load_managed_requirements_state(\n285:             LOCAL_FS.as_ref(),\n286:             &self.codex_home,\n287:             codex_config::ConfigLoadOptions {\n288:                 loader_overrides: self.loader_overrides.clone(),\n289:                 strict_config: self.strict_config,\n290:                 cloud_config_bundle: policy_load.cloud_config.clone(),\n291:             },\n292:         )\n293:         .await?;\n294:         self.check_application_policy_load(&policy_load)?;"
+        },
+        {
+          "from": 503,
+          "to": 523,
+          "text": "503:     pub(crate) async fn load_config_layers(\n504:         &self,\n505:         cwd: Option<AbsolutePathBuf>,\n506:     ) -> std::io::Result<ConfigLayerStack> {\n507:         let policy_load = self.refresh_application_network_policy().await?;\n508:         let result = load_config_layers_state(\n509:             LOCAL_FS.as_ref(),\n510:             &self.codex_home,\n511:             cwd,\n512:             &self.current_cli_overrides(),\n513:             codex_config::ConfigLoadOptions {\n514:                 loader_overrides: self.loader_overrides.clone(),\n515:                 strict_config: self.strict_config,\n516:                 cloud_config_bundle: policy_load.cloud_config.clone(),\n517:             },\n518:             self.thread_config_loader.as_ref(),\n519:         )\n520:         .await;\n521:         let layers = result?;\n522:         self.check_application_policy_load(&policy_load)?;\n523:         Ok(layers)"
+        }
+      ]
+    },
+    {
+      "path": "codex-rs/app-server/src/config_manager_service.rs",
+      "url": "https://raw.githubusercontent.com/openai/codex/rust-v0.163.0/codex-rs/app-server/src/config_manager_service.rs",
+      "sha256": "cb5e0862e3402aed6349d870f4a8b38472ad1835edd906f797ea1e3aeeac8209",
+      "lines": 912,
+      "excerpts": [
+        {
+          "from": 118,
+          "to": 134,
+          "text": "118: impl ConfigManager {\n119:     pub(crate) async fn read(\n120:         &self,\n121:         params: ConfigReadParams,\n122:     ) -> Result<ConfigReadResponse, ConfigManagerError> {\n123:         let layers = match params.cwd.as_deref() {\n124:             Some(cwd) => {\n125:                 let cwd = AbsolutePathBuf::try_from(PathBuf::from(cwd)).map_err(|err| {\n126:                     ConfigManagerError::io(\"failed to resolve config cwd to an absolute path\", err)\n127:                 })?;\n128:                 self.load_config_layers(Some(cwd)).await.map_err(|err| {\n129:                     ConfigManagerError::io(\"failed to read configuration layers\", err)\n130:                 })?\n131:             }\n132:             None => self.load_thread_agnostic_config().await.map_err(|err| {\n133:                 ConfigManagerError::io(\"failed to read configuration layers\", err)\n134:             })?,"
+        },
+        {
+          "from": 445,
+          "to": 448,
+          "text": "445:     /// associated with this query.\n446:     async fn load_thread_agnostic_config(&self) -> std::io::Result<ConfigLayerStack> {\n447:         self.load_config_layers(/*cwd*/ None).await\n448:     }"
+        }
+      ]
+    },
+    {
+      "path": "codex-rs/core/src/session/turn.rs",
+      "url": "https://raw.githubusercontent.com/openai/codex/rust-v0.163.0/codex-rs/core/src/session/turn.rs",
+      "sha256": "394b2246903a312c0cd76c370d06afe7f0673dddde792105a9779a7657dc9e70",
+      "lines": 3330,
+      "excerpts": [
+        {
+          "from": 886,
+          "to": 900,
+          "text": "886:             Err(e) => {\n887:                 info!(\"Turn error: {e:#}\");\n888:                 if matches!(\n889:                     e.details(),\n890:                     CodexErrorDetails::MisalignmentPolicyViolation { .. }\n891:                 ) {\n892:                     sess.conversation.retire_handoffs_for_misalignment().await;\n893:                 }\n894:                 let error = e.to_codex_protocol_error();\n895:                 sess.emit_turn_error_lifecycle(turn_context.as_ref(), error.clone(), e.details())\n896:                     .await;\n897:                 sess.track_turn_codex_error(turn_context.as_ref(), &e);\n898:                 let event = EventMsg::Error(e.to_error_event(/*message_prefix*/ None));\n899:                 sess.send_event(&turn_context, event).await;\n900:                 // let the user continue the conversation"
+        }
+      ]
+    },
+    {
+      "path": "codex-rs/protocol/src/error.rs",
+      "url": "https://raw.githubusercontent.com/openai/codex/rust-v0.163.0/codex-rs/protocol/src/error.rs",
+      "sha256": "ed7438fc5dbe1d72ef26d0c10afc2165657d59248869e9e4d5f35e17b86c04bc",
+      "lines": 938,
+      "excerpts": [
+        {
+          "from": 200,
+          "to": 206,
+          "text": "200:     #[error(\"unsupported operation: {0}\")]\n201:     UnsupportedOperation(String),\n202:     #[error(\"{0}\")]\n203:     RefreshTokenFailed(RefreshTokenFailedError),\n204:     #[error(\"Fatal error: {0}\")]\n205:     Fatal(String),\n206:     // -----------------------------------------------------------------"
+        },
+        {
+          "from": 406,
+          "to": 437,
+          "text": "406:     /// Returns the delay before the given retry attempt, or `None` for a terminal error.\n407:     ///\n408:     /// The first retry is attempt one. Retryable errors use server advice when available and\n409:     /// otherwise use exponential backoff with jitter. Callers enforce their own retry budgets.\n410:     pub fn retry_delay(&self, retry_count: u64) -> Option<Duration> {\n411:         match self.details() {\n412:             CodexErrorDetails::TurnAborted\n413:             | CodexErrorDetails::SessionBudgetExceeded\n414:             | CodexErrorDetails::Interrupted\n415:             | CodexErrorDetails::EnvVar(_)\n416:             | CodexErrorDetails::Fatal(_)\n417:             | CodexErrorDetails::UsageNotIncluded\n418:             | CodexErrorDetails::QuotaExceeded\n419:             | CodexErrorDetails::InvalidImageRequest()\n420:             | CodexErrorDetails::InvalidRequest(_)\n421:             | CodexErrorDetails::ResponseIncomplete(_)\n422:             | CodexErrorDetails::InvalidPrompt { .. }\n423:             | CodexErrorDetails::ToolCollision(_)\n424:             | CodexErrorDetails::RefreshTokenFailed(_)\n425:             | CodexErrorDetails::UnsupportedOperation(_)\n426:             | CodexErrorDetails::Sandbox(_)\n427:             | CodexErrorDetails::LandlockSandboxExecutableNotProvided\n428:             | CodexErrorDetails::ContextWindowExceeded\n429:             | CodexErrorDetails::ThreadNotFound(_)\n430:             | CodexErrorDetails::AgentLimitReached { .. }\n431:             | CodexErrorDetails::Spawn\n432:             | CodexErrorDetails::SessionConfiguredNotFirstEvent\n433:             | CodexErrorDetails::UsageLimitReached(_)\n434:             | CodexErrorDetails::FlexUnavailable\n435:             | CodexErrorDetails::CyberPolicy { .. }\n436:             | CodexErrorDetails::BioPolicy { .. }\n437:             | CodexErrorDetails::MisalignmentPolicyViolation { .. } => None,"
+        }
+      ]
+    },
+    {
+      "path": "codex-rs/login/src/auth/manager.rs",
+      "url": "https://raw.githubusercontent.com/openai/codex/rust-v0.163.0/codex-rs/login/src/auth/manager.rs",
+      "sha256": "d2081e3e4f2f339a7a1aa52ea62d8485e7785c2b0a12dde1a7f470019d56dc2a",
+      "lines": 3132,
+      "excerpts": [
+        {
+          "from": 2477,
+          "to": 2483,
+          "text": "2477: \n2478:     /// Reloads auth from the active source. Returns whether the auth value changed.\n2479:     pub async fn reload(&self) -> bool {\n2480:         tracing::info!(\"Reloading auth\");\n2481:         let new_auth = self.load_auth().await;\n2482:         self.set_cached_auth(new_auth)\n2483:     }"
+        },
+        {
+          "from": 2601,
+          "to": 2616,
+          "text": "2601:         let allowed_login_methods = self.allowed_login_methods();\n2602:         let effective_chatgpt_workspaces = self.effective_chatgpt_workspaces();\n2603:         load_auth(\n2604:             &self.codex_home,\n2605:             self.enable_codex_api_key_env,\n2606:             self.auth_credentials_store_mode,\n2607:             Some(&allowed_login_methods),\n2608:             effective_chatgpt_workspaces.as_deref(),\n2609:             self.chatgpt_base_url.as_deref(),\n2610:             self.keyring_backend_kind,\n2611:             self.agent_identity_authapi_base_url.as_deref(),\n2612:             &self.auth_route_config,\n2613:         )\n2614:         .await\n2615:         .ok()\n2616:         .flatten()"
+        },
+        {
+          "from": 2627,
+          "to": 2649,
+          "text": "2627:     fn set_cached_auth(&self, new_auth: Option<CodexAuth>) -> bool {\n2628:         if let Ok(mut guard) = self.inner.write() {\n2629:             let previous = guard.auth.as_ref();\n2630:             let changed = !AuthManager::auths_equal(previous, new_auth.as_ref());\n2631:             let auth_changed_for_refresh =\n2632:                 !Self::auths_equal_for_refresh(previous, new_auth.as_ref());\n2633:             let owner_changed =\n2634:                 auth_changed_for_refresh && !same_owner(previous, new_auth.as_ref());\n2635:             if owner_changed {\n2636:                 self.auth_route_config\n2637:                     .application_network_policy()\n2638:                     .invalidate();\n2639:             }\n2640:             if auth_changed_for_refresh {\n2641:                 guard.permanent_refresh_failure = None;\n2642:             }\n2643:             tracing::info!(\"Reloaded auth, changed: {changed}\");\n2644:             guard.auth = new_auth;\n2645:             if auth_changed_for_refresh {\n2646:                 self.auth_change_state_tx.send_modify(|state| {\n2647:                     state.generation += 1;\n2648:                     if owner_changed {\n2649:                         state.owner_generation += 1;"
+        }
+      ]
+    }
+  ]
+}

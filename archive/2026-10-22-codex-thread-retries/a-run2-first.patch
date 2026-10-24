@@ -1,0 +1,339 @@
+diff --git a/codex/continuation.go b/codex/continuation.go
+index 064b9f1..a5adb7c 100644
+--- a/codex/continuation.go
++++ b/codex/continuation.go
+@@ -6,7 +6,7 @@ import (
+ 	"strings"
+ )
+ 
+-// ContinueFailedTurn starts a new visible turn only on a loaded, idle thread
++// ContinueFailedTurn starts a new visible turn only on a loaded, quiescent thread
+ // whose latest turn is the exact expected failure. It never resumes, steers,
+ // updates policy, or starts queued work. The application must hold its shared
+ // admission fence and prove unchanged effective settings and execution authority.
+@@ -119,8 +119,8 @@ func (c *Client) continuationIdle(ctx context.Context, threadID, expected string
+ 	if err != nil {
+ 		return err
+ 	}
+-	if state.Status != "idle" || state.LatestTurnID != expected || state.LatestTurnStatus != "failed" {
+-		return errors.New("continuation requires the exact latest failed turn on a loaded idle thread")
++	if !state.IsLoadedFailedTurn(expected) {
++		return errors.New("continuation requires the exact latest failed turn on a loaded quiescent thread")
+ 	}
+ 	if prompts, err := c.PromptsWithItems(ctx, threadID); err != nil {
+ 		return err
+diff --git a/codex/continuation_test.go b/codex/continuation_test.go
+index 52a3a19..568ebdd 100644
+--- a/codex/continuation_test.go
++++ b/codex/continuation_test.go
+@@ -13,6 +13,49 @@ import (
+ 	"github.com/coder/websocket"
+ )
+ 
++func TestTurnStateIsLoadedFailedTurn(t *testing.T) {
++	for _, test := range []struct {
++		name, status, latestID, turnStatus, expectedID string
++		want                                           bool
++	}{
++		{"idle failed", "idle", "failed", "failed", "failed", true},
++		{"loaded error failed", "systemError", "failed", "failed", "failed", true},
++		{"cold failed", "notLoaded", "failed", "failed", "failed", false},
++		{"active failed", "active", "failed", "failed", "failed", false},
++		{"missing status", "", "failed", "failed", "failed", false},
++		{"unknown status", "future", "failed", "failed", "failed", false},
++		{"missing expected", "systemError", "failed", "failed", "", false},
++		{"missing latest", "systemError", "", "failed", "failed", false},
++		{"newer turn", "systemError", "newer", "failed", "failed", false},
++		{"in progress", "systemError", "failed", "inProgress", "failed", false},
++		{"completed", "systemError", "failed", "completed", "failed", false},
++		{"interrupted", "systemError", "failed", "interrupted", "failed", false},
++		{"missing turn status", "systemError", "failed", "", "failed", false},
++		{"unknown turn status", "systemError", "failed", "future", "failed", false},
++	} {
++		t.Run(test.name, func(t *testing.T) {
++			state := TurnState{Status: test.status, LatestTurnID: test.latestID, LatestTurnStatus: test.turnStatus}
++			if got := state.IsLoadedFailedTurn(test.expectedID); got != test.want {
++				t.Fatalf("predicate=%t want=%t for %+v expected=%q", got, test.want, state, test.expectedID)
++			}
++		})
++	}
++}
++
++func TestReadTurnStatePreservesRawStatus(t *testing.T) {
++	for _, status := range []string{"idle", "systemError", "notLoaded", "active"} {
++		t.Run(status, func(t *testing.T) {
++			f := &continuationFixture{state: status, turn: "failed"}
++			client := newTestClient(serveUnixWebsocket(t, f.serve))
++			defer client.Close()
++			state, err := client.ReadTurnState(context.Background(), "thread-1")
++			if err != nil || state.Status != status || state.TerminalFailure == nil || state.TerminalFailure.Code != "serverOverloaded" {
++				t.Fatalf("raw projection changed: %+v %v", state, err)
++			}
++		})
++	}
++}
++
+ func TestReadTurnStateColdTerminalProjection(t *testing.T) {
+ 	for _, test := range []struct {
+ 		name, status string
+@@ -95,13 +138,14 @@ func TestReadTurnStateRejectsMalformedAndRepresentsEmptyHistory(t *testing.T) {
+ }
+ 
+ type continuationFixture struct {
+-	state   string
+-	turn    string
+-	queued  bool
+-	race    bool
+-	unknown bool
+-	starts  atomic.Int32
+-	reads   atomic.Int32
++	state      string
++	turn       string
++	turnStatus string
++	queued     bool
++	race       bool
++	unknown    bool
++	starts     atomic.Int32
++	reads      atomic.Int32
+ }
+ 
+ func (f *continuationFixture) serve(conn *websocket.Conn) error {
+@@ -118,7 +162,10 @@ func (f *continuationFixture) serve(conn *websocket.Conn) error {
+ 		case "thread/read":
+ 			result = map[string]any{"thread": map[string]any{"id": "thread-1", "status": map[string]any{"type": f.state}}}
+ 		case "thread/turns/list":
+-			turn, status := f.turn, "failed"
++			turn, status := f.turn, f.turnStatus
++			if status == "" {
++				status = "failed"
++			}
+ 			if f.race && f.reads.Add(1) > 1 {
+ 				turn, status = "manual", "inProgress"
+ 			}
+@@ -157,70 +204,86 @@ func (f *continuationFixture) serve(conn *websocket.Conn) error {
+ }
+ 
+ func TestContinueFailedTurnAdmissionAndReceipt(t *testing.T) {
+-	for _, name := range []string{"accepted", "active", "cold", "stale", "queue", "new active turn race", "pending request", "other unresolved send", "unknown"} {
+-		t.Run(name, func(t *testing.T) {
+-			f := &continuationFixture{state: "idle", turn: "failed"}
+-			switch name {
+-			case "active":
+-				f.state = "active"
+-			case "cold":
+-				f.state = "notLoaded"
+-			case "stale":
+-				f.turn = "newer"
+-			case "queue":
+-				f.queued = true
+-			case "new active turn race":
+-				f.race = true
+-			case "unknown":
+-				f.unknown = true
+-			}
+-			client := newTestClient(serveUnixWebsocket(t, f.serve))
+-			defer client.Close()
+-			if name == "other unresolved send" {
+-				if err := client.PrepareSend("thread-1", "other", "other", "other", false); err != nil {
+-					t.Fatal(err)
+-				}
+-			}
+-			if name == "pending request" {
+-				if err := client.Ensure(context.Background()); err != nil {
+-					t.Fatal(err)
+-				}
+-				client.pendingMu.Lock()
+-				client.requests[`"pending"`] = PendingRequest{ID: `"pending"`, Method: "item/tool/requestUserInput", connection: client.connection, generation: client.generation, Params: json.RawMessage(`{"threadId":"thread-1","turnId":"failed","itemId":"pending","isBlocking":true,"questions":[{"id":"q","header":"Question","question":"Choose","options":[{"label":"First","description":"First"}]}]}`)}
+-				client.pendingMu.Unlock()
+-			}
+-			receipt, err := client.ContinueFailedTurn(context.Background(), "thread-1", "continue", "stable", "retry:failed:settings", "failed", testTurnOptions())
+-			if name == "accepted" {
+-				if err != nil || receipt.TurnID != "continued" || receipt.Steered {
+-					t.Fatalf("receipt=%+v error=%v", receipt, err)
+-				}
+-				// Reconciliation happens before all current-state checks, even cold.
+-				again, err := client.ContinueFailedTurn(context.Background(), "thread-1", "continue", "stable", "retry:failed:settings", "failed", testTurnOptions())
+-				if err != nil || again != receipt {
+-					t.Fatalf("again=%+v error=%v", again, err)
+-				}
+-				changed := testTurnOptions()
+-				changed.ReasoningEffort = "low"
+-				if _, err := client.ContinueFailedTurn(context.Background(), "thread-1", "continue", "stable", "retry:failed:settings", "failed", changed); err == nil {
+-					t.Fatal("changed options accepted")
+-				}
+-			} else if name == "unknown" {
+-				for range 2 {
+-					var uncertain *UnknownSendOutcomeError
+-					if !errors.As(err, &uncertain) {
+-						t.Fatalf("expected unknown: %v", err)
++	for _, loadedStatus := range []string{"idle", "systemError"} {
++		t.Run(loadedStatus, func(t *testing.T) {
++			for _, name := range []string{"accepted", "active", "cold", "stale", "missing latest", "latest in progress", "latest completed", "latest interrupted", "unknown status", "missing status", "queue", "new active turn race", "pending request", "other unresolved send", "unknown"} {
++				t.Run(name, func(t *testing.T) {
++					f := &continuationFixture{state: loadedStatus, turn: "failed"}
++					switch name {
++					case "active":
++						f.state = "active"
++					case "cold":
++						f.state = "notLoaded"
++					case "stale":
++						f.turn = "newer"
++					case "missing latest":
++						f.turn = ""
++					case "latest in progress":
++						f.turnStatus = "inProgress"
++					case "latest completed":
++						f.turnStatus = "completed"
++					case "latest interrupted":
++						f.turnStatus = "interrupted"
++					case "unknown status":
++						f.state = "future"
++					case "missing status":
++						f.state = ""
++					case "queue":
++						f.queued = true
++					case "new active turn race":
++						f.race = true
++					case "unknown":
++						f.unknown = true
+ 					}
+-					_, err = client.ContinueFailedTurn(context.Background(), "thread-1", "continue", "stable", "retry:failed:settings", "failed", testTurnOptions())
+-				}
+-			} else if err == nil {
+-				t.Fatal("busy continuation accepted")
+-			}
+-			want := int32(0)
+-			if name == "accepted" || name == "unknown" {
+-				want = 1
+-			}
+-			if f.starts.Load() != want {
+-				t.Fatalf("starts=%d, want %d", f.starts.Load(), want)
++					client := newTestClient(serveUnixWebsocket(t, f.serve))
++					defer client.Close()
++					if name == "other unresolved send" {
++						if err := client.PrepareSend("thread-1", "other", "other", "other", false); err != nil {
++							t.Fatal(err)
++						}
++					}
++					if name == "pending request" {
++						if err := client.Ensure(context.Background()); err != nil {
++							t.Fatal(err)
++						}
++						client.pendingMu.Lock()
++						client.requests[`"pending"`] = PendingRequest{ID: `"pending"`, Method: "item/tool/requestUserInput", connection: client.connection, generation: client.generation, Params: json.RawMessage(`{"threadId":"thread-1","turnId":"failed","itemId":"pending","isBlocking":true,"questions":[{"id":"q","header":"Question","question":"Choose","options":[{"label":"First","description":"First"}]}]}`)}
++						client.pendingMu.Unlock()
++					}
++					receipt, err := client.ContinueFailedTurn(context.Background(), "thread-1", "continue", "stable", "retry:failed:settings", "failed", testTurnOptions())
++					if name == "accepted" {
++						if err != nil || receipt.TurnID != "continued" || receipt.Steered {
++							t.Fatalf("receipt=%+v error=%v", receipt, err)
++						}
++						// Reconciliation happens before all current-state checks, even cold.
++						again, err := client.ContinueFailedTurn(context.Background(), "thread-1", "continue", "stable", "retry:failed:settings", "failed", testTurnOptions())
++						if err != nil || again != receipt {
++							t.Fatalf("again=%+v error=%v", again, err)
++						}
++						changed := testTurnOptions()
++						changed.ReasoningEffort = "low"
++						if _, err := client.ContinueFailedTurn(context.Background(), "thread-1", "continue", "stable", "retry:failed:settings", "failed", changed); err == nil {
++							t.Fatal("changed options accepted")
++						}
++					} else if name == "unknown" {
++						for range 2 {
++							var uncertain *UnknownSendOutcomeError
++							if !errors.As(err, &uncertain) {
++								t.Fatalf("expected unknown: %v", err)
++							}
++							_, err = client.ContinueFailedTurn(context.Background(), "thread-1", "continue", "stable", "retry:failed:settings", "failed", testTurnOptions())
++						}
++					} else if err == nil {
++						t.Fatal("busy continuation accepted")
++					}
++					want := int32(0)
++					if name == "accepted" || name == "unknown" {
++						want = 1
++					}
++					if f.starts.Load() != want {
++						t.Fatalf("starts=%d, want %d", f.starts.Load(), want)
++					}
++				})
+ 			}
+ 		})
+ 	}
+diff --git a/codex/turn_state.go b/codex/turn_state.go
+index 893e7bb..3146209 100644
+--- a/codex/turn_state.go
++++ b/codex/turn_state.go
+@@ -23,6 +23,14 @@ type TurnState struct {
+ 	TerminalFailure  *TerminalFailure `json:"terminalFailure"`
+ }
+ 
++// IsLoadedFailedTurn checks only the exact loaded terminal observation. Native
++// systemError can persist after a failed turn until another turn starts. This
++// predicate does not classify errors or prove queue, request or authority holds.
++func (s TurnState) IsLoadedFailedTurn(expectedTurnID string) bool {
++	return expectedTurnID != "" && s.LatestTurnID == expectedTurnID &&
++		s.LatestTurnStatus == "failed" && (s.Status == "idle" || s.Status == "systemError")
++}
++
+ // ReadTurnState is a bounded cold observation. It never loads a thread or
+ // derives failure state from intermediate error notifications or transcript text.
+ func (c *Client) ReadTurnState(ctx context.Context, threadID string) (TurnState, error) {
+diff --git a/docs/reference.md b/docs/reference.md
+index 5108de3..e86592f 100644
+--- a/docs/reference.md
++++ b/docs/reference.md
+@@ -147,12 +147,21 @@ Intermediate errors and `willRetry` notifications do not prove terminal failure.
+ The generated Codex 0.163.0 schema defines `serverOverloaded` and `cyberPolicy`;
+ the embedding application chooses its retry policy.
+ 
++`TurnState.IsLoadedFailedTurn(expectedTurnID)` returns true only when
++`expectedTurnID` is nonempty and matches the latest failed turn, and the raw
++native status is `idle` or `systemError`. Codex 0.163.0 can retain `systemError`
++after a terminal failure until the next turn starts. `TurnState.Status`
++preserves that value. The predicate does not classify the failure or prove
++settings, authority, queue or pending-request conditions. Cold, active, unknown
++and missing statuses, or a different or nonfailed latest turn, return false.
++
+ `ContinueFailedTurn(ctx, threadID, text, stableID, actionContext,
+ expectedFailedTurnID, options)` starts one visible, nonempty continuation turn.
+ It first reconciles an exact accepted/submitting ledger identity, even after
+ new work has changed the thread. A fresh submission requires an already-loaded
+-idle thread, that exact latest failed turn, no pending requests, no native
+-queue and no other unresolved submission. It never resumes, steers, starts a
++thread with no active turn (`idle` or `systemError`), that exact latest failed
++turn, no pending requests, an empty native queue and no other unresolved
++submission. It never resumes, steers, starts a
+ queue, updates settings or reapplies policy. Resume could release saved queues
+ or goals, so it cannot be used to repair a failed continuation preflight.
+ 
+diff --git a/test/codex_protocol_contract.py b/test/codex_protocol_contract.py
+index dc1ecd9..2358c2c 100644
+--- a/test/codex_protocol_contract.py
++++ b/test/codex_protocol_contract.py
+@@ -716,6 +716,25 @@ validate(
+     "thread/loaded/list pagination params",
+ )
+ validate("v2/ThreadReadResponse.json", {"thread": thread}, "thread/read result")
++# Retry admission depends on the exact raw native loaded-status vocabulary.
++# systemError is a status flag, separate from the latest turn's failure code.
++status_schema = json.loads((SCHEMA_DIR / "v2/ThreadReadResponse.json").read_text())
++status_variants = status_schema["definitions"]["ThreadStatus"]["oneOf"]
++status_types = [variant["properties"]["type"]["enum"] for variant in status_variants]
++if sorted(status_types) != [["active"], ["idle"], ["notLoaded"], ["systemError"]]:
++    raise SystemExit(f"native ThreadStatus variants changed: {status_types}")
++active_status = next(v for v in status_variants if v["properties"]["type"]["enum"] == ["active"])
++if "activeFlags" not in active_status["required"]:
++    raise SystemExit("native active ThreadStatus no longer requires activeFlags")
++active_flags = status_schema["definitions"]["ThreadActiveFlag"]["enum"]
++if sorted(active_flags) != ["waitingOnApproval", "waitingOnUserInput"]:
++    raise SystemExit(f"native active flags changed: {active_flags}")
++for raw_status in [
++    {"type": "notLoaded"}, {"type": "idle"}, {"type": "systemError"},
++    {"type": "active", "activeFlags": []},
++    {"type": "active", "activeFlags": active_flags},
++]:
++    validate("v2/ThreadReadResponse.json", {"thread": {**thread, "status": raw_status}}, "raw thread status " + raw_status["type"])
+ validate(
+     "v2/ThreadTurnsListResponse.json",
+     {"data": [transcript_turn]},

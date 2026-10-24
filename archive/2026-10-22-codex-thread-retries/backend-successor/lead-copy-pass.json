@@ -1,0 +1,74 @@
+{
+  "session": "2026-10-22-codex-thread-retries",
+  "at": "2026-10-24T08:41:16.645875+00:00",
+  "owner": "lead",
+  "status": "Direct main-agent factual and prose pass complete; owner1 to apply exact replacements before commit.",
+  "skills": [
+    "vpsfree-user-facing-writing",
+    "humanizer-en (embedded)"
+  ],
+  "draft_sha256": "0c1492920fc9fcca27c871614540f27e8d71b0c780b251a971aba7a32574dfa0",
+  "accepted_errors_unchanged": [
+    "Both retry preferences and their revision are required.",
+    "Retry preferences changed. Reload and try again.",
+    "Retry preferences are unavailable. Try again later."
+  ],
+  "replacements": [
+    {
+      "path": "docs/turn-retry-recovery.md",
+      "old": "not acquire an outer roster or conversation lock. The retry scheduler waits for its next scheduled attempt outside these locks. Two scheduler workers serve retained roots and\nready team members without requiring a browser connection.",
+      "new": "not acquire an outer roster or conversation lock. The retry scheduler waits for\nits next scheduled attempt outside these locks. Two scheduler workers serve\nretained roots and ready team members without requiring a browser connection."
+    },
+    {
+      "path": "docs/turn-retry-recovery.md",
+      "old": "runtime's exclusive lock. Any legacy opt-out makes both session preferences off;\notherwise both start on. Missing legacy records use the old default-on choice.",
+      "new": "runtime's exclusive lock. Any legacy per-thread opt-out disables both session\npreferences; otherwise both start on. Missing legacy records use the old\ndefault-on choice."
+    },
+    {
+      "path": "docs/turn-retry-recovery.md",
+      "old": "read refuses the change. A same-valued request does nothing, including when it\nrepeats a request whose reply was lost. Polling never takes exclusive access.",
+      "new": "read refuses the change. A request that repeats the saved choices returns the\ncurrent revision without changing the policy, baselines or checkpoints. This\nalso covers a repeated request whose reply was lost. Polling never takes\nexclusive access."
+    },
+    {
+      "path": "docs/turn-retry-recovery.md",
+      "old": "remains eligible. Portal restart reads the saved\nboundary and deadline rather than enrolling the same failure again.",
+      "new": "remains eligible. Portal restart reads the saved boundary and deadline rather\nthan enrolling the same failure again."
+    },
+    {
+      "path": "docs/turn-retry-recovery.md",
+      "old": "Stop retrying suppresses future continuations but leaves the preference enabled.\nDisabling also cancels the chain. New input, queue admission/start, settings",
+      "new": "Stop retrying suppresses future continuations without changing the session\npreferences. Turning a class off also cancels its chain. New input, queue\nadmission/start, settings"
+    },
+    {
+      "path": "docs/turn-retry-recovery.md",
+      "old": "before acknowledgment. Duplicate actions are harmless for their exact owning\nidentity; a new chain, policy revision or pending UUID requires refreshed status.\nAn uncertain submission can reach its own receipt-only recovery and Stop before",
+      "new": "before acknowledgment. Duplicate actions are harmless for their exact owning\nidentity. A new chain or policy revision requires refreshed status; Retry now\nalso requires a refresh when the pending UUID changes. An uncertain submission\ncan reach its own receipt-only recovery and Stop before"
+    },
+    {
+      "path": "docs/workspace-portal.md",
+      "old": "Confirmed retry starts count accepted automatic submissions. A possibly\nsubmitted attempt appears separately, and missing history remains partial or\nunavailable. Terminal results keep their elapsed time fixed. Retry preferences",
+      "new": "Confirmed retry starts count accepted automatic submissions. A possibly\nsubmitted attempt appears separately. If confirmed-start evidence is incomplete,\nthe count is partial or unavailable. Terminal results keep their elapsed time\nfixed. Retry preferences"
+    }
+  ],
+  "files": [
+    {
+      "path": "docs/turn-retry-recovery.md",
+      "before_sha256": "73573b4baee7e41fa3f492f291736528e99a7383732a32bd320507a9e8068647",
+      "expected_after_sha256": "9dd6b4fc795c777141e3fb8b094f875c08e28b1efb73953a3dd6245369fc34dd"
+    },
+    {
+      "path": "docs/workspace-portal.md",
+      "before_sha256": "5adc125749bb7455677798204537b8f2f82fd0302477b37a89de1b25543b2fa9",
+      "expected_after_sha256": "7a167475bb20ee6b6d9783332586a6a40d6aafe002dd44b4b53fe82e0585e7e4"
+    }
+  ],
+  "factual_dispositions": [
+    "Keep Stop valid across pending UUID changes within the same chain and revision; only Retry now also binds Pending.ID.",
+    "Describe the same-choice response as current revision without policy, baseline or checkpoint mutation, after ordinary authorization.",
+    "Describe incomplete confirmed-start evidence as partial/unavailable count; do not imply history-derived counting.",
+    "Preserve scheduler deadline waits outside outer locks while allowing bounded sidecar lock contention inside existing outer fences.",
+    "Retain exact schemas, paths, capabilities, request budget, limits, receipt-first recovery, native and queue uncertainty warnings.",
+    "Existing Ruby paragraph and unchanged A typed action/reload copy accepted at their prior exact scopes."
+  ],
+  "limits": "Prose acceptance is not final implementation review, executed backend verification, deployment, integration or readiness for use."
+}

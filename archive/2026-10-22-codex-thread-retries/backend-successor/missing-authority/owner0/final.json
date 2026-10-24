@@ -1,0 +1,242 @@
+{
+  "status": "frozen scoped handoff; incorporation and affected review pending",
+  "createdAt": "2026-10-24T16:17:44.024490+00:00",
+  "base": {
+    "head": "e06578e4ad03cd6c023dcdd9685a678cd64339cc",
+    "tree": "c1a8e9740a45c9e63549fd774dacb54a68b20abc",
+    "immutableSource": "/nix/store/s8y17f18kxpr9jhkxh2wj6b95mx4r8yi-source",
+    "narHash": "sha256-551IPJvVeWZBAs/obewfAeHSnwD/IF4BijQLJf81K/c="
+  },
+  "sourceCopy": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/backend-successor/missing-authority/owner0/source",
+  "paths": {
+    "libexec/dev-session": {
+      "baseSha256": "ad90f457541ece2cccdd3b7cb00420555b04e728fb0528c4a8677bbf0afb08ca",
+      "finalSha256": "580ba0f630846111f1ffe4782e7da1274fa14297df58cc3ce4387f90349811b3",
+      "addedLines": 28,
+      "removedLines": 1,
+      "mainStillBase": true
+    },
+    "test/dev_session/deletion_recovery_test.rb": {
+      "baseSha256": "217d2a8b8487854d62d754ead7bcebf190f8246f1cb34a7683ff4a861e6f2ffa",
+      "finalSha256": "f38048ed87e5a6d7488c9c03d040ffbf4ab02d3495affc1466da2c99abcb55d3",
+      "addedLines": 33,
+      "removedLines": 0,
+      "mainStillBase": true
+    },
+    "test/workspace_host/failed_creation_delete_recovery_test.rb": {
+      "baseSha256": "650b2747ccb4788d53eceb28305bd21dddbd0057cb511874715abb473197abe7",
+      "finalSha256": "c85d55ea8ac867ea94b48df7b1ce31146ec3c14aba38b2a2ca33d9f6f605afc1",
+      "addedLines": 169,
+      "removedLines": 1,
+      "mainStillBase": true
+    },
+    "docs/session-archive-recovery.md": {
+      "baseSha256": "5cf4ea352507dadf85e6510465b446823b6ef10bace4b8c06fed25a6ee6af7f0",
+      "finalSha256": "1576cbf58643f3b9b7bd5ae1fce4b6a8d1a57c3ecce878c52c9bdc17fc16bec1",
+      "addedLines": 9,
+      "removedLines": 0,
+      "mainStillBase": true
+    }
+  },
+  "patch": "final.patch",
+  "patchSha256": "32331f1fba7ab3f7e98654d18c3a36ed79d2eaca5b9e20e2cbe4811a9ae13fbb",
+  "checks": {
+    "syntax": {
+      "receipt": "syntax.json",
+      "receiptSha256": "b60ff43bef321c51daff1d9911becac22321616b55a89cf950fa99bbc2427d98",
+      "stdout": "syntax.stdout",
+      "stdoutSha256": "8ea544038bfad2174f27c59c8a5b6e4910bc244d3498e796d34dbca5086d0a3d",
+      "stderr": "syntax.stderr",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exit": 0,
+      "seconds": 0.6181990262120962,
+      "argv": [
+        "nix",
+        "shell",
+        "nixpkgs#ruby",
+        "-c",
+        "ruby",
+        "-e",
+        "ARGV.each { |path| abort path unless system(RbConfig.ruby,\"-c\",path) }",
+        "libexec/dev-session",
+        "test/dev_session/deletion_recovery_test.rb",
+        "test/workspace_host/failed_creation_delete_recovery_test.rb"
+      ],
+      "inputCount": 586,
+      "inputsBeforeEqualAfter": true
+    },
+    "authority-host": {
+      "receipt": "authority-host.json",
+      "receiptSha256": "962e44d4528c4df0388ed7b2c2ed9de0ab4b5d8d4041e9da3a97b5465bceb108",
+      "stdout": "authority-host.stdout",
+      "stdoutSha256": "a15574b6a2f4eb9df7bb6a5313d07e75869adeb9c6ce0b67086479b5d81a4eca",
+      "stderr": "authority-host.stderr",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exit": 0,
+      "seconds": 12.033066503703594,
+      "argv": [
+        "nix",
+        "shell",
+        "nixpkgs#ruby",
+        "nixpkgs#tmux",
+        "nixpkgs#git",
+        "-c",
+        "ruby",
+        "test/workspace_host_test.rb",
+        "--name",
+        "/failed_creation.*authority/"
+      ],
+      "inputCount": 586,
+      "inputsBeforeEqualAfter": true,
+      "tests": 6,
+      "assertions": 318,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0
+    },
+    "authority-executor": {
+      "receipt": "authority-executor.json",
+      "receiptSha256": "fae0db88e423f7f63285af34b47b0a582e89342355b1a8bf1ba30047c701ae1e",
+      "stdout": "authority-executor.stdout",
+      "stdoutSha256": "b6e1f3b7e4a93b90736f6dd40d1b3c81a78a54a4a182591026a6cbdeee03c8c6",
+      "stderr": "authority-executor.stderr",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exit": 0,
+      "seconds": 0.9706822019070387,
+      "argv": [
+        "nix",
+        "shell",
+        "nixpkgs#ruby",
+        "nixpkgs#tmux",
+        "nixpkgs#git",
+        "-c",
+        "ruby",
+        "test/dev_session_test.rb",
+        "--name",
+        "/failed_creation.*authority/"
+      ],
+      "inputCount": 586,
+      "inputsBeforeEqualAfter": true,
+      "tests": 2,
+      "assertions": 12,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0
+    },
+    "existing-host": {
+      "receipt": "existing-host.json",
+      "receiptSha256": "a280958baa16a4b344849eef9d1931afb46437aad1eb80b8823d82720b64e5d8",
+      "stdout": "existing-host.stdout",
+      "stdoutSha256": "6c0d387f7df5f1cf66aae5a139e79421a0448cd636d297056134946a7db050bb",
+      "stderr": "existing-host.stderr",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exit": 0,
+      "seconds": 38.621493769809604,
+      "argv": [
+        "nix",
+        "shell",
+        "nixpkgs#ruby",
+        "nixpkgs#tmux",
+        "nixpkgs#git",
+        "-c",
+        "ruby",
+        "test/workspace_host_test.rb",
+        "--name",
+        "/^test_failed_creation_candidate_(?!.*authority)/"
+      ],
+      "inputCount": 586,
+      "inputsBeforeEqualAfter": true,
+      "tests": 13,
+      "assertions": 388,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0
+    },
+    "existing-executor": {
+      "receipt": "existing-executor.json",
+      "receiptSha256": "9ec99473d4d37a44851b478f90823fd64362407524ee827a37f973ba75bdf673",
+      "stdout": "existing-executor.stdout",
+      "stdoutSha256": "da1988b93d69811e5ab1c0aced90dd4f958a01785a4a3a1c1572a40a2d5f2ce0",
+      "stderr": "existing-executor.stderr",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exit": 0,
+      "seconds": 2.0765592977404594,
+      "argv": [
+        "nix",
+        "shell",
+        "nixpkgs#ruby",
+        "nixpkgs#tmux",
+        "nixpkgs#git",
+        "-c",
+        "ruby",
+        "test/dev_session_test.rb",
+        "--name",
+        "/^(test_delete_(subordinate_start.*|does_not_take_an_unbound.*|preparation_refusal.*|keeps_retiring.*|moves_direct_team.*)|test_remove_(preflights_legacy_identity_before_creating_a_journal|rejects_a_renamed_authority_session_before_creating_a_journal|resume_upgrades_a_legacy_identity_before_continuing))$/"
+      ],
+      "inputCount": 586,
+      "inputsBeforeEqualAfter": true,
+      "tests": 8,
+      "assertions": 42,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0
+    },
+    "unchanged-guards": {
+      "receipt": "unchanged-guards.json",
+      "receiptSha256": "07af1c50f5e2cda6e91fa8274c4615dadcff2ff4909a6a09c513146fd7dd304e",
+      "stdout": "unchanged-guards.stdout",
+      "stdoutSha256": "143cc079988fcb731c1a9a5df853ab0de2dacfb8a1ec7a2c53f09b0214df9dfa",
+      "stderr": "unchanged-guards.stderr",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exit": 0,
+      "seconds": 2.480197601020336,
+      "argv": [
+        "nix",
+        "shell",
+        "nixpkgs#ruby",
+        "nixpkgs#tmux",
+        "nixpkgs#git",
+        "-c",
+        "ruby",
+        "test/workspace_host_test.rb",
+        "--name",
+        "/^(test_candidate_switch_still_refuses_an_unfinished_creation|test_switch_refuses_unfinished_session_lifecycle_operations|test_switch_refuses_an_unfinished_session_creation|test_switch_refuses_an_unfinished_managed_session_creation|test_switch_refuses_an_unfinished_session_fork|test_switch_refuses_an_unfinished_session_start|test_recover_archive_uses_selected_executor_and_only_substitutes_protocol_helper|test_workspace_host_loads_dev_session_only_for_archive_recovery)$/"
+      ],
+      "inputCount": 586,
+      "inputsBeforeEqualAfter": true,
+      "tests": 8,
+      "assertions": 45,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0
+    }
+  },
+  "totals": {
+    "tests": 37,
+    "assertions": 805,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0
+  },
+  "sourceInputCount": 586,
+  "allCheckInputsIdentical": true,
+  "onlyReservedPathsDifferFromImmutableSource": true,
+  "redBaseline": {
+    "receipt": "red-host.json",
+    "receiptSha256": "9b2363df0dcc0c2b15b10e0e3e8babd223d25837bb6799e57027c836f60cd461",
+    "stdoutSha256": "9cd2152a1a0472fe71e235f16a83c635827fe286c3ebbc1ef4fea14bf9465261",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "preservedNotRerun": true
+  },
+  "copyAcceptance": {
+    "path": "lead-copy-acceptance.json",
+    "sha256": "1402ab0abd1ed23f42e57778958285e6bfd82f899c0b0cde8fe9e55f756ba712",
+    "inventorySha256": "195061c65dd62bc023665382528d304b798b57d389473fa1ee3fcb91ebb75b79",
+    "decision": "accepted unchanged"
+  },
+  "scope": "Actual public candidate host -> ordinary Ruby executor with configured authority and real disposable tmux terminal. External native/provider/portal effects remain synthetic. This is not a full-system/native pass.",
+  "behavior": "Under existing deletion locks, only a freshly revalidated typed failed-creation context with absent authority and exact present managed terminal publishes the existing creating-authority format using the original nonce and ordinary atomic writer. Ordinary trust/deletion then proceeds unchanged.",
+  "mainGitAndLiveOperations": "No main edits, index/Git operations, live authority installation, retry or reconciliation performed.",
+  "nextOwner": "Lead inspects frozen patch; implementer1 alone incorporates after release, followed by retained affected review.",
+  "sessionUrl": "https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-22-codex-thread-retries/"
+}

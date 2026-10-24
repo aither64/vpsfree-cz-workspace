@@ -1,0 +1,342 @@
+diff --git a/flake.lock b/flake.lock
+index 479b55e4..8c261d95 100644
+--- a/flake.lock
++++ b/flake.lock
+@@ -37,17 +37,17 @@
+     "codex-web": {
+       "flake": false,
+       "locked": {
+-        "lastModified": 1792785904,
+-        "narHash": "sha256-IhCdZ7HpW3sora4/WnvWoCLotFZtMMldGCLItXoC90w=",
++        "lastModified": 1792790420,
++        "narHash": "sha256-ZOnY4TjA7p1qn97ESt9qMmhDmR9a3rIg+w+kp1BLwTs=",
+         "owner": "aither64",
+         "repo": "codex-web",
+-        "rev": "55e0300b27b6927b1693b3792042762f31a385cc",
++        "rev": "a58f07064c560bb30efb0228ec6307bcd991d7ab",
+         "type": "github"
+       },
+       "original": {
+         "owner": "aither64",
+         "repo": "codex-web",
+-        "rev": "55e0300b27b6927b1693b3792042762f31a385cc",
++        "rev": "a58f07064c560bb30efb0228ec6307bcd991d7ab",
+         "type": "github"
+       }
+     },
+diff --git a/flake.nix b/flake.nix
+index 31a09e6c..e65fcc62 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -5,7 +5,7 @@
+     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+     llm-agents.url = "github:numtide/llm-agents.nix";
+     codex-web = {
+-      url = "github:aither64/codex-web/55e0300b27b6927b1693b3792042762f31a385cc";
++      url = "github:aither64/codex-web/a58f07064c560bb30efb0228ec6307bcd991d7ab";
+       flake = false;
+     };
+   };
+diff --git a/nix/workspace-portal.nix b/nix/workspace-portal.nix
+index a121f10b..744c410d 100644
+--- a/nix/workspace-portal.nix
++++ b/nix/workspace-portal.nix
+@@ -273,7 +273,7 @@ buildGoModule {
+ 
+   inherit src;
+   modRoot = "portal";
+-  vendorHash = "sha256-jrp5UYCY0XK0Nw1jzOPv5IRaH4YlLle5M15l8opx4Qo=";
++  vendorHash = "sha256-D2/gC6L+gajnPaD27V85FHrDJruizDsTXER3crJEKMM=";
+ 
+   postPatch = ''
+     expected=${lib.escapeShellArg codexWebVersion}
+diff --git a/portal/go.mod b/portal/go.mod
+index da8cef8c..8bcd2a30 100644
+--- a/portal/go.mod
++++ b/portal/go.mod
+@@ -4,7 +4,7 @@ go 1.24.0
+ 
+ require (
+ 	github.com/SherClockHolmes/webpush-go v1.4.0
+-	github.com/aither64/codex-web v0.0.0-20261023200504-55e0300b27b6
++	github.com/aither64/codex-web v0.0.0-20261023212020-a58f07064c56
+ 	github.com/coder/websocket v1.8.14
+ 	github.com/microcosm-cc/bluemonday v1.0.27
+ 	github.com/yuin/goldmark v1.7.17
+diff --git a/portal/go.sum b/portal/go.sum
+index 93baca56..9a88d481 100644
+--- a/portal/go.sum
++++ b/portal/go.sum
+@@ -1,7 +1,7 @@
+ github.com/SherClockHolmes/webpush-go v1.4.0 h1:ocnzNKWN23T9nvHi6IfyrQjkIc0oJWv1B1pULsf9i3s=
+ github.com/SherClockHolmes/webpush-go v1.4.0/go.mod h1:XSq8pKX11vNV8MJEMwjrlTkxhAj1zKfxmyhdV7Pd6UA=
+-github.com/aither64/codex-web v0.0.0-20261023200504-55e0300b27b6 h1:f34novYrdHGiXSAeNfaCAkpkwvNnsI0qGa1XkGK3FDo=
+-github.com/aither64/codex-web v0.0.0-20261023200504-55e0300b27b6/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
++github.com/aither64/codex-web v0.0.0-20261023212020-a58f07064c56 h1:itrVneVC7pdsSt6u1phXFAhdmYZgQCJe672qt0TsJ1M=
++github.com/aither64/codex-web v0.0.0-20261023212020-a58f07064c56/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
+ github.com/aymerick/douceur v0.2.0 h1:Mv+mAeH1Q+n9Fr+oyamOlAkUNPWPlA8PPGR0QAaYuPk=
+ github.com/aymerick/douceur v0.2.0/go.mod h1:wlT5vV2O3h55X9m7iVYN0TBM0NH/MmbLnd30/FjWUq4=
+ github.com/coder/websocket v1.8.14 h1:9L0p0iKiNOibykf283eHkKUHHrpG7f65OE3BhhO7v9g=
+diff --git a/portal/internal/web/auto_archive_test.go b/portal/internal/web/auto_archive_test.go
+index 3f20d686..0bb3713e 100644
+--- a/portal/internal/web/auto_archive_test.go
++++ b/portal/internal/web/auto_archive_test.go
+@@ -40,7 +40,7 @@ func TestAutomaticArchivalPageIsSeparateFromIndex(t *testing.T) {
+ 	if page.Code != http.StatusOK {
+ 		t.Fatalf("dedicated route reached slug lookup: %d: %s", page.Code, page.Body.String())
+ 	}
+-	for _, required := range []string{"data-automatic-archival", "workspace-auto-archive-status", "workspace-auto-archive-rows", `href="/"`, `/static/app.js?v=58`} {
++	for _, required := range []string{"data-automatic-archival", "workspace-auto-archive-status", "workspace-auto-archive-rows", `href="/"`, `/static/app.js?v=59`} {
+ 		if !strings.Contains(page.Body.String(), required) {
+ 			t.Fatalf("overview lacks %q: %s", required, page.Body.String())
+ 		}
+diff --git a/portal/internal/web/browser_asset_versions_test.go b/portal/internal/web/browser_asset_versions_test.go
+index 11374b5e..f122d73e 100644
+--- a/portal/internal/web/browser_asset_versions_test.go
++++ b/portal/internal/web/browser_asset_versions_test.go
+@@ -1,6 +1,8 @@
+ package web
+ 
+ import (
++	"net/http"
++	"net/http/httptest"
+ 	"regexp"
+ 	"strconv"
+ 	"testing"
+@@ -27,22 +29,31 @@ func TestBrowserAssetVersionsForRetryAndQuestionUI(t *testing.T) {
+ 		}
+ 		return version
+ 	}
+-	// Deployed conversation.js?v=23 can remain fresh in a browser's HTTP
+-	// cache for five minutes and lacks the now mandatory question export.
++	// Previously selected modules can remain fresh in a browser's HTTP cache
++	// for five minutes and lack the current retry notice presentation.
+ 	// A fresh page must select a new module URL even after an older page
+ 	// warmed that cache. Do not replace this with a missing-export fallback.
+-	versionAfter(read("static/app.js"), "/codex/assets/conversation.js", 23)
++	versionAfter(read("static/app.js"), "/codex/assets/conversation.js", 24)
+ 	session := read("templates/session.html")
+-	versionAfter(session, "/codex/assets/conversation.css", 9)
++	versionAfter(session, "/codex/assets/conversation.css", 10)
+ 	versionAfter(session, "/static/style.css", 22)
+ 	// All consumers of the changed app entry point select the same fresh
+ 	// bytes, including navigation from index/archival to the conversation.
+ 	var appVersion int
+ 	for _, name := range []string{"session.html", "index.html", "automatic-archival.html"} {
+-		version := versionAfter(read("templates/"+name), "/static/app.js", 57)
++		version := versionAfter(read("templates/"+name), "/static/app.js", 58)
+ 		if appVersion != 0 && version != appVersion {
+ 			t.Fatalf("%s selects app v%d, expected v%d", name, version, appVersion)
+ 		}
+ 		appVersion = version
+ 	}
++	// A new parent module still needs a new child URL: a browser may already
++	// hold the old retry_activity bytes under the child's independent cache key.
++	server := newTestServer(t)
++	response := httptest.NewRecorder()
++	server.Handler().ServeHTTP(response, httptest.NewRequest("GET", "/codex/assets/conversation.js?v=25", nil))
++	if response.Code != http.StatusOK {
++		t.Fatal(response.Code, response.Body.String())
++	}
++	versionAfter(response.Body.String(), "./retry_activity.js", 1)
+ }
+diff --git a/portal/internal/web/question_browser_test.go b/portal/internal/web/question_browser_test.go
+index c4042a7c..35c100b3 100644
+--- a/portal/internal/web/question_browser_test.go
++++ b/portal/internal/web/question_browser_test.go
+@@ -2,7 +2,10 @@ package web
+ 
+ import (
+ 	"context"
++	"crypto/sha256"
+ 	"encoding/base64"
++	"encoding/hex"
++	"encoding/json"
+ 	"fmt"
+ 	"net/http"
+ 	"net/http/httptest"
+@@ -22,7 +25,15 @@ import (
+ 
+ // The controlled page fixture owns these two synthetic conversations. Preserve
+ // the shared contract fake's strict single-thread verification in other tests.
+-type questionBrowserCodex struct{ browserContractCodex }
++type questionBrowserCodex struct {
++	browserContractCodex
++	// The real member resolver requires the team interface. Its unused lifecycle
++	// methods remain unavailable: an unexpected call hits this nil tripwire.
++	teamruntime.Client
++}
++
++var _ conversation.Client = (*questionBrowserCodex)(nil)
++var _ teamruntime.Client = (*questionBrowserCodex)(nil)
+ 
+ func (client *questionBrowserCodex) VerifyThread(ctx context.Context, threadID, cwd string) error {
+ 	if threadID == "member-thread" {
+@@ -40,6 +51,76 @@ func (client *questionBrowserCodex) ReadThread(ctx context.Context, threadID str
+ 	return transcript, err
+ }
+ 
++func (client *questionBrowserCodex) Interrupt(ctx context.Context, threadID string) error {
++	return client.browserContractCodex.Interrupt(ctx, threadID)
++}
++
++func TestQuestionBrowserUploadScopes(t *testing.T) {
++	server := newTestServer(t)
++	prepareInteractiveConversation(t, server, "example")
++	client := &questionBrowserCodex{browserContractCodex: browserContractCodex{emptyPrompts: true}}
++	server.config.Codex = client
++	server.uploadStore.MinFreeBytes = 0
++	store, err := teamruntime.NewStore(server.config.UserStateRoot, server.config.Workspace)
++	if err != nil {
++		t.Fatal(err)
++	}
++	if _, err := store.Update(context.Background(), "example", "thread-1", true, func(roster *teamruntime.Roster) error {
++		roster.Members = []teamruntime.Member{{Address: "implementer0", Role: "implementer", Thread: "member-thread", Model: "gpt-6.1-sol", Effort: "xhigh", Behavior: "implementer", Access: "workspace_write", State: "ready", AddedAt: time.Now().UTC()}}
++		return nil
++	}); err != nil {
++		t.Fatal(err)
++	}
++	handler := server.Handler()
++	call := func(method, path, body string) *httptest.ResponseRecorder {
++		request := httptest.NewRequest(method, path, strings.NewReader(body))
++		request.Header.Set("Origin", server.config.BaseURL)
++		request.Header.Set("Upload-Offset", "0")
++		checksum := sha256.Sum256([]byte(body))
++		request.Header.Set("Upload-Checksum", hex.EncodeToString(checksum[:]))
++		response := httptest.NewRecorder()
++		handler.ServeHTTP(response, request)
++		return response
++	}
++	for _, scope := range []string{"s-example", "s-example~implementer0"} {
++		t.Run(scope, func(t *testing.T) {
++			path := "/uploads/" + scope
++			response := call("GET", path, "")
++			if response.Code != http.StatusOK || !strings.Contains(response.Body.String(), `"limits"`) {
++				t.Fatalf("upload readiness: %d %s", response.Code, response.Body.String())
++			}
++			response = call("POST", path, `{"clientId":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","name":"fixture.txt","size":7}`)
++			if response.Code != http.StatusCreated {
++				t.Fatalf("create: %d %s", response.Code, response.Body.String())
++			}
++			var file conversation.Upload
++			if err := json.Unmarshal(response.Body.Bytes(), &file); err != nil {
++				t.Fatal(err)
++			}
++			path += "/" + file.ID
++			for _, step := range []struct{ method, path, body string }{{"PATCH", path, "content"}, {"POST", path, ""}, {"GET", path + "/content", ""}} {
++				response = call(step.method, step.path, step.body)
++				if response.Code != http.StatusOK {
++					t.Fatalf("%s %s: %d %s", step.method, step.path, response.Code, response.Body.String())
++				}
++			}
++			if response.Body.String() != "content" {
++				t.Fatal("upload readback changed", response.Body.String())
++			}
++			other := "s-example~implementer0"
++			if scope == other {
++				other = "s-example"
++			}
++			if response := call("GET", "/uploads/"+other+"/"+file.ID+"/content", ""); response.Code != http.StatusNotFound {
++				t.Fatalf("file crossed conversation scope: %d", response.Code)
++			}
++		})
++	}
++	if client.sendCount != 0 || client.interrupt {
++		t.Fatal("upload fixture dispatched conversation input")
++	}
++}
++
+ // Run with PORTAL_BROWSER_TEST=1 and Nix-provided Node, Playwright modules and
+ // PLAYWRIGHT_BROWSERS_PATH. The browser controls API responses, while the actual
+ // server supplies the session template, CSP, scripts, styles and upload service.
+@@ -86,7 +167,7 @@ func TestQuestionBrowser(t *testing.T) {
+ 	}
+ 	writeWebRuntimeAuthority(t, server, "example")
+ 	events := make(chan struct{}, 1)
+-	server.config.Codex = &questionBrowserCodex{browserContractCodex{emptyPrompts: true, events: events, transcript: codex.Transcript{
++	server.config.Codex = &questionBrowserCodex{browserContractCodex: browserContractCodex{emptyPrompts: true, events: events, transcript: codex.Transcript{
+ 		ThreadID: "thread-1", Status: "active", CollaborationMode: "plan",
+ 	}}}
+ 	httpServer := httptest.NewUnstartedServer(nil)
+diff --git a/portal/internal/web/retry_activity_browser_test.cjs b/portal/internal/web/retry_activity_browser_test.cjs
+index 686fcffc..31a80238 100644
+--- a/portal/internal/web/retry_activity_browser_test.cjs
++++ b/portal/internal/web/retry_activity_browser_test.cjs
+@@ -275,11 +275,14 @@ const activity = (overrides = {}) => ({
+         state = activity({chainKey: `result-${outcome}`, phase: "terminal", outcome, retryNowToken: "", stopToken: "", nextAttemptAtMs: null, finishedAtMs: 100000, ...extra});
+         await refresh();
+         await expect(notice).toBeVisible();
+-        await expect(notice.getByRole("button", {name: /dismiss/i})).toBeVisible();
++        const dismiss = notice.getByRole("button", {name: "Dismiss retry notice", exact: true});
++        await expect(dismiss).toBeVisible();
++        await expect(dismiss).toHaveText("×");
++        await expect(dismiss).toHaveAttribute("title", "Dismiss retry notice");
+         await scroll.evaluate(node => { node.scrollTop = node.scrollHeight; });
+         await screenshot(outcome);
+       }
+-      const dismiss = notice.getByRole("button", {name: /dismiss/i});
++      const dismiss = notice.getByRole("button", {name: "Dismiss retry notice", exact: true});
+       await dismiss.focus(); await page.keyboard.press("Enter");
+       await expect(notice).toBeHidden();
+       assert.equal(await notice.evaluate(node => node.getBoundingClientRect().height), 0);
+diff --git a/portal/internal/web/static/app.js b/portal/internal/web/static/app.js
+index 01956b48..b615c1e8 100644
+--- a/portal/internal/web/static/app.js
++++ b/portal/internal/web/static/app.js
+@@ -1208,7 +1208,7 @@
+     return;
+   }
+ 
+-  const conversationAssets = await import("/codex/assets/conversation.js?v=24");
++  const conversationAssets = await import("/codex/assets/conversation.js?v=25");
+   sharedTranscriptPresentation = conversationAssets.transcriptEntryPresentation;
+   sharedTranscriptVisible = conversationAssets.transcriptEntryVisible;
+   refreshPolicy = conversationAssets.refreshPolicy;
+diff --git a/portal/internal/web/templates/automatic-archival.html b/portal/internal/web/templates/automatic-archival.html
+index 2b7e472c..3723dc60 100644
+--- a/portal/internal/web/templates/automatic-archival.html
++++ b/portal/internal/web/templates/automatic-archival.html
+@@ -18,7 +18,7 @@
+       <div id="workspace-auto-archive-rows"></div>
+     </section>
+   </main>
+-  <script src="/static/app.js?v=58" defer></script>
++  <script src="/static/app.js?v=59" defer></script>
+ </body>
+ </html>
+ {{end}}
+diff --git a/portal/internal/web/templates/index.html b/portal/internal/web/templates/index.html
+index 4d190b3f..e223506b 100644
+--- a/portal/internal/web/templates/index.html
++++ b/portal/internal/web/templates/index.html
+@@ -98,7 +98,7 @@
+   <script src="/static/session-attention-store.js?v=4" defer></script>
+   <script src="/static/browser-notifications.js?v=6" defer></script>
+   <script src="/static/preparation.js?v=5" defer></script>
+-  <script src="/static/app.js?v=58" defer></script>
++  <script src="/static/app.js?v=59" defer></script>
+   <script src="/static/coordination.js?v=6" defer></script>
+ </body>
+ </html>
+diff --git a/portal/internal/web/templates/session.html b/portal/internal/web/templates/session.html
+index 1ecce64d..43ca30ba 100644
+--- a/portal/internal/web/templates/session.html
++++ b/portal/internal/web/templates/session.html
+@@ -6,7 +6,7 @@
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+   <meta name="style-nonce" content="{{.StyleNonce}}">
+   <title>{{.Session.Slug}} · Workspace</title>
+-  <link rel="stylesheet" href="/codex/assets/conversation.css?v=10">
++  <link rel="stylesheet" href="/codex/assets/conversation.css?v=11">
+   <link rel="stylesheet" href="/static/style.css?v=23">
+   <link rel="stylesheet" href="/codex/assets/uploads.css?v=3">
+ </head>
+@@ -279,7 +279,7 @@
+       <div class="dialog-actions"><button type="button" class="quiet" data-dialog-close>Cancel</button><button type="submit" class="danger">Delete session</button></div>
+     </form>
+   </dialog>
+-  <script src="/static/app.js?v=58" defer></script>
++  <script src="/static/app.js?v=59" defer></script>
+   <script src="/static/session-attention-store.js?v=4" defer></script>
+   <script src="/static/browser-notifications.js?v=6" defer></script>
+   <script src="/static/session-attention.js?v=2" defer></script>

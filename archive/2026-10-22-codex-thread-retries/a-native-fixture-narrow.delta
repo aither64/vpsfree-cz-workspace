@@ -1,0 +1,13 @@
+diff --git a/codex/continuation_integration_test.go b/codex/continuation_integration_test.go
+index b297bbd..545a46d 100644
+--- a/codex/continuation_integration_test.go
++++ b/codex/continuation_integration_test.go
+@@ -241,7 +241,7 @@ func TestPinnedCodexFailedTurnRetryContract(t *testing.T) {
+ 	newThread := func(mode string) string {
+ 		t.Helper()
+ 		provider.set("success")
+-		thread, err := client.StartThreadWithSettings(ctx, fixture.cwd, nil, ThreadSettings{Model: "gpt-5.5", ReasoningEffort: "low", CollaborationMode: mode, Policy: policy})
++		thread, err := client.StartThreadWithSettings(ctx, fixture.cwd, map[string]string{}, ThreadSettings{Model: "gpt-5.5", ReasoningEffort: "low", CollaborationMode: mode, Policy: policy})
+ 		if err != nil {
+ 			t.Fatal(err)
+ 		}

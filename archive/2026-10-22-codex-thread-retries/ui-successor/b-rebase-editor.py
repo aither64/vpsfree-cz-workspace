@@ -1,0 +1,3 @@
+from pathlib import Path
+import sys
+Path(sys.argv[1]).write_text('pick 7262c24e4fbe9dbf8604e73590f9b5ef3d5dce99\npick b3c7187c6e26e269994433716a0ee719d0a7edf7\npick aafaf4195d695c4641ce4f9342d56a1786f237c3\npick a708f4011d33e7df6b73256b9a3873c24d03bbe7\nfixup -C c4cee3bfce327420ce4e425e0e3442eb46807745\npick f856549e54e2dbe56cc91548d2ea9b588c7e6633\npick 9fe56d2b031928ed18a8fa7bde61dc5edadef24e\npick 7b8c646974df72e0df3e576d10f09d79823ae004\npick bf5112cf07fcf03ff52cc82f22ca86a57a2bdef8\n')

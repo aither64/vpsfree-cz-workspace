@@ -1,0 +1,5 @@
+- **Result:** Passed; wrapper exit status 0.
+- **Command:** `bash ui-successor/capture-attempt-7.sh`, run once from `/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries`.
+- **Elapsed:** 32,521 ms. Verified `dev-session current` matched `2026-10-22-codex-thread-retries`.
+- **Evidence:** [result.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/ui-successor/capture-attempt-7/result.json). Wrapper reports `source_changed: false`.
+- **Logs:** `ui-successor/capture-attempt-7/stdout.log` and `stderr.log`. No operation remains running.

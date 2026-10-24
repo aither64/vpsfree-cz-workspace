@@ -1,0 +1,9 @@
+Final system and workspace application deployed from reviewed B b3a6eb2f, W b1f0a0f7 and C bec5556f; all four product defaults subsequently integrated after user acceptance. Final exact source/output/deriver graphs are bound in deployment-release.json. Copy, dry activation, system-switch, profile-switch and host status passed; system deployment included two passing health checks. Native Codex and tmux PID/Invocation identities survived; native effective and live descriptor limits are 524288. Final read-only continuity passed all44 assertions: contracts/catalog/selected graphs, five healthy units, retained native/tmux process/socket identities, effective/live native limits, two infrastructure healthz endpoints and all seven retained coordinator/team thread IDs.
+
+Authorized old625e operation198ff completed ordinary removal with original private start/creation/team/manifest and unknown-reviewer provenance preserved. Completion proof and terminal-only collector supplement accepted. One separate selected-portal GET retired the failed receipt; no retry or extra creation-status query. Replacement unchanged. Source review and synthetic/native producer checks do not establish the old target's prior preview/loaded-state cause.
+
+Original creation failed during reviewer0 native thread start with an unknown outcome; bootstrap and user task delivery were not attempted. Nine contemporaneous EMFILE records establish resource trouble but do not prove causation for that exact request. Later missing-authority and discovery refusals were separate recovery gaps, now corrected.
+
+User acceptance and all four product default integrations are complete; see integration-final/final-summary.json. Machine claim remains held until explicit release direction. Coordinator remains open/active with two preserved registered source-only scratch deliveries.
+
+Session: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-22-codex-thread-retries/

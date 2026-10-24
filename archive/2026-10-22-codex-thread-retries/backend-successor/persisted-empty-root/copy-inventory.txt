@@ -1,0 +1,39 @@
+diff --git a/docs/session-archive-recovery.md b/docs/session-archive-recovery.md
+index 356b417f..2a0102ee 100644
+--- a/docs/session-archive-recovery.md
++++ b/docs/session-archive-recovery.md
+@@ -366,9 +366,14 @@ Root retirement first proves the recorded thread's archive state. If it is
+ not archived and the index has no candidate, retirement also checks loaded
+ threads and their metadata. The original root must be the only thread matching
+ the session directory and source policy. Missing, ambiguous or changing
+-identities still block removal. History, idle and archive checks still apply;
+-attempt records are cleared only after successful archival or positive proof
+-that the root is already archived.
++identities still block removal. When both discovery paths omit the root,
++retirement requires positive proof of the original persisted, non-ephemeral
++`vscode` root with an empty preview and exact `notLoaded` status. Its canonical
++active rollout must be a regular materialized file; metadata and file identity
++must remain stable through history, terminal-turn idle and resolved-submission
++checks. Discovery absence alone never permits archival, and force does not
++bypass this identity proof. Attempt records are cleared only after successful
++archival or positive proof that the root is already archived.
+ 
+ After interruption, repeat the command with the same source, session and
+ request ID. It validates the original removal operation and private recovery
+
+New production errors/comments and native fixture comments:
+		return errors.New("persisted session conversation has no materialized history")
+// Empty discovery can omit a persisted root with no preview. Only a stable,
+// materialized original vscode identity can supply the missing candidate.
+		return codex.ThreadMetadata{}, nil, fmt.Errorf("read persisted retirement metadata: %w", err)
+		return codex.ThreadMetadata{}, nil, errors.New("persisted retirement root is not explicitly non-ephemeral")
+		return codex.ThreadMetadata{}, nil, errors.New("persisted retirement root does not have an empty preview")
+		return codex.ThreadMetadata{}, nil, errors.New("persisted retirement root is not positively unloaded")
+		return codex.ThreadMetadata{}, nil, errors.New("persisted retirement root has no rollout path")
+		return codex.ThreadMetadata{}, nil, errors.New("persisted retirement rollout is not a materialized regular file")
+		return fmt.Errorf("prove materialized retirement root: %w", err)
+		return errors.New("persisted retirement root is no longer positively active")
+		return errors.New("persisted retirement rollout changed during proof")
+//go:build live_switch_integration
+// The native producer owns every rollout and index entry. The forwarding peer
+// only counts unchanged RPCs; the HTTP trap cannot provide a model response.

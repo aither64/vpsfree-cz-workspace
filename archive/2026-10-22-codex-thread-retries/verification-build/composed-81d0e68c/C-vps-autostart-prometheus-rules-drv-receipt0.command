@@ -1,0 +1,1 @@
+nix-store --add-root /home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/verification-build/composed-81d0e68c/roots/C-vps-autostart-prometheus-rules-drv --indirect --realise /nix/store/2ln4hwjphpr074bldbl21sr4wzk6g5d8-vps-autostart-prometheus-rules.drv

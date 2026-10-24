@@ -1,0 +1,6 @@
+systemd: raise the native App Server descriptor limit
+
+The native service inherits a soft limit of 1024 descriptors, leaving little
+headroom for retained sessions. Set its soft and hard limit to 524288 for
+future starts. Preserve the native command, restart policy and all other
+units; existing processes require separately coordinated operational relief.

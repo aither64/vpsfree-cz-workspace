@@ -1,0 +1,315 @@
+ 1:  7262c24e =  1:  7262c24e turnretry: retain bounded retry policy and admission state
+ 2:  b3c7187c =  2:  b3c7187c runtime: require retry-capable package transitions
+ 3:  aafaf419 =  3:  aafaf419 portal: continue new managed failed turns through durable retry admission
+ 4:  4ff797e5 !  4:  6b87e360 deps: select codex-web retry activity support
+    @@ flake.lock
+            "locked": {
+     -        "lastModified": 1792612976,
+     -        "narHash": "sha256-VKTZcWXrTjE7DKFjye4hig3Kg3vWcg6T/vEw+2D8PLA=",
+    -+        "lastModified": 1792785904,
+    -+        "narHash": "sha256-IhCdZ7HpW3sora4/WnvWoCLotFZtMMldGCLItXoC90w=",
+    ++        "lastModified": 1792790420,
+    ++        "narHash": "sha256-ZOnY4TjA7p1qn97ESt9qMmhDmR9a3rIg+w+kp1BLwTs=",
+              "owner": "aither64",
+              "repo": "codex-web",
+     -        "rev": "ea64ef57fdd2ff5fd60715b62f2d1696bc0133e5",
+    -+        "rev": "55e0300b27b6927b1693b3792042762f31a385cc",
+    ++        "rev": "a58f07064c560bb30efb0228ec6307bcd991d7ab",
+              "type": "github"
+            },
+            "original": {
+              "owner": "aither64",
+              "repo": "codex-web",
+     -        "rev": "ea64ef57fdd2ff5fd60715b62f2d1696bc0133e5",
+    -+        "rev": "55e0300b27b6927b1693b3792042762f31a385cc",
+    ++        "rev": "a58f07064c560bb30efb0228ec6307bcd991d7ab",
+              "type": "github"
+            }
+          },
+    @@ flake.nix
+          llm-agents.url = "github:numtide/llm-agents.nix";
+          codex-web = {
+     -      url = "github:aither64/codex-web/ea64ef57fdd2ff5fd60715b62f2d1696bc0133e5";
+    -+      url = "github:aither64/codex-web/55e0300b27b6927b1693b3792042762f31a385cc";
+    ++      url = "github:aither64/codex-web/a58f07064c560bb30efb0228ec6307bcd991d7ab";
+            flake = false;
+          };
+        };
+    @@ nix/workspace-portal.nix: buildGoModule {
+        inherit src;
+        modRoot = "portal";
+     -  vendorHash = "sha256-ABmwKlrjiXjFrrtplRaw2fmMDlv/gxWfufEMA0vjXNQ=";
+    -+  vendorHash = "sha256-jrp5UYCY0XK0Nw1jzOPv5IRaH4YlLle5M15l8opx4Qo=";
+    ++  vendorHash = "sha256-D2/gC6L+gajnPaD27V85FHrDJruizDsTXER3crJEKMM=";
+      
+        postPatch = ''
+          expected=${lib.escapeShellArg codexWebVersion}
+    @@ portal/go.mod: go 1.24.0
+      require (
+      	github.com/SherClockHolmes/webpush-go v1.4.0
+     -	github.com/aither64/codex-web v0.0.0-20261021200256-ea64ef57fdd2
+    -+	github.com/aither64/codex-web v0.0.0-20261023200504-55e0300b27b6
+    ++	github.com/aither64/codex-web v0.0.0-20261023212020-a58f07064c56
+      	github.com/coder/websocket v1.8.14
+      	github.com/microcosm-cc/bluemonday v1.0.27
+      	github.com/yuin/goldmark v1.7.17
+    @@ portal/go.sum
+      github.com/SherClockHolmes/webpush-go v1.4.0/go.mod h1:XSq8pKX11vNV8MJEMwjrlTkxhAj1zKfxmyhdV7Pd6UA=
+     -github.com/aither64/codex-web v0.0.0-20261021200256-ea64ef57fdd2 h1:8Lsxt7NqJnmuZEfApQCqLRKDXQ98RhbANH1mL1kHHkc=
+     -github.com/aither64/codex-web v0.0.0-20261021200256-ea64ef57fdd2/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
+    -+github.com/aither64/codex-web v0.0.0-20261023200504-55e0300b27b6 h1:f34novYrdHGiXSAeNfaCAkpkwvNnsI0qGa1XkGK3FDo=
+    -+github.com/aither64/codex-web v0.0.0-20261023200504-55e0300b27b6/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
+    ++github.com/aither64/codex-web v0.0.0-20261023212020-a58f07064c56 h1:itrVneVC7pdsSt6u1phXFAhdmYZgQCJe672qt0TsJ1M=
+    ++github.com/aither64/codex-web v0.0.0-20261023212020-a58f07064c56/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
+      github.com/aymerick/douceur v0.2.0 h1:Mv+mAeH1Q+n9Fr+oyamOlAkUNPWPlA8PPGR0QAaYuPk=
+      github.com/aymerick/douceur v0.2.0/go.mod h1:wlT5vV2O3h55X9m7iVYN0TBM0NH/MmbLnd30/FjWUq4=
+      github.com/coder/websocket v1.8.14 h1:9L0p0iKiNOibykf283eHkKUHHrpG7f65OE3BhhO7v9g=
+ 5:  24bf3c0b =  5:  1d7c5406 portal: retire accepted retry provenance before bounded admission
+ 6:  4b368337 =  6:  458b1a1e portal: admit exact prepared plan requests after mode selection
+ 7:  07782784 =  7:  334c7b26 portal: wait within HTTP budgets for transient runtime contention
+ 8:  337af0b6 !  8:  534b433c portal: present retry activity inside the conversation viewport
+    @@ portal/internal/web/retry_activity_browser_test.cjs (new)
+     +        state = activity({chainKey: `result-${outcome}`, phase: "terminal", outcome, retryNowToken: "", stopToken: "", nextAttemptAtMs: null, finishedAtMs: 100000, ...extra});
+     +        await refresh();
+     +        await expect(notice).toBeVisible();
+    -+        await expect(notice.getByRole("button", {name: /dismiss/i})).toBeVisible();
+    ++        const dismiss = notice.getByRole("button", {name: "Dismiss retry notice", exact: true});
+    ++        await expect(dismiss).toBeVisible();
+    ++        await expect(dismiss).toHaveText("×");
+    ++        await expect(dismiss).toHaveAttribute("title", "Dismiss retry notice");
+     +        await scroll.evaluate(node => { node.scrollTop = node.scrollHeight; });
+     +        await screenshot(outcome);
+     +      }
+    -+      const dismiss = notice.getByRole("button", {name: /dismiss/i});
+    ++      const dismiss = notice.getByRole("button", {name: "Dismiss retry notice", exact: true});
+     +      await dismiss.focus(); await page.keyboard.press("Enter");
+     +      await expect(notice).toBeHidden();
+     +      assert.equal(await notice.evaluate(node => node.getBoundingClientRect().height), 0);
+    @@ portal/internal/web/templates/session.html
+        <title>{{.Session.Slug}} · Workspace</title>
+     -  <link rel="stylesheet" href="/codex/assets/conversation.css?v=9">
+     -  <link rel="stylesheet" href="/static/style.css?v=22">
+    -+  <link rel="stylesheet" href="/codex/assets/conversation.css?v=10">
+    ++  <link rel="stylesheet" href="/codex/assets/conversation.css?v=11">
+     +  <link rel="stylesheet" href="/static/style.css?v=23">
+        <link rel="stylesheet" href="/codex/assets/uploads.css?v=3">
+      </head>
+ 9:  18b223cc !  9:  5e8c3584 portal: release the next draft before message acknowledgment
+    @@ portal/internal/web/firefox_tabs_acceptance.cjs: function assertBackgroundUnchan
+            questionLatencyMs,visibility:visibleLog,counts:final.counts,dispatches:final.dispatches,journalEntries:final.journalEntries,sendAttempts:final.sendAttempts}));
+     
+      ## portal/internal/web/question_browser_test.go ##
+    +@@ portal/internal/web/question_browser_test.go: package web
+    + 
+    + import (
+    + 	"context"
+    ++	"crypto/sha256"
+    + 	"encoding/base64"
+    ++	"encoding/hex"
+    ++	"encoding/json"
+    + 	"fmt"
+    + 	"net/http"
+    + 	"net/http/httptest"
+     @@ portal/internal/web/question_browser_test.go: import (
+      	"github.com/aither64/dev-workspace/portal/internal/teamruntime"
+      )
+      
+     +// The controlled page fixture owns these two synthetic conversations. Preserve
+     +// the shared contract fake's strict single-thread verification in other tests.
+    -+type questionBrowserCodex struct{ browserContractCodex }
+    ++type questionBrowserCodex struct {
+    ++	browserContractCodex
+    ++	// The real member resolver requires the team interface. Its unused lifecycle
+    ++	// methods remain unavailable: an unexpected call hits this nil tripwire.
+    ++	teamruntime.Client
+    ++}
+    ++
+    ++var _ conversation.Client = (*questionBrowserCodex)(nil)
+    ++var _ teamruntime.Client = (*questionBrowserCodex)(nil)
+     +
+     +func (client *questionBrowserCodex) VerifyThread(ctx context.Context, threadID, cwd string) error {
+     +	if threadID == "member-thread" {
+    @@ portal/internal/web/question_browser_test.go: import (
+     +	transcript.ThreadID = threadID
+     +	return transcript, err
+     +}
+    ++
+    ++func (client *questionBrowserCodex) Interrupt(ctx context.Context, threadID string) error {
+    ++	return client.browserContractCodex.Interrupt(ctx, threadID)
+    ++}
+    ++
+    ++func TestQuestionBrowserUploadScopes(t *testing.T) {
+    ++	server := newTestServer(t)
+    ++	prepareInteractiveConversation(t, server, "example")
+    ++	client := &questionBrowserCodex{browserContractCodex: browserContractCodex{emptyPrompts: true}}
+    ++	server.config.Codex = client
+    ++	server.uploadStore.MinFreeBytes = 0
+    ++	store, err := teamruntime.NewStore(server.config.UserStateRoot, server.config.Workspace)
+    ++	if err != nil {
+    ++		t.Fatal(err)
+    ++	}
+    ++	if _, err := store.Update(context.Background(), "example", "thread-1", true, func(roster *teamruntime.Roster) error {
+    ++		roster.Members = []teamruntime.Member{{Address: "implementer0", Role: "implementer", Thread: "member-thread", Model: "gpt-6.1-sol", Effort: "xhigh", Behavior: "implementer", Access: "workspace_write", State: "ready", AddedAt: time.Now().UTC()}}
+    ++		return nil
+    ++	}); err != nil {
+    ++		t.Fatal(err)
+    ++	}
+    ++	handler := server.Handler()
+    ++	call := func(method, path, body string) *httptest.ResponseRecorder {
+    ++		request := httptest.NewRequest(method, path, strings.NewReader(body))
+    ++		request.Header.Set("Origin", server.config.BaseURL)
+    ++		request.Header.Set("Upload-Offset", "0")
+    ++		checksum := sha256.Sum256([]byte(body))
+    ++		request.Header.Set("Upload-Checksum", hex.EncodeToString(checksum[:]))
+    ++		response := httptest.NewRecorder()
+    ++		handler.ServeHTTP(response, request)
+    ++		return response
+    ++	}
+    ++	for _, scope := range []string{"s-example", "s-example~implementer0"} {
+    ++		t.Run(scope, func(t *testing.T) {
+    ++			path := "/uploads/" + scope
+    ++			response := call("GET", path, "")
+    ++			if response.Code != http.StatusOK || !strings.Contains(response.Body.String(), `"limits"`) {
+    ++				t.Fatalf("upload readiness: %d %s", response.Code, response.Body.String())
+    ++			}
+    ++			response = call("POST", path, `{"clientId":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","name":"fixture.txt","size":7}`)
+    ++			if response.Code != http.StatusCreated {
+    ++				t.Fatalf("create: %d %s", response.Code, response.Body.String())
+    ++			}
+    ++			var file conversation.Upload
+    ++			if err := json.Unmarshal(response.Body.Bytes(), &file); err != nil {
+    ++				t.Fatal(err)
+    ++			}
+    ++			path += "/" + file.ID
+    ++			for _, step := range []struct{ method, path, body string }{{"PATCH", path, "content"}, {"POST", path, ""}, {"GET", path + "/content", ""}} {
+    ++				response = call(step.method, step.path, step.body)
+    ++				if response.Code != http.StatusOK {
+    ++					t.Fatalf("%s %s: %d %s", step.method, step.path, response.Code, response.Body.String())
+    ++				}
+    ++			}
+    ++			if response.Body.String() != "content" {
+    ++				t.Fatal("upload readback changed", response.Body.String())
+    ++			}
+    ++			other := "s-example~implementer0"
+    ++			if scope == other {
+    ++				other = "s-example"
+    ++			}
+    ++			if response := call("GET", "/uploads/"+other+"/"+file.ID+"/content", ""); response.Code != http.StatusNotFound {
+    ++				t.Fatalf("file crossed conversation scope: %d", response.Code)
+    ++			}
+    ++		})
+    ++	}
+    ++	if client.sendCount != 0 || client.interrupt {
+    ++		t.Fatal("upload fixture dispatched conversation input")
+    ++	}
+    ++}
+     +
+      // Run with PORTAL_BROWSER_TEST=1 and Nix-provided Node, Playwright modules and
+      // PLAYWRIGHT_BROWSERS_PATH. The browser controls API responses, while the actual
+    @@ portal/internal/web/question_browser_test.go: func TestQuestionBrowser(t *testin
+      	writeWebRuntimeAuthority(t, server, "example")
+      	events := make(chan struct{}, 1)
+     -	server.config.Codex = &browserContractCodex{emptyPrompts: true, events: events, transcript: codex.Transcript{
+    -+	server.config.Codex = &questionBrowserCodex{browserContractCodex{emptyPrompts: true, events: events, transcript: codex.Transcript{
+    ++	server.config.Codex = &questionBrowserCodex{browserContractCodex: browserContractCodex{emptyPrompts: true, events: events, transcript: codex.Transcript{
+      		ThreadID: "thread-1", Status: "active", CollaborationMode: "plan",
+     -	}}
+     +	}}}
+10:  e7ccc364 ! 10:  207ccfe0 portal: submit question text through its owning action
+    @@ portal/internal/web/auto_archive_test.go: func TestAutomaticArchivalPageIsSepara
+      		t.Fatalf("dedicated route reached slug lookup: %d: %s", page.Code, page.Body.String())
+      	}
+     -	for _, required := range []string{"data-automatic-archival", "workspace-auto-archive-status", "workspace-auto-archive-rows", `href="/"`, `/static/app.js?v=56`} {
+    -+	for _, required := range []string{"data-automatic-archival", "workspace-auto-archive-status", "workspace-auto-archive-rows", `href="/"`, `/static/app.js?v=58`} {
+    ++	for _, required := range []string{"data-automatic-archival", "workspace-auto-archive-status", "workspace-auto-archive-rows", `href="/"`, `/static/app.js?v=59`} {
+      		if !strings.Contains(page.Body.String(), required) {
+      			t.Fatalf("overview lacks %q: %s", required, page.Body.String())
+      		}
+    @@ portal/internal/web/browser_asset_versions_test.go (new)
+     +package web
+     +
+     +import (
+    ++	"net/http"
+    ++	"net/http/httptest"
+     +	"regexp"
+     +	"strconv"
+     +	"testing"
+    @@ portal/internal/web/browser_asset_versions_test.go (new)
+     +		}
+     +		return version
+     +	}
+    -+	// Deployed conversation.js?v=23 can remain fresh in a browser's HTTP
+    -+	// cache for five minutes and lacks the now mandatory question export.
+    ++	// Previously selected modules can remain fresh in a browser's HTTP cache
+    ++	// for five minutes and lack the current retry notice presentation.
+     +	// A fresh page must select a new module URL even after an older page
+     +	// warmed that cache. Do not replace this with a missing-export fallback.
+    -+	versionAfter(read("static/app.js"), "/codex/assets/conversation.js", 23)
+    ++	versionAfter(read("static/app.js"), "/codex/assets/conversation.js", 24)
+     +	session := read("templates/session.html")
+    -+	versionAfter(session, "/codex/assets/conversation.css", 9)
+    ++	versionAfter(session, "/codex/assets/conversation.css", 10)
+     +	versionAfter(session, "/static/style.css", 22)
+     +	// All consumers of the changed app entry point select the same fresh
+     +	// bytes, including navigation from index/archival to the conversation.
+     +	var appVersion int
+     +	for _, name := range []string{"session.html", "index.html", "automatic-archival.html"} {
+    -+		version := versionAfter(read("templates/"+name), "/static/app.js", 57)
+    ++		version := versionAfter(read("templates/"+name), "/static/app.js", 58)
+     +		if appVersion != 0 && version != appVersion {
+     +			t.Fatalf("%s selects app v%d, expected v%d", name, version, appVersion)
+     +		}
+     +		appVersion = version
+     +	}
+    ++	// A new parent module still needs a new child URL: a browser may already
+    ++	// hold the old retry_activity bytes under the child's independent cache key.
+    ++	server := newTestServer(t)
+    ++	response := httptest.NewRecorder()
+    ++	server.Handler().ServeHTTP(response, httptest.NewRequest("GET", "/codex/assets/conversation.js?v=25", nil))
+    ++	if response.Code != http.StatusOK {
+    ++		t.Fatal(response.Code, response.Body.String())
+    ++	}
+    ++	versionAfter(response.Body.String(), "./retry_activity.js", 1)
+     +}
+     
+      ## portal/internal/web/browser_contract_test.cjs ##
+    @@ portal/internal/web/static/app.js
+        }
+      
+     -  const conversationAssets = await import("/codex/assets/conversation.js?v=23");
+    -+  const conversationAssets = await import("/codex/assets/conversation.js?v=24");
+    ++  const conversationAssets = await import("/codex/assets/conversation.js?v=25");
+        sharedTranscriptPresentation = conversationAssets.transcriptEntryPresentation;
+        sharedTranscriptVisible = conversationAssets.transcriptEntryVisible;
+        refreshPolicy = conversationAssets.refreshPolicy;
+    @@ portal/internal/web/templates/automatic-archival.html
+          </section>
+        </main>
+     -  <script src="/static/app.js?v=56" defer></script>
+    -+  <script src="/static/app.js?v=58" defer></script>
+    ++  <script src="/static/app.js?v=59" defer></script>
+      </body>
+      </html>
+      {{end}}
+    @@ portal/internal/web/templates/index.html
+        <script src="/static/browser-notifications.js?v=6" defer></script>
+        <script src="/static/preparation.js?v=5" defer></script>
+     -  <script src="/static/app.js?v=56" defer></script>
+    -+  <script src="/static/app.js?v=58" defer></script>
+    ++  <script src="/static/app.js?v=59" defer></script>
+        <script src="/static/coordination.js?v=6" defer></script>
+      </body>
+      </html>
+    @@ portal/internal/web/templates/session.html
+          </form>
+        </dialog>
+     -  <script src="/static/app.js?v=57" defer></script>
+    -+  <script src="/static/app.js?v=58" defer></script>
+    ++  <script src="/static/app.js?v=59" defer></script>
+        <script src="/static/session-attention-store.js?v=4" defer></script>
+        <script src="/static/browser-notifications.js?v=6" defer></script>
+        <script src="/static/session-attention.js?v=2" defer></script>
+11:  60f887f0 <  -:  -------- fixup! portal: release the next draft before message acknowledgment
+12:  64edd59b <  -:  -------- fixup! deps: select codex-web retry activity support
+13:  63559196 <  -:  -------- fixup! portal: present retry activity inside the conversation viewport
+14:  716d7b8b <  -:  -------- fixup! portal: submit question text through its owning action

@@ -1,0 +1,3 @@
+**Result: failed** — command 1 exited 1 after 68.18 seconds on `e22eecab01a691225f7464f0c8965526648f442a` / tree `1aaa3b356b09875de643d9a1d76c1bd624ae3a7d`.
+
+The browser wrapper reported missing `desktop-root` manifest at `backend-browser/footer-page-diagnosis/implementation/browser-attempt-9/browser/artifacts/desktop-root/manifest.json`. It recorded zero skips and `clean: true`. The second command was not run because command 1 failed. No operation remains running. Raw command output and exit status are retained in this watcher’s tool record.

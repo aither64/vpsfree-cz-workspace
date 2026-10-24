@@ -1,0 +1,1 @@
+nix-store --add-root /home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/verification-build/composed-81d0e68c/roots/W-deployment-contract-drv --indirect --realise /nix/store/a3bqdlb1rjapb9r5abk7pjq6gz7086vl-dev-workspace-deployment-contract-tests.drv

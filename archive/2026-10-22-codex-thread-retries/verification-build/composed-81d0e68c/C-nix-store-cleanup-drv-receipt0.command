@@ -1,0 +1,1 @@
+nix-store --add-root /home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/verification-build/composed-81d0e68c/roots/C-nix-store-cleanup-drv --indirect --realise /nix/store/nj3zazynw8r9xs788z9xd6b91hpxz81n-aitherdev-nix-store-cleanup-tests.drv

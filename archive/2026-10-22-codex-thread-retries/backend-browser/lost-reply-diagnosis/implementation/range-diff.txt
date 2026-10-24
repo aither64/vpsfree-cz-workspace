@@ -1,0 +1,111 @@
+ 1:  7262c24e =  1:  7262c24e turnretry: retain bounded retry policy and admission state
+ 2:  b3c7187c =  2:  b3c7187c runtime: require retry-capable package transitions
+ 3:  aafaf419 =  3:  aafaf419 portal: continue new managed failed turns through durable retry admission
+ 4:  9ccb4b11 =  4:  9ccb4b11 deps: select codex-web retry activity support
+ 5:  100108b0 =  5:  100108b0 portal: retire accepted retry provenance before bounded admission
+ 6:  9311c15a =  6:  9311c15a portal: admit exact prepared plan requests after mode selection
+ 7:  c8c31ab5 =  7:  c8c31ab5 portal: wait within HTTP budgets for transient runtime contention
+ 8:  9ce6b291 =  8:  9ce6b291 portal: present retry activity inside the conversation viewport
+ 9:  4b4da049 =  9:  4b4da049 portal: release the next draft before message acknowledgment
+10:  59c0eb55 = 10:  59c0eb55 portal: submit question text through its owning action
+11:  4b98ceb2 = 11:  4b98ceb2 host: require support for retained session retry policy
+12:  6817bb6f = 12:  6817bb6f session: allow bounded exclusive runtime acquisition
+13:  91bd8535 = 13:  91bd8535 test: exercise accepted fork source lock recovery through Ruby
+14:  66d8ef32 = 14:  66d8ef32 portal: manage retry policy and activity per retained session
+15:  02d33648 ! 15:  5ddd7415 test: connect retry browser controls to the real backend
+    @@ portal/internal/web/retry_backend_browser_test.go (new)
+     +	"encoding/json"
+     +	"errors"
+     +	"fmt"
+    ++	"io"
+     +	"net"
+     +	"net/http"
+     +	"net/http/httptest"
+    @@ portal/internal/web/retry_backend_browser_test.go (new)
+     +	}
+     +}
+     +
+    ++func TestRetryBackendBrowserPolicyReplyLoss(t *testing.T) {
+    ++	for _, member := range []bool{false, true} {
+    ++		t.Run(map[bool]string{false: "root", true: "member"}[member], func(t *testing.T) {
+    ++			f := newRetryBackendBrowserFixture(t, member, false)
+    ++			host := serveRetryBackendBrowser(t, f)
+    ++			client := host.Client()
+    ++			client.Timeout = 5 * time.Second
+    ++			path := "/api/sessions/example/retry-policy"
+    ++			type preferences struct {
+    ++				Capacity      bool   `json:"capacity"`
+    ++				Cybersecurity bool   `json:"cybersecurity"`
+    ++				Revision      string `json:"revision"`
+    ++			}
+    ++			read := func() (preferences, []byte) {
+    ++				t.Helper()
+    ++				response, err := client.Get(host.URL + path)
+    ++				if err != nil {
+    ++					t.Fatal(err)
+    ++				}
+    ++				defer response.Body.Close()
+    ++				data, err := io.ReadAll(response.Body)
+    ++				var value preferences
+    ++				if err != nil || response.StatusCode != http.StatusOK || json.Unmarshal(data, &value) != nil || value.Revision == "" {
+    ++					t.Fatalf("real policy read: status=%d body=%s error=%v", response.StatusCode, data, err)
+    ++				}
+    ++				return value, data
+    ++			}
+    ++			before, _ := read()
+    ++			if !before.Capacity || !before.Cybersecurity {
+    ++				t.Fatal("fixture did not start with enabled real preferences", before)
+    ++			}
+    ++			diagnostics := f.diagnostics()
+    ++			if err := f.control("lose-policy-reply"); err != nil {
+    ++				t.Fatal(err)
+    ++			}
+    ++			body, _ := json.Marshal(map[string]any{"capacity": false, "cybersecurity": true, "expectedRevision": before.Revision})
+    ++			request, err := http.NewRequest(http.MethodPost, host.URL+path, strings.NewReader(string(body)))
+    ++			if err != nil {
+    ++				t.Fatal(err)
+    ++			}
+    ++			request.Header.Set("Content-Type", "application/json")
+    ++			request.Header.Set("Origin", host.URL)
+    ++			response, err := client.Do(request)
+    ++			if err != nil {
+    ++				t.Fatalf("loss must retain real committed response headers: %v", err)
+    ++			}
+    ++			data, readErr := io.ReadAll(response.Body)
+    ++			response.Body.Close()
+    ++			if response.StatusCode != http.StatusOK || !strings.HasPrefix(response.Header.Get("Content-Type"), "application/json") || response.ContentLength <= 0 || len(data) != 0 || !errors.Is(readErr, io.ErrUnexpectedEOF) {
+    ++				t.Fatalf("expected committed headers with missing policy body: status=%d length=%d body=%q error=%v", response.StatusCode, response.ContentLength, data, readErr)
+    ++			}
+    ++			after, completeBody := read()
+    ++			if after.Capacity || !after.Cybersecurity || after.Revision == before.Revision || int64(len(completeBody)) != response.ContentLength {
+    ++				t.Fatal("real readback did not recover the exact committed policy", before, after, response.ContentLength, string(completeBody))
+    ++			}
+    ++			final := f.diagnostics()
+    ++			if final["posts"] != diagnostics["posts"].(int)+1 || final["dropped"] != diagnostics["dropped"].(int)+1 || final["starts"] != 0 || final["ledgerHash"] != diagnostics["ledgerHash"] {
+    ++				t.Fatal("lost response repeated a write or changed native/ledger state", diagnostics, final)
+    ++			}
+    ++		})
+    ++	}
+    ++}
+    ++
+     +func (f *retryBackendBrowserFixture) seed(class string) error {
+     +	ctx := context.Background()
+     +	if err := os.Chmod(filepath.Dir(f.path), 0700); err != nil {
+    @@ portal/internal/web/retry_backend_browser_test.go (new)
+     +					f.dropped++
+     +					f.mu.Unlock()
+     +				}
+    ++				// Preserve the real headers before dropping the body. A bare
+    ++				// close permits browsers to retry a reused connection silently.
+    ++				for name, values := range recorder.Header() {
+    ++					w.Header()[name] = append([]string(nil), values...)
+    ++				}
+    ++				w.Header().Set("Content-Length", fmt.Sprint(recorder.Body.Len()))
+    ++				w.WriteHeader(recorder.Code)
+    ++				w.(http.Flusher).Flush()
+     +				conn, _, err := w.(http.Hijacker).Hijack()
+     +				if err != nil {
+     +					f.t.Error(err)
+16:  5870fcbe = 16:  99f19afc systemd: raise the native App Server descriptor limit
+17:  fda46ca1 = 17:  2812c586 session: retire unknown member reservations during deletion
+18:  f75f79e5 = 18:  a62166a8 sessions: recover failed creations before package selection

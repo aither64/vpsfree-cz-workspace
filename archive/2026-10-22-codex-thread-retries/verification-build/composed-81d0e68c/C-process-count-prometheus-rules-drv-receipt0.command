@@ -1,0 +1,1 @@
+nix-store --add-root /home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/verification-build/composed-81d0e68c/roots/C-process-count-prometheus-rules-drv --indirect --realise /nix/store/3d90x11y5r2dif6pl075bpbm7nqnf5fh-process-count-prometheus-rules.drv

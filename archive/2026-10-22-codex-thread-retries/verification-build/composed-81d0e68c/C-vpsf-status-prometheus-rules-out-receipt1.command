@@ -1,0 +1,1 @@
+nix path-info --json --recursive /nix/store/pjm7fsl4x24w92dbxa4fym09wd0vgvbl-vpsf-status-prometheus-rules

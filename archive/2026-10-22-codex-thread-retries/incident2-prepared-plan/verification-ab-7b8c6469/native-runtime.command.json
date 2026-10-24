@@ -1,0 +1,26 @@
+{
+  "command": [
+    "nix",
+    "develop",
+    "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/dev-workspace",
+    "-c",
+    "env",
+    "LIVE_SWITCH_CODEX=/nix/store/wz4w670930cksh1ivz13y0gn3c23cjzl-codex-package-0.163.0/bin/codex",
+    "go",
+    "test",
+    "-mod=readonly",
+    "-tags=live_switch_integration",
+    "./cmd/workspace-portal",
+    "-run",
+    "^TestNative(LiveSwitchReconnect|TurnRetryController)$",
+    "-count=1",
+    "-json",
+    "-timeout=5m"
+  ],
+  "cwd": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/dev-workspace/portal",
+  "environment": {
+    "DEV_SESSION_SLUG": "2026-10-22-codex-thread-retries",
+    "DEV_SESSION_WORKSPACE": "/home/aither/workspace/ai/vpsfree.cz",
+    "TMPDIR": "/tmp"
+  }
+}

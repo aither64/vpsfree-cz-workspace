@@ -1,0 +1,5 @@
+session: allow bounded exclusive runtime acquisition
+
+Session policy changes need exclusive runtime admission within their request
+budget, without upgrading an existing shared lock. Expose the existing
+context-aware lock loop for that caller and retain fail-fast lifecycle APIs.

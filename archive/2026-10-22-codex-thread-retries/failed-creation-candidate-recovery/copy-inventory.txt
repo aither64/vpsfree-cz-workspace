@@ -1,0 +1,112 @@
+libexec/workspace-host added errors/help/comments:
+          workspace-host recover-failed-creation-delete --source PATH --workspace NAME --session SLUG --request-id UUID
+    # A candidate can repair an eligible failed creation before the unchanged
+    # package-switch guard permits selection. Ordinary deletion owns all effects.
+          opts.on("--#{name} VALUE") { |value| options[name] = value }
+        raise Error, 'failed-creation deletion recovery requires --source, --workspace, --session and --request-id'
+      raise Error, 'failed-creation deletion recovery requires a selected predecessor profile' unless token && File.symlink?(@profile)
+      raise Error, 'failed-creation recovery source did not build exactly one package' unless packages.length == 1
+        raise Error, 'failed-creation deletion recovery requires the exact unselected source package'
+        raise Error, 'failed-creation recovery source changed during preparation' unless source_identity == coordination_source_identity(source)
+        raise Error, 'failed-creation recovery workspace is not registered' unless entry
+          # Only this public, source-bound entry hands predecessor authority to
+          # the candidate ordinary executor while owning transition exclusion.
+          raise Error, 'failed-creation deletion did not complete its exact ordinary removal operation'
+        @out.puts "recovered failed-creation deletion: #{entry.fetch('name')}/#{slug}"
+      # Portal reconciliation takes its own shared transition lock. The caller
+      # performs that separate exact-request operation after this entry returns.
+        raise Error, 'selected workspace package or Codex changed during failed-creation deletion recovery'
+        raise Error, 'selected predecessor has an incompatible failed-creation recovery contract'
+      raise Error, "failed-creation recovery contract is unavailable: #{e.message}"
+      raise Error, "failed-creation deletion verification failed: #{e.message}"
+
+libexec/dev-session added errors/help/comments:
+    # The host entry and ordinary deletion share one context reader. This
+    # observation releases the session locks before the host invokes the CLI.
+        raise Error, 'failed-creation recovery requires a canonical request UUID'
+      raise Error, "#{label} is a symlink: #{path}" if File.symlink?(path)
+      if conflicts.any? { |name| path_exists?(File.join(File.dirname(creation_journal_file(slug)), "#{slug}.#{name}.json")) }
+        raise Error, 'conflicting session operation blocks failed-creation deletion recovery'
+      workspace_id = "#{File.basename(workspace)}-#{Digest::SHA256.hexdigest(workspace)[0, 16]}"
+      receipt = failed_creation_delete_json(File.join(portal, 'creations', "#{slug}.json"),
+        raise Error, 'deletion recovery requires an exact failed direct new-session receipt'
+      names = request_id ? ["#{request_id}.json"] : Dir.children(directory)
+      raise Error, 'too many failed-creation preparation candidates' if names.length > 512
+          raise Error, 'failed-creation preparation does not match the exact accepted request'
+      raise Error, 'failed-creation request identity is missing or ambiguous' unless records.length == 1
+        raise Error, 'failed-creation tracking has a conflicting location'
+      raise Error, 'failed-creation tracking has no validated private recovery' unless tracking
+        raise Error, 'failed-creation deletion requires the exact root and explicitly unsubmitted initial goal'
+        raise Error, 'failed-creation journal changed from the accepted request'
+        raise Error, 'failed-creation root uses a different native protocol identity'
+          raise Error, 'terminal-start reservation does not match the failed creation identity'
+          raise Error, 'completed failed-creation removal still has live session state'
+          raise Error, 'failed-creation authority does not match the retained root and terminal identity'
+          raise Error, 'failed-creation terminal does not match the retained root and creation identity'
+        raise Error, 'conflicting live and private failed-creation recovery records'
+      raise Error, "failed-creation recovery record is missing: #{name}"
+        raise Error, 'failed-creation roster does not match the retained root and accepted team'
+        raise Error, 'failed-creation roster has an invalid member' unless member.is_a?(Hash)
+          raise Error, 'failed-creation member settings or retirement state changed'
+          raise Error, 'failed-creation member has an invalid thread identity'
+          raise Error, 'failed-creation member has no eligible retained unknown-start provenance'
+      raise Error, 'failed-creation roster repeats a member' unless addresses.uniq.length == addresses.length
+        next unless name.include?("-#{slug}-")
+          raise Error, 'completed failed-creation removal has an invalid recovery receipt'
+      raise Error, 'completed failed-creation deletion is ambiguous' if candidates.length > 1
+      raise Error, "invalid completed failed-creation removal: #{e.message}"
+      raise Error, 'subordinate start requires a validated deletion context' unless context.is_a?(FailedCreationDeleteContext) && context.slug == slug
+      raise Error, 'subordinate start ownership requires durable thread_retiring' if removal_phase_before?(removal, 'thread_retiring')
+        raise Error, 'failed-creation identity changed before terminal-start ownership transfer'
+
+docs/session-archive-recovery.md complete new section:
+
+A failed direct creation can block package selection while the selected
+executor cannot finish its deletion. After authorizing deletion of that exact
+session, use the reviewed candidate's public recovery entry:
+
+```sh
+/path/to/candidate/bin/workspace-host recover-failed-creation-delete \
+  --source /path/to/exact/source --workspace NAME --session SLUG \
+  --request-id UUID
+```
+
+The command builds the supplied source and requires its output to be the exact
+unselected candidate. It binds the selected predecessor profile token and native
+executable, validates the native protocol, and holds transition exclusion while
+ordinary deletion runs. It preserves the usual confirmation, resource ownership
+checks and lifecycle journals. It does not select the candidate or restart services.
+The runtime contracts must match exactly except that the candidate may add
+`turnRetrySessionPolicy: 1` to a predecessor without that field. Both may also
+already declare `1`. Other contract differences refuse recovery.
+
+Admission requires the exact failed new-session request, direct team snapshot,
+retained root and roster. The creating manifest must explicitly record both
+`initial_goal_attempted: false` and `initial_goal_sent: false`. A matching
+interrupted terminal-start journal belongs to this creation only when its slug
+and tmux identity match the creating CLI journal and retained runtime identity.
+Other start, fork or lifecycle conflicts remain blockers.
+
+The ordinary deletion owner validates this same context under its existing
+locks. After preflight and root quiescence, it durably records `thread_retiring`
+and atomically moves the unchanged start journal to private recovery as
+`start.json`. It then performs normal member and root retirement. Unknown
+member starts retain their project and attempted-start provenance in the
+preserved roster; this operation does not prove native absence or delete their
+projects. Private recovery retains the start, creation, team and tracking records.
+
+After interruption, repeat the same command with the same source, session and
+request ID. It validates the original removal operation and private recovery
+when tracking has moved. Missing or conflicting provenance refuses recovery.
+Completed removal evidence makes an exact replay a no-op while the failed
+receipt remains available. A missing target alone never proves completion.
+
+After the command returns and releases transition exclusion, reconcile the
+original request through the selected portal's ordinary
+`GET /api/session-creations/UUID`. This status operation can retire its failed
+creation receipt after proving completed deletion. It must not invoke creation
+retry or start another session. If that proof fails, retain the receipt and
+recovery records. Then use the normal forward package switch; its unfinished
+operation and capability checks still apply. A ready replacement is unaffected.
+
+

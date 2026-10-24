@@ -1,0 +1,6 @@
+**Result: passed.** One operation completed with exit status 0 in 49,581 ms. No process remains running.
+
+- Command: `bash ui-successor/capture-attempt-6.sh`
+- Source revision: `dev-workspace` `207ccfe0d55e8b68fde8a1b68fa80f051cc5a124` (tree `e3a00e93c4fcc4de8f87ac6cec30501c2e9a14e1`). The wrapper reports source unchanged.
+- Retained evidence: [result.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/ui-successor/capture-attempt-6/result.json), [stdout.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/ui-successor/capture-attempt-6/stdout.log), [stderr.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/ui-successor/capture-attempt-6/stderr.log), screenshots under [screenshots/](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/ui-successor/capture-attempt-6/screenshots/).
+- Both selected browser tests passed. Logs contain TLS handshake messages and a Nix evaluation warning; the test command’s result was `PASS`.

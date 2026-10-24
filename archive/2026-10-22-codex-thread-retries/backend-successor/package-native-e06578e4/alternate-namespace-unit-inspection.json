@@ -1,0 +1,8 @@
+{
+  "check": "/nix/store/z2j3ijcgnk2fk4bxjfz44n0wgmkndxx8-dev-workspace-user-namespace.drv",
+  "package": "/nix/store/vcqnhmc9d911p16qx7fbmcgnj828kr8j-dev-workspace-0.2.0",
+  "unit": "/nix/store/vcqnhmc9d911p16qx7fbmcgnj828kr8j-dev-workspace-0.2.0/share/systemd/user/workspace-codex@.service",
+  "sha256": "6047816fea200ccfb45a7b005227ed4974aa53720a70c5c192d38b45c8d77b74",
+  "unitText": "[Unit]\nDescription=Workspace Codex App Server for %i\nAfter=network-online.target\nWants=network-online.target\n\n[Service]\nLimitNOFILE=524288\nType=simple\nExecStart=%h/.local/state/previous-workspaces/profile/bin/workspace-host run-codex %i\nRestart=on-failure\nRestartSec=2s\nKillMode=mixed\nTimeoutStopSec=150s\n\n[Install]\nWantedBy=default.target\n",
+  "LimitNOFILE": 524288
+}

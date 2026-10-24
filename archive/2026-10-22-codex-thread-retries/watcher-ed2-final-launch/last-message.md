@@ -1,0 +1,3 @@
+**Result: failed to launch.** The exact driver was not invoked: `/usr/bin/time` was unavailable, so the shell stopped before reaching `python3`. I did not retry.
+
+Launcher exit status: `127`. The requested `elapsed-seconds.txt` was not produced. Launcher stdout and stderr are retained in [watcher-ed2-final-launch](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/watcher-ed2-final-launch); no verification process is running.

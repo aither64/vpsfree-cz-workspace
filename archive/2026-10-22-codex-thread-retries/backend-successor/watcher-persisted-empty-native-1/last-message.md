@@ -1,0 +1,3 @@
+**Verification incomplete.** The RELEASED brief’s prerequisite failed: `/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/backend-successor/AGENTS.md` is missing. I did not run the producer gate, so there is no gate log or exit status. Session identity matched, and the shell reports Codex CLI 0.163.0.
+
+I stopped without locating substitute guidance or taking further action. The operation is not running.

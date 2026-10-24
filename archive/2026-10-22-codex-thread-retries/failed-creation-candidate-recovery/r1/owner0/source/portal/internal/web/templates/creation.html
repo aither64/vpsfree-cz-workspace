@@ -1,0 +1,42 @@
+{{define "creation"}}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{if .Preparation}}New session{{else}}{{.Session.Slug}}{{end}} · Workspace</title>
+  <link rel="stylesheet" href="/static/style.css?v=6">
+  <link rel="stylesheet" href="/codex/assets/conversation.css?v=5">
+</head>
+<body{{if .Preparation}} data-preparation="{{.Preparation.RequestID}}" data-receipt-id="{{.Preparation.ReceiptID}}" data-accepted-at="{{.Preparation.StartedAt}}"{{else}} data-creation="{{.Session.Slug}}"{{end}}>
+  <main class="page">
+    <a href="/">Workspace</a>
+    <h1>{{if .Preparation}}New session{{else}}{{.Session.Slug}}{{end}}</h1>
+    <section class="panel" aria-labelledby="creation-title">
+      <h2 id="creation-title">Creating session</h2>
+      <p id="creation-phase" role="status" aria-live="polite">Loading initialization status…</p>
+      <p id="creation-elapsed" role="timer"></p>
+      <p id="creation-error" class="notice error" hidden></p>
+      <span id="creation-error-copy" hidden></span>
+      <button id="creation-retry" type="button" hidden>{{if .Preparation}}Retry creation{{else}}Retry initialization{{end}}</button>
+      {{if .Preparation}}
+      <form id="creation-name-form" hidden>
+        <p><label for="creation-name">Custom session name</label></p>
+        <input id="creation-name" name="name" type="text" required maxlength="48" pattern="[A-Za-z0-9][A-Za-z0-9_-]{0,47}" placeholder="workspace-notifications" autocomplete="off">
+        <button id="creation-name-submit" type="submit">Use name and continue</button>
+        <p>Your request, files and settings stay saved.</p>
+      </form>
+      {{end}}
+      <p><a id="creation-source" hidden>Return to the source session</a></p>
+      <p id="creation-leave-note">You can leave this page while initialization continues.</p>
+    </section>
+    <section class="panel" id="creation-request-panel"{{if not .InitialRequest}} hidden{{end}}>
+      <div class="section-heading"><h2>Initial request</h2><span id="creation-request-copy"></span></div>
+      <pre class="creation-request" id="creation-request">{{.InitialRequest}}</pre>
+    </section>
+  </main>
+  <script src="/static/preparation.js?v=5" defer></script>
+  <script src="/static/creation.js?v=5" defer></script>
+</body>
+</html>
+{{end}}

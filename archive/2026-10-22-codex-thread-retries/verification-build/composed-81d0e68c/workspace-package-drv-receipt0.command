@@ -1,0 +1,1 @@
+nix-store --add-root /home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/verification-build/composed-81d0e68c/roots/workspace-package-drv --indirect --realise /nix/store/z3dl45fq5bgh1dnfb4wd3j6yl8d02ilz-dev-workspace-0.2.0.drv

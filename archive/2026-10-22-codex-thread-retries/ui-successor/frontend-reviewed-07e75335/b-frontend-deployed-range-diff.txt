@@ -1,0 +1,89 @@
+ 1:  7262c24e =  1:  7262c24e turnretry: retain bounded retry policy and admission state
+ 2:  b3c7187c =  2:  b3c7187c runtime: require retry-capable package transitions
+ 3:  aafaf419 =  3:  aafaf419 portal: continue new managed failed turns through durable retry admission
+ 4:  a708f401 !  4:  4ff797e5 deps: select codex-web prepared-send recovery helpers
+    @@ Metadata
+     Author: Jakub Skokan <jakub.skokan@havefun.cz>
+     
+      ## Commit message ##
+    -    deps: select codex-web prepared-send recovery helpers
+    +    deps: select codex-web retry activity support
+     
+    -    Select the shared failed-turn continuation and exact prepared-send proof
+    -    interfaces from one codex-web revision. Keep the Go module, source input
+    -    and vendored dependency digest aligned for the managed delivery paths.
+    +    Select failed-turn continuation, exact prepared-send recovery and optional
+    +    retry activity presentation from one codex-web revision. Keep the Go module,
+    +    Nix source and vendored dependency digest aligned for managed delivery and
+    +    the capability-gated activity notice.
+     
+      ## flake.lock ##
+     @@
+    @@ flake.lock
+            "locked": {
+     -        "lastModified": 1792612976,
+     -        "narHash": "sha256-VKTZcWXrTjE7DKFjye4hig3Kg3vWcg6T/vEw+2D8PLA=",
+    -+        "lastModified": 1792775188,
+    -+        "narHash": "sha256-tCfdy/lh9LHbvEd6BYO0trM1pUelyv2T63KsQ1iEK90=",
+    ++        "lastModified": 1792785904,
+    ++        "narHash": "sha256-IhCdZ7HpW3sora4/WnvWoCLotFZtMMldGCLItXoC90w=",
+              "owner": "aither64",
+              "repo": "codex-web",
+     -        "rev": "ea64ef57fdd2ff5fd60715b62f2d1696bc0133e5",
+    -+        "rev": "ac62eeeb9d8b1fa7b8ed8fb95ba8160acb7efa1c",
+    ++        "rev": "55e0300b27b6927b1693b3792042762f31a385cc",
+              "type": "github"
+            },
+            "original": {
+              "owner": "aither64",
+              "repo": "codex-web",
+     -        "rev": "ea64ef57fdd2ff5fd60715b62f2d1696bc0133e5",
+    -+        "rev": "ac62eeeb9d8b1fa7b8ed8fb95ba8160acb7efa1c",
+    ++        "rev": "55e0300b27b6927b1693b3792042762f31a385cc",
+              "type": "github"
+            }
+          },
+    @@ flake.nix
+          llm-agents.url = "github:numtide/llm-agents.nix";
+          codex-web = {
+     -      url = "github:aither64/codex-web/ea64ef57fdd2ff5fd60715b62f2d1696bc0133e5";
+    -+      url = "github:aither64/codex-web/ac62eeeb9d8b1fa7b8ed8fb95ba8160acb7efa1c";
+    ++      url = "github:aither64/codex-web/55e0300b27b6927b1693b3792042762f31a385cc";
+            flake = false;
+          };
+        };
+    @@ nix/workspace-portal.nix: buildGoModule {
+        inherit src;
+        modRoot = "portal";
+     -  vendorHash = "sha256-ABmwKlrjiXjFrrtplRaw2fmMDlv/gxWfufEMA0vjXNQ=";
+    -+  vendorHash = "sha256-NZ9hapJobbhvEdxWTtzYJ/3ZeMkSZAqOdewJCsZoL2o=";
+    ++  vendorHash = "sha256-jrp5UYCY0XK0Nw1jzOPv5IRaH4YlLle5M15l8opx4Qo=";
+      
+        postPatch = ''
+          expected=${lib.escapeShellArg codexWebVersion}
+    @@ portal/go.mod: go 1.24.0
+      require (
+      	github.com/SherClockHolmes/webpush-go v1.4.0
+     -	github.com/aither64/codex-web v0.0.0-20261021200256-ea64ef57fdd2
+    -+	github.com/aither64/codex-web v0.0.0-20261023170628-ac62eeeb9d8b
+    ++	github.com/aither64/codex-web v0.0.0-20261023200504-55e0300b27b6
+      	github.com/coder/websocket v1.8.14
+      	github.com/microcosm-cc/bluemonday v1.0.27
+      	github.com/yuin/goldmark v1.7.17
+    @@ portal/go.sum
+      github.com/SherClockHolmes/webpush-go v1.4.0/go.mod h1:XSq8pKX11vNV8MJEMwjrlTkxhAj1zKfxmyhdV7Pd6UA=
+     -github.com/aither64/codex-web v0.0.0-20261021200256-ea64ef57fdd2 h1:8Lsxt7NqJnmuZEfApQCqLRKDXQ98RhbANH1mL1kHHkc=
+     -github.com/aither64/codex-web v0.0.0-20261021200256-ea64ef57fdd2/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
+    -+github.com/aither64/codex-web v0.0.0-20261023170628-ac62eeeb9d8b h1:z09uGj1nKIn7CYBPZ7YZ5rsGF3MwN98tbyHqQln24ds=
+    -+github.com/aither64/codex-web v0.0.0-20261023170628-ac62eeeb9d8b/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
+    ++github.com/aither64/codex-web v0.0.0-20261023200504-55e0300b27b6 h1:f34novYrdHGiXSAeNfaCAkpkwvNnsI0qGa1XkGK3FDo=
+    ++github.com/aither64/codex-web v0.0.0-20261023200504-55e0300b27b6/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
+      github.com/aymerick/douceur v0.2.0 h1:Mv+mAeH1Q+n9Fr+oyamOlAkUNPWPlA8PPGR0QAaYuPk=
+      github.com/aymerick/douceur v0.2.0/go.mod h1:wlT5vV2O3h55X9m7iVYN0TBM0NH/MmbLnd30/FjWUq4=
+      github.com/coder/websocket v1.8.14 h1:9L0p0iKiNOibykf283eHkKUHHrpG7f65OE3BhhO7v9g=
+ 5:  f856549e =  5:  24bf3c0b portal: retire accepted retry provenance before bounded admission
+ 6:  9fe56d2b =  6:  4b368337 portal: admit exact prepared plan requests after mode selection
+ 7:  7b8c6469 =  7:  07782784 portal: wait within HTTP budgets for transient runtime contention
+ -:  -------- >  8:  18767205 portal: present retry activity inside the conversation viewport
+ -:  -------- >  9:  a570286d portal: release the next draft before message acknowledgment
+ -:  -------- > 10:  07e75335 portal: submit question text through its owning action

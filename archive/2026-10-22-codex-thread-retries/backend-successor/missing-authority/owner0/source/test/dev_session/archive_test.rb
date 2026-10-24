@@ -1,0 +1,899 @@
+# frozen_string_literal: true
+
+require_relative '../support/dev_session_test_case'
+
+class DevSessionTest < Minitest::Test
+  def test_explicit_archive_shutdown_passes_selected_private_recovery_context
+    with_workspace do |workspace|
+      slug = '2026-06-06-explicit-recovery-context'
+      state_root = File.join(workspace, 'selected-private-state')
+      runner = archive_runner_for(workspace, env: { 'DEV_WORKSPACES_STATE' => state_root })
+      runner.ensure_tracking_files(slug)
+      runner.send(:ensure_portal_manifest, slug)
+      archive_retained_identity_fixture(workspace, slug)
+      runner.define_singleton_method(:ensure_retirement_identity!) { |*| }
+      runner.define_singleton_method(:quiesce_native_client!) { |*| }
+      runner.define_singleton_method(:recovery_state!) { |*| }
+      runner.define_singleton_method(:sync_team_lifecycle!) { |*| }
+      commands = []
+      command_runner = runner.instance_variable_get(:@command_runner)
+      command_runner.define_singleton_method(:capture) { |command| commands << command; ['', ''] }
+
+      runner.send(:quiesce_explicit_archive!, slug)
+
+      command = commands.fetch(0)
+      assert_includes(command, 'quiesce-explicit')
+      assert_includes(command, '--workspace')
+      assert_equal(workspace, command.fetch(command.index('--workspace') + 1))
+      assert_includes(command, '--user-state-root')
+      assert_equal(state_root, command.fetch(command.index('--user-state-root') + 1))
+    end
+  end
+
+  def test_threadless_archive_threads_owned_context_through_preflights_and_never_adopts_a_root
+    [nil, 'b' * 64].each do |accepted_id|
+      with_workspace do |workspace|
+        slug = '2026-06-06-threadless-context'
+        runner = archive_runner_for(workspace)
+        runner.ensure_tracking_files(slug)
+        commit_archive_fixture(workspace, slug, lifecycle: 'active')
+        configure_workspace_origin(workspace)
+        runner.define_singleton_method(:retire_portal_thread!) { |*| raise 'threadless archive must not adopt a root' }
+        runner.archive(slug, as_is: true, abandoned: true, operation_id: accepted_id)
+        observations = File.readlines(File.join(workspace, 'archive-observations.jsonl')).map { |line| JSON.parse(line) }
+        first = observations.first.fetch('args')
+        if accepted_id
+          assert_equal(accepted_id, first.fetch(first.index('--expected-operation-id') + 1))
+        else
+          refute_includes(first, '--expected-operation-id')
+          refute_includes(first, '--expected-archive-mode')
+        end
+        later = observations.drop(1)
+        assert_operator(later.length, :>=, 5)
+        ids = later.map do |observation|
+          args = observation.fetch('args')
+          assert_equal('abandoned', args.fetch(args.index('--expected-archive-mode') + 1))
+          args.fetch(args.index('--expected-operation-id') + 1)
+        end
+        assert_equal(1, ids.uniq.length)
+        assert_equal(accepted_id, ids.first) if accepted_id
+        assert(observations.any? { |observation| observation['tracking'] == File.join(workspace, 'archive', slug) })
+        manifest = YAML.safe_load(File.read(File.join(workspace, 'archive', slug, 'portal.yml')))
+        refute(manifest.key?('codex'))
+      end
+    end
+  end
+
+  def test_threadless_archive_refuses_unknown_conversation_before_publication
+    with_workspace do |workspace|
+      slug = '2026-06-06-threadless-residue'
+      runner = archive_runner_for(workspace)
+      runner.ensure_tracking_files(slug)
+      File.write(File.join(workspace, 'work', slug, 'conversation-residue'), 'unknown native conversation fixture')
+      commit_archive_fixture(workspace, slug, lifecycle: 'active')
+      configure_workspace_origin(workspace)
+      assert_raises(WorkspaceAutoArchive::ObservationFailure) { runner.archive(slug, as_is: true) }
+      refute(File.exist?(DevSession::ArchiveCleanup.new(runner, slug).path))
+      refute(File.exist?(runner.send(:lifecycle_journal_file, slug, 'archive')))
+      assert(File.directory?(File.join(workspace, 'work', slug)))
+    end
+  end
+
+  def test_explicit_threadless_archive_retains_negative_ownership_proof
+    %w[team conversation].each do |contradiction|
+      with_workspace do |workspace|
+        slug = '2026-06-06-explicit-threadless-residue'
+        runner = archive_runner_for(workspace)
+        runner.ensure_tracking_files(slug)
+        if contradiction == 'team'
+          roster = runner.send(:direct_team_state_path, slug)
+          FileUtils.mkdir_p(File.dirname(roster))
+          File.write(roster, '{}')
+        else
+          File.write(File.join(workspace, 'work', slug, 'conversation-residue'), 'loaded conversation')
+        end
+        commit_archive_fixture(workspace, slug, lifecycle: 'active')
+        configure_workspace_origin(workspace)
+        assert_raises(contradiction == 'team' ? DevSession::Error : WorkspaceAutoArchive::ObservationFailure) do
+          runner.archive(slug, as_is: true, explicit: true)
+        end
+        if contradiction == 'team'
+          refute(File.exist?(DevSession::ArchiveCleanup.new(runner, slug).path))
+          refute(File.exist?(runner.send(:lifecycle_journal_file, slug, 'archive')))
+        else
+          assert(File.exist?(DevSession::ArchiveCleanup.new(runner, slug).path))
+          assert(File.exist?(runner.send(:lifecycle_journal_file, slug, 'archive')))
+        end
+        assert(File.directory?(File.join(workspace, 'work', slug)))
+      end
+    end
+  end
+
+  def test_explicit_threadless_archive_stops_proven_terminal_without_adopting_codex
+    [nil, 'unexpected-root'].each do |thread|
+      with_workspace do |workspace|
+        slug = '2026-06-06-explicit-threadless-terminal'
+        tmux = ManagedTmux.new(slug, workspace:, id: '$11', socket_path: '/run/test.sock', codex_thread_id: thread,
+                               codex_socket_path: thread && '/run/test/codex.sock', codex_client_version: thread && '0.160.0')
+        runner = archive_runner_for(workspace, tmux:)
+        runner.ensure_tracking_files(slug)
+        runner.send(:write_session_authority, slug, tmux.session(slug), state: 'ready')
+        commit_archive_fixture(workspace, slug, lifecycle: 'active')
+        configure_workspace_origin(workspace)
+        runner.define_singleton_method(:retire_portal_thread!) { |*| raise 'must not adopt a conversation' }
+        if thread
+          error = assert_raises(DevSession::Error) { runner.archive(slug, as_is: true, explicit: true) }
+          assert_includes(error.message, 'live runtime contradicts threadless archive')
+          refute(tmux.killed)
+          assert(File.directory?(File.join(workspace, 'work', slug)))
+        else
+          runner.define_singleton_method(:retire_session_runtime!) do |input, session|
+            raise 'terminal was stopped before tracking committed' if tmux.killed
+            raise 'archive tracking was not committed' unless File.directory?(File.join(workspace, 'archive', input))
+            super(input, session)
+          end
+          runner.archive(slug, as_is: true, explicit: true)
+          assert(tmux.killed)
+          assert(File.directory?(File.join(workspace, 'archive', slug)))
+          refute(File.exist?(runner.send(:authority_file, slug)))
+        end
+      end
+    end
+  end
+
+  def test_archive_final_retirement_survives_its_own_real_tmux_terminal
+    skip 'tmux cannot run in this environment' unless tmux_test_available?
+
+    with_workspace do |workspace|
+      socket = File.join(workspace, 'archive-terminal.sock')
+      script = File.join(workspace, 'terminal-probe.rb')
+      result = File.join(workspace, 'terminal-result')
+      executable = File.expand_path('../../libexec/dev-session', __dir__)
+      File.write(script, <<~RUBY)
+      begin
+        load #{executable.inspect}
+        $stdout.sync = true
+        runner = DevSession::Runner.new(workspace: #{workspace.inspect}, tmux_socket: #{socket.inspect}, require_runtime: false)
+        journal = {'schema' => 3, 'slug' => 'archive-terminal', 'workspace' => #{workspace.inspect},
+                   'operation_id' => 'a' * 64, 'phase' => 'thread_retired', 'mode' => 'archived',
+                   'proven_heads' => {}, 'finalized_at' => Time.now.utc.iso8601,
+                   'retained_thread_id' => nil, 'target_tracking_sha256' => 'b' * 64}
+        path = runner.send(:lifecycle_journal_file, 'archive-terminal', 'archive')
+        FileUtils.mkdir_p(File.dirname(path), mode: 0700)
+        runner.send(:write_lifecycle_journal, path, journal, command: 'archive', create: true)
+        runner.send(:with_archive_terminal_retirement, 'archive-terminal') do |own_terminal|
+          raise 'caller terminal not recognized' unless own_terminal
+          runner.instance_variable_get(:@tmux).run('kill-session', '-t', 'archive-terminal')
+          runner.send(:advance_archive!, 'archive-terminal', journal, 'runtime_retired')
+          runner.send(:finish_archive_journal!, 'archive-terminal', journal)
+          raise 'archive journal remains' if File.exist?(path)
+        end
+        File.write(#{result.inspect}, 'finished with handler restored')
+      rescue Exception => error
+        File.write(#{result.inspect}, "failed: " + error.full_message)
+      end
+      RUBY
+      command = [RbConfig.ruby, script].map { |part| Shellwords.escape(part) }.join(' ')
+      assert(system('tmux', '-S', socket, 'new-session', '-d', '-s', 'archive-terminal', "exec #{command}"))
+      deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 10
+      until File.file?(result) || Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
+        sleep 0.05
+      end
+      assert(File.file?(result), 'archive command died when its terminal was retired')
+      assert_equal('finished with handler restored', File.read(result))
+      refute(system('tmux', '-S', socket, 'has-session', '-t', '=archive-terminal', out: File::NULL, err: File::NULL))
+    ensure
+      system('tmux', '-S', socket, 'kill-server', out: File::NULL, err: File::NULL) if socket
+    end
+  end
+
+  def test_archive_rejects_an_unmerged_registered_branch_before_mutating_state
+    skip 'git is not available' unless command_available?('git')
+
+    with_workspace do |workspace|
+      create_bare_repo(workspace, 'sample')
+      slug = '2026-06-06-demo'
+      runner = archive_runner_for(workspace)
+      runner.worktree_add(
+        slug, 'sample', as_is: true, name: nil, branch: nil,
+        base: 'master', fetch: false
+      )
+      path = File.join(workspace, 'worktrees', slug, 'sample')
+      configure_git_identity(path)
+      File.write(File.join(path, 'feature.txt'), "unmerged\n")
+      assert_git_success('git', '-C', path, 'add', 'feature.txt')
+      assert_git_success('git', '-C', path, 'commit', '-m', 'unmerged feature')
+      repository = File.join(workspace, 'repos', 'sample.git')
+      assert_git_success(
+        'git', "--git-dir=#{repository}", 'push', 'origin',
+        "refs/heads/#{slug}:refs/heads/#{slug}"
+      )
+      commit_archive_fixture(workspace, slug, lifecycle: 'active')
+      configure_workspace_origin(workspace)
+
+      error = assert_raises(DevSession::Error) do
+        runner.archive(slug, as_is: true)
+      end
+
+      assert_includes(error.message, 'feature head is not merged')
+      assert_includes(error.message, "#{slug} -> origin/master")
+      assert(File.directory?(File.join(workspace, 'work', slug)))
+      assert(File.directory?(File.join(workspace, 'worktrees', slug, 'sample')))
+      assert_match(
+        /\A---\nlifecycle: active\n---/,
+        File.read(File.join(workspace, 'work', slug, 'state.md'))
+      )
+      refute(File.exist?(runner.send(:lifecycle_journal_file, slug, 'archive')))
+    end
+  end
+
+  def test_archive_accepts_an_unchanged_unpushed_feature_branch
+    skip 'git is not available' unless command_available?('git')
+
+    with_workspace do |workspace|
+      create_bare_repo(workspace, 'sample')
+      slug = '2026-06-06-unchanged-unpushed'
+      runner = archive_runner_for(workspace)
+      runner.worktree_add(
+        slug, 'sample', as_is: true, name: nil, branch: nil,
+        base: 'master', fetch: false
+      )
+      repository = File.join(workspace, 'repos', 'sample.git')
+      base = git_capture_success(
+        'git', "--git-dir=#{repository}", 'rev-parse', 'refs/heads/master'
+      ).strip
+      commit_archive_fixture(workspace, slug, lifecycle: 'active')
+      configure_workspace_origin(workspace)
+
+      runner.archive(slug, as_is: true)
+
+      manifest = YAML.safe_load(
+        File.read(File.join(workspace, 'archive', slug, 'portal.yml'))
+      )
+      repository_entry = manifest.fetch('repositories').fetch(0)
+      assert_equal(base, repository_entry.fetch('initial_base_sha'))
+      assert_equal(base, repository_entry.fetch('final_head_sha'))
+      refute_git_success(
+        'git', "--git-dir=#{repository}", 'ls-remote', '--exit-code', '--heads',
+        'origin', "refs/heads/#{slug}"
+      )
+      refute(File.exist?(runner.send(:lifecycle_journal_file, slug, 'archive')))
+    end
+  end
+
+  def test_archive_retry_accepts_an_unchanged_unpushed_feature_branch
+    skip 'git is not available' unless command_available?('git')
+
+    with_workspace do |workspace|
+      create_bare_repo(workspace, 'sample')
+      slug = '2026-06-06-retry-unchanged-unpushed'
+      runner = archive_runner_for(workspace)
+      runner.worktree_add(
+        slug, 'sample', as_is: true, name: nil, branch: nil,
+        base: 'master', fetch: false
+      )
+      commit_archive_fixture(workspace, slug, lifecycle: 'active')
+      configure_workspace_origin(workspace)
+      hook = File.join(workspace, '.git', 'hooks', 'pre-commit')
+      File.write(hook, "#!/bin/sh\nexit 1\n")
+      File.chmod(0o755, hook)
+
+      assert_raises(DevSession::CommandError) do
+        runner.archive(slug, as_is: true)
+      end
+      File.unlink(hook)
+
+      runner.archive(slug, as_is: true)
+
+      refute(File.exist?(runner.send(:lifecycle_journal_file, slug, 'archive')))
+      assert(File.directory?(File.join(workspace, 'archive', slug)))
+    end
+  end
+
+  def test_archive_rejects_a_changed_unpushed_feature_branch
+    skip 'git is not available' unless command_available?('git')
+
+    with_workspace do |workspace|
+      create_bare_repo(workspace, 'sample')
+      slug = '2026-06-06-changed-unpushed'
+      runner = archive_runner_for(workspace)
+      runner.worktree_add(
+        slug, 'sample', as_is: true, name: nil, branch: nil,
+        base: 'master', fetch: false
+      )
+      path = File.join(workspace, 'worktrees', slug, 'sample')
+      configure_git_identity(path)
+      File.write(File.join(path, 'feature.txt'), "unpushed\n")
+      assert_git_success('git', '-C', path, 'add', 'feature.txt')
+      assert_git_success('git', '-C', path, 'commit', '-m', 'unpushed feature')
+      commit_archive_fixture(workspace, slug, lifecycle: 'active')
+      configure_workspace_origin(workspace)
+
+      error = assert_raises(DevSession::Error) do
+        runner.archive(slug, as_is: true)
+      end
+
+      assert_includes(error.message, 'feature branch is not present on origin')
+      assert(File.directory?(File.join(workspace, 'work', slug)))
+      refute(File.exist?(runner.send(:lifecycle_journal_file, slug, 'archive')))
+    end
+  end
+
+  def test_archive_closes_and_commits_a_coordination_only_session
+    skip 'git is not available' unless command_available?('git')
+
+    with_workspace do |workspace|
+      slug = '2026-06-06-coordination'
+      runner = archive_runner_for(workspace)
+      runner.ensure_tracking_files(slug)
+      runner.send(:ensure_portal_manifest, slug)
+      commit_archive_fixture(workspace, slug, lifecycle: 'active')
+      configure_workspace_origin(workspace)
+      File.write(File.join(workspace, 'staged.txt'), "staged\n")
+      File.write(File.join(workspace, 'unstaged.txt'), "unstaged\n")
+      assert_git_success('git', '-C', workspace, 'add', 'staged.txt')
+
+      runner.archive(slug, as_is: true)
+
+      refute(File.exist?(File.join(workspace, 'work', slug)))
+      assert(File.directory?(File.join(workspace, 'archive', slug)))
+      assert_match(
+        /\A---\nlifecycle: complete\n---/,
+        File.read(File.join(workspace, 'archive', slug, 'state.md'))
+      )
+      assert_equal(
+        "workspace: archive #{slug}",
+        git_capture_success('git', '-C', workspace, 'log', '-1', '--format=%s').strip
+      )
+      changed = git_capture_success(
+        'git', '-C', workspace, 'show', '--format=', '--name-only', 'HEAD'
+      ).lines.map(&:strip).reject(&:empty?)
+      refute_includes(changed, 'staged.txt')
+      refute_includes(changed, 'unstaged.txt')
+      assert_equal('A  staged.txt', git_capture_success(
+        'git', '-C', workspace, 'status', '--short', '--', 'staged.txt'
+      ).strip)
+      assert_equal('?? unstaged.txt', git_capture_success(
+        'git', '-C', workspace, 'status', '--short', '--', 'unstaged.txt'
+      ).strip)
+      refute(File.exist?(runner.send(:lifecycle_journal_file, slug, 'archive')))
+    end
+  end
+
+  def test_archive_retries_a_failed_exact_tracking_commit
+    skip 'git is not available' unless command_available?('git')
+
+    with_workspace do |workspace|
+      slug = '2026-06-06-archive-retry'
+      runner = archive_runner_for(workspace)
+      runner.ensure_tracking_files(slug)
+      runner.send(:ensure_portal_manifest, slug)
+      commit_archive_fixture(workspace, slug, lifecycle: 'active')
+      configure_workspace_origin(workspace)
+      hook = File.join(workspace, '.git', 'hooks', 'pre-commit')
+      File.write(hook, "#!/bin/sh\nexit 1\n")
+      File.chmod(0o755, hook)
+
+      assert_raises(DevSession::CommandError) do
+        runner.archive(slug, as_is: true)
+      end
+      assert(File.directory?(File.join(workspace, 'archive', slug)))
+      journal = JSON.parse(File.read(runner.send(:lifecycle_journal_file, slug, 'archive')))
+      assert_equal('tracking_archived', journal.fetch('phase'))
+
+      File.unlink(hook)
+      runner.archive(slug, as_is: true)
+
+      refute(File.exist?(runner.send(:lifecycle_journal_file, slug, 'archive')))
+      assert_equal(
+        "workspace: archive #{slug}",
+        git_capture_success('git', '-C', workspace, 'log', '-1', '--format=%s').strip
+      )
+    end
+  end
+
+  def test_archive_retry_does_not_kill_a_same_name_replacement
+    skip 'git is not available' unless command_available?('git')
+
+    with_workspace do |workspace|
+      slug = '2026-06-06-archive-stale-runtime'
+      state_home = File.join(workspace, '.xdg-state')
+      authority_dir = File.join(workspace, 'authority')
+      base = archive_runner_for(workspace)
+      base.ensure_tracking_files(slug)
+      base.send(:ensure_portal_manifest, slug)
+      commit_archive_fixture(workspace, slug, lifecycle: 'active')
+      configure_workspace_origin(workspace)
+      interrupted = false
+      runner_class = Class.new(DevSession::Runner) do
+        define_method(:advance_archive!) do |current_slug, journal, phase|
+          super(current_slug, journal, phase)
+          if phase == 'thread_retired' && !interrupted
+            interrupted = true
+            raise DevSession::Error, 'injected pre-runtime interruption'
+          end
+        end
+      end
+      first = runner_class.new(
+        workspace:, tmux: NullTmux.new, authority_dir:,
+        out: StringIO.new, err: StringIO.new, today: TODAY,
+        env: archive_fixture_env(workspace, 'XDG_STATE_HOME' => state_home)
+      )
+
+      assert_raises(DevSession::Error) do
+        first.archive(slug, as_is: true)
+      end
+      journal_path = first.send(:lifecycle_journal_file, slug, 'archive')
+      assert_equal('thread_retired', JSON.parse(File.read(journal_path)).fetch('phase'))
+
+      replacement = ReplacedTmux.new(slug, workspace:)
+      second = archive_runner_for(
+        workspace,
+        tmux: replacement,
+        authority_dir:,
+        env: archive_fixture_env(workspace, 'XDG_STATE_HOME' => state_home)
+      )
+      stale = DevSession::Tmux::Session.new(
+        id: '$11', name: slug, mark: '1', slug:, workspace:,
+        environment_slug: slug, socket_path: '/run/test.sock',
+        identity_token: 'a' * 64
+      )
+      second.send(:write_session_authority, slug, stale, state: 'ready')
+
+      error = assert_raises(DevSession::Error) do
+        second.archive(slug, as_is: true)
+      end
+
+      assert_includes(error.message, 'does not match trusted authority')
+      refute(replacement.kill_attempted)
+      assert(File.file?(File.join(authority_dir, "#{slug}.json")))
+      assert(File.file?(journal_path))
+    end
+  end
+
+  def test_archive_preflights_legacy_identity_before_creating_a_journal
+    skip 'git is not available' unless command_available?('git')
+
+    with_workspace do |workspace|
+      slug = '2026-06-06-archive-legacy-identity'
+      authority_dir = File.join(workspace, 'authority')
+      tmux = RefusedIdentityInitializationTmux.new(
+        slug, workspace:, socket_path: '/run/test.sock', id: '$11',
+        identity_token: nil
+      )
+      runner = archive_runner_for(workspace, tmux:, authority_dir:)
+      runner.ensure_tracking_files(slug)
+      runner.send(:ensure_portal_manifest, slug)
+      runner.send(:write_session_authority, slug, tmux.session(slug), state: 'ready')
+      archive_retained_identity_fixture(workspace, slug)
+      commit_archive_fixture(workspace, slug, lifecycle: 'active')
+      configure_workspace_origin(workspace)
+
+      error = assert_raises(DevSession::Error) do
+        runner.archive(slug, as_is: true)
+      end
+
+      assert_includes(error.message, 'does not match trusted authority')
+      assert(tmux.identity_initialization_attempted)
+      assert(File.directory?(File.join(workspace, 'work', slug)))
+      refute(File.exist?(runner.send(:lifecycle_journal_file, slug, 'archive')))
+    end
+  end
+
+  def test_archive_rejects_a_renamed_authority_session_before_creating_a_journal
+    skip 'git is not available' unless command_available?('git')
+
+    with_workspace do |workspace|
+      slug = '2026-06-06-archive-renamed-session'
+      authority_dir = File.join(workspace, 'authority')
+      tmux = RenamedManagedTmux.new(
+        slug, workspace:, socket_path: '/run/test.sock', id: '$11'
+      )
+      runner = archive_runner_for(workspace, tmux:, authority_dir:)
+      runner.ensure_tracking_files(slug)
+      runner.send(:ensure_portal_manifest, slug)
+      session = DevSession::Tmux::Session.new(
+        id: '$11', name: slug, mark: '1', slug:, workspace:,
+        environment_slug: slug, socket_path: '/run/test.sock',
+        identity_token: 'a' * 64
+      )
+      runner.send(:write_session_authority, slug, session, state: 'ready')
+      archive_retained_identity_fixture(workspace, slug)
+      commit_archive_fixture(workspace, slug, lifecycle: 'active')
+      configure_workspace_origin(workspace)
+
+      error = assert_raises(DevSession::Error) do
+        runner.archive(slug, as_is: true)
+      end
+
+      assert_includes(error.message, 'does not match trusted authority')
+      assert(File.directory?(File.join(workspace, 'work', slug)))
+      refute(File.exist?(runner.send(:lifecycle_journal_file, slug, 'archive')))
+    end
+  end
+
+  def test_archive_resume_upgrades_a_legacy_identity_before_continuing
+    skip 'git is not available' unless command_available?('git')
+
+    with_workspace do |workspace|
+      slug = '2026-06-06-archive-resume-legacy'
+      authority_dir = File.join(workspace, 'authority')
+      tmux = ManagedTmux.new(
+        slug, workspace:, socket_path: '/run/test.sock', id: '$11',
+        identity_token: nil
+      )
+      runner = archive_runner_for(workspace, tmux:, authority_dir:)
+      runner.ensure_tracking_files(slug)
+      runner.send(:ensure_portal_manifest, slug)
+      runner.send(:write_session_authority, slug, tmux.session(slug), state: 'ready')
+      archive_retained_identity_fixture(workspace, slug)
+      commit_archive_fixture(workspace, slug, lifecycle: 'active')
+      configure_workspace_origin(workspace)
+      plan = runner.send(:prepare_cleanup, slug, force: false)
+      runner.send(:prepare_archive_journal!, slug, 'complete', {}, plan)
+
+      runner.archive(slug, as_is: true)
+
+      assert(tmux.killed)
+      assert(File.directory?(File.join(workspace, 'archive', slug)))
+      refute(File.exist?(runner.send(:lifecycle_journal_file, slug, 'archive')))
+      refute(File.exist?(File.join(authority_dir, "#{slug}.json")))
+    end
+  end
+
+  def test_archive_retry_rejects_mutated_tracking_before_the_commit_phase
+    skip 'git is not available' unless command_available?('git')
+
+    %i[state thread].each do |mutation|
+      with_workspace do |workspace|
+        slug = "2026-06-06-archive-#{mutation}"
+        base = archive_runner_for(workspace)
+        base.ensure_tracking_files(slug)
+        base.send(:ensure_portal_manifest, slug)
+        commit_archive_fixture(workspace, slug, lifecycle: 'active')
+        configure_workspace_origin(workspace)
+        fail_once = true
+        runner_class = Class.new(DevSession::Runner) do
+          define_method(:advance_archive!) do |current_slug, journal, phase|
+            if phase == 'tracking_archived' && fail_once
+              fail_once = false
+              raise DevSession::Error, 'injected post-move failure'
+            end
+
+            super(current_slug, journal, phase)
+          end
+        end
+        runner = runner_class.new(
+          workspace:, tmux: NullTmux.new, out: StringIO.new, err: StringIO.new,
+          today: TODAY, env: archive_fixture_env(workspace)
+        )
+
+        assert_raises(DevSession::Error) do
+          runner.archive(slug, as_is: true)
+        end
+        assert(File.directory?(File.join(workspace, 'archive', slug)))
+        journal = JSON.parse(File.read(runner.send(:lifecycle_journal_file, slug, 'archive')))
+        assert_equal('clusters_released', journal.fetch('phase'))
+
+        if mutation == :state
+          state = File.join(workspace, 'archive', slug, 'state.md')
+          File.write(state, File.read(state).sub('lifecycle: complete', 'lifecycle: active'))
+        else
+          portal = File.join(workspace, 'archive', slug, 'portal.yml')
+          manifest = YAML.safe_load(File.read(portal))
+          manifest['codex'] = {
+            'thread_id' => 'replacement-thread',
+            'socket_path' => '/run/test/codex.sock',
+            'client_version' => '0.160.0'
+          }
+          File.write(portal, YAML.dump(manifest))
+        end
+
+        error = assert_raises(DevSession::Error) do
+          runner.archive(slug, as_is: true)
+        end
+        assert_includes(error.message, 'archived tracking changed during recovery')
+        assert(File.exist?(runner.send(:lifecycle_journal_file, slug, 'archive')))
+      end
+    end
+  end
+
+  def test_unfinished_archive_reserves_the_slug_until_its_matching_retry
+    skip 'git is not available' unless command_available?('git')
+
+    with_workspace do |workspace|
+      slug = '2026-06-06-archive-owned'
+      base = archive_runner_for(workspace)
+      base.ensure_tracking_files(slug)
+      base.send(:ensure_portal_manifest, slug)
+      commit_archive_fixture(workspace, slug, lifecycle: 'active')
+      configure_workspace_origin(workspace)
+      fail_thread_retired = true
+      runner_class = Class.new(DevSession::Runner) do
+        define_method(:advance_archive!) do |current_slug, journal, phase|
+          if phase == 'thread_retired' && fail_thread_retired
+            raise DevSession::Error, 'injected pre-thread-retired failure'
+          end
+
+          super(current_slug, journal, phase)
+        end
+      end
+      runner = runner_class.new(
+        workspace:, tmux: NullTmux.new, out: StringIO.new, err: StringIO.new,
+        today: TODAY, env: archive_fixture_env(workspace)
+      )
+
+      assert_raises(DevSession::Error) do
+        runner.archive(slug, as_is: true)
+      end
+      journal = JSON.parse(File.read(runner.send(:lifecycle_journal_file, slug, 'archive')))
+      assert_equal('tracking_committed', journal.fetch('phase'))
+
+      conflicts = [
+        -> { runner.delete(slug, as_is: true, force: false) },
+        -> { runner.revive(slug, as_is: true) },
+        -> do
+          runner.start(
+            slug, as_is: true, new: false, attach: false, run_codex: false
+          )
+        end,
+        -> do
+          runner.worktree_add(
+            slug, 'sample', as_is: true, name: nil, branch: nil,
+            base: 'master', fetch: false
+          )
+        end
+      ]
+      conflicts.each do |operation|
+        error = assert_raises(DevSession::Error, &operation)
+        assert_includes(error.message, 'session archive is unfinished')
+      end
+
+      fail_thread_retired = false
+      runner.archive(slug, as_is: true)
+
+      refute(File.exist?(runner.send(:lifecycle_journal_file, slug, 'archive')))
+      assert(File.directory?(File.join(workspace, 'archive', slug)))
+      refute(File.exist?(File.join(workspace, 'work', slug)))
+    end
+  end
+
+  def test_archive_retry_rejects_dirty_tracking_after_the_commit_phase
+    skip 'git is not available' unless command_available?('git')
+
+    with_workspace do |workspace|
+      slug = '2026-06-06-archive-dirty-commit'
+      base = archive_runner_for(workspace)
+      base.ensure_tracking_files(slug)
+      base.send(:ensure_portal_manifest, slug)
+      commit_archive_fixture(workspace, slug, lifecycle: 'active')
+      configure_workspace_origin(workspace)
+      runner_class = Class.new(DevSession::Runner) do
+        define_method(:advance_archive!) do |current_slug, journal, phase|
+          raise DevSession::Error, 'injected pre-thread-retired failure' if phase == 'thread_retired'
+
+          super(current_slug, journal, phase)
+        end
+      end
+      runner = runner_class.new(
+        workspace:, tmux: NullTmux.new, out: StringIO.new, err: StringIO.new,
+        today: TODAY, env: archive_fixture_env(workspace)
+      )
+      assert_raises(DevSession::Error) do
+        runner.archive(slug, as_is: true)
+      end
+      journal = JSON.parse(File.read(runner.send(:lifecycle_journal_file, slug, 'archive')))
+      assert_equal('tracking_committed', journal.fetch('phase'))
+      File.open(File.join(workspace, 'archive', slug, 'plan.md'), 'a') do |file|
+        file.write("\nUncommitted change.\n")
+      end
+
+      error = assert_raises(DevSession::Error) do
+        runner.archive(slug, as_is: true)
+      end
+
+      assert_includes(error.message, 'committed archive tracking differs')
+      assert(File.exist?(runner.send(:lifecycle_journal_file, slug, 'archive')))
+    end
+  end
+
+  def test_committed_archive_verifier_is_read_only_and_rejects_dirty_tree
+    skip 'git is not available' unless command_available?('git')
+
+    with_workspace do |workspace|
+      slug = '2026-06-06-archive-verifier'
+      base = archive_runner_for(workspace)
+      base.ensure_tracking_files(slug)
+      base.send(:ensure_portal_manifest, slug)
+      commit_archive_fixture(workspace, slug, lifecycle: 'active')
+      configure_workspace_origin(workspace)
+      runner_class = Class.new(DevSession::Runner) do
+        define_method(:advance_archive!) do |current_slug, journal, phase|
+          raise DevSession::Error, 'injected pre-thread-retired failure' if phase == 'thread_retired'
+
+          super(current_slug, journal, phase)
+        end
+      end
+      runner = runner_class.new(
+        workspace:, tmux: NullTmux.new, out: StringIO.new, err: StringIO.new,
+        today: TODAY, env: archive_fixture_env(workspace)
+      )
+      assert_raises(DevSession::Error) { runner.archive(slug, as_is: true) }
+      journal_path = runner.send(:lifecycle_journal_file, slug, 'archive')
+      journal = JSON.parse(File.read(journal_path))
+      assert_equal('tracking_committed', journal.fetch('phase'))
+      before = File.binread(journal_path)
+      reached = false
+      runner.with_verified_committed_archive(slug, journal) { reached = true }
+      assert(reached)
+      assert_equal(before, File.binread(journal_path))
+      File.open(File.join(workspace, 'archive', slug, 'plan.md'), 'a') { |file| file.write("\nDirty.\n") }
+      assert_raises(DevSession::Error) do
+        runner.with_verified_committed_archive(slug, journal) { flunk('dirty archive passed verifier') }
+      end
+      assert_equal(before, File.binread(journal_path))
+    end
+  end
+
+  def test_archive_retry_reproves_the_retained_feature_branch
+    skip 'git is not available' unless command_available?('git')
+
+    with_workspace do |workspace|
+      create_bare_repo(workspace, 'sample')
+      slug = '2026-06-06-reprove'
+      runner = archive_runner_for(workspace)
+      runner.worktree_add(
+        slug, 'sample', as_is: true, name: nil, branch: nil,
+        base: 'master', fetch: false
+      )
+      path = File.join(workspace, 'worktrees', slug, 'sample')
+      configure_git_identity(path)
+      File.write(File.join(path, 'feature.txt'), "merged\n")
+      assert_git_success('git', '-C', path, 'add', 'feature.txt')
+      assert_git_success('git', '-C', path, 'commit', '-m', 'merged feature')
+      commit_archive_fixture(workspace, slug, lifecycle: 'active')
+      merge_registered_branches(workspace, slug)
+      configure_workspace_origin(workspace)
+      hook = File.join(workspace, '.git', 'hooks', 'pre-commit')
+      File.write(hook, "#!/bin/sh\nexit 1\n")
+      File.chmod(0o755, hook)
+
+      assert_raises(DevSession::CommandError) do
+        runner.archive(slug, as_is: true)
+      end
+      File.unlink(hook)
+      repository = File.join(workspace, 'repos', 'sample.git')
+      temporary = File.join(workspace, 'advanced-feature')
+      assert_git_success(
+        'git', "--git-dir=#{repository}", 'worktree', 'add', temporary, slug
+      )
+      configure_git_identity(temporary)
+      File.write(File.join(temporary, 'later.txt'), "not merged\n")
+      assert_git_success('git', '-C', temporary, 'add', 'later.txt')
+      assert_git_success('git', '-C', temporary, 'commit', '-m', 'later feature')
+      assert_git_success('git', '-C', temporary, 'push', 'origin', slug)
+
+      error = assert_raises(DevSession::Error) do
+        runner.archive(slug, as_is: true)
+      end
+
+      assert_includes(error.message, 'feature branch changed after merge proof')
+      assert(File.exist?(runner.send(:lifecycle_journal_file, slug, 'archive')))
+      assert(File.directory?(File.join(workspace, 'archive', slug)))
+    end
+  end
+
+  def test_archive_reproves_exact_heads_before_each_destructive_retry_phase
+    skip 'git is not available' unless command_available?('git')
+
+    %w[quiesced clusters_released].each do |phase|
+      with_workspace do |workspace|
+        create_bare_repo(workspace, 'sample')
+        slug = "2026-06-06-reprove-#{phase.tr('_', '-')}"
+        runner = archive_runner_for(workspace)
+        runner.worktree_add(
+          slug, 'sample', as_is: true, name: nil, branch: nil,
+          base: 'master', fetch: false
+        )
+        path = File.join(workspace, 'worktrees', slug, 'sample')
+        configure_git_identity(path)
+        File.write(File.join(path, 'feature.txt'), "first merged head\n")
+        assert_git_success('git', '-C', path, 'add', 'feature.txt')
+        assert_git_success('git', '-C', path, 'commit', '-m', 'first merged feature')
+        commit_archive_fixture(workspace, slug, lifecycle: 'active')
+        merge_registered_branches(workspace, slug)
+        configure_workspace_origin(workspace)
+
+        plan = runner.send(:prepare_cleanup, slug, force: false)
+        heads = runner.send(:prove_registered_branches_merged!, slug, plan)
+        journal = runner.send(:prepare_archive_journal!, slug, 'complete', heads, plan)
+        runner.send(:advance_archive!, slug, journal, 'quiesced')
+        if phase == 'clusters_released'
+          runner.send(:advance_archive!, slug, journal, 'clusters_released')
+        end
+
+        File.write(File.join(path, 'later.txt'), "second merged head\n")
+        assert_git_success('git', '-C', path, 'add', 'later.txt')
+        assert_git_success('git', '-C', path, 'commit', '-m', 'second merged feature')
+        assert_git_success('git', '-C', path, 'push', 'origin', slug)
+        assert_git_success('git', '-C', path, 'push', 'origin', "#{slug}:master")
+
+        error = assert_raises(DevSession::Error) do
+          runner.archive(slug, as_is: true)
+        end
+        assert_includes(error.message, 'feature heads changed during archival')
+        assert(File.directory?(File.join(workspace, 'work', slug)))
+        assert(File.directory?(path))
+        persisted = JSON.parse(File.read(runner.send(:lifecycle_journal_file, slug, 'archive')))
+        assert_equal(phase, persisted.fetch('phase'))
+      end
+    end
+  end
+
+  def test_archive_accepts_the_exact_feature_head_after_it_is_merged
+    skip 'git is not available' unless command_available?('git')
+
+    with_workspace do |workspace|
+      create_bare_repo(workspace, 'sample')
+      slug = '2026-06-06-merged'
+      runner = archive_runner_for(workspace)
+      runner.worktree_add(
+        slug, 'sample', as_is: true, name: nil, branch: nil,
+        base: 'master', fetch: false
+      )
+      path = File.join(workspace, 'worktrees', slug, 'sample')
+      configure_git_identity(path)
+      File.write(File.join(path, 'feature.txt'), "merged\n")
+      assert_git_success('git', '-C', path, 'add', 'feature.txt')
+      assert_git_success('git', '-C', path, 'commit', '-m', 'merged feature')
+      commit_archive_fixture(workspace, slug, lifecycle: 'active')
+      merge_registered_branches(workspace, slug)
+      configure_workspace_origin(workspace)
+
+      runner.archive(slug, as_is: true)
+
+      manifest = YAML.safe_load(
+        File.read(File.join(workspace, 'archive', slug, 'portal.yml'))
+      )
+      repository = manifest.fetch('repositories').fetch(0)
+      assert_equal(
+        git_capture_success(
+          'git', "--git-dir=#{File.join(workspace, 'repos', 'sample.git')}",
+          'rev-parse', "refs/heads/#{slug}"
+        ).strip,
+        repository.fetch('final_head_sha')
+      )
+      refute(File.exist?(File.join(workspace, 'worktrees', slug)))
+    end
+  end
+
+  def test_archive_abandoned_skips_the_merge_requirement
+    skip 'git is not available' unless command_available?('git')
+
+    with_workspace do |workspace|
+      create_bare_repo(workspace, 'sample')
+      slug = '2026-06-06-discarded'
+      runner = archive_runner_for(workspace)
+      runner.worktree_add(
+        slug, 'sample', as_is: true, name: nil, branch: nil,
+        base: 'master', fetch: false
+      )
+      path = File.join(workspace, 'worktrees', slug, 'sample')
+      configure_git_identity(path)
+      File.write(File.join(path, 'discarded.txt'), "discarded\n")
+      assert_git_success('git', '-C', path, 'add', 'discarded.txt')
+      assert_git_success('git', '-C', path, 'commit', '-m', 'discarded')
+      commit_archive_fixture(workspace, slug, lifecycle: 'active')
+      configure_workspace_origin(workspace)
+
+      runner.archive(slug, as_is: true, abandoned: true)
+
+      assert(File.directory?(File.join(workspace, 'archive', slug)))
+      assert_match(
+        /\A---\nlifecycle: abandoned\n---/,
+        File.read(File.join(workspace, 'archive', slug, 'state.md'))
+      )
+    end
+  end
+
+end

@@ -1,0 +1,191 @@
+{
+  "recordedAt": "2026-10-24T11:58:24.200633+00:00",
+  "status": "Committed/frozen/published; combined focused quicksPASS; retained affected FINALreview/actualgates pending",
+  "source": {
+    "head": "ef773d223e946f1b5ca453f217a600b7e463e8b7",
+    "tree": "f900fd6de795cfb1b3380fa61d0aa23c2b6646fd",
+    "source": "/nix/store/sfykz795m1ca4rpszhg8p14n6p21zhmv-source",
+    "narHash": "sha256-qL1+LBrICZBRvrNe2jV+sABqTzfq20kjGyXuK+RIiHU=",
+    "lastModified": 1792842890,
+    "allGitBlobModesVerified": 585,
+    "narIndependentlyVerified": true,
+    "completeInputGraphEqualsCommittedLock": true,
+    "clean": true
+  },
+  "scope": {
+    "head": "ef773d223e946f1b5ca453f217a600b7e463e8b7",
+    "tree": "f900fd6de795cfb1b3380fa61d0aa23c2b6646fd",
+    "parent": "5870fcbec755f10396b7892b9f08e50335a77fe9",
+    "first16CommitsExact": true,
+    "newLogicalCommit17Only": true,
+    "deltaPaths": [
+      "docs/dev-sessions.md",
+      "libexec/dev-session",
+      "portal/cmd/workspace-portal/deletion_test.go",
+      "portal/cmd/workspace-portal/main.go",
+      "portal/internal/teamruntime/deletion.go",
+      "portal/internal/teamruntime/deletion_test.go",
+      "portal/internal/teamruntime/runtime.go",
+      "test/dev_session/deletion_recovery_test.rb"
+    ],
+    "allOtherBlobModesEqual": 577,
+    "sourceFiles": 585,
+    "allEightAcceptedHashesMatch": true,
+    "fixtureServicePinsAGENTSUnchanged": true,
+    "noNewSchemaOrMigration": true,
+    "noNewPinStream": true,
+    "auxBranchRetained": true
+  },
+  "quick": {
+    "results": {
+      "go": {
+        "command": [
+          "go",
+          "-C",
+          "portal",
+          "test",
+          "-mod=readonly",
+          "./internal/teamruntime",
+          "./cmd/workspace-portal",
+          "./internal/web",
+          "-run",
+          "^(TestPrepareDelete.*|TestTeamPrepareDelete.*|TestRequireIdleAll.*|TestRetryBackendBrowserFixtureConstruction)$",
+          "-count=1",
+          "-timeout=45s",
+          "-json"
+        ],
+        "exit": 0,
+        "elapsed": 13.584947073832154
+      },
+      "ruby": {
+        "command": [
+          "ruby",
+          "test/dev_session_test.rb",
+          "--name",
+          "/\\A(?:test_delete_moves_direct_team_roster_to_private_recovery|test_quiesce_refuses_a_busy_direct_team_member|test_force_delete_retires_busy_direct_member_after_non_force_retry|test_delete_preparation_refusal_precedes_root_quiescence|test_delete_keeps_retiring_journal_after_uncertain_tombstone_publication|test_remove_discovers_a_thread_whose_start_result_was_lost|test_remove_can_upgrade_a_non_force_retirement_retry_to_force|test_remove_rejects_recovery_storage_nested_in_tracking|test_remove_refuses_non_directory_state_root_before_recovery_setup|test_remove_rejects_recovery_storage_nested_in_the_creation_journal|test_direct_team_state_probe_allows_an_operator_managed_symlinked_parent|test_remove_force_rejects_recovery_storage_nested_in_a_worktree|test_remove_rejects_recovery_storage_nested_in_absent_cluster_state|test_remove_rejects_recovery_storage_nested_in_cluster_socket|test_remove_rejects_recovery_storage_nested_in_legacy_cluster_socket|test_remove_reconciles_an_archive_before_its_phase_update|test_remove_refuses_to_orphan_a_known_thread_when_runtime_is_unavailable|test_remove_retries_after_cluster_release_failure|test_remove_passes_its_exclusive_session_lock_to_cluster_reset|test_remove_preflights_legacy_identity_before_creating_a_journal|test_remove_rejects_a_renamed_authority_session_before_creating_a_journal|test_remove_resume_upgrades_a_legacy_identity_before_continuing|test_removal_journal_is_bound_to_the_portal_operation_identity|test_archive_journal_is_bound_to_the_portal_operation_identity|test_revive_journal_is_bound_to_the_portal_operation_identity)\\z/"
+        ],
+        "exit": 0,
+        "elapsed": 6.444914208725095
+      }
+    },
+    "goPassedTopNames": [
+      "TestPrepareDeleteDoesNotRelaxOtherRetirementOrReuseProjectKeys",
+      "TestPrepareDeleteKeepsKnownIdleChecksAndRevalidatesForce",
+      "TestPrepareDeletePreservesUnknownAndRetiresKnownWithoutNewStarts",
+      "TestPrepareDeleteRefusesIneligibleReservationsAtomically",
+      "TestPrepareDeleteRefusesInvalidContextWithoutPublication",
+      "TestPrepareDeleteSaveFailureLeavesRetiringJournalAndReservation",
+      "TestRetryBackendBrowserFixtureConstruction",
+      "TestTeamPrepareDeleteCommandProcess",
+      "TestTeamPrepareDeleteRejectsUnboundFlags",
+      "TestTeamPrepareDeleteRubyOwnerOrderingAndPrivateTombstone"
+    ],
+    "goPassedTestsAndSubtests": 39,
+    "goPackages": [
+      {
+        "package": "github.com/aither64/dev-workspace/portal/internal/teamruntime",
+        "elapsed": 2.558
+      },
+      {
+        "package": "github.com/aither64/dev-workspace/portal/cmd/workspace-portal",
+        "elapsed": 1.5310000000000001
+      },
+      {
+        "package": "github.com/aither64/dev-workspace/portal/internal/web",
+        "elapsed": 0.529
+      }
+    ],
+    "goFailed": [],
+    "goSkipped": [],
+    "rubySummary": [
+      25,
+      158,
+      0,
+      0,
+      0
+    ],
+    "allEightAcceptedFileHashesMatch": true,
+    "syntaxAndFormat": true
+  },
+  "publication": {
+    "head": "ef773d223e946f1b5ca453f217a600b7e463e8b7",
+    "tree": "f900fd6de795cfb1b3380fa61d0aa23c2b6646fd",
+    "clean": true,
+    "SSHVerified": true,
+    "fastForwardFrom": "5870fcbec755f10396b7892b9f08e50335a77fe9",
+    "defaultUnchanged": "bf6d4b0c49600c15e17fe71248807ef43424e932"
+  },
+  "browserPrepared": {
+    "status": "PREPARED ONLY; combined final review and fresh lead watcher required",
+    "head": "ef773d223e946f1b5ca453f217a600b7e463e8b7",
+    "tree": "f900fd6de795cfb1b3380fa61d0aa23c2b6646fd",
+    "command": "python3 /home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/delete-guard/incorporation/browser-command.py",
+    "scriptSHA256": "0527db29a26073bdfd98e5f8284ab4567e121c8ca91ea6407af5a825e6090c9b",
+    "output": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/delete-guard/incorporation/browser-attempt-5",
+    "outputExists": false,
+    "selector": "^TestRetryBackendBrowser$",
+    "budget": "360s",
+    "requiredCases": 32,
+    "requiredGoNames": 5,
+    "fullNixPATHAndGCC": true,
+    "operationsLaunched": false
+  },
+  "artifacts": {
+    "owner3-handoff.json": "b7aa5d43b21a14c17037a72a7fc542b2acc635ff5845a95002af9a842f6f3146",
+    "accepted.patch": "e6ffd5fb48a27d8cb4cce596e360da6138393f0a1e543daada95fbfee1aad8b5",
+    "accepted-prose-pass.json": "de5ccaaff6bd751bf993033653705381d617b3a69cca03a1d7db97c04489b465",
+    "preservation-and-apply.json": "a52c60eb64d72145366772452783423519fec1a70d75ae6e94a19b975416cf12",
+    "before-incorporation.bundle": "74f40f6b4ae54617b1f081aace49df25bef7f85ba88f369743524be032c26e51",
+    "before-bundle-verify.txt": "52e2c558e2ccdb71dd17fac4ad4910fb1950c2a6b60e4d6f398c4e87a5c1d7ba",
+    "run-quick.py": "00d83d625f5dac5469eff33837d88c4500594323681346cffd3264bedbef6691",
+    "quick-plan.json": "d6cb9989ae2c983eb1e923445294e5303d32e0a006560f8d0c10fbd6cca2933c",
+    "quick.json": "b3f31cfa6995c2adbb2f3b55a8689f27f329147c790fbf94019b006bc93fc981",
+    "go.stdout.jsonl": "73e836fa4188eb362e4266d3afd9d86d0514ad01fb8f8d44a1a01de437c4526f",
+    "go.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "ruby.stdout": "8d013fd6d67c3058384f35f054785730fae7721eddf1621d136de6ebea1efbe6",
+    "ruby.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "syntax.stdout": "bbafef10c22b9323fa5589564990f57fbf57f9a632381d5e765dc5a3b25b4a1b",
+    "syntax.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "tested-tree.json": "d0006b727860193045b80b2499f7439133e027066ede11919c7405f6af3ea854",
+    "commit-message.txt": "653921b5d56e096ed2fcc92d02e42aae1cd1f7fb26a7027e3ac6dc30c816eff1",
+    "commit.stdout": "f5c776243328ed0414b3c2142e55ac6d7e98a6de125488b958155a316167e128",
+    "commit.stderr": "df8a699acd4423f66f38fa89f08cb26920b1959c591bb7db2061b92fea4e341b",
+    "minimal-receipt.json": "3713263b32e7b4d7fceb668131daa844c7112d2203efbe92681ad60ecb21d83c",
+    "series.txt": "816180041f6439dee0ac92734f62107a36e179c066f8b9a7d43d8bef596c498c",
+    "full.diff": "df47f76d26ff221cdb1a6324b5d0db06bddb3987308f2b5497fc2259c8a6f82d",
+    "deletion.delta.diff": "48ceb8017cfefd26ddb63909e376ab7c632b3431d5cc2b089f29c1157b7d1b3f",
+    "range-diff.txt": "1f9cabbfbe430a9f14636777eaeb994d2fec22f1f9a933799187a6f839729345",
+    "scope-proof.json": "68d03efc3f1ad4271834fc27a04887bb8bf2d8d70c3d001f75c514045aa39ade",
+    "publication-0.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "publication-0.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "publication-1.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "publication-1.stderr": "98fddb79eb26e87a5bd5bc59af1a645c572120690e34753cab7cae785307cc93",
+    "remote-after.txt": "35e841157b360658bb903080bb166f0c143f678e2c78bb3d69e1d439bfb0e690",
+    "publication.json": "c1226248f9d5cbe6f80e736324ce2ff7c8dfd6fe7f95e7dcc70df8f8e2cccf3a",
+    "browser-command.py": "0527db29a26073bdfd98e5f8284ab4567e121c8ca91ea6407af5a825e6090c9b",
+    "browser-preparation.json": "b1323a8959cd67a7e0de00e6238d4f28b126d0f78dcb9b353f166a6c005653ee",
+    "source-metadata.json": "124e1902dc2bc0286d9f0fda3c3a50bec65aa1ec25811f4d9f2c6339fca5e164",
+    "source-metadata.stderr": "a11102f4cd002c340b5db05a2532660def76d0376e61efb68ac3692813b32dfa",
+    "metadata-command.json": "a317e37fe27019717ee20aa06b1d8bc90915c7712cb40074464ee47f69abd10f",
+    "source-identity.json": "e398dcb871501d23456b521aad7a818dc3ec3762d0900df3c8b03b1823e0d928",
+    "final.bundle": "760985ddb118a70cada93a4c2b2d93b405bfc6b296b7a93e6c28bee8c77ec441",
+    "bundle-verify.txt": "d39085503380c5d06dead46d8f3fecd0f6bb94ef2793553508de4aa2412d67fc",
+    "handoff.md": "051c3e7ff9c5a519de5de8b54d2034606755ed078d26dcfcad128650a7caae32",
+    "owner3-files/docs/dev-sessions.md": "b2b8651d7da24f48408f88d12644292aba4a64d1cff013d25214734c811a1078",
+    "before-files/docs/dev-sessions.md": "031f33a99398d5dbc97e40a4ca12348fa2750df963e01ba2fd28a82d800d11e4",
+    "owner3-files/libexec/dev-session": "76e87a9b83dd00d0e153b2f4de0081fa054a125ae3ba10d400b73809baea9a26",
+    "before-files/libexec/dev-session": "a26f6b6e62d6d1566815da2ce6bc3266c5fda8d4f9138f13ff92b25afb176399",
+    "owner3-files/portal/cmd/workspace-portal/deletion_test.go": "5a7fc65cb6954675a48ad96f677ceb30b275a82b021bf419abb1b8fbe228053a",
+    "owner3-files/portal/cmd/workspace-portal/main.go": "4408d7f9bc4998345bba50d19985b848022e50314b935b7044b2aa5208c67f5a",
+    "before-files/portal/cmd/workspace-portal/main.go": "03cf976f0de670e1ee69066fa7b599522ee251eb6a1b1817ff289d6cc4af4a4f",
+    "owner3-files/portal/internal/teamruntime/deletion.go": "6d80cf8a30d53e79e1e945b0705440a4da100916fe5e23169a29aba5e8dab0df",
+    "owner3-files/portal/internal/teamruntime/deletion_test.go": "5bb805db8fe8a8e4eea8fec4dc2e403cebb0a073c9eb45eb675425f54c696ea1",
+    "owner3-files/portal/internal/teamruntime/runtime.go": "8e6d2213f739543fad890eb865d6f8585f6272f87af31d46aff9c94d689990e5",
+    "before-files/portal/internal/teamruntime/runtime.go": "921a97ef145b09d9bed621c7a94869dfee87ef929ec070f8f95a8d2e778a8be0",
+    "owner3-files/test/dev_session/deletion_recovery_test.rb": "2e2e8f5c52c0d10821fb547cfaf5be490565c2a23a3a126e27ea80dc26b1bdf7",
+    "before-files/test/dev_session/deletion_recovery_test.rb": "55976d56425c47bb4e3821b4a7dbf9bde4de24e23d8ed71164236f38c69843e0"
+  },
+  "artifactSeal": "Explicit stable owned files only; runtime watcher outputs excluded",
+  "handoff": "handoff.md",
+  "priorFixturePacket": "backend-browser/policy-ui-remedy/final.json; all38bound artifacts unchanged"
+}

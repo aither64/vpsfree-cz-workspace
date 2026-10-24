@@ -1,0 +1,1 @@
+nix-store --add-root /home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/verification-build/composed-81d0e68c/roots/W-cluster-provider-composition-out --indirect --realise /nix/store/gyqahlhwazc2bhcp7mxa95wvgvc27yyc-workspace-cluster-provider-composition-tests

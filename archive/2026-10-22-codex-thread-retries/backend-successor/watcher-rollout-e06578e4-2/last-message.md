@@ -1,0 +1,3 @@
+**Result: failed — escalation required.** `recovery-worktree.status.json` reports exit 1 for `public-failed-creation-recovery`: it refused to retire an untrusted same-name tmux session. The file says ordinary deletion began and reconciliation is required; it authorizes no replay, GET, or switch. I stopped observation as instructed and did not cancel anything.
+
+The status artifact is [recovery-worktree.status.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/backend-successor/rollout-e06578e4/recovery-worktree.status.json). No source edits or other operations were performed.

@@ -1,0 +1,5 @@
+- **Result:** Failed, exit status 1.
+- **Revisions:** `codex-web` `55e0300b27b6927b1693b3792042762f31a385cc` (tree `b89b91b73ad5a028edfe9e72f6ecf056bde086af`); `dev-workspace` `9f03387583185d213c14ca09af190bcc27a7f309` (tree `d73fbad45383f236a926f81a6be10931b79f4830`). Both worktrees were clean before execution.
+- **Command:** `bash capture-attempt-3.sh`, run once from the released tracking directory. The test reported 51.093 seconds.
+- **Evidence:** The retry activity check failed its scrolled-up anchor assertion; composer handoff did not show “Lost original”; required question keyboard timed out locating the “First” radio option. Complete command output is retained in the execution record.
+- **Artifact status:** `capture-attempt-3/` contains `screenshots/`, but no `stdout.log`, `stderr.log`, or `result.json` was present. No process remains running.

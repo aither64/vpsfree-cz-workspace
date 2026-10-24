@@ -1,0 +1,1 @@
+nix-store --add-root /home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/verification-build/composed-81d0e68c/roots/system-rollback --indirect --realise /nix/store/yl9vnin9wlv04cip0sqpkisk80xmccwh-auto-rollback.rb

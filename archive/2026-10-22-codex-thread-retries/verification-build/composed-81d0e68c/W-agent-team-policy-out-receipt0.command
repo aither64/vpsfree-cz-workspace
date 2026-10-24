@@ -1,0 +1,1 @@
+nix-store --add-root /home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/verification-build/composed-81d0e68c/roots/W-agent-team-policy-out --indirect --realise /nix/store/bzhhvp3fws720zqpi7w0vhxnld8801yf-workspace-agent-team-policy-tests

@@ -1,0 +1,25 @@
+{
+  "command": [
+    "nix",
+    "develop",
+    "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/dev-workspace",
+    "-c",
+    "env",
+    "CODEX_WEB_TEST_BINARY=/nix/store/wz4w670930cksh1ivz13y0gn3c23cjzl-codex-package-0.163.0/bin/codex",
+    "go",
+    "test",
+    "-mod=readonly",
+    "./codex",
+    "-run",
+    "^TestPinnedCodex(RecoveryRemainsColdUntilActivation|FailedTurnRetryContract)$",
+    "-count=1",
+    "-json",
+    "-timeout=5m"
+  ],
+  "cwd": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/codex-web",
+  "environment": {
+    "DEV_SESSION_SLUG": "2026-10-22-codex-thread-retries",
+    "DEV_SESSION_WORKSPACE": "/home/aither/workspace/ai/vpsfree.cz",
+    "TMPDIR": "/tmp"
+  }
+}

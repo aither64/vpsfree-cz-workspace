@@ -1,0 +1,190 @@
+diff --git a/portal/internal/web/auto_archive_test.go b/portal/internal/web/auto_archive_test.go
+index 2b569694..3f20d686 100644
+--- a/portal/internal/web/auto_archive_test.go
++++ b/portal/internal/web/auto_archive_test.go
+@@ -40,7 +40,7 @@ func TestAutomaticArchivalPageIsSeparateFromIndex(t *testing.T) {
+ 	if page.Code != http.StatusOK {
+ 		t.Fatalf("dedicated route reached slug lookup: %d: %s", page.Code, page.Body.String())
+ 	}
+-	for _, required := range []string{"data-automatic-archival", "workspace-auto-archive-status", "workspace-auto-archive-rows", `href="/"`, `/static/app.js?v=56`} {
++	for _, required := range []string{"data-automatic-archival", "workspace-auto-archive-status", "workspace-auto-archive-rows", `href="/"`, `/static/app.js?v=58`} {
+ 		if !strings.Contains(page.Body.String(), required) {
+ 			t.Fatalf("overview lacks %q: %s", required, page.Body.String())
+ 		}
+diff --git a/portal/internal/web/browser_asset_versions_test.go b/portal/internal/web/browser_asset_versions_test.go
+new file mode 100644
+index 00000000..11374b5e
+--- /dev/null
++++ b/portal/internal/web/browser_asset_versions_test.go
+@@ -0,0 +1,48 @@
++package web
++
++import (
++	"regexp"
++	"strconv"
++	"testing"
++)
++
++func TestBrowserAssetVersionsForRetryAndQuestionUI(t *testing.T) {
++	read := func(name string) string {
++		t.Helper()
++		data, err := assets.ReadFile(name)
++		if err != nil {
++			t.Fatal(err)
++		}
++		return string(data)
++	}
++	versionAfter := func(source, path string, previous int) int {
++		t.Helper()
++		matches := regexp.MustCompile(regexp.QuoteMeta(path)+`[?]v=([0-9]+)`).FindAllStringSubmatch(source, -1)
++		if len(matches) != 1 {
++			t.Fatalf("expected one versioned %s, got %d", path, len(matches))
++		}
++		version, err := strconv.Atoi(matches[0][1])
++		if err != nil || version <= previous {
++			t.Fatalf("%s reuses cached predecessor identity v%d: %s", path, previous, matches[0][0])
++		}
++		return version
++	}
++	// Deployed conversation.js?v=23 can remain fresh in a browser's HTTP
++	// cache for five minutes and lacks the now mandatory question export.
++	// A fresh page must select a new module URL even after an older page
++	// warmed that cache. Do not replace this with a missing-export fallback.
++	versionAfter(read("static/app.js"), "/codex/assets/conversation.js", 23)
++	session := read("templates/session.html")
++	versionAfter(session, "/codex/assets/conversation.css", 9)
++	versionAfter(session, "/static/style.css", 22)
++	// All consumers of the changed app entry point select the same fresh
++	// bytes, including navigation from index/archival to the conversation.
++	var appVersion int
++	for _, name := range []string{"session.html", "index.html", "automatic-archival.html"} {
++		version := versionAfter(read("templates/"+name), "/static/app.js", 57)
++		if appVersion != 0 && version != appVersion {
++			t.Fatalf("%s selects app v%d, expected v%d", name, version, appVersion)
++		}
++		appVersion = version
++	}
++}
+diff --git a/portal/internal/web/composer_handoff_browser_test.cjs b/portal/internal/web/composer_handoff_browser_test.cjs
+index c7bafaac..44ddc36f 100644
+--- a/portal/internal/web/composer_handoff_browser_test.cjs
++++ b/portal/internal/web/composer_handoff_browser_test.cjs
+@@ -164,11 +164,10 @@ const digest = text => createHash("sha256").update(text).digest("hex");
+           await expect(prompt).toHaveValue(`Preserve ${fault}`);
+           await expect(page.locator("#message-uploads")).toContainText(`preserve-${fault}.txt`);
+           assert.equal(sends.length, before);
+-          await page.evaluate(() => {window.composerFault = null;});
++          // Reset only this disposable fixture's selection between fault cases;
++          // retain every original attempt and its immutable attachment IDs.
++          await page.evaluate(key => {window.composerFault = null; localStorage.setItem(key, "[]");}, draftKey);
+           await page.reload(); await expect(send).toBeEnabled();
+-          // Clear selection through its own supported control, preserving all
+-          // recovery attempts. This is disposable fixture state only.
+-          for (const remove of await page.locator('#message-uploads button[aria-label^="Remove "]').all()) await remove.click();
+           await expect(page.locator("#message-uploads .codex-attachment")).toHaveCount(0);
+         }
+         phase = "interrupt-while-sending";
+diff --git a/portal/internal/web/question_browser_test.go b/portal/internal/web/question_browser_test.go
+index d16b2529..c4042a7c 100644
+--- a/portal/internal/web/question_browser_test.go
++++ b/portal/internal/web/question_browser_test.go
+@@ -20,6 +20,26 @@ import (
+ 	"github.com/aither64/dev-workspace/portal/internal/teamruntime"
+ )
+ 
++// The controlled page fixture owns these two synthetic conversations. Preserve
++// the shared contract fake's strict single-thread verification in other tests.
++type questionBrowserCodex struct{ browserContractCodex }
++
++func (client *questionBrowserCodex) VerifyThread(ctx context.Context, threadID, cwd string) error {
++	if threadID == "member-thread" {
++		return nil
++	}
++	return client.browserContractCodex.VerifyThread(ctx, threadID, cwd)
++}
++
++func (client *questionBrowserCodex) ReadThread(ctx context.Context, threadID string) (codex.Transcript, error) {
++	if err := client.VerifyThread(ctx, threadID, ""); err != nil {
++		return codex.Transcript{}, err
++	}
++	transcript, err := client.browserContractCodex.ReadThread(ctx, threadID)
++	transcript.ThreadID = threadID
++	return transcript, err
++}
++
+ // Run with PORTAL_BROWSER_TEST=1 and Nix-provided Node, Playwright modules and
+ // PLAYWRIGHT_BROWSERS_PATH. The browser controls API responses, while the actual
+ // server supplies the session template, CSP, scripts, styles and upload service.
+@@ -66,9 +86,9 @@ func TestQuestionBrowser(t *testing.T) {
+ 	}
+ 	writeWebRuntimeAuthority(t, server, "example")
+ 	events := make(chan struct{}, 1)
+-	server.config.Codex = &browserContractCodex{emptyPrompts: true, events: events, transcript: codex.Transcript{
++	server.config.Codex = &questionBrowserCodex{browserContractCodex{emptyPrompts: true, events: events, transcript: codex.Transcript{
+ 		ThreadID: "thread-1", Status: "active", CollaborationMode: "plan",
+-	}}
++	}}}
+ 	httpServer := httptest.NewUnstartedServer(nil)
+ 	server.config.BaseURL = "https://" + httpServer.Listener.Addr().String()
+ 	server.trustedOrigins = []string{server.config.BaseURL}
+diff --git a/portal/internal/web/static/app.js b/portal/internal/web/static/app.js
+index 5896d6a0..01956b48 100644
+--- a/portal/internal/web/static/app.js
++++ b/portal/internal/web/static/app.js
+@@ -1208,7 +1208,7 @@
+     return;
+   }
+ 
+-  const conversationAssets = await import("/codex/assets/conversation.js?v=23");
++  const conversationAssets = await import("/codex/assets/conversation.js?v=24");
+   sharedTranscriptPresentation = conversationAssets.transcriptEntryPresentation;
+   sharedTranscriptVisible = conversationAssets.transcriptEntryVisible;
+   refreshPolicy = conversationAssets.refreshPolicy;
+diff --git a/portal/internal/web/templates/automatic-archival.html b/portal/internal/web/templates/automatic-archival.html
+index 3c0f2843..2b7e472c 100644
+--- a/portal/internal/web/templates/automatic-archival.html
++++ b/portal/internal/web/templates/automatic-archival.html
+@@ -18,7 +18,7 @@
+       <div id="workspace-auto-archive-rows"></div>
+     </section>
+   </main>
+-  <script src="/static/app.js?v=56" defer></script>
++  <script src="/static/app.js?v=58" defer></script>
+ </body>
+ </html>
+ {{end}}
+diff --git a/portal/internal/web/templates/index.html b/portal/internal/web/templates/index.html
+index 9a37a1e5..4d190b3f 100644
+--- a/portal/internal/web/templates/index.html
++++ b/portal/internal/web/templates/index.html
+@@ -98,7 +98,7 @@
+   <script src="/static/session-attention-store.js?v=4" defer></script>
+   <script src="/static/browser-notifications.js?v=6" defer></script>
+   <script src="/static/preparation.js?v=5" defer></script>
+-  <script src="/static/app.js?v=56" defer></script>
++  <script src="/static/app.js?v=58" defer></script>
+   <script src="/static/coordination.js?v=6" defer></script>
+ </body>
+ </html>
+diff --git a/portal/internal/web/templates/session.html b/portal/internal/web/templates/session.html
+index 22df21c2..1ecce64d 100644
+--- a/portal/internal/web/templates/session.html
++++ b/portal/internal/web/templates/session.html
+@@ -6,7 +6,7 @@
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+   <meta name="style-nonce" content="{{.StyleNonce}}">
+   <title>{{.Session.Slug}} · Workspace</title>
+-  <link rel="stylesheet" href="/codex/assets/conversation.css?v=9">
++  <link rel="stylesheet" href="/codex/assets/conversation.css?v=10">
+   <link rel="stylesheet" href="/static/style.css?v=23">
+   <link rel="stylesheet" href="/codex/assets/uploads.css?v=3">
+ </head>
+@@ -279,7 +279,7 @@
+       <div class="dialog-actions"><button type="button" class="quiet" data-dialog-close>Cancel</button><button type="submit" class="danger">Delete session</button></div>
+     </form>
+   </dialog>
+-  <script src="/static/app.js?v=57" defer></script>
++  <script src="/static/app.js?v=58" defer></script>
+   <script src="/static/session-attention-store.js?v=4" defer></script>
+   <script src="/static/browser-notifications.js?v=6" defer></script>
+   <script src="/static/session-attention.js?v=2" defer></script>

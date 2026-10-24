@@ -1,0 +1,9 @@
+codex: isolate caller cancellation before shared writes
+
+A request canceled behind the shared writer can discard a healthy
+connection and fail sibling calls before its own frame is sent.
+
+Check the caller context after generation and prompt-claim validation.
+Return the existing transport error without retiring the connection at
+this pre-write boundary. Errors after entering Write keep their existing
+disconnection and unknown-delivery behavior.

@@ -1,0 +1,31 @@
+commit 39497062e0da98a70386355384fa922c0eaa0168
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Fri Oct 23 21:27:13 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Fri Oct 23 21:32:24 2026 +0200
+
+    portal: present retry activity inside the conversation viewport
+    
+    Keep transcript messages and date rows in their own list so full and
+    incremental rendering preserve an optional retry footer. Place active and
+    dismissible activity at the viewport bottom without changing the composer
+    or leaving space when the footer is hidden.
+    
+    Expose two session-wide retry preferences in Settings only when the policy
+    capability is available. Retain exact revision comparison and observation
+    after uncertain writes; remove the per-thread toggle. Scheduling, policy
+    storage and native delivery remain unchanged in this presentation slice.
+    
+    Use the actual HTTPS template and assets in a controlled browser fixture
+    for rare states and desktop/mobile acceptance before backend expansion.
+
+ docs/turn-retry-recovery.md                        |  10 +-
+ docs/workspace-portal.md                           |  31 ++-
+ portal/internal/web/paging_browser_test.cjs        |   2 +-
+ portal/internal/web/question_browser_test.go       |  16 +-
+ .../internal/web/retry_activity_browser_test.cjs   | 266 +++++++++++++++++++++
+ portal/internal/web/server_test.go                 |   2 +-
+ portal/internal/web/static/app.js                  | 109 +++++++--
+ portal/internal/web/static/style.css               |  15 +-
+ portal/internal/web/templates/session.html         |  16 +-
+ 9 files changed, 426 insertions(+), 41 deletions(-)

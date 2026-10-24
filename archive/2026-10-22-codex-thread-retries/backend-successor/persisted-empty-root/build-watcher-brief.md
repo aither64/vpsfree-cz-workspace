@@ -1,0 +1,10 @@
+# Final b3 package and composition batch
+Status: RELEASED. Native producer PASS, final W/C publication and parent mechanical reconstruction accepted. Run the two independent commands concurrently once.
+
+Fresh managed Luna/low operation utility, one related batch. Read these exact files in full: /home/aither/.codex/skills/dev-session-monitor/SKILL.md; /home/aither/workspace/ai/vpsfree.cz/AGENTS.md; /home/aither/workspace/ai/vpsfree.cz/docs/agent-instructions/verification.md; /home/aither/workspace/ai/vpsfree.cz/docs/agent-instructions/deployment.md; /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/dev-workspace/AGENTS.md; /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/workspace/AGENTS.md; /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/vpsfree-cz-configuration/AGENTS.md. Do not invent an AGENTS requirement under tracking/backend-successor. Verify exact bound session/environment.
+
+Once RELEASED, from /home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries, launch these independent read-only commands ONCE CONCURRENTLY and own both handles until completion:
+python3 backend-successor/persisted-empty-root/run-affected-packaged-verification.py
+python3 backend-successor/persisted-empty-root/run-composed-verification.py
+
+Separate source/read-only checks and unique roots/output paths permit concurrency; Nix owns shared derivation scheduling. Preserve both raw results and logs; no retry or launch of any later operation on failure. No A/browser/native/model campaign. Ruby reuse requires exact successful derivations and full shard coverage, enforced by driver. Stop only owned commands if unexpected local Linux kernel build begins, and report. No silence timeout. No source edits, diagnosis, CI, live endpoints/RPC, claim/deployment/recovery/integration/lifecycle/cleanup or nested agents/CLI. Return both actual driver exits/result paths/elapsed and any still-running command; outer utility exit alone is not acceptance.

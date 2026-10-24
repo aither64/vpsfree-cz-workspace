@@ -1,0 +1,118 @@
+{
+  "head": "480231f5127c69ae210f0d17796a57481cdc2e28",
+  "tree": "6f951eba4574836750d888238db605dca89c7dca",
+  "tested_tree": "6f951eba4574836750d888238db605dca89c7dca",
+  "source": "/nix/store/qby8mrbxsv6nia6mx8k859y2c1kyi0k8-source",
+  "narHash": "sha256-QyyVloDNlPcgl4NH7sq4i+3Ts/gDCVDD5igcs2kC6/c=",
+  "lastModified": 1792784599,
+  "clean": true,
+  "remote_verified_head": "480231f5127c69ae210f0d17796a57481cdc2e28",
+  "source_blob_mode_verified_files": 561,
+  "base": "bf6d4b0c49600c15e17fe71248807ef43424e932",
+  "deployed_predecessor": "7b8c646974df72e0df3e576d10f09d79823ae004",
+  "reviewed_predecessor": "39497062e0da98a70386355384fa922c0eaa0168",
+  "prior_receipt": "reviewed-39497062/b-final.json",
+  "original_reviewed_bundle": "b-reviewed-39497062.bundle",
+  "full_series": [
+    {
+      "commit": "7262c24e4fbe9dbf8604e73590f9b5ef3d5dce99",
+      "tree": "082d1fa7228113019bb63fa29cdcb82189bc76cc",
+      "subject": "turnretry: retain bounded retry policy and admission state"
+    },
+    {
+      "commit": "b3c7187c6e26e269994433716a0ee719d0a7edf7",
+      "tree": "001755e5b7336ec3f8b8a3a1f7e3545482e3e82e",
+      "subject": "runtime: require retry-capable package transitions"
+    },
+    {
+      "commit": "aafaf4195d695c4641ce4f9342d56a1786f237c3",
+      "tree": "208aa98473f80994320a4e2d9818326723c166e7",
+      "subject": "portal: continue new managed failed turns through durable retry admission"
+    },
+    {
+      "commit": "67b354e814162533f6d19342e4e4513540be70fd",
+      "tree": "6247e6a81949f10ae8ff12cdc71e4a0fe9acc350",
+      "subject": "deps: select codex-web retry activity support"
+    },
+    {
+      "commit": "6dba4c398ba2bf54896734ab88eb449cffcd237f",
+      "tree": "a93b46940e716f3c8d3d40b42ebd8f5b9725f20a",
+      "subject": "portal: retire accepted retry provenance before bounded admission"
+    },
+    {
+      "commit": "6435f157fbb0a7e5084a48a3966f2b531d906036",
+      "tree": "c10a66f5a7756074dc62f0316101cf78183ffdc2",
+      "subject": "portal: admit exact prepared plan requests after mode selection"
+    },
+    {
+      "commit": "b8967dfe58b83c8b82c3fd7980b4d2b58dab589c",
+      "tree": "49df583af5c5694fd6758cbce7958bf1235264d7",
+      "subject": "portal: wait within HTTP budgets for transient runtime contention"
+    },
+    {
+      "commit": "480231f5127c69ae210f0d17796a57481cdc2e28",
+      "tree": "6f951eba4574836750d888238db605dca89c7dca",
+      "subject": "portal: present retry activity inside the conversation viewport"
+    }
+  ],
+  "sole_A_selection": {
+    "commit": "67b354e814162533f6d19342e4e4513540be70fd",
+    "head": "f86290673d752c77b56c70228c3d26aced75e177",
+    "version": "v0.0.0-20261023192737-f86290673d75",
+    "sum": "h1:5iVFEW9ghXtccbfhFB2swLC+UqZYIqEPaRfNOh1bsMM=",
+    "goModSum": "h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=",
+    "narHash": "sha256-jOEXFTr55N88YbPakjlMw/7wsH8ZKr51Ag+Z1QaM25A=",
+    "lastModified": 1792783657,
+    "source": "/nix/store/2fcnmakk5qvazcsqp1kk7rwpq9vc97sk-source",
+    "vendorHash": "sha256-x0Qrgfvcn74v0E6zJ7JKgwBnOGuJNUNTZQz0JdFIqcU=",
+    "vendor_directory": "/tmp/codex-thread-retries-ui-vendor-f8629067"
+  },
+  "consumer_graph": {
+    "Go": "portal/go.mod -> codex-web f862; web client and handler tests consume embedded conversation assets",
+    "Nix": "flake.nix/flake.lock codex-web -> nix/workspace-portal.nix source+version + regenerated vendorHash",
+    "browser": "session.html -> static/app.js -> optional mountRetryActivity(root, {client,conversationKey}); createConversationClient retryActivity/retryNow/stopRetry token-only routes",
+    "policy": "B Settings -> /api/sessions/{slug}/retry-policy exact revision + both booleans; controlled fixture only until later backend package"
+  },
+  "schema_migrations": "none; schema1 retry and schema3 submission unchanged; no new sidecar or policy backend in this milestone",
+  "finding": "Important I1: footer-only layout changes did not follow because only fixed viewport was observed",
+  "remediation": "Observe retryRoot with the existing transcriptResize ResizeObserver, retaining its current per-filter follow flag and no-scroll behavior for scrolled-up views. No new framework, public API, backend or copy.",
+  "exact_delta_paths": [
+    "portal/internal/web/static/app.js",
+    "portal/internal/web/retry_activity_browser_test.cjs"
+  ],
+  "prior_seven_commits_exact": true,
+  "product_delta": "one added transcriptResize.observe(retryRoot) line",
+  "tests": {
+    "b-i1-quick.log": "PASS syntax, paging contract, readcycle17; shipped client HTTP1.069s; fixture compiled0.047s",
+    "new_browser_assertions": "activity:null -> scheduled, height growth/shrink with no manual scroll; holds transcript responses and asserts unchanged response count to prevent incidental transcript rendering from masking the regression; existing scrolled-up focus/selection/anchor cases retained",
+    "browser_execution": "not run; lead watcher after review",
+    "capture_guard": "capture.sh now exact480231f5 and clean source"
+  },
+  "not_run": [
+    "Playwright capture",
+    "native",
+    "long/full tests",
+    "build",
+    "deployment"
+  ],
+  "artifacts": {
+    "b-i1-exact.patch": "6e090dd670716745c6b097e67319019190b764b24937465ce9cf65817f96c649",
+    "b-i1-range-diff.txt": "a2b55d0be422a40169bd0099be58195de778c0dbfef0390bbee7229428bbc672",
+    "b-i1-full-final.patch": "148b16fcc3eb3ce5816d983a7bd170473e66ce58a9cad66fe88b3d02c6ce00bf",
+    "b-i1-deployed-final.patch": "1366f619fa3f55ed89be3628ade08551f4725eed6695bc6369be135b4ce53712",
+    "b-i1-final.bundle": "400a039a94c83dbaa9bcfdb5839cf7d25004e3fe46e817d6d5d188de8fdd457f",
+    "b-i1-quick.log": "8ae5c02e25889800574b8ae1727d2e78585a85376aaebb681c7221d2c49203b8",
+    "capture.sh": "9feabcb9c3e2cbe937e60abe052ded2e226f389a67653cc064cd35547355e667",
+    "b-i1-superseded-cancel.stderr": "5470353b1d9c51816832c59c732600687947767235922c0d20e1f16fb870aa54"
+  },
+  "ci_snapshot": {
+    "current_run": 40013640217,
+    "status": "in_progress at one-shot snapshot",
+    "superseded_run": 40012270221,
+    "superseded_status": "in_progress at one-shot snapshot",
+    "cancellation": "rejected HTTP403 Resource not accessible by personal access token",
+    "cancellation_attempts": 1,
+    "no_wait_rerun_or_credential_workaround": true,
+    "evidence": "b-i1-superseded-cancel.stderr"
+  }
+}

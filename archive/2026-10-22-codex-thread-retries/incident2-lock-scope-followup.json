@@ -1,0 +1,13 @@
+{
+  "recorded_at": "2026-10-23T16:56:16.348729+00:00",
+  "finding": "team assign legitimately holds EX runtime lock across synchronous portal child/RPC, same inode/path as browser nonblocking SH lock.",
+  "source": {
+    "libexec/dev-session:1838-1850": "with_slug_lock wraps invoke_team_command",
+    "libexec/dev-session:1916-1917": "synchronous command_runner.capture",
+    "libexec/dev-session:7952-7970": "exclusive with_host_lock",
+    "libexec/dev-session:7822-7826": "authority/<slug>.lock",
+    "portal/internal/session/authority.go:45-75": "nonblocking shared browser flock"
+  },
+  "limits": "No historical lock-holder attribution; three bounded snapshots no current holder, no leak/stuck proof. No lock acquire/release/stop/workaround.",
+  "next": "Await saved brief, then additive A helper successor after actual deployedc1f."
+}

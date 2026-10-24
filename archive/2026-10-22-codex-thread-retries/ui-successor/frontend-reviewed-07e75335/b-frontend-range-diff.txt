@@ -1,0 +1,188 @@
+ 1:  7262c24e =  1:  7262c24e turnretry: retain bounded retry policy and admission state
+ 2:  b3c7187c =  2:  b3c7187c runtime: require retry-capable package transitions
+ 3:  aafaf419 =  3:  aafaf419 portal: continue new managed failed turns through durable retry admission
+ 4:  67b354e8 !  4:  4ff797e5 deps: select codex-web retry activity support
+    @@ flake.lock
+            "locked": {
+     -        "lastModified": 1792612976,
+     -        "narHash": "sha256-VKTZcWXrTjE7DKFjye4hig3Kg3vWcg6T/vEw+2D8PLA=",
+    -+        "lastModified": 1792783657,
+    -+        "narHash": "sha256-jOEXFTr55N88YbPakjlMw/7wsH8ZKr51Ag+Z1QaM25A=",
+    ++        "lastModified": 1792785904,
+    ++        "narHash": "sha256-IhCdZ7HpW3sora4/WnvWoCLotFZtMMldGCLItXoC90w=",
+              "owner": "aither64",
+              "repo": "codex-web",
+     -        "rev": "ea64ef57fdd2ff5fd60715b62f2d1696bc0133e5",
+    -+        "rev": "f86290673d752c77b56c70228c3d26aced75e177",
+    ++        "rev": "55e0300b27b6927b1693b3792042762f31a385cc",
+              "type": "github"
+            },
+            "original": {
+              "owner": "aither64",
+              "repo": "codex-web",
+     -        "rev": "ea64ef57fdd2ff5fd60715b62f2d1696bc0133e5",
+    -+        "rev": "f86290673d752c77b56c70228c3d26aced75e177",
+    ++        "rev": "55e0300b27b6927b1693b3792042762f31a385cc",
+              "type": "github"
+            }
+          },
+    @@ flake.nix
+          llm-agents.url = "github:numtide/llm-agents.nix";
+          codex-web = {
+     -      url = "github:aither64/codex-web/ea64ef57fdd2ff5fd60715b62f2d1696bc0133e5";
+    -+      url = "github:aither64/codex-web/f86290673d752c77b56c70228c3d26aced75e177";
+    ++      url = "github:aither64/codex-web/55e0300b27b6927b1693b3792042762f31a385cc";
+            flake = false;
+          };
+        };
+    @@ nix/workspace-portal.nix: buildGoModule {
+        inherit src;
+        modRoot = "portal";
+     -  vendorHash = "sha256-ABmwKlrjiXjFrrtplRaw2fmMDlv/gxWfufEMA0vjXNQ=";
+    -+  vendorHash = "sha256-x0Qrgfvcn74v0E6zJ7JKgwBnOGuJNUNTZQz0JdFIqcU=";
+    ++  vendorHash = "sha256-jrp5UYCY0XK0Nw1jzOPv5IRaH4YlLle5M15l8opx4Qo=";
+      
+        postPatch = ''
+          expected=${lib.escapeShellArg codexWebVersion}
+    @@ portal/go.mod: go 1.24.0
+      require (
+      	github.com/SherClockHolmes/webpush-go v1.4.0
+     -	github.com/aither64/codex-web v0.0.0-20261021200256-ea64ef57fdd2
+    -+	github.com/aither64/codex-web v0.0.0-20261023192737-f86290673d75
+    ++	github.com/aither64/codex-web v0.0.0-20261023200504-55e0300b27b6
+      	github.com/coder/websocket v1.8.14
+      	github.com/microcosm-cc/bluemonday v1.0.27
+      	github.com/yuin/goldmark v1.7.17
+    @@ portal/go.sum
+      github.com/SherClockHolmes/webpush-go v1.4.0/go.mod h1:XSq8pKX11vNV8MJEMwjrlTkxhAj1zKfxmyhdV7Pd6UA=
+     -github.com/aither64/codex-web v0.0.0-20261021200256-ea64ef57fdd2 h1:8Lsxt7NqJnmuZEfApQCqLRKDXQ98RhbANH1mL1kHHkc=
+     -github.com/aither64/codex-web v0.0.0-20261021200256-ea64ef57fdd2/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
+    -+github.com/aither64/codex-web v0.0.0-20261023192737-f86290673d75 h1:5iVFEW9ghXtccbfhFB2swLC+UqZYIqEPaRfNOh1bsMM=
+    -+github.com/aither64/codex-web v0.0.0-20261023192737-f86290673d75/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
+    ++github.com/aither64/codex-web v0.0.0-20261023200504-55e0300b27b6 h1:f34novYrdHGiXSAeNfaCAkpkwvNnsI0qGa1XkGK3FDo=
+    ++github.com/aither64/codex-web v0.0.0-20261023200504-55e0300b27b6/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
+      github.com/aymerick/douceur v0.2.0 h1:Mv+mAeH1Q+n9Fr+oyamOlAkUNPWPlA8PPGR0QAaYuPk=
+      github.com/aymerick/douceur v0.2.0/go.mod h1:wlT5vV2O3h55X9m7iVYN0TBM0NH/MmbLnd30/FjWUq4=
+      github.com/coder/websocket v1.8.14 h1:9L0p0iKiNOibykf283eHkKUHHrpG7f65OE3BhhO7v9g=
+ 5:  6dba4c39 =  5:  24bf3c0b portal: retire accepted retry provenance before bounded admission
+ 6:  6435f157 =  6:  4b368337 portal: admit exact prepared plan requests after mode selection
+ 7:  b8967dfe =  7:  07782784 portal: wait within HTTP budgets for transient runtime contention
+ 8:  5e342788 !  8:  18767205 portal: present retry activity inside the conversation viewport
+    @@ portal/internal/web/retry_activity_browser_test.cjs (new)
+     +      const page = await browser.newPage({ignoreHTTPSErrors: true,
+     +        viewport: mobile ? {width: 390, height: 844} : {width: 1440, height: 1000}});
+     +      const errors = [], requestFailures = [], httpFailures = [], writes = [], actions = [];
+    ++      const timeline = [];
+    ++      const trace = (event, detail = {}) => {
+    ++        timeline.push({sequence: timeline.length ? timeline.at(-1).sequence + 1 : 1, event, ...detail});
+    ++        if (timeline.length > 200) timeline.shift();
+    ++      };
+     +      const suffix = mobile ? "mobile" : "desktop";
+     +      let phase = "startup";
+     +      page.on("pageerror", error => errors.push(error.message));
+     +      page.on("requestfailed", request => requestFailures.push({url: request.url(), error: request.failure()?.errorText}));
+     +      page.on("response", response => { if (response.status() >= 400) httpFailures.push({url: response.url(), status: response.status()}); });
+    ++      page.on("console", message => {
+    ++        const prefix = "retry-fixture-geometry ";
+    ++        if (message.text().startsWith(prefix)) trace("geometry", JSON.parse(message.text().slice(prefix.length)));
+    ++      });
+     +      reportFailure = async () => {
+     +        const evidence = {viewport: suffix, phase, url: page.url(), pageErrors: errors.slice(-20).map(message => message.slice(0, 2048)),
+     +          requestFailures: requestFailures.slice(-30), httpFailures: httpFailures.slice(-30)};
+    ++        try { evidence.geometry = await page.evaluate(() => window.retryGeometry?.("failure")); }
+    ++        catch (failure) { evidence.geometryError = failure.message; }
+    ++        evidence.timeline = timeline.slice();
+     +        if (capture) {
+     +          try {
+     +            const file = `failure-${suffix}.png`;
+    @@ portal/internal/web/retry_activity_browser_test.cjs (new)
+     +          }
+     +          return failPolicy ? json({error: "Fixture unavailable"}, 503) : json(policy);
+     +        }
+    -+        if (url.pathname.endsWith("/retry/activity")) return activityAvailable ? json({serverNowMs: 100000, activity: state}) : json({error: "Fixture optional activity unavailable"}, 404);
+    ++        if (url.pathname.endsWith("/retry/activity")) {
+    ++          trace("activity-fulfill", {class: state?.class, phase: state?.phase});
+    ++          return activityAvailable ? json({serverNowMs: 100000, activity: state}) : json({error: "Fixture optional activity unavailable"}, 404);
+    ++        }
+     +        if (url.pathname.endsWith("/retry/now") || url.pathname.endsWith("/retry/stop")) {
+     +          const body = route.request().postDataJSON(); actions.push({operation, body});
+     +          assert.deepEqual(Object.keys(body), ["token"]);
+    @@ portal/internal/web/retry_activity_browser_test.cjs (new)
+     +        if (url.pathname.endsWith("/retry") || url.pathname.endsWith("/retry/enabled") || url.pathname.endsWith("/retry/cancel")) throw new Error("Removed thread retry control used a legacy route");
+     +        if (operation === "thread" || operation === "page") {
+     +          threadReads++;
+    ++          const read = threadReads;
+    ++          trace("transcript-request", {read, held: holdTranscript});
+     +          if (holdTranscript) await new Promise(resolve => heldTranscriptReads.push(resolve));
+     +          threadResponses++;
+    ++          trace("transcript-fulfill", {read, response: threadResponses});
+     +          return json({threadId: url.pathname.includes("~") ? "member-thread" : "thread-1",
+     +            latestTurnId: "task", status: "idle", collaborationMode: "default", model: "model-1",
+     +            reasoningEffort: "medium", entries: url.searchParams.has("cursor") ? entries(81, 100) : newer,
+    @@ portal/internal/web/retry_activity_browser_test.cjs (new)
+     +      const screenshot = async name => { phase = name; if (capture) await page.screenshot({path: path.join(capture, `${name}-${suffix}.png`), animations: "disabled"}); };
+     +      const notice = page.locator("#automatic-turn-retry");
+     +      const refresh = async () => {
+    ++        trace("focus-refresh", {phase, class: state?.class, activityPhase: state?.phase});
+     +        await page.evaluate(() => dispatchEvent(new Event("focus")));
+     +      };
+     +      const startTranscript = async () => {
+    @@ portal/internal/web/retry_activity_browser_test.cjs (new)
+     +      const scroll = page.locator("#transcript");
+     +      const bottomDistance = () => scroll.evaluate(node => node.scrollHeight - node.clientHeight - node.scrollTop);
+     +      await load(false, false);
+    ++      await page.evaluate(() => {
+    ++        const log = document.getElementById("transcript"), footer = document.getElementById("automatic-turn-retry");
+    ++        const bounds = node => {
+    ++          const rect = node?.getBoundingClientRect();
+    ++          return rect ? {top: rect.top, bottom: rect.bottom, height: rect.height} : null;
+    ++        };
+    ++        window.retryGeometry = (label, detail = {}) => {
+    ++          const anchor = window.retryAnchor?.node;
+    ++          const value = {label, ...detail, scrollTop: log.scrollTop, scrollHeight: log.scrollHeight,
+    ++            clientHeight: log.clientHeight, viewport: bounds(log), footer: bounds(footer), footerHidden: footer.hidden,
+    ++            entries: bounds(document.getElementById("transcript-entries")), anchor: bounds(anchor),
+    ++            anchorConnected: anchor?.isConnected, capturedAnchorTop: window.retryAnchor?.top,
+    ++            messages: document.querySelectorAll("#transcript-entries .message").length};
+    ++          console.debug("retry-fixture-geometry " + JSON.stringify(value));
+    ++          return value;
+    ++        };
+    ++        log.addEventListener("wheel", event => window.retryGeometry("wheel", {deltaY: event.deltaY}), {passive: true});
+    ++        log.addEventListener("scroll", () => window.retryGeometry("scroll"), {passive: true});
+    ++        new ResizeObserver(() => window.retryGeometry("resize")).observe(footer);
+    ++        new MutationObserver(() => window.retryGeometry("entries-mutation")).observe(document.getElementById("transcript-entries"), {childList: true});
+    ++        new MutationObserver(() => window.retryGeometry("footer-mutation")).observe(footer, {childList: true, subtree: true, attributes: true});
+    ++      });
+     +      await expect.poll(bottomDistance).toBeLessThanOrEqual(2);
+     +      // Focus refresh may request both lanes. Hold every transcript response
+     +      // so its render cannot accidentally supply the footer's missing follow.
+    @@ portal/internal/web/retry_activity_browser_test.cjs (new)
+     +      await expect.poll(bottomDistance).toBeLessThanOrEqual(2);
+     +      assert.equal(threadResponses, initialThreadResponses, "transcript rendering masked the activity-only follow check");
+     +      holdTranscript = false;
+    ++      trace("release-transcript", {held: heldTranscriptReads.length});
+     +      for (const release of heldTranscriptReads.splice(0)) release();
+     +
+     +      // Both render owners must leave the footer node, focus and selection intact.
+     +      await page.locator("#message-form textarea").fill("Keep this draft.");
+     +      await page.locator("#message-form textarea").evaluate(node => { node.focus(); node.setSelectionRange(2, 6); });
+    ++      phase = "scrolled-up-notice";
+    ++      await page.evaluate(() => window.retryGeometry("before-wheel"));
+     +      await scroll.hover(); await page.mouse.wheel(0, -120);
+     +      await page.clock.runFor(100);
+     +      await page.evaluate(() => {
+    @@ portal/internal/web/retry_activity_browser_test.cjs (new)
+     +        const log = document.getElementById("transcript");
+     +        const message = [...document.querySelectorAll("#transcript-entries .message")].find(node => node.getBoundingClientRect().bottom > log.getBoundingClientRect().top);
+     +        window.retryAnchor = {node: message, top: message.getBoundingClientRect().top};
+    ++        window.retryGeometry("anchor-captured");
+     +      });
+     +      state = activity({class: "cybersecurity", nextAttemptAtMs: 100000});
+     +      await refresh();
+     +      await expect(notice).toContainText(/Cybersecurity/i);
+    ++      await page.evaluate(() => window.retryGeometry("notice-updated"));
+     +      assert.deepEqual(await page.locator("#message-form textarea").evaluate(node => [node.selectionStart, node.selectionEnd, document.activeElement === node]), [2, 6, true]);
+     +      assert.ok(await page.evaluate(() => Math.abs(window.retryAnchor.node.getBoundingClientRect().top - window.retryAnchor.top) < 2), "notice update shifted a scrolled-up message");
+     +      assert.ok(await page.evaluate(() => window.retryFooter === document.getElementById("automatic-turn-retry")));
+ -:  -------- >  9:  a570286d portal: release the next draft before message acknowledgment
+ -:  -------- > 10:  07e75335 portal: submit question text through its owning action

@@ -1,0 +1,12 @@
+{
+  "sourceFile": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/dev-workspace-delete-guard/docs/dev-sessions.md",
+  "sourceSha256": "1293582c4c41ad2297f27f7075920d14b7f6dd066f49517097686b7a5ddfd751",
+  "replacements": [
+    {
+      "old": "thread identity normally blocks deletion. During an unfinished direct-team\ncreation, deletion can abandon a reservation whose native start was attempted\nbut never acknowledged or bootstrapped, provided the initial request was never\nattempted or sent. It preserves the unknown project's identity, attempt and\nsettings in a `removed` member record with a removal time in private `team.json`\nrecovery storage. The native outcome remains unknown: a thread may still appear,\nand deletion neither deletes the project nor adopts or initializes that thread.\nThe deletion journal must reach `thread_retiring` before this record is saved;\nan interrupted attempt resumes the same journal and preserves the removal time.\nOther missing identities still require resolution before deletion. If a non-forced attempt stops at an\n",
+      "new": "thread identity normally blocks deletion. During an unfinished direct-team\ncreation, deletion can mark an unconfirmed, unbootstrapped member reservation as\n`removed` if its native start was attempted and both initial-request flags\nexplicitly record that the request was neither attempted nor sent. The private\nrecovery file `team.json` retains the project identity, start attempt, settings\nand removal time. The native outcome remains unknown: a thread may still appear.\nDeletion preserves the project and neither adopts nor initializes that thread.\nThe deletion journal must durably reach `thread_retiring` before saving the\nremoved record. An interrupted deletion resumes the same journal and preserves\nthe removal time. Other missing identities still require resolution before\ndeletion. If a non-forced attempt stops at an\n"
+    }
+  ],
+  "errorsAcceptedUnchanged": true,
+  "instructions": "Apply exact once before commit; retain all technical facts, flags, identifiers and recovery semantics. Direct lead vpsfree-user-facing-writing + humanizer-en pass."
+}

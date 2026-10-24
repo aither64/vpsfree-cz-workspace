@@ -1,0 +1,312 @@
+--- a/libexec/dev-session
++++ b/libexec/dev-session
+@@ -2419,7 +2419,9 @@
+           reject_conflicting_lifecycle_journal!(slug, operation: 'delete', deletion_context:)
+           coordination_store.require_lifecycle_idle!(workspace, slug)
+           coordination_store.require_lifecycle_capacity!(workspace, slug, 'delete') unless load_removal_journal(slug)
+-          ensure_retirement_identity!(slug, cleanup_session(slug))
++          session = cleanup_session(slug)
++          publish_failed_creation_delete_authority!(slug, session, deletion_context) if deletion_context
++          ensure_retirement_identity!(slug, session)
+           removal = prepare_removal!(slug, force:, operation_id:)
+           retry_root = load_portal_manifest(portal_file(slug), required: false)&.dig('codex', 'thread_id')
+           recovery_state!(slug, retry_root, 'cancel-retries') if retry_root
+@@ -6335,6 +6337,31 @@
+       candidates.first
+     rescue ArgumentError, KeyError => e
+       raise Error, "invalid completed failed-creation removal: #{e.message}"
++    end
++
++    def publish_failed_creation_delete_authority!(slug, session, context)
++      return unless @authority_dir && session
++      return if load_session_authority(slug, required: false)
++
++      unless context.is_a?(FailedCreationDeleteContext) && context.slug == slug
++        raise Error, "refusing to retire an untrusted same-name tmux session: #{slug}"
++      end
++      current = failed_creation_delete_context(slug, request_id: context.request_id)
++      terminal = @tmux.session_by_id(session.id)
++      named = @tmux.session(slug)
++      unless current.identity == context.identity && current.creation_nonce == context.creation_nonce &&
++             current.start_bytes == context.start_bytes && !current.completed &&
++             terminal && named && terminal.id == session.id && named == terminal &&
++             terminal.name == slug && terminal.managed? && terminal.environment_slug == slug &&
++             workspace_identity?(terminal.workspace) && terminal.socket_path == @configured_tmux_socket &&
++             terminal.identity_token == current.creation_nonce && terminal.codex_thread_id == current.root &&
++             terminal.codex_socket_path == @codex_socket && valid_client_version?(@codex_version) &&
++             terminal.codex_client_version == @codex_version
++        raise Error, "refusing to retire an untrusted same-name tmux session: #{slug}"
++      end
++      return if load_session_authority(slug, required: false)
++
++      write_session_authority(slug, terminal, state: 'creating')
+     end
+ 
+     def transfer_failed_creation_start!(slug, removal, context)
+--- a/test/dev_session/deletion_recovery_test.rb
++++ b/test/dev_session/deletion_recovery_test.rb
+@@ -3,6 +3,39 @@
+ require_relative '../support/dev_session_test_case'
+ 
+ class DevSessionTest < Minitest::Test
++  def test_failed_creation_authority_publication_requires_typed_context
++    with_workspace do |workspace|
++      slug = '2026-06-06-authority-context'
++      authority_dir = File.join(workspace, 'authority')
++      tmux = ManagedTmux.new(slug, workspace:, socket_path: '/run/test.sock', id: '$11')
++      runner = runner_for(workspace, tmux:, authority_dir:)
++      [nil, {slug: slug}].each do |context|
++        assert_raises(DevSession::Error) do
++          runner.send(:publish_failed_creation_delete_authority!, slug, tmux.session(slug), context)
++        end
++        refute(File.exist?(File.join(authority_dir, "#{slug}.json")))
++      end
++    end
++  end
++
++  def test_failed_creation_authority_publication_does_not_change_ordinary_trust
++    %i[delete archive].each do |operation|
++      with_workspace do |workspace|
++        slug = '2026-06-06-ordinary-authority'
++        authority_dir = File.join(workspace, 'authority')
++        tmux = ManagedTmux.new(slug, workspace:, socket_path: '/run/test.sock', id: '$11')
++        runner = runner_for(workspace, tmux:, authority_dir:)
++        runner.ensure_tracking_files(slug)
++        assert_raises(DevSession::Error) do
++          operation == :delete ? runner.delete(slug, as_is: true, force: false) : runner.archive(slug, as_is: true)
++        end
++        refute(File.exist?(File.join(authority_dir, "#{slug}.json")))
++        refute(tmux.killed)
++        refute(File.exist?(runner.send(:lifecycle_journal_file, slug, 'delete')))
++      end
++    end
++  end
++
+   def test_delete_subordinate_start_requires_typed_validated_context
+     with_workspace do |workspace|
+       slug = '2026-06-06-demo'
+--- a/test/workspace_host/failed_creation_delete_recovery_test.rb
++++ b/test/workspace_host/failed_creation_delete_recovery_test.rb
+@@ -22,6 +22,23 @@
+ 
+     private
+ 
++    def publish_failed_creation_delete_authority!(slug, session, context)
++      if fixture_host.authority_context_change
++        path = File.join(work_dir(slug), 'portal.yml')
++        record = YAML.safe_load(File.read(path))
++        record.fetch('creation')['initial_goal_sent'] = true
++        File.write(path, YAML.dump(record))
++      end
++      super
++    end
++
++    def write_session_authority(slug, session, state:)
++      super
++      fixture_host.authority_publications ||= []
++      fixture_host.authority_publications << File.binread(authority_file(slug))
++      fail_deletion_fixture!('authority_published')
++    end
++
+     def advance_removal!(slug, removal, phase)
+       super
+       fail_deletion_fixture!(phase)
+@@ -47,7 +64,8 @@
+ 
+   module FailedCreationHostFixture
+     attr_accessor :deletion_fault, :deletion_fault_fired, :confirmation_answer,
+-                  :turnover_before_lock, :native_turnover_before_lock, :native_turnover_command, :fixture_terminal, :reject_selected_protocol
++                  :turnover_before_lock, :native_turnover_before_lock, :native_turnover_command, :fixture_terminal, :reject_selected_protocol,
++                  :live_disposable_terminal, :authority_publications, :authority_terminal_fault, :authority_context_change
+     attr_reader :deletion_invocations
+ 
+     private
+@@ -79,6 +97,18 @@
+     end
+ 
+     def inject_disposable_terminal(runner)
++      if live_disposable_terminal
++        if authority_terminal_fault
++          fault = authority_terminal_fault
++          runner.instance_variable_get(:@tmux).define_singleton_method(:session_by_id) do |id|
++            value = super(id)
++            value = value.dup if value
++            value[fault.fetch(:field)] = fault.fetch(:value) if value
++            value
++          end
++        end
++        return runner
++      end
+       terminal = FailedCreationNoTerminal.new
+       terminal.terminal = fixture_terminal
+       runner.instance_variable_set(:@tmux, terminal)
+@@ -101,6 +131,114 @@
+       end
+       status = cli.run
+       raise DevWorkspaceHost::Error, 'ordinary deletion executor refused' unless status.zero?
++    end
++  end
++
++  def test_failed_creation_candidate_missing_authority_uses_original_live_terminal
++    with_failed_creation_candidate do |host, paths|
++      with_failed_creation_live_terminal(host, paths) do |terminal, authority|
++        start = File.binread(paths.fetch(:start))
++        refute(File.exist?(authority))
++        assert_equal(0, invoke_failed_creation_candidate(host, paths), host.instance_variable_get(:@err).string)
++        assert_equal(1, host.authority_publications.length)
++        record = JSON.parse(host.authority_publications.first)
++        assert_equal('creating', record.fetch('state'))
++        assert_equal(terminal.fetch(:id), record.fetch('tmux_session_id'))
++        assert_equal('d' * 64, record.fetch('tmux_identity'))
++        assert_equal(paths.fetch(:root_thread), record.fetch('codex_thread_id'))
++        recovery = completed_failed_creation_recovery(host, paths)
++        assert_equal(start, File.binread(File.join(recovery, 'start.json')))
++        refute(File.exist?(authority))
++        assert_equal(0, invoke_failed_creation_candidate(host, paths))
++        assert_equal(1, host.deletion_invocations.length)
++        assert_equal(1, host.authority_publications.length)
++        calls = File.readlines(paths.fetch(:calls), chomp: true).map { |line| JSON.parse(line) }
++        refute(calls.any? { |call| (call & %w[start create resume bootstrap ensure-initial project/delete]).any? })
++      end
++    end
++  end
++
++  def test_failed_creation_candidate_authority_publication_interruption_reuses_exact_record
++    with_failed_creation_candidate do |host, paths|
++      with_failed_creation_live_terminal(host, paths) do |_terminal, authority|
++        original = %i[start creation roster].to_h { |key| [key, File.binread(paths.fetch(key))] }
++        host.deletion_fault = 'authority_published'
++        assert_equal(1, invoke_failed_creation_candidate(host, paths))
++        assert(host.deletion_fault_fired)
++        bytes = File.binread(authority)
++        assert_equal(0o600, File.stat(authority).mode & 0o777)
++        assert_equal('creating', JSON.parse(bytes).fetch('state'))
++        assert_empty(Dir.glob(File.join(File.dirname(paths.fetch(:start)), '*.removal.json')))
++        original.each { |key, value| assert_equal(value, File.binread(paths.fetch(key))) }
++        assert_equal(0, invoke_failed_creation_candidate(host, paths), host.instance_variable_get(:@err).string)
++        assert_equal([bytes], host.authority_publications, 'replay must not replace the creating authority')
++        completed_failed_creation_recovery(host, paths)
++        refute(File.exist?(authority))
++      end
++    end
++  end
++
++  def test_failed_creation_candidate_authority_rejects_changed_terminal_tuple
++    {id: '$999999', name: 'other', mark: '0', slug: 'other', environment_slug: 'other',
++     workspace: '/wrong-workspace', socket_path: '/wrong-tmux.sock', identity_token: 'e' * 64,
++     codex_thread_id: '99999999-1111-7111-8111-111111111111', codex_socket_path: '/wrong-native.sock',
++     codex_client_version: '0.0.1'}.each do |field, value|
++      with_failed_creation_candidate do |host, paths|
++        with_failed_creation_live_terminal(host, paths) do |_terminal, authority|
++          host.authority_terminal_fault = {field:, value:}
++          assert_equal(1, invoke_failed_creation_candidate(host, paths), field)
++          assert_nil(host.authority_publications, field)
++          refute(File.exist?(authority), field)
++          assert(File.directory?(paths.fetch(:tracking)), field)
++          assert_empty(Dir.glob(File.join(File.dirname(paths.fetch(:start)), '*.removal.json')))
++        end
++      end
++    end
++  end
++
++  def test_failed_creation_candidate_authority_rechecks_context_before_publication
++    with_failed_creation_candidate do |host, paths|
++      with_failed_creation_live_terminal(host, paths) do |_terminal, authority|
++        host.authority_context_change = true
++        assert_equal(1, invoke_failed_creation_candidate(host, paths))
++        refute(File.exist?(authority))
++        assert_nil(host.authority_publications)
++        assert_empty(Dir.glob(File.join(File.dirname(paths.fetch(:start)), '*.removal.json')))
++      end
++    end
++  end
++
++  def test_failed_creation_candidate_authority_never_overwrites_existing_record
++    %w[malformed conflicting].each do |kind|
++      with_failed_creation_candidate do |host, paths|
++        with_failed_creation_live_terminal(host, paths) do |terminal, authority|
++          bytes = if kind == 'malformed'
++                    '{'
++                  else
++                    JSON.generate('schema' => 1, 'state' => 'creating', 'slug' => paths.fetch(:slug),
++                      'workspace' => paths.fetch(:entry).fetch('root'), 'tmux_socket' => terminal.fetch(:socket),
++                      'tmux_session_id' => terminal.fetch(:id), 'tmux_identity' => 'e' * 64,
++                      'codex_thread_id' => paths.fetch(:root_thread), 'codex_socket_path' => terminal.fetch(:native),
++                      'codex_client_version' => '1.2.3')
++                  end
++          FileUtils.mkdir_p(File.dirname(authority), mode: 0o700)
++          File.write(authority, bytes)
++          File.chmod(0o600, authority)
++          assert_equal(1, invoke_failed_creation_candidate(host, paths), kind)
++          assert_equal(bytes, File.binread(authority), kind)
++          assert_nil(host.authority_publications, kind)
++          assert_nil(host.deletion_invocations, kind)
++        end
++      end
++    end
++  end
++
++  def test_failed_creation_candidate_absent_terminal_does_not_publish_authority
++    with_failed_creation_candidate do |host, paths|
++      authority = File.join(host.send(:instance_runtime, paths.fetch(:entry)).fetch(:authority), paths.fetch(:slug) + '.json')
++      assert_equal(0, invoke_failed_creation_candidate(host, paths))
++      assert_nil(host.authority_publications)
++      refute(File.exist?(authority))
+     end
+   end
+ 
+@@ -442,6 +580,36 @@
+   end
+ 
+   private
++
++  def with_failed_creation_live_terminal(host, paths)
++    runtime = host.send(:instance_runtime, paths.fetch(:entry))
++    socket = runtime.fetch(:tmux)
++    FileUtils.mkdir_p(File.dirname(socket))
++    shell = host.instance_variable_get(:@env).fetch('SHELL', ENV.fetch('SHELL', '/bin/sh'))
++    target = "=#{paths.fetch(:slug)}:"
++    command = lambda do |*args|
++      output, error, status = Open3.capture3({'TMUX' => nil}, 'tmux', '-S', socket, *args)
++      assert(status.success?, "disposable tmux #{args.first} failed: #{error}")
++      output.strip
++    end
++    command.call('-f', '/dev/null', 'new-session', '-d', '-s', paths.fetch(:slug), '-c', paths.fetch(:tracking), shell)
++    id = command.call('display-message', '-p', '-t', target, '#{session_id}')
++    pane = command.call('display-message', '-p', '-t', target, '#{pane_id}')
++    {'@dev_session' => '1', '@dev_session_slug' => paths.fetch(:slug),
++     '@dev_session_codex_thread' => paths.fetch(:root_thread), '@dev_session_codex_socket' => runtime.fetch(:codex),
++     '@dev_session_codex_version' => '1.2.3', '@dev_session_codex_pane' => pane}.each do |key, value|
++      command.call('set-option', '-t', target, key, value)
++    end
++    {'DEV_SESSION_WORKSPACE' => paths.fetch(:entry).fetch('root'), 'DEV_SESSION_SLUG' => paths.fetch(:slug),
++     'DEV_SESSION_TMUX_IDENTITY' => 'd' * 64}.each do |key, value|
++      command.call('set-environment', '-t', target, key, value)
++    end
++    host.live_disposable_terminal = true
++    authority = File.join(runtime.fetch(:authority), paths.fetch(:slug) + '.json')
++    yield({id:, socket:, native: runtime.fetch(:codex)}, authority)
++  ensure
++    Open3.capture3('tmux', '-S', socket, 'kill-server') if socket
++  end
+ 
+   def failed_creation_recovery_bytes(recovery)
+     Dir.glob(File.join(recovery, '**', '*'), File::FNM_DOTMATCH).select { |path| File.file?(path) }.to_h do |path|
+--- a/docs/session-archive-recovery.md
++++ b/docs/session-archive-recovery.md
+@@ -345,6 +345,15 @@
+ identity match the creating CLI journal and retained runtime identity.
+ Other start, fork or lifecycle conflicts remain blockers.
+ 
++A failed direct creation can leave its exact managed terminal before runtime
++authority is published. If authority is absent and that terminal is present,
++the ordinary deletion owner revalidates the failed-creation context, terminal
++ID, workspace, sockets, client version and original creation nonce under its
++existing locks. It publishes the ordinary authority with state `creating`,
++then applies the unchanged trust and deletion checks. It does not replace an
++existing authority, create one without a terminal, or mark creation ready.
++After interruption, the same authority remains available to ordinary recovery.
++
+ The ordinary deletion owner repeats these checks under its existing locks.
+ After preflight and root quiescence, it durably records `thread_retiring` and
+ atomically moves the unchanged start journal to private recovery as `start.json`.

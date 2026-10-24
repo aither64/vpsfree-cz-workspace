@@ -1,0 +1,152 @@
+{
+  "recordedAtUTC": "2026-10-24T11:47:21.593176+00:00",
+  "owner": "implementer3",
+  "workspace": "/home/aither/workspace/ai/vpsfree.cz",
+  "session": "2026-10-22-codex-thread-retries",
+  "sourceRoot": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/dev-workspace-delete-guard",
+  "branchUnchanged": "2026-10-22-codex-thread-retries-delete-guard",
+  "base": "e914c52a91d94192acd8368e77871b5a451196bd",
+  "baseTree": "0144e3dab9938553c09469b11e19c2fd9f967da0",
+  "delivery": "Scoped uncommitted patch only; no Git mutations or main B writes. Owner1 remains sole B Git owner.",
+  "patch": {
+    "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/delete-guard/delete-guard.patch",
+    "sha256": "e6ffd5fb48a27d8cb4cce596e360da6138393f0a1e543daada95fbfee1aad8b5",
+    "bytes": 46687
+  },
+  "files": [
+    {
+      "path": "docs/dev-sessions.md",
+      "sha256": "b2b8651d7da24f48408f88d12644292aba4a64d1cff013d25214734c811a1078",
+      "bytes": 61383,
+      "lines": 1087,
+      "new": false,
+      "baseSha256": "031f33a99398d5dbc97e40a4ca12348fa2750df963e01ba2fd28a82d800d11e4"
+    },
+    {
+      "path": "libexec/dev-session",
+      "sha256": "76e87a9b83dd00d0e153b2f4de0081fa054a125ae3ba10d400b73809baea9a26",
+      "bytes": 430006,
+      "lines": 10199,
+      "new": false,
+      "baseSha256": "a26f6b6e62d6d1566815da2ce6bc3266c5fda8d4f9138f13ff92b25afb176399"
+    },
+    {
+      "path": "portal/cmd/workspace-portal/deletion_test.go",
+      "sha256": "5a7fc65cb6954675a48ad96f677ceb30b275a82b021bf419abb1b8fbe228053a",
+      "bytes": 9265,
+      "lines": 225,
+      "new": true,
+      "baseSha256": null
+    },
+    {
+      "path": "portal/cmd/workspace-portal/main.go",
+      "sha256": "4408d7f9bc4998345bba50d19985b848022e50314b935b7044b2aa5208c67f5a",
+      "bytes": 49654,
+      "lines": 1217,
+      "new": false,
+      "baseSha256": "03cf976f0de670e1ee69066fa7b599522ee251eb6a1b1817ff289d6cc4af4a4f"
+    },
+    {
+      "path": "portal/internal/teamruntime/deletion.go",
+      "sha256": "6d80cf8a30d53e79e1e945b0705440a4da100916fe5e23169a29aba5e8dab0df",
+      "bytes": 8966,
+      "lines": 218,
+      "new": true,
+      "baseSha256": null
+    },
+    {
+      "path": "portal/internal/teamruntime/deletion_test.go",
+      "sha256": "5bb805db8fe8a8e4eea8fec4dc2e403cebb0a073c9eb45eb675425f54c696ea1",
+      "bytes": 14337,
+      "lines": 366,
+      "new": true,
+      "baseSha256": null
+    },
+    {
+      "path": "portal/internal/teamruntime/runtime.go",
+      "sha256": "8e6d2213f739543fad890eb865d6f8585f6272f87af31d46aff9c94d689990e5",
+      "bytes": 102711,
+      "lines": 2538,
+      "new": false,
+      "baseSha256": "921a97ef145b09d9bed621c7a94869dfee87ef929ec070f8f95a8d2e778a8be0"
+    },
+    {
+      "path": "test/dev_session/deletion_recovery_test.rb",
+      "sha256": "2e2e8f5c52c0d10821fb547cfaf5be490565c2a23a3a126e27ea80dc26b1bdf7",
+      "bytes": 29787,
+      "lines": 777,
+      "new": false,
+      "baseSha256": "55976d56425c47bb4e3821b4a7dbf9bde4de24e23d8ed71164236f38c69843e0"
+    }
+  ],
+  "checks": {
+    "format": {
+      "command": "nix develop --no-update-lock-file --command gofmt -l [five changed Go files]",
+      "result": "PASS: empty gofmt -l output, exit0"
+    },
+    "rubySyntax": {
+      "command": "nix develop --no-update-lock-file --command ruby -c libexec/dev-session",
+      "result": "PASS: Syntax OK"
+    },
+    "goFocused": {
+      "command": "nix develop --no-update-lock-file --command go -C portal test -mod=readonly ./internal/teamruntime ./cmd/workspace-portal -run 'TestPrepareDelete|TestTeamPrepareDelete|TestRequireIdleAll' -count=1 -timeout 45s",
+      "result": "PASS",
+      "wallSeconds": 11.094,
+      "packageSeconds": {
+        "teamruntime": 2.594,
+        "workspace-portal": 1.494
+      },
+      "log": "go-final.log"
+    },
+    "rubyFocused": {
+      "command": "nix develop --no-update-lock-file --command ruby test/dev_session_test.rb --name [anchored 25 owning-file method names recorded in log]",
+      "selectedFrom": "test/dev_session/deletion_recovery_test.rb",
+      "tests": 25,
+      "assertions": 158,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "wallSeconds": 7.74,
+      "testSeconds": 6.38705,
+      "result": "PASS",
+      "log": "ruby-focused-2.log"
+    },
+    "retainedFailures": [
+      {
+        "attempt": "initial",
+        "cause": "Unknown-start fixture auto-recovered its discoverable thread; direct Ruby file omitted shared tmux fakes. Fixed fixture visibility and suite loader; no product assertion weakened."
+      },
+      {
+        "log": "go-focused-2.log",
+        "result": "FAIL",
+        "cause": "Synthetic wire omitted native thread/turns/list; bounded20s command fixture expired. Added exact empty terminal-turn response and immediate websocket close on fixture error."
+      },
+      {
+        "log": "go-command-3.log",
+        "result": "FAIL",
+        "cause": "Owner ordering completed; imported Minitest support autorun rejected an empty filter. Fixture now exits successfully only after ordinary Ruby delete returns; outer Go assertions own validation."
+      }
+    ],
+    "cleanup": {
+      "liveActions": false,
+      "leftoverCommandHelpers": false,
+      "proof": "Exact TestTeamPrepareDeleteCommandProcess ps query empty after final check."
+    },
+    "limits": [
+      "No long checks, native/model/VM campaign, deployment or live lifecycle action.",
+      "No staged or committed changes; independent final review belongs to lead/owner1 after serialized incorporation."
+    ]
+  },
+  "prosePass": {
+    "receipt": "../delete-guard-prose-pass.json",
+    "appliedExactlyOnce": true,
+    "resultSha256": "b2b8651d7da24f48408f88d12644292aba4a64d1cff013d25214734c811a1078"
+  },
+  "designDeviation": "None. Architect direct clarification accepted the released signature, persisted journal force authority, full manifest validation plus explicit-false presence, and intra-call immutable-context revalidation.",
+  "deliveryReports": {
+    "leadMessageId": "6a769ff8-e220-47d1-9fb3-e308727fda05",
+    "leadConfirmed": true,
+    "owner1MessageId": "44ffbcbc-0e04-4bc1-bdef-8f78f1958a39",
+    "owner1DirectDispatch": "refused before dispatch: another dev-session command changing this session; lead notified for serialization"
+  }
+}

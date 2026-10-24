@@ -1,0 +1,405 @@
+warning: Git tree '/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/dev-workspace' is dirty
+evaluation warning: 'system' has been renamed to/replaced by 'stdenv.hostPlatform.system'
+/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/dev-workspace/portal/internal/web/browser_contract_test.cjs:169
+if (!baseURL) throw new Error("browser contract test requires the server URL");
+              ^
+
+Error: browser contract test requires the server URL
+    at Object.<anonymous> (/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/dev-workspace/portal/internal/web/browser_contract_test.cjs:169:21)
+    at Module._compile (node:internal/modules/cjs/loader:1872:14)
+    at Object..js (node:internal/modules/cjs/loader:2003:10)
+    at Module.load (node:internal/modules/cjs/loader:1594:32)
+    at Module._load (node:internal/modules/cjs/loader:1396:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47
+
+Node.js v24.19.0
+node:assert:885
+    throw err;
+    ^
+
+AssertionError [ERR_ASSERTION]: The input did not match the regular expression /renderThread\(page, \(\) => read\.isCurrent\(\)/. Input:
+
+'(async () => {\n' +
+  '  let refreshPolicy = null;\n' +
+  '  let sharedTranscriptPresentation = null, sharedTranscriptVisible = null;\n' +
+  '  const apiPath = (slug, operation) => `/api/sessions/${encodeURIComponent(slug)}/${operation}`;\n' +
+  '  const createRequest = (fetchRequest) => async (path, options = {}) => {\n' +
+  '    const response = await fetchRequest(path, {\n' +
+  '      ...options,\n' +
+  '      headers: {"Content-Type": "application/json", ...(options.headers || {})},\n' +
+  '    });\n' +
+  '    options.signal?.throwIfAborted();\n' +
+  '    if (response.ok && (response.status === 204 || response.status === 205 || options.method === "HEAD")) return {};\n' +
+  '    let data;\n' +
+  '    try { data = await response.json(); }\n' +
+  '    catch (error) {\n' +
+  '      options.signal?.throwIfAborted();\n' +
+  '      if (response.ok || error.name !== "SyntaxError") throw error;\n' +
+  '      data = {};\n' +
+  '    }\n' +
+  '    options.signal?.throwIfAborted();\n' +
+  '    if (!response.ok) { const error = new Error(data.error || `Request failed (${response.status})`); error.status = response.status; error.code = data.code; error.currentTarget = data.currentTarget; error.receiptId = data.receiptId; throw error; }\n' +
+  '    return data;\n' +
+  '  };\n' +
+  '  const createSessionClient = (slug, request, conversation, selectedMember = "") => ({\n' +
+  '    thread: conversation?.thread,\n' +
+  '    threadPage: conversation?.threadPage,\n' +
+  '    activity: conversation?.activity,\n' +
+  '    pending: conversation?.pending,\n' +
+  '    modes: () => request("/api/collaboration-modes"),\n' +
+  '    queue: conversation?.queue,\n' +
+  '    reconcileQueue: conversation?.reconcileQueue,\n' +
+  '    message: conversation?.message,\n' +
+  '    acknowledgeMessages: conversation?.acknowledgeMessages,\n' +
+  '    queueMessage: conversation?.queueMessage,\n' +
+  '    deleteQueued: conversation?.deleteQueued,\n' +
+  '    startQueue: conversation?.startQueue,\n' +
+  '    settings: conversation?.settings,\n' +
+  '    fork: (name, creationDate, model, reasoningEffort, sensitive = false, browserNotificationsEnabled = true, provider = "") => request(apiPath(slug, "fork"), {\n' +
+  '      method: "POST", body: JSON.stringify({name, creationDate, model, reasoningEffort, browserNotificationsEnabled, ...(provider ? {provider} : {}), ...(sensitive ? {sensitive: true} : {})}),\n' +
+  '    }),\n' +
+  '    controlCluster: (kind, action) => request(apiPath(slug, `${action}-cluster`), {\n' +
+  '      method: "POST", body: JSON.stringify({kind}),\n' +
+  '    }),\n' +
+  '    details: (options) => request(`${apiPath(slug, "details")}${selectedMember ? `?member=${encodeURIComponent(selectedMember)}` : ""}`, options),\n' +
+  '    autoArchive: () => request(apiPath(slug, "auto-archive")),\n' +
+  '    autoArchiveHold: (hold, targetId) => request(apiPath(slug, "auto-archive"), {\n' +
+  '      method: "POST", body: JSON.stringify({hold, targetId}),\n' +
+  '    }),\n' +
+  '    files: (options) => request(apiPath(slug, "files"), options),\n' +
+  '    file: (path, options) => request(`${apiPath(slug, "file")}?artifact=${encodeURIComponent(path)}`, options),\n' +
+  '    artifactPreview: (path, options) => request(`${apiPath(slug, "artifact-preview")}?path=${encodeURIComponent(path)}`, options),\n' +
+  '    archive: (mode, targetId, receiptId) => request(apiPath(slug, "archive"), {\n' +
+  '      method: "POST", body: JSON.stringify({mode, targetId, ...(receiptId ? {receiptId} : {})}),\n' +
+  '    }),\n' +
+  '    revive: (allowAbandoned, targetId, receiptId) => request(apiPath(slug, "revive"), {\n' +
+  '      method: "POST", body: JSON.stringify({allowAbandoned, targetId, ...(receiptId ? {receiptId} : {})}),\n' +
+  '    }),\n' +
+  '    deleteSession: (force, targetId, receiptId) => request(apiPath(slug, "delete"), {\n' +
+  '      method: "POST", body: JSON.stringify({force, targetId, ...(receiptId ? {receiptId} : {})}),\n' +
+  '    }),\n' +
+  '    operation: () => request(apiPath(slug, "operation")),\n' +
+  '    retryOperation: (receiptId, journalId, force) => {\n' +
+  '      const body = {receiptId, journalId};\n' +
+  '      if (force !== undefined) body.force = force;\n' +
+  '      return request(`${apiPath(slug, "operation")}/retry`, {\n' +
+  '        method: "POST", body: JSON.stringify(body),\n' +
+  '      });\n' +
+  '    },\n' +
+  '    dismissOperation: (receiptId) => request(apiPath(slug, "operation"), {\n' +
+  '      method: "DELETE", body: JSON.stringify({receiptId}),\n' +
+  '    }),\n' +
+  '    interrupt: conversation?.interrupt,\n' +
+  '    implementPlan: (payload) => request(apiPath(slug, "implement-plan"), {\n' +
+  '      method: "POST", body: JSON.stringify(payload),\n' +
+  '    }),\n' +
+  '    respond: conversation?.respond,\n' +
+  '    snooze: conversation?.snooze,\n' +
+  '    eventsPath: conversation?.eventsPath,\n' +
+  '  });\n' +
+  '  const currentCompletedPlan = (payload) => payload.latestTurnId ?\n' +
+  '    [...(payload.entries || [])].reverse().find((entry) => (\n' +
+  '      entry.turnId === payload.latestTurnId && entry.kind === "plan" &&\n' +
+  '      entry.turnStatus === "completed" && (entry.text || "").trim()\n' +
+  '    )) : undefined;\n' +
+  '  const planIdentity = (turnId, digest) => JSON.stringify([turnId, digest]);\n' +
+  '  const planActionContext = (turnId, digest) => `plan:${turnId}:${digest}`;\n' +
+  '  const pendingPlanImplementation = (attempts, turnId, digest) => Boolean(\n' +
+  '    matchingSendAttempt([...attempts], "Implement the plan.", planActionContext(turnId, digest))\n' +
+  '  );\n' +
+  '  const planRecoveryRequest = (attempt, latestTurnId) => {\n' +
+  '    if (attempt.message !== "Implement the plan.") return null;\n' +
+  '    const legacy = /^plan:([0-9a-f]{64})$/.exec(attempt.context || "");\n' +
+  '    if (legacy) return {action: "recover", planSha256: legacy[1], clientUserMessageId: attempt.id};\n' +
+  '    const current = /^plan:(.+):([0-9a-f]{64})$/.exec(attempt.context || "");\n' +
+  '    if (!current || !latestTurnId || current[1] === latestTurnId) return null;\n' +
+  '    return {action: "recover", planContextVersion: 2, planTurnId: current[1], planSha256: current[2], clientUserMessageId: attempt.id};\n' +
+  '  };\n' +
+  '  // Plan rendering and pending-request refreshes share one owner for the composer.\n' +
+  '  const createComposerView = (panel, form, pending) => {\n' +
+  '    const document = form.ownerDocument;\n' +
+  '    const chat = form.closest(".chat-panel");\n' +
+  '    const interrupt = form.querySelector("#interrupt");\n' +
+  '    const interruptHome = interrupt.parentElement;\n' +
+  '    let planVisible = false;\n' +
+  '\n' +
+  '    const update = ({focusComposer = false, previousQuestion = null, previousFocus = document.activeElement} = {}) => {\n' +
+  '      const question = pending.querySelector(".question-approval");\n' +
+  '      const showPlan = planVisible && !question;\n' +
+  '      const hideComposer = Boolean(question || showPlan);\n' +
+  '      const moveFocus = focusComposer || previousQuestion ||\n' +
+  '        (hideComposer && form.contains(previousFocus)) ||\n' +
+  '        (!showPlan && panel.contains(previousFocus));\n' +
+  '      if (hideComposer && !form.hidden) {\n' +
+  '        form.querySelectorAll(":popover-open").forEach((menu) => menu.hidePopover());\n' +
+  '      }\n' +
+  '      const interruptParent = question ? question.querySelector(".question-heading") : interruptHome;\n' +
+  '      if (interrupt.parentElement !== interruptParent) interruptParent.append(interrupt);\n' +
+  '      panel.hidden = !showPlan;\n' +
+  '      form.hidden = hideComposer;\n' +
+  '      chat.classList.toggle("plan-decision", showPlan);\n' +
+  '      if (previousFocus === interrupt && !interrupt.disabled && (question || !hideComposer)) {\n' +
+  '        if (document.activeElement !== interrupt) interrupt.focus();\n' +
+  '      } else if (moveFocus) {\n' +
+  '        const matchingQuestion = previousQuestion && [...pending.querySelectorAll(".question-approval")]\n' +
+  '          .find((entry) => previousQuestion.dataset.promptKey ? entry.dataset.promptKey === previousQuestion.dataset.promptKey :\n' +
+  '            entry.dataset.requestId === previousQuestion.dataset.requestId);\n' +
+  '        const matchingControl = matchingQuestion && [...matchingQuestion.querySelectorAll("input, textarea, button")]\n' +
+  '          .find((control) => !control.disabled && control.name && control.name === previousFocus.name &&\n' +
+  '            (previousFocus.type !== "radio" || control.value === previousFocus.value));\n' +
+  '        const target = matchingControl || (question ?\n' +
+  '          question.querySelector(".input-wizard input:checked:not(:disabled)") ||\n' +
+  '            question.querySelector(".input-wizard input:not(:disabled), .input-wizard textarea:not(:disabled), .input-wizard button:not(:disabled)") :\n' +
+  '          showPlan ? panel.querySelector("#plan-keep-planning") : form.querySelector("textarea"));\n' +
+  '        target?.focus({preventScroll: true});\n' +
+  '        if (matchingControl && previousFocus.selectionStart !== null && previousFocus.selectionStart !== undefined) {\n' +
+  '          matchingControl.setSelectionRange(previousFocus.selectionStart, previousFocus.selectionEnd);\n' +
+  '        }\n' +
+  '      }\n' +
+  '    };\n' +
+  '\n' +
+  '    return {\n' +
+  '      restoreFocus(previousFocus, previousQuestion) {\n' +
+  '        if (document.activeElement === document.body) update({previousFocus, previousQuestion});\n' +
+  '      },\n' +
+  '      setInterruptEnabled(enabled) {\n' +
+  '        const wasFocused = document.activeElement === interrupt;\n' +
+  '        interrupt.disabled = !enabled;\n' +
+  '        if (wasFocused && !enabled) update({focusComposer: true});\n' +
+  '      },\n' +
+  '      setPlanVisible(visible, focusComposer = false) {\n' +
+  '        planVisible = visible;\n' +
+  '        update({focusComposer});\n' +
+  '      },\n' +
+  '      replacePending(entries) {\n' +
+  '        const previousFocus = document.activeElement;\n' +
+  '        const previousQuestion = pending.contains(previousFocus) ? previousFocus.closest(".question-approval") : null;\n' +
+  '        pending.replaceChildren(...entries);\n' +
+  '        update({previousFocus, previousQuestion});\n' +
+  '      },\n' +
+  '    };\n' +
+  '  };\n' +
+  '  const setControlLabel = (control, label) => {\n' +
+  '    const target = control.querySelector(".rail-label") || control;\n' +
+  '    target.textContent = label;\n' +
+  '    if (target !== control) {\n' +
+  '      control.title = label;\n' +
+  '      control.setAttribute("aria-label", label);\n' +
+  '    }\n' +
+  '  };\n' +
+  '  const automaticReasoningLabel = () => "Automatic";\n' +
+  '  const messageActionLabel = (active) => active ? "Steer now" : "Send";\n' +
+  '  const shouldSubmitMessage = (event) => (\n' +
+  '    event.key === "Enter" && !event.shiftKey && !event.isComposing\n' +
+  '  );\n' +
+  '  const shouldFollowTranscript = (element, threshold = 48) => (\n' +
+  '    element.scrollHeight - element.clientHeight - element.scrollTop <= threshold\n' +
+  '  );\n' +
+  '  const transcriptFollowOnScroll = (follow, element, userInitiated) => (\n' +
+  '    userInitiated ? shouldFollowTranscript(element) : follow\n' +
+  '  );\n' +
+  '  const sendAcknowledgementCandidates = (entries, attempts, excludedIDs = new Set(), lim'... 317527 more characters
+
+    at Object.<anonymous> (/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/dev-workspace/portal/internal/web/paging_browser_test.cjs:13:8)
+    at Module._compile (node:internal/modules/cjs/loader:1872:14)
+    at Object..js (node:internal/modules/cjs/loader:2003:10)
+    at Module.load (node:internal/modules/cjs/loader:1594:32)
+    at Module._load (node:internal/modules/cjs/loader:1396:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: '(async () => {\n' +
+    '  let refreshPolicy = null;\n' +
+    '  let sharedTranscriptPresentation = null, sharedTranscriptVisible = null;\n' +
+    '  const apiPath = (slug, operation) => `/api/sessions/${encodeURIComponent(slug)}/${operation}`;\n' +
+    '  const createRequest = (fetchRequest) => async (path, options = {}) => {\n' +
+    '    const response = await fetchRequest(path, {\n' +
+    '      ...options,\n' +
+    '      headers: {"Content-Type": "application/json", ...(options.headers || {})},\n' +
+    '    });\n' +
+    '    options.signal?.throwIfAborted();\n' +
+    '    if (response.ok && (response.status === 204 || response.status === 205 || options.method === "HEAD")) return {};\n' +
+    '    let data;\n' +
+    '    try { data = await response.json(); }\n' +
+    '    catch (error) {\n' +
+    '      options.signal?.throwIfAborted();\n' +
+    '      if (response.ok || error.name !== "SyntaxError") throw error;\n' +
+    '      data = {};\n' +
+    '    }\n' +
+    '    options.signal?.throwIfAborted();\n' +
+    '    if (!response.ok) { const error = new Error(data.error || `Request failed (${response.status})`); error.status = response.status; error.code = data.code; error.currentTarget = data.currentTarget; error.receiptId = data.receiptId; throw error; }\n' +
+    '    return data;\n' +
+    '  };\n' +
+    '  const createSessionClient = (slug, request, conversation, selectedMember = "") => ({\n' +
+    '    thread: conversation?.thread,\n' +
+    '    threadPage: conversation?.threadPage,\n' +
+    '    activity: conversation?.activity,\n' +
+    '    pending: conversation?.pending,\n' +
+    '    modes: () => request("/api/collaboration-modes"),\n' +
+    '    queue: conversation?.queue,\n' +
+    '    reconcileQueue: conversation?.reconcileQueue,\n' +
+    '    message: conversation?.message,\n' +
+    '    acknowledgeMessages: conversation?.acknowledgeMessages,\n' +
+    '    queueMessage: conversation?.queueMessage,\n' +
+    '    deleteQueued: conversation?.deleteQueued,\n' +
+    '    startQueue: conversation?.startQueue,\n' +
+    '    settings: conversation?.settings,\n' +
+    '    fork: (name, creationDate, model, reasoningEffort, sensitive = false, browserNotificationsEnabled = true, provider = "") => request(apiPath(slug, "fork"), {\n' +
+    '      method: "POST", body: JSON.stringify({name, creationDate, model, reasoningEffort, browserNotificationsEnabled, ...(provider ? {provider} : {}), ...(sensitive ? {sensitive: true} : {})}),\n' +
+    '    }),\n' +
+    '    controlCluster: (kind, action) => request(apiPath(slug, `${action}-cluster`), {\n' +
+    '      method: "POST", body: JSON.stringify({kind}),\n' +
+    '    }),\n' +
+    '    details: (options) => request(`${apiPath(slug, "details")}${selectedMember ? `?member=${encodeURIComponent(selectedMember)}` : ""}`, options),\n' +
+    '    autoArchive: () => request(apiPath(slug, "auto-archive")),\n' +
+    '    autoArchiveHold: (hold, targetId) => request(apiPath(slug, "auto-archive"), {\n' +
+    '      method: "POST", body: JSON.stringify({hold, targetId}),\n' +
+    '    }),\n' +
+    '    files: (options) => request(apiPath(slug, "files"), options),\n' +
+    '    file: (path, options) => request(`${apiPath(slug, "file")}?artifact=${encodeURIComponent(path)}`, options),\n' +
+    '    artifactPreview: (path, options) => request(`${apiPath(slug, "artifact-preview")}?path=${encodeURIComponent(path)}`, options),\n' +
+    '    archive: (mode, targetId, receiptId) => request(apiPath(slug, "archive"), {\n' +
+    '      method: "POST", body: JSON.stringify({mode, targetId, ...(receiptId ? {receiptId} : {})}),\n' +
+    '    }),\n' +
+    '    revive: (allowAbandoned, targetId, receiptId) => request(apiPath(slug, "revive"), {\n' +
+    '      method: "POST", body: JSON.stringify({allowAbandoned, targetId, ...(receiptId ? {receiptId} : {})}),\n' +
+    '    }),\n' +
+    '    deleteSession: (force, targetId, receiptId) => request(apiPath(slug, "delete"), {\n' +
+    '      method: "POST", body: JSON.stringify({force, targetId, ...(receiptId ? {receiptId} : {})}),\n' +
+    '    }),\n' +
+    '    operation: () => request(apiPath(slug, "operation")),\n' +
+    '    retryOperation: (receiptId, journalId, force) => {\n' +
+    '      const body = {receiptId, journalId};\n' +
+    '      if (force !== undefined) body.force = force;\n' +
+    '      return request(`${apiPath(slug, "operation")}/retry`, {\n' +
+    '        method: "POST", body: JSON.stringify(body),\n' +
+    '      });\n' +
+    '    },\n' +
+    '    dismissOperation: (receiptId) => request(apiPath(slug, "operation"), {\n' +
+    '      method: "DELETE", body: JSON.stringify({receiptId}),\n' +
+    '    }),\n' +
+    '    interrupt: conversation?.interrupt,\n' +
+    '    implementPlan: (payload) => request(apiPath(slug, "implement-plan"), {\n' +
+    '      method: "POST", body: JSON.stringify(payload),\n' +
+    '    }),\n' +
+    '    respond: conversation?.respond,\n' +
+    '    snooze: conversation?.snooze,\n' +
+    '    eventsPath: conversation?.eventsPath,\n' +
+    '  });\n' +
+    '  const currentCompletedPlan = (payload) => payload.latestTurnId ?\n' +
+    '    [...(payload.entries || [])].reverse().find((entry) => (\n' +
+    '      entry.turnId === payload.latestTurnId && entry.kind === "plan" &&\n' +
+    '      entry.turnStatus === "completed" && (entry.text || "").trim()\n' +
+    '    )) : undefined;\n' +
+    '  const planIdentity = (turnId, digest) => JSON.stringify([turnId, digest]);\n' +
+    '  const planActionContext = (turnId, digest) => `plan:${turnId}:${digest}`;\n' +
+    '  const pendingPlanImplementation = (attempts, turnId, digest) => Boolean(\n' +
+    '    matchingSendAttempt([...attempts], "Implement the plan.", planActionContext(turnId, digest))\n' +
+    '  );\n' +
+    '  const planRecoveryRequest = (attempt, latestTurnId) => {\n' +
+    '    if (attempt.message !== "Implement the plan.") return null;\n' +
+    '    const legacy = /^plan:([0-9a-f]{64})$/.exec(attempt.context || "");\n' +
+    '    if (legacy) return {action: "recover", planSha256: legacy[1], clientUserMessageId: attempt.id};\n' +
+    '    const current = /^plan:(.+):([0-9a-f]{64})$/.exec(attempt.context || "");\n' +
+    '    if (!current || !latestTurnId || current[1] === latestTurnId) return null;\n' +
+    '    return {action: "recover", planContextVersion: 2, planTurnId: current[1], planSha256: current[2], clientUserMessageId: attempt.id};\n' +
+    '  };\n' +
+    '  // Plan rendering and pending-request refreshes share one owner for the composer.\n' +
+    '  const createComposerView = (panel, form, pending) => {\n' +
+    '    const document = form.ownerDocument;\n' +
+    '    const chat = form.closest(".chat-panel");\n' +
+    '    const interrupt = form.querySelector("#interrupt");\n' +
+    '    const interruptHome = interrupt.parentElement;\n' +
+    '    let planVisible = false;\n' +
+    '\n' +
+    '    const update = ({focusComposer = false, previousQuestion = null, previousFocus = document.activeElement} = {}) => {\n' +
+    '      const question = pending.querySelector(".question-approval");\n' +
+    '      const showPlan = planVisible && !question;\n' +
+    '      const hideComposer = Boolean(question || showPlan);\n' +
+    '      const moveFocus = focusComposer || previousQuestion ||\n' +
+    '        (hideComposer && form.contains(previousFocus)) ||\n' +
+    '        (!showPlan && panel.contains(previousFocus));\n' +
+    '      if (hideComposer && !form.hidden) {\n' +
+    '        form.querySelectorAll(":popover-open").forEach((menu) => menu.hidePopover());\n' +
+    '      }\n' +
+    '      const interruptParent = question ? question.querySelector(".question-heading") : interruptHome;\n' +
+    '      if (interrupt.parentElement !== interruptParent) interruptParent.append(interrupt);\n' +
+    '      panel.hidden = !showPlan;\n' +
+    '      form.hidden = hideComposer;\n' +
+    '      chat.classList.toggle("plan-decision", showPlan);\n' +
+    '      if (previousFocus === interrupt && !interrupt.disabled && (question || !hideComposer)) {\n' +
+    '        if (document.activeElement !== interrupt) interrupt.focus();\n' +
+    '      } else if (moveFocus) {\n' +
+    '        const matchingQuestion = previousQuestion && [...pending.querySelectorAll(".question-approval")]\n' +
+    '          .find((entry) => previousQuestion.dataset.promptKey ? entry.dataset.promptKey === previousQuestion.dataset.promptKey :\n' +
+    '            entry.dataset.requestId === previousQuestion.dataset.requestId);\n' +
+    '        const matchingControl = matchingQuestion && [...matchingQuestion.querySelectorAll("input, textarea, button")]\n' +
+    '          .find((control) => !control.disabled && control.name && control.name === previousFocus.name &&\n' +
+    '            (previousFocus.type !== "radio" || control.value === previousFocus.value));\n' +
+    '        const target = matchingControl || (question ?\n' +
+    '          question.querySelector(".input-wizard input:checked:not(:disabled)") ||\n' +
+    '            question.querySelector(".input-wizard input:not(:disabled), .input-wizard textarea:not(:disabled), .input-wizard button:not(:disabled)") :\n' +
+    '          showPlan ? panel.querySelector("#plan-keep-planning") : form.querySelector("textarea"));\n' +
+    '        target?.focus({preventScroll: true});\n' +
+    '        if (matchingControl && previousFocus.selectionStart !== null && previousFocus.selectionStart !== undefined) {\n' +
+    '          matchingControl.setSelectionRange(previousFocus.selectionStart, previousFocus.selectionEnd);\n' +
+    '        }\n' +
+    '      }\n' +
+    '    };\n' +
+    '\n' +
+    '    return {\n' +
+    '      restoreFocus(previousFocus, previousQuestion) {\n' +
+    '        if (document.activeElement === document.body) update({previousFocus, previousQuestion});\n' +
+    '      },\n' +
+    '      setInterruptEnabled(enabled) {\n' +
+    '        const wasFocused = document.activeElement === interrupt;\n' +
+    '        interrupt.disabled = !enabled;\n' +
+    '        if (wasFocused && !enabled) update({focusComposer: true});\n' +
+    '      },\n' +
+    '      setPlanVisible(visible, focusComposer = false) {\n' +
+    '        planVisible = visible;\n' +
+    '        update({focusComposer});\n' +
+    '      },\n' +
+    '      replacePending(entries) {\n' +
+    '        const previousFocus = document.activeElement;\n' +
+    '        const previousQuestion = pending.contains(previousFocus) ? previousFocus.closest(".question-approval") : null;\n' +
+    '        pending.replaceChildren(...entries);\n' +
+    '        update({previousFocus, previousQuestion});\n' +
+    '      },\n' +
+    '    };\n' +
+    '  };\n' +
+    '  const setControlLabel = (control, label) => {\n' +
+    '    const target = control.querySelector(".rail-label") || control;\n' +
+    '    target.textContent = label;\n' +
+    '    if (target !== control) {\n' +
+    '      control.title = label;\n' +
+    '      control.setAttribute("aria-label", label);\n' +
+    '    }\n' +
+    '  };\n' +
+    '  const automaticReasoningLabel = () => "Automatic";\n' +
+    '  const messageActionLabel = (active) => active ? "Steer now" : "Send";\n' +
+    '  const shouldSubmitMessage = (event) => (\n' +
+    '    event.key === "Enter" && !event.shiftKey && !event.isComposing\n' +
+    '  );\n' +
+    '  const shouldFollowTranscript = (element, threshold = 48) => (\n' +
+    '    element.scrollHeight - element.clientHeight - element.scrollTop <= threshold\n' +
+    '  );\n' +
+    '  const transcriptFollowOnScroll = (follow, element, userInitiated) => (\n' +
+    '    userInitiated ? shouldFollowTranscript(element) : follow\n' +
+    '  );\n' +
+    '  const sendAcknowledgementCandidates = (entries, attempts, excludedIDs = new Set(), lim'... 317527 more characters,
+  expected: /renderThread\(page, \(\) => read\.isCurrent\(\)/,
+  operator: 'match',
+  diff: 'simple'
+}
+
+Node.js v24.19.0
+=== RUN   TestQuestionBrowser
+    question_browser_test.go:28: set PORTAL_BROWSER_TEST=1 to run the Playwright question regression
+--- SKIP: TestQuestionBrowser (0.00s)
+PASS
+ok  	github.com/aither64/dev-workspace/portal/internal/web	0.049s

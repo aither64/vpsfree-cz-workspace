@@ -1,0 +1,1 @@
+nix eval /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/vpsfree-cz-configuration#checks.x86_64-linux --json --no-write-lock-file --apply checks: builtins.mapAttrs (_: drv: { inherit (drv) drvPath outPath; }) checks

@@ -1,0 +1,58 @@
+{
+  "argv": [
+    "nix",
+    "develop",
+    "--no-update-lock-file",
+    "--command",
+    "go",
+    "-C",
+    "portal",
+    "test",
+    "-mod=readonly",
+    "./internal/web",
+    "-run",
+    "^(TestRetryActivityViewCheckpointContinuity|TestRetryActivityActualHTTPCheckpointGaps|TestRetryActivityActualHTTPRootMemberActionsIdentityAndNoDispatch|TestRetryActivityActualHTTPStopsOwnUnknownBeforeOrdinaryGate|TestRetryActivityStopAcknowledgesLedgerWithUnavailableSummary)$",
+    "-count=1",
+    "-timeout=45s",
+    "-json"
+  ],
+  "exit": 0,
+  "elapsed": 18.08005033619702,
+  "files": {
+    "portal/internal/web/turn_retry_activity.go": "ac31d1dd0ca79e79dbc776b3045a81a6b3a2cea5fceb4ba68d6f1c1b39516827",
+    "portal/internal/web/turn_retry_activity_test.go": "78ee38f52e371aedf0e9b80fe2524f06d970b1458877a72c5a153baf7ac2f9a6"
+  },
+  "passed": [
+    "TestRetryActivityActualHTTPRootMemberActionsIdentityAndNoDispatch/root",
+    "TestRetryActivityActualHTTPRootMemberActionsIdentityAndNoDispatch/member",
+    "TestRetryActivityActualHTTPRootMemberActionsIdentityAndNoDispatch",
+    "TestRetryActivityStopAcknowledgesLedgerWithUnavailableSummary",
+    "TestRetryActivityActualHTTPStopsOwnUnknownBeforeOrdinaryGate/root",
+    "TestRetryActivityActualHTTPStopsOwnUnknownBeforeOrdinaryGate/member",
+    "TestRetryActivityActualHTTPStopsOwnUnknownBeforeOrdinaryGate",
+    "TestRetryActivityViewCheckpointContinuity/accepted_before_checkpoint",
+    "TestRetryActivityViewCheckpointContinuity/Stop_checkpoint_failed",
+    "TestRetryActivityViewCheckpointContinuity/manual_retirement",
+    "TestRetryActivityViewCheckpointContinuity/replaced_pending",
+    "TestRetryActivityViewCheckpointContinuity/accepted_caught_up",
+    "TestRetryActivityViewCheckpointContinuity/retired_caught_up",
+    "TestRetryActivityViewCheckpointContinuity/scheduled",
+    "TestRetryActivityViewCheckpointContinuity/unknown",
+    "TestRetryActivityViewCheckpointContinuity/partial_accepted",
+    "TestRetryActivityViewCheckpointContinuity/unavailable_accepted",
+    "TestRetryActivityViewCheckpointContinuity",
+    "TestRetryActivityActualHTTPCheckpointGaps/root",
+    "TestRetryActivityActualHTTPCheckpointGaps/member",
+    "TestRetryActivityActualHTTPCheckpointGaps"
+  ],
+  "topLevelPassed": [
+    "TestRetryActivityActualHTTPRootMemberActionsIdentityAndNoDispatch",
+    "TestRetryActivityStopAcknowledgesLedgerWithUnavailableSummary",
+    "TestRetryActivityActualHTTPStopsOwnUnknownBeforeOrdinaryGate",
+    "TestRetryActivityViewCheckpointContinuity",
+    "TestRetryActivityActualHTTPCheckpointGaps"
+  ],
+  "skipped": [],
+  "failed": [],
+  "goElapsed": 2.306
+}

@@ -1,0 +1,87 @@
+ 1:  7262c24e =  1:  7262c24e turnretry: retain bounded retry policy and admission state
+ 2:  b3c7187c =  2:  b3c7187c runtime: require retry-capable package transitions
+ 3:  aafaf419 =  3:  aafaf419 portal: continue new managed failed turns through durable retry admission
+ 4:  9ccb4b11 =  4:  9ccb4b11 deps: select codex-web retry activity support
+ 5:  100108b0 =  5:  100108b0 portal: retire accepted retry provenance before bounded admission
+ 6:  9311c15a =  6:  9311c15a portal: admit exact prepared plan requests after mode selection
+ 7:  c8c31ab5 =  7:  c8c31ab5 portal: wait within HTTP budgets for transient runtime contention
+ 8:  f1ada8e9 !  8:  9ce6b291 portal: present retry activity inside the conversation viewport
+    @@ portal/internal/web/retry_activity_browser_test.cjs (new)
+     +        const ordinary = receipt.getByRole("button", {name: "Dismiss message", exact: true});
+     +        await expect(ordinary).toBeVisible();
+     +        await expect(ordinary).toHaveText("×");
+    -+        const appearance = locator => locator.evaluate(node => {
+    ++        const appearance = (locator, focused = false) => locator.evaluate((node, focused) => {
+     +          const style = getComputedStyle(node);
+    -+          return Object.fromEntries(["fontFamily", "fontSize", "fontWeight", "lineHeight", "color", "backgroundColor", "borderRadius"]
+    -+            .map(key => [key, style[key]]));
+    -+        });
+    ++          const fields = ["fontFamily", "fontSize", "fontWeight", "lineHeight", "color", "backgroundColor", "borderRadius"];
+    ++          if (focused) fields.push("outlineWidth", "outlineStyle", "outlineColor", "outlineOffset");
+    ++          return Object.fromEntries(fields.map(key => [key, style[key]]));
+    ++        }, focused);
+     +        const compare = async stateName => {
+     +          const expected = await appearance(ordinary), actual = await appearance(dismiss);
+     +          trace("dismiss-comparison", {state: stateName, ordinary: expected, retry: actual});
+    @@ portal/internal/web/retry_activity_browser_test.cjs (new)
+     +        await ordinary.focus(); await page.keyboard.press("Tab"); await page.keyboard.press("Shift+Tab");
+     +        await expect(ordinary).toBeFocused();
+     +        assert.equal(await ordinary.evaluate(node => node.matches(":focus-visible")), true);
+    -+        const keyboard = await appearance(ordinary);
+    ++        const keyboard = await appearance(ordinary, true);
+     +        await screenshot("dismiss-ordinary-focus");
+     +        await dismiss.focus(); await page.keyboard.press("Tab"); await page.keyboard.press("Shift+Tab");
+     +        await expect(dismiss).toBeFocused();
+     +        assert.equal(await dismiss.evaluate(node => node.matches(":focus-visible")), true);
+    -+        const retryKeyboard = await appearance(dismiss);
+    ++        const retryKeyboard = await appearance(dismiss, true);
+     +        trace("dismiss-comparison", {state: "keyboard-focus", ordinary: keyboard, retry: retryKeyboard});
+     +        assert.deepEqual(retryKeyboard, keyboard, "keyboard-focus retry dismiss differs from ordinary receipt");
+    -+        await expect(dismiss).toHaveCSS("outline-style", "solid");
+    -+        await expect(dismiss).toHaveCSS("outline-width", "2px");
+    -+        await expect(dismiss).toHaveCSS("outline-offset", "2px");
+    -+        await expect(dismiss).toHaveCSS("outline-color", "rgb(119, 224, 181)");
+    ++        assert.ok(parseFloat(retryKeyboard.outlineWidth) > 0, "retry keyboard outline has zero width");
+    ++        assert.ok(!["none", "hidden"].includes(retryKeyboard.outlineStyle), "retry keyboard outline is hidden");
+    ++        assert.ok(!["transparent", "rgba(0, 0, 0, 0)"].includes(retryKeyboard.outlineColor), "retry keyboard outline is transparent");
+     +        const geometry = await dismiss.evaluate(node => {
+     +          const rect = node.getBoundingClientRect(), heading = node.parentElement.getBoundingClientRect();
+     +          return {width: rect.width, height: rect.height, right: rect.right, headingRight: heading.right,
+    @@ portal/internal/web/static/style.css: a.icon-button { display: inline-flex; alig
+     +#automatic-turn-retry .codex-retry-activity-notice { margin: 0; }
+     +#automatic-turn-retry .codex-retry-activity-dismiss { color: var(--muted); }
+     +#automatic-turn-retry .codex-retry-activity-dismiss:hover, #automatic-turn-retry .codex-retry-activity-dismiss:focus-visible { background: var(--panel-2); color: var(--text); }
+    -+#automatic-turn-retry .codex-retry-activity-dismiss:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    ++#automatic-turn-retry .codex-retry-activity-dismiss:focus-visible { outline: revert; outline-offset: revert; }
+     +#automatic-turn-retry:not([hidden]) { margin-top: .8rem; }
+     +.retry-policy-switch { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; padding: 1rem 0; border-bottom: 1px solid var(--line); }
+     +.retry-policy-switch > span { display: grid; gap: .3rem; min-width: 0; }
+    @@ portal/internal/web/templates/session.html
+     -  <link rel="stylesheet" href="/codex/assets/conversation.css?v=9">
+     -  <link rel="stylesheet" href="/static/style.css?v=22">
+     +  <link rel="stylesheet" href="/codex/assets/conversation.css?v=12">
+    -+  <link rel="stylesheet" href="/static/style.css?v=24">
+    ++  <link rel="stylesheet" href="/static/style.css?v=25">
+        <link rel="stylesheet" href="/codex/assets/uploads.css?v=3">
+      </head>
+      <body class="session-body" data-session="{{.Session.Slug}}" data-session-observation="{{.Session.ObservationIdentity}}" data-thread-id="{{if .SelectedThreadID}}{{.SelectedThreadID}}{{else}}{{.Session.Codex.ThreadID}}{{end}}" data-root-thread-id="{{.Session.Codex.ThreadID}}" data-conversation-id="{{.ConversationID}}" data-selected-member="{{.SelectedMember}}" data-lifecycle-target-id="{{.LifecycleTargetID}}" data-target-identity-version="2" data-archived="{{.Session.Archived}}" data-interactive="{{.Session.Interactive}}" data-execution-held="{{.Session.ExecutionHeld}}" data-lifecycle="{{.Session.Lifecycle}}" data-pending-lifecycle="{{.PendingLifecycle}}">
+ 9:  ffa4a41f =  9:  4b4da049 portal: release the next draft before message acknowledgment
+10:  1f737473 ! 10:  59c0eb55 portal: submit question text through its owning action
+    @@ portal/internal/web/browser_asset_versions_test.go (new)
+     +	versionAfter(read("static/app.js"), "/codex/assets/conversation.js", 24)
+     +	session := read("templates/session.html")
+     +	versionAfter(session, "/codex/assets/conversation.css", 11)
+    -+	versionAfter(session, "/static/style.css", 23)
+    ++	versionAfter(session, "/static/style.css", 24)
+     +	// All consumers of the changed app entry point select the same fresh
+     +	// bytes, including navigation from index/archival to the conversation.
+     +	var appVersion int
+    @@ portal/internal/web/browser_asset_versions_test.go (new)
+     +	// A new parent module still needs a new child URL: a browser may already
+     +	// hold the old retry_activity bytes under the child's independent cache key.
+     +	server := newTestServer(t)
+    -+	for _, path := range []string{"/codex/assets/conversation.css?v=12", "/static/style.css?v=24"} {
+    ++	for _, path := range []string{"/codex/assets/conversation.css?v=12", "/static/style.css?v=25"} {
+     +		response := httptest.NewRecorder()
+     +		server.Handler().ServeHTTP(response, httptest.NewRequest("GET", path, nil))
+     +		if response.Code != http.StatusOK || !strings.HasPrefix(response.Header().Get("Content-Type"), "text/css") {

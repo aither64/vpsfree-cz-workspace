@@ -1,0 +1,102 @@
+{
+  "head": "c79af9736c04f6e7cd9c6b2197913d101896544c",
+  "tree": "dab062f2ed2718884089520192876440a5f2eeaf",
+  "startedAt": "2026-10-24T11:04:35.030443+00:00",
+  "stages": [
+    {
+      "stage": "browser",
+      "command": [
+        "nix",
+        "develop",
+        "--no-update-lock-file",
+        "--command",
+        "python3",
+        "-c",
+        "import shutil,subprocess,sys,json; names=['go','gcc','ruby','node','git']; paths={n:shutil.which(n) for n in names}; print(json.dumps({'nixTools':paths}),file=sys.stderr,flush=True); assert all(paths.values()),paths; sys.exit(subprocess.run(sys.argv[1:]).returncode)",
+        "go",
+        "-C",
+        "portal",
+        "test",
+        "-mod=readonly",
+        "./internal/web",
+        "-run",
+        "^TestRetryBackendBrowser$",
+        "-count=1",
+        "-json",
+        "-timeout=360s"
+      ],
+      "actualExit": 1,
+      "elapsed": 9.534156829118729,
+      "missing": [
+        "TestRetryBackendBrowser",
+        "TestRetryBackendBrowser/desktop-member",
+        "TestRetryBackendBrowser/desktop-root",
+        "TestRetryBackendBrowser/mobile-member",
+        "TestRetryBackendBrowser/mobile-root"
+      ],
+      "missingRun": [],
+      "failed": [
+        "TestRetryBackendBrowser/desktop-root",
+        "TestRetryBackendBrowser/desktop-member",
+        "TestRetryBackendBrowser/mobile-root",
+        "TestRetryBackendBrowser/mobile-member",
+        "TestRetryBackendBrowser",
+        "package"
+      ],
+      "skipped": [],
+      "invalidJSON": [],
+      "caseErrors": [
+        "desktop-root: [Errno 2] No such file or directory: '/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/backend-browser/TB-remedy/combined-attempt-1/browser/artifacts/desktop-root/manifest.json'",
+        "desktop-member: [Errno 2] No such file or directory: '/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/backend-browser/TB-remedy/combined-attempt-1/browser/artifacts/desktop-member/manifest.json'",
+        "mobile-root: [Errno 2] No such file or directory: '/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/backend-browser/TB-remedy/combined-attempt-1/browser/artifacts/mobile-root/manifest.json'",
+        "mobile-member: [Errno 2] No such file or directory: '/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/backend-browser/TB-remedy/combined-attempt-1/browser/artifacts/mobile-member/manifest.json'"
+      ],
+      "after": [
+        "c79af9736c04f6e7cd9c6b2197913d101896544c",
+        "dab062f2ed2718884089520192876440a5f2eeaf"
+      ],
+      "clean": true,
+      "pass": false
+    },
+    {
+      "stage": "fork",
+      "command": [
+        "nix",
+        "develop",
+        "--no-update-lock-file",
+        "--command",
+        "python3",
+        "-c",
+        "import shutil,subprocess,sys,json; names=['go','gcc','ruby','node','git']; paths={n:shutil.which(n) for n in names}; print(json.dumps({'nixTools':paths}),file=sys.stderr,flush=True); assert all(paths.values()),paths; sys.exit(subprocess.run(sys.argv[1:]).returncode)",
+        "go",
+        "-C",
+        "portal",
+        "test",
+        "-mod=readonly",
+        "./internal/web",
+        "-run",
+        "^(TestAcceptedForkSourceSharedLockRefusalAndReceiptRecovery|TestCreationFastSourceLockDoesNotWaitForLifecycleMutation|TestCreationReceiptRubyInitializerContract)$",
+        "-count=1",
+        "-json",
+        "-timeout=45s"
+      ],
+      "actualExit": 0,
+      "elapsed": 31.243409492075443,
+      "missing": [],
+      "missingRun": [],
+      "failed": [],
+      "skipped": [],
+      "invalidJSON": [],
+      "caseErrors": [],
+      "after": [
+        "c79af9736c04f6e7cd9c6b2197913d101896544c",
+        "dab062f2ed2718884089520192876440a5f2eeaf"
+      ],
+      "clean": true,
+      "pass": true
+    }
+  ],
+  "pass": false,
+  "elapsed": 40.88445668108761,
+  "scriptSHA256": "2a44ab712f63593ee4342e8aed17a8937b8cb829e6d94700f6fed09c6b966c47"
+}

@@ -1,0 +1,3 @@
+Verification stopped before execution. The packet’s required `B AGENTS.md` is missing: `backend-successor/B/` does not exist. The session binding and environment do agree on slug `2026-10-22-codex-thread-retries` and workspace `/home/aither/workspace/ai/vpsfree.cz`.
+
+I did not run the Python operation. No logs or result artifacts were created by this watcher. Please provide the required B guidance or a corrected released packet before launching another watcher.

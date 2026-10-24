@@ -1,0 +1,5 @@
+- **Result:** Passed, exit status 0.
+- **Session:** `2026-10-22-codex-thread-retries`; `dev-session current` matched.
+- **Command:** `python3 backend-successor/missing-authority/run-affected-packaged-verification.py`, run once from the specified workspace directory.
+- **Evidence:** Every reported step exited 0, including build checks (509.1 s), output closures, Ruby shard coverage, and final source/head/tree checks. Total runtime was about 10 minutes.
+- **Artifacts:** No final artifact paths were printed in the captured output. The process exited; no operation remains running.

@@ -1,0 +1,63 @@
+=== RUN   TestQuestionBrowser
+=== RUN   TestQuestionBrowser/retry_activity_browser_test.cjs
+2026/10/23 21:47:03 http: TLS handshake error from 127.0.0.1:45008: remote error: tls: unknown certificate
+2026/10/23 21:47:04 http: TLS handshake error from 127.0.0.1:45028: remote error: tls: unknown certificate
+2026/10/23 21:47:04 http: TLS handshake error from 127.0.0.1:45044: remote error: tls: unknown certificate
+2026/10/23 21:47:04 http: TLS handshake error from 127.0.0.1:45050: remote error: tls: unknown certificate
+2026/10/23 21:47:04 http: TLS handshake error from 127.0.0.1:45072: remote error: tls: unknown certificate
+2026/10/23 21:47:04 http: TLS handshake error from 127.0.0.1:45058: remote error: tls: unknown certificate
+2026/10/23 21:47:04 http: TLS handshake error from 127.0.0.1:45096: remote error: tls: unknown certificate
+2026/10/23 21:47:04 http: TLS handshake error from 127.0.0.1:45122: remote error: tls: unknown certificate
+2026/10/23 21:47:04 http: TLS handshake error from 127.0.0.1:45130: remote error: tls: unknown certificate
+2026/10/23 21:47:04 http: TLS handshake error from 127.0.0.1:45146: remote error: tls: unknown certificate
+2026/10/23 21:47:04 http: TLS handshake error from 127.0.0.1:45150: remote error: tls: unknown certificate
+    question_browser_test.go:185: retry_activity_browser_test.cjs: exit status 1
+        A [Error]: expect(locator).toHaveCount(expected) failed
+        
+        Locator:  locator('#transcript-entries .message')
+        Expected: 20
+        Received: 0
+        Timeout:  5000ms
+        
+        Call log:
+          - Expect "to.have.count" with timeout 5000ms
+          - waiting for locator('#transcript-entries .message')
+            8 × locator resolved to 0 elements
+              - unexpected value "0"
+        
+            at Proxy.<anonymous> (/nix/store/fg778x0631ld4xd8fim2kbvxll5715xp-playwright-test-1.59.1/lib/node_modules/playwright/lib/matchers/expect.js:213:24)
+            at load (/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/dev-workspace/portal/internal/web/retry_activity_browser_test.cjs:104:68)
+            at runNextTicks (node:internal/process/task_queues:65:5)
+            at process.processImmediate (node:internal/timers:502:9)
+            at async /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/dev-workspace/portal/internal/web/retry_activity_browser_test.cjs:111:7 {
+          matcherResult: {
+            actual: 0,
+            expected: 20,
+            message: 'expect(locator).toHaveCount(expected) failed\n' +
+              '\n' +
+              "Locator:  locator('#transcript-entries .message')\n" +
+              'Expected: 20\n' +
+              'Received: 0\n' +
+              'Timeout:  5000ms\n' +
+              '\n' +
+              'Call log:\n' +
+              '  - Expect "to.have.count" with timeout 5000ms\n' +
+              "  - waiting for locator('#transcript-entries .message')\n" +
+              '    8 × locator resolved to 0 elements\n' +
+              '      - unexpected value "0"\n',
+            name: 'toHaveCount',
+            pass: false,
+            log: [
+              '  - Expect "to.have.count" with timeout 5000ms',
+              "  - waiting for locator('#transcript-entries .message')",
+              '    8 × locator resolved to 0 elements',
+              '      - unexpected value "0"'
+            ],
+            timeout: 5000
+          }
+        }
+--- FAIL: TestQuestionBrowser (8.17s)
+    --- FAIL: TestQuestionBrowser/retry_activity_browser_test.cjs (8.07s)
+FAIL
+FAIL	github.com/aither64/dev-workspace/portal/internal/web	8.216s
+FAIL

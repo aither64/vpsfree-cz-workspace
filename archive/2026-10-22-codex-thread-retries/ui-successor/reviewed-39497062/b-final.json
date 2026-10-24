@@ -1,0 +1,134 @@
+{
+  "repository": "git@github.com:aither64/dev-workspace.git",
+  "branch": "2026-10-22-codex-thread-retries",
+  "base": "bf6d4b0c49600c15e17fe71248807ef43424e932",
+  "deployed_predecessor": "7b8c646974df72e0df3e576d10f09d79823ae004",
+  "head": "39497062e0da98a70386355384fa922c0eaa0168",
+  "tree": "28a9d72044dc3ffa7eb4f817cbb2c4d6c9614d18",
+  "tested_tree": "28a9d72044dc3ffa7eb4f817cbb2c4d6c9614d18",
+  "clean": true,
+  "remote_verified_head": "39497062e0da98a70386355384fa922c0eaa0168",
+  "source": "/nix/store/945qwb93ggqnwgrrdlgg0pkwwrmphdv3-source",
+  "narHash": "sha256-q05iiwXXkcIyD1zStXof4+fkItIFpyBhJK3DBz8VC48=",
+  "lastModified": 1792783944,
+  "source_blob_mode_verified_files": 561,
+  "full_series": [
+    {
+      "commit": "7262c24e4fbe9dbf8604e73590f9b5ef3d5dce99",
+      "tree": "082d1fa7228113019bb63fa29cdcb82189bc76cc",
+      "subject": "turnretry: retain bounded retry policy and admission state"
+    },
+    {
+      "commit": "b3c7187c6e26e269994433716a0ee719d0a7edf7",
+      "tree": "001755e5b7336ec3f8b8a3a1f7e3545482e3e82e",
+      "subject": "runtime: require retry-capable package transitions"
+    },
+    {
+      "commit": "aafaf4195d695c4641ce4f9342d56a1786f237c3",
+      "tree": "208aa98473f80994320a4e2d9818326723c166e7",
+      "subject": "portal: continue new managed failed turns through durable retry admission"
+    },
+    {
+      "commit": "67b354e814162533f6d19342e4e4513540be70fd",
+      "tree": "6247e6a81949f10ae8ff12cdc71e4a0fe9acc350",
+      "subject": "deps: select codex-web retry activity support"
+    },
+    {
+      "commit": "6dba4c398ba2bf54896734ab88eb449cffcd237f",
+      "tree": "a93b46940e716f3c8d3d40b42ebd8f5b9725f20a",
+      "subject": "portal: retire accepted retry provenance before bounded admission"
+    },
+    {
+      "commit": "6435f157fbb0a7e5084a48a3966f2b531d906036",
+      "tree": "c10a66f5a7756074dc62f0316101cf78183ffdc2",
+      "subject": "portal: admit exact prepared plan requests after mode selection"
+    },
+    {
+      "commit": "b8967dfe58b83c8b82c3fd7980b4d2b58dab589c",
+      "tree": "49df583af5c5694fd6758cbce7958bf1235264d7",
+      "subject": "portal: wait within HTTP budgets for transient runtime contention"
+    },
+    {
+      "commit": "39497062e0da98a70386355384fa922c0eaa0168",
+      "tree": "28a9d72044dc3ffa7eb4f817cbb2c4d6c9614d18",
+      "subject": "portal: present retry activity inside the conversation viewport"
+    }
+  ],
+  "sole_A_selection": {
+    "commit": "67b354e814162533f6d19342e4e4513540be70fd",
+    "head": "f86290673d752c77b56c70228c3d26aced75e177",
+    "version": "v0.0.0-20261023192737-f86290673d75",
+    "sum": "h1:5iVFEW9ghXtccbfhFB2swLC+UqZYIqEPaRfNOh1bsMM=",
+    "goModSum": "h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=",
+    "narHash": "sha256-jOEXFTr55N88YbPakjlMw/7wsH8ZKr51Ag+Z1QaM25A=",
+    "lastModified": 1792783657,
+    "source": "/nix/store/2fcnmakk5qvazcsqp1kk7rwpq9vc97sk-source",
+    "vendorHash": "sha256-x0Qrgfvcn74v0E6zJ7JKgwBnOGuJNUNTZQz0JdFIqcU=",
+    "vendor_directory": "/tmp/codex-thread-retries-ui-vendor-f8629067"
+  },
+  "schema_migrations": "none; schema1 retry and schema3 submission unchanged; no new sidecar or policy backend in this milestone",
+  "policy_backend": "deferred until independent presentation review/capture and explicit user visual acceptance",
+  "compatibility": "optional A provider/renderer; B old server has no activity/policy provider; new controls stay unavailable. Legacy A API retained for other embeddings. Manual delivery does not consume optional metadata. Exact deployed refs/bundles preserved; no literal ancestor claim after approved A pin consolidation.",
+  "consumer_graph": {
+    "Go": "portal/go.mod -> codex-web f862; web client and handler tests consume embedded conversation assets",
+    "Nix": "flake.nix/flake.lock codex-web -> nix/workspace-portal.nix source+version + regenerated vendorHash",
+    "browser": "session.html -> static/app.js -> optional mountRetryActivity(root, {client,conversationKey}); createConversationClient retryActivity/retryNow/stopRetry token-only routes",
+    "policy": "B Settings -> /api/sessions/{slug}/retry-policy exact revision + both booleans; controlled fixture only until later backend package"
+  },
+  "quickchecks": {
+    "log": "b-final-quick.log",
+    "result": "PASS",
+    "Node": "syntax + paging source contract + read-cycle17 tests",
+    "Go": "ShippedBrowser HTTP/client + PlanDelivery + HTTPMutationWaits all PASS5.965s; fixture Go compilation0.042s with -run^$",
+    "final_syntax": "b-final-syntax.log PASS after final fixture action barrier correction",
+    "not_run": [
+      "Playwright screenshots",
+      "native",
+      "long/full package checks",
+      "build",
+      "deployment"
+    ]
+  },
+  "ci_snapshot": {
+    "current": [
+      {
+        "conclusion": "",
+        "createdAt": "2026-10-23T19:32:57Z",
+        "databaseId": 40012270221,
+        "headSha": "39497062e0da98a70386355384fa922c0eaa0168",
+        "status": "in_progress",
+        "updatedAt": "2026-10-23T19:33:08Z",
+        "url": "https://github.com/aither64/dev-workspace/actions/runs/40012270221",
+        "workflowName": "Check"
+      }
+    ],
+    "superseded": "recent branch runs all complete; no cancel required",
+    "no_wait": true
+  },
+  "lineage_proof": "b-lineage-proof.json",
+  "capture": {
+    "script": "capture.sh",
+    "environment": "environment.json",
+    "screenshots": "screenshots/",
+    "test": "^TestQuestionBrowser$/^retry_activity_browser_test[.]cjs$",
+    "go_timeout": "240s",
+    "status": "not run; lead-owned fresh watcher after committed affected review"
+  },
+  "documentation": [
+    "docs/workspace-portal.md",
+    "docs/turn-retry-recovery.md"
+  ],
+  "copy_gate": "exact lead-approved labels/statuses/help/guide paragraphs applied",
+  "evidence_hashes": {
+    "b-final-quick.log": "e0ef488d7b0b75eaca0ea93baec943941457b6db405883884739d1fab7ef43da",
+    "b-final-syntax.log": "df8a699acd4423f66f38fa89f08cb26920b1959c591bb7db2061b92fea4e341b",
+    "b-final-history.json": "6b0e9db8cd1200c1ed2e09744521a783778040a9f1bfc2fdb936487342797543",
+    "b-lineage-proof.json": "7a67bd1f0a1f30778d0264510325d4d38aa649e0f4fefb7e73016d0392aa15aa",
+    "b-full-final.patch": "940b7043915d2d06306828d8c774f2511d27a85904d714dc20b321d4c28bb608",
+    "b-deployed-final.patch": "2c336078004ca2b1db227867d26425fa1c6c8e89244424410820399a7237f414",
+    "b-consolidation-range-diff.txt": "4c6a71733e89b57c87553b433585967de85cb766561ca03f551d4bd7c07871bc",
+    "b-deployed-final-range-diff.txt": "c642936ad39ee4c8bfebf6baf4cfab054c25a18f31890da7d6ccb070935e6d9b",
+    "b-final.bundle": "c6592d16e183976eb02b2b265d99674296215b88f438afb61767a56116ae5d7b",
+    "b-preconsolidation.bundle": "d9e329873a5a9511c981e49d6f19e151d3b077707260de4ada157b109fb34240"
+  }
+}

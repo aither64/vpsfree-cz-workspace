@@ -1,0 +1,79 @@
+diff --git a/flake.lock b/flake.lock
+index e71e8951f3fd0be70e0d90679d3f5840643fc145..d5cb89fae62b268af86043cfda87cd75a6b0c2ea 100644
+--- a/flake.lock
++++ b/flake.lock
+@@ -37,17 +37,17 @@
+     "codex-web": {
+       "flake": false,
+       "locked": {
+-        "lastModified": 1792826794,
+-        "narHash": "sha256-HFvEQcsmYJ3MIrsgGyterS1/3jnJrxrqYrRRovrarto=",
++        "lastModified": 1792852844,
++        "narHash": "sha256-tWV8OX1uCr9fjcCvZBgwYYn+O9XvM1xpY+kPv4vgFSY=",
+         "owner": "aither64",
+         "repo": "codex-web",
+-        "rev": "5743f94c2fbd01b65438847d2e2bab0f01df32ae",
++        "rev": "11ec57d2203fc735696fe75a837d47da55a5c6af",
+         "type": "github"
+       },
+       "original": {
+         "owner": "aither64",
+         "repo": "codex-web",
+-        "rev": "5743f94c2fbd01b65438847d2e2bab0f01df32ae",
++        "rev": "11ec57d2203fc735696fe75a837d47da55a5c6af",
+         "type": "github"
+       }
+     },
+diff --git a/flake.nix b/flake.nix
+index 314b250348005f4048322e69c0d40277c075b8fa..8f90c4f68191b197b44799c9e01fb48d70710969 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -5,7 +5,7 @@
+     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+     llm-agents.url = "github:numtide/llm-agents.nix";
+     codex-web = {
+-      url = "github:aither64/codex-web/5743f94c2fbd01b65438847d2e2bab0f01df32ae";
++      url = "github:aither64/codex-web/11ec57d2203fc735696fe75a837d47da55a5c6af";
+       flake = false;
+     };
+   };
+diff --git a/nix/workspace-portal.nix b/nix/workspace-portal.nix
+index 3c323dda80d703c0cb0bc420c0cb3f1753d7c2e2..b824500423d51f99b0fbf2f9baf7fc886c0fba80 100644
+--- a/nix/workspace-portal.nix
++++ b/nix/workspace-portal.nix
+@@ -273,7 +273,7 @@ buildGoModule {
+ 
+   inherit src;
+   modRoot = "portal";
+-  vendorHash = "sha256-bNeFZMHChen0znapzj7liBwO6YluoxWeZQUO35rVOHc=";
++  vendorHash = "sha256-GcniWcl+4lS5swtWoGZYG04oa5uNtBjfYrKxVaiW1us=";
+ 
+   postPatch = ''
+     expected=${lib.escapeShellArg codexWebVersion}
+diff --git a/portal/go.mod b/portal/go.mod
+index 84bb0d63da2633a11bff192c4d439c9b9abcbf22..53f4dcd7b631edac498fc658955ace8b02650275 100644
+--- a/portal/go.mod
++++ b/portal/go.mod
+@@ -4,7 +4,7 @@ go 1.24.0
+ 
+ require (
+ 	github.com/SherClockHolmes/webpush-go v1.4.0
+-	github.com/aither64/codex-web v0.0.0-20261024072634-5743f94c2fbd
++	github.com/aither64/codex-web v0.0.0-20261024144044-11ec57d2203f
+ 	github.com/coder/websocket v1.8.14
+ 	github.com/microcosm-cc/bluemonday v1.0.27
+ 	github.com/yuin/goldmark v1.7.17
+diff --git a/portal/go.sum b/portal/go.sum
+index d99d1b657824198ce3c8f6afb8ec37a9e323333b..60b7df9070caffaddc4c373919eba18eb2534abb 100644
+--- a/portal/go.sum
++++ b/portal/go.sum
+@@ -1,7 +1,7 @@
+ github.com/SherClockHolmes/webpush-go v1.4.0 h1:ocnzNKWN23T9nvHi6IfyrQjkIc0oJWv1B1pULsf9i3s=
+ github.com/SherClockHolmes/webpush-go v1.4.0/go.mod h1:XSq8pKX11vNV8MJEMwjrlTkxhAj1zKfxmyhdV7Pd6UA=
+-github.com/aither64/codex-web v0.0.0-20261024072634-5743f94c2fbd h1:kl5V+eAacBcbN3S/ZoxUUnvVXW7le9mnhlBhxgQyJiQ=
+-github.com/aither64/codex-web v0.0.0-20261024072634-5743f94c2fbd/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
++github.com/aither64/codex-web v0.0.0-20261024144044-11ec57d2203f h1:cod93lovFHu5adtEqQy7QyE1E5YIFJrTkCnjB3phFgw=
++github.com/aither64/codex-web v0.0.0-20261024144044-11ec57d2203f/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
+ github.com/aymerick/douceur v0.2.0 h1:Mv+mAeH1Q+n9Fr+oyamOlAkUNPWPlA8PPGR0QAaYuPk=
+ github.com/aymerick/douceur v0.2.0/go.mod h1:wlT5vV2O3h55X9m7iVYN0TBM0NH/MmbLnd30/FjWUq4=
+ github.com/coder/websocket v1.8.14 h1:9L0p0iKiNOibykf283eHkKUHHrpG7f65OE3BhhO7v9g=

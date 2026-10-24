@@ -1,0 +1,28 @@
+1:  8ea8307 ! 1:  a58f070 conversation: use an icon to dismiss retry notices
+    @@ Commit message
+     
+         Retain exact conversation and chain dismissal keys, local storage fallback and
+         active Retry now and Stop retrying controls. No provider or delivery behavior
+    -    changes.
+    +    changes. Version the child module URL so cached imports refresh the control.
+     
+      ## conversation/assets/conversation.css ##
+     @@
+    @@ conversation/assets/conversation.css
+     +  .codex-retry-activity-dismiss { width: 2.5rem; min-height: 2.5rem; }
+      }
+     
+    + ## conversation/assets/conversation.js ##
+    +@@ conversation/assets/conversation.js: export {createConversationSync, renderConnectionStatus, connectionMessage} from
+    + import {refreshPolicy, createRefreshNotice} from "./refresh.js?v=1";
+    + import {mountRetryControls} from "./retry.js?v=1";
+    + export {mountRetryControls, retryStatusText} from "./retry.js?v=1";
+    +-export {mountRetryActivity, retryActivityPresentation} from "./retry_activity.js?v=1";
+    ++export {mountRetryActivity, retryActivityPresentation} from "./retry_activity.js?v=2";
+    + import {createAsyncQuestions, bindQuestionAnswerKeyboard} from "./questions.js?v=4";
+    + export {createAsyncQuestions, asyncQuestionReply, bindQuestionAnswerKeyboard} from "./questions.js?v=4";
+    + export {refreshPolicy, createRefreshNotice} from "./refresh.js?v=1";
+    +
+      ## conversation/assets/retry_activity.js ##
+     @@ conversation/assets/retry_activity.js: export function mountRetryActivity(root, options) {
+          const node = page.createElement(tag); node.className = className; node.textContent = text; return node;

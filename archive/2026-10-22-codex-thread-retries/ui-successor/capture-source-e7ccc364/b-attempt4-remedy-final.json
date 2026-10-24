@@ -1,0 +1,178 @@
+{
+  "recordedAt": "2026-10-23T21:14:17.925927+00:00",
+  "base": "bf6d4b0c49600c15e17fe71248807ef43424e932",
+  "head": "e7ccc364f8b52e66af33e8f4ffe178eaa9e1547a",
+  "tree": "72ee1924492404722c731694ffeec44def7aba2c",
+  "testedTree": "72ee1924492404722c731694ffeec44def7aba2c",
+  "testedPreconsolidationHead": "6df32bc6ac04201f2b2bceb3065fd8af4602b79b",
+  "preconsolidationTreeEquivalent": true,
+  "remoteVerifiedHead": "e7ccc364f8b52e66af33e8f4ffe178eaa9e1547a",
+  "clean": true,
+  "source": "/nix/store/7v5ji3jxnvdkc17c4jibvl3gvjnd90ib-source",
+  "narHash": "sha256-52Tg0CugMCpxlJfMqaBfJt4zVHSji14tjWBALCMMi2U=",
+  "lastModified": 1792789632,
+  "verifiedBlobsAndModes": 566,
+  "sourceFileSetExact": true,
+  "narRehashed": true,
+  "previousHead": "e1e165e89b7741a95a5b66dfbd15f8a3c3987285",
+  "previousTree": "c9874dd068d2de9431b12114e0fb91b95f1ad186",
+  "first8CommitsExact": true,
+  "fullSeries": [
+    {
+      "commit": "7262c24e4fbe9dbf8604e73590f9b5ef3d5dce99",
+      "subject": "turnretry: retain bounded retry policy and admission state"
+    },
+    {
+      "commit": "b3c7187c6e26e269994433716a0ee719d0a7edf7",
+      "subject": "runtime: require retry-capable package transitions"
+    },
+    {
+      "commit": "aafaf4195d695c4641ce4f9342d56a1786f237c3",
+      "subject": "portal: continue new managed failed turns through durable retry admission"
+    },
+    {
+      "commit": "4ff797e51397b9a5c59b1e12b592c9fc0c34c1fd",
+      "subject": "deps: select codex-web retry activity support"
+    },
+    {
+      "commit": "24bf3c0be7288184a420f3112accfc54a94f9cd3",
+      "subject": "portal: retire accepted retry provenance before bounded admission"
+    },
+    {
+      "commit": "4b3683377a5defcb9d8bcd6410c7177715f38f9b",
+      "subject": "portal: admit exact prepared plan requests after mode selection"
+    },
+    {
+      "commit": "0778278498dd4cd31be49e107cb851ba95e5398a",
+      "subject": "portal: wait within HTTP budgets for transient runtime contention"
+    },
+    {
+      "commit": "337af0b6513977ca31f353bbc1728020469a5f1d",
+      "subject": "portal: present retry activity inside the conversation viewport"
+    },
+    {
+      "commit": "18b223cc2d30ccbbdf3554c51cf1003569f1f121",
+      "subject": "portal: release the next draft before message acknowledgment"
+    },
+    {
+      "commit": "e7ccc364f8b52e66af33e8f4ffe178eaa9e1547a",
+      "subject": "portal: submit question text through its owning action"
+    }
+  ],
+  "deltaPaths": [
+    "portal/internal/web/composer_handoff_browser_test.cjs"
+  ],
+  "allOtherProductConfigDocsPinsAndFixturesEqual": true,
+  "A": {
+    "head": "55e0300b27b6927b1693b3792042762f31a385cc",
+    "source": "/nix/store/bfz8h6rkirxszm4lfsrn20mnj2pzxpzh-source",
+    "narHash": "sha256-IhCdZ7HpW3sora4/WnvWoCLotFZtMMldGCLItXoC90w=",
+    "lastModified": 1792785904,
+    "version": "v0.0.0-20261023200504-55e0300b27b6",
+    "sum": "h1:f34novYrdHGiXSAeNfaCAkpkwvNnsI0qGa1XkGK3FDo=",
+    "goModSum": "h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=",
+    "vendorHash": "sha256-jrp5UYCY0XK0Nw1jzOPv5IRaH4YlLle5M15l8opx4Qo=",
+    "nixVendorHash": "sha256-jrp5UYCY0XK0Nw1jzOPv5IRaH4YlLle5M15l8opx4Qo=",
+    "consumerGraph": "B portal Go module + embedded browser assets; flake codex-web source + codex model catalog; nix/workspace-portal.nix goModules digest. No W/C selection changed."
+  },
+  "migrations": [],
+  "diagnosis": {
+    "finding": "After fault-case reload fixture awaited only Send, while initial load also awaited upload-toggle readiness. mountUploads.add ignores file selection until limits metadata exists. Direct hidden-picker setInputFiles bypasses disabled Add attachments UI.",
+    "limit": "Readiness race is source-backed; original run lacks upload request/readiness timeline, so empirical cause remains unproved. No product/upload-client error assumed.",
+    "remedy": "Await actual upload toggle before every attach; keep exact filename/Ready/zero-request/draft/identity assertions and add bounded upload diagnostics. Passing fixtures and all other blobs stay byte-identical.",
+    "evidence": "attempt4-diagnosis.json",
+    "originalEvidenceHashesVerified": true
+  },
+  "checks": {
+    "command": "nix develop --no-update-lock-file --command bash -c 'set -e; node --check portal/internal/web/composer_handoff_browser_test.cjs; cd portal; TMPDIR=/tmp go test -mod=readonly ./internal/web -run \"^$\" -count=1'",
+    "log": "attempt4-remedy-quick.log",
+    "syntax": "PASS",
+    "GoFixtureCompile": "PASS0.046s [no tests to run]",
+    "captureScriptSyntax": "bash -n both scripts + Python compile PASS",
+    "browserByOwner": "NOT RUN",
+    "priorActualBrowser": {
+      "head": "e1e165e89b7741a95a5b66dfbd15f8a3c3987285",
+      "tree": "c9874dd068d2de9431b12114e0fb91b95f1ad186",
+      "receipt": "capture-attempt-4/result.json",
+      "batchExit": 1,
+      "batchElapsedMS": 47084,
+      "retryActivity": "PASS desktop+mobile19.50s",
+      "requiredKeyboard": "PASS4.40s",
+      "composer": "FAIL14.78s readback attachment setup; unchanged evidence"
+    },
+    "otherProductQuick": "Retained prior packet exact source provenance; all non-composer-fixture blobs equal e1"
+  },
+  "preserved": {
+    "oldRef": "refs/heads/preserved/2026-10-22-codex-thread-retries-capture4-e1e165e8",
+    "oldBundle": "b-preserved-e1e165e8.bundle",
+    "oldPacketDirectory": "capture-source-e1e165e8/",
+    "preconsolidationRef": "refs/heads/preserved/2026-10-22-codex-thread-retries-attempt4-remedy-preconsolidation",
+    "preconsolidationBundle": "b-attempt4-remedy-preconsolidation.bundle",
+    "finalBundle": "b-attempt4-remedy-final.bundle",
+    "attempt4": "capture-attempt-4/ original logs/result/screenshots untouched"
+  },
+  "review": {
+    "previousAffectedReview": "Retained review on07e, direct narrow remedies through e1 preserved in prior packet",
+    "thisDelta": "Lead exact e1-to-e7 onefixture diff step9 accepted in current assignment; no behavior expansion"
+  },
+  "capture5": {
+    "launch": "bash ui-successor/capture-attempt-5.sh",
+    "cwd": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries",
+    "guard": "e7ccc364f8b52e66af33e8f4ffe178eaa9e1547a + clean",
+    "selectedFixtures": [
+      "composer_handoff_browser_test.cjs"
+    ],
+    "output": "ui-successor/capture-attempt-5/{stdout.log,stderr.log,result.json,screenshots/}",
+    "uniqueOutputRefusesOverwrite": true,
+    "scriptReceipt": "capture-attempt-5-prepared.json",
+    "hashes": {
+      "capture.sh": "dfee54d3b6a2772705b70ff041469b188367463ae3d7f34dca1a48260e2b9290",
+      "capture-attempt-5.sh": "c8e4d63fffb1f2b3c79df494a5d3f4e30e765dc8fedeb92a7c097de8b84e96b7",
+      "capture-command.py": "999ee400c846b96ab37980926e8476bed6a917d9a47fe8421eb6127de2d82aeb"
+    },
+    "timeout": "Go360s",
+    "owner": "Lead fresh Luna/low watcher after directstep9; no source/pin changes during run",
+    "result": "Not observed by this owner; no outcome asserted"
+  },
+  "CI": {
+    "snapshot": "b-attempt4-remedy-ci-snapshot.json",
+    "currentRun": 40024500854,
+    "currentStatusAtSnapshot": "in_progress",
+    "supersededRun": 40022639730,
+    "supersededStatusAtSnapshot": "in_progress",
+    "pollOrWait": false,
+    "cancel": "Retained same-credential HTTP403; user prohibited repeat; no workaround/repeat attempted",
+    "separate9fFinding": "See prior packet and ci-9f-failure.log; lead-owned diagnosis"
+  },
+  "operations": {
+    "browserRunByOwner": false,
+    "nativeOrBuild": false,
+    "liveStateOrSend": false,
+    "deployOrIntegration": false,
+    "lifecycleAction": false,
+    "ownerActiveProcess": null
+  },
+  "documentation": "No product doc change for fixture-only readiness fence; rationale, limits and original evidence retained in this session packet.",
+  "artifacts": {
+    "attempt4-diagnosis.json": "9c2ec67588496d9e8b96a0b56e787cf272ed5df8ce1d07c9abda49582f86c89f",
+    "attempt4-remedy-quick.log": "4ed0dbf1fd81f32a46b4d62df889de64c7b63156c850e262415722de3b4546ee",
+    "b-attempt4-remedy-series.txt": "273afa534427136ab34a5c70980d369281025e2266e1e1feada87ccc0ede02e6",
+    "b-attempt4-remedy-full.diff": "8f807062e7f4c4c21af83b32f886a508b381a74d2e487069f4f078a58cdc1561",
+    "b-attempt4-remedy-delta.diff": "6e35bbb507c9b42beedcf7307c8e0a1cf7fcdbb965ae8987f3228aa3df380967",
+    "b-attempt4-remedy-range-diff.txt": "7616199ac439bbed432ccad263144d16960cd943a2e5981bb53dc1889652aa4e",
+    "b-attempt4-remedy-preconsolidation-range-diff.txt": "eaf1a452549a9a89b8e35a8a88eded4b9d954bdcea08480b7e795e56c5913194",
+    "b-attempt4-remedy-product.diff": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "b-attempt4-remedy-source-identity.json": "190168043792a6ad2171f120f39fa4f8c6b6c3b33b009c7d7e5cc632e1d38e61",
+    "b-attempt4-remedy-source-metadata.json": "d88cda8bd7451eaeacd58c749b9e6884a88edbb5760840701a6b3725d13271cc",
+    "b-attempt4-remedy-fixture-proof.json": "e35e156e88f6a54c8c561665ee63bc16e23d76aca56e62fa24bb8103aa068176",
+    "b-attempt4-remedy-bundle-verify.txt": "a59a1b44c744cb303f0ca3697dea394e2f5ea36018021bf45f10a8ff595696cd",
+    "b-attempt4-remedy-remote-after.txt": "c7a23c735b7cfb679ece149b68219f339b9d105f91d6f26842641c33b2ac8648",
+    "b-attempt4-remedy-push.log": "e9c7e51ac1845166dec5a4da3da686e894d5d7b413a2ec92ec26f0f101001b9e",
+    "b-attempt4-remedy-ci-snapshot.json": "7f7f8f110d1ef9925ae9518ce4340573fc8aeff046651b01afb6a6779fea9080",
+    "b-attempt4-remedy-handoff.md": "1bef53edcd4e76a1c6ae4c8f4653300e2705bd3407786d5384b31963416a4f71",
+    "capture-attempt-5-prepared.json": "e97eb15ab355f4ea82a48ea5fe0787ad9d5e60caca6a9b394a98c8d9648dda77",
+    "capture.sh": "dfee54d3b6a2772705b70ff041469b188367463ae3d7f34dca1a48260e2b9290",
+    "capture-attempt-5.sh": "c8e4d63fffb1f2b3c79df494a5d3f4e30e765dc8fedeb92a7c097de8b84e96b7",
+    "capture-command.py": "999ee400c846b96ab37980926e8476bed6a917d9a47fe8421eb6127de2d82aeb"
+  }
+}

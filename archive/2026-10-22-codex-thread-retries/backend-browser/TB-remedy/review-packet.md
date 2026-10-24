@@ -1,0 +1,9 @@
+# Completed TB remedy and descriptor service unit
+
+Frozen exact head `c79af9736c04f6e7cd9c6b2197913d101896544c`, tree `dab062f2ed2718884089520192876440a5f2eeaf`, clean and SSH-published with exactf0 lease. Review only assessed TB1/TB2 fixture wire fidelity expansion plus the separately committed service line; retain unchanged prior conclusions. Source delta from reviewedf0 is exactly the new browser Go file and workspace-codex@.service. The CJS assertions, manual host, shared helpers/native fixtures, actual backend/provider/admission/sender, A/pins/docs/assets/schemas remain byte-identical.
+
+The fixture-private wire tracks exact per-thread native failure ID/status/class, accepts only its six explicit native methods and validates original Pending/thread/text/model/effort/action before the one controlled continuation; history retains that same original client ID and its accepted turn. Each seed uses a new fixture failure ID for native state, proof and State.Observe. Capacity alone gets a future deadline; cyber retains its real immediately due Observe deadline. No admission validation is changed and no assertion is weakened.
+
+Service16 adds exactly LimitNOFILE=524288 under Service. Declarative one-setting/otherwise-identical check and declared namespace substitution preservation pass. Existing packaged user-namespace validation remains a post-review package gate; no build/VM/native or live process action ran here.
+
+Complete16series/full.diff/range-diff/f0.delta.diff and scope-proof.json show first14 exact, browser15 amended, service16 separate. No repeated pin/fixup stream or migrations. Originalf0 ref/bundle/packet artifacts retained. Gofmt/diff/Node syntax and repository-Nix web compile-only pass (quick.json); compile is not browser/fork execution. Combined exact-head browser32/fork21 driver is preparation only. All existing prior failed runs and historical CI uncertainty are retained.

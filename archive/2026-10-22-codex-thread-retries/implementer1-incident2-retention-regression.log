@@ -1,0 +1,31 @@
+warning: Git tree '/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/dev-workspace' is dirty
+error (ignored): SQLite database '/home/aither/.cache/nix/eval-cache-v6/98a9dabf3a41360c1063dc47688309770d7d4ced3f3c2a94a6156b2701313a37.sqlite' is busy
+evaluation warning: 'system' has been renamed to/replaced by 'stdenv.hostPlatform.system'
+=== RUN   TestRetryRetentionManagedSteersBeyond64AndExactReplay
+=== RUN   TestRetryRetentionManagedSteersBeyond64AndExactReplay/member=false
+    turn_retry_settings_test.go:214: explicit owner lost inherited policy/MCP: map[string]interface {}{"excludeTurns":true, "threadId":"root"}
+    turn_retry_retention_test.go:206: 64 accepted steers -> 69 distinct accepted steers; ledger/restart/ack/history replays and changed text/action/options: native sends=69, snapshots=64
+=== RUN   TestRetryRetentionManagedSteersBeyond64AndExactReplay/member=true
+    turn_retry_settings_test.go:214: explicit owner lost inherited policy/MCP: map[string]interface {}{"excludeTurns":true, "threadId":"member"}
+    turn_retry_retention_test.go:206: 64 accepted steers -> 69 distinct accepted steers; ledger/restart/ack/history replays and changed text/action/options: native sends=69, snapshots=64
+--- FAIL: TestRetryRetentionManagedSteersBeyond64AndExactReplay (8.84s)
+    --- FAIL: TestRetryRetentionManagedSteersBeyond64AndExactReplay/member=false (4.45s)
+    --- FAIL: TestRetryRetentionManagedSteersBeyond64AndExactReplay/member=true (4.39s)
+=== RUN   TestRetryRetentionProtectedQueueFIFOAndPreparedIdentity
+=== RUN   TestRetryRetentionProtectedQueueFIFOAndPreparedIdentity/member=false
+=== RUN   TestRetryRetentionProtectedQueueFIFOAndPreparedIdentity/member=true
+=== RUN   TestRetryRetentionProtectedQueueFIFOAndPreparedIdentity/prepared_first_execution_without_admission
+    turn_retry_settings_test.go:214: explicit owner lost inherited policy/MCP: map[string]interface {}{"excludeTurns":true, "threadId":"root"}
+--- FAIL: TestRetryRetentionProtectedQueueFIFOAndPreparedIdentity (4.45s)
+    --- PASS: TestRetryRetentionProtectedQueueFIFOAndPreparedIdentity/member=false (2.26s)
+    --- PASS: TestRetryRetentionProtectedQueueFIFOAndPreparedIdentity/member=true (2.11s)
+    --- FAIL: TestRetryRetentionProtectedQueueFIFOAndPreparedIdentity/prepared_first_execution_without_admission (0.07s)
+FAIL
+FAIL	github.com/aither64/dev-workspace/portal/internal/workspacecodex	13.319s
+=== RUN   TestRetentionAcceptedAtProtectedCapConverges
+--- PASS: TestRetentionAcceptedAtProtectedCapConverges (0.11s)
+=== RUN   TestRetentionProofAndAcceptedReceiptByteBudget
+--- PASS: TestRetentionProofAndAcceptedReceiptByteBudget (0.06s)
+PASS
+ok  	github.com/aither64/dev-workspace/portal/internal/turnretry	0.196s
+FAIL

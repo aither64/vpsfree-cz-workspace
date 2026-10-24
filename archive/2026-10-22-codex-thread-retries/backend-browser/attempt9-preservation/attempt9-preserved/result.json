@@ -1,0 +1,56 @@
+{
+  "head": "e22eecab01a691225f7464f0c8965526648f442a",
+  "tree": "1aaa3b356b09875de643d9a1d76c1bd624ae3a7d",
+  "startedAt": "2026-10-24T14:20:32.917885+00:00",
+  "stages": [
+    {
+      "stage": "browser",
+      "command": [
+        "nix",
+        "develop",
+        "--no-update-lock-file",
+        "--command",
+        "python3",
+        "-c",
+        "import shutil,subprocess,sys,json; names=['go','gcc','ruby','node','git']; paths={n:shutil.which(n) for n in names}; print(json.dumps({'nixTools':paths}),file=sys.stderr,flush=True); assert all(paths.values()),paths; sys.exit(subprocess.run(sys.argv[1:]).returncode)",
+        "go",
+        "-C",
+        "portal",
+        "test",
+        "-mod=readonly",
+        "./internal/web",
+        "-run",
+        "^TestRetryBackendBrowser$",
+        "-count=1",
+        "-json",
+        "-timeout=360s"
+      ],
+      "actualExit": 1,
+      "elapsed": 68.02480567246675,
+      "missing": [
+        "TestRetryBackendBrowser",
+        "TestRetryBackendBrowser/desktop-root"
+      ],
+      "missingRun": [],
+      "failed": [
+        "TestRetryBackendBrowser/desktop-root",
+        "TestRetryBackendBrowser",
+        "package"
+      ],
+      "skipped": [],
+      "invalidJSON": [],
+      "caseErrors": [
+        "desktop-root: [Errno 2] No such file or directory: '/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/backend-browser/footer-page-diagnosis/implementation/browser-attempt-9/browser/artifacts/desktop-root/manifest.json'"
+      ],
+      "after": [
+        "e22eecab01a691225f7464f0c8965526648f442a",
+        "1aaa3b356b09875de643d9a1d76c1bd624ae3a7d"
+      ],
+      "clean": true,
+      "pass": false
+    }
+  ],
+  "pass": false,
+  "elapsed": 68.17909232340753,
+  "scriptSHA256": "792c1a95df0e17c3a165148bf64c3e01dbe90627e46494a1aa76c0b10c54b983"
+}

@@ -1,0 +1,176 @@
+panic: test timed out after 45s
+	running tests:
+		TestRetryRetentionAggregateAndAutomaticAtCap (6s)
+		TestRetryRetentionAggregateAndAutomaticAtCap/64 (2s)
+
+goroutine 706 [running]:
+testing.(*M).startAlarm.func1()
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/testing/testing.go:2802 +0x354
+created by time.goFunc
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/time/sleep.go:215 +0x2d
+
+goroutine 1 [chan receive]:
+testing.(*T).Run(0x20384a04b48, {0x9e5fe8?, 0x0?}, 0x9fe8b0)
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/testing/testing.go:2109 +0x4e5
+testing.runTests.func1(0x20384a04b48)
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/testing/testing.go:2585 +0x3e
+testing.tRunner(0x20384a04b48, 0x20384adfc58)
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/testing/testing.go:2036 +0xea
+testing.runTests({0x9e2a4f, 0x28}, {0x9f19a9, 0x40}, 0x203847ba948, {0xdf3300, 0x4e, 0x4e}, {0xc2af3a20f8009458, 0xa7a991114, ...})
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/testing/testing.go:2583 +0x505
+testing.(*M).Run(0x20384afbb80)
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/testing/testing.go:2443 +0x6ac
+main.main()
+	_testmain.go:202 +0x9b
+
+goroutine 676 [chan receive]:
+testing.(*T).Run(0x20384a05208, {0x20384cca42e?, 0x1?}, 0x20384cca430)
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/testing/testing.go:2109 +0x4e5
+github.com/aither64/dev-workspace/portal/internal/workspacecodex.TestRetryRetentionAggregateAndAutomaticAtCap(0x20384a05208)
+	/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/dev-workspace/portal/internal/workspacecodex/turn_retry_retention_test.go:414 +0xaf
+testing.tRunner(0x20384a05208, 0x9fe8b0)
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/testing/testing.go:2036 +0xea
+created by testing.(*T).Run in goroutine 1
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/testing/testing.go:2101 +0x4c5
+
+goroutine 666 [syscall]:
+syscall.Syscall(0x4a, 0xa, 0x0, 0x0)
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/syscall/syscall_linux.go:74 +0x25
+syscall.Fsync(0x2038480c950?)
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/syscall/zsyscall_linux_amd64.go:463 +0x25
+internal/poll.(*FD).Fsync.func1(...)
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/internal/poll/fd_fsync_posix.go:18
+internal/poll.ignoringEINTR(...)
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/internal/poll/fd_posix.go:74
+internal/poll.(*FD).Fsync(0x0?)
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/internal/poll/fd_fsync_posix.go:17 +0xe7
+os.(*File).Sync(0x203849820e0)
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/os/file_posix.go:167 +0x3b
+github.com/aither64/codex-web/codex.(*Client).writeQueueLedgerLocked(0x20384b74008)
+	/home/aither/go/pkg/mod/github.com/aither64/codex-web@v0.0.0-20261024072634-5743f94c2fbd/codex/client.go:2579 +0x52b
+github.com/aither64/codex-web/codex.(*Client).SendWithOptions.(*Client).markSendSubmitting.func2()
+	/home/aither/go/pkg/mod/github.com/aither64/codex-web@v0.0.0-20261024072634-5743f94c2fbd/codex/client.go:2784 +0x257
+github.com/aither64/codex-web/codex.queueLedgerAction.func1()
+	/home/aither/go/pkg/mod/github.com/aither64/codex-web@v0.0.0-20261024072634-5743f94c2fbd/codex/client.go:2533 +0x13
+github.com/aither64/codex-web/codex.queueLedgerTransaction[...](0x20384b74008?, 0x2038480cd28)
+	/home/aither/go/pkg/mod/github.com/aither64/codex-web@v0.0.0-20261024072634-5743f94c2fbd/codex/client.go:2528 +0xe2
+github.com/aither64/codex-web/codex.queueLedgerAction(0x93bd01?, 0x0?)
+	/home/aither/go/pkg/mod/github.com/aither64/codex-web@v0.0.0-20261024072634-5743f94c2fbd/codex/client.go:2532 +0x33
+github.com/aither64/codex-web/codex.(*Client).markSendSubmitting(...)
+	/home/aither/go/pkg/mod/github.com/aither64/codex-web@v0.0.0-20261024072634-5743f94c2fbd/codex/client.go:2771
+github.com/aither64/codex-web/codex.(*Client).SendWithOptions(0x20384b74008, {0xa0a638, 0x20384b82120}, {0x9c7702, 0x4}, {0x20384ccbb80, 0x8}, {0x203847dbec0, 0x24}, {0x0, ...}, ...)
+	/home/aither/go/pkg/mod/github.com/aither64/codex-web@v0.0.0-20261024072634-5743f94c2fbd/codex/client.go:5141 +0xd45
+github.com/aither64/dev-workspace/portal/internal/workspacecodex.(*Client).sendWithRecovery(0x20385288300, {0xa0a638, 0x20384b82120}, {0x9c7702, 0x4}, {0x20384ccbb80, 0x8}, {0x203847dbec0, 0x24}, {0x0, ...}, ...)
+	/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/dev-workspace/portal/internal/workspacecodex/recovery.go:64 +0x13a5
+github.com/aither64/dev-workspace/portal/internal/workspacecodex.(*Client).SendWithOptions(0x20385288300, {0xa0a4e8, 0xe1abe0}, {0x9c7702, 0x4}, {0x20384ccbb80, 0x8}, {0x203847dbec0, 0x24}, {0x0, ...}, ...)
+	/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/dev-workspace/portal/internal/workspacecodex/turn_retry.go:343 +0x76e
+github.com/aither64/dev-workspace/portal/internal/workspacecodex.retryRetentionSend(0x20384a04d88, 0x20384b9c3c0, 0x2b)
+	/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/dev-workspace/portal/internal/workspacecodex/turn_retry_retention_test.go:125 +0x18a
+github.com/aither64/dev-workspace/portal/internal/workspacecodex.TestRetryRetentionAggregateAndAutomaticAtCap.func1(0x20384a04d88)
+	/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/dev-workspace/portal/internal/workspacecodex/turn_retry_retention_test.go:418 +0xc9
+testing.tRunner(0x20384a04d88, 0x20384cca430)
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/testing/testing.go:2036 +0xea
+created by testing.(*T).Run in goroutine 676
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/testing/testing.go:2101 +0x4c5
+
+goroutine 667 [IO wait]:
+internal/poll.runtime_pollWait(0x7fffb1197e00, 0x72)
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/runtime/netpoll.go:351 +0x85
+internal/poll.(*pollDesc).wait(0x20385288080?, 0x20?, 0x0)
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/internal/poll/fd_poll_runtime.go:84 +0x27
+internal/poll.(*pollDesc).waitRead(...)
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/internal/poll/fd_poll_runtime.go:89
+internal/poll.(*FD).Accept(0x20385288080)
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/internal/poll/fd_unix.go:613 +0x28c
+net.(*netFD).accept(0x20385288080)
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/net/fd_unix.go:150 +0x29
+net.(*UnixListener).accept(0x2038492be48?)
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/net/unixsock_posix.go:172 +0x16
+net.(*UnixListener).Accept(0x2038495d080)
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/net/unixsock.go:267 +0x30
+net/http.(*Server).Serve(0x20384c14000, {0xa09ea0, 0x2038495d080})
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/net/http/server.go:3432 +0x30c
+github.com/aither64/dev-workspace/portal/internal/workspacecodex.serveUnixWebsocket.func3()
+	/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/dev-workspace/portal/internal/workspacecodex/client_test.go:1550 +0x28
+created by github.com/aither64/dev-workspace/portal/internal/workspacecodex.serveUnixWebsocket in goroutine 666
+	/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/dev-workspace/portal/internal/workspacecodex/client_test.go:1549 +0x2a5
+
+goroutine 248 [IO wait]:
+internal/poll.runtime_pollWait(0x7fffb1198200, 0x72)
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/runtime/netpoll.go:351 +0x85
+internal/poll.(*pollDesc).wait(0x20385288480?, 0x20384a14000?, 0x0)
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/internal/poll/fd_poll_runtime.go:84 +0x27
+internal/poll.(*pollDesc).waitRead(...)
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/internal/poll/fd_poll_runtime.go:89
+internal/poll.(*FD).Read(0x20385288480, {0x20384a14000, 0x1000, 0x1000})
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/internal/poll/fd_unix.go:165 +0x2ae
+net.(*netFD).Read(0x20385288480, {0x20384a14000?, 0x20384d995a8?, 0x488605?})
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/net/fd_posix.go:68 +0x25
+net.(*conn).Read(0x20384d820e8, {0x20384a14000?, 0x7fffae8dcf48?, 0x7ffff7f700f8?})
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/net/net.go:196 +0x45
+net/http.(*readWriteCloserBody).Read(0x20384b829c0?, {0x20384a14000?, 0x488605?, 0x28?})
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/net/http/transport.go:2630 +0x88
+bufio.(*Reader).fill(0x20384b9e0c0)
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/bufio/bufio.go:113 +0x103
+bufio.(*Reader).ReadByte(0x20384b9e0c0)
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/bufio/bufio.go:273 +0x27
+github.com/coder/websocket.readFrameHeader(0x20384b9e0c0, {0x203849ba7e0, 0x8, 0x8})
+	/home/aither/go/pkg/mod/github.com/coder/websocket@v1.8.14/frame.go:55 +0x87
+github.com/coder/websocket.(*Conn).readFrameHeader(0x203849ba780, {0xa0a4e8, 0xe1abe0})
+	/home/aither/go/pkg/mod/github.com/coder/websocket@v1.8.14/read.go:266 +0xe5
+github.com/coder/websocket.(*Conn).readLoop(0x203849ba780, {0xa0a4e8, 0xe1abe0})
+	/home/aither/go/pkg/mod/github.com/coder/websocket@v1.8.14/read.go:185 +0x65
+github.com/coder/websocket.(*Conn).reader(0x203849ba780, {0xa0a4e8, 0xe1abe0})
+	/home/aither/go/pkg/mod/github.com/coder/websocket@v1.8.14/read.go:381 +0x10f
+github.com/coder/websocket.(*Conn).Reader(...)
+	/home/aither/go/pkg/mod/github.com/coder/websocket@v1.8.14/read.go:36
+github.com/coder/websocket.(*Conn).Read(0x20384d7e140?, {0xa0a4e8?, 0xe1abe0?})
+	/home/aither/go/pkg/mod/github.com/coder/websocket@v1.8.14/read.go:42 +0x1e
+github.com/aither64/codex-web/codex.(*Client).readLoop(0x20384b74008, 0x203849ba780, 0x1)
+	/home/aither/go/pkg/mod/github.com/aither64/codex-web@v0.0.0-20261024072634-5743f94c2fbd/codex/client.go:1208 +0x55
+created by github.com/aither64/codex-web/codex.(*Client).Ensure in goroutine 666
+	/home/aither/go/pkg/mod/github.com/aither64/codex-web@v0.0.0-20261024072634-5743f94c2fbd/codex/client.go:987 +0x67c
+
+goroutine 673 [IO wait]:
+internal/poll.runtime_pollWait(0x7fffb1198600, 0x72)
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/runtime/netpoll.go:351 +0x85
+internal/poll.(*pollDesc).wait(0x20385288700?, 0x20384c32000?, 0x0)
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/internal/poll/fd_poll_runtime.go:84 +0x27
+internal/poll.(*pollDesc).waitRead(...)
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/internal/poll/fd_poll_runtime.go:89
+internal/poll.(*FD).Read(0x20385288700, {0x20384c32000, 0x1000, 0x1000})
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/internal/poll/fd_unix.go:165 +0x2ae
+net.(*netFD).Read(0x20385288700, {0x20384c32000?, 0x10?, 0x2038491b808?})
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/net/fd_posix.go:68 +0x25
+net.(*conn).Read(0x20384d820f0, {0x20384c32000?, 0x20384fa3470?, 0x424225?})
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/net/net.go:196 +0x45
+io.(*multiReader).Read(0x20384a12108, {0x20384c32000, 0x1000, 0x1000})
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/io/multi.go:26 +0x93
+bufio.(*Reader).fill(0x20384b9e9c0)
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/bufio/bufio.go:113 +0x103
+bufio.(*Reader).ReadByte(0x20384b9e9c0)
+	/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/share/go/src/bufio/bufio.go:273 +0x27
+github.com/coder/websocket.readFrameHeader(0x20384b9e9c0, {0x20384b9c9c0, 0x8, 0x8})
+	/home/aither/go/pkg/mod/github.com/coder/websocket@v1.8.14/frame.go:55 +0x87
+github.com/coder/websocket.(*Conn).readFrameHeader(0x20384b9c960, {0xa0a6e0, 0x20384942b60})
+	/home/aither/go/pkg/mod/github.com/coder/websocket@v1.8.14/read.go:266 +0xe5
+github.com/coder/websocket.(*Conn).readLoop(0x20384b9c960, {0xa0a6e0, 0x20384942b60})
+	/home/aither/go/pkg/mod/github.com/coder/websocket@v1.8.14/read.go:185 +0x65
+github.com/coder/websocket.(*Conn).reader(0x20384b9c960, {0xa0a6e0, 0x20384942b60})
+	/home/aither/go/pkg/mod/github.com/coder/websocket@v1.8.14/read.go:381 +0x10f
+github.com/coder/websocket.(*Conn).Reader(...)
+	/home/aither/go/pkg/mod/github.com/coder/websocket@v1.8.14/read.go:36
+github.com/coder/websocket.(*Conn).Read(0xa0a4e8?, {0xa0a6e0?, 0x20384942b60?})
+	/home/aither/go/pkg/mod/github.com/coder/websocket@v1.8.14/read.go:42 +0x1e
+github.com/aither64/dev-workspace/portal/internal/workspacecodex.readObject(0x20384b9c960)
+	/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/dev-workspace/portal/internal/workspacecodex/client_test.go:1568 +0x6f
+github.com/aither64/dev-workspace/portal/internal/workspacecodex.(*retryRetentionWire).serve(0x20384992140, 0x20384b9c3c0, 0x20384b9c960)
+	/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/dev-workspace/portal/internal/workspacecodex/turn_retry_retention_test.go:41 +0xd7
+github.com/aither64/dev-workspace/portal/internal/workspacecodex.newRetrySettingsWireWithServer.func1(0x20384cbefd0?)
+	/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/dev-workspace/portal/internal/workspacecodex/turn_retry_settings_test.go:63 +0x22
+github.com/aither64/dev-workspace/portal/internal/workspacecodex.serveUnixWebsocket.func2.1()
+	/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/dev-workspace/portal/internal/workspacecodex/client_test.go:1544 +0x27
+created by github.com/aither64/dev-workspace/portal/internal/workspacecodex.serveUnixWebsocket.func2 in goroutine 671
+	/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/dev-workspace/portal/internal/workspacecodex/client_test.go:1543 +0xc9
+FAIL	github.com/aither64/dev-workspace/portal/internal/workspacecodex	45.031s
+FAIL

@@ -1,0 +1,26 @@
+{
+  "changed_paths": [
+    "portal/internal/web/creation_source_lock_test.go"
+  ],
+  "setup_added_lines": 28,
+  "removed_lines": 0,
+  "assertion_changes": false,
+  "ruby_unchanged": true,
+  "test_body_and_all_post_setup_helpers_unchanged": true,
+  "original_evidence_unchanged": true,
+  "bundle_sha256": "03e4c06915a9a168fc4b055f2249ea18c36320953bf973dbc97eccc99b7529db",
+  "source_head_reference": "45e14be3d34a9ca2d3b418c310da927351b7f330",
+  "source_tree_reference": "edb3f41dec072a44e03a4f4a7a4c4e8894b440f4",
+  "cause": [
+    "newTestServer constructs original Config with empty WorkspaceName/PackageRoot/RegistrationMarker.",
+    "providerTestCatalog changes WorkspaceName and UserStateRoot after construction.",
+    "assertReplay invokes real New again after ready attempt2 and New correctly rejects incomplete authority tuple at server.go395\u2013397.",
+    "Replacement=true passes because it refuses replacement and never invokes assertReplay/New."
+  ],
+  "correction": [
+    "Complete disposable package root with strict unmanaged package metadata and same-directory registration/socket paths.",
+    "Call real New after completing tuple, before source admission, so constructor checks run initially and on replay.",
+    "Keep source manifest Codex socket equal to disposable selected socket.",
+    "No Ruby, production validator, lifecycle, receipt/binding/journal/authority/completion/recovery or assertion changes."
+  ]
+}

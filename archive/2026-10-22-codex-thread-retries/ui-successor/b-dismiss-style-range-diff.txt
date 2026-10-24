@@ -1,0 +1,253 @@
+ 1:  7262c24e =  1:  7262c24e turnretry: retain bounded retry policy and admission state
+ 2:  b3c7187c =  2:  b3c7187c runtime: require retry-capable package transitions
+ 3:  aafaf419 =  3:  aafaf419 portal: continue new managed failed turns through durable retry admission
+ 4:  6b87e360 !  4:  9ccb4b11 deps: select codex-web retry activity support
+    @@ flake.lock
+            "locked": {
+     -        "lastModified": 1792612976,
+     -        "narHash": "sha256-VKTZcWXrTjE7DKFjye4hig3Kg3vWcg6T/vEw+2D8PLA=",
+    -+        "lastModified": 1792790420,
+    -+        "narHash": "sha256-ZOnY4TjA7p1qn97ESt9qMmhDmR9a3rIg+w+kp1BLwTs=",
+    ++        "lastModified": 1792826794,
+    ++        "narHash": "sha256-HFvEQcsmYJ3MIrsgGyterS1/3jnJrxrqYrRRovrarto=",
+              "owner": "aither64",
+              "repo": "codex-web",
+     -        "rev": "ea64ef57fdd2ff5fd60715b62f2d1696bc0133e5",
+    -+        "rev": "a58f07064c560bb30efb0228ec6307bcd991d7ab",
+    ++        "rev": "5743f94c2fbd01b65438847d2e2bab0f01df32ae",
+              "type": "github"
+            },
+            "original": {
+              "owner": "aither64",
+              "repo": "codex-web",
+     -        "rev": "ea64ef57fdd2ff5fd60715b62f2d1696bc0133e5",
+    -+        "rev": "a58f07064c560bb30efb0228ec6307bcd991d7ab",
+    ++        "rev": "5743f94c2fbd01b65438847d2e2bab0f01df32ae",
+              "type": "github"
+            }
+          },
+    @@ flake.nix
+          llm-agents.url = "github:numtide/llm-agents.nix";
+          codex-web = {
+     -      url = "github:aither64/codex-web/ea64ef57fdd2ff5fd60715b62f2d1696bc0133e5";
+    -+      url = "github:aither64/codex-web/a58f07064c560bb30efb0228ec6307bcd991d7ab";
+    ++      url = "github:aither64/codex-web/5743f94c2fbd01b65438847d2e2bab0f01df32ae";
+            flake = false;
+          };
+        };
+    @@ nix/workspace-portal.nix: buildGoModule {
+        inherit src;
+        modRoot = "portal";
+     -  vendorHash = "sha256-ABmwKlrjiXjFrrtplRaw2fmMDlv/gxWfufEMA0vjXNQ=";
+    -+  vendorHash = "sha256-D2/gC6L+gajnPaD27V85FHrDJruizDsTXER3crJEKMM=";
+    ++  vendorHash = "sha256-bNeFZMHChen0znapzj7liBwO6YluoxWeZQUO35rVOHc=";
+      
+        postPatch = ''
+          expected=${lib.escapeShellArg codexWebVersion}
+    @@ portal/go.mod: go 1.24.0
+      require (
+      	github.com/SherClockHolmes/webpush-go v1.4.0
+     -	github.com/aither64/codex-web v0.0.0-20261021200256-ea64ef57fdd2
+    -+	github.com/aither64/codex-web v0.0.0-20261023212020-a58f07064c56
+    ++	github.com/aither64/codex-web v0.0.0-20261024072634-5743f94c2fbd
+      	github.com/coder/websocket v1.8.14
+      	github.com/microcosm-cc/bluemonday v1.0.27
+      	github.com/yuin/goldmark v1.7.17
+    @@ portal/go.sum
+      github.com/SherClockHolmes/webpush-go v1.4.0/go.mod h1:XSq8pKX11vNV8MJEMwjrlTkxhAj1zKfxmyhdV7Pd6UA=
+     -github.com/aither64/codex-web v0.0.0-20261021200256-ea64ef57fdd2 h1:8Lsxt7NqJnmuZEfApQCqLRKDXQ98RhbANH1mL1kHHkc=
+     -github.com/aither64/codex-web v0.0.0-20261021200256-ea64ef57fdd2/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
+    -+github.com/aither64/codex-web v0.0.0-20261023212020-a58f07064c56 h1:itrVneVC7pdsSt6u1phXFAhdmYZgQCJe672qt0TsJ1M=
+    -+github.com/aither64/codex-web v0.0.0-20261023212020-a58f07064c56/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
+    ++github.com/aither64/codex-web v0.0.0-20261024072634-5743f94c2fbd h1:kl5V+eAacBcbN3S/ZoxUUnvVXW7le9mnhlBhxgQyJiQ=
+    ++github.com/aither64/codex-web v0.0.0-20261024072634-5743f94c2fbd/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
+      github.com/aymerick/douceur v0.2.0 h1:Mv+mAeH1Q+n9Fr+oyamOlAkUNPWPlA8PPGR0QAaYuPk=
+      github.com/aymerick/douceur v0.2.0/go.mod h1:wlT5vV2O3h55X9m7iVYN0TBM0NH/MmbLnd30/FjWUq4=
+      github.com/coder/websocket v1.8.14 h1:9L0p0iKiNOibykf283eHkKUHHrpG7f65OE3BhhO7v9g=
+ 5:  1d7c5406 =  5:  100108b0 portal: retire accepted retry provenance before bounded admission
+ 6:  458b1a1e =  6:  9311c15a portal: admit exact prepared plan requests after mode selection
+ 7:  334c7b26 =  7:  c8c31ab5 portal: wait within HTTP budgets for transient runtime contention
+ 8:  534b433c !  8:  f1ada8e9 portal: present retry activity inside the conversation viewport
+    @@ Commit message
+         Use the actual HTTPS template and assets in a controlled browser fixture
+         for rare states and desktop/mobile acceptance before backend expansion.
+     
+    + ## AGENTS.md ##
+    +@@ AGENTS.md: operational work. Start from the README's documentation links. The session guide
+    + owns lifecycle and authoring guidance; the portal guide owns browser, extension,
+    + and host-deployment contracts. Keep those explanations current with the code.
+    + 
+    ++## Portal controls
+    ++
+    ++Before adding or restyling a portal control, check its existing occurrences and
+    ++reuse the established appearance and interaction behavior. Keep repeated controls
+    ++consistent in size, typography, colors, spacing, hover, keyboard focus and disabled
+    ++states; reuse their existing styles or component when available.
+    ++
+    + ## Development commands
+    + 
+    + Use the repository's Nix environment. Run `nix flake check --print-build-logs`
+    +
+      ## docs/turn-retry-recovery.md ##
+     @@ docs/turn-retry-recovery.md: The portal retries new managed turns that fail with the native
+      [portal guide](workspace-portal.md#automatic-turn-retries) describes the controls
+    @@ portal/internal/web/retry_activity_browser_test.cjs (new)
+     +      await page.route("**/api/sessions/example/**", serve);
+     +      await page.route("**/codex/conversations/**", serve);
+     +      const screenshot = async name => { phase = name; if (capture) await page.screenshot({path: path.join(capture, `${name}-${suffix}.png`), animations: "disabled"}); };
+    ++      const compareDismissControls = async dismiss => {
+    ++        const receipt = page.locator('#message-receipts .message-receipt[data-receipt-state="accepted"]');
+    ++        const ordinary = receipt.getByRole("button", {name: "Dismiss message", exact: true});
+    ++        await expect(ordinary).toBeVisible();
+    ++        await expect(ordinary).toHaveText("×");
+    ++        const appearance = locator => locator.evaluate(node => {
+    ++          const style = getComputedStyle(node);
+    ++          return Object.fromEntries(["fontFamily", "fontSize", "fontWeight", "lineHeight", "color", "backgroundColor", "borderRadius"]
+    ++            .map(key => [key, style[key]]));
+    ++        });
+    ++        const compare = async stateName => {
+    ++          const expected = await appearance(ordinary), actual = await appearance(dismiss);
+    ++          trace("dismiss-comparison", {state: stateName, ordinary: expected, retry: actual});
+    ++          assert.deepEqual(actual, expected, `${stateName} retry dismiss differs from ordinary receipt`);
+    ++          assert.equal(actual.fontWeight, "400");
+    ++          return {ordinary: expected, retry: actual};
+    ++        };
+    ++        await page.locator("#message-form textarea").focus();
+    ++        await page.mouse.move(0, 0);
+    ++        await expect(ordinary).toBeInViewport();
+    ++        await expect(dismiss).toBeInViewport();
+    ++        const resting = await compare("rest");
+    ++        await screenshot("dismiss-controls-rest");
+    ++        await ordinary.hover(); const hover = await appearance(ordinary);
+    ++        await screenshot("dismiss-ordinary-hover");
+    ++        await dismiss.hover();
+    ++        const retryHover = await appearance(dismiss);
+    ++        trace("dismiss-comparison", {state: "hover", ordinary: hover, retry: retryHover});
+    ++        assert.deepEqual(retryHover, hover, "hover retry dismiss differs from ordinary receipt");
+    ++        await screenshot("dismiss-controls-hover");
+    ++        await page.mouse.move(0, 0);
+    ++        // Enter from keyboard navigation so :focus-visible is exercised on
+    ++        // both real controls, without activating either dismissal.
+    ++        await ordinary.focus(); await page.keyboard.press("Tab"); await page.keyboard.press("Shift+Tab");
+    ++        await expect(ordinary).toBeFocused();
+    ++        assert.equal(await ordinary.evaluate(node => node.matches(":focus-visible")), true);
+    ++        const keyboard = await appearance(ordinary);
+    ++        await screenshot("dismiss-ordinary-focus");
+    ++        await dismiss.focus(); await page.keyboard.press("Tab"); await page.keyboard.press("Shift+Tab");
+    ++        await expect(dismiss).toBeFocused();
+    ++        assert.equal(await dismiss.evaluate(node => node.matches(":focus-visible")), true);
+    ++        const retryKeyboard = await appearance(dismiss);
+    ++        trace("dismiss-comparison", {state: "keyboard-focus", ordinary: keyboard, retry: retryKeyboard});
+    ++        assert.deepEqual(retryKeyboard, keyboard, "keyboard-focus retry dismiss differs from ordinary receipt");
+    ++        await expect(dismiss).toHaveCSS("outline-style", "solid");
+    ++        await expect(dismiss).toHaveCSS("outline-width", "2px");
+    ++        await expect(dismiss).toHaveCSS("outline-offset", "2px");
+    ++        await expect(dismiss).toHaveCSS("outline-color", "rgb(119, 224, 181)");
+    ++        const geometry = await dismiss.evaluate(node => {
+    ++          const rect = node.getBoundingClientRect(), heading = node.parentElement.getBoundingClientRect();
+    ++          return {width: rect.width, height: rect.height, right: rect.right, headingRight: heading.right,
+    ++            rootFont: parseFloat(getComputedStyle(document.documentElement).fontSize)};
+    ++        });
+    ++        const target = geometry.rootFont * (mobile ? 2.5 : 2);
+    ++        assert.ok(Math.abs(geometry.width - target) < 1 && geometry.height >= target,
+    ++          "retry dismiss lost its existing hit target: " + JSON.stringify(geometry));
+    ++        assert.ok(Math.abs(geometry.right - geometry.headingRight) < 1,
+    ++          "retry dismiss lost right alignment: " + JSON.stringify(geometry));
+    ++        trace("dismiss-geometry", geometry);
+    ++        const comparison = {viewport: suffix, resting, hover: {ordinary: hover, retry: retryHover},
+    ++          keyboardFocus: {ordinary: keyboard, retry: retryKeyboard}, geometry};
+    ++        console.log("Retry dismiss comparison: " + JSON.stringify(comparison));
+    ++        if (capture) fs.writeFileSync(path.join(capture, `dismiss-comparison-${suffix}.json`), JSON.stringify(comparison, null, 2) + "\n");
+    ++        await screenshot("dismiss-controls-focus");
+    ++        await ordinary.click();
+    ++        await expect(receipt).toHaveCount(0);
+    ++        await page.locator("#message-form textarea").focus();
+    ++      };
+     +      const notice = page.locator("#automatic-turn-retry");
+     +      const refresh = async () => {
+     +        trace("focus-refresh", {phase, class: state?.class, activityPhase: state?.phase});
+    @@ portal/internal/web/retry_activity_browser_test.cjs (new)
+     +
+     +      for (const [outcome, extra] of [["success", {}], ["stopped", {confirmedStarts: 0}], ["exhausted", {class: "cybersecurity", confirmedStarts: null, countQuality: "unavailable", startedAtMs: null, elapsedMs: null, timingQuality: "unavailable"}]]) {
+     +        state = activity({chainKey: `result-${outcome}`, phase: "terminal", outcome, retryNowToken: "", stopToken: "", nextAttemptAtMs: null, finishedAtMs: 100000, ...extra});
+    ++        if (outcome === "success") {
+    ++          // Hydrate the actual ordinary-receipt renderer from its supported
+    ++          // browser record; this fixture does not submit native input.
+    ++          await page.evaluate(() => sessionStorage.setItem(
+    ++            "workspace-portal.send-attempt.example.thread-1.00000000-0000-4000-8000-000000000099",
+    ++            JSON.stringify({message: "Keep this draft.", context: "", state: "accepted"}),
+    ++          ));
+    ++          await reload();
+    ++        }
+     +        await refresh();
+     +        await expect(notice).toBeVisible();
+     +        const dismiss = notice.getByRole("button", {name: "Dismiss retry notice", exact: true});
+    @@ portal/internal/web/retry_activity_browser_test.cjs (new)
+     +        await expect(dismiss).toHaveAttribute("title", "Dismiss retry notice");
+     +        await scroll.evaluate(node => { node.scrollTop = node.scrollHeight; });
+     +        await screenshot(outcome);
+    ++        if (outcome === "success") {
+    ++          await compareDismissControls(dismiss);
+    ++          await dismiss.click();
+    ++          await expect(notice).toBeHidden();
+    ++          assert.equal(await notice.evaluate(node => node.getBoundingClientRect().height), 0);
+    ++        }
+     +      }
+     +      const dismiss = notice.getByRole("button", {name: "Dismiss retry notice", exact: true});
+     +      await dismiss.focus(); await page.keyboard.press("Enter");
+    @@ portal/internal/web/static/style.css: a.icon-button { display: inline-flex; alig
+     +#transcript-entries { flex: 1 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: .7rem; }
+     +#automatic-turn-retry { flex: 0 0 auto; --codex-border: var(--line); --codex-accent: var(--accent-2); --codex-surface: var(--panel-2); --codex-muted: var(--muted); }
+     +#automatic-turn-retry .codex-retry-activity-notice { margin: 0; }
+    ++#automatic-turn-retry .codex-retry-activity-dismiss { color: var(--muted); }
+    ++#automatic-turn-retry .codex-retry-activity-dismiss:hover, #automatic-turn-retry .codex-retry-activity-dismiss:focus-visible { background: var(--panel-2); color: var(--text); }
+    ++#automatic-turn-retry .codex-retry-activity-dismiss:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+     +#automatic-turn-retry:not([hidden]) { margin-top: .8rem; }
+     +.retry-policy-switch { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; padding: 1rem 0; border-bottom: 1px solid var(--line); }
+     +.retry-policy-switch > span { display: grid; gap: .3rem; min-width: 0; }
+    @@ portal/internal/web/templates/session.html
+        <title>{{.Session.Slug}} · Workspace</title>
+     -  <link rel="stylesheet" href="/codex/assets/conversation.css?v=9">
+     -  <link rel="stylesheet" href="/static/style.css?v=22">
+    -+  <link rel="stylesheet" href="/codex/assets/conversation.css?v=11">
+    -+  <link rel="stylesheet" href="/static/style.css?v=23">
+    ++  <link rel="stylesheet" href="/codex/assets/conversation.css?v=12">
+    ++  <link rel="stylesheet" href="/static/style.css?v=24">
+        <link rel="stylesheet" href="/codex/assets/uploads.css?v=3">
+      </head>
+      <body class="session-body" data-session="{{.Session.Slug}}" data-session-observation="{{.Session.ObservationIdentity}}" data-thread-id="{{if .SelectedThreadID}}{{.SelectedThreadID}}{{else}}{{.Session.Codex.ThreadID}}{{end}}" data-root-thread-id="{{.Session.Codex.ThreadID}}" data-conversation-id="{{.ConversationID}}" data-selected-member="{{.SelectedMember}}" data-lifecycle-target-id="{{.LifecycleTargetID}}" data-target-identity-version="2" data-archived="{{.Session.Archived}}" data-interactive="{{.Session.Interactive}}" data-execution-held="{{.Session.ExecutionHeld}}" data-lifecycle="{{.Session.Lifecycle}}" data-pending-lifecycle="{{.PendingLifecycle}}">
+ 9:  5e8c3584 =  9:  ffa4a41f portal: release the next draft before message acknowledgment
+10:  207ccfe0 ! 10:  1f737473 portal: submit question text through its owning action
+    @@ portal/internal/web/browser_asset_versions_test.go (new)
+     +	"net/http/httptest"
+     +	"regexp"
+     +	"strconv"
+    ++	"strings"
+     +	"testing"
+     +)
+     +
+    @@ portal/internal/web/browser_asset_versions_test.go (new)
+     +	// warmed that cache. Do not replace this with a missing-export fallback.
+     +	versionAfter(read("static/app.js"), "/codex/assets/conversation.js", 24)
+     +	session := read("templates/session.html")
+    -+	versionAfter(session, "/codex/assets/conversation.css", 10)
+    -+	versionAfter(session, "/static/style.css", 22)
+    ++	versionAfter(session, "/codex/assets/conversation.css", 11)
+    ++	versionAfter(session, "/static/style.css", 23)
+     +	// All consumers of the changed app entry point select the same fresh
+     +	// bytes, including navigation from index/archival to the conversation.
+     +	var appVersion int
+    @@ portal/internal/web/browser_asset_versions_test.go (new)
+     +	// A new parent module still needs a new child URL: a browser may already
+     +	// hold the old retry_activity bytes under the child's independent cache key.
+     +	server := newTestServer(t)
+    ++	for _, path := range []string{"/codex/assets/conversation.css?v=12", "/static/style.css?v=24"} {
+    ++		response := httptest.NewRecorder()
+    ++		server.Handler().ServeHTTP(response, httptest.NewRequest("GET", path, nil))
+    ++		if response.Code != http.StatusOK || !strings.HasPrefix(response.Header().Get("Content-Type"), "text/css") {
+    ++			t.Fatalf("stylesheet %s: %d %s", path, response.Code, response.Header().Get("Content-Type"))
+    ++		}
+    ++	}
+     +	response := httptest.NewRecorder()
+     +	server.Handler().ServeHTTP(response, httptest.NewRequest("GET", "/codex/assets/conversation.js?v=25", nil))
+     +	if response.Code != http.StatusOK {

@@ -1,0 +1,47 @@
+diff --git a/portal/internal/turnretry/controller.go b/portal/internal/turnretry/controller.go
+index 863133f..8896083 100644
+--- a/portal/internal/turnretry/controller.go
++++ b/portal/internal/turnretry/controller.go
+@@ -233,7 +233,7 @@ func (c Controller) preflightAccepted(tx *Transaction) error {
+ 	if err != nil {
+ 		if errors.Is(err, ErrSnapshotCapacity) {
+ 			tx.State.Handled = tx.State.Pending.Failure
+-			tx.State.Phase, tx.State.Reason, tx.State.Cancelled, tx.State.DeadlineMS, tx.State.Pending = "blocked", "settings_unproven", true, 0, nil
++			tx.State.Phase, tx.State.Reason, tx.State.Cancelled, tx.State.DeadlineMS = "blocked", "settings_unproven", true, 0
+ 			if saveErr := tx.Save(); saveErr != nil {
+ 				return saveErr
+ 			}
+diff --git a/portal/internal/turnretry/retention_test.go b/portal/internal/turnretry/retention_test.go
+index ec3b70e..cf21fa1 100644
+--- a/portal/internal/turnretry/retention_test.go
++++ b/portal/internal/turnretry/retention_test.go
+@@ -175,6 +175,8 @@ func TestRetentionFreshAutomaticPreflightAndReceiptSaveFailure(t *testing.T) {
+ 	if err := tx.State.Observe(Observation{"failed", "failed", "cyberPolicy"}, *now, 0); err != nil {
+ 		t.Fatal(err)
+ 	}
++	originalPending := *tx.State.Pending
++	originalCyber := append([]Charge{}, tx.State.Cyber...)
+ 	if err := tx.Save(); err != nil {
+ 		t.Fatal(err)
+ 	}
+@@ -184,9 +186,19 @@ func TestRetentionFreshAutomaticPreflightAndReceiptSaveFailure(t *testing.T) {
+ 		t.Fatal("full protected automatic result slot was not refused", err)
+ 	}
+ 	s, _ := c.Store.Load(scope)
+-	if b.sends != 0 || s.Pending != nil || len(s.Cyber) != 0 || s.Phase != "blocked" {
++	if b.sends != 0 || s.Pending == nil || !reflect.DeepEqual(*s.Pending, originalPending) || !reflect.DeepEqual(s.Cyber, originalCyber) || s.Phase != "blocked" {
+ 		t.Fatal("preflight consumed quota or submitted", s)
+ 	}
++	for i := 0; i < 2; i++ {
++		restarted := Controller{Store: c.Store, Backend: b, Clock: c.Clock}
++		if err := restarted.Step(context.Background(), scope); err != nil {
++			t.Fatal(err)
++		}
++		s, err := c.Store.Load(scope)
++		if err != nil || s.Pending == nil || !reflect.DeepEqual(*s.Pending, originalPending) || !reflect.DeepEqual(s.Cyber, originalCyber) || s.Phase != "blocked" || s.Uncertain() || s.Pending.ResultTurn != "" || s.Pending.ChargedAtMS != originalPending.ChargedAtMS || s.Handled != "failed" || b.sends != 0 {
++			t.Fatal("blocked preflight lost its tuple or rearmed after reload", s, err)
++		}
++	}
+ 	// A persistence failure after native acceptance leaves the original durable
+ 	// uncertain tuple for exact retry, not a fabricated successful settlement.
+ 	tx, _ = c.Store.Lock(context.Background(), scope)

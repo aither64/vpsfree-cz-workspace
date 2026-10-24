@@ -1,0 +1,491 @@
+package cluster
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
+	"syscall"
+	"testing"
+	"time"
+)
+
+func testProviders(values ...string) []Provider {
+	providers := make([]Provider, 0, len(values)/3)
+	for index := 0; index < len(values); index += 3 {
+		providers = append(providers, Provider{
+			Name: values[index], Helper: values[index+1], Label: values[index+2],
+		})
+	}
+	return providers
+}
+
+func TestMayExistUsesOnlyProviderStateEntries(t *testing.T) {
+	workspace := t.TempDir()
+	runner := Runner{Workspace: workspace, Providers: testProviders("alpha", "", "Alpha")}
+	if runner.MayExist("example") {
+		t.Fatal("missing cluster state may exist")
+	}
+	directory := filepath.Join(workspace, ".dev-clusters", "alpha", "clusters", "example")
+	if err := os.MkdirAll(filepath.Dir(directory), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink("missing", directory); err != nil {
+		t.Fatal(err)
+	}
+	if !runner.MayExist("example") {
+		t.Fatal("unsafe cluster state was hidden from provider validation")
+	}
+	if runner.MayExist("../example") {
+		t.Fatal("invalid cluster slug may exist")
+	}
+}
+
+func TestInspectUsesHelperOwnedStructuredStatus(t *testing.T) {
+	workspace := t.TempDir()
+	alpha := statusHelper(t, `{
+		"schema":2,"found":true,"kind":"alpha",
+		"state":"stale","ready":true,"topology":"single","network":"local",
+		"commands":[{"label":"services","value":"alpha-devcluster ssh example services"}],
+		"services":[
+			{
+				"label":"Web UI","url":"https://webui.example.test:10443/",
+				"accounts":[{"label":"Administrator","fields":[
+					{"label":"Login","value":"test-admin","secret":false},
+					{"label":"Password","value":"test-password","secret":true}
+				]}]
+			},
+			{
+				"label":"Adminer","accounts":[{"label":"Web authentication","fields":[
+					{"label":"Password","value":"adminer-password","secret":true}
+				]}]
+			}
+		]
+	}`)
+	beta := statusHelper(t, `{"schema":2,"found":false,"kind":"beta"}`)
+
+	statuses, err := (Runner{Workspace: workspace, Providers: testProviders(
+		"alpha", alpha, "Alpha", "beta", beta, "Beta",
+	)}).Inspect("example")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(statuses) != 1 || statuses[0].Kind != "alpha" || statuses[0].State != "stale" {
+		t.Fatalf("statuses = %#v", statuses)
+	}
+	if statuses[0].Label != "Alpha" {
+		t.Fatalf("status label = %q", statuses[0].Label)
+	}
+	if len(statuses[0].Services) != 2 ||
+		statuses[0].Services[0].URL != "https://webui.example.test:10443/" ||
+		statuses[0].Services[1].URL != "" {
+		t.Fatalf("services = %#v", statuses[0].Services)
+	}
+	if len(statuses[0].Commands) != 1 ||
+		!statuses[0].Services[0].Accounts[0].Fields[1].Secret {
+		t.Fatalf("structured status = %#v", statuses[0])
+	}
+
+	for _, helper := range []string{alpha, beta} {
+		data, err := os.ReadFile(helper + ".arguments")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if string(data) != "status\nexample\n--json\n" {
+			t.Fatalf("helper arguments = %q", data)
+		}
+		data, err = os.ReadFile(helper + ".workspace")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if string(data) != workspace {
+			t.Fatalf("helper workspace = %q", data)
+		}
+	}
+}
+
+func TestInspectNormalizesLegacyHelperStatus(t *testing.T) {
+	helper := statusHelper(t, `{
+		"schema":1,"found":true,"kind":"alpha","state":"stopped","ready":false,
+		"links":[{"label":"Web UI","url":"https://webui.example.test/"}],
+		"commands":[{"label":"services","value":"alpha-devcluster ssh example services"}],
+		"credentials":[
+			{"label":"Admin login","value":"test-admin"},
+			{"label":"Admin password","value":"test-password"}
+		]
+	}`)
+
+	statuses, err := (Runner{Workspace: t.TempDir(), Providers: testProviders(
+		"alpha", helper, "Alpha",
+	)}).Inspect("example")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(statuses) != 1 || len(statuses[0].Services) != 2 {
+		t.Fatalf("legacy status = %#v", statuses)
+	}
+	if statuses[0].Services[0].URL != "https://webui.example.test/" ||
+		statuses[0].Services[1].Accounts[0].Fields[0].Value != "test-admin" ||
+		!statuses[0].Services[1].Accounts[0].Fields[1].Secret {
+		t.Fatalf("normalized legacy services = %#v", statuses[0].Services)
+	}
+	if statuses[0].Links != nil || statuses[0].Credentials != nil {
+		t.Fatalf("legacy fields were not cleared: %#v", statuses[0])
+	}
+}
+
+const webUISourceMetadata = `"webuiSource":{"revision":"aa2f60b89df65d2f987be48784ed42bab7010833","dirty":false,"kind":"worktree"}`
+const releasedMaintenanceMetadata = `"maintenance":{"version":2,"mode":"maintenance","phase":"released","pending":false,"copied":true,"active":true}`
+
+func TestInspectAcceptsProviderMetadataWithoutChangingStatus(t *testing.T) {
+	for _, testCase := range []struct{ name, metadata string }{
+		{"worktree", webUISourceMetadata},
+		{"pinned-dirty", strings.ReplaceAll(strings.ReplaceAll(webUISourceMetadata, "worktree", "pinned"), "false", "true")},
+		{"maintenance-v1", strings.ReplaceAll(releasedMaintenanceMetadata, `"version":2`, `"version":1`)},
+		{"maintenance-v2", releasedMaintenanceMetadata},
+		{"combined", webUISourceMetadata + "," + releasedMaintenanceMetadata},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			payload := `{"schema":2,"found":true,"kind":"vpsadmin","state":"running","ready":true,"topology":"storage","network":"bridge","services":[{"label":"React Web UI","url":"https://webui.example.test/"}],` + testCase.metadata + `}`
+			statuses, err := (Runner{Workspace: t.TempDir(), Providers: testProviders(
+				"vpsadmin", statusHelper(t, payload), "vpsAdmin",
+			)}).Inspect("example")
+			if err != nil || len(statuses) != 1 {
+				t.Fatalf("inspection = %v, %v", statuses, err)
+			}
+			status := statuses[0]
+			if status.State != "running" || !status.Ready || len(status.Services) != 1 || status.Notice != "" {
+				t.Fatalf("status = %#v", status)
+			}
+			encoded, err := json.Marshal(status)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if strings.Contains(string(encoded), "webuiSource") || strings.Contains(string(encoded), "maintenance") {
+				t.Fatalf("provider metadata escaped into public status: %s", encoded)
+			}
+		})
+	}
+}
+
+func TestInspectRejectsInvalidProviderMetadata(t *testing.T) {
+	for _, testCase := range []struct{ name, metadata string }{
+		{"source-revision", strings.ReplaceAll(webUISourceMetadata, "aa2f60b89df65d2f987be48784ed42bab7010833", "invalid")},
+		{"source-uppercase", strings.ReplaceAll(webUISourceMetadata, "aa2f", "AA2F")},
+		{"source-kind", strings.ReplaceAll(webUISourceMetadata, "worktree", "foreign")},
+		{"source-missing-dirty", strings.ReplaceAll(webUISourceMetadata, `"dirty":false,`, "")},
+		{"source-null-dirty", strings.ReplaceAll(webUISourceMetadata, `"dirty":false`, `"dirty":null`)},
+		{"source-wrong-dirty-type", strings.ReplaceAll(webUISourceMetadata, `"dirty":false`, `"dirty":"false"`)},
+		{"source-unknown-field", strings.ReplaceAll(webUISourceMetadata, `"dirty":false`, `"dirty":false,"extra":true`)},
+		{"maintenance-version", strings.ReplaceAll(releasedMaintenanceMetadata, `"version":2`, `"version":3`)},
+		{"maintenance-mode", strings.ReplaceAll(releasedMaintenanceMetadata, `"mode":"maintenance"`, `"mode":"other"`)},
+		{"maintenance-phase", strings.ReplaceAll(releasedMaintenanceMetadata, "released", "unknown")},
+		{"maintenance-missing-pending", strings.ReplaceAll(releasedMaintenanceMetadata, `"pending":false,`, "")},
+		{"maintenance-missing-copied", strings.ReplaceAll(releasedMaintenanceMetadata, `"copied":true,`, "")},
+		{"maintenance-missing-active", strings.ReplaceAll(releasedMaintenanceMetadata, `,"active":true`, "")},
+		{"maintenance-pending-disagrees", strings.ReplaceAll(releasedMaintenanceMetadata, `"pending":false`, `"pending":true`)},
+		{"maintenance-active-disagrees", strings.ReplaceAll(releasedMaintenanceMetadata, `"active":true`, `"active":false`)},
+		{"maintenance-unknown-field", strings.ReplaceAll(releasedMaintenanceMetadata, `"version":2`, `"version":2,"extra":true`)},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			payload := `{"schema":2,"found":true,"kind":"vpsadmin","state":"running","ready":false,"services":[],` + testCase.metadata + `}`
+			_, err := (Runner{Workspace: t.TempDir(), Providers: testProviders(
+				"vpsadmin", statusHelper(t, payload), "vpsAdmin",
+			)}).Inspect("example")
+			if err == nil {
+				t.Fatal("invalid metadata was accepted")
+			}
+		})
+	}
+	for _, payload := range []string{
+		`{"schema":1,"found":true,"kind":"vpsadmin","state":"stopped",` + webUISourceMetadata + `}`,
+		`{"schema":2,"found":false,"kind":"vpsadmin",` + releasedMaintenanceMetadata + `}`,
+		`{"schema":2,"found":true,"kind":"vpsadmin","state":"running","services":[],` + webUISourceMetadata + `} {}`,
+	} {
+		_, err := (Runner{Workspace: t.TempDir(), Providers: testProviders(
+			"vpsadmin", statusHelper(t, payload), "vpsAdmin",
+		)}).Inspect("example")
+		if err == nil {
+			t.Fatalf("invalid envelope was accepted: %s", payload)
+		}
+	}
+}
+
+func TestPendingMaintenanceReplacesCachedReadinessAndServices(t *testing.T) {
+	for _, phase := range []string{"held", "maintenance_ready", "copying", "copied", "starting_copied"} {
+		t.Run(phase, func(t *testing.T) {
+			cache := &StatusCache{}
+			cache.observe("example\x00vpsadmin", Status{State: "running", Ready: true, Services: []Service{
+				{Label: "Web UI", Accounts: []Account{{Label: "Admin", Fields: []Field{
+					{Label: "Password", Value: "old-password", Secret: true},
+				}}}},
+			}}, true, "")
+			metadata := fmt.Sprintf(`"maintenance":{"version":2,"mode":"maintenance","phase":%q,"pending":true,"copied":false,"active":false}`, phase)
+			payload := `{"schema":2,"found":true,"kind":"vpsadmin","state":"running","ready":false,"services":[],` + metadata + `}`
+			runner := Runner{Workspace: t.TempDir(), Providers: testProviders(
+				"vpsadmin", statusHelper(t, payload), "vpsAdmin",
+			), Cache: cache}
+			statuses, err := runner.Inspect("example")
+			if err != nil || len(statuses) != 1 || statuses[0].Ready || len(statuses[0].Services) != 0 || statuses[0].Notice != "" {
+				t.Fatalf("pending maintenance = %v, %v", statuses, err)
+			}
+			cached := cache.observe("example\x00vpsadmin", Status{}, true, "busy")
+			if cached.Ready || len(cached.Services) != 0 {
+				t.Fatalf("maintenance did not replace cache: %#v", cached)
+			}
+			for _, invalid := range []string{
+				strings.ReplaceAll(payload, `"ready":false`, `"ready":true`),
+				strings.ReplaceAll(payload, `"services":[]`, `"services":[{"label":"Web UI","url":"https://example.test/"}]`),
+			} {
+				runner.Providers[0].Helper = statusHelper(t, invalid)
+				if _, err := runner.Inspect("example"); err == nil {
+					t.Fatal("pending maintenance exposed readiness or services")
+				}
+			}
+		})
+	}
+}
+
+func TestInspectRejectsIncompatibleOrInvalidHelperStatus(t *testing.T) {
+	for _, testCase := range []struct {
+		name, payload, message string
+	}{
+		{"schema", `{"schema":3,"found":true,"kind":"alpha"}`, "incompatible"},
+		{"kind", `{"schema":1,"found":true,"kind":"beta"}`, "incompatible"},
+		{"state", `{"schema":1,"found":true,"kind":"alpha","state":"broken"}`, "invalid status"},
+		{"label", `{"schema":1,"found":true,"kind":"alpha","label":"helper label","state":"stopped"}`, "invalid status"},
+		{"not-found-label", `{"schema":1,"found":false,"kind":"alpha","label":"helper label"}`, "invalid status"},
+		{"unknown-field", `{"schema":1,"found":false,"kind":"alpha","extra":true}`, "unknown field"},
+		{"schema-2-legacy", `{"schema":2,"found":true,"kind":"alpha","state":"stopped","links":[]}`, "legacy"},
+		{"schema-2-services", `{"schema":2,"found":true,"kind":"alpha","state":"stopped"}`, "missing services"},
+		{"unsafe-service-url", `{"schema":2,"found":true,"kind":"alpha","state":"stopped","services":[{"label":"Web UI","url":"javascript:alert(1)"}]}`, "service is invalid"},
+		{"empty-service", `{"schema":2,"found":true,"kind":"alpha","state":"stopped","services":[{"label":"Web UI"}]}`, "service is invalid"},
+		{"empty-account", `{"schema":2,"found":true,"kind":"alpha","state":"stopped","services":[{"label":"Web UI","url":"https://example.test/","accounts":[{"label":"Admin","fields":[]}]}]}`, "account is incomplete"},
+		{"missing-secret", `{"schema":2,"found":true,"kind":"alpha","state":"stopped","services":[{"label":"Web UI","url":"https://example.test/","accounts":[{"label":"Admin","fields":[{"label":"Login","value":"admin"}]}]}]}`, "missing secret flag"},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			helper := statusHelper(t, testCase.payload)
+			_, err := (Runner{Workspace: t.TempDir(), Providers: testProviders(
+				"alpha", helper, "Alpha",
+			)}).Inspect("example")
+			if err == nil || !strings.Contains(err.Error(), testCase.message) {
+				t.Fatalf("inspection error = %v", err)
+			}
+		})
+	}
+}
+
+func TestInspectContextStopsBlockedProvidersAtTheCallerDeadline(t *testing.T) {
+	helper := filepath.Join(t.TempDir(), "helper")
+	if err := os.WriteFile(helper, []byte("#!/bin/sh\nsleep 30\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+	started := time.Now()
+	_, err := (Runner{
+		Workspace: t.TempDir(), Providers: testProviders(
+			"alpha", helper, "Alpha", "beta", helper, "Beta",
+		),
+	}).InspectContext(ctx, "example")
+	if err == nil || !strings.Contains(err.Error(), context.DeadlineExceeded.Error()) {
+		t.Fatalf("inspection result = %v, want caller deadline", err)
+	}
+	if elapsed := time.Since(started); elapsed > 2*time.Second {
+		t.Fatalf("inspection ignored caller deadline: %s", elapsed)
+	}
+}
+
+func TestReleaseUsesConfiguredHelperAndWorkspace(t *testing.T) {
+	workspace := t.TempDir()
+	output := filepath.Join(t.TempDir(), "release")
+	helper := filepath.Join(t.TempDir(), "helper")
+	script := "#!/bin/sh\nif [ \"$1\" = status ]; then printf '%s' '{\"schema\":2,\"kind\":\"alpha\",\"found\":true,\"state\":\"stopped\",\"ready\":false,\"services\":[]}'; exit; fi\nprintf '%s\\n%s\\n%s\\n' \"$1\" \"$2\" \"$DEVCLUSTER_WORKSPACE\" > \"$OUTPUT\"\n"
+	if err := os.WriteFile(helper, []byte(script), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("OUTPUT", output)
+	runner := Runner{Workspace: workspace, Providers: testProviders("alpha", helper, "Alpha")}
+	if err := runner.Release(context.Background(), "alpha", "2026-09-04-test"); err != nil {
+		t.Fatal(err)
+	}
+	data, err := os.ReadFile(output)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(data) != "reset\n2026-09-04-test\n"+workspace+"\n" {
+		t.Fatalf("release invocation = %q", data)
+	}
+}
+
+func TestReleaseAllInvokesEveryProviderWithoutAStatusSnapshot(t *testing.T) {
+	workspace := t.TempDir()
+	output := t.TempDir()
+	alpha := releaseHelper(t, filepath.Join(output, "alpha"))
+	beta := releaseHelper(t, filepath.Join(output, "beta"))
+	runner := Runner{Workspace: workspace, Providers: testProviders(
+		"alpha", alpha, "Alpha", "beta", beta, "Beta",
+	)}
+	if err := runner.ReleaseAll(context.Background(), "2026-09-05-archive"); err != nil {
+		t.Fatal(err)
+	}
+	for _, kind := range []string{"alpha", "beta"} {
+		data, err := os.ReadFile(filepath.Join(output, kind))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if string(data) != "reset\n2026-09-05-archive\n"+workspace+"\n" {
+			t.Fatalf("%s release invocation = %q", kind, data)
+		}
+	}
+}
+
+func TestReleaseDeadlineKillsAHelperBlockedOnFlock(t *testing.T) {
+	lockPath := filepath.Join(t.TempDir(), "held.lock")
+	lock, err := os.OpenFile(lockPath, os.O_CREATE|os.O_RDWR, 0o600)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer lock.Close()
+	if err := syscall.Flock(int(lock.Fd()), syscall.LOCK_EX); err != nil {
+		t.Fatal(err)
+	}
+	defer syscall.Flock(int(lock.Fd()), syscall.LOCK_UN)
+
+	pidFile := filepath.Join(t.TempDir(), "flock.pid")
+	helper := filepath.Join(t.TempDir(), "helper")
+	script := "#!/bin/sh\nif [ \"$1\" = status ]; then printf '%s' '{\"schema\":2,\"kind\":\"alpha\",\"found\":true,\"state\":\"stopped\",\"ready\":false,\"services\":[]}'; exit; fi\nflock \"$LOCK_PATH\" sh -c 'sleep 30' &\n" +
+		"printf '%s\\n' \"$!\" > \"$PID_FILE.tmp\"\n" +
+		"mv \"$PID_FILE.tmp\" \"$PID_FILE\"\nwait\n"
+	if err := os.WriteFile(helper, []byte(script), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("LOCK_PATH", lockPath)
+	t.Setenv("PID_FILE", pidFile)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	workspace := t.TempDir()
+	result := make(chan error, 1)
+	go func() {
+		result <- (Runner{Workspace: workspace, Providers: testProviders(
+			"alpha", helper, "Alpha",
+		)}).Release(ctx, "alpha", "example")
+	}()
+	deadline := time.Now().Add(2 * time.Second)
+	for {
+		if _, err := os.Stat(pidFile); err == nil {
+			break
+		} else if !errors.Is(err, os.ErrNotExist) {
+			t.Fatal(err)
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("helper did not publish its flock PID")
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	started := time.Now()
+	cancel()
+	select {
+	case err = <-result:
+	case <-time.After(3 * time.Second):
+		t.Fatal("release did not return after cancellation")
+	}
+	if err == nil || !strings.Contains(err.Error(), context.Canceled.Error()) {
+		t.Fatalf("release result = %v, want cancellation", err)
+	}
+	if elapsed := time.Since(started); elapsed > 3*time.Second {
+		t.Fatalf("release exceeded its bounded cancellation window: %s", elapsed)
+	}
+	data, err := os.ReadFile(pidFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pid, err := strconv.Atoi(strings.TrimSpace(string(data)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	exitDeadline := time.Now().Add(2 * time.Second)
+	for syscall.Kill(pid, 0) == nil && time.Now().Before(exitDeadline) {
+		time.Sleep(10 * time.Millisecond)
+	}
+	if syscall.Kill(pid, 0) == nil {
+		t.Fatalf("flock descendant %d survived cancellation", pid)
+	}
+}
+
+func releaseHelper(t *testing.T, output string) string {
+	t.Helper()
+	helper := filepath.Join(t.TempDir(), "helper")
+	script := "#!/bin/sh\nprintf '%s\\n%s\\n%s\\n' \"$1\" \"$2\" \"$DEVCLUSTER_WORKSPACE\" > \"" + output + "\"\n"
+	if err := os.WriteFile(helper, []byte(script), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	return helper
+}
+
+func statusHelper(t *testing.T, payload string) string {
+	t.Helper()
+	helper := filepath.Join(t.TempDir(), "helper")
+	script := "#!/bin/sh\nprintf '%s\\n' \"$@\" > \"$0.arguments\"\nprintf '%s' \"$DEVCLUSTER_WORKSPACE\" > \"$0.workspace\"\nprintf '%s\\n' '" + payload + "'\n"
+	if err := os.WriteFile(helper, []byte(script), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	return helper
+}
+
+func TestBusyStatusRetainsLastObservationAndScopesFailures(t *testing.T) {
+	workspace := t.TempDir()
+	helper := filepath.Join(t.TempDir(), "helper")
+	write := func(body string) {
+		t.Helper()
+		if err := os.WriteFile(helper, []byte("#!/bin/sh\n"+body+"\n"), 0700); err != nil {
+			t.Fatal(err)
+		}
+	}
+	runner := Runner{Workspace: workspace, Providers: []Provider{{Name: "alpha", Label: "Alpha", Helper: helper}}, Cache: &StatusCache{}}
+	write(`echo '{"schema":2,"found":true,"kind":"alpha","state":"running","ready":true,"services":[]}'`)
+	states, err := runner.Inspect("example")
+	if err != nil || len(states) != 1 {
+		t.Fatalf("initial: %v %v", states, err)
+	}
+	write("exit 75")
+	states, err = runner.Inspect("example")
+	if err != nil || len(states) != 1 || states[0].State != "running" || !states[0].Ready || !strings.Contains(states[0].Notice, "changing") {
+		t.Fatalf("busy: %v %v", states, err)
+	}
+	states, err = runner.Inspect("another")
+	if err != nil || states[0].State != "changing" || states[0].Ready {
+		t.Fatalf("other session: %v %v", states, err)
+	}
+	write("echo broken >&2; exit 1")
+	states, err = runner.Inspect("example")
+	if err == nil || len(states) != 1 || states[0].Kind != "alpha" || !strings.Contains(states[0].Notice, "broken") {
+		t.Fatalf("failure: %v %v", states, err)
+	}
+	write(`echo '{"schema":2,"found":true,"kind":"alpha","state":"stopped","ready":false,"services":[]}'`)
+	states, err = runner.Inspect("example")
+	if err != nil || states[0].State != "stopped" || states[0].Notice != "" {
+		t.Fatalf("stopped: %v %v", states, err)
+	}
+}
+
+func TestMayExistEvictsEachAbsentProvider(t *testing.T) {
+	cache := &StatusCache{}
+	cache.observe("example\x00alpha", Status{State: "running", Ready: true}, true, "")
+	cache.observe("example\x00beta", Status{State: "running", Ready: true}, true, "")
+	runner := Runner{Workspace: t.TempDir(), Providers: []Provider{{Name: "alpha"}, {Name: "beta"}}, Cache: cache}
+	if err := os.MkdirAll(filepath.Join(runner.Workspace, ".dev-clusters", "alpha", "clusters", "example"), 0700); err != nil {
+		t.Fatal(err)
+	}
+	if !runner.MayExist("example") {
+		t.Fatal("hid existing provider")
+	}
+	status := cache.observe("example\x00beta", Status{State: "changing"}, true, "busy")
+	if status.State != "changing" || status.Ready {
+		t.Fatalf("retained absent provider: %#v", status)
+	}
+}

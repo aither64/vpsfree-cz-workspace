@@ -1,0 +1,1245 @@
+diff --git a/README.md b/README.md
+index 0c3d30a..268b3b2 100644
+--- a/README.md
++++ b/README.md
+@@ -111,6 +111,7 @@ The handler serves `conversation.js`, `conversation.css`, and, when enabled,
+ the upload assets below its base path. Import one of these browser APIs:
+ 
+ - `mountConversation()` for the complete framework-free conversation UI;
++- `mountRetryActivity()` for an optional retry-chain notice in a custom transcript;
+ - `createConversationClient()` for the HTTP API;
+ - `createDurableSender()` for retry-safe message submission;
+ - `createConversationSync()` for a custom synchronized interface.
+diff --git a/conversation/assets/conversation.css b/conversation/assets/conversation.css
+index ba2427f..00fabf5 100644
+--- a/conversation/assets/conversation.css
++++ b/conversation/assets/conversation.css
+@@ -146,3 +146,75 @@
+ .codex-retry-controls[hidden] { display: none; }
+ .codex-retry-controls label { display: inline-flex; align-items: center; gap: .35rem; }
+ .codex-retry-controls [role="status"] { flex: 1 1 18rem; }
++.codex-retry-activity[hidden] { display: none !important; }
++.codex-retry-activity { margin: 0; min-width: 0; }
++.codex-retry-activity-notice {
++  display: grid;
++  gap: .5rem;
++  margin: .75rem 0 0;
++  padding: .8rem 1rem;
++  border: 1px solid var(--codex-border, light-dark(#ccd2da, #414b59));
++  border-left: 3px solid var(--codex-accent, light-dark(#547aa5, #86add8));
++  border-radius: .5rem;
++  background: var(--codex-surface, light-dark(#f7f9fb, #1b222c));
++  color: inherit;
++  font: inherit;
++  font-size: .875rem;
++  overflow-wrap: anywhere;
++}
++.codex-retry-activity-heading { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .5rem; align-items: start; }
++.codex-retry-activity-title { min-width: 0; font-weight: 600; }
++.codex-retry-activity-metrics, .codex-retry-activity-actions {
++  display: flex;
++  flex-wrap: wrap;
++  align-items: center;
++  gap: .4rem 1rem;
++}
++.codex-retry-activity-metrics { color: var(--codex-muted, light-dark(#53647a, #a8b7ca)); }
++.codex-retry-activity-actions { gap: .5rem; }
++.codex-retry-activity-actions button, .codex-retry-activity-dismiss {
++  min-height: 2rem;
++  padding: .3rem .65rem;
++  border: 1px solid var(--codex-border, light-dark(#ccd2da, #414b59));
++  border-radius: .35rem;
++  background: transparent;
++  color: inherit;
++  font: inherit;
++  cursor: pointer;
++}
++.codex-retry-activity-dismiss {
++  display: grid;
++  place-items: center;
++  grid-column: 2;
++  width: 2rem;
++  padding: 0;
++  border: 0;
++  border-radius: .2rem;
++  background: transparent;
++  color: var(--codex-muted, light-dark(#53647a, #a8b7ca));
++  font-size: 1.1rem;
++  font-weight: 400;
++  line-height: 1;
++}
++.codex-retry-activity-dismiss:hover, .codex-retry-activity-dismiss:focus-visible {
++  background: var(--codex-surface, light-dark(#e9edf2, #252f3c));
++  color: inherit;
++}
++.codex-retry-activity-actions button:focus-visible, .codex-retry-activity-dismiss:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
++.codex-retry-activity-actions button:disabled { opacity: .6; cursor: default; }
++.codex-retry-activity-actions button[hidden], .codex-retry-activity-notice [hidden] { display: none !important; }
++.codex-retry-activity-announcement {
++  position: absolute;
++  width: 1px;
++  height: 1px;
++  padding: 0;
++  overflow: hidden;
++  clip-path: inset(50%);
++  white-space: nowrap;
++}
++@media (max-width: 480px) {
++  .codex-retry-activity-notice { padding: .7rem .75rem; }
++  .codex-retry-activity-metrics { gap: .3rem .75rem; }
++  .codex-retry-activity-actions button { min-height: 2.5rem; }
++  .codex-retry-activity-dismiss { width: 2.5rem; min-height: 2.5rem; }
++}
+diff --git a/conversation/assets/conversation.js b/conversation/assets/conversation.js
+index dfae71f..fa60763 100644
+--- a/conversation/assets/conversation.js
++++ b/conversation/assets/conversation.js
+@@ -7,8 +7,9 @@ export {createConversationSync, renderConnectionStatus, connectionMessage} from
+ import {refreshPolicy, createRefreshNotice} from "./refresh.js?v=1";
+ import {mountRetryControls} from "./retry.js?v=1";
+ export {mountRetryControls, retryStatusText} from "./retry.js?v=1";
+-import {createAsyncQuestions} from "./questions.js?v=3";
+-export {createAsyncQuestions, asyncQuestionReply} from "./questions.js?v=3";
++export {mountRetryActivity, retryActivityPresentation} from "./retry_activity.js?v=2";
++import {createAsyncQuestions, bindQuestionAnswerKeyboard} from "./questions.js?v=4";
++export {createAsyncQuestions, asyncQuestionReply, bindQuestionAnswerKeyboard} from "./questions.js?v=4";
+ export {refreshPolicy, createRefreshNotice} from "./refresh.js?v=1";
+ 
+ const defaultLabels = {
+@@ -285,6 +286,9 @@ export function createConversationClient(options) {
+     retry: (options) => read("retry", options),
+     setRetryEnabled: (enabled) => request("retry/enabled", {method: "POST", body: JSON.stringify({enabled})}),
+     cancelRetry: () => request("retry/cancel", {method: "POST", body: "{}"}),
++    retryActivity: (options) => read("retry/activity", options),
++    retryNow: (token) => request("retry/now", {method: "POST", body: JSON.stringify({token})}),
++    stopRetry: (token) => request("retry/stop", {method: "POST", body: JSON.stringify({token})}),
+     pending: async (options) => (await read("pending", options)) || [],
+     models: async (options) => (await read("models", options)) || [],
+     modes: async (options) => (await read("collaboration-modes", options)) || [],
+@@ -1147,6 +1151,7 @@ export function mountConversation(root, options) {
+             status.textContent = error.message;
+           }
+         });
++        bindQuestionAnswerKeyboard(answer, submit);
+         item.append(answer, submit);
+         if (Number(entry.autoResolutionAtMs) > 0) {
+           const snooze = createElement("button", {type: "button"}, "Snooze");
+diff --git a/conversation/assets/questions.js b/conversation/assets/questions.js
+index e15496e..ff63359 100644
+--- a/conversation/assets/questions.js
++++ b/conversation/assets/questions.js
+@@ -18,6 +18,21 @@ const terminal = status => ["completed", "failed", "interrupted", "error"].inclu
+ let nextViewId = 0;
+ const answerText = (choice, note) => [choice, note].map(value => String(value || "").trim()).filter(Boolean).join("\n\n");
+ 
++// Activate the owning action so keyboard answers retain its validation and
++// delivery rules. Composition and modified shortcuts keep their native behavior.
++export function bindQuestionAnswerKeyboard(input, submit) {
++  let composing = false;
++  input.addEventListener("compositionstart", () => { composing = true; });
++  input.addEventListener("compositionend", () => { composing = false; });
++  input.addEventListener("keydown", event => {
++    if (event.defaultPrevented || event.key !== "Enter" || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey ||
++        composing || event.isComposing || event.keyCode === 229) return;
++    event.preventDefault();
++    if (event.repeat || input.disabled || input.readOnly || input.hidden || submit.disabled || submit.hidden) return;
++    submit.click();
++  });
++}
++
+ // One owner for inline and pinned controls. The normal composer has its own draft
+ // and delivery records; question answers still use the ordinary message endpoint.
+ export function createAsyncQuestions({storage, namespace, send, acknowledge,
+@@ -209,6 +224,7 @@ export function createAsyncQuestions({storage, namespace, send, acknowledge,
+     root.append(title, actions, input, footer, status);
+     input.addEventListener("input", () => { updateDraft(draftFor(record).choice, input.value); });
+     submit.addEventListener("click", () => { record.pinnedAction = pinned; void sendAnswer(record.id, record.state.draft); });
++    bindQuestionAnswerKeyboard(input, submit);
+     retry.addEventListener("click", () => { record.pinnedAction = pinned; void sendAnswer(record.id, record.state.attempt?.answer); });
+     dismiss.addEventListener("click", () => { record.pinnedAction = pinned; record.state.dismissed = true; save(record); pins.delete(record.id); emit(); });
+     const view = {root, update: () => {
+diff --git a/conversation/assets/retry_activity.js b/conversation/assets/retry_activity.js
+new file mode 100644
+index 0000000..8eaeb69
+--- /dev/null
++++ b/conversation/assets/retry_activity.js
+@@ -0,0 +1,190 @@
++const phases = new Set(["scheduled", "submitting", "reconciling", "running", "terminal"]);
++const outcomes = {
++  success: "Retry completed.", stopped: "Retrying stopped.",
++  exhausted: "Automatic retry limit reached.", superseded: "New input ended this retry chain.",
++  blocked: "Automatic retry cannot continue.",
++};
++const identity = value => typeof value === "string" && /^[A-Za-z0-9_-]{1,256}$/.test(value);
++const metric = value => Number.isSafeInteger(value) && value >= 0;
++const timestamp = value => metric(value) && value > 0;
++const quality = value => ["exact", "partial", "unavailable"].includes(value);
++const pageDismissals = new WeakMap();
++
++function validStatus(state) {
++  if (!state || !timestamp(state.serverNowMs)) return false;
++  const a = state.activity;
++  if (a === null) return true;
++  return a && identity(a.chainKey) && ["capacity", "cybersecurity"].includes(a.class) && phases.has(a.phase) &&
++    quality(a.countQuality) && quality(a.timingQuality) && [0, 1].includes(a.unconfirmed) &&
++    (a.confirmedStarts === null ? a.countQuality === "unavailable" : metric(a.confirmedStarts) && a.countQuality !== "unavailable") &&
++    (a.elapsedMs === null && a.startedAtMs === null ? a.timingQuality === "unavailable" :
++      metric(a.elapsedMs) && timestamp(a.startedAtMs) && a.timingQuality !== "unavailable") &&
++    (a.finishedAtMs === null || timestamp(a.finishedAtMs)) && (a.nextAttemptAtMs === null || timestamp(a.nextAttemptAtMs)) &&
++    typeof a.reason === "string" && a.reason.isWellFormed() && new TextEncoder().encode(a.reason).length <= 1024 &&
++    (a.retryNowToken === "" || identity(a.retryNowToken) && a.phase === "scheduled") &&
++    (a.stopToken === "" || identity(a.stopToken)) &&
++    (a.phase === "terminal" ? Object.hasOwn(outcomes, a.outcome) && !a.retryNowToken && !a.stopToken && a.nextAttemptAtMs === null :
++      a.outcome === "" && a.finishedAtMs === null) && (a.nextAttemptAtMs === null || a.phase === "scheduled");
++}
++
++function duration(ms) {
++  const seconds = Math.floor(ms / 1000), minutes = Math.floor(seconds / 60), hours = Math.floor(minutes / 60);
++  if (hours) return `${hours}h ${minutes % 60}m`;
++  if (minutes) return `${minutes}m ${seconds % 60}s`;
++  return `${seconds}s`;
++}
++
++// Elapsed time advances only for a current exact active observation. Terminal
++// and partial metrics retain their server values rather than inventing precision.
++export function retryActivityPresentation(state, elapsedSinceObservation = 0) {
++  if (!validStatus(state)) throw new TypeError("invalid retry activity status");
++  const a = state.activity;
++  if (!a) return null;
++  const delta = Number.isFinite(elapsedSinceObservation) ? Math.max(0, elapsedSinceObservation) : 0;
++  const terminal = a.phase === "terminal";
++  const count = a.confirmedStarts === null ? "Retry count unavailable" :
++    `${a.countQuality === "partial" ? "At least " : ""}${a.confirmedStarts} ${a.confirmedStarts === 1 ? "retry" : "retries"} started`;
++  const elapsed = a.elapsedMs === null ? "Elapsed time unavailable" :
++    `${a.timingQuality === "partial" ? "Recorded time" : "Total elapsed"} ${duration(a.elapsedMs + (!terminal && a.timingQuality === "exact" ? delta : 0))}${a.timingQuality === "partial" ? " (partial)" : ""}`;
++  let status = terminal ? outcomes[a.outcome] : a.phase === "running" ? "Retry in progress." :
++    ["submitting", "reconciling"].includes(a.phase) ? "Confirming whether the retry started." : "Waiting to retry.";
++  if (a.phase === "scheduled" && a.nextAttemptAtMs !== null) {
++    const seconds = Math.max(0, Math.ceil((a.nextAttemptAtMs - state.serverNowMs - delta) / 1000));
++    status = `Retrying in ${seconds}s.`;
++  }
++  return {terminal, title: a.class === "capacity" ? "Model at capacity" : "Cybersecurity error", count, elapsed,
++    unconfirmed: a.unconfirmed ? "1 retry awaiting confirmation" : "", status, reason: a.reason,
++    announcement: terminal ? outcomes[a.outcome] : a.phase === "scheduled" ? "Automatic retry scheduled." : status};
++}
++
++// Owns only the supplied footer's children. The application keeps its scroll
++// owner and message list; the browser never schedules or dispatches a retry.
++export function mountRetryActivity(root, options) {
++  if (typeof options?.conversationKey !== "string" || !options.conversationKey) throw new TypeError("conversationKey is required");
++  const page = options.document || globalThis.document, browser = options.window || globalThis;
++  const now = options.now || (() => globalThis.performance.now());
++  const later = options.setTimeout || globalThis.setTimeout, clear = options.clearTimeout || globalThis.clearTimeout;
++  let storage = options.storage;
++  if (storage === undefined) { try { storage = browser.localStorage; } catch (_) { storage = null; } }
++  const conversationKey = options.conversationKey;
++  const dismissalKey = chainKey => `codex-web.retry-activity.dismissed:${JSON.stringify([conversationKey, chainKey])}`;
++  const dismissed = pageDismissals.get(page) || new Set();
++  pageDismissals.set(page, dismissed);
++  const isDismissed = chainKey => {
++    const key = dismissalKey(chainKey);
++    if (dismissed.has(key)) return true;
++    try { if (storage?.getItem(key) === "1") dismissed.add(key); } catch (_) {}
++    return dismissed.has(key);
++  };
++  const create = (tag, className, text = "") => {
++    const node = page.createElement(tag); node.className = className; node.textContent = text; return node;
++  };
++  const notice = create("section", "codex-retry-activity-notice"); notice.setAttribute("aria-label", "Automatic retry");
++  const heading = create("div", "codex-retry-activity-heading");
++  const title = create("strong", "codex-retry-activity-title");
++  const metrics = create("div", "codex-retry-activity-metrics");
++  const count = create("span", "codex-retry-activity-count"), elapsed = create("span", "codex-retry-activity-elapsed");
++  metrics.append(count, elapsed);
++  const status = create("span", "codex-retry-activity-status"); status.setAttribute("aria-live", "off");
++  const uncertain = create("span", "codex-retry-activity-unconfirmed");
++  const reason = create("span", "codex-retry-activity-reason");
++  const live = create("span", "codex-retry-activity-announcement"); live.setAttribute("role", "status"); live.setAttribute("aria-live", "polite");
++  const actions = create("div", "codex-retry-activity-actions");
++  const retryNow = create("button", "codex-retry-activity-now", "Retry now");
++  const stop = create("button", "codex-retry-activity-stop", "Stop retrying");
++  const dismiss = create("button", "codex-retry-activity-dismiss", "×");
++  dismiss.setAttribute("aria-label", "Dismiss retry notice");
++  dismiss.setAttribute("title", "Dismiss retry notice");
++  for (const button of [retryNow, stop, dismiss]) button.type = "button";
++  heading.append(title, dismiss);
++  actions.append(retryNow, stop);
++  notice.append(heading, metrics, status, uncertain, reason, actions, live);
++  root.classList.add("codex-retry-activity"); root.hidden = true; root.replaceChildren(notice);
++  let state = null, observedAt = 0, stopped = false, suspended = false, busy = false, unavailable = false, reloadRequired = false;
++  let tick = null, poll = null, activeRead = null, readPromise = null, generation = 0, announcementKey = "";
++  const hidden = () => stopped || suspended || page.hidden;
++  const render = () => {
++    clear(tick); tick = null;
++    if (hidden()) return;
++    const a = state?.activity;
++    const view = state ? retryActivityPresentation(state, unavailable ? 0 : Math.max(0, now() - observedAt)) : null;
++    root.hidden = !view || view.terminal && isDismissed(a.chainKey);
++    if (root.hidden) return;
++    title.textContent = view.title; count.textContent = view.count; elapsed.textContent = view.elapsed;
++    status.textContent = reloadRequired ? "Reload the page to use the current retry controls." : unavailable ? "Retry status is unavailable. Refresh to check again." : view.status;
++    uncertain.textContent = view.unconfirmed; uncertain.hidden = !view.unconfirmed;
++    reason.textContent = view.reason; reason.hidden = !view.reason;
++    retryNow.hidden = view.terminal || a.phase !== "scheduled" || !a.retryNowToken;
++    stop.hidden = view.terminal || !a.stopToken;
++    dismiss.hidden = !view.terminal;
++    retryNow.disabled = stop.disabled = busy || unavailable || reloadRequired;
++    const key = JSON.stringify([a.chainKey, a.phase, a.outcome, unavailable, reloadRequired]);
++    if (key !== announcementKey) { live.textContent = unavailable ? status.textContent : view.announcement; announcementKey = key; }
++    if (!unavailable && !view.terminal) tick = later(render, 1000);
++  };
++  const apply = value => {
++    if (!validStatus(value)) throw new TypeError("invalid retry activity status");
++    state = value; observedAt = now(); unavailable = false; render();
++  };
++  const refresh = () => {
++    if (hidden() || busy || reloadRequired) return Promise.resolve();
++    if (readPromise) return readPromise;
++    clear(poll); poll = null;
++    const controller = new AbortController(), current = ++generation;
++    activeRead = controller;
++    const promise = Promise.resolve().then(() => options.client.retryActivity({signal: controller.signal})).then(value => {
++      if (current === generation && !hidden()) apply(value);
++    }).catch(error => {
++      if (current !== generation || hidden() || controller.signal.aborted) return;
++      unavailable = true;
++      if ([403, 404].includes(error.status)) { state = null; root.hidden = true; }
++      render();
++    }).finally(() => {
++      if (readPromise === promise) readPromise = null;
++      if (current === generation) {
++        activeRead = null;
++        if (!hidden()) poll = later(() => { void refresh(); }, 15_000);
++      }
++    });
++    readPromise = promise;
++    return promise;
++  };
++  const mutate = async (method, token) => {
++    if (hidden() || busy || unavailable || reloadRequired || !token) return;
++    busy = true; generation++; activeRead?.abort(); activeRead = null; readPromise = null;
++    clear(poll); poll = null; render();
++    try {
++      const value = await options.client[method](token);
++      if (!stopped) apply(value);
++    } catch (error) {
++      if (!stopped) { unavailable = true; reloadRequired = error.code === "retry_reload_required"; }
++    } finally {
++      busy = false; render();
++      // Unknown or stale writes only trigger a read of this conversation.
++      if (!reloadRequired) void refresh();
++    }
++  };
++  retryNow.addEventListener("click", () => { void mutate("retryNow", state?.activity?.retryNowToken); });
++  stop.addEventListener("click", () => { void mutate("stopRetry", state?.activity?.stopToken); });
++  dismiss.addEventListener("click", () => {
++    if (state?.activity?.phase !== "terminal") return;
++    const chainKey = state.activity.chainKey;
++    dismissed.add(dismissalKey(chainKey));
++    try { storage?.setItem(dismissalKey(chainKey), "1"); } catch (_) {}
++    render();
++  });
++  const suspend = () => {
++    suspended = true; generation++; activeRead?.abort(); activeRead = null; readPromise = null;
++    clear(tick); clear(poll); tick = poll = null;
++  };
++  const resume = () => { if (stopped) return; suspended = false; render(); void refresh(); };
++  const visibility = () => { if (page.hidden) suspend(); else resume(); };
++  page.addEventListener?.("visibilitychange", visibility);
++  browser.addEventListener?.("pagehide", suspend); browser.addEventListener?.("pageshow", resume); browser.addEventListener?.("focus", resume);
++  void refresh();
++  return {refresh, destroy() {
++    stopped = true; suspend(); root.hidden = true; root.replaceChildren();
++    page.removeEventListener?.("visibilitychange", visibility);
++    browser.removeEventListener?.("pagehide", suspend); browser.removeEventListener?.("pageshow", resume); browser.removeEventListener?.("focus", resume);
++  }};
++}
+diff --git a/conversation/handler.go b/conversation/handler.go
+index 426db4d..ca74388 100644
+--- a/conversation/handler.go
++++ b/conversation/handler.go
+@@ -35,23 +35,24 @@ var messageDigestPattern = regexp.MustCompile(`^[0-9a-f]{64}$`)
+ var pageCursorPattern = regexp.MustCompile(`^[A-Za-z0-9_-]{32}$`)
+ var basePathPattern = regexp.MustCompile(`^[A-Za-z0-9/._~!$&'()*+,;=:@-]+$`)
+ 
+-//go:embed assets/conversation.js assets/conversation.css assets/uploads.js assets/uploads.css assets/sync.js assets/refresh.js assets/questions.js assets/citations.js assets/retry.js
++//go:embed assets/conversation.js assets/conversation.css assets/uploads.js assets/uploads.css assets/sync.js assets/refresh.js assets/questions.js assets/citations.js assets/retry.js assets/retry_activity.js
+ var assetFiles embed.FS
+ 
+ // Capabilities grants an opaque conversation ID access to individual
+ // operations. Applications should grant only the operations their own policy
+ // allows for the current request.
+ type Capabilities struct {
+-	Read        bool
+-	Pending     bool
+-	QueueRead   bool
+-	Send        bool
+-	Queue       bool
+-	Interrupt   bool
+-	Settings    bool
+-	Respond     bool
+-	EventStream bool
+-	Retry       bool
++	Read          bool
++	Pending       bool
++	QueueRead     bool
++	Send          bool
++	Queue         bool
++	Interrupt     bool
++	Settings      bool
++	Respond       bool
++	EventStream   bool
++	Retry         bool
++	RetryActivity bool
+ }
+ 
+ // Client is the App Server behavior used by Handler. *codex.Client implements
+@@ -121,6 +122,7 @@ type Target struct {
+ 	ModelCatalog        func(context.Context) ([]codex.Model, error)
+ 	Activity            ActivityProvider
+ 	Retry               RetryProvider
++	RetryActivity       RetryActivityProvider
+ 	ThreadID            string
+ 	Directory           string
+ 	Capabilities        Capabilities
+@@ -368,6 +370,8 @@ func (handler *Handler) serveOperation(
+ 	response.Header().Set("X-Content-Type-Options", "nosniff")
+ 	ctx := request.Context()
+ 	switch operation {
++	case "retry/activity", "retry/now", "retry/stop":
++		handler.retryActivity(response, request, target, operation)
+ 	case "retry", "retry/enabled", "retry/cancel":
+ 		handler.retry(response, request, target, operation)
+ 	case "thread/page":
+diff --git a/conversation/prompt_response_test.go b/conversation/prompt_response_test.go
+index ab0cbaa..88743fe 100644
+--- a/conversation/prompt_response_test.go
++++ b/conversation/prompt_response_test.go
+@@ -8,6 +8,7 @@ import (
+ 	"fmt"
+ 	"log"
+ 	"net/http/httptest"
++	"reflect"
+ 	"testing"
+ 
+ 	"github.com/aither64/codex-web/codex"
+@@ -20,6 +21,38 @@ type boundPromptClient struct {
+ 	err      error
+ }
+ 
++func TestBoundPromptHTTPMultiQuestionAnswerContract(t *testing.T) {
++	for _, test := range []struct {
++		name, payload string
++		status        int
++	}{
++		{"complete with unanswered optional", `"answers":{"required":{"answers":["First","Details"]},"optional":{"answers":[]}}`, 200},
++		{"mixed action", `"answers":{"required":{"answers":["First"]}},"decision":"accept"`, 400},
++		{"malformed answer", `"answers":{"required":{"answers":"First"}}`, 400},
++	} {
++		t.Run(test.name, func(t *testing.T) {
++			client := &boundPromptClient{}
++			handler := &Handler{maxBodyBytes: defaultMaxBodyBytes, logger: log.New(&bytes.Buffer{}, "", 0)}
++			request := httptest.NewRequest("POST", "/respond", bytes.NewBufferString(`{"id":"questions","token":"same-offer",`+test.payload+`}`))
++			response := httptest.NewRecorder()
++			handler.respond(response, request, Target{Client: client, ThreadID: "trusted-thread", Capabilities: Capabilities{Respond: true}})
++			if response.Code != test.status {
++				t.Fatalf("response: %d %s", response.Code, response.Body)
++			}
++			if test.status != 200 {
++				if client.response.ID != "" {
++					t.Fatal("invalid answers reached responder")
++				}
++				return
++			}
++			expected := map[string]map[string][]string{"required": {"answers": {"First", "Details"}}, "optional": {"answers": {}}}
++			if client.thread != "trusted-thread" || client.response.Token != "same-offer" || !reflect.DeepEqual(client.response.Answers, expected) {
++				t.Fatalf("changed answer tuple: %#v", client)
++			}
++		})
++	}
++}
++
+ func (c *boundPromptClient) RespondPrompt(_ context.Context, thread string, response codex.PromptResponse) error {
+ 	c.thread, c.response = thread, response
+ 	return c.err
+diff --git a/conversation/retry_activity.go b/conversation/retry_activity.go
+new file mode 100644
+index 0000000..b747441
+--- /dev/null
++++ b/conversation/retry_activity.go
+@@ -0,0 +1,154 @@
++package conversation
++
++import (
++	"context"
++	"errors"
++	"net/http"
++	"regexp"
++	"slices"
++	"unicode/utf8"
++)
++
++// RetryActivityProvider observes application-owned retry chains. Tokens compare
++// exact action identities; the application still owns authority and scheduling.
++type RetryActivityProvider interface {
++	ReadRetryActivity(context.Context, string) (RetryActivityStatus, error)
++	RetryNow(context.Context, string, string) (RetryActivityStatus, error)
++	StopRetry(context.Context, string, string) (RetryActivityStatus, error)
++}
++
++type RetryActivityStatus struct {
++	ServerNowMS int64          `json:"serverNowMs"`
++	Activity    *RetryActivity `json:"activity"`
++}
++
++// RetryActivity contains safe presentation data, never native routing, prompts
++// or execution options. Nullable metrics preserve unavailable observations.
++type RetryActivity struct {
++	ChainKey        string `json:"chainKey"`
++	Class           string `json:"class"`
++	Phase           string `json:"phase"`
++	ConfirmedStarts *int64 `json:"confirmedStarts"`
++	Unconfirmed     int    `json:"unconfirmed"`
++	CountQuality    string `json:"countQuality"`
++	StartedAtMS     *int64 `json:"startedAtMs"`
++	ElapsedMS       *int64 `json:"elapsedMs"`
++	TimingQuality   string `json:"timingQuality"`
++	FinishedAtMS    *int64 `json:"finishedAtMs"`
++	NextAttemptAtMS *int64 `json:"nextAttemptAtMs"`
++	Outcome         string `json:"outcome"`
++	Reason          string `json:"reason"`
++	RetryNowToken   string `json:"retryNowToken"`
++	StopToken       string `json:"stopToken"`
++}
++
++const (
++	RetryActionStale         = "retry_action_stale"
++	RetryReloadRequired      = "retry_reload_required"
++	RetryActivityUnavailable = "retry_activity_unavailable"
++)
++
++// RetryActivityError supplies a bounded public error code. Provider diagnostics
++// are never copied into the HTTP response or logs.
++type RetryActivityError struct{ Code string }
++
++func (err *RetryActivityError) Error() string { return "retry activity action failed" }
++
++var retryActivityIdentity = regexp.MustCompile(`^[A-Za-z0-9_-]{1,256}$`)
++
++const maxSafeJSONInteger int64 = 1<<53 - 1
++
++func (handler *Handler) retryActivity(response http.ResponseWriter, request *http.Request, target Target, operation string) {
++	if !target.Capabilities.RetryActivity ||
++		(operation == "retry/activity" && request.Method != http.MethodGet) ||
++		(operation != "retry/activity" && request.Method != http.MethodPost) {
++		handler.rejectOperation(response, request)
++		return
++	}
++	if target.RetryActivity == nil {
++		writeError(response, http.StatusNotFound, "retry activity is unavailable")
++		return
++	}
++	var state RetryActivityStatus
++	var err error
++	if operation == "retry/activity" {
++		state, err = target.RetryActivity.ReadRetryActivity(request.Context(), target.ThreadID)
++	} else {
++		var body struct {
++			Token string `json:"token"`
++		}
++		if !handler.decode(response, request, &body) {
++			return
++		}
++		if !retryActivityIdentity.MatchString(body.Token) {
++			writeError(response, http.StatusBadRequest, "retry action token is invalid")
++			return
++		}
++		if operation == "retry/now" {
++			state, err = target.RetryActivity.RetryNow(request.Context(), target.ThreadID, body.Token)
++		} else {
++			state, err = target.RetryActivity.StopRetry(request.Context(), target.ThreadID, body.Token)
++		}
++	}
++	if err != nil {
++		code, message, status := RetryActivityUnavailable, "Retry activity is unavailable. Try again later.", http.StatusServiceUnavailable
++		var actionErr *RetryActivityError
++		if errors.As(err, &actionErr) && actionErr != nil {
++			switch actionErr.Code {
++			case RetryActionStale:
++				code, message, status = RetryActionStale, "The retry changed. Refresh its status before trying again.", http.StatusConflict
++			case RetryReloadRequired:
++				code, message, status = RetryReloadRequired, "Reload the page to use the current retry controls.", http.StatusConflict
++			}
++		}
++		writeJSON(response, status, map[string]string{"code": code, "error": message})
++		return
++	}
++	if !validRetryActivityStatus(state) {
++		handler.serverError(response, request, errors.New("retry activity provider returned invalid status"))
++		return
++	}
++	writeJSON(response, http.StatusOK, state)
++}
++
++func validRetryActivityStatus(state RetryActivityStatus) bool {
++	if state.ServerNowMS <= 0 || state.ServerNowMS > maxSafeJSONInteger {
++		return false
++	}
++	a := state.Activity
++	if a == nil {
++		return true
++	}
++	quality := func(value string) bool { return slices.Contains([]string{"exact", "partial", "unavailable"}, value) }
++	metric := func(value *int64) bool { return value == nil || *value >= 0 && *value <= maxSafeJSONInteger }
++	timestamp := func(value *int64) bool { return value == nil || *value > 0 && *value <= maxSafeJSONInteger }
++	if !retryActivityIdentity.MatchString(a.ChainKey) ||
++		!slices.Contains([]string{"capacity", "cybersecurity"}, a.Class) ||
++		!slices.Contains([]string{"scheduled", "submitting", "reconciling", "running", "terminal"}, a.Phase) ||
++		!quality(a.CountQuality) || !quality(a.TimingQuality) || !metric(a.ConfirmedStarts) ||
++		(a.Unconfirmed != 0 && a.Unconfirmed != 1) || !metric(a.ElapsedMS) ||
++		!timestamp(a.StartedAtMS) || !timestamp(a.FinishedAtMS) || !timestamp(a.NextAttemptAtMS) ||
++		len(a.Reason) > 1024 || !utf8.ValidString(a.Reason) {
++		return false
++	}
++	if (a.CountQuality == "unavailable") != (a.ConfirmedStarts == nil) ||
++		(a.TimingQuality == "unavailable") != (a.StartedAtMS == nil && a.ElapsedMS == nil) ||
++		(a.StartedAtMS == nil) != (a.ElapsedMS == nil) {
++		return false
++	}
++	if a.Phase == "terminal" {
++		if !slices.Contains([]string{"success", "stopped", "exhausted", "superseded", "blocked"}, a.Outcome) ||
++			a.NextAttemptAtMS != nil || a.RetryNowToken != "" || a.StopToken != "" {
++			return false
++		}
++	} else if a.Outcome != "" || a.FinishedAtMS != nil {
++		return false
++	}
++	if a.RetryNowToken != "" && (a.Phase != "scheduled" || !retryActivityIdentity.MatchString(a.RetryNowToken)) {
++		return false
++	}
++	if a.StopToken != "" && !retryActivityIdentity.MatchString(a.StopToken) {
++		return false
++	}
++	return a.NextAttemptAtMS == nil || a.Phase == "scheduled"
++}
+diff --git a/conversation/retry_activity_test.go b/conversation/retry_activity_test.go
+new file mode 100644
+index 0000000..fd9c227
+--- /dev/null
++++ b/conversation/retry_activity_test.go
+@@ -0,0 +1,224 @@
++package conversation
++
++import (
++	"bytes"
++	"context"
++	"encoding/json"
++	"errors"
++	"fmt"
++	"log"
++	"net/http"
++	"net/http/httptest"
++	"strings"
++	"testing"
++)
++
++type activityFixture struct {
++	state                    RetryActivityStatus
++	err                      error
++	lock                     *retryFixtureLock
++	thread, token, operation string
++	calls                    int
++}
++
++func (f *activityFixture) call(thread, token, operation string) (RetryActivityStatus, error) {
++	if operation != "read" && !f.lock.held {
++		return RetryActivityStatus{}, errors.New("mutation lock missing")
++	}
++	f.thread, f.token, f.operation = thread, token, operation
++	f.calls++
++	return f.state, f.err
++}
++func (f *activityFixture) ReadRetryActivity(_ context.Context, thread string) (RetryActivityStatus, error) {
++	return f.call(thread, "", "read")
++}
++func (f *activityFixture) RetryNow(_ context.Context, thread, token string) (RetryActivityStatus, error) {
++	return f.call(thread, token, "now")
++}
++func (f *activityFixture) StopRetry(_ context.Context, thread, token string) (RetryActivityStatus, error) {
++	return f.call(thread, token, "stop")
++}
++
++func activityNumber(value int64) *int64 { return &value }
++func activityState() RetryActivityStatus {
++	return RetryActivityStatus{ServerNowMS: 100000, Activity: &RetryActivity{
++		ChainKey: "chain-1", Class: "capacity", Phase: "scheduled", ConfirmedStarts: activityNumber(3),
++		CountQuality: "exact", StartedAtMS: activityNumber(30000), ElapsedMS: activityNumber(70000), TimingQuality: "exact",
++		NextAttemptAtMS: activityNumber(115000), RetryNowToken: "attempt-token", StopToken: "chain-token",
++	}}
++}
++func activityHandler(t *testing.T, provider RetryActivityProvider, grant bool, lock *retryFixtureLock, output *bytes.Buffer) *Handler {
++	t.Helper()
++	h, err := NewHandler(Options{AllowedOrigins: []string{"https://trusted.test"}, Logger: log.New(output, "", 0),
++		Resolver: ResolverFunc(func(_ context.Context, request ResolveRequest) (Target, error) {
++			if request.ID != "opaque" {
++				t.Fatalf("untrusted route: %+v", request)
++			}
++			return Target{Client: &fakeClient{}, ThreadID: "trusted-thread", Directory: "/trusted", MutationLock: lock,
++				RetryActivity: provider, Capabilities: Capabilities{RetryActivity: grant}}, nil
++		})})
++	if err != nil {
++		t.Fatal(err)
++	}
++	return h
++}
++
++func TestRetryActivityRoutes(t *testing.T) {
++	for _, tc := range []struct {
++		name, method, path, body, origin, operation string
++		grant, provider                             bool
++		status, calls                               int
++	}{
++		{"read", "GET", "activity", "", "", "read", true, true, 200, 1},
++		{"now", "POST", "now", `{"token":"attempt-token"}`, "https://trusted.test", "now", true, true, 200, 1},
++		{"stop", "POST", "stop", `{"token":"chain-token"}`, "https://trusted.test", "stop", true, true, 200, 1},
++		{"denied", "GET", "activity", "", "", "", false, true, 403, 0},
++		{"no provider", "GET", "activity", "", "", "", true, false, 404, 0},
++		{"cross origin", "POST", "stop", `{"token":"x"}`, "https://evil.test", "", true, true, 403, 0},
++		{"no origin", "POST", "stop", `{"token":"x"}`, "", "", true, true, 403, 0},
++		{"wrong read verb", "POST", "activity", `{}`, "https://trusted.test", "", true, true, 403, 0},
++		{"wrong action verb", "GET", "now", "", "", "", true, true, 403, 0},
++		{"missing token", "POST", "now", `{}`, "https://trusted.test", "", true, true, 400, 0},
++		{"null token", "POST", "stop", `{"token":null}`, "https://trusted.test", "", true, true, 400, 0},
++		{"invalid token", "POST", "now", `{"token":"x/y"}`, "https://trusted.test", "", true, true, 400, 0},
++		{"oversize token", "POST", "now", `{"token":"` + strings.Repeat("x", 257) + `"}`, "https://trusted.test", "", true, true, 400, 0},
++		{"thread injection", "POST", "now", `{"token":"x","threadId":"evil"}`, "https://trusted.test", "", true, true, 400, 0},
++		{"input injection", "POST", "stop", `{"token":"x","message":"send"}`, "https://trusted.test", "", true, true, 400, 0},
++		{"options injection", "POST", "now", `{"token":"x","options":{}}`, "https://trusted.test", "", true, true, 400, 0},
++		{"trailing body", "POST", "stop", `{"token":"x"}{}`, "https://trusted.test", "", true, true, 400, 0},
++	} {
++		t.Run(tc.name, func(t *testing.T) {
++			lock := &retryFixtureLock{}
++			f := &activityFixture{state: activityState(), lock: lock}
++			var selected RetryActivityProvider = f
++			if !tc.provider {
++				selected = nil
++			}
++			var output bytes.Buffer
++			h := activityHandler(t, selected, tc.grant, lock, &output)
++			r := httptest.NewRequest(tc.method, "/codex/conversations/opaque/retry/"+tc.path, strings.NewReader(tc.body))
++			if tc.origin != "" {
++				r.Header.Set("Origin", tc.origin)
++			}
++			w := httptest.NewRecorder()
++			h.ServeHTTP(w, r)
++			if w.Code != tc.status || f.calls != tc.calls {
++				t.Fatalf("status=%d body=%s calls=%d", w.Code, w.Body.String(), f.calls)
++			}
++			if tc.calls > 0 && (f.thread != "trusted-thread" || f.operation != tc.operation) {
++				t.Fatalf("provider=%+v", f)
++			}
++			if tc.operation != "read" && tc.calls > 0 && !strings.Contains(tc.body, `"`+f.token+`"`) {
++				t.Fatal("token changed")
++			}
++			if lock.held {
++				t.Fatal("lock leaked")
++			}
++			if w.Code == 200 {
++				var got RetryActivityStatus
++				if err := json.Unmarshal(w.Body.Bytes(), &got); err != nil {
++					t.Fatal(err)
++				}
++				if !validRetryActivityStatus(got) {
++					t.Fatal(w.Body.String())
++				}
++			}
++		})
++	}
++}
++
++func TestRetryActivityErrorsAreBounded(t *testing.T) {
++	for _, tc := range []struct {
++		err    error
++		status int
++		code   string
++	}{
++		{errors.New("secret /private/native-data"), 503, RetryActivityUnavailable},
++		{&RetryActivityError{Code: RetryActivityUnavailable}, 503, RetryActivityUnavailable},
++		{fmt.Errorf("secret: %w", &RetryActivityError{Code: RetryActionStale}), 409, RetryActionStale},
++		{&RetryActivityError{Code: RetryReloadRequired}, 409, RetryReloadRequired},
++		{&RetryActivityError{Code: "secret"}, 503, RetryActivityUnavailable},
++		{(*RetryActivityError)(nil), 503, RetryActivityUnavailable},
++	} {
++		t.Run(tc.code+fmt.Sprint(tc.err), func(t *testing.T) {
++			var output bytes.Buffer
++			f := &activityFixture{err: tc.err}
++			h := activityHandler(t, f, true, &retryFixtureLock{}, &output)
++			w := httptest.NewRecorder()
++			h.ServeHTTP(w, httptest.NewRequest("GET", "/codex/conversations/opaque/retry/activity", nil))
++			if w.Code != tc.status || !strings.Contains(w.Body.String(), tc.code) || strings.Contains(w.Body.String()+output.String(), "secret") || strings.Contains(w.Body.String()+output.String(), "private") {
++				t.Fatalf("status=%d body=%s log=%s", w.Code, w.Body.String(), output.String())
++			}
++		})
++	}
++}
++
++func TestRetryActivityDTOValidation(t *testing.T) {
++	for name, change := range map[string]func(*RetryActivityStatus){
++		"unsafe clock":                func(s *RetryActivityStatus) { s.ServerNowMS = maxSafeJSONInteger + 1 },
++		"missing clock":               func(s *RetryActivityStatus) { s.ServerNowMS = 0 },
++		"chain":                       func(s *RetryActivityStatus) { s.Activity.ChainKey = "../x" },
++		"class":                       func(s *RetryActivityStatus) { s.Activity.Class = "unknown" },
++		"phase":                       func(s *RetryActivityStatus) { s.Activity.Phase = "idle" },
++		"negative count":              func(s *RetryActivityStatus) { s.Activity.ConfirmedStarts = activityNumber(-1) },
++		"unsafe count":                func(s *RetryActivityStatus) { s.Activity.ConfirmedStarts = activityNumber(maxSafeJSONInteger + 1) },
++		"null exact count":            func(s *RetryActivityStatus) { s.Activity.ConfirmedStarts = nil },
++		"unknown quality":             func(s *RetryActivityStatus) { s.Activity.CountQuality = "approximate" },
++		"invented unavailable count":  func(s *RetryActivityStatus) { s.Activity.CountQuality = "unavailable" },
++		"unconfirmed":                 func(s *RetryActivityStatus) { s.Activity.Unconfirmed = 2 },
++		"half timing":                 func(s *RetryActivityStatus) { s.Activity.StartedAtMS = nil },
++		"negative elapsed":            func(s *RetryActivityStatus) { s.Activity.ElapsedMS = activityNumber(-1) },
++		"invented unavailable timing": func(s *RetryActivityStatus) { s.Activity.TimingQuality = "unavailable" },
++		"active finished":             func(s *RetryActivityStatus) { s.Activity.FinishedAtMS = activityNumber(100000) },
++		"active outcome":              func(s *RetryActivityStatus) { s.Activity.Outcome = "success" },
++		"reason bound":                func(s *RetryActivityStatus) { s.Activity.Reason = strings.Repeat("x", 1025) },
++		"invalid utf8":                func(s *RetryActivityStatus) { s.Activity.Reason = string([]byte{255}) },
++		"token":                       func(s *RetryActivityStatus) { s.Activity.StopToken = "private/path" },
++		"running now":                 func(s *RetryActivityStatus) { s.Activity.Phase = "running"; s.Activity.NextAttemptAtMS = nil },
++		"running deadline":            func(s *RetryActivityStatus) { s.Activity.Phase = "running"; s.Activity.RetryNowToken = "" },
++		"terminal actions":            func(s *RetryActivityStatus) { s.Activity.Phase = "terminal"; s.Activity.Outcome = "success" },
++	} {
++		t.Run(name, func(t *testing.T) {
++			s := activityState()
++			change(&s)
++			if validRetryActivityStatus(s) {
++				t.Fatal("accepted invalid DTO")
++			}
++		})
++	}
++	for _, phase := range []string{"scheduled", "submitting", "reconciling", "running", "terminal"} {
++		s := activityState()
++		a := s.Activity
++		a.Phase = phase
++		a.NextAttemptAtMS = nil
++		a.RetryNowToken = ""
++		a.ConfirmedStarts = nil
++		a.CountQuality = "unavailable"
++		a.StartedAtMS = nil
++		a.ElapsedMS = nil
++		a.TimingQuality = "unavailable"
++		if phase == "terminal" {
++			a.Outcome = "stopped"
++			a.StopToken = ""
++		}
++		if !validRetryActivityStatus(s) {
++			t.Fatalf("rejected valid unavailable %s", phase)
++		}
++	}
++	var output bytes.Buffer
++	f := &activityFixture{state: RetryActivityStatus{ServerNowMS: 100000}}
++	h := activityHandler(t, f, true, &retryFixtureLock{}, &output)
++	w := httptest.NewRecorder()
++	h.ServeHTTP(w, httptest.NewRequest("GET", "/codex/conversations/opaque/retry/activity", nil))
++	if w.Code != http.StatusOK || !strings.Contains(w.Body.String(), `"activity":null`) {
++		t.Fatal(w.Body.String())
++	}
++	bad := activityState()
++	bad.Activity.Class = "private"
++	f.state = bad
++	w = httptest.NewRecorder()
++	h.ServeHTTP(w, httptest.NewRequest("GET", "/codex/conversations/opaque/retry/activity", nil))
++	if w.Code != 503 || strings.Contains(w.Body.String()+output.String(), "private") {
++		t.Fatalf("body=%s log=%s", w.Body.String(), output.String())
++	}
++}
+diff --git a/docs/reference.md b/docs/reference.md
+index 25c77fb..6674f2a 100644
+--- a/docs/reference.md
++++ b/docs/reference.md
+@@ -278,7 +278,10 @@ above the composer. Suggested options use compact radio lists. Unedited question
+ select the recommended option, or the first option when none is marked. Select
+ an option and optionally add text, or choose **Other** for a custom answer. **Send answer**
+ submits the selected label and text, separated by a blank line. Selecting an
+-option does not send it. **Dismiss** removes a question from the panel without
++option does not send it. Enter in an answer textarea activates its existing
++submit action; Shift+Enter inserts a newline. IME composition, other modified
++shortcuts and option controls retain their normal behavior. Holding Enter does
++not submit another answer. **Dismiss** removes a question from the panel without
+ sending a message. Turn completion and accepted ordinary follow-ups also clear
+ the panel. Unanswered questions remain answerable from the original message;
+ answered questions show the submitted answer. Drafts survive unpinning and
+@@ -312,6 +315,12 @@ Set `onPanelEmpty` to return focus to the embedding application's composer when
+ the last focused question disappears. The callback does not run when focus is
+ already elsewhere.
+ 
++Custom question textareas can use `bindQuestionAnswerKeyboard(input, submit)`
++with their owning submit button. The binding activates that button on plain
++Enter and preserves its validation and delivery path. The mounted pending-request
++JSON editor uses the same binding; JSON parsing and server answer validation
++still apply.
++
+ Pending prompts expose an opaque `token` for each offer. Send that token with
+ answers, decisions and snoozes through `RespondPrompt`; an expired offer returns
+ `PromptResponseError`. Its `NotSent` field distinguishes a rejected response
+@@ -667,6 +676,72 @@ Use the existing Stop control to interrupt a running turn. Re-enabling must
+ consume the current failure as a baseline instead of reviving it. These semantics
+ are enforced by the application provider, independently of an open browser tab.
+ 
++### Optional retry activity notice
++
++`Target.RetryActivity RetryActivityProvider` and `Capabilities.RetryActivity`
++enable a separate optional activity API. The required `Client` interface and
++the existing `RetryProvider` controls remain unchanged. The trusted resolver
++selects the provider and thread for every request. `GET retry/activity` reads
++the current or latest chain; `POST retry/now` and `POST retry/stop` each accept
++only `{ "token": "..." }`. POST retains exact-origin checks, payload bounds
++and the common mutation lock. Tokens compare server-owned action identities;
++they grant no authorization. The provider owns admission, durable cancellation
++and scheduling. Reads must not start work. Retry now accelerates the saved
++scheduled attempt; Stop retrying stops this chain without changing preferences
++or interrupting a running turn. Neither action retracts an accepted request.
++
++`RetryActivityStatus` contains `serverNowMs` and a nullable `activity`. Null means
++there is no notice. Activity contains `chainKey`, `class`, `phase`,
++`confirmedStarts`, `unconfirmed`, `countQuality`, `startedAtMs`, `elapsedMs`,
++`timingQuality`, `finishedAtMs`, `nextAttemptAtMs`, `outcome`, `reason`,
++`retryNowToken` and `stopToken`. Classes are `capacity` or `cybersecurity`;
++phases are `scheduled`, `submitting`, `reconciling`, `running` or `terminal`.
++Terminal outcomes are `success`, `stopped`, `exhausted`, `superseded` or
++`blocked`. Times are Unix milliseconds and elapsed time is milliseconds.
++Metrics are nonnegative safe JSON integers. An unavailable count is null;
++unavailable timing has null start and elapsed values. Quality is `exact`,
++`partial` or `unavailable`. `confirmedStarts` counts confirmed native starts,
++while `unconfirmed` separately records zero or one uncertain submission.
++Preparation, polls and clicks are not confirmed starts. Missing historical
++metrics must remain partial or unavailable. Terminal elapsed time is frozen.
++Reasons must be safe public text within 1024 UTF-8 bytes; raw native data,
++prompts and execution options do not belong in this DTO. Opaque chain keys and
++action tokens contain 1 to 256 ASCII letters, digits, underscores or hyphens.
++An empty action token means that control is unavailable.
++
++Provider errors use `RetryActivityError{Code: ...}` with `RetryActionStale` or
++`RetryReloadRequired` (HTTP 409), or `RetryActivityUnavailable` (HTTP 503).
++Unknown provider failures return a fixed unavailable response without exposing
++their diagnostics. Stale actions require a fresh observation; reload-required
++responses require a page reload. Clients must never fall back to Send.
++
++`createConversationClient()` supplies `retryActivity()`, `retryNow(token)` and
++`stopRetry(token)`. Mount `mountRetryActivity(footer, {client, conversationKey})`
++explicitly; the returned controller provides `refresh()` and `destroy()`.
++The footer belongs inside the application's transcript viewport, after its
++message list and above the composer. The renderer owns only footer children;
++the host retains message rendering, scrolling and anchors. Include
++`conversation.css`. A hidden or dismissed notice reserves no height or margin.
++The legacy `mountConversation()` retry controls are configured separately.
++
++The notice retains confirmed counts and elapsed time during a running retry,
++shows an uncertain start separately, and labels partial or unavailable metrics.
++Countdown and exact active elapsed time use server observations plus monotonic
++browser time. Terminal elapsed time stays frozen. Countdown ticks do not create
++submissions or repeated screen-reader announcements. Visible notices poll and
++refresh on focus/restoration; hidden pages suspend reads and timers. Refreshes
++coalesce, and destroyed controllers ignore late responses. A lost action reply
++triggers a read without repeating the POST. Destroy the controller before
++mounting a different conversation.
++
++Dismissal is browser-local, keyed by the exact conversation and chain pair.
++Each dismissed result remains hidden independently, including after another
++chain is dismissed or an older observation arrives. Reload preserves dismissal
++when localStorage is available. If storage fails, dismissal still works for
++this page, including conversation remounts. A new chain or different
++conversation remains independent.
++Dismissal performs no backend operation or preference change.
++
+ `submissionFailurePresentation(error)` returns `{message, uncertain}` for inline
+ delivery errors. Only explicit `error.notSent === true` establishes an unsent
+ message. Transport failures, HTTP 502/503/504, aborts and unknown errors remain
+diff --git a/flake.nix b/flake.nix
+index 8d70a72..aaf4d2b 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -25,7 +25,7 @@
+             --coverage-only codex/client.go
+           go test ./...
+           ${pkgs.nodejs}/bin/node --check conversation/assets/conversation.js
+-          ${pkgs.nodejs}/bin/node --test test/conversation_browser_contract_test.cjs test/uploads_browser_contract_test.cjs test/sync_browser_contract_test.cjs test/refresh_browser_contract_test.cjs test/questions_browser_contract_test.cjs test/citations_browser_contract_test.cjs test/retry_browser_contract_test.cjs
++          ${pkgs.nodejs}/bin/node --test test/conversation_browser_contract_test.cjs test/uploads_browser_contract_test.cjs test/sync_browser_contract_test.cjs test/refresh_browser_contract_test.cjs test/questions_browser_contract_test.cjs test/citations_browser_contract_test.cjs test/retry_browser_contract_test.cjs test/retry_activity_browser_contract_test.cjs
+           runHook postCheck
+         '';
+         installPhase = ''
+diff --git a/test/conversation_browser_contract_test.cjs b/test/conversation_browser_contract_test.cjs
+index b3f39ea..6364692 100644
+--- a/test/conversation_browser_contract_test.cjs
++++ b/test/conversation_browser_contract_test.cjs
+@@ -579,6 +579,7 @@ class MemoryStorage {
+       }
+     }
+     addEventListener(name, listener) { this.listeners.set(name, listener); }
++    click() { if (!this.disabled) this.listeners.get("click")?.(); }
+     showModal() { this.open = true; }
+     close() { this.open = false; this.listeners.get("close")?.(); }
+     descendants() { return [this, ...this.children.flatMap((child) => child.descendants())]; }
+@@ -1275,6 +1276,25 @@ class MemoryStorage {
+     globalThis.setTimeout = pendingClockLater; globalThis.clearTimeout = pendingClockClear;
+   }
+ 
++  // The pending JSON editor uses the same action for Enter and button clicks.
++  const keyboardRoot = new FakeElement("main"), keyboardResponses = [];
++  let releaseKeyboard;
++  const disposeKeyboard = mountConversation(keyboardRoot,{id:"answer-keys",client:{
++    thread:async()=>({threadId:"answer-thread",status:"active",entries:[]}),
++    pending:async()=>[{id:"request",kind:"userInput",token:"exact-offer",questions:[{id:"required"},{id:"optional"}]}],
++    respond:(id,value)=>{keyboardResponses.push({id,value});return new Promise(resolve=>{releaseKeyboard=resolve;});},
++  },capabilities:{send:false,queueRead:false,queue:false,interrupt:false,settings:false,respond:true,eventStream:false}});
++  await new Promise(resolve=>setImmediate(resolve));
++  const answerJSON=keyboardRoot.descendants().find(node=>node.attributes["aria-label"]==="Answers as JSON");
++  const answerButton=keyboardRoot.descendants().find(node=>node.textContent==="Submit answers");
++  const answerKey=extra=>{let prevented=false;answerJSON.listeners.get("keydown")({key:"Enter",...extra,preventDefault(){prevented=true;}});return prevented;};
++  answerJSON.value="invalid json";assert.equal(answerKey(),true);assert.equal(keyboardResponses.length,0,"JSON validation still owns submission");
++  const completeAnswers={required:{answers:["Answer"]},optional:{answers:[]}};answerJSON.value=JSON.stringify(completeAnswers);
++  assert.equal(answerKey({shiftKey:true}),false);assert.equal(answerKey({repeat:true}),true);assert.equal(keyboardResponses.length,0);
++  answerKey();assert.deepEqual(keyboardResponses,[{id:"request",value:{token:"exact-offer",answers:completeAnswers}}]);
++  answerKey({repeat:true});assert.equal(keyboardResponses.length,1);releaseKeyboard();await new Promise(resolve=>setImmediate(resolve));
++  answerButton.click();assert.equal(keyboardResponses.length,2,"button path is unchanged");releaseKeyboard();await new Promise(resolve=>setImmediate(resolve));disposeKeyboard();
++
+   const timeoutRoot = new FakeElement("main");
+   const disposeTimeout = mountConversation(timeoutRoot,{id:"timeouts",client:{
+     thread:async()=>({threadId:"timeout-thread",status:"idle",entries:[]}),
+diff --git a/test/questions_browser_contract_test.cjs b/test/questions_browser_contract_test.cjs
+index 9c99513..21096c9 100644
+--- a/test/questions_browser_contract_test.cjs
++++ b/test/questions_browser_contract_test.cjs
+@@ -10,6 +10,78 @@ class Storage {
+   setItem(key, value) { this.values.set(key, value); }
+ }
+ 
++class QuestionElement extends EventTarget {
++  constructor(tag) { super(); this.tag=tag;this.children=[];this.dataset={};this.attributes={};this.value=""; }
++  setAttribute(name,value) { this.attributes[name]=String(value); }
++  removeAttribute(name) { delete this.attributes[name]; }
++  append(...nodes) { for(const node of nodes){node.remove();node.parentElement=this;this.children.push(node);} }
++  replaceChildren(...nodes) { for(const node of this.children)node.parentElement=null;this.children=[];this.append(...nodes); }
++  insertBefore(node,before) { node.remove();node.parentElement=this;const index=this.children.indexOf(before);this.children.splice(index<0?this.children.length:index,0,node); }
++  remove() { if(this.parentElement)this.parentElement.children=this.parentElement.children.filter(node=>node!==this);this.parentElement=null; }
++  contains(node) { return this===node || this.children.some(child=>child.contains(node)); }
++  closest(selector) { return this.className===selector.slice(1)?this:this.parentElement?.closest(selector); }
++  descendants() { return [this,...this.children.flatMap(node=>node.descendants())]; }
++  querySelector(selector) {
++    if(selector==='section:not([hidden]) .codex-question-title')return this.children.find(node=>node.tag==='section'&&!node.hidden)?.querySelector('.codex-question-title');
++    return this.descendants().find(node=>node.className===selector.slice(1));
++  }
++  focus() { globalThis.document.activeElement=this; }
++  click() { if(!this.disabled)this.dispatchEvent(new Event('click')); }
++}
++const key = (input,extra={}) => {
++  const event=new Event('keydown',{cancelable:true});Object.assign(event,{key:'Enter',...extra});input.dispatchEvent(event);return event;
++};
++const settled = async () => { for(let i=0;i<12;i++)await Promise.resolve(); };
++
++test('question textarea keys preserve composition, modified shortcuts, held keys and control guards',async()=>{
++  const {bindQuestionAnswerKeyboard}=await load();const input=new QuestionElement('textarea'),submit=new QuestionElement('button');let calls=0;
++  submit.addEventListener('click',()=>calls++);bindQuestionAnswerKeyboard(input,submit);
++  input.value='Selected answer';input.selectionStart=2;input.selectionEnd=8;
++  for(const extra of [{key:'a'},{shiftKey:true},{altKey:true},{ctrlKey:true},{metaKey:true},{isComposing:true},{keyCode:229}])assert.equal(key(input,extra).defaultPrevented,false);
++  input.dispatchEvent(new Event('compositionstart'));assert.equal(key(input).defaultPrevented,false);input.dispatchEvent(new Event('compositionend'));
++  assert.equal(calls,0);assert.equal(key(input,{repeat:true}).defaultPrevented,true);assert.equal(calls,0);
++  for(const [control,property] of [[input,'disabled'],[input,'readOnly'],[input,'hidden'],[submit,'disabled'],[submit,'hidden']]){
++    control[property]=true;key(input);assert.equal(calls,0);control[property]=false;
++  }
++  const prevented=new Event('keydown',{cancelable:true});Object.assign(prevented,{key:'Enter'});prevented.preventDefault();input.dispatchEvent(prevented);assert.equal(calls,0);
++  assert.equal(key(input).defaultPrevented,true);assert.equal(calls,1);assert.equal(input.value,'Selected answer');assert.equal(input.selectionStart,2);assert.equal(input.selectionEnd,8);
++  submit.click();assert.equal(calls,2,'mouse and keyboard share the owning action');
++});
++
++test('inline and pinned Enter submit the existing optional answer once, preserving other questions and unknown recovery',async t=>{
++  const originalDocument=globalThis.document;t.after(()=>{globalThis.document=originalDocument;});
++  globalThis.document={createElement:tag=>new QuestionElement(tag),body:new QuestionElement('body')};
++  const {createAsyncQuestions}=await load();
++  for(const pinned of [false,true]) {
++    let release;const sends=[];const source=agent('keyboard-'+pinned),container=new QuestionElement('aside');
++    const controller=createAsyncQuestions({storage:new Storage(),namespace:'keyboard',randomUUID:()=> 'original-uuid',onChange:()=>{if(pinned)controller.renderPinned(container);},send:value=>{sends.push(value);return new Promise(resolve=>{release=resolve;});}});
++    controller.update(snapshot([source]));
++    if(pinned)container.children[0].click();else container.append(controller.inline(source));
++    const first=container.descendants().find(node=>node.className==='codex-async-question'),input=first.descendants().find(node=>node.tag==='textarea');
++    const radio=first.descendants().find(node=>node.type==='radio');key(radio);assert.equal(sends.length,0,'radio Enter remains untouched');
++    input.value='Extra details';input.dispatchEvent(new Event('input'));assert.equal(key(input,{shiftKey:true}).defaultPrevented,false);assert.equal(sends.length,0);
++    key(input);key(input,{repeat:true});key(input);await settled();assert.equal(sends.length,1);assert.equal(sends[0].id,'original-uuid');assert.equal(sends[0].retry,false);
++    const reply=JSON.parse(sends[0].message.split('\n')[1])[0];assert.equal(reply.answer,'One\n\nExtra details');assert.equal(reply.questionItemId,source.questions[0].id);
++    assert.equal(controller.state(source.questions[1].id).answer,undefined,'optional questions are independently answerable');
++    release();await settled();assert.equal(controller.state(source.questions[0].id).answer,'One\n\nExtra details');assert.deepEqual(controller.pending(),[source.questions[1].id]);
++    const failedSource=agent('uncertain-'+pinned);let failures=0;const uncertain=createAsyncQuestions({storage:new Storage(),namespace:'unknown',randomUUID:()=> 'uncertain-uuid',send:async()=>{failures++;throw Error('Lost reply');}});
++    uncertain.update(snapshot([failedSource]));const failedView=uncertain.inline(failedSource);const failedInput=failedView.descendants().find(node=>node.tag==='textarea');
++    key(failedInput);await settled();assert.equal(failures,1);assert.equal(failedInput.disabled,true);key(failedInput);assert.equal(failures,1,'Enter never retries an uncertain original');
++    assert.equal(uncertain.state(failedSource.questions[0].id).attempt.id,'uncertain-uuid');
++  }
++});
++
++test('optional empty free text and denied sending remain unsent while a selected option remains answerable',async t=>{
++  const originalDocument=globalThis.document;t.after(()=>{globalThis.document=originalDocument;});globalThis.document={createElement:tag=>new QuestionElement(tag)};
++  const {createAsyncQuestions}=await load();let allowed=true;const sends=[];const source=agent('free');source.questions[0].options=[];
++  const controller=createAsyncQuestions({storage:new Storage(),namespace:'free',randomUUID:()=> 'free-uuid',canSend:()=>allowed,send:async value=>sends.push(value)});controller.update(snapshot([source]));
++  const view=controller.inline(source),inputs=view.descendants().filter(node=>node.tag==='textarea');
++  key(inputs[0]);await settled();assert.equal(sends.length,0,'blank optional free text cannot send');
++  allowed=false;controller.update(snapshot([source]));inputs[0].value='Answer';inputs[0].dispatchEvent(new Event('input'));key(inputs[0]);await settled();assert.equal(sends.length,0);
++  allowed=true;controller.update(snapshot([source]));key(inputs[1]);await settled();assert.equal(sends.length,1,'selected option with no note remains a valid answer');
++  assert.equal(controller.state(source.questions[0].id).answer,undefined);
++});
++
+ test("untouched drafts select the recommendation or first option without replacing saved answers", async () => {
+   const {createAsyncQuestions} = await load();
+   const cases = [
+diff --git a/test/retry_activity_browser_contract_test.cjs b/test/retry_activity_browser_contract_test.cjs
+new file mode 100644
+index 0000000..d022e9f
+--- /dev/null
++++ b/test/retry_activity_browser_contract_test.cjs
+@@ -0,0 +1,149 @@
++const assert = require('node:assert/strict');
++const {test} = require('node:test');
++const ready = import('../conversation/assets/retry_activity.js');
++const settle = async () => { for(let i=0;i<20;i++) await Promise.resolve(); };
++class Node extends EventTarget {
++  constructor(tag) {super();this.tag=tag;this.children=[];this.hidden=false;this.attributes={};this.classList={add(){}};this.writes=0;}
++  setAttribute(name,value) {this.attributes[name]=value;}
++  append(...nodes) {this.children.push(...nodes);}
++  replaceChildren(...nodes) {this.children=nodes;}
++  set textContent(value) {this.text=value;this.writes++;}
++  get textContent() {return this.text;}
++}
++const memoryStorage = () => {const data=new Map();return {data,getItem:key=>data.get(key)??null,setItem:(key,value)=>data.set(key,value)};};
++const state = (extra={}, envelope={}) => ({serverNowMs:5000000,activity:{chainKey:'chain-1',class:'capacity',phase:'scheduled',confirmedStarts:3,unconfirmed:0,countQuality:'exact',startedAtMs:4930000,elapsedMs:70000,timingQuality:'exact',finishedAtMs:null,nextAttemptAtMs:5015000,outcome:'',reason:'',retryNowToken:'attempt-token',stopToken:'chain-token',...extra},...envelope});
++const terminal = (extra={}) => state({phase:'terminal',outcome:'success',finishedAtMs:5000000,nextAttemptAtMs:null,retryNowToken:'',stopToken:'',...extra});
++async function fixture(t,client,options={}) {
++  const {mountRetryActivity}=await ready;
++  const page=new EventTarget(),browser=new EventTarget(),root=new Node('footer'),messages=new Node('messages'),parent=new Node('transcript');
++  parent.append(messages,root);page.hidden=false;page.createElement=tag=>new Node(tag);
++  const storage=options.storage===undefined?memoryStorage():options.storage;
++  let at=100000,seq=0,controls;
++  const timers=new Map();
++  const mount=(key='conversation-1')=>{controls=mountRetryActivity(root,{client,conversationKey:key,document:page,window:browser,storage,now:()=>at,
++    setTimeout:(fn,ms)=>{const id=++seq;timers.set(id,{fn,at:at+ms});return id;},clearTimeout:id=>timers.delete(id)});};
++  mount(options.key);await settle();t.after(()=>controls.destroy());
++  const node=className=>{const find=n=>n.className===className?n:n.children.map(find).find(Boolean);return find(root);};
++  return {root,messages,parent,page,browser,timers,storage,node,
++    status:()=>node('codex-retry-activity-status'),count:()=>node('codex-retry-activity-count'),elapsed:()=>node('codex-retry-activity-elapsed'),
++    now:()=>node('codex-retry-activity-now'),stop:()=>node('codex-retry-activity-stop'),dismiss:()=>node('codex-retry-activity-dismiss'),live:()=>node('codex-retry-activity-announcement'),
++    refresh:()=>controls.refresh(),destroy:()=>controls.destroy(),
++    async reload(key=options.key){controls.destroy();mount(key);await settle();},
++    async advance(ms){const end=at+ms;for(;;){const next=[...timers].sort((a,b)=>a[1].at-b[1].at)[0];if(!next||next[1].at>end)break;at=next[1].at;timers.delete(next[0]);next[1].fn();await settle();}at=end;},
++  };
++}
++
++test('server time countdown, exact elapsed and running summary; countdown never submits',async t=>{
++  let saved=state(),reads=0,writes=0;
++  const f=await fixture(t,{retryActivity:async()=>{reads++;return saved;},retryNow:()=>writes++,stopRetry:()=>writes++});
++  assert.equal(f.status().textContent,'Retrying in 15s.');assert.equal(f.count().textContent,'3 retries started');assert.equal(f.elapsed().textContent,'Total elapsed 1m 10s');
++  const announcements=f.live().writes;
++  await f.advance(1000);assert.equal(f.status().textContent,'Retrying in 14s.');assert.equal(f.elapsed().textContent,'Total elapsed 1m 11s');assert.equal(f.live().writes,announcements);
++  await f.advance(14000);assert.equal(reads,2);assert.equal(writes,0);
++  saved=state({phase:'running',nextAttemptAtMs:null,retryNowToken:''});await f.refresh();
++  assert.equal(f.root.hidden,false);assert.equal(f.now().hidden,true);assert.equal(f.stop().hidden,false);assert.equal(f.status().textContent,'Retry in progress.');
++  await f.advance(2000);assert.equal(f.elapsed().textContent,'Total elapsed 1m 12s');
++  saved=terminal();await f.refresh();await f.advance(4000);assert.equal(f.elapsed().textContent,'Total elapsed 1m 10s');assert.equal(f.dismiss().hidden,false);
++});
++
++test('uncertain starts, partial counts and missing timing stay honest',async()=>{
++  const {retryActivityPresentation:view}=await ready;
++  const uncertain=view(state({phase:'reconciling',retryNowToken:'',nextAttemptAtMs:null,unconfirmed:1,countQuality:'partial',timingQuality:'partial'}),10000);
++  assert.equal(uncertain.count,'At least 3 retries started');assert.equal(uncertain.elapsed,'Recorded time 1m 10s (partial)');
++  assert.equal(uncertain.unconfirmed,'1 retry awaiting confirmation');assert.equal(uncertain.status,'Confirming whether the retry started.');
++  const missing=view(terminal({confirmedStarts:null,countQuality:'unavailable',startedAtMs:null,elapsedMs:null,timingQuality:'unavailable',outcome:'stopped'}));
++  assert.equal(missing.count,'Retry count unavailable');assert.equal(missing.elapsed,'Elapsed time unavailable');assert.equal(missing.status,'Retrying stopped.');
++  assert.equal(view(state({class:'cybersecurity'})).title,'Cybersecurity error');
++  for(const outcome of ['success','stopped','exhausted','superseded','blocked']) assert.ok(view(terminal({outcome})).terminal);
++  assert.equal(view(state({}, {activity:null})),null);
++});
++
++test('Now and Stop use only the issued tokens, coalesce clicks and never interrupt or change preferences',async t=>{
++  let saved=state(),resolveNow;const calls=[];
++  const f=await fixture(t,{retryActivity:async()=>saved,retryNow:token=>{calls.push(['now',token]);return new Promise(resolve=>{resolveNow=resolve;});},stopRetry:async token=>{calls.push(['stop',token]);return saved=terminal({outcome:'stopped'});},interrupt(){assert.fail('interrupt');},setRetryEnabled(){assert.fail('preference');}});
++  f.now().dispatchEvent(new Event('click'));f.now().dispatchEvent(new Event('click'));f.stop().dispatchEvent(new Event('click'));await settle();assert.deepEqual(calls,[['now','attempt-token']]);
++  saved=state({phase:'running',nextAttemptAtMs:null,retryNowToken:''});resolveNow(saved);await settle();
++  f.stop().dispatchEvent(new Event('click'));await settle();assert.deepEqual(calls,[['now','attempt-token'],['stop','chain-token']]);assert.equal(f.status().textContent,'Retrying stopped.');
++});
++
++test('lost or stale action response reads current status without repeating POST; reload-required stops writes',async t=>{
++  let saved=state(),writes=0,reads=0,reload=false;
++  const f=await fixture(t,{retryActivity:async()=>{reads++;return saved;},retryNow:async()=>{writes++;if(reload)throw Object.assign(Error('private'),{code:'retry_reload_required'});saved=state({phase:'reconciling',nextAttemptAtMs:null,retryNowToken:'',unconfirmed:1});throw Object.assign(Error('lost reply'),{code:'retry_action_stale'});},stopRetry:async()=>assert.fail('unexpected stop')});
++  f.now().dispatchEvent(new Event('click'));await settle();assert.equal(writes,1);assert.equal(reads,2);assert.match(f.status().textContent,/Confirming/);
++  saved=state();await f.refresh();reload=true;f.now().dispatchEvent(new Event('click'));await settle();const before=reads;
++  assert.match(f.status().textContent,/Reload the page/);f.now().dispatchEvent(new Event('click'));await f.refresh();assert.equal(writes,2);assert.equal(reads,before);
++});
++
++test('dismissal persists independently for every exact conversation and chain, including out-of-order chains',async t=>{
++  let saved=terminal();let writes=0;
++  const f=await fixture(t,{retryActivity:async()=>saved,retryNow:()=>writes++,stopRetry:()=>writes++});
++  f.dismiss().dispatchEvent(new Event('click'));assert.equal(f.root.hidden,true);await f.reload();assert.equal(f.root.hidden,true);
++  saved=terminal({chainKey:'chain-2'});await f.refresh();assert.equal(f.root.hidden,false);f.dismiss().dispatchEvent(new Event('click'));assert.equal(f.root.hidden,true);
++  saved=terminal();await f.refresh();assert.equal(f.root.hidden,true,'chain 2 dismissal must not forget chain 1');await f.reload();assert.equal(f.root.hidden,true);
++  const reloaded=await fixture(t,{retryActivity:async()=>saved},{storage:f.storage});assert.equal(reloaded.root.hidden,true,'a new page reads persistent pair keys');
++  assert.equal(f.storage.data.size,2);for(const key of f.storage.data.keys())assert.match(key,/\["conversation-1","chain-[12]"\]$/);
++  await f.reload('conversation-2');assert.equal(f.root.hidden,false,'different conversation is independent');
++  saved=terminal({chainKey:'chain-3'});await f.refresh();assert.equal(f.root.hidden,false);assert.equal(writes,0);
++});
++
++test('terminal dismissal is an accessible icon button in its own right heading cell',async t=>{
++  let saved=state();const calls=[];
++  const f=await fixture(t,{retryActivity:async()=>saved,retryNow:()=>calls.push('now'),stopRetry:()=>calls.push('stop')});
++  const dismiss=f.dismiss(),heading=f.node('codex-retry-activity-heading'),actions=f.node('codex-retry-activity-actions');
++  assert.equal(dismiss.tag,'button');assert.equal(dismiss.type,'button');assert.equal(dismiss.textContent,'×');
++  assert.equal(dismiss.attributes['aria-label'],'Dismiss retry notice');assert.equal(dismiss.attributes.title,'Dismiss retry notice');
++  assert.deepEqual(heading.children,[f.node('codex-retry-activity-title'),dismiss]);assert.deepEqual(actions.children,[f.now(),f.stop()]);
++  for(const phase of ['scheduled','submitting','reconciling','running']) {
++    saved=state({phase,nextAttemptAtMs:phase==='scheduled'?5015000:null,retryNowToken:phase==='scheduled'?'attempt-token':''});await f.refresh();
++    assert.equal(dismiss.hidden,true);assert.equal(f.stop().hidden,false);assert.equal(f.now().hidden,phase!=='scheduled');
++  }
++  for(const outcome of ['success','stopped','exhausted','superseded','blocked']) {
++    saved=terminal({chainKey:'chain-'+outcome,outcome});await f.refresh();assert.equal(dismiss.hidden,false);
++    assert.equal(f.now().hidden,true);assert.equal(f.stop().hidden,true);
++  }
++  dismiss.dispatchEvent(new Event('click'));assert.equal(f.root.hidden,true);await f.reload();assert.equal(f.root.hidden,true);
++  assert.deepEqual(calls,[],'dismissal never mutates backend activity');
++});
++
++test('unavailable localStorage retains all dismissals on this page',async t=>{
++  let saved=terminal();const storage={getItem(){throw Error('disabled');},setItem(){throw Error('full');}};
++  const f=await fixture(t,{retryActivity:async()=>saved},{storage});
++  f.dismiss().dispatchEvent(new Event('click'));saved=terminal({chainKey:'chain-2'});await f.refresh();f.dismiss().dispatchEvent(new Event('click'));
++  saved=terminal();await f.refresh();assert.equal(f.root.hidden,true);saved=terminal({chainKey:'chain-2'});await f.refresh();assert.equal(f.root.hidden,true);
++  await f.reload('conversation-2');assert.equal(f.root.hidden,false);await f.reload('conversation-1');assert.equal(f.root.hidden,true,'same-page conversation remount retains dismissal');
++  const reloaded=await fixture(t,{retryActivity:async()=>saved},{storage});assert.equal(reloaded.root.hidden,false,'a new page cannot retain dismissal without storage');
++});
++
++test('idle has no footprint; renderer owns footer children only and safely inserts reason text',async t=>{
++  let saved=state({}, {activity:null});const f=await fixture(t,{retryActivity:async()=>saved});
++  assert.equal(f.root.hidden,true);assert.deepEqual(f.parent.children,[f.messages,f.root]);assert.equal(f.messages.children.length,0);
++  saved=state({reason:'<img src=x onerror=alert(1)>'});await f.refresh();assert.equal(f.node('codex-retry-activity-reason').textContent,saved.activity.reason);
++  f.destroy();assert.equal(f.root.hidden,true);assert.equal(f.root.children.length,0);assert.deepEqual(f.parent.children,[f.messages,f.root]);assert.equal(f.timers.size,0);
++});
++
++test('reads coalesce, visibility suspends and late stale/destroyed responses cannot overwrite',async t=>{
++  let resolveOld,resolveLate,reads=0;const f=await fixture(t,{retryActivity:async()=>{reads++;if(reads===2)return new Promise(resolve=>{resolveOld=resolve});if(reads===4)return new Promise(resolve=>{resolveLate=resolve});return reads===1?state():terminal();}});
++  const a=f.refresh(),b=f.refresh();assert.equal(a,b);await settle();assert.equal(reads,2);
++  f.page.hidden=true;f.page.dispatchEvent(new Event('visibilitychange'));await f.advance(60000);assert.equal(reads,2);assert.equal(f.timers.size,0);
++  f.page.hidden=false;f.page.dispatchEvent(new Event('visibilitychange'));await settle();assert.equal(f.status().textContent,'Retry completed.');
++  resolveOld(state());await a;assert.equal(f.status().textContent,'Retry completed.');
++  f.browser.dispatchEvent(new Event('pagehide'));f.browser.dispatchEvent(new Event('pageshow'));await settle();assert.equal(reads,4);
++  f.destroy();resolveLate(state());await settle();assert.equal(f.root.children.length,0);assert.equal(f.timers.size,0);
++});
++
++test('malformed or missing capability status never enables controls or exposes errors',async t=>{
++  let saved=state(),error=null;const f=await fixture(t,{retryActivity:async()=>{if(error)throw error;return saved;}});
++  saved=state({confirmedStarts:-1});await f.refresh();assert.match(f.status().textContent,/unavailable/);assert.equal(f.now().disabled,true);
++  error=Object.assign(Error('private-data'),{status:404});await f.refresh();assert.equal(f.root.hidden,true);
++  error=Object.assign(Error('private-data'),{status:403});await f.refresh();assert.equal(f.root.hidden,true);
++  const {retryActivityPresentation:view}=await ready;
++  for(const invalid of [state({class:'other'}),state({confirmedStarts:null}),state({unconfirmed:2}),state({phase:'running'}),state({reason:1}),state({reason:'é'.repeat(513)}),state({reason:'\uD800'}),state({}, {serverNowMs:Number.MAX_SAFE_INTEGER+1})]) assert.throws(()=>view(invalid),/invalid retry/);
++});
++
++test('HTTP adapter uses opaque activity routes and token-only bodies',async()=>{
++  const {createConversationClient,mountRetryActivity}=await import('../conversation/assets/conversation.js');assert.equal(typeof mountRetryActivity,'function');const requests=[];
++  const client=createConversationClient({id:'opaque',basePath:'/codex',fetch:async(path,options)=>{requests.push({path,options});return {ok:true,json:async()=>state()};}});
++  await client.retryActivity();await client.retryNow('attempt-token');await client.stopRetry('chain-token');
++  assert.deepEqual(requests.map(r=>r.path),['/codex/conversations/opaque/retry/activity','/codex/conversations/opaque/retry/now','/codex/conversations/opaque/retry/stop']);
++  assert.deepEqual(requests.slice(1).map(r=>JSON.parse(r.options.body)),[{token:'attempt-token'},{token:'chain-token'}]);
++});

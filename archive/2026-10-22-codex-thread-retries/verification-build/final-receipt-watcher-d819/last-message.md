@@ -1,0 +1,3 @@
+**Result: incomplete.** The verification operation was not started because this session does not expose the native managed utility launcher. Running it from the ordinary shell would not verify the assigned utility identity or its inherited launch policy.
+
+I read the released packet and required guidance. No packet command was run and no receipt files were created. The packet’s existing records identify the expected utility as `gpt-6-luna/low`, `dw_b9dd4137280d3e047a81fbdfe0ea73c900c9fd89f8861d12`, with `danger-full-access` and approval `never`. Parent acceptance remains pending.

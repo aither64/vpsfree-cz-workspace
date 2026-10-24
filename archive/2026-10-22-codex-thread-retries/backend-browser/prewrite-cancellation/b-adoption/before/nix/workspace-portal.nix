@@ -1,0 +1,579 @@
+{
+  activationEnvironmentAliases ? [ ],
+  bash,
+  buildGoModule,
+  buildNpmPackage,
+  coreutils,
+  codex,
+  codexModelCatalog,
+  codexWebSrc,
+  codexWebVersion,
+  git,
+  gh,
+  jq,
+  lib,
+  makeWrapper,
+  nodejs,
+  nix,
+  openssl,
+  openssh,
+  python3,
+  ruby,
+  runCommand,
+  routerSocket,
+  systemd,
+  teamConfig ? null,
+  coordinationConfig ? null,
+  integrationConfig ? null,
+  tmux,
+  userNamespace ? "dev-workspaces",
+  util-linux,
+  writeText,
+  extensions ? { },
+  src,
+}:
+let
+  reviewAssets = import ./review-ui.nix {
+    inherit buildNpmPackage lib git;
+  };
+  rubyChecks = import ./ruby-checks.nix {
+    inherit
+      bash
+      coreutils
+      git
+      jq
+      lib
+      nodejs
+      openssl
+      openssh
+      python3
+      ruby
+      runCommand
+      src
+      tmux
+      util-linux
+      ;
+  };
+  contractPython = python3.withPackages (pythonPackages: [ pythonPackages.jsonschema ]);
+  validActivationEnvironmentAliases =
+    builtins.isList activationEnvironmentAliases
+    &&
+      builtins.length activationEnvironmentAliases
+      == builtins.length (lib.unique activationEnvironmentAliases)
+    && builtins.all (
+      name:
+      builtins.isString name
+      && builtins.match "[A-Z][A-Z0-9_]*" name != null
+      && name != "DEV_WORKSPACE_ACTIVATION"
+    ) activationEnvironmentAliases;
+  validUserNamespace =
+    builtins.stringLength userNamespace <= 63
+    && builtins.match "[a-z0-9][a-z0-9-]*" userNamespace != null;
+  validRouterSocket =
+    let
+      components = lib.splitString "/" routerSocket;
+    in
+    lib.hasPrefix "/run/" routerSocket
+    && lib.all (component: component != "" && component != "." && component != "..") (
+      builtins.tail components
+    );
+  extensionCommands = extensions.commands or { };
+  extensionSkills = extensions.skills or { };
+  coreSkills = {
+    dev-session-documentation = "${src}/skills/dev-session-documentation";
+    dev-session-monitor = "${src}/skills/dev-session-monitor";
+    update-codex-web = "${codexWebSrc}/skills/update-codex-web";
+    update-dev-workspace-codex = "${src}/skills/update-dev-workspace-codex";
+  };
+  agentTeams = import ./agent-teams.nix {
+    inherit
+      lib
+      teamConfig
+      writeText
+      ;
+  };
+  skills = coreSkills // extensionSkills;
+  skillNamesUnique = builtins.intersectAttrs coreSkills extensionSkills == { };
+  clusterProviders = extensions.clusterProviders or { };
+  extensionsValid = builtins.all (
+    name:
+    builtins.elem name [
+      "clusterProviders"
+      "commands"
+      "skills"
+    ]
+  ) (builtins.attrNames extensions);
+  validName =
+    name: builtins.stringLength name <= 63 && builtins.match "[a-z0-9][a-z0-9-]*" name != null;
+  validTarget =
+    value:
+    (builtins.isString value || builtins.isPath value || lib.isDerivation value)
+    && (
+      let
+        string = toString value;
+      in
+      builtins.hasContext string && lib.hasPrefix "${builtins.storeDir}/" string
+    );
+  commandNames = builtins.attrNames extensionCommands;
+  skillNames = builtins.attrNames skills;
+  providerNames = builtins.attrNames clusterProviders;
+  providerPrograms = map (name: "${name}-devcluster") providerNames;
+  allNamesValid = builtins.all validName (commandNames ++ skillNames ++ providerNames);
+  extensionTargets =
+    builtins.attrValues extensionCommands
+    ++ builtins.attrValues skills
+    ++ map (name: clusterProviders.${name}.command or "") providerNames;
+  invalidTargets = builtins.filter (value: !validTarget value) extensionTargets;
+  targetsValid = invalidTargets == [ ];
+  programNames = commandNames ++ providerPrograms;
+  programsValid =
+    builtins.length programNames == builtins.length (lib.unique programNames)
+    && builtins.all (
+      name:
+      !(builtins.elem name [
+        "workspace-host"
+        "workspace-portal"
+        "dev-session"
+      ])
+    ) programNames;
+  providersValid = builtins.all (
+    name:
+    let
+      provider = clusterProviders.${name};
+    in
+    builtins.isAttrs provider
+    &&
+      builtins.attrNames provider == [
+        "command"
+        "label"
+      ]
+    && provider ? label
+    && provider ? command
+    && builtins.isString provider.label
+    && provider.label != ""
+    && builtins.stringLength provider.label <= 128
+  ) providerNames;
+  extensionCatalogData = {
+    schema = 1;
+    commands = map (name: {
+      inherit name;
+      path = toString extensionCommands.${name};
+    }) commandNames;
+    skills = map (name: {
+      inherit name;
+      path = toString skills.${name};
+    }) skillNames;
+    clusterProviders = map (name: {
+      id = name;
+      inherit (clusterProviders.${name}) label;
+      command = toString clusterProviders.${name}.command;
+    }) providerNames;
+  };
+  extensionCatalog = writeText "dev-workspace-extensions.json" (builtins.toJSON extensionCatalogData);
+  coordinationData =
+    if coordinationConfig == null then
+      builtins.fromJSON (builtins.readFile ./coordination-empty.json)
+    else
+      coordinationConfig;
+  coordinationCatalog = writeText "dev-workspace-coordination.json" (
+    builtins.toJSON coordinationData
+  );
+  validCoordination =
+    coordinationData.schema == 1
+    &&
+      builtins.attrNames coordinationData == [
+        "adapters"
+        "machines"
+        "profileMachine"
+        "repositories"
+        "schema"
+      ]
+    && builtins.all (adapter: adapter.protocol == 1 && validTarget adapter.command) (
+      builtins.attrValues coordinationData.adapters
+    );
+  integrationData =
+    if integrationConfig == null then
+      {
+        schema = 1;
+        recipes = { };
+      }
+    else
+      integrationConfig;
+  integrationCatalog = writeText "dev-workspace-integration.json" (builtins.toJSON integrationData);
+  validIntegration =
+    integrationData.schema == 1
+    && builtins.all (
+      name:
+      builtins.elem name [
+        "recipes"
+        "refreshes"
+        "schema"
+      ]
+    ) (builtins.attrNames integrationData)
+    && builtins.all (recipe: recipe.protocol == 1 && validTarget recipe.command) (
+      builtins.attrValues integrationData.recipes
+    );
+  packageConfiguration = writeText "dev-workspace-package.json" (
+    builtins.toJSON {
+      schema = 1;
+      integration = {
+        journalSchema = 1;
+        certificationSchema = 1;
+      };
+      inherit activationEnvironmentAliases routerSocket userNamespace;
+      agent_teams =
+        if agentTeams.configured then
+          {
+            managed = true;
+            metadata_schema = 1;
+            catalog = {
+              path = agentTeams.catalogPath;
+              digest = agentTeams.catalogDigest;
+              schema_version = teamConfig.schema_version;
+            };
+            capacity = teamConfig.capacity;
+            native_capacity = {
+              config_key = "agents.max_concurrent_threads_per_session";
+              required_value = teamConfig.capacity.required_native_child_threads;
+            };
+            generator = agentTeams.generator;
+            native_adapter = agentTeams.nativeAdapter;
+            native_role_configs = agentTeams.nativeRoleConfigs;
+            native_utility_configs = agentTeams.nativeUtilityConfigs;
+          }
+        else
+          {
+            managed = false;
+          };
+    }
+  );
+in
+assert lib.assertMsg validActivationEnvironmentAliases
+  "dev-workspace activation environment aliases must be unique uppercase names";
+assert lib.assertMsg validUserNamespace
+  "dev-workspace user namespace must be a lowercase identifier";
+assert lib.assertMsg validRouterSocket
+  "dev-workspace router socket must be an absolute path below /run";
+assert lib.assertMsg agentTeams.valid
+  "dev-workspace teamConfig must satisfy the version 4 agent-team catalog schema";
+assert lib.assertMsg extensionsValid "dev-workspace extensions contain an unknown section";
+assert lib.assertMsg skillNamesUnique
+  "dev-workspace extension skills must not replace a built-in skill";
+assert lib.assertMsg allNamesValid "dev-workspace extension names must be lowercase identifiers";
+assert lib.assertMsg targetsValid
+  "dev-workspace extension targets must be immutable Nix store references: ${builtins.toJSON (map toString invalidTargets)}";
+assert lib.assertMsg programsValid "dev-workspace extension commands must not collide";
+assert lib.assertMsg providersValid "dev-workspace cluster providers require label and command";
+assert lib.assertMsg validCoordination
+  "dev-workspace coordination catalog requires immutable protocol-1 adapters";
+assert lib.assertMsg validIntegration "integration recipes require immutable protocol-1 commands";
+buildGoModule {
+  pname = "dev-workspace";
+  version = "0.2.0";
+
+  inherit src;
+  modRoot = "portal";
+  vendorHash = "sha256-bNeFZMHChen0znapzj7liBwO6YluoxWeZQUO35rVOHc=";
+
+  postPatch = ''
+    expected=${lib.escapeShellArg codexWebVersion}
+    module_file=portal/go.mod
+    [ -f "$module_file" ] || module_file=go.mod
+    ${bash}/bin/bash ${src}/nix/check-codex-web-pin.sh \
+      "$module_file" "$expected" ${jq}/bin/jq
+  '';
+
+  preBuild = ''
+    cp ${reviewAssets}/review-* internal/web/static/
+  '';
+
+  subPackages = [ "cmd/workspace-portal" ];
+  nativeBuildInputs = [ makeWrapper ];
+  nativeCheckInputs = [
+    bash
+    coreutils
+    git
+    jq
+    nodejs
+    openssl
+    openssh
+    contractPython
+    ruby
+    tmux
+    util-linux
+  ];
+
+  checkPhase = ''
+    runHook preCheck
+    test -e ${rubyChecks.all}
+    export HOME="$TMPDIR/home"
+    export LANG=C.UTF-8
+    export LC_ALL=C.UTF-8
+    export SHELL=${bash}/bin/bash
+    export TMUX_TMPDIR="$TMPDIR/tmux"
+    export DEV_SESSION_SKIP_REAL_TMUX_TESTS=1
+    mkdir -p "$HOME" "$TMUX_TMPDIR"
+    ${bash}/bin/bash ../test/codex_web_pin_test.sh \
+      ../nix/check-codex-web-pin.sh ${jq}/bin/jq \
+      ${lib.escapeShellArg codexWebVersion}
+    ${contractPython}/bin/python3 ${codexWebSrc}/test/codex_protocol_contract.py \
+      --coverage-only ${codexWebSrc}/codex/client.go
+    go test ./...
+    node --check internal/web/static/app.js
+    node --test internal/web/read_cycle_browser_test.cjs
+    node --check internal/web/static/session-attention-store.js
+    node --check internal/web/static/session-attention.js
+    node --check internal/web/static/browser-notifications.js
+    node --check internal/web/static/notification-worker.js
+    node --test internal/web/attention_browser_test.cjs
+    node --check internal/web/static/coordination.js
+    node --test internal/web/coordination_browser_test.cjs
+    node --check internal/web/static/codex-providers.js
+    node --test internal/web/codex_providers_browser_test.cjs
+    node --check internal/web/static/repository-review.js
+    node --check internal/web/static/source-file.js
+    node --check internal/web/static/review-editor.js
+    runHook postCheck
+  '';
+
+  postInstall = ''
+    mkdir -p "$out/libexec/workspace-portal" "$out/share/dev-workspace"
+    ln -s ${codex} "$out/libexec/codex"
+    install -Dm444 ${codexModelCatalog} "$out/share/workspace-portal/codex-models.json"
+    install -Dm755 ${src}/libexec/dev-session \
+      "$out/libexec/workspace-portal/dev-session"
+    install -Dm755 ${src}/libexec/workspace-host \
+      "$out/libexec/workspace-host"
+    install -Dm644 ${src}/libexec/workspace-profile-identity.rb \
+      "$out/libexec/workspace-profile-identity.rb"
+    for name in workspace-coordination-claims workspace-coordination-claims-host workspace-coordination workspace-coordination-gc workspace-coordination-execution workspace-coordination-host workspace-coordination-command workspace-coordination-timing workspace-coordination-admission workspace-integration-certification workspace-integration-background workspace-integration-handoff workspace-integration; do
+      install -Dm644 "${src}/libexec/$name.rb" "$out/libexec/$name.rb"
+    done
+    ln -s ../workspace-coordination.rb "$out/libexec/workspace-portal/workspace-coordination.rb"
+    ln -s ../workspace-coordination-claims.rb "$out/libexec/workspace-portal/workspace-coordination-claims.rb"
+    ln -s ../workspace-coordination-command.rb "$out/libexec/workspace-portal/workspace-coordination-command.rb"
+    ln -s ../workspace-coordination-timing.rb "$out/libexec/workspace-portal/workspace-coordination-timing.rb"
+    install -Dm644 ${src}/libexec/workspace-codex-providers.rb \
+      "$out/libexec/workspace-codex-providers.rb"
+    install -Dm644 ${src}/libexec/workspace-provider-sessions.rb \
+      "$out/libexec/workspace-provider-sessions.rb"
+    install -Dm644 ${src}/libexec/workspace-provider-admission.rb \
+      "$out/libexec/workspace-provider-admission.rb"
+    ln -s ../workspace-provider-admission.rb \
+      "$out/libexec/workspace-portal/workspace-provider-admission.rb"
+    ln -s ../workspace-profile-identity.rb \
+      "$out/libexec/workspace-portal/workspace-profile-identity.rb"
+    install -Dm644 ${src}/libexec/workspace-sensitive-sessions.rb "$out/libexec/workspace-sensitive-sessions.rb"
+    ln -s ../workspace-sensitive-sessions.rb "$out/libexec/workspace-portal/workspace-sensitive-sessions.rb"
+    install -Dm644 ${src}/libexec/workspace-auto-archive.rb \
+      "$out/libexec/workspace-auto-archive.rb"
+    ln -s ../workspace-auto-archive.rb \
+      "$out/libexec/workspace-portal/workspace-auto-archive.rb"
+    install -Dm644 ${src}/libexec/workspace-archive-cleanup.rb \
+      "$out/libexec/workspace-archive-cleanup.rb"
+    ln -s ../workspace-archive-cleanup.rb \
+      "$out/libexec/workspace-portal/workspace-archive-cleanup.rb"
+    install -Dm644 ${src}/libexec/workspace-archive-recovery.rb \
+      "$out/libexec/workspace-archive-recovery.rb"
+    ln -s ../workspace-archive-recovery.rb \
+      "$out/libexec/workspace-portal/workspace-archive-recovery.rb"
+    install -Dm644 ${src}/libexec/workspace-tracking-sync.rb \
+      "$out/libexec/workspace-tracking-sync.rb"
+    ln -s ../workspace-tracking-sync.rb \
+      "$out/libexec/workspace-portal/workspace-tracking-sync.rb"
+    install -Dm644 ${codexWebSrc}/test/codex_protocol_contract.py \
+      "$out/share/workspace-portal/codex_web_protocol_contract.py"
+    install -Dm644 ${src}/test/selected_protocol_contract.py \
+      "$out/share/workspace-portal/codex_protocol_contract.py"
+    install -Dm644 ${src}/test/workspace_protocol_contract.py \
+      "$out/share/workspace-portal/workspace_protocol_contract.py"
+    mkdir -p "$out/share/workspace-portal/codex"
+    for source in ${codexWebSrc}/codex/*.go; do
+      case "$source" in *_test.go) continue ;; esac
+      install -m644 "$source" "$out/share/workspace-portal/codex/"
+    done
+    install -m644 ${codexWebSrc}/codex/ephemeral_policy.json \
+      "$out/share/workspace-portal/codex/ephemeral_policy.json"
+    ${contractPython}/bin/python3 "$out/share/workspace-portal/codex_protocol_contract.py" \
+      --coverage-only "$out/share/workspace-portal/codex/client.go"
+    install -Dm644 ${src}/portal/internal/session/runtime-contract.json \
+      "$out/share/workspace-portal/runtime-contract.json"
+    install -Dm644 ${extensionCatalog} "$out/share/dev-workspace/extensions.json"
+    install -Dm644 ${integrationCatalog} "$out/share/dev-workspace/integration.json"
+    install -Dm644 ${src}/nix/integration-contract.json "$out/share/dev-workspace/integration-contract.json"
+    install -Dm644 ${coordinationCatalog} "$out/share/dev-workspace/coordination.json"
+    install -Dm644 ${src}/nix/claim-contract.json "$out/share/dev-workspace/claim-contract.json"
+    install -Dm644 ${src}/nix/repository-claim-contract.json "$out/share/dev-workspace/repository-claim-contract.json"
+    install -Dm644 ${src}/docs/coordination-legacy.md "$out/share/dev-workspace/coordination-legacy.md"
+    install -Dm644 ${src}/docs/integration.md "$out/share/dev-workspace/integration.md"
+    install -Dm644 ${src}/nix/coordination-contract.json "$out/share/dev-workspace/coordination-contract.json"
+    install -Dm644 ${src}/docs/coordination.md "$out/share/dev-workspace/coordination.md"
+    install -Dm644 ${src}/docs/coordination-operations.md "$out/share/dev-workspace/coordination-operations.md"
+    install -Dm644 ${packageConfiguration} "$out/share/dev-workspace/package.json"
+    ${lib.optionalString agentTeams.configured ''
+      install -Dm644 ${agentTeams.catalog} "$out/${agentTeams.catalogPath}"
+    ''}
+    ${lib.concatMapStringsSep "\n" (variant: ''
+      install -Dm644 ${variant.source} "$out/${variant.path}"
+    '') agentTeams.roleVariants}
+    ${lib.optionalString (agentTeams.utilityVariant != null) ''
+      install -Dm644 ${agentTeams.utilityVariant.source} \
+        "$out/${agentTeams.utilityVariant.path}"
+    ''}
+    install -Dm644 ${src}/nix/systemd/workspace-* \
+      -t "$out/share/systemd/user"
+    substituteInPlace "$out/share/systemd/user/"workspace-*.service \
+      --replace-fail '%h/.local/state/dev-workspaces/profile' \
+      '%h/.local/state/${userNamespace}/profile'
+
+    ${lib.concatMapStringsSep "\n" (name: ''
+      ln -s ${lib.escapeShellArg (toString extensionCommands.${name})} \
+        "$out/bin/${name}"
+    '') commandNames}
+    mkdir -p "$out/share/codex/skills"
+    ${lib.concatMapStringsSep "\n" (name: ''
+      ln -s ${lib.escapeShellArg (toString skills.${name})} \
+        "$out/share/codex/skills/${name}"
+    '') skillNames}
+    ${lib.concatMapStringsSep "\n" (name: ''
+      ln -s ${lib.escapeShellArg (toString clusterProviders.${name}.command)} \
+        "$out/libexec/workspace-portal/${name}-devcluster"
+    '') providerNames}
+
+    substituteInPlace "$out/libexec/workspace-portal/dev-session" \
+      --replace-fail '#!/usr/bin/env ruby' '#!${ruby}/bin/ruby'
+    substituteInPlace "$out/libexec/workspace-host" \
+      --replace-fail '#!/usr/bin/env ruby' '#!${ruby}/bin/ruby'
+
+    runtimePath=${
+      lib.makeBinPath [
+        coreutils
+        git
+        ruby
+        tmux
+      ]
+    }
+    wrapProgram "$out/libexec/workspace-portal/dev-session" \
+      --prefix PATH : "$runtimePath"
+    hostRuntimePath=${
+      lib.makeBinPath [
+        coreutils
+        gh
+        git
+        nix
+        openssh
+        contractPython
+        ruby
+        systemd
+        tmux
+      ]
+    }
+    wrapProgram "$out/libexec/workspace-host" \
+      --prefix PATH : "$hostRuntimePath"
+    for command in workspace-host dev-session ${lib.concatStringsSep " " providerPrograms}; do
+      makeWrapper "$out/libexec/workspace-host" "$out/bin/$command" \
+        --set DEV_WORKSPACE_HOST_MODE "$command" \
+        --set DEV_WORKSPACES_EXTENSION_CATALOG "$out/share/dev-workspace/extensions.json" \
+        --set DEV_WORKSPACE_ACTIVATION_ALIASES \
+          ${lib.escapeShellArg (lib.concatStringsSep ":" activationEnvironmentAliases)} \
+        --set-default DEV_WORKSPACES_NAMESPACE ${lib.escapeShellArg userNamespace} \
+        --set-default DEV_WORKSPACES_ROUTER_SOCKET ${lib.escapeShellArg routerSocket}
+    done
+  '';
+
+  postFixup = ''
+    mkdir -p "$TMPDIR/workspace"
+    test -x "$out/bin/dev-session"
+    test -x "$out/bin/workspace-host"
+    test -f "$out/share/workspace-portal/runtime-contract.json"
+    test -f "$out/share/dev-workspace/extensions.json"
+    test -f "$out/share/dev-workspace/package.json"
+    (cd "$TMPDIR/workspace"; "$out/bin/workspace-host" coordination guide) > "$TMPDIR/installed-coordination-guide"
+    grep -Fq '# Resource claims and session notifications' "$TMPDIR/installed-coordination-guide"
+    grep -Fq '# Coordination operations and recovery' "$TMPDIR/installed-coordination-guide"
+    test -x "$out/bin/workspace-portal"
+    cmp ${codexModelCatalog} "$out/share/workspace-portal/codex-models.json"
+    test "$(sha256sum "$out/share/workspace-portal/codex-models.json" | cut -d' ' -f1)" = 049042aaadcf2f19722fa1e893f926d2bdbd4d0ff092d80704ff4256e2a45fb1
+    test "$("$out/libexec/codex/libexec/codex/bin/codex" --version)" = "codex-cli 0.163.0"
+    mkdir -p "$TMPDIR/agent-team-state" "$TMPDIR/agent-team-workspace"
+    printf '{"schema":1}\n' | ${coreutils}/bin/env -i PATH=/empty HOME="$TMPDIR" \
+      "$out/bin/workspace-portal" agent-teams registration \
+      --package-root "$out" \
+      --state-root "$TMPDIR/agent-team-state" \
+      --workspace "$TMPDIR/agent-team-workspace" \
+      >"$TMPDIR/agent-team-registration.json"
+    ${contractPython}/bin/python3 - "$TMPDIR/agent-team-registration.json" <<'PY'
+    import json
+    import re
+    import sys
+
+    with open(sys.argv[1], encoding="utf-8") as source:
+        registration = json.load(source)
+    assert set(registration) == {
+        "argv", "digest", "policy", "required_native_child_threads", "schema", "states"
+    }
+    assert registration["schema"] == 1
+    assert registration["policy"] == 1
+    assert re.fullmatch(r"[0-9a-f]{64}", registration["digest"])
+    assert isinstance(registration["argv"], list)
+    assert isinstance(registration["states"], list) and registration["states"] == []
+    assert 0 <= registration["required_native_child_threads"] <= 64
+    PY
+    ${lib.optionalString agentTeams.configured ''
+      test -f "$out/${agentTeams.catalogPath}"
+    ''}
+    ${lib.concatMapStringsSep "\n" (variant: ''
+      test -f "$out/${variant.path}"
+    '') agentTeams.roleVariants}
+    ${lib.optionalString (agentTeams.utilityVariant != null) ''
+      test -f "$out/${agentTeams.utilityVariant.path}"
+    ''}
+    wrapped="$out/libexec/workspace-portal/.dev-session-wrapped"
+    if ! head -n 1 "$wrapped" | grep -Eq '^#! */nix/store/'; then
+      echo "wrapped helper has a non-store interpreter: $wrapped" >&2
+      exit 1
+    fi
+    wrapped="$out/libexec/.workspace-host-wrapped"
+    if ! head -n 1 "$wrapped" | grep -Eq '^#! */nix/store/'; then
+      echo "wrapped helper has a non-store interpreter: $wrapped" >&2
+      exit 1
+    fi
+    ${lib.concatMapStringsSep "\n" (name: ''
+      test -x "$out/bin/${name}-devcluster"
+      ${coreutils}/bin/env -i PATH=/empty HOME="$TMPDIR" \
+        DEVCLUSTER_WORKSPACE="$TMPDIR/workspace" \
+        "$out/bin/${name}-devcluster" --help >/dev/null
+    '') providerNames}
+    ${lib.concatMapStringsSep "\n" (name: ''
+      test -f "$out/bin/${name}"
+      test -x "$out/bin/${name}"
+    '') commandNames}
+    ${lib.concatMapStringsSep "\n" (name: ''
+      test -d "$out/share/codex/skills/${name}"
+    '') skillNames}
+    ${coreutils}/bin/env -i PATH=/empty HOME="$TMPDIR" \
+      "$out/libexec/workspace-portal/dev-session" --help >/dev/null
+    ${coreutils}/bin/env -i PATH=/empty HOME="$TMPDIR" \
+      "$out/bin/workspace-host" --help >/dev/null
+    ${coreutils}/bin/env -i PATH=/empty HOME="$TMPDIR" \
+      "$out/bin/dev-session" --help >/dev/null
+    if ${coreutils}/bin/env -i PATH=/empty HOME="$TMPDIR" \
+      DEV_WORKSPACE_ACTIVATION_ALIASES=HOSTILE_WORKSPACE_ACTIVATION \
+      HOSTILE_WORKSPACE_ACTIVATION=1 \
+      "$out/bin/workspace-host" _activate >"$TMPDIR/hostile-activation" 2>&1; then
+      echo "ambient activation alias bypassed the packaged wrapper" >&2
+      exit 1
+    fi
+    grep -q 'workspace activation is private' "$TMPDIR/hostile-activation"
+  '';
+
+  passthru.rubyChecks = rubyChecks.checks // {
+    ruby-verification = rubyChecks.all;
+  };
+
+  meta = {
+    description = "Persistent development workspaces backed by Codex App Server";
+    mainProgram = "workspace-portal";
+    platforms = lib.platforms.linux;
+  };
+}

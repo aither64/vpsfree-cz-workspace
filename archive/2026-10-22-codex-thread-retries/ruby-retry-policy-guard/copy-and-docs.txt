@@ -1,0 +1,24 @@
+New guard errors (exact):
+- target workspace package cannot preserve session-wide automatic retry policy; recover forward with a compatible package
+- target workspace package has no readable session retry policy contract
+- cannot inspect session retry policy state; preserve retained state and recover forward with a compatible package
+
+New source comment:
+Go owns policy validation. Even an empty or malformed committed sidecar
+requires support; a failed inventory must not look like absent state.
+
+Suggested owner1 docs paragraph (docs/turn-retry-recovery.md remains untouched by owner0):
+Packages publish `turnRetrySessionPolicy: 1` alongside unchanged
+`turnRetryStateSchema: 1`. Once any `.json` file exists below
+`$DEV_WORKSPACES_STATE/turn-retry-policy`, package preparation, activation and
+candidate self-activation require that exact integer capability, even without
+legacy retry records. Ruby checks presence only. Empty, malformed, oversized
+or wrong-incarnation sidecars still require support; Go validates their payloads.
+Empty directories and lock or temporary files alone do not require the new
+capability. State-inspection failures refuse the transition. Keep policy
+sidecars with retry ledgers and receipts during supported recovery. Do not
+delete or rewrite policy to select an incompatible package. Recover forward
+with a compatible package.
+
+Storage owned by Go: turn-retry-policy/<lowercase SHA256 canonical workspace>/<slug>.json,
+1MiB strict schema1, .json.lock sibling; Ruby guard is intentionally payload agnostic.

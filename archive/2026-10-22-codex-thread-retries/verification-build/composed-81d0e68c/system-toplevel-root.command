@@ -1,0 +1,1 @@
+nix-store --add-root /home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/verification-build/composed-81d0e68c/roots/system-toplevel --indirect --realise /nix/store/lpyzadqc6wz5549mzfb6d529a9bfxvzz-nixos-system-aitherdev-26.05.20261021.da6dc0e

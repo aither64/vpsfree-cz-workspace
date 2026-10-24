@@ -1,0 +1,608 @@
+ 1:  7262c24e =  1:  7262c24e turnretry: retain bounded retry policy and admission state
+ 2:  b3c7187c =  2:  b3c7187c runtime: require retry-capable package transitions
+ 3:  aafaf419 =  3:  aafaf419 portal: continue new managed failed turns through durable retry admission
+ 4:  65e58006 =  4:  65e58006 deps: select codex-web retry activity support
+ 5:  fb9d7b63 =  5:  fb9d7b63 portal: retire accepted retry provenance before bounded admission
+ 6:  78d7b878 =  6:  78d7b878 portal: admit exact prepared plan requests after mode selection
+ 7:  721a5e16 =  7:  721a5e16 portal: wait within HTTP budgets for transient runtime contention
+ 8:  549589ae =  8:  549589ae portal: present retry activity inside the conversation viewport
+ 9:  7cd6ca98 =  9:  7cd6ca98 portal: release the next draft before message acknowledgment
+10:  9ce8335d = 10:  9ce8335d portal: submit question text through its owning action
+11:  7844c9c3 = 11:  7844c9c3 host: require support for retained session retry policy
+12:  3ee30ea4 = 12:  3ee30ea4 session: allow bounded exclusive runtime acquisition
+13:  016d45fa = 13:  016d45fa test: exercise accepted fork source lock recovery through Ruby
+14:  7cf53953 = 14:  7cf53953 portal: manage retry policy and activity per retained session
+15:  9c29a829 ! 15:  9ff433b3 test: connect retry browser controls to the real backend
+    @@ portal/internal/web/retry_backend_browser_test.cjs (new)
+     +const ancillaryExpectation = failure => failure.kind === "http" && [base, manualBase].includes(failure.origin) &&
+     +  ancillaryExpectations.find(expected => ["method", "path", "query", "status"].every(key => failure[key] === expected[key]));
+     +const cases = [], requests = [], failures = [], errors = [], timeline = [], payloads = [];
+    ++const requestDiagnostics = [], requestRecords = new WeakMap();
+    ++let requestSequence = 0, watchedPageSequence = 0;
+     +let phase = "startup", page, browser;
+     +const trace = (event, values = {}) => {
+     +  timeline.push({sequence: timeline.length + 1, phase, event, ...values});
+     +};
+     +const watch = p => {
+    ++  const watchedPage = ++watchedPageSequence;
+    ++  let documentOrdinal = 0;
+     +  p.on("pageerror", error => errors.push(error.message));
+     +  p.on("request", request => {
+    ++    if (request.isNavigationRequest() && request.frame() === p.mainFrame()) documentOrdinal++;
+    ++    const url = new URL(request.url());
+    ++    const row = {sequence: ++requestSequence, watchedPage, documentOrdinal, startPhase: phase, startMs: performance.now()};
+    ++    requestRecords.set(request, row);
+    ++    if (url.origin === base && [
+    ++      "POST /api/sessions/example/queue/reconcile", "GET /api/sessions/example/thread/page",
+    ++      "POST /codex/conversations/example~implementer0/queue/reconcile", "GET /codex/conversations/example~implementer0/thread/page",
+    ++    ].includes(request.method() + " " + url.pathname)) {
+    ++      Object.assign(row, {origin: url.origin, method: request.method(), path: url.pathname, query: url.search,
+    ++        activeAtSnapshot: true, join: "unjoined"});
+    ++      requestDiagnostics.push(row);
+    ++    }
+     +    if (request.method() === "POST" && !request.url().includes("/__retry_backend__/")) {
+     +      const row = {url: request.url(), body: request.postDataJSON()};
+     +      requests.push(row); trace("post", row);
+    @@ portal/internal/web/retry_backend_browser_test.cjs (new)
+     +  });
+     +  p.on("response", async response => {
+     +    const url = new URL(response.url());
+    ++    const row = requestRecords.get(response.request());
+    ++    if (row?.join) {
+    ++      const serverRequest = response.headers()["x-retry-fixture-request"];
+    ++      Object.assign(row, {status: response.status(), responsePhase: phase, responseMs: performance.now()});
+    ++      if (serverRequest) Object.assign(row, {serverRequest, join: "response-header"});
+    ++    }
+     +    if (response.status() >= 400) failures.push({kind: "http", origin: url.origin, method: response.request().method(),
+     +      path: url.pathname, query: url.search, status: response.status(), phase});
+     +    if (url.pathname.endsWith("/retry/activity")) {
+    @@ portal/internal/web/retry_backend_browser_test.cjs (new)
+     +      catch (_) { /* Page teardown may abort a completed read body. */ }
+     +    }
+     +  });
+    ++  p.on("requestfinished", request => {
+    ++    const row = requestRecords.get(request);
+    ++    if (row?.join) Object.assign(row, {activeAtSnapshot: false, endPhase: phase, endMs: performance.now(), end: "finished"});
+    ++  });
+     +  p.on("requestfailed", request => {
+    ++    const row = requestRecords.get(request);
+    ++    if (row?.join) Object.assign(row, {activeAtSnapshot: false, endPhase: phase, endMs: performance.now(),
+    ++      end: "failed", failureKind: request.failure()?.errorText});
+     +    if (request.resourceType() === "eventsource" || request.failure()?.errorText === "net::ERR_ABORTED") return;
+     +    const url = new URL(request.url());
+     +    failures.push({kind: "transport", origin: url.origin, method: request.method(), path: url.pathname,
+    @@ portal/internal/web/retry_backend_browser_test.cjs (new)
+     +    ));
+     +    assert.deepEqual(errors, []); assert.deepEqual(unexpected, []);
+     +    for (const row of requests.filter(row => /\/retry\/(now|stop)$/.test(new URL(row.url).pathname))) assert.deepEqual(Object.keys(row.body), ["token"]);
+    -+    const manifest = {name, viewport: mobile ? [390, 844] : [1440, 1000], member, cases, failures, expectedAncillary, requests, payloads, timeline};
+    ++    const manifest = {name, viewport: mobile ? [390, 844] : [1440, 1000], member, cases, failures, expectedAncillary, requests, payloads, timeline, requestDiagnostics};
+     +    fs.writeFileSync(path.join(output, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n");
+     +    console.log(JSON.stringify({name, cases, pass: true}));
+     +  } catch (error) {
+     +    const expectedAncillary = failures.filter(ancillaryExpectation).map(failure => ({...failure, expectation: ancillaryExpectation(failure)}));
+    -+    const evidence = {name, phase, url: page.url(), cases, errors, failures, expectedAncillary, requests, payloads, timeline, error: error.stack};
+    ++    const evidence = {name, phase, url: page.url(), cases, errors, failures, expectedAncillary, requests, payloads, timeline, requestDiagnostics, error: error.stack};
+     +    try { evidence.geometry = await page.locator("#transcript").evaluate(node => ({top: node.scrollTop, height: node.scrollHeight, viewport: node.clientHeight, footer: document.getElementById("automatic-turn-retry")?.getBoundingClientRect().toJSON()})); }
+     +    catch (failure) { evidence.geometryError = failure.message; }
+     +    try { await screenshot("failure"); } catch (failure) { evidence.screenshotError = failure.message; }
+    @@ portal/internal/web/retry_backend_browser_test.go (new)
+     +	"os"
+     +	"os/exec"
+     +	"path/filepath"
+    ++	"sort"
+     +	"strings"
+     +	"sync"
+     +	"testing"
+    @@ portal/internal/web/retry_backend_browser_test.go (new)
+     +
+     +const retryBackendOlderCursor = "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+     +
+    ++const retryBackendDiagnosticLimit = 4096
+    ++
+    ++type retryBackendDiagnosticEvent struct {
+    ++	Sequence        int    `json:"sequence"`
+    ++	AtUS            int64  `json:"atUs"`
+    ++	Request         uint64 `json:"request,omitempty"`
+    ++	Connection      uint64 `json:"connection,omitempty"`
+    ++	Stage           string `json:"stage"`
+    ++	Edge            string `json:"edge"`
+    ++	Subject         string `json:"subject,omitempty"`
+    ++	ParentContext   string `json:"parentContext,omitempty"`
+    ++	StageContext    string `json:"stageContext,omitempty"`
+    ++	ErrorKind       string `json:"errorKind,omitempty"`
+    ++	Canceled        bool   `json:"canceled,omitempty"`
+    ++	Deadline        bool   `json:"deadline,omitempty"`
+    ++	Transport       bool   `json:"transport,omitempty"`
+    ++	ObservationCode string `json:"observationCode,omitempty"`
+    ++	Ambiguous       bool   `json:"ambiguous,omitempty"`
+    ++}
+    ++
+    ++type retryBackendDiagnosticSink struct {
+    ++	mu                          sync.Mutex
+    ++	start                       time.Time
+    ++	nextRequest, nextConnection uint64
+    ++	events                      []retryBackendDiagnosticEvent
+    ++	incomplete                  bool
+    ++}
+    ++
+    ++func newRetryBackendDiagnosticSink() *retryBackendDiagnosticSink {
+    ++	return &retryBackendDiagnosticSink{start: time.Now()}
+    ++}
+    ++
+    ++func (s *retryBackendDiagnosticSink) append(event retryBackendDiagnosticEvent) {
+    ++	s.mu.Lock()
+    ++	defer s.mu.Unlock()
+    ++	if len(s.events) == retryBackendDiagnosticLimit {
+    ++		s.incomplete = true
+    ++		return
+    ++	}
+    ++	event.Sequence, event.AtUS = len(s.events)+1, time.Since(s.start).Microseconds()
+    ++	s.events = append(s.events, event)
+    ++}
+    ++
+    ++func (s *retryBackendDiagnosticSink) snapshot() map[string]any {
+    ++	s.mu.Lock()
+    ++	defer s.mu.Unlock()
+    ++	active := map[uint64]bool{}
+    ++	for _, event := range s.events {
+    ++		if event.Stage == "request" {
+    ++			if event.Edge == "enter" {
+    ++				active[event.Request] = true
+    ++			} else {
+    ++				delete(active, event.Request)
+    ++			}
+    ++		}
+    ++	}
+    ++	ids := []uint64{}
+    ++	for id := range active {
+    ++		ids = append(ids, id)
+    ++	}
+    ++	sort.Slice(ids, func(i, j int) bool { return ids[i] < ids[j] })
+    ++	return map[string]any{"events": append([]retryBackendDiagnosticEvent{}, s.events...), "diagnosticIncomplete": s.incomplete, "activeAtSnapshot": len(ids) > 0, "activeRequests": ids, "limit": retryBackendDiagnosticLimit}
+    ++}
+    ++
+    ++type retryBackendDiagnosticKey struct{}
+    ++type retryBackendDiagnosticRequest struct {
+    ++	sink   *retryBackendDiagnosticSink
+    ++	id     uint64
+    ++	parent context.Context
+    ++}
+    ++
+    ++func retryBackendContextState(ctx context.Context) string {
+    ++	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+    ++		return "deadline"
+    ++	}
+    ++	if errors.Is(ctx.Err(), context.Canceled) {
+    ++		return "canceled"
+    ++	}
+    ++	return "live"
+    ++}
+    ++
+    ++func (s *retryBackendDiagnosticSink) request(ctx context.Context, subject string) (context.Context, *retryBackendDiagnosticRequest) {
+    ++	s.mu.Lock()
+    ++	s.nextRequest++
+    ++	id := s.nextRequest
+    ++	s.mu.Unlock()
+    ++	r := &retryBackendDiagnosticRequest{sink: s, id: id, parent: ctx}
+    ++	r.record(ctx, "request", "enter", subject, nil)
+    ++	return context.WithValue(ctx, retryBackendDiagnosticKey{}, r), r
+    ++}
+    ++
+    ++func (r *retryBackendDiagnosticRequest) record(ctx context.Context, stage, edge, subject string, err error) {
+    ++	// Capture both context states before classification or sink contention.
+    ++	parentState, stageState := retryBackendContextState(r.parent), retryBackendContextState(ctx)
+    ++	e := retryBackendDiagnosticEvent{Request: r.id, Stage: stage, Edge: edge, Subject: subject, ParentContext: parentState, StageContext: stageState}
+    ++	if edge == "return" {
+    ++		e.ErrorKind = "success"
+    ++		if err != nil {
+    ++			e.ErrorKind = "other"
+    ++			e.Canceled, e.Deadline = errors.Is(err, context.Canceled), errors.Is(err, context.DeadlineExceeded)
+    ++			var transport *codex.TransportError
+    ++			e.Transport = errors.As(err, &transport)
+    ++			var observation *workspacecodex.ObservationError
+    ++			if errors.As(err, &observation) {
+    ++				e.ObservationCode, e.ErrorKind = observation.Code, "observation"
+    ++			}
+    ++			if e.Transport {
+    ++				e.ErrorKind = "transport"
+    ++			}
+    ++			if e.Canceled {
+    ++				e.ErrorKind = "canceled"
+    ++			}
+    ++			if e.Deadline {
+    ++				e.ErrorKind = "deadline"
+    ++			}
+    ++			e.Ambiguous = (e.Transport || e.ObservationCode == "transport_unavailable") && (e.Canceled || e.Deadline || parentState != "live" || stageState != "live")
+    ++		}
+    ++	}
+    ++	r.sink.append(e)
+    ++}
+    ++
+    ++func retryBackendDiagnosticCall[T any](ctx context.Context, stage, subject string, delegate func() (T, error)) (T, error) {
+    ++	r, _ := ctx.Value(retryBackendDiagnosticKey{}).(*retryBackendDiagnosticRequest)
+    ++	if r == nil {
+    ++		return delegate()
+    ++	}
+    ++	r.record(ctx, stage, "enter", subject, nil)
+    ++	value, err := delegate()
+    ++	r.record(ctx, stage, "return", subject, err)
+    ++	return value, err
+    ++}
+    ++
+    ++func retryBackendSubject(thread string) string {
+    ++	switch thread {
+    ++	case "thread-1", "example":
+    ++		return "root"
+    ++	case "member-thread", "example~implementer0":
+    ++		return "member"
+    ++	default:
+    ++		return "other"
+    ++	}
+    ++}
+    ++
+    ++func (c *retryBackendBrowserDisplay) ObserveThreadIdentity(ctx context.Context, thread, cwd, project string, state workspacecodex.ArchiveState) (workspacecodex.ThreadObservation, error) {
+    ++	return retryBackendDiagnosticCall(ctx, "observe", retryBackendSubject(thread), func() (workspacecodex.ThreadObservation, error) {
+    ++		return c.planDeliveryClient.ObserveThreadIdentity(ctx, thread, cwd, project, state)
+    ++	})
+    ++}
+    ++
+    ++func (c *retryBackendBrowserDisplay) VerifyThread(ctx context.Context, thread, cwd string) error {
+    ++	_, err := retryBackendDiagnosticCall(ctx, "verify", retryBackendSubject(thread), func() (struct{}, error) {
+    ++		return struct{}{}, c.planDeliveryClient.VerifyThread(ctx, thread, cwd)
+    ++	})
+    ++	return err
+    ++}
+    ++
+     +// Only display reads/events are adapted. All delivery, admission, policy,
+     +// receipt and retry methods are inherited from the real managed client.
+     +type retryBackendBrowserDisplay struct {
+    @@ portal/internal/web/retry_backend_browser_test.go (new)
+     +// recognizes only the literal "failed", whereas each scenario needs a new
+     +// exact failure identity. Its methods and effects stay strictly bounded.
+     +type retryBackendNativeWire struct {
+    -+	mu     sync.Mutex
+    -+	cwd    string
+    -+	turns  map[string]*retryBackendNativeTurn
+    -+	starts int
+    -+	expose bool
+    ++	mu          sync.Mutex
+    ++	cwd         string
+    ++	turns       map[string]*retryBackendNativeTurn
+    ++	starts      int
+    ++	expose      bool
+    ++	diagnostics *retryBackendDiagnosticSink
+     +}
+     +
+     +func (w *retryBackendNativeWire) serve(t *testing.T, socket string) {
+    @@ portal/internal/web/retry_backend_browser_test.go (new)
+     +		if err != nil {
+     +			return
+     +		}
+    -+		defer conn.CloseNow()
+    ++		w.diagnostics.mu.Lock()
+    ++		w.diagnostics.nextConnection++
+    ++		ordinal := w.diagnostics.nextConnection
+    ++		w.diagnostics.mu.Unlock()
+    ++		w.diagnostics.append(retryBackendDiagnosticEvent{Stage: "native", Edge: "accepted", Connection: ordinal})
+    ++		termination := "normal"
+    ++		defer func() {
+    ++			_ = conn.CloseNow()
+    ++			w.diagnostics.append(retryBackendDiagnosticEvent{Stage: "native", Edge: "closed", Connection: ordinal, Subject: termination})
+    ++		}()
+     +		for {
+     +			_, data, err := conn.Read(context.Background())
+     +			if err != nil {
+    ++				termination = "read"
+    ++				if status := websocket.CloseStatus(err); status == websocket.StatusNormalClosure || status == websocket.StatusGoingAway {
+    ++					termination = "normal"
+    ++				}
+     +				return
+     +			}
+     +			var request struct {
+    @@ portal/internal/web/retry_backend_browser_test.go (new)
+     +				Params map[string]any `json:"params"`
+     +			}
+     +			if json.Unmarshal(data, &request) != nil {
+    ++				termination = "read"
+     +				t.Error("invalid private native request")
+     +				return
+     +			}
+    @@ portal/internal/web/retry_backend_browser_test.go (new)
+     +			}
+     +			encoded, _ := json.Marshal(reply)
+     +			if conn.Write(context.Background(), websocket.MessageText, encoded) != nil {
+    ++				termination = "write"
+     +				return
+     +			}
+     +		}
+    @@ portal/internal/web/retry_backend_browser_test.go (new)
+     +	t.Cleanup(func() { _ = host.Close(); _ = listener.Close() })
+     +}
+     +
+    -+func newRetryBackendNative(t *testing.T) (*Server, *planDeliveryClient, *retryBackendNativeWire) {
+    ++func newRetryBackendNative(t *testing.T, diagnostics *retryBackendDiagnosticSink) (*Server, *planDeliveryClient, *retryBackendNativeWire) {
+     +	t.Helper()
+     +	s := newTestServer(t)
+     +	cwd := filepath.Join(s.config.Workspace, "work", "example")
+    @@ portal/internal/web/retry_backend_browser_test.go (new)
+     +	}
+     +	writeWebTrackingFiles(t, cwd, "active")
+     +	writeWebRuntimeAuthority(t, s, "example")
+    -+	wire := &retryBackendNativeWire{cwd: cwd, turns: map[string]*retryBackendNativeTurn{}}
+    ++	wire := &retryBackendNativeWire{cwd: cwd, turns: map[string]*retryBackendNativeTurn{}, diagnostics: diagnostics}
+     +	for _, thread := range []string{"thread-1", "member-thread"} {
+     +		wire.turns[thread] = &retryBackendNativeTurn{latest: "initial-" + thread, status: "failed", code: "cyberPolicy"}
+     +	}
+    @@ portal/internal/web/retry_backend_browser_test.go (new)
+     +	posts   int
+     +	dropped int
+     +	seeds   int
+    ++	trace   *retryBackendDiagnosticSink
+     +}
+     +
+     +func newRetryBackendBrowserFixture(t *testing.T, member, manual bool) *retryBackendBrowserFixture {
+    @@ portal/internal/web/retry_backend_browser_test.go (new)
+     +		f.path = retryPolicyPath(p)
+     +	} else {
+     +		// The private wire keeps native failure identities exact across seeds.
+    -+		s, managed, wire := newRetryBackendNative(t)
+    ++		f.trace = newRetryBackendDiagnosticSink()
+    ++		s, managed, wire := newRetryBackendNative(t, f.trace)
+     +		f.s, f.wire = s, wire
+     +		f.client = &retryBackendBrowserDisplay{planDeliveryClient: managed, listeners: map[chan struct{}]bool{}}
+     +		f.s.config.Codex = f.client
+    @@ portal/internal/web/retry_backend_browser_test.go (new)
+     +	}
+     +}
+     +
+    ++func TestRetryBackendBrowserDiagnostics(t *testing.T) {
+    ++	for _, member := range []bool{false, true} {
+    ++		t.Run(map[bool]string{false: "root", true: "member"}[member], func(t *testing.T) {
+    ++			f := newRetryBackendBrowserFixture(t, member, false)
+    ++			host := serveRetryBackendBrowser(t, f)
+    ++			path := "/api/sessions/example/queue/reconcile"
+    ++			if member {
+    ++				path = "/codex/conversations/example~implementer0/queue/reconcile"
+    ++			}
+    ++			before := f.diagnostics()
+    ++			request, err := http.NewRequest(http.MethodPost, host.URL+path, strings.NewReader("{}"))
+    ++			if err != nil {
+    ++				t.Fatal(err)
+    ++			}
+    ++			request.Header.Set("Origin", host.URL)
+    ++			request.Header.Set("Content-Type", "application/json")
+    ++			client := host.Client()
+    ++			client.Timeout = 5 * time.Second
+    ++			response, err := client.Do(request)
+    ++			if err != nil {
+    ++				t.Fatal(err)
+    ++			}
+    ++			body, err := io.ReadAll(response.Body)
+    ++			response.Body.Close()
+    ++			headers := response.Header.Values("X-Retry-Fixture-Request")
+    ++			if err != nil || response.StatusCode != 200 || string(body) != "{\"ok\":true}\n" || len(headers) != 1 || headers[0] != "1" {
+    ++				t.Fatalf("forwarded real TLS queue response: status=%d body=%q headers=%v error=%v", response.StatusCode, body, headers, err)
+    ++			}
+    ++			after := f.diagnostics()
+    ++			if after["policyHash"] != before["policyHash"] || after["ledgerHash"] != before["ledgerHash"] || after["starts"] != 0 || after["posts"] != before["posts"] {
+    ++				t.Fatal("diagnostic request changed retry/native state", before, after)
+    ++			}
+    ++			snapshot := f.trace.snapshot()
+    ++			events := snapshot["events"].([]retryBackendDiagnosticEvent)
+    ++			resolverCalls, verifyCalls := 0, 0
+    ++			observed := map[string]bool{}
+    ++			for _, e := range events {
+    ++				if e.Stage == "native" {
+    ++					continue
+    ++				}
+    ++				if e.Request != 1 || e.ParentContext != "live" || e.StageContext != "live" {
+    ++					t.Fatal("real request context was not preserved", e)
+    ++				}
+    ++				if e.Edge == "return" && e.ErrorKind != "success" {
+    ++					t.Fatal("ordinary real request failed", e)
+    ++				}
+    ++				if e.Edge == "enter" {
+    ++					switch e.Stage {
+    ++					case "resolver":
+    ++						resolverCalls++
+    ++					case "verify":
+    ++						verifyCalls++
+    ++					case "observe":
+    ++						observed[e.Subject] = true
+    ++					}
+    ++				}
+    ++			}
+    ++			if resolverCalls != 1 || verifyCalls != 1 || !observed["root"] || !observed["member"] || snapshot["diagnosticIncomplete"].(bool) {
+    ++				t.Fatal("missing real forwarding stages", events)
+    ++			}
+    ++		})
+    ++	}
+    ++	t.Run("typed-forwarding", func(t *testing.T) {
+    ++		for _, name := range []string{"success", "canceled", "deadline", "transport", "semantic", "simultaneous"} {
+    ++			t.Run(name, func(t *testing.T) {
+    ++				parent, cancel := context.WithCancel(context.Background())
+    ++				defer cancel()
+    ++				if name == "canceled" || name == "simultaneous" {
+    ++					cancel()
+    ++				}
+    ++				sink := newRetryBackendDiagnosticSink()
+    ++				ctx, _ := sink.request(parent, "root")
+    ++				if name == "deadline" {
+    ++					var release context.CancelFunc
+    ++					ctx, release = context.WithDeadline(ctx, time.Unix(1, 0))
+    ++					defer release()
+    ++				}
+    ++				var expected error
+    ++				kind := name
+    ++				switch name {
+    ++				case "canceled":
+    ++					expected = context.Canceled
+    ++				case "deadline":
+    ++					expected = context.DeadlineExceeded
+    ++				case "transport":
+    ++					expected = &codex.TransportError{Err: errors.New("never-record-this")}
+    ++				case "semantic":
+    ++					expected = &workspacecodex.ObservationError{Code: "identity_invalid", Message: "never-record-this"}
+    ++					kind = "observation"
+    ++				case "simultaneous":
+    ++					expected = &codex.TransportError{Err: context.Canceled}
+    ++					kind = "canceled"
+    ++				}
+    ++				value := &struct{ identity int }{42}
+    ++				calls := 0
+    ++				result, err := retryBackendDiagnosticCall(ctx, "observe", "root", func() (*struct{ identity int }, error) { calls++; return value, expected })
+    ++				if calls != 1 || result != value || err != expected {
+    ++					t.Fatal("diagnostics changed result/error or call count")
+    ++				}
+    ++				snapshot := sink.snapshot()
+    ++				events := snapshot["events"].([]retryBackendDiagnosticEvent)
+    ++				event := events[len(events)-1]
+    ++				if event.ErrorKind != kind || event.Ambiguous != (name == "simultaneous") || !snapshot["activeAtSnapshot"].(bool) {
+    ++					t.Fatal("lost typed class or unfinished request", event, snapshot)
+    ++				}
+    ++				if event.Canceled != errors.Is(expected, context.Canceled) || event.Deadline != errors.Is(expected, context.DeadlineExceeded) || event.Transport != (name == "transport" || name == "simultaneous") {
+    ++					t.Fatal("lost original typed error", event)
+    ++				}
+    ++				if name == "semantic" && event.ObservationCode != "identity_invalid" || name == "deadline" && (event.ParentContext != "live" || event.StageContext != "deadline") || name == "transport" && event.StageContext != "live" {
+    ++					t.Fatal("lost semantic/context distinction", event)
+    ++				}
+    ++				encoded, _ := json.Marshal(snapshot)
+    ++				if strings.Contains(string(encoded), "never-record-this") {
+    ++					t.Fatal("diagnostics leaked error text")
+    ++				}
+    ++			})
+    ++		}
+    ++	})
+    ++	t.Run("target-release-preserved", func(t *testing.T) {
+    ++		sink := newRetryBackendDiagnosticSink()
+    ++		ctx, _ := sink.request(context.Background(), "member")
+    ++		calls, released := 0, 0
+    ++		expected := errors.New("controlled resolver refusal")
+    ++		target := conversation.Target{ThreadID: "member-thread", Directory: "synthetic", Capabilities: conversation.Capabilities{Read: true}, Release: func() { released++ }}
+    ++		result, err := retryBackendDiagnosticCall(ctx, "resolver", "member", func() (conversation.Target, error) { calls++; return target, expected })
+    ++		if calls != 1 || err != expected || result.ThreadID != target.ThreadID || result.Directory != target.Directory || result.Capabilities != target.Capabilities || released != 0 {
+    ++			t.Fatal("resolver result/Release changed")
+    ++		}
+    ++		result.Release()
+    ++		if released != 1 {
+    ++			t.Fatal("resolver Release was replaced")
+    ++		}
+    ++	})
+    ++	t.Run("overlapping-contexts", func(t *testing.T) {
+    ++		sink := newRetryBackendDiagnosticSink()
+    ++		parent, cancel := context.WithCancel(context.Background())
+    ++		defer cancel()
+    ++		first, one := sink.request(parent, "root")
+    ++		second, two := sink.request(context.Background(), "member")
+    ++		entered, release, done := make(chan struct{}, 2), make(chan struct{}), make(chan error, 2)
+    ++		for _, ctx := range []context.Context{first, second} {
+    ++			go func(ctx context.Context) {
+    ++				_, err := retryBackendDiagnosticCall(ctx, "verify", "synthetic", func() (int, error) { entered <- struct{}{}; <-release; return 7, ctx.Err() })
+    ++				done <- err
+    ++			}(ctx)
+    ++		}
+    ++		<-entered
+    ++		<-entered
+    ++		cancel()
+    ++		close(release)
+    ++		errorsSeen := []error{<-done, <-done}
+    ++		if (errorsSeen[0] == context.Canceled) == (errorsSeen[1] == context.Canceled) {
+    ++			t.Fatal("overlap did not retain distinct cancellation")
+    ++		}
+    ++		returns := map[uint64]retryBackendDiagnosticEvent{}
+    ++		for _, e := range sink.snapshot()["events"].([]retryBackendDiagnosticEvent) {
+    ++			if e.Stage == "verify" && e.Edge == "return" {
+    ++				returns[e.Request] = e
+    ++			}
+    ++		}
+    ++		if len(returns) != 2 || returns[one.id].ParentContext != "canceled" || returns[two.id].ParentContext != "live" || returns[one.id].ErrorKind != "canceled" || returns[two.id].ErrorKind != "success" {
+    ++			t.Fatal("overlapping requests exchanged records", returns)
+    ++		}
+    ++	})
+    ++	t.Run("overflow-forwards", func(t *testing.T) {
+    ++		sink := newRetryBackendDiagnosticSink()
+    ++		ctx, _ := sink.request(context.Background(), "root")
+    ++		for i := 0; i < retryBackendDiagnosticLimit; i++ {
+    ++			sink.append(retryBackendDiagnosticEvent{Stage: "controlled", Edge: "enter"})
+    ++		}
+    ++		calls := 0
+    ++		value, err := retryBackendDiagnosticCall(ctx, "verify", "root", func() (int, error) { calls++; return 42, nil })
+    ++		snapshot := sink.snapshot()
+    ++		if value != 42 || err != nil || calls != 1 || !snapshot["diagnosticIncomplete"].(bool) || len(snapshot["events"].([]retryBackendDiagnosticEvent)) != retryBackendDiagnosticLimit {
+    ++			t.Fatal("overflow changed delegate or silently truncated evidence")
+    ++		}
+    ++	})
+    ++}
+    ++
+     +func (f *retryBackendBrowserFixture) seed(class string) error {
+     +	ctx := context.Background()
+     +	if err := os.Chmod(filepath.Dir(f.path), 0700); err != nil {
+    @@ portal/internal/web/retry_backend_browser_test.go (new)
+     +	f.s.config.BaseURL = "https://" + host.Listener.Addr().String()
+     +	f.s.trustedOrigins = []string{f.s.config.BaseURL}
+     +	var err error
+    -+	f.s.conversation, err = conversation.NewHandler(conversation.Options{AllowedOrigins: f.s.trustedOrigins, BasePath: "/codex", Shutdown: f.s.stopping, Resolver: conversation.ResolverFunc(f.s.resolveConversation)})
+    ++	resolver := conversation.ResolverFunc(func(ctx context.Context, request conversation.ResolveRequest) (conversation.Target, error) {
+    ++		return retryBackendDiagnosticCall(ctx, "resolver", retryBackendSubject(request.ID), func() (conversation.Target, error) {
+    ++			return f.s.resolveConversation(ctx, request)
+    ++		})
+    ++	})
+    ++	f.s.conversation, err = conversation.NewHandler(conversation.Options{AllowedOrigins: f.s.trustedOrigins, BasePath: "/codex", Shutdown: f.s.stopping, Resolver: resolver})
+     +	if err != nil {
+     +		t.Fatal(err)
+     +	}
+    @@ portal/internal/web/retry_backend_browser_test.go (new)
+     +	f.s.uploadStore.MinFreeBytes = 0
+     +	handler := f.s.Handler()
+     +	host.Config.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+    ++		if f.trace != nil {
+    ++			subject := ""
+    ++			switch r.Method + " " + r.URL.Path {
+    ++			case "POST /api/sessions/example/queue/reconcile":
+    ++				subject = "root:queue/reconcile"
+    ++			case "GET /api/sessions/example/thread/page":
+    ++				subject = "root:thread/page"
+    ++			case "POST /codex/conversations/example~implementer0/queue/reconcile":
+    ++				subject = "member:queue/reconcile"
+    ++			case "GET /codex/conversations/example~implementer0/thread/page":
+    ++				subject = "member:thread/page"
+    ++			}
+    ++			if subject != "" {
+    ++				ctx, record := f.trace.request(r.Context(), subject)
+    ++				r = r.WithContext(ctx)
+    ++				w.Header().Set("X-Retry-Fixture-Request", fmt.Sprint(record.id))
+    ++				defer record.record(ctx, "request", "return", subject, nil)
+    ++			}
+    ++		}
+     +		if r.URL.Path == "/__retry_backend__/diagnostics" && r.Method == http.MethodGet {
+     +			f.s.writeJSON(w, 200, f.diagnostics())
+     +			return
+    @@ portal/internal/web/retry_backend_browser_test.go (new)
+     +			command := exec.CommandContext(ctx, "node", "retry_backend_browser_test.cjs", retryHost.URL, manualHost.URL, name)
+     +			command.Env = append(os.Environ(), "PORTAL_RETRY_BACKEND_OUTPUT="+directory)
+     +			output, err := command.CombinedOutput()
+    ++			serverDiagnostics := retry.trace.snapshot()
+    ++			serverDiagnostics["origin"] = retryHost.URL
+    ++			traceData, traceErr := json.MarshalIndent(serverDiagnostics, "", "  ")
+    ++			if traceErr == nil {
+    ++				traceErr = os.WriteFile(filepath.Join(directory, "server-diagnostics.json"), append(traceData, '\n'), 0600)
+    ++			}
+     +			if writeErr := os.WriteFile(filepath.Join(directory, "browser.log"), output, 0600); writeErr != nil {
+     +				t.Fatal(writeErr)
+     +			}
+    ++			if traceErr != nil {
+    ++				t.Fatal(traceErr)
+    ++			}
+     +			if err != nil {
+     +				t.Fatalf("real backend browser: %v\n%s", err, output)
+     +			}
+    ++			if serverDiagnostics["diagnosticIncomplete"].(bool) {
+    ++				t.Fatal("fixture diagnostic event bound exceeded; evidence is incomplete")
+    ++			}
+     +			data, err := os.ReadFile(filepath.Join(directory, "manifest.json"))
+     +			if err != nil {
+     +				t.Fatal(err)
+16:  aa7dc087 = 16:  306073ab systemd: raise the native App Server descriptor limit
+17:  8593c42e = 17:  62308a7f session: retire unknown member reservations during deletion
+18:  10182241 = 18:  e06578e4 sessions: recover failed creations before package selection

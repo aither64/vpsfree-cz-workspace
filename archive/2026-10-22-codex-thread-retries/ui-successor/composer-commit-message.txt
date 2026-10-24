@@ -1,0 +1,12 @@
+portal: release the next draft before message acknowledgment
+
+Transfer a verified durable attempt to its Sending row before dispatch,
+then detach the captured upload selection and clear that draft once.
+Keep editing and uploads available while one ordinary request is pending;
+release Send on HTTP settlement independently of transcript refresh.
+
+Retain unknown attempts for exact original-ID recovery. Accepted content
+can be sent again as new explicit intent. Late receipts and transcript
+acknowledgments never clear text or attachments from a newer draft.
+Keep queue delivery and server admission contracts unchanged.
+

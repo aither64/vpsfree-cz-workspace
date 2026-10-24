@@ -1,0 +1,174 @@
+{
+  "session": "2026-10-22-codex-thread-retries",
+  "at": "2026-10-23T21:17:37.497234+00:00",
+  "repository": "codex-web",
+  "worktree": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/codex-web",
+  "branch": "2026-10-22-codex-thread-retries",
+  "base": "ea64ef57fdd2ff5fd60715b62f2d1696bc0133e5",
+  "deployed_head": "ac62eeeb9d8b1fa7b8ed8fb95ba8160acb7efa1c",
+  "previous_head": "55e0300b27b6927b1693b3792042762f31a385cc",
+  "head": "8ea83078c08f0a2536e1b863329fd05a13b67ceb",
+  "tree": "1293bf1c5f239afa592e3218ffdf19d56e2b6850",
+  "tested_tree": "1293bf1c5f239afa592e3218ffdf19d56e2b6850",
+  "clean": true,
+  "remote_proof": "ref: refs/heads/master\tHEAD\nea64ef57fdd2ff5fd60715b62f2d1696bc0133e5\tHEAD\n8ea83078c08f0a2536e1b863329fd05a13b67ceb\trefs/heads/2026-10-22-codex-thread-retries\nea64ef57fdd2ff5fd60715b62f2d1696bc0133e5\trefs/heads/master",
+  "complete_series": "commit df00fa36c820fc7a62ee5b8dd6e1745940ff8e15\nAuthor:     Jakub Skokan <jakub.skokan@havefun.cz>\nAuthorDate: Thu Oct 22 16:28:43 2026 +0200\nCommit:     Jakub Skokan <jakub.skokan@havefun.cz>\nCommitDate: Thu Oct 22 20:12:03 2026 +0200\n\n    codex: add exact failed-turn continuation and context reads\n    \n    Expose cold latest-turn failure metadata and exact native execution context\n    without guessing from current defaults. The context projection validates\n    Codex 0.163.0 rollout identities and supported policy shapes while keeping\n    prompts, instructions and application authority out of the returned value.\n    \n    Continue an exact failed turn only while its thread is already loaded and\n    quiescent, with raw idle or systemError status and an exact terminal turn.\n    Preserve original options and reconcile durable receipts before fresh\n    admission checks. An atomic submitting claim prevents competing clients\n    from dispatching the same identity twice. This path never resumes, steers\n    or writes policy; applications retain the shared admission and authority\n    fences, including the native protocol's lack of compare-and-start.\n    \n    Keep the schema-3 submission ledger and existing send behavior compatible.\n\ncommit 6c828759440705c632e1902fa8309ccac446b050\nAuthor:     Jakub Skokan <jakub.skokan@havefun.cz>\nAuthorDate: Thu Oct 22 16:30:46 2026 +0200\nCommit:     Jakub Skokan <jakub.skokan@havefun.cz>\nCommitDate: Thu Oct 22 20:12:03 2026 +0200\n\n    conversation: expose optional application-owned retry controls\n    \n    Add an optional retry provider and capability without changing the required\n    App Server client interface. Resolve each opaque conversation through the\n    application and keep preference/cancel writes behind existing origin,\n    payload and shared mutation-lock checks. The provider retains durable\n    policy, authority and scheduling.\n    \n    Offer an opt-in Auto retry checkbox, server-relative countdown, quota\n    status and Cancel retry control. Read authoritative state after reload,\n    focus and uncertain writes; the browser never starts a continuation.\n    Cancellation preserves the preference and cannot retract dispatched work.\n    Existing embeddings keep their current interface with retry controls off.\n\ncommit c1f415ad5602c23e6443cced73cb59267a796f05\nAuthor:     Jakub Skokan <jakub.skokan@havefun.cz>\nAuthorDate: Thu Oct 22 16:54:04 2026 +0200\nCommit:     Jakub Skokan <jakub.skokan@havefun.cz>\nCommitDate: Thu Oct 22 20:12:03 2026 +0200\n\n    codex: verify failed-turn retries against a private native fixture\n    \n    Share the existing recovery fixture's private home, native process and\n    loopback Responses provider with a focused failed-turn contract test.\n    Synthetic failure events exercise terminal classification and retained\n    command output without real keys or policy-triggering requests.\n    \n    Check nonempty continuation settings, native queue execution context and\n    recreated-client recovery after a dropped accepted reply. A transparent\n    protocol proxy also forces competing native work after the final preflight,\n    so native busy-turn behavior remains an explicit deployment gate rather\n    than an assumption made from fake transport tests.\n\ncommit ac62eeeb9d8b1fa7b8ed8fb95ba8160acb7efa1c\nAuthor:     Jakub Skokan <jakub.skokan@havefun.cz>\nAuthorDate: Fri Oct 23 19:06:28 2026 +0200\nCommit:     Jakub Skokan <jakub.skokan@havefun.cz>\nCommitDate: Fri Oct 23 19:06:28 2026 +0200\n\n    codex: expose exact prepared-send observation proofs\n    \n    Distinguish an exact unsubmitted preparation from accepted, submitting or\n    queue-owned work without changing SendAttempted semantics. Applications can\n    exclude that one preparation from submission observation while retaining\n    ordinary checks for every other attempt and queue deletion.\n    \n    Keep the original identity, options, steering flag and ledger unchanged.\n    The proof does not authorize dispatch or replace application admission\n    fences. Existing native and durable state formats remain compatible.\n\ncommit f86290673d752c77b56c70228c3d26aced75e177\nAuthor:     Jakub Skokan <jakub.skokan@havefun.cz>\nAuthorDate: Fri Oct 23 21:27:37 2026 +0200\nCommit:     Jakub Skokan <jakub.skokan@havefun.cz>\nCommitDate: Fri Oct 23 21:27:37 2026 +0200\n\n    conversation: add optional retry activity notices and actions\n    \n    Expose safe retry-chain observations through an optional provider and token-only\n    Now and Stop routes. Resolve trusted conversation authority for every call and\n    retain the existing origin, payload and mutation-lock boundaries. Keep legacy\n    retry providers and the required App Server client interface unchanged.\n    \n    Offer a reusable footer notice with confirmed starts, uncertain submissions,\n    server-relative countdowns and honest elapsed-time quality through execution\n    and frozen results. Dismiss each exact conversation and chain locally, including\n    when browser storage is unavailable. Coalesce observations and reconcile lost\n    action responses by reading; the browser never dispatches a continuation.\n    \n    Applications own scheduling, durable policy, cancellation and transcript scroll\n    behavior. Native protocols and submission formats are unchanged.\n\ncommit 55e0300b27b6927b1693b3792042762f31a385cc\nAuthor:     Jakub Skokan <jakub.skokan@havefun.cz>\nAuthorDate: Fri Oct 23 22:05:04 2026 +0200\nCommit:     Jakub Skokan <jakub.skokan@havefun.cz>\nCommitDate: Fri Oct 23 22:05:04 2026 +0200\n\n    conversation: submit question answers with Enter\n    \n    Activate each question textarea's existing submit button on plain Enter and\n    retain Shift+Enter for newlines. Share the binding across optional inline and\n    pinned questions and the pending JSON editor, preserving their validation,\n    authority and exact delivery paths.\n    \n    Leave composition, modified shortcuts and option widgets alone. Suppress held\n    Enter repeats and respect disabled, hidden and read-only controls. Export the\n    small binding for applications with their own question forms; the main composer\n    and durable sender are unchanged.\n\ncommit 8ea83078c08f0a2536e1b863329fd05a13b67ceb\nAuthor:     Jakub Skokan <jakub.skokan@havefun.cz>\nAuthorDate: Fri Oct 23 23:16:39 2026 +0200\nCommit:     Jakub Skokan <jakub.skokan@havefun.cz>\nCommitDate: Fri Oct 23 23:16:39 2026 +0200\n\n    conversation: use an icon to dismiss retry notices\n    \n    Place terminal retry dismissal in a separate right-side heading cell. Keep\n    wrapped titles and metrics clear of the close icon on narrow screens, with an\n    explicit accessible name and the existing keyboard focus treatment.\n    \n    Retain exact conversation and chain dismissal keys, local storage fallback and\n    active Retry now and Stop retrying controls. No provider or delivery behavior\n    changes.",
+  "delta_stat": "conversation/assets/conversation.css          |  9 ++++++---\n conversation/assets/retry_activity.js         | 10 +++++++---\n test/retry_activity_browser_contract_test.cjs | 19 +++++++++++++++++++\n 3 files changed, 32 insertions(+), 6 deletions(-)",
+  "delta_files": "M\tconversation/assets/conversation.css\nM\tconversation/assets/retry_activity.js\nM\ttest/retry_activity_browser_contract_test.cjs",
+  "migration_provenance": "No DB/native/ledger/submission/policy schema migrations or new state keys. No live state changed; visual successor undeployed. Prior deployed four-commit lineage and preceding presentation/keyboard commits are unchanged ancestors.",
+  "history_disposition_for_review": "Exactly one bounded user-requested visual correction appended to55e. No fixups, repeated pins or obsolete approaches. Previous55e exact bundle/receipt retained question-keyboard-a/final.json. Retained reviewer/lead owns final whole-series assessment.",
+  "checks": {
+    "node-focused": {
+      "exit": 0,
+      "elapsed": 10.60022552497685
+    },
+    "go-focused": {
+      "exit": 0,
+      "elapsed": 13.211524890735745
+    },
+    "push": {
+      "exit": 0,
+      "elapsed": 1.9355736188590527
+    },
+    "source-metadata": {
+      "exit": 0,
+      "elapsed": 0.1968215722590685
+    },
+    "go-module": {
+      "exit": 0,
+      "elapsed": 13.111264919862151
+    },
+    "ci-query": {
+      "exit": 0,
+      "elapsed": 1.1347488649189472
+    }
+  },
+  "ci": [
+    {
+      "conclusion": "",
+      "databaseId": 40025585269,
+      "headSha": "8ea83078c08f0a2536e1b863329fd05a13b67ceb",
+      "status": "in_progress",
+      "url": "https://github.com/aither64/codex-web/actions/runs/40025585269"
+    },
+    {
+      "conclusion": "failure",
+      "databaseId": 40016478249,
+      "headSha": "55e0300b27b6927b1693b3792042762f31a385cc",
+      "status": "completed",
+      "url": "https://github.com/aither64/codex-web/actions/runs/40016478249"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 40011597349,
+      "headSha": "f86290673d752c77b56c70228c3d26aced75e177",
+      "status": "completed",
+      "url": "https://github.com/aither64/codex-web/actions/runs/40011597349"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 39992358832,
+      "headSha": "ac62eeeb9d8b1fa7b8ed8fb95ba8160acb7efa1c",
+      "status": "completed",
+      "url": "https://github.com/aither64/codex-web/actions/runs/39992358832"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 39829307938,
+      "headSha": "c1f415ad5602c23e6443cced73cb59267a796f05",
+      "status": "completed",
+      "url": "https://github.com/aither64/codex-web/actions/runs/39829307938"
+    }
+  ],
+  "nix_metadata": {
+    "description": "Reusable Codex App Server web integration",
+    "fingerprint": "809e38a6b7f63d065342a3b874d81a8ca022345844c0964b6f7424b12fc04a0a",
+    "lastModified": 1792790199,
+    "locked": {
+      "__final": true,
+      "lastModified": 1792790199,
+      "narHash": "sha256-K5jFxsCbK5TGT+hohxbuQ4fx3vky4hsOrPKOGozpILU=",
+      "ref": "refs/heads/2026-10-22-codex-thread-retries",
+      "rev": "8ea83078c08f0a2536e1b863329fd05a13b67ceb",
+      "revCount": 115,
+      "type": "git",
+      "url": "file:///home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/codex-web"
+    },
+    "locks": {
+      "nodes": {
+        "nixpkgs": {
+          "locked": {
+            "lastModified": 1788921488,
+            "narHash": "sha256-8+xWRxEkD6l217cIUdRxfeUGS9lQX0hVtUuNVsBaDzk=",
+            "owner": "NixOS",
+            "repo": "nixpkgs",
+            "rev": "6aefcda9401be8acc2b74244fb3b37520ea1f0a8",
+            "type": "github"
+          },
+          "original": {
+            "owner": "NixOS",
+            "ref": "nixos-26.05",
+            "repo": "nixpkgs",
+            "type": "github"
+          }
+        },
+        "root": {
+          "inputs": {
+            "nixpkgs": "nixpkgs"
+          }
+        }
+      },
+      "root": "root",
+      "version": 7
+    },
+    "original": {
+      "type": "git",
+      "url": "file:///home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/codex-web"
+    },
+    "originalUrl": "git+file:///home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/codex-web",
+    "path": "/nix/store/pvk2dy3z48s71k5agrq9irl0ay5ip52k-source",
+    "resolved": {
+      "type": "git",
+      "url": "file:///home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/codex-web"
+    },
+    "resolvedUrl": "git+file:///home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/codex-web",
+    "revCount": 115,
+    "revision": "8ea83078c08f0a2536e1b863329fd05a13b67ceb",
+    "url": "git+file:///home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/codex-web?ref=refs/heads/2026-10-22-codex-thread-retries&rev=8ea83078c08f0a2536e1b863329fd05a13b67ceb"
+  },
+  "go_metadata": {
+    "Path": "github.com/aither64/codex-web",
+    "Version": "v0.0.0-20261023211639-8ea83078c08f",
+    "Query": "8ea83078c08f0a2536e1b863329fd05a13b67ceb",
+    "Info": "/home/aither/go/pkg/mod/cache/download/github.com/aither64/codex-web/@v/v0.0.0-20261023211639-8ea83078c08f.info",
+    "GoMod": "/home/aither/go/pkg/mod/cache/download/github.com/aither64/codex-web/@v/v0.0.0-20261023211639-8ea83078c08f.mod",
+    "Zip": "/home/aither/go/pkg/mod/cache/download/github.com/aither64/codex-web/@v/v0.0.0-20261023211639-8ea83078c08f.zip",
+    "Dir": "/home/aither/go/pkg/mod/github.com/aither64/codex-web@v0.0.0-20261023211639-8ea83078c08f",
+    "Sum": "h1:jsm7bF87m1HIuifu9LlEYZdZn/ZCi3jjmXWlOfHS3Nw=",
+    "GoModSum": "h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=",
+    "Origin": {
+      "VCS": "git",
+      "URL": "https://github.com/aither64/codex-web",
+      "Hash": "8ea83078c08f0a2536e1b863329fd05a13b67ceb"
+    }
+  },
+  "source_verified_file_count": 115,
+  "source_identity": "retry-dismiss-a/source-identity.json",
+  "bundle_sha256": "d4d9be961e78f1ab5d228ba9d1127ebe443af663fa06c7488678992b60b6bfb9",
+  "bundle_verify": "The bundle contains this ref:\n8ea83078c08f0a2536e1b863329fd05a13b67ceb refs/heads/2026-10-22-codex-thread-retries\nThe bundle requires this ref:\nea64ef57fdd2ff5fd60715b62f2d1696bc0133e5 \nThe bundle uses this hash algorithm: sha1\n/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/retry-dismiss-a/codex-web-retry-dismiss-8ea83078.bundle is okay\n",
+  "behavior": "Visible \u00d7 terminal dismissal in separate right heading grid cell; aria-label/title Dismiss retry notice, native button type/focus treatment unchanged. Title minmax(0,1fr), separate full-width wrapping metrics, 2.5rem mobile target. Active Retry now/Stop unchanged. Exact conversation+chain persistence/page-local fallback unchanged. Hidden root still display:none, no idle spacer.",
+  "copy": "Lead brief directly approved exact visible glyph\u00d7 and accessible copy Dismiss retry notice; no other copy changes.",
+  "docs_rationale": "No lasting docs change needed: reference already describes local terminal dismissal and does not prescribe text/icon placement.",
+  "cross_project_adoption": "B owner alone consolidates final A selection and updates visual browser name/geometry expectations when released. No B/W/C pin/source mutation by A.",
+  "remaining": "Retained affected frontend review and controlled actual-template visual capture; no browser/native/build/live/deploy/integration authorized.",
+  "portal": "https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-22-codex-thread-retries/",
+  "prior_ci_diagnosis": {
+    "run": 40016478249,
+    "head": "55e0300b27b6927b1693b3792042762f31a385cc",
+    "failure": "test/uploads_browser_contract_test.cjs618 numbered recovery, final ready() at630;104PASS1FAIL; test duration3.62452ms",
+    "source_boundary": "uploads.js and upload browser contract byte-unchanged from upstream ea64 through final8ea; git diff --quiet confirms",
+    "observation": "eventually waits50setImmediate iterations, not elapsed deadline; upload verification uses async WebCrypto SHA256. Failure timing consistent with insufficient wait opportunity, but logs lack component state so scheduling cause not proven. No test/assertions weakened or CI rerun.",
+    "evidence": "retry-dismiss-a/prior-ci-failure.stdout",
+    "next": "Lead disposition for bounded fixture-only wait diagnostics if required; no source expansion performed."
+  }
+}

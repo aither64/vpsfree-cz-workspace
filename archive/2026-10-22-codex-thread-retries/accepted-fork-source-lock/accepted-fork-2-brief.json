@@ -1,0 +1,80 @@
+{
+  "status": "PREPARED ONLY; execution requires lead-selected fresh watcher",
+  "head": "45e14be3d34a9ca2d3b418c310da927351b7f330",
+  "tree": "edb3f41dec072a44e03a4f4a7a4c4e8894b440f4",
+  "cwd": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/dev-workspace/portal",
+  "argv": [
+    "nix",
+    "shell",
+    "--inputs-from",
+    "..",
+    "nixpkgs#go",
+    "nixpkgs#ruby",
+    "nixpkgs#git",
+    "nixpkgs#gcc",
+    "-c",
+    "go",
+    "test",
+    "-mod=readonly",
+    "./internal/web",
+    "-run",
+    "^(TestAcceptedForkSourceSharedLockRefusalAndReceiptRecovery|TestCreationFastSourceLockDoesNotWaitForLifecycleMutation|TestCreationReceiptRubyInitializerContract)$",
+    "-count=1",
+    "-timeout=45s",
+    "-json"
+  ],
+  "originalManifest": "accepted-fork-source-lock/watcher-brief.json",
+  "originalManifestSHA256": "bca462b87f4062b053bd86273faaf92799b0a5693e8a87d3cec6e7064a85c642",
+  "originalCommandScript": "backend-successor/I-B1/accepted-fork-command.py",
+  "required_leaf_tests": [
+    "TestAcceptedForkSourceSharedLockRefusalAndReceiptRecovery/source_ex_1/replacement=false",
+    "TestAcceptedForkSourceSharedLockRefusalAndReceiptRecovery/source_ex_1/replacement=true",
+    "TestAcceptedForkSourceSharedLockRefusalAndReceiptRecovery/source_ex_2/replacement=false",
+    "TestAcceptedForkSourceSharedLockRefusalAndReceiptRecovery/source_ex_2/replacement=true",
+    "TestAcceptedForkSourceSharedLockRefusalAndReceiptRecovery/journal_bound_recovery_keeps_created_fork_without_source",
+    "TestCreationFastSourceLockDoesNotWaitForLifecycleMutation",
+    "TestCreationReceiptRubyInitializerContract/direct=false/new/provider=",
+    "TestCreationReceiptRubyInitializerContract/direct=false/new/provider=openai",
+    "TestCreationReceiptRubyInitializerContract/direct=false/new/provider=pool",
+    "TestCreationReceiptRubyInitializerContract/direct=false/plan/provider=",
+    "TestCreationReceiptRubyInitializerContract/direct=false/plan/provider=openai",
+    "TestCreationReceiptRubyInitializerContract/direct=false/plan/provider=pool",
+    "TestCreationReceiptRubyInitializerContract/direct=false/fork/provider=",
+    "TestCreationReceiptRubyInitializerContract/direct=false/fork/provider=openai",
+    "TestCreationReceiptRubyInitializerContract/direct=false/fork/provider=pool",
+    "TestCreationReceiptRubyInitializerContract/direct=true/new/provider=",
+    "TestCreationReceiptRubyInitializerContract/direct=true/new/provider=openai",
+    "TestCreationReceiptRubyInitializerContract/direct=true/new/provider=pool",
+    "TestCreationReceiptRubyInitializerContract/direct=true/plan/provider=",
+    "TestCreationReceiptRubyInitializerContract/direct=true/plan/provider=openai",
+    "TestCreationReceiptRubyInitializerContract/direct=true/plan/provider=pool"
+  ],
+  "expected_leaf_count": 21,
+  "required_top_level_tests": [
+    "TestAcceptedForkSourceSharedLockRefusalAndReceiptRecovery",
+    "TestCreationFastSourceLockDoesNotWaitForLifecycleMutation",
+    "TestCreationReceiptRubyInitializerContract"
+  ],
+  "owned_files": {
+    "portal/internal/web/creation_source_lock_test.go": {
+      "sha256": "797541023eedce366c22c7708a45fe305fafb6ccfaa743a77a575cb86f317b91",
+      "bytes": 24263,
+      "lines": 658,
+      "mode": "0o644"
+    },
+    "test/support/accepted_fork_runner.rb": {
+      "sha256": "593fc6a8ee2a34b2e7020b4079bfca1ed2308589ba0015c2761719b910f2ecde",
+      "bytes": 9048,
+      "lines": 206,
+      "mode": "0o644"
+    }
+  },
+  "output": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/backend-successor/I-B1/accepted-fork-attempt-2",
+  "commandDelta": {
+    "addedPackage": "nixpkgs#gcc",
+    "allOtherArgvAndAssertionsUnchanged": true,
+    "disableCGO": false
+  },
+  "executionBudget": "Same Go timeout45s; rendezvous<=5s; fixture target<10s excluding compilation remains unmeasured. Nix/compile duration uncertain.",
+  "watcherInstructions": "Run wrapper ONCE only after lead release, preserving exact script/brief hashes. Escalate occupied output, source/env mismatch, failure or unexpected kernel build. No retries, edits, CI/native/VM/browser/live/deploy/lifecycle work. No historical CI-holder inference or waiver."
+}

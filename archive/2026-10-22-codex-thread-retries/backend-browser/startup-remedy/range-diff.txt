@@ -1,0 +1,26 @@
+ 1:  7262c24e =  1:  7262c24e turnretry: retain bounded retry policy and admission state
+ 2:  b3c7187c =  2:  b3c7187c runtime: require retry-capable package transitions
+ 3:  aafaf419 =  3:  aafaf419 portal: continue new managed failed turns through durable retry admission
+ 4:  9ccb4b11 =  4:  9ccb4b11 deps: select codex-web retry activity support
+ 5:  100108b0 =  5:  100108b0 portal: retire accepted retry provenance before bounded admission
+ 6:  9311c15a =  6:  9311c15a portal: admit exact prepared plan requests after mode selection
+ 7:  c8c31ab5 =  7:  c8c31ab5 portal: wait within HTTP budgets for transient runtime contention
+ 8:  9ce6b291 =  8:  9ce6b291 portal: present retry activity inside the conversation viewport
+ 9:  4b4da049 =  9:  4b4da049 portal: release the next draft before message acknowledgment
+10:  59c0eb55 = 10:  59c0eb55 portal: submit question text through its owning action
+11:  4b98ceb2 = 11:  4b98ceb2 host: require support for retained session retry policy
+12:  6817bb6f = 12:  6817bb6f session: allow bounded exclusive runtime acquisition
+13:  91bd8535 = 13:  91bd8535 test: exercise accepted fork source lock recovery through Ruby
+14:  66d8ef32 = 14:  66d8ef32 portal: manage retry policy and activity per retained session
+15:  d407f8d0 ! 15:  6723d5a7 test: connect retry browser controls to the real backend
+    @@ portal/internal/web/retry_backend_browser_test.go (new)
+     +	c.RetryPolicyResolver = func(context.Context, string) (codex.ThreadPolicy, error) { return codex.ThreadPolicy{}, nil }
+     +	managed := &planDeliveryClient{resolverRetryClient: &resolverRetryClient{c, cwd}, stateRoot: s.config.UserStateRoot, workspace: s.config.Workspace}
+     +	f := &planDeliveryFixture{s: s, client: managed}
+    -+	addPolicyMember(t, f)
+     +	s.config.Codex = managed
+    ++	addPolicyMember(t, f)
+     +	if _, err := s.transactRetryPolicy(context.Background(), managed, "example", nil); err != nil {
+     +		t.Fatal(err)
+     +	}
+16:  c79af973 = 16:  e914c52a systemd: raise the native App Server descriptor limit

@@ -1,0 +1,44 @@
+{
+  "atUTC": "2026-10-24T10:53:00.761946+00:00",
+  "readOnlyIndependentCommands": [
+    {
+      "argv": [
+        "/run/current-system/sw/bin/prlimit",
+        "--pid",
+        "3387667",
+        "--nofile",
+        "--output",
+        "RESOURCE,SOFT,HARD"
+      ],
+      "exit": 0,
+      "stdout": "RESOURCE   SOFT   HARD\nNOFILE   524288 524288\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "systemctl",
+        "--user",
+        "show",
+        "workspace-codex@vpsfree-cz.service",
+        "--property=MainPID,InvocationID,ExecMainStartTimestamp,ActiveState,SubState,NRestarts,ExecMainStatus"
+      ],
+      "exit": 0,
+      "stdout": "ActiveState=active\nSubState=running\nInvocationID=84b92a0a1c5a4fffa9a0c7beaf0693f1\nMainPID=3387667\nNRestarts=0\nExecMainStartTimestamp=Sun 2026-10-18 12:08:01 CEST\nExecMainStatus=0\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "systemctl",
+        "--user",
+        "is-active",
+        "workspace-codex@vpsfree-cz.service",
+        "workspace-portal@vpsfree-cz.service"
+      ],
+      "exit": 0,
+      "stdout": "active\nactive\n",
+      "stderr": ""
+    }
+  ],
+  "startTicks": 1162579375,
+  "exe": "/nix/store/jrsm1rzxm1ak23j1f2vn0lil9qgxblym-codex-package-0.163.0/libexec/codex/bin/codex"
+}

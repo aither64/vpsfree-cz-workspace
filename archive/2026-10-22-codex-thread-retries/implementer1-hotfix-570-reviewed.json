@@ -1,0 +1,253 @@
+{
+  "session": "2026-10-22-codex-thread-retries",
+  "owner": "implementer1",
+  "repository": "git@github.com:aither64/dev-workspace.git",
+  "branch": "2026-10-22-codex-thread-retries",
+  "base": "bf6d4b0c49600c15e17fe71248807ef43424e932",
+  "deployed_predecessor": "d819ad044ef7fcc7bb4a111dc7676fe251383249",
+  "deployed_tree": "6f1f05da60b09743d3716eb1a0adf794b90cf5a3",
+  "head": "570d900a4b7bbfe5c716cfd234f9dc89bbedc746",
+  "tree": "f877578a730f0d61a5d6aa2dcc18332cb9712c07",
+  "source_clean": true,
+  "series": [
+    {
+      "commit": "7262c24e4fbe9dbf8604e73590f9b5ef3d5dce99",
+      "tree": "082d1fa7228113019bb63fa29cdcb82189bc76cc",
+      "subject": "turnretry: retain bounded retry policy and admission state"
+    },
+    {
+      "commit": "b3c7187c6e26e269994433716a0ee719d0a7edf7",
+      "tree": "001755e5b7336ec3f8b8a3a1f7e3545482e3e82e",
+      "subject": "runtime: require retry-capable package transitions"
+    },
+    {
+      "commit": "aafaf4195d695c4641ce4f9342d56a1786f237c3",
+      "tree": "208aa98473f80994320a4e2d9818326723c166e7",
+      "subject": "portal: continue new managed failed turns through durable retry admission"
+    },
+    {
+      "commit": "d819ad044ef7fcc7bb4a111dc7676fe251383249",
+      "tree": "6f1f05da60b09743d3716eb1a0adf794b90cf5a3",
+      "subject": "deps: pin codex-web failed-turn continuation support"
+    },
+    {
+      "commit": "570d900a4b7bbfe5c716cfd234f9dc89bbedc746",
+      "tree": "f877578a730f0d61a5d6aa2dcc18332cb9712c07",
+      "subject": "portal: retire accepted retry provenance before bounded admission"
+    }
+  ],
+  "delta_paths": [
+    "docs/turn-retry-recovery.md",
+    "portal/internal/turnretry/controller.go",
+    "portal/internal/turnretry/retention_test.go",
+    "portal/internal/turnretry/state.go",
+    "portal/internal/turnretry/store.go",
+    "portal/internal/workspacecodex/turn_retry.go",
+    "portal/internal/workspacecodex/turn_retry_proof.go",
+    "portal/internal/workspacecodex/turn_retry_retention_test.go"
+  ],
+  "blobs": {
+    "docs/turn-retry-recovery.md": "ea6c7e05069b69fbd7640e3d7805fd023d3bfa4f",
+    "portal/internal/turnretry/controller.go": "863133f90cd0cae81e2bd53df724b1ecb1d83607",
+    "portal/internal/turnretry/retention_test.go": "ec3b70ef810356bc09b1b6203bd61d17ab92f3a6",
+    "portal/internal/turnretry/state.go": "576045e5c3d0d77b2f60a155a434b0dc18204820",
+    "portal/internal/turnretry/store.go": "f6021277c731c729ffa4eb0c6b6675de15c86b5c",
+    "portal/internal/workspacecodex/turn_retry.go": "de52cc4409382f561f7b8086eabb567af31c9025",
+    "portal/internal/workspacecodex/turn_retry_proof.go": "41c0e0ff94a3cbf7c0b15c8fe3ec3b2979867832",
+    "portal/internal/workspacecodex/turn_retry_retention_test.go": "d1c911da0eabf16c84983cce1d8d52590bb83162"
+  },
+  "lineage": "One additive hotfix after supported deployed d819; original four commits unchanged. No rebase/rewrite/migrations or eager state rewrite.",
+  "unchanged": [
+    "codex-web c1f415ad5602c23e6443cced73cb59267a796f05",
+    "portal/go.mod",
+    "portal/go.sum",
+    "flake.lock",
+    "nix",
+    "schema 1",
+    "MaxSnapshots=64",
+    "native ledger schema 3",
+    "HTTP503/API/UI"
+  ],
+  "remote_receipt": "570d900a4b7bbfe5c716cfd234f9dc89bbedc746 refs/heads/2026-10-22-codex-thread-retries",
+  "verification": {
+    "focused_nonrace": {
+      "log": "implementer1-hotfix-focused-4.log",
+      "core_seconds": 0.241,
+      "wrapper_seconds": 43.774,
+      "result": "passed"
+    },
+    "core_race": {
+      "log": "implementer1-hotfix-race-core.log",
+      "seconds": 7.637,
+      "result": "passed"
+    },
+    "controller_authority_resolver_race": {
+      "log": "implementer1-hotfix-race-controller-corrected.log",
+      "wrapper_seconds": 88.445,
+      "web_seconds": 7.346,
+      "result": "passed"
+    },
+    "admission_race": {
+      "log": "implementer1-hotfix-race-admission.log",
+      "result": "failed only replay fixture context expired; protected FIFO19.28s and all four crash/save62.05s passed; original failed evidence retained"
+    },
+    "corrected_replay_race": {
+      "log": "implementer1-hotfix-race-replay-corrected.log",
+      "seconds": 37.185,
+      "result": "passed",
+      "root_native_sends": 69,
+      "member_native_sends": 69,
+      "retained_snapshots": 64,
+      "changed_tuple": "explicit identity-reuse diagnostic for text/action/options"
+    },
+    "byte_proof_receipt_race": {
+      "log": "implementer1-hotfix-race-byte-budget.log",
+      "seconds": 1.503,
+      "result": "passed"
+    },
+    "exact_accepted_cap": {
+      "log": "implementer1-hotfix-race-controller-corrected.log",
+      "case": "TestRetryRetentionUnknownAutomaticAtCapHoldsManual",
+      "native_sends": 2,
+      "automatic_sends": 1,
+      "repeat_sends": 0,
+      "snapshots_protected": 64,
+      "restart_states": [
+        "active",
+        "failed",
+        "failed"
+      ]
+    },
+    "tree_provenance": "All final production blobs were exercised by the race matrix. Final replay-context/assertion and fixture-lock refinements exercised by final replay race; last added byte regression separately race checked. No production edits followed the matrix.",
+    "not_run": [
+      "native",
+      "packaged checks",
+      "builds",
+      "deployment",
+      "CI wait"
+    ],
+    "fixture_diagnoses": [
+      "nil thread/items list -> explicit empty list",
+      "unique synthetic native item IDs per input",
+      "new independent queue admitted while source active under existing warm binding",
+      "replay deadline begins after sustained admission setup; identity checks require actual reuse error",
+      "unsupported negative-lookahead test selector replaced with Go-compatible explicit selectors"
+    ],
+    "monitoring": "Focused race batches exceeded their initial nonrace estimate; parent retained the existing nontransferable tool handles to completion, without native/packaged/CI waits."
+  },
+  "ci_snapshot": [
+    {
+      "attempt": 1,
+      "conclusion": "",
+      "databaseId": 39974175490,
+      "headSha": "570d900a4b7bbfe5c716cfd234f9dc89bbedc746",
+      "status": "in_progress",
+      "url": "https://github.com/aither64/dev-workspace/actions/runs/39974175490",
+      "workflowName": "Check"
+    },
+    {
+      "attempt": 1,
+      "conclusion": "success",
+      "databaseId": 39832302919,
+      "headSha": "d819ad044ef7fcc7bb4a111dc7676fe251383249",
+      "status": "completed",
+      "url": "https://github.com/aither64/dev-workspace/actions/runs/39832302919",
+      "workflowName": "Check"
+    },
+    {
+      "attempt": 1,
+      "conclusion": "success",
+      "databaseId": 39831251707,
+      "headSha": "b6956520331e4043f011fbb028521fefb48a7111",
+      "status": "completed",
+      "url": "https://github.com/aither64/dev-workspace/actions/runs/39831251707",
+      "workflowName": "Check"
+    },
+    {
+      "attempt": 1,
+      "conclusion": "failure",
+      "databaseId": 39825681410,
+      "headSha": "731bb742e07b4374cb8ee9a3a1379eb751cf44c4",
+      "status": "completed",
+      "url": "https://github.com/aither64/dev-workspace/actions/runs/39825681410",
+      "workflowName": "Check"
+    },
+    {
+      "attempt": 1,
+      "conclusion": "success",
+      "databaseId": 39818601167,
+      "headSha": "3f2153a44e87bcd60c40ac5dcc660f214ccf04fa",
+      "status": "completed",
+      "url": "https://github.com/aither64/dev-workspace/actions/runs/39818601167",
+      "workflowName": "Check"
+    },
+    {
+      "attempt": 1,
+      "conclusion": "success",
+      "databaseId": 39815568428,
+      "headSha": "e0fb1238bd17cc3b29cc7d59ddaa9784c89ef939",
+      "status": "completed",
+      "url": "https://github.com/aither64/dev-workspace/actions/runs/39815568428",
+      "workflowName": "Check"
+    },
+    {
+      "attempt": 1,
+      "conclusion": "success",
+      "databaseId": 39815566005,
+      "headSha": "e0fb1238bd17cc3b29cc7d59ddaa9784c89ef939",
+      "status": "completed",
+      "url": "https://github.com/aither64/dev-workspace/actions/runs/39815566005",
+      "workflowName": "Check"
+    },
+    {
+      "attempt": 1,
+      "conclusion": "failure",
+      "databaseId": 39814474141,
+      "headSha": "61de5e28d1cb1936aeb3ef2376cdaf17f6034e4b",
+      "status": "completed",
+      "url": "https://github.com/aither64/dev-workspace/actions/runs/39814474141",
+      "workflowName": "Check"
+    },
+    {
+      "attempt": 1,
+      "conclusion": "failure",
+      "databaseId": 39809331648,
+      "headSha": "cca49782ebd2d5135352cea4cb140548b36f7de9",
+      "status": "completed",
+      "url": "https://github.com/aither64/dev-workspace/actions/runs/39809331648",
+      "workflowName": "Check"
+    },
+    {
+      "attempt": 1,
+      "conclusion": "failure",
+      "databaseId": 39802005782,
+      "headSha": "85f6f7327e6948a13ad110c4c058d8b96b6ab2b9",
+      "status": "completed",
+      "url": "https://github.com/aither64/dev-workspace/actions/runs/39802005782",
+      "workflowName": "Check"
+    }
+  ],
+  "superseded_ci": "No superseded active workflow in the bounded branch snapshot; no cancellation needed. Current39974175490 left running.",
+  "hooks": "No hook framework declared; ordinary git commit executed without bypass.",
+  "docs": "Main approved exact recovery-guide copy and all new diagnostics before commit.",
+  "artifacts": {
+    "implementer1-hotfix-artifacts.sha256": "e7f819137ab564da99ed9da5ec3052295e962075111cce430c1ead848115ed9b",
+    "implementer1-hotfix-bundle-verify.txt": "b982d8940241d2baaa82076c6c44557661a4b90aef6cb583d9a1d808021413e1",
+    "implementer1-hotfix-ci-snapshot.json": "c46acac7451687a7859c46bc7246c5c35a6c9c85aed4f58d760283cf89a9a95d",
+    "implementer1-hotfix-deployed-history.txt": "605b5902c6cdb454a9520545c73a86397b6e22337cf66a31bed70e946133b258",
+    "implementer1-hotfix-deployed.patch": "8b371ce3fa08f6033067c3865fe55bc762681e29774b393d1294a850004abd2d",
+    "implementer1-hotfix-final-history.txt": "052924794eccd9953689d6eba9140a001d5f3acc37b086c4583bfe9197161b1a",
+    "implementer1-hotfix-focused-1.log": "762845438ddc44c7ad57922b3bbefa6c51d131bc5fbc6c363940b30d54d42622",
+    "implementer1-hotfix-focused-2.log": "b7e9e2b1f72575882bdab50737d49b83db3d244445a2b197c0674e8f8ad9a3e7",
+    "implementer1-hotfix-focused-3.log": "ab4bf828da7daa2aaba0a326db55bb0910a1e9300d477101ad37ddeffb15b266",
+    "implementer1-hotfix-focused-4.log": "fa3dfa95439bc7c3eaafaf6763f02bb03e3637b8dc441c49d571834a6bcdbd33",
+    "implementer1-hotfix-race-admission.log": "f4d5a025bcefb61ef930c497c3619755519e43d22b375a4bc0be67ae40eb7118",
+    "implementer1-hotfix-race-byte-budget.log": "25a9870f1df3755ef6e2be5853de40c1d35e20d3ba98404588a78cbbb65f7289",
+    "implementer1-hotfix-race-controller-corrected.log": "90e6d109cd8c259fe3a583e8f317ae8b4124aed1e9c87efaa015d4428b491a29",
+    "implementer1-hotfix-race-controller.log": "b6d3ae81575c5366e8c6cdd7a86a55b55581dacaa65d0f1e5fb44fd7787e5582",
+    "implementer1-hotfix-race-core.log": "4fb69481d03b5f5638593fdab1e6f86e9bdb078c930bfc2fe816a93c222469e0",
+    "implementer1-hotfix-race-replay-corrected.log": "194c2e5382031d806d3fb6257e6bd61c224fc1a44d59a259f05033c1d339c9d8",
+    "implementer1-hotfix-successor.patch": "09cb35c851040004a2015ef0321706d2cf17d944a051080535a8308a57f51e53",
+    "implementer1-deployed-d819-hotfix-predecessor.bundle": "3f469c15bda685642b3a834bd28a11434d94abceb99ee8884df6ff12775e6b3e"
+  }
+}

@@ -1,0 +1,1 @@
+nix path-info --json --recursive /nix/store/6570hgnfg6fdamymv9q1n0144fwwxaa1-vps-autostart-prometheus-rules

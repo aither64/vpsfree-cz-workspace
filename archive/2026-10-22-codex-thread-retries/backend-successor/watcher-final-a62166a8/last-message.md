@@ -1,0 +1,3 @@
+**Result: failed.** The browser verification ran once at dev-workspace revision `a62166a87658e16baa0efdddfea3a448ebebcc28`, tree `49dee759cd203a94eb898c6af5f67fbe99474028`. It exited 1 after 78.47 seconds. The result reports four missing browser case runs and missing manifests under `browser-attempt-8`; no cases were skipped. The second command was not run because the packet requires browser exit 0 first.
+
+The raw command output and exit status are retained in this run’s tool output; the attempt artifacts are under `backend-browser/lost-reply-diagnosis/implementation/browser-attempt-8`. No operation remains running.

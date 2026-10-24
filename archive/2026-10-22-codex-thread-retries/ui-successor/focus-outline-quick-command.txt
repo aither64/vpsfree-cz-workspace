@@ -1,0 +1,1 @@
+nix develop --no-update-lock-file --command bash -c 'set -e; node --check portal/internal/web/retry_activity_browser_test.cjs; cd portal; TMPDIR=/tmp go test -mod=readonly ./internal/web -run "^TestBrowserAssetVersionsForRetryAndQuestionUI$" -count=1 -v'

@@ -1,0 +1,370 @@
+diff --git a/codex/continuation_integration_test.go b/codex/continuation_integration_test.go
+index d2e8ef1..3e2af91 100644
+--- a/codex/continuation_integration_test.go
++++ b/codex/continuation_integration_test.go
+@@ -24,9 +24,11 @@ import (
+ // Retain only protocol identities and bounded status diagnostics, never prompts,
+ // provider bodies or arbitrary native configuration.
+ type retryNativeTrace struct {
+-	mu     sync.Mutex
+-	events []string
+-	total  int
++	mu            sync.Mutex
++	events        []string
++	total         int
++	startRequests int
++	droppedTurnID string
+ }
+ 
+ func (trace *retryNativeTrace) record(direction string, data []byte) {
+@@ -64,12 +66,40 @@ func (trace *retryNativeTrace) record(direction string, data []byte) {
+ 	trace.mu.Lock()
+ 	defer trace.mu.Unlock()
+ 	trace.total++
++	if direction == "request" && message.Method == "turn/start" {
++		trace.startRequests++
++	}
+ 	trace.events = append(trace.events, line)
+ 	if len(trace.events) > 128 {
+ 		trace.events = trace.events[len(trace.events)-128:]
+ 	}
+ }
+ 
++// A submitted attempt may become visible in paginated history after the native
++// acceptance reply. Observe only its immutable receipt; this loop cannot send.
++func retryNativeReconcile(ctx context.Context, client *Client, thread, text, id, action string, options TurnOptions) (SendReceipt, error) {
++	for {
++		receipt, found, err := client.ReconcileSendWithOptions(ctx, thread, text, id, action, options)
++		if err == nil {
++			if !found {
++				return SendReceipt{}, errors.New("fixture has no submitted attempt to reconcile")
++			}
++			return receipt, nil
++		}
++		var unknown *UnknownSendOutcomeError
++		if !errors.As(err, &unknown) {
++			return SendReceipt{}, err
++		}
++		timer := time.NewTimer(20 * time.Millisecond)
++		select {
++		case <-ctx.Done():
++			timer.Stop()
++			return SendReceipt{}, fmt.Errorf("native receipt remained uncertain: %w; %v", err, ctx.Err())
++		case <-timer.C:
++		}
++	}
++}
++
+ func (trace *retryNativeTrace) snapshot() string {
+ 	trace.mu.Lock()
+ 	defer trace.mu.Unlock()
+@@ -218,6 +248,75 @@ func TestRetryNativeTraceIsBoundedAndOmitsPayloads(t *testing.T) {
+ 	}
+ }
+ 
++func TestRetryNativeReconciliationWaitsWithoutSubmitting(t *testing.T) {
++	for _, variant := range []string{"delayed history", "wrong text", "absent attempt", "history stays unknown"} {
++		t.Run(variant, func(t *testing.T) {
++			var reads atomic.Int32
++			socket := serveUnixWebsocket(t, func(connection *websocket.Conn) error {
++				if err := handshake(connection); err != nil {
++					return err
++				}
++				for {
++					request, err := readObject(connection)
++					if err != nil {
++						return nil
++					}
++					if request["method"] != "thread/items/list" {
++						return fmt.Errorf("reconciliation sent or mutated: %v", request["method"])
++					}
++					data := []any{}
++					if read := reads.Add(1); variant != "history stays unknown" && (read >= 3 || variant == "wrong text") {
++						text := "Synthetic visible continuation."
++						if variant == "wrong text" {
++							text = "Different input."
++						}
++						data = append(data, map[string]any{"turnId": "native-accepted", "item": map[string]any{
++							"id": "input-1", "type": "userMessage", "clientId": "lost-stable",
++							"content": []any{map[string]any{"type": "text", "text": text}},
++						}})
++					}
++					if err := writeObject(connection, map[string]any{"id": request["id"], "result": map[string]any{"data": data}}); err != nil {
++						return err
++					}
++				}
++			})
++			client := NewWithOptions(socket, ClientOptions{SubmissionLedgerPath: filepath.Join(t.TempDir(), "receipts.json")})
++			defer client.Close()
++			options := TurnOptions{Model: "gpt-5.5", ReasoningEffort: "low"}
++			if variant != "absent attempt" {
++				if err := client.PrepareSendWithOptions("thread-1", "Synthetic visible continuation.", "lost-stable", "fixture:lost:failed", false, options); err != nil {
++					t.Fatal(err)
++				}
++				normalized, _ := normalizeTurnOptions(options)
++				claimed, err := client.claimContinuationAttempt("thread-1", "lost-stable", "Synthetic visible continuation.", "fixture:lost:failed", normalized.Digest)
++				if err != nil || !claimed {
++					t.Fatal("prepare synthetic submitting state", claimed, err)
++				}
++			}
++			limit := time.Second
++			if variant == "history stays unknown" {
++				limit = 80 * time.Millisecond
++			}
++			ctx, cancel := context.WithTimeout(context.Background(), limit)
++			defer cancel()
++			receipt, err := retryNativeReconcile(ctx, client, "thread-1", "Synthetic visible continuation.", "lost-stable", "fixture:lost:failed", options)
++			if variant == "delayed history" {
++				if err != nil || receipt.TurnID != "native-accepted" || reads.Load() != 3 {
++					t.Fatalf("receipt=%+v reads=%d err=%v", receipt, reads.Load(), err)
++				}
++			} else if variant == "history stays unknown" {
++				normalized, _ := normalizeTurnOptions(options)
++				attempt, _, inspectErr := client.sendAttemptWithOptions("thread-1", "lost-stable", "Synthetic visible continuation.", "fixture:lost:failed", normalized.Digest)
++				if err == nil || inspectErr != nil || reads.Load() < 1 || receipt.TurnID != "" || attempt.State != "submitting" {
++					t.Fatalf("uncertain receipt gained authority: %+v state=%s %v %v", receipt, attempt.State, err, inspectErr)
++				}
++			} else if err == nil || reads.Load() > 1 {
++				t.Fatalf("non-unknown result retried: receipt=%+v reads=%d err=%v", receipt, reads.Load(), err)
++			}
++		})
++	}
++}
++
+ // retryNativeProxy forwards the real private App Server protocol unchanged.
+ // Its single test hook can delay a start or discard its accepted reply; it
+ // never manufactures native turn history, context or errors.
+@@ -292,13 +391,26 @@ func retryNativeProxy(t *testing.T, ctx context.Context, fixture *recoveryIntegr
+ 				}
+ 				record("native", data)
+ 				var response struct {
+-					ID json.RawMessage `json:"id"`
++					ID     json.RawMessage `json:"id"`
++					Result struct {
++						Turn struct {
++							ID string `json:"id"`
++						} `json:"turn"`
++					} `json:"result"`
+ 				}
+ 				json.Unmarshal(data, &response)
+ 				mu.Lock()
+ 				drop := droppedID != "" && string(response.ID) == droppedID
+ 				mu.Unlock()
+ 				if drop {
++					if response.Result.Turn.ID == "" {
++						t.Error("loss proxy did not receive native turn acceptance")
++					}
++					for _, trace := range traces {
++						trace.mu.Lock()
++						trace.droppedTurnID = response.Result.Turn.ID
++						trace.mu.Unlock()
++					}
+ 					return
+ 				}
+ 				if front.Write(ctx, kind, data) != nil {
+@@ -630,8 +742,10 @@ func TestPinnedCodexFailedTurnRetryContract(t *testing.T) {
+ 	t.Run("lost accepted reply recreated client", func(t *testing.T) {
+ 		thread := newThread(t, "default")
+ 		original := failed(t, thread, "capacity", "lost-original")
++		before := retryNativeContext(t, ctx, client, thread, original.TurnID)
+ 		provider.set("success")
+-		proxy := retryNativeProxy(t, ctx, fixture, nil, true)
++		lostTrace := &retryNativeTrace{}
++		proxy := retryNativeProxy(t, ctx, fixture, nil, true, lostTrace)
+ 		path := filepath.Join(fixture.root, "lost-ledger.json")
+ 		first := NewWithOptions(proxy, ClientOptions{SubmissionLedgerPath: path})
+ 		defer first.Close()
+@@ -644,13 +758,57 @@ func TestPinnedCodexFailedTurnRetryContract(t *testing.T) {
+ 			}
+ 		}
+ 		first.Close()
++		lostTrace.mu.Lock()
++		acceptedTurn, submissions := lostTrace.droppedTurnID, lostTrace.startRequests
++		lostTrace.mu.Unlock()
++		if acceptedTurn == "" || submissions != 1 {
++			t.Fatalf("loss fixture did not drop exactly one accepted start: turn=%s starts=%d", acceptedTurn, submissions)
++		}
+ 		recreated := NewWithOptions(fixture.socket, ClientOptions{SubmissionLedgerPath: path})
+ 		defer recreated.Close()
+-		receipt, err := recreated.ContinueFailedTurn(ctx, thread, "Synthetic visible continuation.", "lost-stable", "fixture:lost:"+original.TurnID, original.TurnID, options)
++		// Native acceptance can precede user-input history publication. Keep the
++		// exact submitting tuple and observe its receipt; never submit again to
++		// make history appear. This bound fits inside the original scenario limit.
++		reconcileCtx, stopReconciliation := context.WithTimeout(ctx, 5*time.Second)
++		defer stopReconciliation()
++		receipt, err := retryNativeReconcile(reconcileCtx, recreated, thread, "Synthetic visible continuation.", "lost-stable", "fixture:lost:"+original.TurnID, options)
+ 		if err != nil {
+ 			t.Fatal(err)
+ 		}
++		if receipt.TurnID != acceptedTurn || receipt.ClientUserMessageID != "lost-stable" {
++			t.Fatalf("reconciliation changed accepted identity: %+v native=%s", receipt, acceptedTurn)
++		}
+ 		retryNativeWait(t, ctx, client, thread, receipt.TurnID, "completed")
++		after := retryNativeContext(t, ctx, client, thread, receipt.TurnID)
++		if before.Model != after.Model || before.ReasoningEffort != after.ReasoningEffort || before.CollaborationMode != after.CollaborationMode || string(before.ApprovalPolicy) != string(after.ApprovalPolicy) || string(before.SandboxPolicy) != string(after.SandboxPolicy) {
++			t.Fatalf("lost-reply continuation changed settings: before=%+v after=%+v", before, after)
++		}
++		again, err := recreated.ContinueFailedTurn(ctx, thread, "Synthetic visible continuation.", "lost-stable", "fixture:lost:"+original.TurnID, original.TurnID, options)
++		if err != nil || again != receipt {
++			t.Fatalf("same-ID accepted reconciliation changed receipt: %+v %v", again, err)
++		}
++		transcript, err := client.ReadThread(ctx, thread)
++		if err != nil {
++			t.Fatal(err)
++		}
++		seen, originalSeen := 0, 0
++		for _, entry := range transcript.Entries {
++			if entry.ClientUserMessageID == "lost-original" {
++				originalSeen++
++				if entry.TurnID != original.TurnID || entry.Text != "Synthetic fixture request." || entry.TurnStatus != "failed" {
++					t.Fatalf("lost-reply recovery changed original failed history: %+v", entry)
++				}
++			}
++			if entry.ClientUserMessageID == "lost-stable" {
++				seen++
++				if entry.TurnID != acceptedTurn || entry.Text != "Synthetic visible continuation." {
++					t.Fatalf("lost receipt matched different input: %+v", entry)
++				}
++			}
++		}
++		if seen != 1 || originalSeen != 1 {
++			t.Fatalf("lost-reply native inputs: continuation=%d original=%d want=1 each", seen, originalSeen)
++		}
+ 		provider.mu.Lock()
+ 		count := len(provider.requests)
+ 		provider.mu.Unlock()
+@@ -661,6 +819,10 @@ func TestPinnedCodexFailedTurnRetryContract(t *testing.T) {
+ 	t.Run("native direct busy race compatibility", func(t *testing.T) {
+ 		thread := newThread(t, "default")
+ 		original := failed(t, thread, "capacity", "busy-original")
++		originalState, err := client.ReadTurnState(ctx, thread)
++		if err != nil || originalState.TerminalFailure == nil {
++			t.Fatal("original failed history unavailable", originalState, err)
++		}
+ 		provider.set("hold")
+ 		manualReady := make(chan SendReceipt, 1)
+ 		proxy := retryNativeProxy(t, ctx, fixture, func() {
+@@ -678,6 +840,10 @@ func TestPinnedCodexFailedTurnRetryContract(t *testing.T) {
+ 			case <-ctx.Done():
+ 				t.Error("native race task never reached provider")
+ 			}
++			active, err := client.ReadTurnState(ctx, thread)
++			if err != nil || active.Status != "active" || active.LatestTurnID != manual.TurnID || active.LatestTurnStatus != "inProgress" {
++				t.Errorf("native race did not establish the exact active manual turn: %+v %v", active, err)
++			}
+ 			manualReady <- manual
+ 		}, false)
+ 		candidate := NewWithOptions(proxy, ClientOptions{SubmissionLedgerPath: filepath.Join(fixture.root, "race-ledger.json")})
+@@ -694,16 +860,71 @@ func TestPinnedCodexFailedTurnRetryContract(t *testing.T) {
+ 		nativeRequests := len(provider.requests)
+ 		provider.mu.Unlock()
+ 		t.Logf("native-direct race: manual=%s continuation=%s result=%v latest=%s status=%s providerRequests=%d", manual.TurnID, receipt.TurnID, err, state.LatestTurnID, state.LatestTurnStatus, nativeRequests)
+-		if err == nil || receipt.TurnID != "" || readErr != nil || state.LatestTurnID != manual.TurnID || state.LatestTurnStatus != "inProgress" {
+-			t.Error("native-direct race compatibility gate: concurrent turn/start accepted or replaced active work; escalate to lead, managed safety still requires shared admission")
+-		}
+ 		provider.mu.Lock()
+ 		release := provider.hold
+ 		provider.mu.Unlock()
+ 		close(release)
+-		if state.LatestTurnID == manual.TurnID {
+-			retryNativeWait(t, ctx, client, thread, manual.TurnID, "completed")
++		// Pinned public turn/start implicitly steers into an active regular
++		// turn. This diagnostic records that unmanaged limitation; managed
++		// exclusion is proved separately through the shared admission fence.
++		if err != nil || manual.TurnID == "" || receipt.TurnID != manual.TurnID || readErr != nil || state.LatestTurnID != manual.TurnID || state.LatestTurnStatus != "inProgress" || nativeRequests != 1 {
++			t.Fatal("native-direct race changed pinned implicit-steering behavior; compatibility reassessment required")
++		}
++		finishCtx, finishCancel := context.WithTimeout(ctx, 5*time.Second)
++		defer finishCancel()
++		retryNativeWait(t, finishCtx, client, thread, manual.TurnID, "completed")
++		for {
++			transcript, err := client.ReadThread(finishCtx, thread)
++			if err != nil {
++				t.Fatal(err)
++			}
++			counts := map[string]int{}
++			for _, entry := range transcript.Entries {
++				wantText, wantTurn, wantStatus := "", manual.TurnID, "completed"
++				switch entry.ClientUserMessageID {
++				case "busy-manual":
++					wantText = "Concurrent native fixture task."
++				case "race-stable":
++					wantText = "Racing synthetic continuation."
++				case "busy-original":
++					wantText, wantTurn, wantStatus = "Synthetic fixture request.", original.TurnID, "failed"
++				default:
++					continue
++				}
++				counts[entry.ClientUserMessageID]++
++				if counts[entry.ClientUserMessageID] > 1 || entry.TurnID != wantTurn || entry.Text != wantText || entry.TurnStatus != wantStatus {
++					t.Fatalf("native-direct input duplicated, replaced or interrupted: %+v", entry)
++				}
++			}
++			if counts["busy-manual"] == 1 && counts["race-stable"] == 1 && counts["busy-original"] == 1 {
++				break
++			}
++			select {
++			case <-finishCtx.Done():
++				t.Fatalf("native-direct accepted inputs did not reach exact history: %v", counts)
++			case <-time.After(20 * time.Millisecond):
++			}
+ 		}
++		var history struct {
++			Data []struct {
++				ID     string `json:"id"`
++				Status string `json:"status"`
++				Error  *struct {
++					Code    string `json:"codexErrorInfo"`
++					Message string `json:"message"`
++				} `json:"error"`
++			} `json:"data"`
++		}
++		if err := client.Request(finishCtx, "thread/turns/list", map[string]any{"threadId": thread, "limit": 10, "sortDirection": "desc", "itemsView": "notLoaded"}, &history); err != nil {
++			t.Fatal(err)
++		}
++		if len(history.Data) != 2 || history.Data[0].ID != manual.TurnID || history.Data[0].Status != "completed" || history.Data[1].ID != original.TurnID || history.Data[1].Status != "failed" || history.Data[1].Error == nil || history.Data[1].Error.Code != originalState.TerminalFailure.Code || history.Data[1].Error.Message != originalState.TerminalFailure.Message {
++			t.Fatalf("native-direct race replaced a turn or changed original failed history: %+v", history)
++		}
++		provider.mu.Lock()
++		finalRequests := len(provider.requests)
++		provider.mu.Unlock()
++		t.Logf("native-direct pinned limitation verified: both input IDs once in completed turn=%s, original failed turn=%s preserved, providerRequests held=%d final=%d; managed safety requires the shared admission fence", manual.TurnID, original.TurnID, nativeRequests, finalRequests)
+ 	})
+ }
+ 
+diff --git a/docs/reference.md b/docs/reference.md
+index e86592f..6367faf 100644
+--- a/docs/reference.md
++++ b/docs/reference.md
+@@ -176,17 +176,23 @@ across restart and reconciliation. Missing proof keeps the task manual.
+ Submission uses the existing schema-3 ledger. An atomic prepared-to-submitting
+ claim grants only one cooperating same-ID caller permission to send. Uncertain
+ outcomes retain `UnknownSendOutcomeError` and can only reconcile the same ID;
+-absence from a history read does not authorize another submission. A preflight
++absence from a history read does not authorize another submission. Native
++acceptance can precede visibility in paginated history. A missing input during
++reconciliation keeps a submitting attempt uncertain. Reconciliation must keep
++the same immutable identity and must not issue a new submission. A preflight
+ that loses admission can leave a prepared attempt, which the owner may retire
+ with `DiscardPreparedSendWithOptions` after proving it was never submitted.
+ 
+-The per-client queue mutex serializes local sends and queue mutations. The
+-embedding application must additionally hold its shared admission fence across
+-the entire dispatch. The native `turn/start` protocol has no expected-turn
+-compare-and-start field: another native writer outside that fence can still
+-race the final observation. This library does not provide atomic exclusion
+-against such a writer. Continuation does not replay original input or tools,
+-and cannot guarantee exactly-once external effects from an interrupted task.
++The per-client queue mutex serializes local sends and queue mutations. Every
++managed writer must additionally hold the application's shared admission fence
++across the entire dispatch. The native `turn/start` protocol has no expected-turn
++compare-and-start field. In Codex 0.163.0, a direct `turn/start` can join an
++active regular turn and apply supplied settings overrides. `SendReceipt.Steered`
++describes the client's chosen RPC path; false does not prove that native
++declined implicit steering. This library provides no atomic exclusion or
++unchanged-settings guarantee against unmanaged direct native writers.
++Continuation does not replay original input or tools, and cannot guarantee
++exactly-once external effects from an interrupted task.
+ 
+ `ReadTurnContext(ctx, threadID, turnID)` supplies trusted Go callers with the
+ exact execution context from a native Codex 0.163.0 rollout. It verifies the

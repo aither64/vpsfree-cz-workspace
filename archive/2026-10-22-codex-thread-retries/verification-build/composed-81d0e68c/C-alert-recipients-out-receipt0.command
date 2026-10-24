@@ -1,0 +1,1 @@
+nix-store --add-root /home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/verification-build/composed-81d0e68c/roots/C-alert-recipients-out --indirect --realise /nix/store/bmi9g2kqza1w86c7csmwrf6jv1db3zgh-alert-recipients

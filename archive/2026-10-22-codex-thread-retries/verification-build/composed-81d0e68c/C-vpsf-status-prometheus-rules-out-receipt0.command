@@ -1,0 +1,1 @@
+nix-store --add-root /home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/verification-build/composed-81d0e68c/roots/C-vpsf-status-prometheus-rules-out --indirect --realise /nix/store/pjm7fsl4x24w92dbxa4fym09wd0vgvbl-vpsf-status-prometheus-rules

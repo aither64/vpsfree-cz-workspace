@@ -1,0 +1,1 @@
+nix-store --add-root /home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/verification-build/composed-81d0e68c/roots/C-alert-recipients-drv --indirect --realise /nix/store/83kzc5y4h5rfr1a5lxrr38ysm9p0qdc9-alert-recipients.drv

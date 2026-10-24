@@ -1,0 +1,9 @@
+host: require support for retained session retry policy
+
+Session retry preferences must survive package selection independently of
+legacy per-thread records. Refuse a candidate without the exact policy
+capability whenever any committed sidecar exists, including unreadable or
+malformed state. Preparation and activation use the same presence guard.
+
+Keep the deployed retry ledger schema unchanged. Policy payload validation
+belongs to Go; recovery retains the sidecars and selects compatible software.

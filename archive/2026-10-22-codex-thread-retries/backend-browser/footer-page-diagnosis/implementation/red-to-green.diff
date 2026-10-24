@@ -1,0 +1,29 @@
+--- baseline regression+old cursor
++++ final regression+valid cursor
+@@ -33,6 +33,8 @@
+ 	"unknown-and-confirmed", "terminal-dismissal", "footer-refresh", "optional-unavailable-manual",
+ }
+ 
++const retryBackendOlderCursor = "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
++
+ // Only display reads/events are adapted. All delivery, admission, policy,
+ // receipt and retry methods are inherited from the real managed client.
+ type retryBackendBrowserDisplay struct {
+@@ -61,7 +63,7 @@
+ 		last++
+ 	}
+ 	if cursor != "" {
+-		if cursor != "backend-older" {
++		if cursor != retryBackendOlderCursor {
+ 			return codex.TranscriptPage{}, errors.New("unexpected display cursor")
+ 		}
+ 		first, last = 11, 30
+@@ -72,7 +74,7 @@
+ 	}
+ 	p := codex.TranscriptPage{Transcript: codex.Transcript{ThreadID: thread, LatestTurnID: "display-task", Status: "idle", Model: "retained-model", ReasoningEffort: "xhigh", CollaborationMode: "default", Entries: entries}}
+ 	if cursor == "" {
+-		older := "backend-older"
++		older := retryBackendOlderCursor
+ 		p.OlderCursor, p.HasOlder = &older, true
+ 	}
+ 	return p, nil

@@ -1,0 +1,53 @@
+{
+  "commands": {
+    "go": [
+      "go",
+      "-C",
+      "portal",
+      "test",
+      "-mod=readonly",
+      "./internal/teamruntime",
+      "./cmd/workspace-portal",
+      "./internal/web",
+      "-run",
+      "^(TestPrepareDelete.*|TestTeamPrepareDelete.*|TestRequireIdleAll.*|TestRetryBackendBrowserFixtureConstruction)$",
+      "-count=1",
+      "-timeout=45s",
+      "-json"
+    ],
+    "ruby": [
+      "ruby",
+      "test/dev_session_test.rb",
+      "--name",
+      "/\\A(?:test_delete_moves_direct_team_roster_to_private_recovery|test_quiesce_refuses_a_busy_direct_team_member|test_force_delete_retires_busy_direct_member_after_non_force_retry|test_delete_preparation_refusal_precedes_root_quiescence|test_delete_keeps_retiring_journal_after_uncertain_tombstone_publication|test_remove_discovers_a_thread_whose_start_result_was_lost|test_remove_can_upgrade_a_non_force_retirement_retry_to_force|test_remove_rejects_recovery_storage_nested_in_tracking|test_remove_refuses_non_directory_state_root_before_recovery_setup|test_remove_rejects_recovery_storage_nested_in_the_creation_journal|test_direct_team_state_probe_allows_an_operator_managed_symlinked_parent|test_remove_force_rejects_recovery_storage_nested_in_a_worktree|test_remove_rejects_recovery_storage_nested_in_absent_cluster_state|test_remove_rejects_recovery_storage_nested_in_cluster_socket|test_remove_rejects_recovery_storage_nested_in_legacy_cluster_socket|test_remove_reconciles_an_archive_before_its_phase_update|test_remove_refuses_to_orphan_a_known_thread_when_runtime_is_unavailable|test_remove_retries_after_cluster_release_failure|test_remove_passes_its_exclusive_session_lock_to_cluster_reset|test_remove_preflights_legacy_identity_before_creating_a_journal|test_remove_rejects_a_renamed_authority_session_before_creating_a_journal|test_remove_resume_upgrades_a_legacy_identity_before_continuing|test_removal_journal_is_bound_to_the_portal_operation_identity|test_archive_journal_is_bound_to_the_portal_operation_identity|test_revive_journal_is_bound_to_the_portal_operation_identity)\\z/"
+    ]
+  },
+  "rubyNames": [
+    "test_delete_moves_direct_team_roster_to_private_recovery",
+    "test_quiesce_refuses_a_busy_direct_team_member",
+    "test_force_delete_retires_busy_direct_member_after_non_force_retry",
+    "test_delete_preparation_refusal_precedes_root_quiescence",
+    "test_delete_keeps_retiring_journal_after_uncertain_tombstone_publication",
+    "test_remove_discovers_a_thread_whose_start_result_was_lost",
+    "test_remove_can_upgrade_a_non_force_retirement_retry_to_force",
+    "test_remove_rejects_recovery_storage_nested_in_tracking",
+    "test_remove_refuses_non_directory_state_root_before_recovery_setup",
+    "test_remove_rejects_recovery_storage_nested_in_the_creation_journal",
+    "test_direct_team_state_probe_allows_an_operator_managed_symlinked_parent",
+    "test_remove_force_rejects_recovery_storage_nested_in_a_worktree",
+    "test_remove_rejects_recovery_storage_nested_in_absent_cluster_state",
+    "test_remove_rejects_recovery_storage_nested_in_cluster_socket",
+    "test_remove_rejects_recovery_storage_nested_in_legacy_cluster_socket",
+    "test_remove_reconciles_an_archive_before_its_phase_update",
+    "test_remove_refuses_to_orphan_a_known_thread_when_runtime_is_unavailable",
+    "test_remove_retries_after_cluster_release_failure",
+    "test_remove_passes_its_exclusive_session_lock_to_cluster_reset",
+    "test_remove_preflights_legacy_identity_before_creating_a_journal",
+    "test_remove_rejects_a_renamed_authority_session_before_creating_a_journal",
+    "test_remove_resume_upgrades_a_legacy_identity_before_continuing",
+    "test_removal_journal_is_bound_to_the_portal_operation_identity",
+    "test_archive_journal_is_bound_to_the_portal_operation_identity",
+    "test_revive_journal_is_bound_to_the_portal_operation_identity"
+  ],
+  "scope": "Focused normal disposable checks only; no actual browser/fork/pressure/live/native daemon/build/CI"
+}

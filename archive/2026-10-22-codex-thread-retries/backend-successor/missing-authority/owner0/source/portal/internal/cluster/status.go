@@ -1,0 +1,525 @@
+package cluster
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"net/url"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/aither64/dev-workspace/portal/internal/processgroup"
+	"github.com/aither64/dev-workspace/portal/internal/session"
+)
+
+type Link struct {
+	Label string `json:"label"`
+	URL   string `json:"url"`
+}
+
+type Command struct {
+	Label string `json:"label"`
+	Value string `json:"value"`
+}
+
+type Credential struct {
+	Label string `json:"label"`
+	Value string `json:"value"`
+}
+
+type Field struct {
+	Label  string `json:"label"`
+	Value  string `json:"value"`
+	Secret bool   `json:"secret"`
+}
+
+func (f *Field) UnmarshalJSON(data []byte) error {
+	var decoded struct {
+		Label  string `json:"label"`
+		Value  string `json:"value"`
+		Secret *bool  `json:"secret"`
+	}
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&decoded); err != nil {
+		return err
+	}
+	if err := decoder.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
+		return errors.New("trailing field data")
+	}
+	if decoded.Secret == nil {
+		return errors.New("missing secret flag")
+	}
+	*f = Field{Label: decoded.Label, Value: decoded.Value, Secret: *decoded.Secret}
+	return nil
+}
+
+type Account struct {
+	Label  string  `json:"label"`
+	Fields []Field `json:"fields"`
+}
+
+type Service struct {
+	Label    string    `json:"label"`
+	URL      string    `json:"url,omitempty"`
+	Accounts []Account `json:"accounts,omitempty"`
+}
+
+type Status struct {
+	Kind        string       `json:"kind"`
+	Label       string       `json:"label"`
+	State       string       `json:"state"`
+	Notice      string       `json:"notice,omitempty"`
+	Ready       bool         `json:"ready"`
+	Topology    string       `json:"topology,omitempty"`
+	Network     string       `json:"network,omitempty"`
+	Links       []Link       `json:"links,omitempty"`
+	Commands    []Command    `json:"commands,omitempty"`
+	Credentials []Credential `json:"credentials,omitempty"`
+	Services    []Service    `json:"services,omitempty"`
+	Actions     []string     `json:"actions,omitempty"`
+}
+
+func (s Status) HasPowerControls() bool { return s.Actions != nil }
+
+func (s Status) CanControl(action string) bool {
+	if s.Notice != "" || s.State == "changing" || s.State == "unavailable" {
+		return false
+	}
+	if s.Actions == nil {
+		return action == "release"
+	}
+	for _, available := range s.Actions {
+		if available == action {
+			return true
+		}
+	}
+	return false
+}
+
+// Provider metadata is validated at the wire boundary without changing the
+// portal's rendered Status interface.
+type helperResponse struct {
+	Schema      int                `json:"schema"`
+	Found       bool               `json:"found"`
+	WebUISource *helperWebUISource `json:"webuiSource"`
+	Maintenance *helperMaintenance `json:"maintenance"`
+	Status
+}
+
+type helperWebUISource struct {
+	Revision string `json:"revision"`
+	Dirty    *bool  `json:"dirty"`
+	Kind     string `json:"kind"`
+}
+
+type helperMaintenance struct {
+	Version int    `json:"version"`
+	Mode    string `json:"mode"`
+	Phase   string `json:"phase"`
+	Pending *bool  `json:"pending"`
+	Copied  *bool  `json:"copied"`
+	Active  *bool  `json:"active"`
+}
+
+type Runner struct {
+	Workspace string
+	Providers []Provider
+	Cache     *StatusCache
+}
+
+// StatusCache retains the last successful observation during a provider mutation.
+// It is private to one workspace runner and is never persisted.
+type StatusCache struct {
+	mu     sync.Mutex
+	values map[string]Status
+}
+
+func (c *StatusCache) forget(key string) {
+	if c == nil {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	delete(c.values, key)
+}
+
+func (c *StatusCache) observe(key string, status Status, found bool, notice string) Status {
+	if c == nil {
+		status.Notice = notice
+		return status
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.values == nil {
+		c.values = make(map[string]Status)
+	}
+	if notice != "" {
+		if previous, ok := c.values[key]; ok {
+			status = previous
+		}
+		status.Notice = notice
+	} else if found {
+		c.values[key] = status
+	} else {
+		delete(c.values, key)
+	}
+	return status
+}
+
+type Provider struct {
+	Name   string
+	Label  string
+	Helper string
+}
+
+func (r Runner) Inspect(slug string) ([]Status, error) {
+	return r.InspectContext(context.Background(), slug)
+}
+
+// InspectContext reads all provider statuses while respecting the caller's
+// deadline. Each provider also has its own five-second upper bound.
+func (r Runner) InspectContext(ctx context.Context, slug string) ([]Status, error) {
+	if !validSlug(slug) {
+		return nil, errors.New("invalid session slug")
+	}
+	type result struct {
+		status Status
+		found  bool
+		err    error
+	}
+	providers := r.Providers
+	results := make([]result, len(providers))
+	var wait sync.WaitGroup
+	wait.Add(len(providers))
+	for index, currentProvider := range providers {
+		go func(index int, currentProvider Provider) {
+			defer wait.Done()
+			results[index].status, results[index].found, results[index].err =
+				r.inspectProvider(ctx, currentProvider, slug)
+		}(index, currentProvider)
+	}
+	wait.Wait()
+	var statuses []Status
+	var problems []error
+	for index, provider := range providers {
+		result := results[index]
+		notice := result.status.Notice
+		if result.err != nil {
+			problems = append(problems, fmt.Errorf("inspect %s cluster: %w", provider.Name, result.err))
+			result.status = Status{Kind: provider.Name, Label: provider.Label, State: "unavailable"}
+			result.found = true
+			notice = "Status unavailable: " + result.err.Error()
+		}
+		result.status = r.Cache.observe(slug+"\x00"+provider.Name, result.status, result.found, notice)
+		if result.found {
+			statuses = append(statuses, result.status)
+		}
+	}
+	return statuses, errors.Join(problems...)
+}
+
+// MayExist avoids launching provider helpers for sessions without cluster
+// state. Unexpected filesystem errors and unsafe entries still return true so
+// Inspect can validate and report them through the provider-owned contract.
+func (r Runner) MayExist(slug string) bool {
+	if !validSlug(slug) {
+		return false
+	}
+	found := false
+	for _, provider := range r.Providers {
+		path := filepath.Join(r.Workspace, ".dev-clusters", provider.Name, "clusters", slug)
+		if _, err := os.Lstat(path); err == nil || !errors.Is(err, os.ErrNotExist) {
+			found = true
+		} else {
+			r.Cache.forget(slug + "\x00" + provider.Name)
+		}
+	}
+	return found
+}
+
+// ReleaseAll invokes every provider unconditionally. Each helper serializes
+// reset with starts for the same session, so this is also the archive barrier:
+// a cluster cannot appear between a one-time status snapshot and finalization.
+func (r Runner) ReleaseAll(ctx context.Context, slug string) error {
+	var problems []error
+	for _, provider := range r.Providers {
+		if err := r.releaseProvider(ctx, provider, slug); err != nil {
+			problems = append(problems, fmt.Errorf("release %s cluster: %w", provider.Label, err))
+		}
+	}
+	return errors.Join(problems...)
+}
+
+func (r Runner) Release(ctx context.Context, kind, slug string) error {
+	return r.Control(ctx, kind, slug, "release")
+}
+
+// Control uses fresh, uncached provider permissions. Helpers recheck native
+// state under their own lock and refuse overlapping portal mutations.
+func (r Runner) Control(ctx context.Context, kind, slug, action string) error {
+	if !validSlug(slug) {
+		return errors.New("invalid session slug")
+	}
+	if action != "start" && action != "stop" && action != "release" {
+		return errors.New("unknown development cluster action")
+	}
+	for _, provider := range r.Providers {
+		if provider.Name == kind {
+			status, found, err := r.inspectProvider(ctx, provider, slug)
+			if err != nil {
+				return err
+			}
+			if status.Notice != "" {
+				return errors.New("cluster is changing; wait for the current operation")
+			}
+			if (!found && action != "release") || (found && !status.CanControl(action)) {
+				return fmt.Errorf("cluster %s is unavailable in its current state", action)
+			}
+			args := []string{action, slug}
+			if action == "release" {
+				args[0] = "reset"
+			} else if action == "start" {
+				args = append(args, "--existing")
+			}
+			return r.runProvider(ctx, provider, slug, true, args...)
+		}
+	}
+	return errors.New("unknown development cluster")
+}
+
+func (r Runner) releaseProvider(ctx context.Context, provider Provider, slug string) error {
+	return r.runProvider(ctx, provider, slug, false, "reset", slug)
+}
+
+func (r Runner) runProvider(ctx context.Context, provider Provider, slug string, portalControl bool, args ...string) error {
+	if provider.Helper == "" || !filepath.IsAbs(provider.Helper) {
+		return errors.New("development cluster helper is unavailable")
+	}
+	command := exec.Command(provider.Helper, args...)
+	command.Env = append(os.Environ(), "DEVCLUSTER_WORKSPACE="+r.Workspace)
+	if portalControl {
+		command.Env = append(command.Env, "DEVCLUSTER_PORTAL_CONTROLS=1")
+	}
+	defer r.Cache.forget(slug + "\x00" + provider.Name)
+	output, err := processgroup.CombinedOutput(ctx, command)
+	if err != nil {
+		var exitError *exec.ExitError
+		if errors.As(err, &exitError) && exitError.ExitCode() == session.ClusterProvider().StatusBusyExitCode {
+			return errors.New("cluster is changing; wait for the current operation")
+		}
+		message := strings.TrimSpace(string(output))
+		if message == "" {
+			message = err.Error()
+		}
+		return errors.New(message)
+	}
+	return nil
+}
+
+func (r Runner) inspectProvider(parent context.Context, provider Provider, slug string) (Status, bool, error) {
+	if provider.Helper == "" {
+		return Status{}, false, nil
+	}
+	if !filepath.IsAbs(provider.Helper) {
+		return Status{}, false, errors.New("development cluster helper is not absolute")
+	}
+	ctx, cancel := context.WithTimeout(parent, 5*time.Second)
+	defer cancel()
+	command := exec.Command(provider.Helper, "status", slug, "--json")
+	command.Env = append(os.Environ(), "DEVCLUSTER_WORKSPACE="+r.Workspace, "DEVCLUSTER_PORTAL_CONTROLS=1")
+	output, err := processgroup.CombinedOutput(ctx, command)
+	if err != nil {
+		var exitError *exec.ExitError
+		if ctx.Err() == nil && errors.As(err, &exitError) && exitError.ExitCode() == session.ClusterProvider().StatusBusyExitCode {
+			return Status{Kind: provider.Name, Label: provider.Label, State: "changing", Notice: "Cluster is changing. Status will update when the operation finishes."}, true, nil
+		}
+		message := strings.TrimSpace(string(output))
+		if message == "" {
+			message = err.Error()
+		}
+		return Status{}, false, errors.New(message)
+	}
+	var response helperResponse
+	decoder := json.NewDecoder(bytes.NewReader(output))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&response); err != nil {
+		return Status{}, false, fmt.Errorf("decode helper status: %w", err)
+	}
+	if err := decoder.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
+		return Status{}, false, errors.New("development cluster helper returned trailing output")
+	}
+	if (response.Schema != 1 && response.Schema != 2) || response.Kind != provider.Name {
+		return Status{}, false, errors.New("development cluster helper returned an incompatible status")
+	}
+	if response.Label != "" || response.Notice != "" {
+		return Status{}, false, errors.New("development cluster helper returned an invalid status")
+	}
+	if err := response.validateMetadata(); err != nil {
+		return Status{}, false, fmt.Errorf("development cluster helper returned an invalid status: %w", err)
+	}
+	if !response.Found {
+		return Status{}, false, nil
+	}
+	if response.State != "running" && response.State != "stopped" && response.State != "stale" {
+		return Status{}, false, errors.New("development cluster helper returned an invalid status")
+	}
+	if err := validateStructuredStatus(response.Schema, response.Status); err != nil {
+		return Status{}, false, fmt.Errorf("development cluster helper returned an invalid status: %w", err)
+	}
+	if response.Schema == 1 {
+		response.Services = legacyServices(response.Links, response.Credentials)
+		response.Links = nil
+		response.Credentials = nil
+	}
+	response.Label = provider.Label
+	return response.Status, true, nil
+}
+
+func (response helperResponse) validateMetadata() error {
+	if response.Actions != nil {
+		if response.Schema != 2 || !response.Found {
+			return errors.New("actions require a found schema 2 cluster")
+		}
+		seen := make(map[string]bool)
+		for _, action := range response.Actions {
+			if seen[action] || (action != "start" && action != "stop" && action != "release") {
+				return errors.New("cluster actions are invalid")
+			}
+			seen[action] = true
+			if action == "start" && response.State != "stopped" ||
+				action == "stop" && response.State != "running" && response.State != "stale" {
+				return errors.New("cluster actions disagree with state")
+			}
+			if response.Maintenance != nil && response.Maintenance.Pending != nil &&
+				*response.Maintenance.Pending && action != "stop" {
+				return errors.New("cluster actions bypass pending maintenance")
+			}
+		}
+	}
+	if response.WebUISource == nil && response.Maintenance == nil {
+		return nil
+	}
+	if response.Schema != 2 || !response.Found {
+		return errors.New("metadata requires a found schema 2 cluster")
+	}
+	if source := response.WebUISource; source != nil {
+		if len(source.Revision) != 40 || strings.Trim(source.Revision, "0123456789abcdef") != "" ||
+			source.Dirty == nil || (source.Kind != "pinned" && source.Kind != "worktree") {
+			return errors.New("WebUI source metadata is invalid")
+		}
+	}
+	if maintenance := response.Maintenance; maintenance != nil {
+		if (maintenance.Version != 1 && maintenance.Version != 2) || maintenance.Mode != "maintenance" ||
+			maintenance.Pending == nil || maintenance.Copied == nil || maintenance.Active == nil {
+			return errors.New("maintenance metadata is invalid")
+		}
+		switch maintenance.Phase {
+		case "held", "maintenance_ready", "copying", "copied", "starting_copied", "released":
+		default:
+			return errors.New("maintenance phase is invalid")
+		}
+		released := maintenance.Phase == "released"
+		if *maintenance.Pending != !released || *maintenance.Active != released {
+			return errors.New("maintenance flags disagree with phase")
+		}
+		if *maintenance.Pending && (response.Ready || len(response.Services) != 0) {
+			return errors.New("pending maintenance contains readiness or services")
+		}
+	}
+	return nil
+}
+
+func validateStructuredStatus(schema int, status Status) error {
+	if schema == 1 && status.Services != nil {
+		return errors.New("schema 1 status contains services")
+	}
+	if schema == 2 && (status.Links != nil || status.Credentials != nil) {
+		return errors.New("schema 2 status contains legacy links or credentials")
+	}
+	if schema == 2 && status.Services == nil {
+		return errors.New("schema 2 status is missing services")
+	}
+	for _, command := range status.Commands {
+		if command.Label == "" || command.Value == "" {
+			return errors.New("command is incomplete")
+		}
+	}
+	for _, link := range status.Links {
+		if link.Label == "" || !safeServiceURL(link.URL) {
+			return errors.New("link is invalid")
+		}
+	}
+	for _, credential := range status.Credentials {
+		if credential.Label == "" || credential.Value == "" {
+			return errors.New("credential is incomplete")
+		}
+	}
+	for _, service := range status.Services {
+		if service.Label == "" ||
+			(service.URL == "" && len(service.Accounts) == 0) ||
+			(service.URL != "" && !safeServiceURL(service.URL)) {
+			return errors.New("service is invalid")
+		}
+		for _, account := range service.Accounts {
+			if account.Label == "" || len(account.Fields) == 0 {
+				return errors.New("service account is incomplete")
+			}
+			for _, field := range account.Fields {
+				if field.Label == "" || field.Value == "" {
+					return errors.New("service account field is incomplete")
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func safeServiceURL(value string) bool {
+	parsed, err := url.Parse(value)
+	return err == nil && (parsed.Scheme == "https" || parsed.Scheme == "http") &&
+		parsed.Host != "" && parsed.User == nil
+}
+
+func legacyServices(links []Link, credentials []Credential) []Service {
+	services := make([]Service, 0, len(links)+1)
+	for _, link := range links {
+		services = append(services, Service{Label: link.Label, URL: link.URL})
+	}
+	if len(credentials) == 0 {
+		return services
+	}
+	fields := make([]Field, 0, len(credentials))
+	for _, credential := range credentials {
+		fields = append(fields, Field{
+			Label: credential.Label, Value: credential.Value,
+			Secret: strings.Contains(strings.ToLower(credential.Label), "password"),
+		})
+	}
+	services = append(services, Service{
+		Label:    "Legacy credentials",
+		Accounts: []Account{{Label: "Credentials", Fields: fields}},
+	})
+	return services
+}
+
+func validSlug(value string) bool {
+	if value == "" {
+		return false
+	}
+	for index, character := range value {
+		if (character >= 'a' && character <= 'z') || (character >= 'A' && character <= 'Z') ||
+			(character >= '0' && character <= '9') || (index > 0 && (character == '_' || character == '-')) {
+			continue
+		}
+		return false
+	}
+	return true
+}

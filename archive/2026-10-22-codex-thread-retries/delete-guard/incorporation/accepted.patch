@@ -1,0 +1,1078 @@
+--- a/docs/dev-sessions.md
++++ b/docs/dev-sessions.md
+@@ -611,7 +611,17 @@
+ the deletion journal retryable. Non-forced deletion and strict completion archival
+ require every member to be idle. A forced deletion can also retire a member
+ whose thread was confirmed while member creation remained unfinished; a missing
+-thread identity still blocks deletion. If a non-forced attempt stops at an
++thread identity normally blocks deletion. During an unfinished direct-team
++creation, deletion can mark an unconfirmed, unbootstrapped member reservation as
++`removed` if its native start was attempted and both initial-request flags
++explicitly record that the request was neither attempted nor sent. The private
++recovery file `team.json` retains the project identity, start attempt, settings
++and removal time. The native outcome remains unknown: a thread may still appear.
++Deletion preserves the project and neither adopts nor initializes that thread.
++The deletion journal must durably reach `thread_retiring` before saving the
++removed record. An interrupted deletion resumes the same journal and preserves
++the removal time. Other missing identities still require resolution before
++deletion. If a non-forced attempt stops at an
+ active turn, rerunning it with `--force` records a one-way upgrade and resumes
+ the same journal. Forced deletion still requires the interactive `y/N`
+ confirmation:
+--- a/libexec/dev-session
++++ b/libexec/dev-session
+@@ -1948,6 +1948,28 @@
+ 	  @command_runner.with_timeout(THREAD_RETIRE_TIMEOUT) { team(slug, action:, lifecycle: true) }
+ 	end
+ 
++    # Only the ordinary deletion owner calls this while retaining lifecycle locks.
++    def prepare_team_delete!(slug, removal, check_only:)
++      return unless @portal_command && !@portal_command.empty? && direct_team_state_present?(slug)
++
++      tracking = removal.fetch('tracking') == 'work' ? portal_file(slug) : File.join(archive_dir(slug), PORTAL_MANIFEST)
++      manifest = load_portal_manifest(tracking, required: true, expected_slug: slug)
++      root = manifest.dig('codex', 'thread_id')
++      unless root.is_a?(String) && root.match?(/\A[0-9A-Za-z-]+\z/)
++        raise Error, "session has no valid lead Codex thread: #{slug}"
++      end
++      command = [*@portal_command, 'team', 'prepare-delete',
++                 '--user-state-root', @workspace_state_root, '--host-profile', @host_profile,
++                 '--workspace', workspace, '--session-slug', slug,
++                 '--root-thread-id', root, '--cwd', work_dir(slug),
++                 '--deletion-operation-id', removal.fetch('operation_id')]
++      command.concat(['--socket', @codex_socket]) if @codex_socket
++      command << '--check-only' if check_only
++      @command_runner.capture(command)
++    end
++
++    private :prepare_team_delete!
++
+ 	def direct_team_state_present?(slug)
+ 	  File.lstat(direct_team_state_path(slug))
+ 	  true
+@@ -2381,11 +2403,12 @@
+             advance_removal!(slug, removal, 'validated')
+           end
+           if removal_phase_before?(removal, 'thread_retiring')
++            prepare_team_delete!(slug, removal, check_only: true)
+             quiesced = quiesce_native_client!(slug, plan.session)
+-            sync_team_lifecycle!(slug, 'require-idle') unless removal.fetch('force')
+             advance_removal!(slug, removal, 'thread_retiring')
+           end
+           if removal_phase_before?(removal, 'thread_retired')
++            prepare_team_delete!(slug, removal, check_only: false)
+             sync_team_lifecycle!(slug, removal.fetch('force') ? 'retire' : 'archive')
+             retire_portal_thread!(slug, force: removal.fetch('force'))
+             retained_root = load_portal_manifest(portal_file(slug), required: false)&.dig('codex', 'thread_id')
+--- /dev/null
++++ b/portal/cmd/workspace-portal/deletion_test.go
+@@ -0,0 +1,225 @@
++package main
++
++import (
++	"context"
++	"encoding/json"
++	"fmt"
++	"os"
++	"os/exec"
++	"path/filepath"
++	"strings"
++	"sync"
++	"testing"
++	"time"
++
++	"github.com/aither64/dev-workspace/portal/internal/teamruntime"
++	"github.com/aither64/dev-workspace/portal/internal/userstate"
++	"github.com/coder/websocket"
++)
++
++func TestTeamPrepareDeleteRejectsUnboundFlags(t *testing.T) {
++	base := []string{"--user-state-root", t.TempDir(), "--workspace", t.TempDir(), "--session-slug", "one", "--root-thread-id", "root-one"}
++	for _, args := range [][]string{
++		append([]string{"prepare-delete"}, base...),
++		append(append([]string{"require-idle"}, base...), "--check-only"),
++		append(append([]string{"archive"}, base...), "--deletion-operation-id", strings.Repeat("a", 64)),
++	} {
++		if err := teamCommand(args); err == nil {
++			t.Fatal("unbound deletion flags passed")
++		}
++	}
++	args := append(append([]string{"prepare-delete"}, base...), "--deletion-operation-id", strings.Repeat("a", 64))
++	if err := teamCommand(args); err == nil || !strings.Contains(err.Error(), "live removal journal") {
++		t.Fatalf("missing deletion owner accepted: %v", err)
++	}
++}
++
++// The Ruby fixture executes the actual command in this already compiled test
++// binary. No build, live native daemon, model call or installed package is used.
++func TestTeamPrepareDeleteCommandProcess(t *testing.T) {
++	if os.Getenv("DEV_WORKSPACE_TEST_DELETE_COMMAND") != "1" {
++		return
++	}
++	for index, arg := range os.Args {
++		if arg == "--" {
++			if err := run(os.Args[index+1:]); err != nil {
++				fmt.Fprintln(os.Stderr, err)
++				os.Exit(1)
++			}
++			os.Exit(0)
++		}
++	}
++	os.Exit(2)
++}
++
++func TestTeamPrepareDeleteRubyOwnerOrderingAndPrivateTombstone(t *testing.T) {
++	ruby, err := exec.LookPath("ruby")
++	if err != nil {
++		t.Fatal("Ruby must come from the repository Nix shell")
++	}
++	workspace, state := t.TempDir(), t.TempDir()
++	home := t.TempDir()
++	slug, root := "2026-06-06-demo", "11111111-1111-7111-8111-111111111111"
++	known := "22222222-2222-7222-8222-222222222222"
++	project := "33333333-3333-7333-8333-333333333333"
++	unknownProject := "44444444-4444-7444-8444-444444444444"
++	cwd := filepath.Join(workspace, "work", slug)
++	store, err := teamruntime.NewStore(state, workspace)
++	if err != nil {
++		t.Fatal(err)
++	}
++	_, err = store.Update(context.Background(), slug, root, true, func(roster *teamruntime.Roster) error {
++		roster.Members = []teamruntime.Member{
++			{Address: "implementer0", Role: "implementer", Thread: known, Model: "gpt-6-sol", Effort: "high", ProjectID: project, CreateAttempted: true, BootstrapAttempted: true, State: "ready", AddedAt: time.Now().UTC()},
++			{Address: "reviewer0", Role: "reviewer", Model: "gpt-6-sol", Effort: "xhigh", ProjectID: unknownProject, CreateAttempted: true, State: "creating", AddedAt: time.Now().UTC()},
++		}
++		return nil
++	})
++	if err != nil {
++		t.Fatal(err)
++	}
++	var mu sync.Mutex
++	var methods []string
++	socket := threadCommandAppServer(t, func(connection *websocket.Conn) error {
++		defer connection.CloseNow()
++		if err := threadCommandHandshake(connection); err != nil {
++			return err
++		}
++		for {
++			request, err := threadCommandReadObject(connection)
++			if err != nil {
++				return nil
++			}
++			method, _ := request["method"].(string)
++			mu.Lock()
++			methods = append(methods, method)
++			mu.Unlock()
++			var result any
++			switch method {
++			case "thread/read":
++				params, _ := request["params"].(map[string]any)
++				if params["threadId"] != known {
++					return fmt.Errorf("unknown reservation was inspected/adopted: %#v", params)
++				}
++				result = map[string]any{"thread": map[string]any{"id": known, "cwd": cwd, "projectId": project, "source": "vscode", "path": nil, "status": map[string]any{"type": "idle"}, "turns": []any{}}}
++			case "thread/queue/list", "thread/loaded/list", "thread/turns/list":
++				result = map[string]any{"data": []any{}}
++			case "thread/goal/get":
++				result = map[string]any{"goal": nil}
++			default:
++				return fmt.Errorf("unexpected deletion preflight RPC: %s", method)
++			}
++			if err := threadCommandWriteObject(connection, map[string]any{"id": request["id"], "result": result}); err != nil {
++				return err
++			}
++		}
++	})
++	command, err := os.Executable()
++	if err != nil {
++		t.Fatal(err)
++	}
++	repository, err := filepath.Abs(filepath.Join("..", "..", ".."))
++	if err != nil {
++		t.Fatal(err)
++	}
++	// This fixture keeps root retirement synthetic and asserts all team state
++	// before acknowledging it. Prepare-delete itself crosses into the real Go
++	// command, including native idle proof for the confirmed member.
++	script := `
++require File.join(ARGV.fetch(0), 'test', 'dev_session', 'lifecycle_commands_test')
++repository, workspace, state, command, socket, home, root = ARGV
++ARGV.clear
++slug = '2026-06-06-demo'
++FileUtils.mkdir_p(File.join(workspace, 'worktrees'))
++wrapper = File.join(workspace, 'portal.rb')
++calls = File.join(workspace, 'delete-calls')
++File.write(wrapper, <<~RUBY)
++  require 'json'
++  require 'digest'
++  workspace = #{workspace.dump}
++  slug = #{slug.dump}
++  state = #{state.dump}
++  journal_path = File.join(workspace, 'worktrees', '.locks', slug + '.removal.json')
++  roster_path = File.join(state, 'codex-teams', File.basename(workspace) + '-' + Digest::SHA256.hexdigest(workspace)[0,16], slug + '.json')
++  exit 0 if ARGV[0,2] == ['uploads', 'remove-session']
++  journal = JSON.parse(File.read(journal_path))
++  if ARGV[0,2] == ['team', 'prepare-delete']
++    check = ARGV.include?('--check-only')
++    abort 'Ruby helper phase mismatch' unless journal.fetch('phase') == (check ? 'validated' : 'thread_retiring')
++    abort 'Ruby operation identity mismatch' unless ARGV.fetch(ARGV.index('--deletion-operation-id') + 1) == journal.fetch('operation_id')
++    File.open(#{calls.dump}, 'a') { |file| file.puts(check ? 'check validated' : 'apply thread_retiring') }
++    ENV['DEV_WORKSPACE_TEST_DELETE_COMMAND'] = '1'
++    ENV['DEV_WORKSPACE_CODEX_HOME'] = #{home.dump}
++    exec #{command.dump}, '-test.run=^TestTeamPrepareDeleteCommandProcess$', '--', *ARGV
++  end
++  roster = JSON.parse(File.read(roster_path))
++  unknown = roster.fetch('members').find { |member| member.fetch('address') == 'reviewer0' }
++  abort 'retirement ran before durable tombstone' unless journal.fetch('phase') == 'thread_retiring' && unknown.fetch('state') == 'removed' && unknown['removedAt'] && unknown.fetch('threadId') == ''
++  if ARGV[0,2] == ['team', 'archive']
++    File.open(#{calls.dump}, 'a') { |file| file.puts 'archive known' }
++    roster.fetch('members').find { |member| member.fetch('address') == 'implementer0' }['state'] = 'archived'
++    File.write(roster_path, JSON.generate(roster))
++  elsif ARGV[0,2] == ['thread', 'retire']
++    abort 'root retired before known member' unless roster.fetch('members').first.fetch('state') == 'archived'
++    File.open(#{calls.dump}, 'a') { |file| file.puts 'retire root' }
++  else
++    abort 'unexpected deletion action'
++  end
++RUBY
++fixture = DevSessionTest.new('fixture')
++runner = fixture.send(:runner_for, workspace, env: {
++  'DEV_WORKSPACES_STATE' => state,
++  DevSession::ENV_PORTAL_COMMAND => [RbConfig.ruby, wrapper].shelljoin,
++  DevSession::ENV_CODEX_SOCKET => socket
++})
++runner.ensure_tracking_files(slug)
++manifest = runner.send(:ensure_portal_manifest, slug)
++manifest['schema'] = 2
++manifest['codex'] = {'thread_id' => root}
++manifest['creation'] = {'state' => 'creating', 'initial_goal_attempted' => false, 'initial_goal_sent' => false}
++runner.send(:write_portal_manifest, slug, manifest)
++runner.define_singleton_method(:quiesce_native_client!) do |*|
++  journal = send(:load_removal_journal, slug)
++  raise 'quiesce phase mismatch' unless journal.fetch('phase') == 'validated'
++  File.open(calls, 'a') { |file| file.puts 'quiesce validated' }
++  nil
++end
++runner.delete(slug, as_is: true, force: false)
++STDOUT.flush
++exit! 0 # The Go test owns assertions; do not run imported Ruby fixture tests.
++`
++	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
++	defer cancel()
++	child := exec.CommandContext(ctx, ruby, "-e", script, repository, workspace, state, command, socket, home, root)
++	if output, err := child.CombinedOutput(); err != nil {
++		t.Fatalf("Ruby/Go deletion fixture: %v\n%s", err, output)
++	}
++	calls, err := os.ReadFile(filepath.Join(workspace, "delete-calls"))
++	if err != nil {
++		t.Fatal(err)
++	}
++	if string(calls) != "check validated\nquiesce validated\napply thread_retiring\narchive known\nretire root\n" {
++		t.Fatalf("wrong owner ordering: %s", calls)
++	}
++	paths, err := filepath.Glob(filepath.Join(userstate.WorkspaceDirectory(state, "removed", workspace), "*", "team.json"))
++	if err != nil || len(paths) != 1 {
++		t.Fatalf("private tombstone missing: %v %v", paths, err)
++	}
++	data, err := os.ReadFile(paths[0])
++	if err != nil {
++		t.Fatal(err)
++	}
++	var retained teamruntime.Roster
++	if err := json.Unmarshal(data, &retained); err != nil {
++		t.Fatal(err)
++	}
++	unknown := retained.Members[1]
++	if unknown.State != "removed" || unknown.RemovedAt == nil || unknown.ProjectID != unknownProject || !unknown.CreateAttempted || unknown.BootstrapAttempted || unknown.Thread != "" || unknown.Model != "gpt-6-sol" || unknown.Effort != "xhigh" {
++		t.Fatalf("private tombstone lost unknown identity/settings: %#v", unknown)
++	}
++	mu.Lock()
++	defer mu.Unlock()
++	if len(methods) == 0 {
++		t.Fatal("confirmed member never received native idle proof")
++	}
++}
+--- a/portal/cmd/workspace-portal/main.go
++++ b/portal/cmd/workspace-portal/main.go
+@@ -512,6 +512,8 @@
+ 	socket := flags.String("socket", codex.DefaultSocket(), "Codex App Server Unix socket")
+ 	codexHome := flags.String("codex-home", "", "host-selected Codex home")
+ 	retainedOnly := flags.Bool("retained-only", false, "complete only retained member archival")
++	deletionOperationID := flags.String("deletion-operation-id", "", "owning session deletion operation")
++	checkOnly := flags.Bool("check-only", false, "validate deletion preparation without publishing")
+ 	authorityDir := flags.String("authority-dir", "", "host-only runtime authority directory")
+ 	cwd := flags.String("cwd", "", "session working directory")
+ 	preset := flags.String("preset", "", "team preset")
+@@ -535,6 +537,12 @@
+ 	}
+ 	if *retainedOnly && command != "archive" {
+ 		return errors.New("--retained-only is only valid for team archive")
++	}
++	if command != "prepare-delete" && (*deletionOperationID != "" || *checkOnly) {
++		return errors.New("deletion preparation flags are only valid for team prepare-delete")
++	}
++	if command == "prepare-delete" && !regexp.MustCompile(`^[0-9a-f]{64}$`).MatchString(*deletionOperationID) {
++		return errors.New("team prepare-delete requires --deletion-operation-id")
+ 	}
+ 	store, err := teamruntime.NewStore(*stateRoot, *workspace)
+ 	if err != nil {
+@@ -671,6 +679,8 @@
+ 		result, err = service.Assign(ctx, *slug, *rootThread, *from, *to, *message, *model, *effort, *messageID)
+ 	case "require-idle":
+ 		err = service.RequireIdleAll(ctx, *slug, *rootThread)
++	case "prepare-delete":
++		err = service.PrepareDelete(ctx, *slug, *rootThread, *deletionOperationID, *checkOnly)
+ 	case "require-archive-ready":
+ 		if !canonicalAbsolutePath(client.CodexHome) || *codexHome != client.CodexHome ||
+ 			!canonicalAbsolutePath(*socket) || !canonicalAbsolutePath(*authorityDir) ||
+--- /dev/null
++++ b/portal/internal/teamruntime/deletion.go
+@@ -0,0 +1,218 @@
++package teamruntime
++
++import (
++	"bytes"
++	"context"
++	"crypto/sha256"
++	"encoding/json"
++	"errors"
++	"fmt"
++	"io"
++	"os"
++	"path/filepath"
++	"reflect"
++	"strings"
++	"syscall"
++	"time"
++
++	"github.com/aither64/dev-workspace/portal/internal/session"
++	"github.com/aither64/dev-workspace/portal/internal/userstate"
++	"gopkg.in/yaml.v3"
++)
++
++// PrepareDelete belongs only to the ordinary deletion owner, which keeps its
++// lifecycle, generation and session locks across both calls and retirement.
++// It abandons a managed reservation, without claiming its native start had no effect.
++func (service Service) PrepareDelete(ctx context.Context, slug, rootThreadID, operationID string, checkOnly bool) error {
++	if ctx == nil || service.Store == nil || service.Client == nil || !session.ValidSlug(slug) ||
++		rootThreadID == "" || !digestPattern.MatchString(operationID) {
++		return errors.New("invalid team deletion preparation")
++	}
++	return service.Store.withOperationLock(ctx, slug, func() error {
++		context, err := service.deleteContext(slug, rootThreadID, operationID, checkOnly)
++		if err != nil {
++			return err
++		}
++		roster, err := service.Store.Load(slug, rootThreadID)
++		if err != nil {
++			return err
++		}
++		candidates, err := deletionCandidates(roster, context.unstarted)
++		if err != nil {
++			return err
++		}
++		if !context.force {
++			cwd := filepath.Join(service.Store.workspace, "work", slug)
++			for _, member := range roster.Members {
++				if candidates[member.Address] {
++					continue
++				}
++				if err := service.requireIdleMember(ctx, member, cwd); err != nil {
++					return err
++				}
++			}
++		}
++		current, err := service.deleteContext(slug, rootThreadID, operationID, checkOnly)
++		if err != nil || current != context {
++			return errors.New("session deletion context changed during preparation")
++		}
++		if checkOnly || len(candidates) == 0 {
++			return nil
++		}
++		_, err = service.Store.Update(ctx, slug, rootThreadID, false, func(updated *Roster) error {
++			current, err := service.deleteContext(slug, rootThreadID, operationID, false)
++			if err != nil || current != context || !reflect.DeepEqual(updated, roster) {
++				return errors.New("session deletion context or roster changed before publication")
++			}
++			now := time.Now().UTC()
++			for index := range updated.Members {
++				member := &updated.Members[index]
++				if candidates[member.Address] {
++					member.State, member.RemovedAt = "removed", &now
++				}
++			}
++			return nil
++		})
++		return err
++	})
++}
++
++// Every member is validated before the first reservation can be changed.
++func deletionCandidates(roster *Roster, unstarted bool) (map[string]bool, error) {
++	candidates := make(map[string]bool)
++	for _, member := range roster.Members {
++		if member.Thread != "" {
++			continue
++		}
++		if !unstarted || roster.ForkSource != nil || !projectUUIDPattern.MatchString(member.ProjectID) ||
++			!member.CreateAttempted || member.BootstrapAttempted || member.RetireIntent != "" {
++			return nil, fmt.Errorf("member %s has no confirmed thread; resolve creation before deletion", member.Address)
++		}
++		switch member.State {
++		case "creating":
++			if member.RemovedAt != nil {
++				return nil, fmt.Errorf("member %s has a conflicting removal marker", member.Address)
++			}
++			candidates[member.Address] = true
++		case "removed":
++			if member.RemovedAt == nil || member.RemovedAt.IsZero() {
++				return nil, fmt.Errorf("member %s has no deletion tombstone time", member.Address)
++			}
++		default:
++			return nil, fmt.Errorf("member %s has no confirmed thread", member.Address)
++		}
++	}
++	return candidates, nil
++}
++
++type deletionContext struct {
++	journal, manifest [32]byte
++	force, unstarted  bool
++}
++
++// This is the deletion owner's schema-1 record, not the portal's presentation
++// projection. Inventory fields stay owned and validated by the Ruby owner.
++type deletionJournal struct {
++	Schema          int             `json:"schema"`
++	Slug            string          `json:"slug"`
++	Workspace       string          `json:"workspace"`
++	CreatedAt       string          `json:"created_at"`
++	OperationID     string          `json:"operation_id"`
++	State           string          `json:"state"`
++	Phase           string          `json:"phase"`
++	Force           *bool           `json:"force"`
++	Tracking        string          `json:"tracking"`
++	Recovery        string          `json:"recovery"`
++	GitTracked      *bool           `json:"git_tracked,omitempty"`
++	Worktrees       json.RawMessage `json:"worktrees,omitempty"`
++	WorktreesSealed *bool           `json:"worktrees_sealed,omitempty"`
++}
++
++func (service Service) deleteContext(slug, rootThreadID, operationID string, checkOnly bool) (deletionContext, error) {
++	workspace := service.Store.workspace
++	if operation, err := session.PendingLifecycle(workspace, slug); err != nil || operation != "delete" {
++		return deletionContext{}, errors.New("team deletion requires its live removal journal")
++	}
++	data, err := readDeletionFile(workspace, filepath.Join("worktrees", ".locks", slug+".removal.json"), 64*1024, true)
++	if err != nil {
++		return deletionContext{}, err
++	}
++	var journal deletionJournal
++	decoder := json.NewDecoder(bytes.NewReader(data))
++	decoder.DisallowUnknownFields()
++	if err := decoder.Decode(&journal); err != nil {
++		return deletionContext{}, fmt.Errorf("decode session deletion journal: %w", err)
++	}
++	phase := "thread_retiring"
++	if checkOnly {
++		phase = "validated"
++	}
++	_, timeErr := time.Parse(time.RFC3339Nano, journal.CreatedAt)
++	if decoder.Decode(new(any)) != io.EOF || journal.Schema != 1 || journal.Slug != slug ||
++		journal.Workspace != workspace || journal.OperationID != operationID || journal.Force == nil ||
++		journal.Phase != phase || journal.State != "prepared" || timeErr != nil ||
++		(journal.Tracking != "work" && journal.Tracking != "archive") ||
++		(journal.WorktreesSealed != nil && *journal.WorktreesSealed && len(journal.Worktrees) == 0) {
++		return deletionContext{}, errors.New("session deletion journal identity, phase or force is invalid")
++	}
++	recoveryRoot := userstate.WorkspaceDirectory(service.Store.stateRoot, "removed", workspace)
++	if filepath.Dir(journal.Recovery) != recoveryRoot || filepath.Clean(journal.Recovery) != journal.Recovery ||
++		!strings.Contains(filepath.Base(journal.Recovery), "-"+slug+"-") {
++		return deletionContext{}, errors.New("session deletion recovery identity is invalid")
++	}
++	info, err := os.Lstat(journal.Recovery)
++	if err != nil || !info.IsDir() || info.Mode().Perm() != 0o700 {
++		return deletionContext{}, errors.New("session deletion recovery directory is unavailable or unsafe")
++	}
++	owner, ok := info.Sys().(*syscall.Stat_t)
++	if !ok || owner.Uid != uint32(os.Geteuid()) {
++		return deletionContext{}, errors.New("session deletion recovery directory has the wrong owner")
++	}
++	summary, err := session.Find(workspace, slug)
++	if err != nil {
++		return deletionContext{}, fmt.Errorf("validate session deletion manifest: %w", err)
++	}
++	if summary.Root != journal.Tracking || summary.Manifest.Codex.ThreadID != rootThreadID {
++		return deletionContext{}, errors.New("session deletion manifest has the wrong retained root")
++	}
++	manifest, err := readDeletionFile(workspace, filepath.Join(summary.Root, slug, session.ManifestName), 1024*1024, false)
++	if err != nil {
++		return deletionContext{}, err
++	}
++	var presence struct {
++		Codex struct {
++			ThreadID string `yaml:"thread_id"`
++		} `yaml:"codex"`
++		Creation struct {
++			State     string `yaml:"state"`
++			Attempted *bool  `yaml:"initial_goal_attempted"`
++			Sent      *bool  `yaml:"initial_goal_sent"`
++		} `yaml:"creation"`
++	}
++	if err := yaml.Unmarshal(manifest, &presence); err != nil || presence.Codex.ThreadID != rootThreadID ||
++		presence.Creation.State != summary.Manifest.Creation.State ||
++		presence.Creation.Sent != nil && *presence.Creation.Sent != summary.Manifest.Creation.InitialGoalSent ||
++		!reflect.DeepEqual(presence.Creation.Attempted, summary.Manifest.Creation.InitialGoalAttempted) {
++		return deletionContext{}, errors.New("session deletion manifest changed during validation")
++	}
++	return deletionContext{journal: sha256.Sum256(data), manifest: sha256.Sum256(manifest), force: *journal.Force,
++		unstarted: !summary.Archived && summary.Manifest.ForkedFrom == "" && presence.Creation.State == "creating" && presence.Creation.Attempted != nil &&
++			!*presence.Creation.Attempted && presence.Creation.Sent != nil && !*presence.Creation.Sent}, nil
++}
++
++func readDeletionFile(workspace, relative string, limit int64, private bool) ([]byte, error) {
++	file, info, err := session.OpenRegularFile(workspace, relative)
++	if err != nil {
++		return nil, err
++	}
++	defer file.Close()
++	owner, ok := info.Sys().(*syscall.Stat_t)
++	if info.Size() > limit || private && (!ok || owner.Uid != uint32(os.Geteuid()) || info.Mode().Perm() != 0o600) {
++		return nil, errors.New("session deletion record is unsafe or exceeds bounds")
++	}
++	data, err := io.ReadAll(io.LimitReader(file, limit+1))
++	if err != nil || int64(len(data)) > limit {
++		return nil, errors.New("cannot read bounded session deletion record")
++	}
++	return data, nil
++}
+--- /dev/null
++++ b/portal/internal/teamruntime/deletion_test.go
+@@ -0,0 +1,366 @@
++package teamruntime
++
++import (
++	"context"
++	"encoding/json"
++	"errors"
++	"os"
++	"path/filepath"
++	"reflect"
++	"strings"
++	"testing"
++	"time"
++
++	"github.com/aither64/dev-workspace/portal/internal/userstate"
++)
++
++const deletionTestOperation = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
++
++type deletionFixture struct {
++	service           Service
++	client            *testClient
++	journal, manifest string
++	unknown           Member
++}
++
++func newDeletionFixture(t *testing.T) deletionFixture {
++	t.Helper()
++	service, client, _ := archivePreflightFixture(t, false)
++	client.lostStart = true
++	client.hideThreads = true // The attempted native start has no discoverable acknowledgement.
++	if _, err := service.Add(context.Background(), "one", "root-one", filepath.Join(service.Store.workspace, "work", "one"), nil, "reviewer", "gpt-6-sol", "high"); err == nil {
++		t.Fatal("fixture must retain an unknown start outcome")
++	}
++	client.hideThreads = false
++	roster, err := service.Store.Load("one", "root-one")
++	if err != nil {
++		t.Fatal(err)
++	}
++	unknown := roster.Members[len(roster.Members)-1]
++	if unknown.Thread != "" || !unknown.CreateAttempted || unknown.BootstrapAttempted {
++		t.Fatalf("unexpected unknown reservation: %#v", unknown)
++	}
++	workspace := service.Store.workspace
++	directory := filepath.Join(workspace, "work", "one")
++	if err := os.MkdirAll(directory, 0o755); err != nil {
++		t.Fatal(err)
++	}
++	manifest := filepath.Join(directory, "portal.yml")
++	for path, data := range map[string]string{
++		manifest:                             "schema: 2\nslug: one\nrepositories: []\nartifacts: []\ncodex:\n  thread_id: root-one\ncreation:\n  state: creating\n  initial_goal_attempted: false\n  initial_goal_sent: false\n",
++		filepath.Join(directory, "state.md"): "---\nlifecycle: active\n---\nState\n",
++		filepath.Join(directory, "plan.md"):  "Plan\n",
++	} {
++		if err := os.WriteFile(path, []byte(data), 0o644); err != nil {
++			t.Fatal(err)
++		}
++	}
++	recovery := filepath.Join(userstate.WorkspaceDirectory(service.Store.stateRoot, "removed", workspace), "20261024-one-1")
++	if err := os.MkdirAll(recovery, 0o700); err != nil {
++		t.Fatal(err)
++	}
++	journal := filepath.Join(workspace, "worktrees", ".locks", "one.removal.json")
++	if err := os.MkdirAll(filepath.Dir(journal), 0o700); err != nil {
++		t.Fatal(err)
++	}
++	data, _ := json.Marshal(map[string]any{"schema": 1, "slug": "one", "workspace": workspace,
++		"created_at": time.Now().UTC().Format(time.RFC3339Nano), "operation_id": deletionTestOperation,
++		"state": "prepared", "phase": "validated", "force": false, "tracking": "work", "recovery": recovery})
++	if err := os.WriteFile(journal, data, 0o600); err != nil {
++		t.Fatal(err)
++	}
++	return deletionFixture{service: service, client: client, journal: journal, manifest: manifest, unknown: unknown}
++}
++
++func (fixture deletionFixture) changeJournal(t *testing.T, change func(map[string]any)) {
++	t.Helper()
++	data, err := os.ReadFile(fixture.journal)
++	if err != nil {
++		t.Fatal(err)
++	}
++	var value map[string]any
++	if err := json.Unmarshal(data, &value); err != nil {
++		t.Fatal(err)
++	}
++	change(value)
++	data, err = json.Marshal(value)
++	if err != nil {
++		t.Fatal(err)
++	}
++	if err := os.WriteFile(fixture.journal, data, 0o600); err != nil {
++		t.Fatal(err)
++	}
++}
++
++func (fixture deletionFixture) changeRoster(t *testing.T, change func(*Roster)) {
++	t.Helper()
++	roster, err := fixture.service.Store.Load("one", "root-one")
++	if err != nil {
++		t.Fatal(err)
++	}
++	change(roster)
++	data, err := json.MarshalIndent(roster, "", "  ")
++	if err != nil {
++		t.Fatal(err)
++	}
++	if err := os.WriteFile(fixture.service.Store.path("one"), data, 0o600); err != nil {
++		t.Fatal(err)
++	}
++}
++
++func deletionRosterBytes(t *testing.T, fixture deletionFixture) []byte {
++	t.Helper()
++	data, err := os.ReadFile(fixture.service.Store.path("one"))
++	if err != nil {
++		t.Fatal(err)
++	}
++	return data
++}
++
++func TestPrepareDeletePreservesUnknownAndRetiresKnownWithoutNewStarts(t *testing.T) {
++	fixture := newDeletionFixture(t)
++	before := deletionRosterBytes(t, fixture)
++	starts, bootstraps, projects := len(fixture.client.starts), len(fixture.client.bootstrapCalls), fixture.client.projectCreates
++	if err := fixture.service.PrepareDelete(context.Background(), "one", "root-one", deletionTestOperation, true); err != nil {
++		t.Fatal(err)
++	}
++	if !reflect.DeepEqual(before, deletionRosterBytes(t, fixture)) {
++		t.Fatal("check-only changed the roster")
++	}
++	// Crash before publication: the durable phase alone has no roster effect.
++	fixture.changeJournal(t, func(value map[string]any) { value["phase"] = "thread_retiring" })
++	restarted := fixture.service
++	store, err := NewStore(fixture.service.Store.stateRoot, fixture.service.Store.workspace)
++	if err != nil {
++		t.Fatal(err)
++	}
++	restarted.Store = store
++	if err := restarted.PrepareDelete(context.Background(), "one", "root-one", deletionTestOperation, false); err != nil {
++		t.Fatal(err)
++	}
++	roster, err := store.Load("one", "root-one")
++	if err != nil {
++		t.Fatal(err)
++	}
++	removed := roster.Members[len(roster.Members)-1]
++	if removed.State != "removed" || removed.RemovedAt == nil {
++		t.Fatalf("reservation not tombstoned: %#v", removed)
++	}
++	retained := removed
++	retained.State, retained.RemovedAt = fixture.unknown.State, fixture.unknown.RemovedAt
++	if !reflect.DeepEqual(retained, fixture.unknown) {
++		t.Fatal("unknown project, attempts or settings changed")
++	}
++	// Crash after publication: replay under the same operation preserves bytes/time.
++	published := deletionRosterBytes(t, fixture)
++	if err := restarted.PrepareDelete(context.Background(), "one", "root-one", deletionTestOperation, false); err != nil {
++		t.Fatal(err)
++	}
++	if !reflect.DeepEqual(published, deletionRosterBytes(t, fixture)) {
++		t.Fatal("replay rewrote a tombstone")
++	}
++	if err := restarted.ArchiveAll(context.Background(), "one", "root-one"); err != nil {
++		t.Fatal(err)
++	}
++	if len(fixture.client.archives) != 1 || len(fixture.client.starts) != starts || len(fixture.client.bootstrapCalls) != bootstraps || fixture.client.projectCreates != projects || len(fixture.client.resumes) != 0 || len(fixture.client.deleted) != 0 {
++		t.Fatal("deletion created, resumed, bootstrapped or recycled a member")
++	}
++	for _, thread := range fixture.client.clearedThreads {
++		if thread == fixture.unknown.Thread {
++			t.Fatal("unknown submission state was cleared")
++		}
++	}
++}
++
++func TestPrepareDeleteRefusesInvalidContextWithoutPublication(t *testing.T) {
++	for _, failure := range []string{"missing journal", "operation", "root", "workspace", "schema", "phase", "missing force", "null force", "invalid force", "extra field", "unsafe journal", "wrong manifest root"} {
++		t.Run(failure, func(t *testing.T) {
++			fixture := newDeletionFixture(t)
++			operation, root := deletionTestOperation, "root-one"
++			switch failure {
++			case "missing journal":
++				if err := os.Remove(fixture.journal); err != nil {
++					t.Fatal(err)
++				}
++			case "operation":
++				operation = strings.Repeat("a", 64)
++			case "root":
++				root = "other-root"
++			case "unsafe journal":
++				if err := os.Chmod(fixture.journal, 0o644); err != nil {
++					t.Fatal(err)
++				}
++			case "wrong manifest root":
++				data, _ := os.ReadFile(fixture.manifest)
++				if err := os.WriteFile(fixture.manifest, []byte(strings.ReplaceAll(string(data), "root-one", "other-root")), 0o644); err != nil {
++					t.Fatal(err)
++				}
++			default:
++				fixture.changeJournal(t, func(value map[string]any) {
++					switch failure {
++					case "workspace":
++						value["workspace"] = "/other"
++					case "schema":
++						value["schema"] = 2
++					case "phase":
++						value["phase"] = "prepared"
++					case "missing force":
++						delete(value, "force")
++					case "null force":
++						value["force"] = nil
++					case "invalid force":
++						value["force"] = "false"
++					case "extra field":
++						value["approval"] = true
++					}
++				})
++			}
++			before := deletionRosterBytes(t, fixture)
++			if err := fixture.service.PrepareDelete(context.Background(), "one", root, operation, true); err == nil {
++				t.Fatal("invalid deletion context passed")
++			}
++			if !reflect.DeepEqual(before, deletionRosterBytes(t, fixture)) {
++				t.Fatal("refusal changed roster")
++			}
++		})
++	}
++	fixture := newDeletionFixture(t)
++	if err := fixture.service.PrepareDelete(context.Background(), "one", "root-one", deletionTestOperation, false); err == nil {
++		t.Fatal("validated journal authorized mutation")
++	}
++}
++
++func TestPrepareDeleteRefusesIneligibleReservationsAtomically(t *testing.T) {
++	for _, failure := range []string{"unattempted", "missing project", "legacy project", "bootstrap", "retirement", "fork", "manifest fork", "goal attempted", "goal sent", "attempt missing", "sent missing", "sent null", "second ineligible"} {
++		t.Run(failure, func(t *testing.T) {
++			fixture := newDeletionFixture(t)
++			fixture.changeJournal(t, func(value map[string]any) { value["phase"] = "thread_retiring" })
++			switch failure {
++			case "manifest fork", "goal attempted", "goal sent", "attempt missing", "sent missing", "sent null":
++				data, _ := os.ReadFile(fixture.manifest)
++				value := string(data)
++				switch failure {
++				case "manifest fork":
++					value += "forked_from: source\n"
++				case "goal attempted":
++					value = strings.ReplaceAll(value, "initial_goal_attempted: false", "initial_goal_attempted: true")
++				case "goal sent":
++					value = strings.ReplaceAll(value, "initial_goal_sent: false", "initial_goal_sent: true")
++				case "attempt missing":
++					value = strings.ReplaceAll(value, "  initial_goal_attempted: false\n", "")
++				case "sent missing":
++					value = strings.ReplaceAll(value, "  initial_goal_sent: false\n", "")
++				case "sent null":
++					value = strings.ReplaceAll(value, "initial_goal_sent: false", "initial_goal_sent: null")
++				}
++				if err := os.WriteFile(fixture.manifest, []byte(value), 0o644); err != nil {
++					t.Fatal(err)
++				}
++			default:
++				fixture.changeRoster(t, func(roster *Roster) {
++					member := &roster.Members[len(roster.Members)-1]
++					switch failure {
++					case "unattempted":
++						member.CreateAttempted = false
++					case "missing project":
++						member.ProjectID = ""
++					case "legacy project":
++						member.ProjectID = memberProjectKey(roster.Workspace, roster.Slug, roster.RootThreadID, member.Address)
++					case "bootstrap":
++						member.BootstrapAttempted = true
++					case "retirement":
++						member.RetireIntent = "remove"
++					case "fork":
++						roster.ForkSource = &ForkSourceSnapshot{Workspace: roster.Workspace, Slug: "source", RootThreadID: "source-root", Revision: 1, Digest: strings.Repeat("a", 64)}
++					case "second ineligible":
++						second := *member
++						second.Address, second.Index, second.CreateAttempted = "reviewer1", 1, false
++						roster.Members = append(roster.Members, second)
++					}
++				})
++			}
++			before := deletionRosterBytes(t, fixture)
++			if err := fixture.service.PrepareDelete(context.Background(), "one", "root-one", deletionTestOperation, false); err == nil {
++				t.Fatal("ineligible reservation passed")
++			}
++			if !reflect.DeepEqual(before, deletionRosterBytes(t, fixture)) {
++				t.Fatal("one candidate changed before another refused")
++			}
++		})
++	}
++}
++
++type deletionIdleHook struct {
++	*testClient
++	hook func()
++}
++
++func (client deletionIdleHook) RequireThreadIdle(ctx context.Context, thread, cwd string) error {
++	err := client.testClient.RequireThreadIdle(ctx, thread, cwd)
++	client.hook()
++	return err
++}
++
++func TestPrepareDeleteKeepsKnownIdleChecksAndRevalidatesForce(t *testing.T) {
++	fixture := newDeletionFixture(t)
++	fixture.client.idleError = errors.New("active turn")
++	if err := fixture.service.PrepareDelete(context.Background(), "one", "root-one", deletionTestOperation, true); err == nil {
++		t.Fatal("active known member passed non-force deletion")
++	}
++	fixture.changeJournal(t, func(value map[string]any) { value["force"] = true })
++	if err := fixture.service.PrepareDelete(context.Background(), "one", "root-one", deletionTestOperation, true); err != nil {
++		t.Fatalf("force lost its ordinary interruption route: %v", err)
++	}
++	fixture = newDeletionFixture(t)
++	fixture.changeJournal(t, func(value map[string]any) { value["phase"] = "thread_retiring" })
++	fixture.service.Client = deletionIdleHook{fixture.client, func() { fixture.changeJournal(t, func(value map[string]any) { value["force"] = true }) }}
++	before := deletionRosterBytes(t, fixture)
++	if err := fixture.service.PrepareDelete(context.Background(), "one", "root-one", deletionTestOperation, false); err == nil {
++		t.Fatal("changed force authorized publication")
++	}
++	if !reflect.DeepEqual(before, deletionRosterBytes(t, fixture)) {
++		t.Fatal("force change modified reservation")
++	}
++}
++
++func TestPrepareDeleteSaveFailureLeavesRetiringJournalAndReservation(t *testing.T) {
++	fixture := newDeletionFixture(t)
++	fixture.changeJournal(t, func(value map[string]any) { value["phase"] = "thread_retiring" })
++	fixture.changeRoster(t, func(roster *Roster) {
++		data, _ := json.MarshalIndent(roster, "", "  ")
++		member := &roster.Members[len(roster.Members)-1]
++		member.Model += strings.Repeat("m", maxRosterBytes-len(data)-2)
++	})
++	before := deletionRosterBytes(t, fixture)
++	if err := fixture.service.PrepareDelete(context.Background(), "one", "root-one", deletionTestOperation, false); err == nil || !strings.Contains(err.Error(), "exceeds") {
++		t.Fatalf("save bound was not exercised: %v", err)
++	}
++	if !reflect.DeepEqual(before, deletionRosterBytes(t, fixture)) {
++		t.Fatal("failed save changed reservation")
++	}
++	data, _ := os.ReadFile(fixture.journal)
++	if !strings.Contains(string(data), "thread_retiring") {
++		t.Fatal("failed publication lost its durable recovery owner")
++	}
++}
++
++func TestPrepareDeleteDoesNotRelaxOtherRetirementOrReuseProjectKeys(t *testing.T) {
++	for _, action := range []string{"archive", "remove", "retire"} {
++		fixture := newDeletionFixture(t)
++		var err error
++		switch action {
++		case "archive":
++			err = fixture.service.ArchiveAll(context.Background(), "one", "root-one")
++		case "remove":
++			err = fixture.service.Remove(context.Background(), "one", "root-one", fixture.unknown.Address)
++		case "retire":
++			err = fixture.service.RetireAll(context.Background(), "one", "root-one")
++		}
++		if err == nil {
++			t.Fatalf("ordinary %s accepted unknown reservation", action)
++		}
++	}
++	if memberProjectKey("/workspace", "one", "old-root", "reviewer0") == memberProjectKey("/workspace", "one", "new-root", "reviewer0") {
++		t.Fatal("fresh root reused old project key")
++	}
++}
+--- a/portal/internal/teamruntime/runtime.go
++++ b/portal/internal/teamruntime/runtime.go
+@@ -1721,28 +1721,35 @@
+ 	}
+ 	cwd := filepath.Join(service.Store.workspace, "work", slug)
+ 	for _, member := range roster.Members {
+-		if member.State == "archived" || member.State == "removed" {
+-			continue
+-		}
+-		if member.State != "ready" || member.Thread == "" {
+-			return fmt.Errorf("member %s has no confirmed idle thread", member.Address)
+-		}
+-		if member.RetireIntent != "" {
+-			return fmt.Errorf("member %s retirement is pending", member.Address)
+-		}
+-		archived, err := service.archivedMemberThread(ctx, member, cwd)
+-		if err != nil {
+-			return fmt.Errorf("inspect archived member %s: %w", member.Address, err)
+-		}
+-		if archived {
+-			if err := service.Client.RequireSubmissionAttemptsResolved(ctx, member.Thread); err != nil {
+-				return fmt.Errorf("member %s has unresolved submission attempts: %w", member.Address, err)
+-			}
+-			continue
+-		}
+-		if err := service.Client.RequireThreadIdle(ctx, member.Thread, cwd); err != nil {
+-			return fmt.Errorf("member %s is not idle: %w", member.Address, err)
+-		}
++		if err := service.requireIdleMember(ctx, member, cwd); err != nil {
++			return err
++		}
++	}
++	return nil
++}
++
++func (service Service) requireIdleMember(ctx context.Context, member Member, cwd string) error {
++	if member.State == "archived" || member.State == "removed" {
++		return nil
++	}
++	if member.State != "ready" || member.Thread == "" {
++		return fmt.Errorf("member %s has no confirmed idle thread", member.Address)
++	}
++	if member.RetireIntent != "" {
++		return fmt.Errorf("member %s retirement is pending", member.Address)
++	}
++	archived, err := service.archivedMemberThread(ctx, member, cwd)
++	if err != nil {
++		return fmt.Errorf("inspect archived member %s: %w", member.Address, err)
++	}
++	if archived {
++		if err := service.Client.RequireSubmissionAttemptsResolved(ctx, member.Thread); err != nil {
++			return fmt.Errorf("member %s has unresolved submission attempts: %w", member.Address, err)
++		}
++		return nil
++	}
++	if err := service.Client.RequireThreadIdle(ctx, member.Thread, cwd); err != nil {
++		return fmt.Errorf("member %s is not idle: %w", member.Address, err)
+ 	}
+ 	return nil
+ }
+--- a/test/dev_session/deletion_recovery_test.rb
++++ b/test/dev_session/deletion_recovery_test.rb
+@@ -51,9 +51,13 @@
+       calls = File.join(workspace, 'portal-calls')
+       portal = File.join(workspace, 'portal.rb')
+       File.write(portal, <<~RUBY)
++        require 'json'
+         exit 0 if ARGV[0, 2] == ['uploads', 'remove-session']
+         File.open(#{calls.dump}, 'a') { |file| file.puts ARGV[0, 2].join(' ') }
+-        abort 'member has an active turn' if ARGV[0, 2] == ['team', 'require-idle']
++        if ARGV[0, 2] == ['team', 'prepare-delete'] && ARGV.include?('--check-only')
++          journal = JSON.parse(File.read(File.join(#{workspace.dump}, 'worktrees', '.locks', #{slug.dump} + '.removal.json')))
++          abort 'member has an active turn' unless journal.fetch('force')
++        end
+         abort 'ordinary archive must stay idle-only' if ARGV[0, 2] == ['team', 'archive']
+         abort 'forced root retirement lacks --force' if ARGV[0, 2] == ['thread', 'retire'] && !ARGV.include?('--force')
+       RUBY
+@@ -72,8 +76,82 @@
+       assert_raises(DevSession::CommandError) { runner.delete(slug, as_is: true, force: false) }
+       runner.delete(slug, as_is: true, force: true)
+ 
+-      assert_equal(['team require-idle', 'team retire', 'thread retire'], File.readlines(calls, chomp: true))
++      assert_equal(['team prepare-delete', 'team prepare-delete', 'team prepare-delete', 'team retire', 'thread retire'], File.readlines(calls, chomp: true))
+       refute(File.exist?(File.join(workspace, 'work', slug)))
++    end
++  end
++
++  def test_delete_preparation_refusal_precedes_root_quiescence
++    with_workspace do |workspace|
++      slug = '2026-06-06-demo'
++      portal = File.join(workspace, 'portal.rb')
++      File.write(portal, <<~RUBY)
++        require 'json'
++        abort 'unexpected deletion action' unless ARGV[0, 2] == ['team', 'prepare-delete'] && ARGV.include?('--check-only')
++        journal = JSON.parse(File.read(File.join(#{workspace.dump}, 'worktrees', '.locks', #{slug.dump} + '.removal.json')))
++        abort 'wrong preflight phase' unless journal.fetch('phase') == 'validated'
++        abort 'unresolved reservation fixture'
++      RUBY
++      runner = runner_for(workspace, env: {
++        DevSession::ENV_PORTAL_COMMAND => [RbConfig.ruby, portal].shelljoin
++      })
++      runner.ensure_tracking_files(slug)
++      manifest = runner.send(:ensure_portal_manifest, slug)
++      manifest['codex'] = {'thread_id' => 'root-thread'}
++      runner.send(:write_portal_manifest, slug, manifest)
++      roster = runner.send(:direct_team_state_path, slug)
++      FileUtils.mkdir_p(File.dirname(roster), mode: 0o700)
++      File.write(roster, "team\n")
++      runner.define_singleton_method(:quiesce_native_client!) { |*| raise 'root quiesced before refusal' }
++
++      error = assert_raises(DevSession::CommandError) { runner.delete(slug, as_is: true, force: false) }
++      assert_includes(error.message, 'unresolved reservation fixture')
++      assert(File.exist?(File.join(workspace, 'work', slug)))
++      assert_equal("team\n", File.read(roster))
++    end
++  end
++
++  def test_delete_keeps_retiring_journal_after_uncertain_tombstone_publication
++    with_workspace do |workspace|
++      slug = '2026-06-06-demo'
++      portal = File.join(workspace, 'portal.rb')
++      calls = File.join(workspace, 'publication-calls')
++      File.write(portal, <<~RUBY)
++        require 'json'
++        exit 0 if ARGV[0, 2] == ['uploads', 'remove-session']
++        if ARGV[0, 2] == ['team', 'prepare-delete']
++          journal = JSON.parse(File.read(File.join(#{workspace.dump}, 'worktrees', '.locks', #{slug.dump} + '.removal.json')))
++          check = ARGV.include?('--check-only')
++          abort 'wrong helper phase' unless journal.fetch('phase') == (check ? 'validated' : 'thread_retiring')
++          unless check
++            File.open(#{calls.dump}, 'a') { |file| file.puts journal.fetch('operation_id') }
++            abort 'publication result unknown fixture'
++          end
++        else
++          abort 'retirement ran after uncertain publication'
++        end
++      RUBY
++      runner = runner_for(workspace, env: {
++        DevSession::ENV_PORTAL_COMMAND => [RbConfig.ruby, portal].shelljoin
++      })
++      runner.ensure_tracking_files(slug)
++      manifest = runner.send(:ensure_portal_manifest, slug)
++      manifest['codex'] = {'thread_id' => 'root-thread'}
++      runner.send(:write_portal_manifest, slug, manifest)
++      roster = runner.send(:direct_team_state_path, slug)
++      FileUtils.mkdir_p(File.dirname(roster), mode: 0o700)
++      File.write(roster, "team\n")
++
++      2.times do
++        error = assert_raises(DevSession::CommandError) { runner.delete(slug, as_is: true, force: false) }
++        assert_includes(error.message, 'publication result unknown fixture')
++        journal = runner.send(:load_removal_journal, slug)
++        assert_equal('thread_retiring', journal.fetch('phase'))
++        assert(File.directory?(journal.fetch('recovery')))
++      end
++      operations = File.readlines(calls, chomp: true)
++      assert_equal(2, operations.length)
++      assert_equal(1, operations.uniq.length)
+     end
+   end
+ 

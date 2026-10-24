@@ -1,0 +1,258 @@
+diff --git a/conversation/assets/conversation.js b/conversation/assets/conversation.js
+index f0ce1b5..001290f 100644
+--- a/conversation/assets/conversation.js
++++ b/conversation/assets/conversation.js
+@@ -8,8 +8,8 @@ import {refreshPolicy, createRefreshNotice} from "./refresh.js?v=1";
+ import {mountRetryControls} from "./retry.js?v=1";
+ export {mountRetryControls, retryStatusText} from "./retry.js?v=1";
+ export {mountRetryActivity, retryActivityPresentation} from "./retry_activity.js?v=1";
+-import {createAsyncQuestions} from "./questions.js?v=3";
+-export {createAsyncQuestions, asyncQuestionReply} from "./questions.js?v=3";
++import {createAsyncQuestions, bindQuestionAnswerKeyboard} from "./questions.js?v=4";
++export {createAsyncQuestions, asyncQuestionReply, bindQuestionAnswerKeyboard} from "./questions.js?v=4";
+ export {refreshPolicy, createRefreshNotice} from "./refresh.js?v=1";
+ 
+ const defaultLabels = {
+@@ -1151,6 +1151,7 @@ export function mountConversation(root, options) {
+             status.textContent = error.message;
+           }
+         });
++        bindQuestionAnswerKeyboard(answer, submit);
+         item.append(answer, submit);
+         if (Number(entry.autoResolutionAtMs) > 0) {
+           const snooze = createElement("button", {type: "button"}, "Snooze");
+diff --git a/conversation/assets/questions.js b/conversation/assets/questions.js
+index e15496e..ff63359 100644
+--- a/conversation/assets/questions.js
++++ b/conversation/assets/questions.js
+@@ -18,6 +18,21 @@ const terminal = status => ["completed", "failed", "interrupted", "error"].inclu
+ let nextViewId = 0;
+ const answerText = (choice, note) => [choice, note].map(value => String(value || "").trim()).filter(Boolean).join("\n\n");
+ 
++// Activate the owning action so keyboard answers retain its validation and
++// delivery rules. Composition and modified shortcuts keep their native behavior.
++export function bindQuestionAnswerKeyboard(input, submit) {
++  let composing = false;
++  input.addEventListener("compositionstart", () => { composing = true; });
++  input.addEventListener("compositionend", () => { composing = false; });
++  input.addEventListener("keydown", event => {
++    if (event.defaultPrevented || event.key !== "Enter" || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey ||
++        composing || event.isComposing || event.keyCode === 229) return;
++    event.preventDefault();
++    if (event.repeat || input.disabled || input.readOnly || input.hidden || submit.disabled || submit.hidden) return;
++    submit.click();
++  });
++}
++
+ // One owner for inline and pinned controls. The normal composer has its own draft
+ // and delivery records; question answers still use the ordinary message endpoint.
+ export function createAsyncQuestions({storage, namespace, send, acknowledge,
+@@ -209,6 +224,7 @@ export function createAsyncQuestions({storage, namespace, send, acknowledge,
+     root.append(title, actions, input, footer, status);
+     input.addEventListener("input", () => { updateDraft(draftFor(record).choice, input.value); });
+     submit.addEventListener("click", () => { record.pinnedAction = pinned; void sendAnswer(record.id, record.state.draft); });
++    bindQuestionAnswerKeyboard(input, submit);
+     retry.addEventListener("click", () => { record.pinnedAction = pinned; void sendAnswer(record.id, record.state.attempt?.answer); });
+     dismiss.addEventListener("click", () => { record.pinnedAction = pinned; record.state.dismissed = true; save(record); pins.delete(record.id); emit(); });
+     const view = {root, update: () => {
+diff --git a/conversation/prompt_response_test.go b/conversation/prompt_response_test.go
+index ab0cbaa..88743fe 100644
+--- a/conversation/prompt_response_test.go
++++ b/conversation/prompt_response_test.go
+@@ -8,6 +8,7 @@ import (
+ 	"fmt"
+ 	"log"
+ 	"net/http/httptest"
++	"reflect"
+ 	"testing"
+ 
+ 	"github.com/aither64/codex-web/codex"
+@@ -20,6 +21,38 @@ type boundPromptClient struct {
+ 	err      error
+ }
+ 
++func TestBoundPromptHTTPMultiQuestionAnswerContract(t *testing.T) {
++	for _, test := range []struct {
++		name, payload string
++		status        int
++	}{
++		{"complete with unanswered optional", `"answers":{"required":{"answers":["First","Details"]},"optional":{"answers":[]}}`, 200},
++		{"mixed action", `"answers":{"required":{"answers":["First"]}},"decision":"accept"`, 400},
++		{"malformed answer", `"answers":{"required":{"answers":"First"}}`, 400},
++	} {
++		t.Run(test.name, func(t *testing.T) {
++			client := &boundPromptClient{}
++			handler := &Handler{maxBodyBytes: defaultMaxBodyBytes, logger: log.New(&bytes.Buffer{}, "", 0)}
++			request := httptest.NewRequest("POST", "/respond", bytes.NewBufferString(`{"id":"questions","token":"same-offer",`+test.payload+`}`))
++			response := httptest.NewRecorder()
++			handler.respond(response, request, Target{Client: client, ThreadID: "trusted-thread", Capabilities: Capabilities{Respond: true}})
++			if response.Code != test.status {
++				t.Fatalf("response: %d %s", response.Code, response.Body)
++			}
++			if test.status != 200 {
++				if client.response.ID != "" {
++					t.Fatal("invalid answers reached responder")
++				}
++				return
++			}
++			expected := map[string]map[string][]string{"required": {"answers": {"First", "Details"}}, "optional": {"answers": {}}}
++			if client.thread != "trusted-thread" || client.response.Token != "same-offer" || !reflect.DeepEqual(client.response.Answers, expected) {
++				t.Fatalf("changed answer tuple: %#v", client)
++			}
++		})
++	}
++}
++
+ func (c *boundPromptClient) RespondPrompt(_ context.Context, thread string, response codex.PromptResponse) error {
+ 	c.thread, c.response = thread, response
+ 	return c.err
+diff --git a/docs/reference.md b/docs/reference.md
+index f99ce50..6674f2a 100644
+--- a/docs/reference.md
++++ b/docs/reference.md
+@@ -278,7 +278,10 @@ above the composer. Suggested options use compact radio lists. Unedited question
+ select the recommended option, or the first option when none is marked. Select
+ an option and optionally add text, or choose **Other** for a custom answer. **Send answer**
+ submits the selected label and text, separated by a blank line. Selecting an
+-option does not send it. **Dismiss** removes a question from the panel without
++option does not send it. Enter in an answer textarea activates its existing
++submit action; Shift+Enter inserts a newline. IME composition, other modified
++shortcuts and option controls retain their normal behavior. Holding Enter does
++not submit another answer. **Dismiss** removes a question from the panel without
+ sending a message. Turn completion and accepted ordinary follow-ups also clear
+ the panel. Unanswered questions remain answerable from the original message;
+ answered questions show the submitted answer. Drafts survive unpinning and
+@@ -312,6 +315,12 @@ Set `onPanelEmpty` to return focus to the embedding application's composer when
+ the last focused question disappears. The callback does not run when focus is
+ already elsewhere.
+ 
++Custom question textareas can use `bindQuestionAnswerKeyboard(input, submit)`
++with their owning submit button. The binding activates that button on plain
++Enter and preserves its validation and delivery path. The mounted pending-request
++JSON editor uses the same binding; JSON parsing and server answer validation
++still apply.
++
+ Pending prompts expose an opaque `token` for each offer. Send that token with
+ answers, decisions and snoozes through `RespondPrompt`; an expired offer returns
+ `PromptResponseError`. Its `NotSent` field distinguishes a rejected response
+diff --git a/test/conversation_browser_contract_test.cjs b/test/conversation_browser_contract_test.cjs
+index b3f39ea..6364692 100644
+--- a/test/conversation_browser_contract_test.cjs
++++ b/test/conversation_browser_contract_test.cjs
+@@ -579,6 +579,7 @@ class MemoryStorage {
+       }
+     }
+     addEventListener(name, listener) { this.listeners.set(name, listener); }
++    click() { if (!this.disabled) this.listeners.get("click")?.(); }
+     showModal() { this.open = true; }
+     close() { this.open = false; this.listeners.get("close")?.(); }
+     descendants() { return [this, ...this.children.flatMap((child) => child.descendants())]; }
+@@ -1275,6 +1276,25 @@ class MemoryStorage {
+     globalThis.setTimeout = pendingClockLater; globalThis.clearTimeout = pendingClockClear;
+   }
+ 
++  // The pending JSON editor uses the same action for Enter and button clicks.
++  const keyboardRoot = new FakeElement("main"), keyboardResponses = [];
++  let releaseKeyboard;
++  const disposeKeyboard = mountConversation(keyboardRoot,{id:"answer-keys",client:{
++    thread:async()=>({threadId:"answer-thread",status:"active",entries:[]}),
++    pending:async()=>[{id:"request",kind:"userInput",token:"exact-offer",questions:[{id:"required"},{id:"optional"}]}],
++    respond:(id,value)=>{keyboardResponses.push({id,value});return new Promise(resolve=>{releaseKeyboard=resolve;});},
++  },capabilities:{send:false,queueRead:false,queue:false,interrupt:false,settings:false,respond:true,eventStream:false}});
++  await new Promise(resolve=>setImmediate(resolve));
++  const answerJSON=keyboardRoot.descendants().find(node=>node.attributes["aria-label"]==="Answers as JSON");
++  const answerButton=keyboardRoot.descendants().find(node=>node.textContent==="Submit answers");
++  const answerKey=extra=>{let prevented=false;answerJSON.listeners.get("keydown")({key:"Enter",...extra,preventDefault(){prevented=true;}});return prevented;};
++  answerJSON.value="invalid json";assert.equal(answerKey(),true);assert.equal(keyboardResponses.length,0,"JSON validation still owns submission");
++  const completeAnswers={required:{answers:["Answer"]},optional:{answers:[]}};answerJSON.value=JSON.stringify(completeAnswers);
++  assert.equal(answerKey({shiftKey:true}),false);assert.equal(answerKey({repeat:true}),true);assert.equal(keyboardResponses.length,0);
++  answerKey();assert.deepEqual(keyboardResponses,[{id:"request",value:{token:"exact-offer",answers:completeAnswers}}]);
++  answerKey({repeat:true});assert.equal(keyboardResponses.length,1);releaseKeyboard();await new Promise(resolve=>setImmediate(resolve));
++  answerButton.click();assert.equal(keyboardResponses.length,2,"button path is unchanged");releaseKeyboard();await new Promise(resolve=>setImmediate(resolve));disposeKeyboard();
++
+   const timeoutRoot = new FakeElement("main");
+   const disposeTimeout = mountConversation(timeoutRoot,{id:"timeouts",client:{
+     thread:async()=>({threadId:"timeout-thread",status:"idle",entries:[]}),
+diff --git a/test/questions_browser_contract_test.cjs b/test/questions_browser_contract_test.cjs
+index 9c99513..21096c9 100644
+--- a/test/questions_browser_contract_test.cjs
++++ b/test/questions_browser_contract_test.cjs
+@@ -10,6 +10,78 @@ class Storage {
+   setItem(key, value) { this.values.set(key, value); }
+ }
+ 
++class QuestionElement extends EventTarget {
++  constructor(tag) { super(); this.tag=tag;this.children=[];this.dataset={};this.attributes={};this.value=""; }
++  setAttribute(name,value) { this.attributes[name]=String(value); }
++  removeAttribute(name) { delete this.attributes[name]; }
++  append(...nodes) { for(const node of nodes){node.remove();node.parentElement=this;this.children.push(node);} }
++  replaceChildren(...nodes) { for(const node of this.children)node.parentElement=null;this.children=[];this.append(...nodes); }
++  insertBefore(node,before) { node.remove();node.parentElement=this;const index=this.children.indexOf(before);this.children.splice(index<0?this.children.length:index,0,node); }
++  remove() { if(this.parentElement)this.parentElement.children=this.parentElement.children.filter(node=>node!==this);this.parentElement=null; }
++  contains(node) { return this===node || this.children.some(child=>child.contains(node)); }
++  closest(selector) { return this.className===selector.slice(1)?this:this.parentElement?.closest(selector); }
++  descendants() { return [this,...this.children.flatMap(node=>node.descendants())]; }
++  querySelector(selector) {
++    if(selector==='section:not([hidden]) .codex-question-title')return this.children.find(node=>node.tag==='section'&&!node.hidden)?.querySelector('.codex-question-title');
++    return this.descendants().find(node=>node.className===selector.slice(1));
++  }
++  focus() { globalThis.document.activeElement=this; }
++  click() { if(!this.disabled)this.dispatchEvent(new Event('click')); }
++}
++const key = (input,extra={}) => {
++  const event=new Event('keydown',{cancelable:true});Object.assign(event,{key:'Enter',...extra});input.dispatchEvent(event);return event;
++};
++const settled = async () => { for(let i=0;i<12;i++)await Promise.resolve(); };
++
++test('question textarea keys preserve composition, modified shortcuts, held keys and control guards',async()=>{
++  const {bindQuestionAnswerKeyboard}=await load();const input=new QuestionElement('textarea'),submit=new QuestionElement('button');let calls=0;
++  submit.addEventListener('click',()=>calls++);bindQuestionAnswerKeyboard(input,submit);
++  input.value='Selected answer';input.selectionStart=2;input.selectionEnd=8;
++  for(const extra of [{key:'a'},{shiftKey:true},{altKey:true},{ctrlKey:true},{metaKey:true},{isComposing:true},{keyCode:229}])assert.equal(key(input,extra).defaultPrevented,false);
++  input.dispatchEvent(new Event('compositionstart'));assert.equal(key(input).defaultPrevented,false);input.dispatchEvent(new Event('compositionend'));
++  assert.equal(calls,0);assert.equal(key(input,{repeat:true}).defaultPrevented,true);assert.equal(calls,0);
++  for(const [control,property] of [[input,'disabled'],[input,'readOnly'],[input,'hidden'],[submit,'disabled'],[submit,'hidden']]){
++    control[property]=true;key(input);assert.equal(calls,0);control[property]=false;
++  }
++  const prevented=new Event('keydown',{cancelable:true});Object.assign(prevented,{key:'Enter'});prevented.preventDefault();input.dispatchEvent(prevented);assert.equal(calls,0);
++  assert.equal(key(input).defaultPrevented,true);assert.equal(calls,1);assert.equal(input.value,'Selected answer');assert.equal(input.selectionStart,2);assert.equal(input.selectionEnd,8);
++  submit.click();assert.equal(calls,2,'mouse and keyboard share the owning action');
++});
++
++test('inline and pinned Enter submit the existing optional answer once, preserving other questions and unknown recovery',async t=>{
++  const originalDocument=globalThis.document;t.after(()=>{globalThis.document=originalDocument;});
++  globalThis.document={createElement:tag=>new QuestionElement(tag),body:new QuestionElement('body')};
++  const {createAsyncQuestions}=await load();
++  for(const pinned of [false,true]) {
++    let release;const sends=[];const source=agent('keyboard-'+pinned),container=new QuestionElement('aside');
++    const controller=createAsyncQuestions({storage:new Storage(),namespace:'keyboard',randomUUID:()=> 'original-uuid',onChange:()=>{if(pinned)controller.renderPinned(container);},send:value=>{sends.push(value);return new Promise(resolve=>{release=resolve;});}});
++    controller.update(snapshot([source]));
++    if(pinned)container.children[0].click();else container.append(controller.inline(source));
++    const first=container.descendants().find(node=>node.className==='codex-async-question'),input=first.descendants().find(node=>node.tag==='textarea');
++    const radio=first.descendants().find(node=>node.type==='radio');key(radio);assert.equal(sends.length,0,'radio Enter remains untouched');
++    input.value='Extra details';input.dispatchEvent(new Event('input'));assert.equal(key(input,{shiftKey:true}).defaultPrevented,false);assert.equal(sends.length,0);
++    key(input);key(input,{repeat:true});key(input);await settled();assert.equal(sends.length,1);assert.equal(sends[0].id,'original-uuid');assert.equal(sends[0].retry,false);
++    const reply=JSON.parse(sends[0].message.split('\n')[1])[0];assert.equal(reply.answer,'One\n\nExtra details');assert.equal(reply.questionItemId,source.questions[0].id);
++    assert.equal(controller.state(source.questions[1].id).answer,undefined,'optional questions are independently answerable');
++    release();await settled();assert.equal(controller.state(source.questions[0].id).answer,'One\n\nExtra details');assert.deepEqual(controller.pending(),[source.questions[1].id]);
++    const failedSource=agent('uncertain-'+pinned);let failures=0;const uncertain=createAsyncQuestions({storage:new Storage(),namespace:'unknown',randomUUID:()=> 'uncertain-uuid',send:async()=>{failures++;throw Error('Lost reply');}});
++    uncertain.update(snapshot([failedSource]));const failedView=uncertain.inline(failedSource);const failedInput=failedView.descendants().find(node=>node.tag==='textarea');
++    key(failedInput);await settled();assert.equal(failures,1);assert.equal(failedInput.disabled,true);key(failedInput);assert.equal(failures,1,'Enter never retries an uncertain original');
++    assert.equal(uncertain.state(failedSource.questions[0].id).attempt.id,'uncertain-uuid');
++  }
++});
++
++test('optional empty free text and denied sending remain unsent while a selected option remains answerable',async t=>{
++  const originalDocument=globalThis.document;t.after(()=>{globalThis.document=originalDocument;});globalThis.document={createElement:tag=>new QuestionElement(tag)};
++  const {createAsyncQuestions}=await load();let allowed=true;const sends=[];const source=agent('free');source.questions[0].options=[];
++  const controller=createAsyncQuestions({storage:new Storage(),namespace:'free',randomUUID:()=> 'free-uuid',canSend:()=>allowed,send:async value=>sends.push(value)});controller.update(snapshot([source]));
++  const view=controller.inline(source),inputs=view.descendants().filter(node=>node.tag==='textarea');
++  key(inputs[0]);await settled();assert.equal(sends.length,0,'blank optional free text cannot send');
++  allowed=false;controller.update(snapshot([source]));inputs[0].value='Answer';inputs[0].dispatchEvent(new Event('input'));key(inputs[0]);await settled();assert.equal(sends.length,0);
++  allowed=true;controller.update(snapshot([source]));key(inputs[1]);await settled();assert.equal(sends.length,1,'selected option with no note remains a valid answer');
++  assert.equal(controller.state(source.questions[0].id).answer,undefined);
++});
++
+ test("untouched drafts select the recommendation or first option without replacing saved answers", async () => {
+   const {createAsyncQuestions} = await load();
+   const cases = [

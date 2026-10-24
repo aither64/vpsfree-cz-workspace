@@ -1,0 +1,29 @@
+{
+  "argv": [
+    "nix",
+    "develop",
+    "--no-update-lock-file",
+    "--command",
+    "python3",
+    "-c",
+    "import subprocess; subprocess.run(['gofmt','-w','portal/internal/web/retry_backend_browser_test.go'],check=True); subprocess.run(['git','diff','--check'],check=True); subprocess.run(['node','--check','portal/internal/web/retry_backend_browser_test.cjs'],check=True); subprocess.run(['go','-C','portal','test','-mod=readonly','./internal/web','-run','^TestRetryBackendBrowserFixtureConstruction$','-count=1','-json','-timeout=20s'],check=True)"
+  ],
+  "exit": 0,
+  "elapsed": 18.978202326223254,
+  "passed": [
+    "TestRetryBackendBrowserFixtureConstruction",
+    "TestRetryBackendBrowserFixtureConstruction/manual-member",
+    "TestRetryBackendBrowserFixtureConstruction/manual-root",
+    "TestRetryBackendBrowserFixtureConstruction/retry-member",
+    "TestRetryBackendBrowserFixtureConstruction/retry-root",
+    "package"
+  ],
+  "missing": [],
+  "failed": [],
+  "skipped": [],
+  "scope": "gofmt/diff/Node syntax plus real Handler single policy POST200/revision/readback across retry/manual x root/member constructors; no browser",
+  "files": {
+    "portal/internal/web/retry_backend_browser_test.go": "330f93593f767012454d20969bb76d199faa6d3434e7bfb7b29d2f31091abe7b",
+    "portal/internal/web/retry_backend_browser_test.cjs": "db07b594a4cc8757ccb5cea850fc8e8343776cf7d23f1ca615bea67375d34be5"
+  }
+}

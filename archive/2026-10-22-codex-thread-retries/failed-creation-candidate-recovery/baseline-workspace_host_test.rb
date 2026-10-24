@@ -1,0 +1,12 @@
+# frozen_string_literal: true
+
+require_relative 'workspace_host/registry_extensions_test'
+require_relative 'workspace_host/services_registration_test'
+require_relative 'workspace_host/commands_and_locks_test'
+require_relative 'workspace_host/profile_transition_test'
+require_relative 'workspace_host/agent_team_registration_test'
+require_relative 'workspace_host/suspension_test'
+require_relative 'workspace_host/live_switch_test'
+require_relative 'workspace_host/archive_recovery_test'
+require_relative 'workspace_host/codex_provider_test'
+require_relative 'workspace_host/provider_sessions_test'

@@ -1,0 +1,14 @@
+diff --git a/portal/internal/web/retry_backend_browser_test.go b/portal/internal/web/retry_backend_browser_test.go
+index e5804b4b..7cdecd2e 100644
+--- a/portal/internal/web/retry_backend_browser_test.go
++++ b/portal/internal/web/retry_backend_browser_test.go
+@@ -269,8 +269,8 @@ func newRetryBackendNative(t *testing.T) (*Server, *planDeliveryClient, *retryBa
+ 	c.RetryPolicyResolver = func(context.Context, string) (codex.ThreadPolicy, error) { return codex.ThreadPolicy{}, nil }
+ 	managed := &planDeliveryClient{resolverRetryClient: &resolverRetryClient{c, cwd}, stateRoot: s.config.UserStateRoot, workspace: s.config.Workspace}
+ 	f := &planDeliveryFixture{s: s, client: managed}
+-	addPolicyMember(t, f)
+ 	s.config.Codex = managed
++	addPolicyMember(t, f)
+ 	if _, err := s.transactRetryPolicy(context.Background(), managed, "example", nil); err != nil {
+ 		t.Fatal(err)
+ 	}

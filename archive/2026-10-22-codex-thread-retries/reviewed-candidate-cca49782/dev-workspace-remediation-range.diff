@@ -1,0 +1,1835 @@
+1:  259fcd6 ! 1:  7262c24 turnretry: retain bounded retry policy and admission state
+    @@ portal/internal/turnretry/controller.go (new)
+     +import (
+     +	"context"
+     +	"errors"
+    ++	"os"
+     +	"time"
+     +
+     +	"github.com/aither64/codex-web/codex"
+    @@ portal/internal/turnretry/controller.go (new)
+     +	return 0
+     +}
+     +
+    -+func (c Controller) Step(ctx context.Context, scope Scope) error {
+    ++// ReconcileOnly recovers an existing exact intent without enrollment or
+    ++// execution. It may retire that intent's positively unsubmitted prepared
+    ++// ledger entry so ordinary admission can run again. It never calls Continue.
+    ++func (c Controller) ReconcileOnly(ctx context.Context, scope Scope) error {
+    ++	if _, err := c.Store.Load(scope); errors.Is(err, os.ErrNotExist) {
+    ++		return nil
+    ++	} else if err != nil {
+    ++		return err
+    ++	}
+     +	tx, err := c.Store.Lock(ctx, scope)
+     +	if err != nil {
+     +		return err
+     +	}
+     +	defer tx.Close()
+    ++	if err := c.checkBoundary(ctx, tx); err != nil {
+    ++		return err
+    ++	}
+    ++	if !tx.State.Uncertain() {
+    ++		return nil
+    ++	}
+    ++	_, err = c.reconcile(ctx, tx)
+    ++	return err
+    ++}
+    ++
+    ++func (c Controller) checkBoundary(ctx context.Context, tx *Transaction) error {
+     +	s := &tx.State
+    -+	boundary, err := c.Backend.Boundary(ctx, scope)
+    ++	boundary, err := c.Backend.Boundary(ctx, s.Scope)
+     +	if err != nil {
+     +		return err
+     +	}
+    @@ portal/internal/turnretry/controller.go (new)
+     +		}
+     +		return errors.New("retry session incarnation changed")
+     +	}
+    -+	// Reconcile before current-failure/policy checks: a receipt remains valid
+    -+	// after a newer user turn, opt-out, stop or generation recovery.
+    -+	if s.Uncertain() {
+    -+		p := *s.Pending
+    -+		receipt, found, reconcileErr := c.Backend.Reconcile(ctx, scope, p)
+    -+		if found && reconcileErr == nil {
+    -+			if err := s.Accepted(receipt.TurnID); err != nil {
+    -+				return err
+    -+			}
+    -+			return tx.Save()
+    ++	return nil
+    ++}
+    ++
+    ++// A false result means accepted, cancelled, or still uncertain: no fresh
+    ++// outbound attempt is permitted by this reconciliation pass.
+    ++func (c Controller) reconcile(ctx context.Context, tx *Transaction) (bool, error) {
+    ++	s := &tx.State
+    ++	p := *s.Pending
+    ++	receipt, found, err := c.Backend.Reconcile(ctx, s.Scope, p)
+    ++	if found && err == nil {
+    ++		if err := s.Accepted(receipt.TurnID, c.now()); err != nil {
+    ++			return false, err
+     +		}
+    -+		if reconcileErr != nil {
+    -+			s.Phase, s.Reason = "reconciling", "outcome_unknown"
+    -+			if err := tx.Save(); err != nil {
+    -+				return err
+    ++		return false, tx.Save()
+    ++	}
+    ++	if err == nil {
+    ++		var never bool
+    ++		never, err = c.Backend.NeverSubmitted(ctx, s.Scope, p)
+    ++		if err == nil && never {
+    ++			if s.Cancelled || !s.Enabled {
+    ++				s.Phase, s.Pending = "cancelled", nil
+     +			}
+    -+			return reconcileErr
+    ++			return s.Pending != nil, tx.Save()
+     +		}
+    -+		if s.Cancelled || !s.Enabled {
+    -+			never, err := c.Backend.NeverSubmitted(ctx, scope, p)
+    -+			if err != nil {
+    -+				return err
+    -+			}
+    -+			if !never {
+    -+				s.Phase, s.Reason = "reconciling", "outcome_unknown"
+    -+				return tx.Save()
+    -+			}
+    -+			s.Phase, s.Pending = "cancelled", nil
+    -+			return tx.Save()
+    ++	}
+    ++	s.Phase, s.Reason = "reconciling", "outcome_unknown"
+    ++	if saveErr := tx.Save(); saveErr != nil {
+    ++		return false, saveErr
+    ++	}
+    ++	if err == nil {
+    ++		err = errors.New("automatic submission requires reconciliation")
+    ++	}
+    ++	return false, err
+    ++}
+    ++
+    ++func (c Controller) Step(ctx context.Context, scope Scope) error {
+    ++	tx, err := c.Store.Lock(ctx, scope)
+    ++	if err != nil {
+    ++		return err
+    ++	}
+    ++	defer tx.Close()
+    ++	s := &tx.State
+    ++	if err := c.checkBoundary(ctx, tx); err != nil {
+    ++		return err
+    ++	}
+    ++	// Reconcile before current-failure/policy checks: a receipt remains valid
+    ++	// after a newer user turn, opt-out, stop or generation recovery.
+    ++	if s.Uncertain() {
+    ++		unsubmitted, err := c.reconcile(ctx, tx)
+    ++		if err != nil || !unsubmitted {
+    ++			return err
+     +		}
+    -+		// There was no possible outbound attempt in the native ledger. Reuse
+    -+		// exactly this persisted ID/options and its already charged slot.
+    ++		p := *s.Pending
+    ++		// Positive proof permits this same ID/options to be sent. Renew its
+    ++		// reservation at dispatch time; an old charge cannot cover a new call.
+     +		if err := c.Backend.Check(ctx, scope, p.Snapshot); err != nil {
+     +			s.Reason = "admission_held"
+     +			if saveErr := tx.Save(); saveErr != nil {
+    @@ portal/internal/turnretry/controller.go (new)
+     +			}
+     +			return err
+     +		}
+    -+		return c.dispatch(ctx, tx, p)
+    ++		if err := s.ReserveUnsubmitted(c.now()); err != nil {
+    ++			return err
+    ++		}
+    ++		if err := tx.Save(); err != nil {
+    ++			return err
+    ++		}
+    ++		if s.Pending == nil {
+    ++			return nil
+    ++		}
+    ++		return c.dispatch(ctx, tx, *s.Pending)
+     +	}
+     +	o, err := c.Backend.Observe(ctx, scope)
+     +	if err != nil {
+    @@ portal/internal/turnretry/controller.go (new)
+     +		}
+     +		return err
+     +	}
+    ++	unsubmitted, err := c.reconcile(ctx, tx)
+    ++	if err != nil || !unsubmitted {
+    ++		return err
+    ++	}
+     +	if err := s.Begin(c.now()); err != nil {
+     +		return err
+     +	}
+    @@ portal/internal/turnretry/controller.go (new)
+     +func (c Controller) dispatch(ctx context.Context, tx *Transaction, p Pending) error {
+     +	receipt, err := c.Backend.Continue(ctx, tx.State.Scope, p)
+     +	if err == nil {
+    -+		if err := tx.State.Accepted(receipt.TurnID); err != nil {
+    ++		if err := tx.State.Accepted(receipt.TurnID, c.now()); err != nil {
+     +			return err
+     +		}
+     +		return tx.Save()
+    @@ portal/internal/turnretry/controller_test.go (new)
+     +	if f.accepted != "" {
+     +		return codex.SendReceipt{TurnID: f.accepted}, true, nil
+     +	}
+    -+	if f.unknown {
+    ++	if f.unknown && f.sends > 0 {
+     +		return codex.SendReceipt{}, false, &codex.UnknownSendOutcomeError{Err: errors.New("lost response")}
+     +	}
+     +	return codex.SendReceipt{}, false, nil
+    @@ portal/internal/turnretry/controller_test.go (new)
+     +	if err := c.Step(context.Background(), scope); err == nil {
+     +		t.Fatal("incarnation replacement admitted")
+     +	}
+    ++}
+    +
+    + ## portal/internal/turnretry/recovery_test.go (new) ##
+    +@@
+    ++package turnretry
+    ++
+    ++import (
+    ++	"context"
+    ++	"encoding/json"
+    ++	"fmt"
+    ++	"os"
+    ++	"testing"
+    ++	"time"
+    ++
+    ++	"github.com/aither64/codex-web/codex"
+    ++)
+    ++
+    ++func savedUnsubmitted(t *testing.T, c Controller, now time.Time) Pending {
+    ++	t.Helper()
+    ++	tx, err := c.Store.Lock(context.Background(), fixtureScope())
+    ++	if err != nil {
+    ++		t.Fatal(err)
+    ++	}
+    ++	defer tx.Close()
+    ++	tx.State.Boundary = "incarnation"
+    ++	tx.State.Enroll(Observation{})
+    ++	tx.State.AddSnapshot(proof("failed"))
+    ++	if err := tx.State.Observe(Observation{"failed", "failed", "cyberPolicy"}, now, 0); err != nil {
+    ++		t.Fatal(err)
+    ++	}
+    ++	if err := tx.State.Begin(now); err != nil {
+    ++		t.Fatal(err)
+    ++	}
+    ++	if err := tx.Save(); err != nil {
+    ++		t.Fatal(err)
+    ++	}
+    ++	return *tx.State.Pending
+    ++}
+    ++
+    ++func TestControllerDelayedUnsubmittedCyberReservation(t *testing.T) {
+    ++	for _, delay := range []time.Duration{299 * time.Second, 301 * time.Second} {
+    ++		t.Run(delay.String(), func(t *testing.T) {
+    ++			c, b, now := controllerFixture(t)
+    ++			p := savedUnsubmitted(t, c, *now)
+    ++			*now = now.Add(delay)
+    ++			b.o = Observation{"failed", "failed", "cyberPolicy"}
+    ++			if err := c.ReconcileOnly(context.Background(), fixtureScope()); err != nil {
+    ++				t.Fatal(err)
+    ++			}
+    ++			if b.sends != 0 {
+    ++				t.Fatal("reconciliation dispatched")
+    ++			}
+    ++			if err := c.Step(context.Background(), fixtureScope()); err != nil {
+    ++				t.Fatal(err)
+    ++			}
+    ++			s, err := c.Store.Load(fixtureScope())
+    ++			if err != nil {
+    ++				t.Fatal(err)
+    ++			}
+    ++			if b.sends != 1 || s.Pending.ID != p.ID || s.Attempt != 1 || s.Cyber[0].AtMS != now.UnixMilli() {
+    ++				t.Fatal("stale reservation reused", s)
+    ++			}
+    ++			// Twenty-nine subsequent possible sends fit; a thirtieth must not.
+    ++			for i := 0; i < 30; i++ {
+    ++				tx, err := c.Store.Lock(context.Background(), fixtureScope())
+    ++				if err != nil {
+    ++					t.Fatal(err)
+    ++				}
+    ++				tx.State.Pending = nil
+    ++				tx.State.Phase = "idle"
+    ++				turn := fmt.Sprintf("next-%d", i)
+    ++				tx.State.AddSnapshot(proof(turn))
+    ++				if err := tx.State.Observe(Observation{turn, "failed", "cyberPolicy"}, *now, 0); err != nil {
+    ++					t.Fatal(err)
+    ++				}
+    ++				if err := tx.State.Begin(*now); err != nil && i < 29 {
+    ++					t.Fatal(err)
+    ++				}
+    ++				if i == 29 && (tx.State.Pending != nil || tx.State.Phase != "exhausted") {
+    ++					t.Fatal("31st possible send admitted")
+    ++				}
+    ++				if err := tx.Save(); err != nil {
+    ++					t.Fatal(err)
+    ++				}
+    ++				tx.Close()
+    ++			}
+    ++		})
+    ++	}
+    ++}
+    ++
+    ++func TestControllerUnsubmittedReservationCountsOtherIDsAndClock(t *testing.T) {
+    ++	for _, others := range []int{29, 30} {
+    ++		t.Run(fmt.Sprint(others), func(t *testing.T) {
+    ++			c, b, now := controllerFixture(t)
+    ++			p := savedUnsubmitted(t, c, *now)
+    ++			*now = now.Add(301 * time.Second)
+    ++			tx, _ := c.Store.Lock(context.Background(), fixtureScope())
+    ++			for i := 0; i < others; i++ {
+    ++				id, _ := NewID()
+    ++				tx.State.Cyber = append(tx.State.Cyber, Charge{ID: id, AtMS: now.UnixMilli()})
+    ++			}
+    ++			if err := tx.Save(); err != nil {
+    ++				t.Fatal(err)
+    ++			}
+    ++			tx.Close()
+    ++			b.o = Observation{"failed", "failed", "cyberPolicy"}
+    ++			if err := c.Step(context.Background(), fixtureScope()); err != nil {
+    ++				t.Fatal(err)
+    ++			}
+    ++			s, _ := c.Store.Load(fixtureScope())
+    ++			if b.sends != 30-others || s.CyberUsed(now.UnixMilli()) != 30 {
+    ++				t.Fatal("other reservations were removed", s)
+    ++			}
+    ++			if others == 29 && s.Pending.ID != p.ID {
+    ++				t.Fatal("replacement UUID")
+    ++			}
+    ++			if others == 30 && s.Phase != "exhausted" {
+    ++				t.Fatal("quota not exhausted")
+    ++			}
+    ++			if others == 30 {
+    ++				*now = now.Add(time.Hour)
+    ++				if err := c.Step(context.Background(), fixtureScope()); err != nil {
+    ++					t.Fatal(err)
+    ++				}
+    ++				if b.sends != 0 {
+    ++					t.Fatal("timer rearmed exhaustion")
+    ++				}
+    ++			}
+    ++		})
+    ++	}
+    ++	// Equal timestamps carry distinct identities; renewing one leaves the other.
+    ++	c, _, now := controllerFixture(t)
+    ++	p := savedUnsubmitted(t, c, *now)
+    ++	tx, _ := c.Store.Lock(context.Background(), fixtureScope())
+    ++	other, _ := NewID()
+    ++	tx.State.Cyber = append(tx.State.Cyber, Charge{ID: other, AtMS: p.ChargedAtMS})
+    ++	if err := tx.State.ReserveUnsubmitted(now.Add(-time.Minute)); err != nil {
+    ++		t.Fatal(err)
+    ++	}
+    ++	if len(tx.State.Cyber) != 2 || tx.State.Cyber[0].ID != other || tx.State.Pending.ChargedAtMS != p.ChargedAtMS {
+    ++		t.Fatal("equal timestamp charge removed or backwards time accepted")
+    ++	}
+    ++	tx.Close()
+    ++}
+    ++
+    ++func TestControllerDelayedUnknownAcceptanceReanchorsOnceWithoutResend(t *testing.T) {
+    ++	c, b, now := controllerFixture(t)
+    ++	p := savedUnsubmitted(t, c, *now)
+    ++	b.sends = 1
+    ++	b.unknown = true
+    ++	b.never = false
+    ++	*now = now.Add(301 * time.Second)
+    ++	if err := c.ReconcileOnly(context.Background(), fixtureScope()); err == nil {
+    ++		t.Fatal("unknown outcome released")
+    ++	}
+    ++	s, _ := c.Store.Load(fixtureScope())
+    ++	if s.Cyber[0].AtMS != p.ChargedAtMS || b.sends != 1 {
+    ++		t.Fatal("unknown was recharged or resent")
+    ++	}
+    ++	b.accepted = "accepted"
+    ++	b.unknown = false
+    ++	if err := c.ReconcileOnly(context.Background(), fixtureScope()); err != nil {
+    ++		t.Fatal(err)
+    ++	}
+    ++	s, _ = c.Store.Load(fixtureScope())
+    ++	at := s.Cyber[0].AtMS
+    ++	if at != now.UnixMilli() || !s.Cyber[0].Accepted || s.Pending.ID != p.ID {
+    ++		t.Fatal("delayed acceptance expired too soon")
+    ++	}
+    ++	tx, _ := c.Store.Lock(context.Background(), fixtureScope())
+    ++	tx.State.Phase = "reconciling"
+    ++	tx.State.Pending.ResultTurn = ""
+    ++	if err := tx.Save(); err != nil {
+    ++		t.Fatal(err)
+    ++	}
+    ++	tx.Close()
+    ++	*now = now.Add(time.Minute)
+    ++	if err := c.ReconcileOnly(context.Background(), fixtureScope()); err != nil {
+    ++		t.Fatal(err)
+    ++	}
+    ++	s, _ = c.Store.Load(fixtureScope())
+    ++	if s.Cyber[0].AtMS != at || len(s.Cyber) != 1 || b.sends != 1 {
+    ++		t.Fatal("duplicate receipt changed charge")
+    ++	}
+    ++}
+    ++
+    ++func TestRetryFinalSchemaRejectsPreliminaryShapes(t *testing.T) {
+    ++	c, _, now := controllerFixture(t)
+    ++	savedUnsubmitted(t, c, *now)
+    ++	s, _ := c.Store.Load(fixtureScope())
+    ++	data, _ := json.Marshal(s)
+    ++	for name, change := range map[string]func(map[string]any){
+    ++		"missing epoch":          func(v map[string]any) { delete(v, "epoch") },
+    ++		"anonymous quota":        func(v map[string]any) { v["cyber"] = []any{float64(now.UnixMilli())} },
+    ++		"duplicate charge":       func(v map[string]any) { v["cyber"] = append(v["cyber"].([]any), v["cyber"].([]any)[0]) },
+    ++		"missing snapshot epoch": func(v map[string]any) { delete(v["snapshots"].([]any)[0].(map[string]any), "epoch") },
+    ++		"wrong pending charge":   func(v map[string]any) { v["pending"].(map[string]any)["chargedAtMs"] = float64(1) },
+    ++	} {
+    ++		t.Run(name, func(t *testing.T) {
+    ++			var raw map[string]any
+    ++			_ = json.Unmarshal(data, &raw)
+    ++			change(raw)
+    ++			bad, _ := json.Marshal(raw)
+    ++			if err := os.WriteFile(c.Store.path(fixtureScope()), bad, 0600); err != nil {
+    ++				t.Fatal(err)
+    ++			}
+    ++			if _, err := c.Store.Load(fixtureScope()); err == nil {
+    ++				t.Fatal("preliminary state accepted")
+    ++			}
+    ++		})
+    ++	}
+    ++	if err := os.WriteFile(c.Store.path(fixtureScope()), data, 0600); err != nil {
+    ++		t.Fatal(err)
+    ++	}
+    ++	if _, err := c.Store.Load(fixtureScope()); err != nil {
+    ++		t.Fatal(err)
+    ++	}
+    ++}
+    ++
+    ++type delayedReceiptBackend struct {
+    ++	*fakeBackend
+    ++	now *time.Time
+    ++}
+    ++
+    ++func (b delayedReceiptBackend) Continue(ctx context.Context, scope Scope, p Pending) (codex.SendReceipt, error) {
+    ++	*b.now = b.now.Add(301 * time.Second)
+    ++	return b.fakeBackend.Continue(ctx, scope, p)
+    ++}
+    ++func TestControllerAcceptedNetworkDelayReanchorsBeforeNextRetry(t *testing.T) {
+    ++	c, b, now := controllerFixture(t)
+    ++	c.Backend = delayedReceiptBackend{b, now}
+    ++	if err := c.Step(context.Background(), fixtureScope()); err != nil {
+    ++		t.Fatal(err)
+    ++	}
+    ++	b.o = Observation{"failed", "failed", "cyberPolicy"}
+    ++	if err := c.Step(context.Background(), fixtureScope()); err != nil {
+    ++		t.Fatal(err)
+    ++	}
+    ++	s, err := c.Store.Load(fixtureScope())
+    ++	if err != nil {
+    ++		t.Fatal(err)
+    ++	}
+    ++	if s.CyberUsed(now.UnixMilli()) != 1 || s.Cyber[0].AtMS != now.UnixMilli() || !s.Cyber[0].Accepted {
+    ++		t.Fatal("network delay expired a possible send", s)
+    ++	}
+    ++}
+    ++
+    ++func TestRetrySettingsBarrierRetainsOldUncertaintyWithoutNewAuthority(t *testing.T) {
+    ++	c, _, now := controllerFixture(t)
+    ++	p := savedUnsubmitted(t, c, *now)
+    ++	tx, err := c.Store.Lock(context.Background(), fixtureScope())
+    ++	if err != nil {
+    ++		t.Fatal(err)
+    ++	}
+    ++	tx.State.Enabled = false
+    ++	baseline, enrolled := tx.State.Baseline, tx.State.Enrolled
+    ++	if err := tx.State.InvalidateSettings("active-manual"); err != nil {
+    ++		t.Fatal(err)
+    ++	}
+    ++	if tx.State.Epoch != 2 || tx.State.Enabled || tx.State.Enrolled != enrolled || tx.State.Baseline != baseline || !tx.State.Uncertain() || tx.State.Pending.Snapshot.Digest != p.Snapshot.Digest || tx.State.Pending.Snapshot.Epoch != 1 || len(tx.State.Cyber) != 1 {
+    ++		t.Fatal("settings boundary rewrote old authority")
+    ++	}
+    ++	if err := tx.State.Accepted("accepted-old", *now); err != nil {
+    ++		t.Fatal(err)
+    ++	}
+    ++	if tx.State.Phase != "cancelled" || tx.State.Proof("accepted-old") != nil || tx.State.Pending.Snapshot.Epoch != 1 {
+    ++		t.Fatal("old receipt acquired current authority")
+    ++	}
+    ++	if err := tx.Save(); err != nil {
+    ++		t.Fatal(err)
+    ++	}
+    ++	tx.Close()
+    ++	saved, err := c.Store.Load(fixtureScope())
+    ++	if err != nil || saved.Epoch != 2 || saved.Enabled {
+    ++		t.Fatal("restart lost settings barrier", err)
+    ++	}
+    ++	saved.Epoch = ^uint64(0)
+    ++	if err := saved.InvalidateSettings("active"); err == nil {
+    ++		t.Fatal("epoch wrapped")
+    ++	}
+     +}
+     
+      ## portal/internal/turnretry/state.go (new) ##
+    @@ portal/internal/turnretry/state.go (new)
+     +// Snapshot is captured at managed admission, never reconstructed from defaults
+     +// after failure. Turn is populated only by an exact accepted receipt.
+     +type Snapshot struct {
+    ++	Epoch              uint64            `json:"epoch"`
+     +	Version            int               `json:"version"`
+     +	ID                 string            `json:"id"`
+     +	Turn               string            `json:"turn"`
+    @@ portal/internal/turnretry/state.go (new)
+     +}
+     +
+     +type Binding struct {
+    ++	Epoch              uint64             `json:"epoch"`
+     +	SocketIdentity     string             `json:"socketIdentity"`
+     +	Provider           string             `json:"provider"`
+     +	Policy             codex.ThreadPolicy `json:"policy"`
+    @@ portal/internal/turnretry/state.go (new)
+     +	ResultTurn  string   `json:"resultTurn"`
+     +}
+     +
+    ++type Charge struct {
+    ++	ID       string `json:"id"`
+    ++	AtMS     int64  `json:"atMs"`
+    ++	Accepted bool   `json:"accepted"`
+    ++}
+    ++
+     +type State struct {
+    ++	Epoch          uint64     `json:"epoch"`
+     +	Schema         int        `json:"schema"`
+     +	Scope          Scope      `json:"scope"`
+     +	Enabled        bool       `json:"enabled"`
+    @@ portal/internal/turnretry/state.go (new)
+     +	Capacity       uint64     `json:"capacity"`
+     +	DeadlineMS     int64      `json:"deadlineMs"`
+     +	ClockMS        int64      `json:"clockMs"`
+    -+	Cyber          []int64    `json:"cyber"`
+    ++	Cyber          []Charge   `json:"cyber"`
+     +	Cancelled      bool       `json:"cancelled"`
+     +	Pending        *Pending   `json:"pending"`
+     +	Snapshots      []Snapshot `json:"snapshots"`
+    @@ portal/internal/turnretry/state.go (new)
+     +type Observation struct{ Turn, Status, Code string }
+     +
+     +func New(scope Scope) State {
+    -+	return State{Schema: Schema, Scope: scope, Enabled: true, Phase: "idle", Cyber: []int64{}, Snapshots: []Snapshot{}}
+    ++	return State{Schema: Schema, Epoch: 1, Scope: scope, Enabled: true, Phase: "idle", Cyber: []Charge{}, Snapshots: []Snapshot{}}
+     +}
+     +
+     +// Enroll consumes a terminal baseline. An active baseline is eligible only if
+    @@ portal/internal/turnretry/state.go (new)
+     +	}
+     +}
+     +
+    ++// Settings intent invalidates every earlier admission, including queues that
+    ++// can execute natively while the settings RPC is in flight. Old tuples remain
+    ++// immutable for reconciliation and can never acquire the new epoch.
+    ++func (s *State) InvalidateSettings(turn string) error {
+    ++	if s.Epoch == 0 || s.Epoch == ^uint64(0) {
+    ++		return errors.New("retry provenance epoch is unavailable")
+    ++	}
+    ++	s.Epoch++
+    ++	s.Cancel("settings_changed")
+    ++	if turn != "" {
+    ++		s.Handled = turn
+    ++	}
+    ++	s.Binding = nil
+    ++	return nil
+    ++}
+    ++
+     +func (s *State) Now(now time.Time) int64 {
+     +	// A backward clock jump cannot expire charges or make a deadline due early.
+     +	value := now.UnixMilli()
+    @@ portal/internal/turnretry/state.go (new)
+     +
+     +func (s *State) CyberUsed(now int64) int {
+     +	count := 0
+    -+	for _, at := range s.Cyber {
+    -+		if at > now-300000 {
+    ++	for _, charge := range s.Cyber {
+    ++		if charge.AtMS > now-300000 {
+     +			count++
+     +		}
+     +	}
+    @@ portal/internal/turnretry/state.go (new)
+     +
+     +func (s *State) Proof(turn string) *Snapshot {
+     +	for i := len(s.Snapshots) - 1; i >= 0; i-- {
+    -+		if s.Snapshots[i].Turn == turn && s.Snapshots[i].Proven {
+    ++		if s.Snapshots[i].Turn == turn && s.Snapshots[i].Proven && s.Snapshots[i].Epoch == s.Epoch {
+     +			v := s.Snapshots[i]
+     +			return &v
+     +		}
+    @@ portal/internal/turnretry/state.go (new)
+     +	if !s.Enabled || s.Cancelled || s.Phase != "scheduled" || s.Pending == nil || clock < s.DeadlineMS {
+     +		return errors.New("retry is not due")
+     +	}
+    -+	if s.Class == "cybersecurity" {
+    -+		if s.CyberUsed(clock) >= CyberLimit {
+    -+			s.Phase, s.Reason, s.DeadlineMS = "exhausted", "cyber_limit", 0
+    -+			s.Pending = nil
+    -+			return nil
+    -+		}
+    -+		kept := []int64{}
+    -+		for _, at := range s.Cyber {
+    -+			if at > clock-300000 {
+    -+				kept = append(kept, at)
+    -+			}
+    -+		}
+    -+		s.Cyber = append(kept, clock)
+    -+		s.Pending.ChargedAtMS = clock
+    ++	if err := s.ReserveUnsubmitted(now); err != nil {
+    ++		return err
+    ++	}
+    ++	if s.Pending == nil {
+    ++		return nil
+     +	}
+     +	s.Attempt++
+     +	if s.Class == "capacity" {
+    @@ portal/internal/turnretry/state.go (new)
+     +	return nil
+     +}
+     +
+    -+func (s *State) Accepted(turn string) error {
+    ++// ReserveUnsubmitted requires positive proof that this exact pending ID has
+    ++// never been sent. Its old reservation cannot authorize a later outbound call.
+    ++func (s *State) ReserveUnsubmitted(now time.Time) error {
+    ++	if s.Class != "cybersecurity" {
+    ++		return nil
+    ++	}
+    ++	if s.Pending == nil {
+    ++		return errors.New("retry reservation has no intent")
+    ++	}
+    ++	clock := s.Now(now)
+    ++	kept := []Charge{}
+    ++	for _, charge := range s.Cyber {
+    ++		if charge.ID != s.Pending.ID && charge.AtMS > clock-300000 {
+    ++			kept = append(kept, charge)
+    ++		}
+    ++	}
+    ++	s.Cyber = kept
+    ++	if len(kept) >= CyberLimit {
+    ++		s.Phase, s.Reason, s.DeadlineMS, s.Pending = "exhausted", "cyber_limit", 0, nil
+    ++		return nil
+    ++	}
+    ++	s.Cyber = append(s.Cyber, Charge{ID: s.Pending.ID, AtMS: clock})
+    ++	s.Pending.ChargedAtMS = clock
+    ++	return nil
+    ++}
+    ++
+    ++func (s *State) Accepted(turn string, now time.Time) error {
+     +	if s.Pending == nil || turn == "" {
+     +		return errors.New("retry receipt has no exact turn")
+     +	}
+    ++	if s.Pending.ResultTurn != "" && s.Pending.ResultTurn != turn {
+    ++		return errors.New("retry receipt identity changed")
+    ++	}
+    ++	if s.Class == "cybersecurity" {
+    ++		found := false
+    ++		for i := range s.Cyber {
+    ++			charge := &s.Cyber[i]
+    ++			if charge.ID != s.Pending.ID {
+    ++				continue
+    ++			}
+    ++			found = true
+    ++			if !charge.Accepted {
+    ++				charge.AtMS = max(charge.AtMS, s.Now(now))
+    ++				charge.Accepted = true
+    ++				s.Pending.ChargedAtMS = charge.AtMS
+    ++			}
+    ++		}
+    ++		if !found {
+    ++			return errors.New("retry receipt has no quota reservation")
+    ++		}
+    ++	}
+     +	s.Pending.ResultTurn = turn
+     +	proof := s.Pending.Snapshot
+     +	proof.ID, proof.Turn, proof.Origin, proof.Proven = s.Pending.ID, turn, "automatic", false
+    @@ portal/internal/turnretry/state_test.go (new)
+     +	return Scope{Workspace: "/workspace", Slug: "2026-10-22-test", Root: "root", Thread: "root", Socket: "/socket"}
+     +}
+     +func proof(turn string) Snapshot {
+    -+	p := Snapshot{Version: 1, ID: "manual-" + turn, Turn: turn, Origin: "browser", Provider: "openai", Mode: "default", Options: codex.TurnOptions{Model: "model", ReasoningEffort: "high"}, Proven: true}
+    ++	p := Snapshot{Epoch: 1, Version: 1, ID: "manual-" + turn, Turn: turn, Origin: "browser", Provider: "openai", Mode: "default", Options: codex.TurnOptions{Model: "model", ReasoningEffort: "high"}, Proven: true}
+     +	p.Digest, _ = p.Hash()
+     +	return p
+     +}
+    @@ portal/internal/turnretry/state_test.go (new)
+     +		if err := s.Begin(now); err != nil {
+     +			t.Fatal(err)
+     +		}
+    -+		if err := s.Accepted(string(rune('a' + i + 1))); err != nil {
+    ++		if err := s.Accepted(string(rune('a'+i+1)), now); err != nil {
+     +			t.Fatal(err)
+     +		}
+     +	}
+    @@ portal/internal/turnretry/state_test.go (new)
+     +		if s.CyberUsed(s.Now(now.Add(-time.Hour))) != i+1 {
+     +			t.Fatal("lost uncertain charge")
+     +		}
+    -+		if err := s.Accepted(string(rune(101 + i))); err != nil {
+    ++		if err := s.Accepted(string(rune(101+i)), now); err != nil {
+     +			t.Fatal(err)
+     +		}
+     +	}
+    @@ portal/internal/turnretry/state_test.go (new)
+     +	if s.Pending.ID != id || !s.Uncertain() || !s.Cancelled {
+     +		t.Fatal("uncertain cancel lost identity")
+     +	}
+    -+	if err := s.Accepted("result"); err != nil {
+    ++	if err := s.Accepted("result", now); err != nil {
+     +		t.Fatal(err)
+     +	}
+     +	if s.Phase != "cancelled" {
+    @@ portal/internal/turnretry/store.go (new)
+     +	"io"
+     +	"os"
+     +	"path/filepath"
+    ++	"regexp"
+     +	"strings"
+     +	"time"
+     +
+    @@ portal/internal/turnretry/store.go (new)
+     +
+     +type Store struct{ Root, Workspace string }
+     +
+    ++var attemptIDPattern = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
+    ++
+     +func hash(value string) string {
+     +	sum := sha256.Sum256([]byte(value))
+     +	return hex.EncodeToString(sum[:])
+    @@ portal/internal/turnretry/store.go (new)
+     +}
+     +
+     +func validate(scope Scope, state State) error {
+    -+	if state.Schema != Schema || state.Scope != scope || len(state.Reason) > 128 || len(state.Cyber) > CyberLimit || len(state.Snapshots) > MaxSnapshots || state.Cyber == nil || state.Snapshots == nil {
+    ++	if state.Schema != Schema || state.Epoch == 0 || state.Scope != scope || len(state.Reason) > 128 || len(state.Cyber) > CyberLimit+1 || len(state.Snapshots) > MaxSnapshots || state.Cyber == nil || state.Snapshots == nil {
+     +		return errors.New("retry state identity or bounds changed")
+     +	}
+     +	switch state.Phase {
+    @@ portal/internal/turnretry/store.go (new)
+     +	if state.Class != "" && state.Class != "capacity" && state.Class != "cybersecurity" {
+     +		return errors.New("unsupported retry class")
+     +	}
+    -+	for _, at := range state.Cyber {
+    -+		if at <= 0 {
+    ++	charges := map[string]Charge{}
+    ++	for _, charge := range state.Cyber {
+    ++		if !attemptIDPattern.MatchString(charge.ID) || charge.AtMS <= 0 || charges[charge.ID].ID != "" {
+     +			return errors.New("invalid cyber dispatch time")
+     +		}
+    ++		charges[charge.ID] = charge
+     +	}
+     +	check := func(snapshot Snapshot) error {
+     +		digest, err := snapshot.Hash()
+    -+		if err != nil || snapshot.Version != 1 || snapshot.ID == "" || snapshot.Digest != digest {
+    ++		if err != nil || snapshot.Epoch == 0 || snapshot.Epoch > state.Epoch || snapshot.Version != 1 || snapshot.ID == "" || snapshot.Digest != digest {
+     +			return errors.New("retry settings snapshot is invalid")
+     +		}
+     +		if snapshot.Proven && (snapshot.Turn == "" || snapshot.Options.Model == "" || snapshot.Options.ReasoningEffort == "" || snapshot.Provider == "" || (snapshot.Mode != "default" && snapshot.Mode != "plan")) {
+    @@ portal/internal/turnretry/store.go (new)
+     +	}
+     +	if state.Binding != nil {
+     +		digest, err := state.Binding.Hash()
+    -+		if err != nil || state.Binding.Digest != digest || state.Binding.SocketIdentity == "" || state.Binding.Provider == "" {
+    ++		if err != nil || state.Binding.Epoch != state.Epoch || state.Binding.Digest != digest || state.Binding.SocketIdentity == "" || state.Binding.Provider == "" {
+     +			return errors.New("retry loaded binding is invalid")
+     +		}
+     +	}
+     +	if state.Pending != nil {
+     +		p := state.Pending
+    -+		if len(p.ID) != 36 || p.Action == "" || p.Failure == "" {
+    ++		if !attemptIDPattern.MatchString(p.ID) || p.Action == "" || p.Failure == "" {
+     +			return errors.New("retry attempt identity is incomplete")
+     +		}
+     +		if err := check(p.Snapshot); err != nil {
+     +			return err
+     +		}
+    ++		if p.ChargedAtMS != 0 && (charges[p.ID].ID == "" || charges[p.ID].AtMS != p.ChargedAtMS) {
+    ++			return errors.New("retry quota reservation changed")
+    ++		}
+    ++		if state.Class == "cybersecurity" && (state.Phase == "submitting" || state.Phase == "reconciling" || state.Phase == "running") && p.ChargedAtMS == 0 {
+    ++			return errors.New("retry quota reservation is missing")
+    ++		}
+     +	}
+     +	if state.Phase == "scheduled" && (state.Pending == nil || state.DeadlineMS <= 0) || state.Uncertain() && state.Pending == nil {
+     +		return errors.New("retry phase is incomplete")
+    @@ portal/internal/turnretry/store.go (new)
+     +		if t.State.Uncertain() && len(backends) == 1 {
+     +			p := *t.State.Pending
+     +			if receipt, found, err := backends[0].Reconcile(ctx, header.Scope, p); err == nil && found {
+    -+				if err := t.State.Accepted(receipt.TurnID); err != nil {
+    ++				if err := t.State.Accepted(receipt.TurnID, time.Now()); err != nil {
+     +					t.Close()
+     +					return err
+     +				}
+2:  1f76716 = 2:  b3c7187 runtime: require retry-capable package transitions
+3:  0398d16 ! 3:  c493a41 portal: continue new managed failed turns through durable retry admission
+    @@ docs/turn-retry-recovery.md (new)
+     +quota timestamps and bounded settings evidence. Instructions and application
+     +context remain private; status responses expose neither.
+     +
+    ++State, loaded bindings and admission snapshots carry a required nonzero
+    ++provenance epoch. Cybersecurity charges carry unique automatic submission UUIDs;
+    ++equal timestamps do not make two charges interchangeable. Missing epochs,
+    ++anonymous charges and inconsistent pending identities fail closed.
+    ++
+     +Directories use mode 0700 and records mode 0600. Writers hold a per-thread
+     +interprocess admission lock and replace each record atomically, syncing both
+     +file and directory. A record is limited to 1 MiB, each settings snapshot to
+    @@ docs/turn-retry-recovery.md (new)
+     +unidentified input block continuation; historical context and display caches
+     +cannot prove absence of every concurrent external writer.
+     +
+    ++A managed settings intent advances the durable epoch before applying settings,
+    ++even when no retry is pending. It consumes the current active or failed turn
+    ++and cancels its chain. Failed or uncertain settings replies do not undo this
+    ++boundary. The settings intent invalidates all earlier admission proofs. Queued
+    ++inputs keep their order and may execute normally, but their failures require
+    ++manual continuation. Newly admitted managed input can qualify using the new
+    ++epoch and exact execution proof. Old snapshots needed for reconciliation remain
+    ++unchanged and cannot acquire the new binding.
+    ++
+     +## Lost responses and cancellation
+     +
+     +Automatic continuations use the existing schema-3 native submission ledger.
+    @@ docs/turn-retry-recovery.md (new)
+     +ledger/history proves the outcome. Stop, retirement and package/provider
+     +transitions preserve that uncertainty rather than erasing it.
+     +
+    ++The worker settles its exact saved submission identity in a separate internal
+    ++reconciliation pass before ordinary mutation admission. That pass cannot send,
+    ++resume, steer, change settings or activate queues. Fresh execution then reacquires
+    ++the full ordinary admission checks. Other unknown submissions and cold or stopped
+    ++execution holds continue to block new work.
+    ++
+     +Cybersecurity quota counts possible automatic sends in the rolling five-minute
+     +window, including dispatches interrupted before their result was saved. Receipt
+     +reconciliation does not charge again. Backward clock movement cannot expire
+     +charges or advance a deadline early. Quota exhaustion remains terminal for the
+     +same failure after the window expires; a timer does not restart it.
+     +
+    ++After positive proof that an exact UUID was never submitted, a resumed dispatch
+    ++reserves that UUID again at the current conservative time. It does not reuse an
+    ++expired pre-crash charge or replace another ID's charge. Acceptance, including a
+    ++receipt recovered later, anchors the same charge once at receipt observation
+    ++time so preflight or network delay cannot expire it early. Duplicate receipt
+    ++reconciliation does not add a charge or move that anchor again.
+    ++
+     +## Forward recovery
+     +
+     +Packages publish `turnRetryStateSchema: 1` in their runtime contract. Once any
+    @@ portal/cmd/workspace-portal/turn_retry_native_integration_test.go (new)
+     +	}
+     +	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
+     +	defer cancel()
+    -+	socket := filepath.Join(root, "native.sock")
+    -+	command := exec.CommandContext(ctx, native, "app-server", "--strict-config", "--listen", "unix://"+socket)
+    ++	nativeSocket := filepath.Join(root, "native.sock")
+    ++	socket := filepath.Join(root, "proxy.sock")
+    ++	command := exec.CommandContext(ctx, native, "app-server", "--strict-config", "--listen", "unix://"+nativeSocket)
+     +	command.Dir = root
+     +	command.Env = []string{"HOME=" + root, "CODEX_HOME=" + home, "PATH=" + os.Getenv("PATH"), "OPENAI_API_KEY=synthetic-only"}
+     +	log, err := os.Create(filepath.Join(root, "native.log"))
+    @@ portal/cmd/workspace-portal/turn_retry_native_integration_test.go (new)
+     +			}
+     +		}
+     +	}
+    -+	wait("native socket", func() bool { _, err := os.Stat(socket); return err == nil })
+    ++	wait("native socket", func() bool { _, err := os.Stat(nativeSocket); return err == nil })
+    ++	barrier := retryNativeReceiptBarrier(t, ctx, nativeSocket, socket)
+     +	t.Setenv("DEV_WORKSPACE_NAME", "")
+     +	t.Setenv("DEV_WORKSPACE_CODEX_HOME", home)
+     +	client := newCodexClient(socket, workspace, stateRoot)
+    @@ portal/cmd/workspace-portal/turn_retry_native_integration_test.go (new)
+     +		t.Fatal("cold enrollment retried an old failure")
+     +	}
+     +	fail.Store(false)
+    ++	barrier.Store(true)
+     +	now = time.UnixMilli(deadline)
+    -+	wait("actual automatic continuation", func() bool {
+    -+		_ = controller.Step(ctx, scope)
+    -+		s, err := controller.Store.Load(scope)
+    -+		return err == nil && s.Pending != nil && s.Pending.ResultTurn != ""
+    -+	})
+    -+	accepted, _ := controller.Store.Load(scope)
+    -+	continued := accepted.Pending.ResultTurn
+    -+	if accepted.Pending.ID != id || accepted.Attempt != 1 || continued == accepted.Pending.Failure {
+    -+		t.Fatal("controller changed retry identity")
+    ++	// The proxy removes the actual accepted reply and hides history until restart.
+    ++	if err := controller.Step(ctx, scope); err == nil {
+    ++		t.Fatal("lost native reply did not remain uncertain")
+    ++	}
+    ++	uncertain, err := controller.Store.Load(scope)
+    ++	if err != nil || !uncertain.Uncertain() || uncertain.Pending.ID != id {
+    ++		t.Fatal("native uncertainty lost exact intent", err)
+     +	}
+    ++	var continued string
+     +	wait("native continuation completion", func() bool {
+     +		s, err := client.ReadTurnState(ctx, thread)
+    -+		return err == nil && s.LatestTurnID == continued && s.LatestTurnStatus == "completed"
+    ++		if err == nil && s.LatestTurnID != uncertain.Pending.Failure && s.LatestTurnStatus == "completed" {
+    ++			continued = s.LatestTurnID
+    ++			return true
+    ++		}
+    ++		return false
+     +	})
+    -+	before, err := client.ReadTurnContext(ctx, thread, accepted.Pending.Failure)
+    ++	before, err := client.ReadTurnContext(ctx, thread, uncertain.Pending.Failure)
+     +	if err != nil {
+     +		t.Fatal(err)
+     +	}
+    @@ portal/cmd/workspace-portal/turn_retry_native_integration_test.go (new)
+     +	if before.Model != after.Model || before.ReasoningEffort != after.ReasoningEffort || before.CollaborationMode != after.CollaborationMode {
+     +		t.Fatal("automatic continuation changed actual settings")
+     +	}
+    -+	// Model a process loss after actual native acceptance but before saving the
+    -+	// application result. The native ledger remains the submission authority.
+    -+	tx, err := controller.Store.Lock(ctx, scope)
+    -+	if err != nil {
+    -+		t.Fatal(err)
+    -+	}
+    -+	tx.State.Phase = "reconciling"
+    -+	tx.State.Pending.ResultTurn = ""
+    -+	if err := tx.Save(); err != nil {
+    -+		t.Fatal(err)
+    -+	}
+    -+	tx.Close()
+     +	requestCount := requests.Load()
+     +	client.Close()
+     +	client = newCodexClient(socket, workspace, stateRoot)
+     +	client.RetryPolicyResolver = func(context.Context, string) (codex.ThreadPolicy, error) { return policy, nil }
+     +	controller.Backend, controller.Store = client.RetryBackend(), client.RetryStore()
+    -+	if err := controller.Step(ctx, scope); err != nil {
+    -+		t.Fatal(err)
+    -+	}
+    -+	if state, _ := controller.Store.Load(scope); state.Pending.ID != id || state.Pending.ResultTurn != continued || requests.Load() != requestCount {
+    -+		t.Fatal("accepted restart did not reconcile the exact native receipt")
+    ++	barrier.Store(false)
+    ++	portal := retryNativePortal(t, root, workspace, stateRoot, socket, thread, client)
+    ++	defer portal.Close()
+    ++	wait("portal resolver receipt recovery", func() bool {
+    ++		s, err := controller.Store.Load(scope)
+    ++		if err != nil {
+    ++			return false
+    ++		}
+    ++		for _, p := range s.Snapshots {
+    ++			if p.ID == id && p.Turn == continued {
+    ++				return true
+    ++			}
+    ++		}
+    ++		return false
+    ++	})
+    ++	portal.Close()
+    ++	if requests.Load() != requestCount {
+    ++		t.Fatal("resolver recovery repeated native submission")
+     +	}
+    -+	if err := controller.Step(ctx, scope); err != nil {
+    -+		t.Fatal(err)
+    ++	if err := client.RequireSubmissionAttemptsKnown(ctx, thread); err != nil {
+    ++		t.Fatal("native submitting ledger was not reconciled", err)
+     +	}
+    ++	accepted := uncertain
+     +	// A fresh managed failure schedules another chain; disabling before its
+     +	// deadline must prevent an actual model request even after time advances.
+     +	fail.Store(true)
+    @@ portal/cmd/workspace-portal/turn_retry_native_integration_test.go (new)
+     +	})
+     +	state, _ := controller.Store.Load(scope)
+     +	secondDeadline := state.DeadlineMS
+    -+	tx, err = controller.Store.Lock(ctx, scope)
+    ++	tx, err := controller.Store.Lock(ctx, scope)
+     +	if err != nil {
+     +		t.Fatal(err)
+     +	}
+    @@ portal/cmd/workspace-portal/turn_retry_native_integration_test.go (new)
+     +		t.Fatal("optout before deadline allowed native dispatch")
+     +	}
+     +	t.Logf("private native controller retained UUID %s across restart; %s -> %s, requests=%d", id, accepted.Pending.Failure, continued, requests.Load())
+    ++}
+    +
+    + ## portal/cmd/workspace-portal/turn_retry_native_proxy_test.go (new) ##
+    +@@
+    ++//go:build live_switch_integration
+    ++
+    ++package main
+    ++
+    ++import (
+    ++	"context"
+    ++	"encoding/json"
+    ++	"io"
+    ++	"log"
+    ++	"net"
+    ++	"net/http"
+    ++	"os"
+    ++	"path/filepath"
+    ++	"strings"
+    ++	"sync"
+    ++	"sync/atomic"
+    ++	"testing"
+    ++
+    ++	"github.com/aither64/dev-workspace/portal/internal/session"
+    ++	portalweb "github.com/aither64/dev-workspace/portal/internal/web"
+    ++	"github.com/aither64/dev-workspace/portal/internal/workspacecodex"
+    ++	"github.com/coder/websocket"
+    ++)
+    ++
+    ++// Hold hides receipt history and removes only a turn/start response's usable
+    ++// receipt after the real native daemon accepted it. Native state stays intact.
+    ++func retryNativeReceiptBarrier(t *testing.T, ctx context.Context, native, proxy string) *atomic.Bool {
+    ++	t.Helper()
+    ++	hold := &atomic.Bool{}
+    ++	listener, err := net.Listen("unix", proxy)
+    ++	if err != nil {
+    ++		t.Fatal(err)
+    ++	}
+    ++	server := &http.Server{Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+    ++		down, err := websocket.Accept(w, r, nil)
+    ++		if err != nil {
+    ++			return
+    ++		}
+    ++		defer down.CloseNow()
+    ++		down.SetReadLimit(16 << 20)
+    ++		transport := &http.Transport{DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
+    ++			return (&net.Dialer{}).DialContext(ctx, "unix", native)
+    ++		}}
+    ++		defer transport.CloseIdleConnections()
+    ++		up, _, err := websocket.Dial(ctx, "ws://localhost/", &websocket.DialOptions{HTTPClient: &http.Client{Transport: transport}})
+    ++		if err != nil {
+    ++			t.Errorf("native proxy dial: %v", err)
+    ++			return
+    ++		}
+    ++		defer up.CloseNow()
+    ++		up.SetReadLimit(16 << 20)
+    ++		var mu sync.Mutex
+    ++		starts := map[string]bool{}
+    ++		done := make(chan struct{})
+    ++		go func() {
+    ++			defer close(done)
+    ++			defer down.CloseNow()
+    ++			for {
+    ++				kind, data, err := up.Read(ctx)
+    ++				if err != nil {
+    ++					return
+    ++				}
+    ++				var reply map[string]json.RawMessage
+    ++				if json.Unmarshal(data, &reply) == nil && reply["id"] != nil {
+    ++					mu.Lock()
+    ++					drop := starts[string(reply["id"])]
+    ++					delete(starts, string(reply["id"]))
+    ++					mu.Unlock()
+    ++					if drop {
+    ++						delete(reply, "error")
+    ++						reply["result"] = json.RawMessage(`{"turn":{}}`)
+    ++						data, _ = json.Marshal(reply)
+    ++					}
+    ++				}
+    ++				if err := down.Write(ctx, kind, data); err != nil {
+    ++					return
+    ++				}
+    ++			}
+    ++		}()
+    ++		defer func() { _ = up.CloseNow(); <-done }()
+    ++		for {
+    ++			kind, data, err := down.Read(ctx)
+    ++			if err != nil {
+    ++				return
+    ++			}
+    ++			var req struct {
+    ++				ID     json.RawMessage `json:"id"`
+    ++				Method string          `json:"method"`
+    ++			}
+    ++			_ = json.Unmarshal(data, &req)
+    ++			if hold.Load() && req.Method == "thread/items/list" {
+    ++				out, _ := json.Marshal(map[string]any{"id": req.ID, "result": map[string]any{"data": []any{}, "nextCursor": nil}})
+    ++				if down.Write(ctx, websocket.MessageText, out) != nil {
+    ++					return
+    ++				}
+    ++				continue
+    ++			}
+    ++			if hold.Load() && req.Method == "turn/start" {
+    ++				mu.Lock()
+    ++				starts[string(req.ID)] = true
+    ++				mu.Unlock()
+    ++			}
+    ++			if up.Write(ctx, kind, data) != nil {
+    ++				return
+    ++			}
+    ++		}
+    ++	})}
+    ++	go func() { _ = server.Serve(listener) }()
+    ++	t.Cleanup(func() { _ = server.Close(); _ = listener.Close() })
+    ++	return hold
+    ++}
+    ++
+    ++func retryNativePortal(t *testing.T, root, workspace, stateRoot, socket, thread string, client *workspacecodex.Client) *portalweb.Server {
+    ++	t.Helper()
+    ++	authorityDir := filepath.Join(root, "authority")
+    ++	if err := os.MkdirAll(authorityDir, 0700); err != nil {
+    ++		t.Fatal(err)
+    ++	}
+    ++	authority := session.RuntimeAuthority{Schema: 1, State: "ready", Slug: "example", Workspace: workspace, TmuxSocket: filepath.Join(root, "tmux.sock"), TmuxSessionID: "$1", TmuxIdentity: strings.Repeat("a", 64), CodexThreadID: thread, CodexSocketPath: socket, CodexClientVersion: "0.163.0"}
+    ++	data, _ := json.Marshal(authority)
+    ++	if err := os.WriteFile(filepath.Join(authorityDir, "example.json"), data, 0600); err != nil {
+    ++		t.Fatal(err)
+    ++	}
+    ++	tmux := filepath.Join(root, "tmux")
+    ++	line := strings.Join([]string{"$1", "example", "1", "example", workspace, "example", authority.TmuxSocket, thread, socket, "0.163.0", "%1", authority.TmuxIdentity}, "\t")
+    ++	if err := os.WriteFile(tmux, []byte("#!/bin/sh\nprintf '%s\\n' '"+line+"'\n"), 0700); err != nil {
+    ++		t.Fatal(err)
+    ++	}
+    ++	helper := filepath.Join(root, "no-lifecycle")
+    ++	if err := os.WriteFile(helper, []byte("#!/bin/sh\nexit 1\n"), 0700); err != nil {
+    ++		t.Fatal(err)
+    ++	}
+    ++	profile := filepath.Join(root, "profile")
+    ++	if err := os.Symlink(root, profile); err != nil {
+    ++		t.Fatal(err)
+    ++	}
+    ++	server, err := portalweb.New(portalweb.Config{Workspace: workspace, BaseURL: "http://fixture.local", UserStateRoot: stateRoot, AuthorityDir: authorityDir, HostProfile: profile, TransitionLock: filepath.Join(root, "transition.lock"), DevSession: helper, Tmux: tmux, Codex: client, CodexSocket: socket, CodexVersion: "0.163.0", VerifyThread: client.VerifyThread, RecoverSessions: true, Logger: log.New(io.Discard, "", 0)})
+    ++	if err != nil {
+    ++		t.Fatal(err)
+    ++	}
+    ++	return server
+     +}
+     
+      ## portal/internal/teamruntime/runtime.go ##
+    @@ portal/internal/web/turn_retry.go (new)
+     +	"math/rand/v2"
+     +	"net/http"
+     +	"os"
+    ++	"path/filepath"
+     +	"sync"
+     +	"time"
+     +
+     +	"github.com/aither64/codex-web/conversation"
+     +	"github.com/aither64/dev-workspace/portal/internal/session"
+     +	"github.com/aither64/dev-workspace/portal/internal/turnretry"
+    ++	"github.com/aither64/dev-workspace/portal/internal/workspacecodex"
+    ++	"golang.org/x/sys/unix"
+     +)
+     +
+     +type turnRetryClient interface {
+    @@ portal/internal/web/turn_retry.go (new)
+     +}
+     +
+     +func (s *Server) stepTurnRetry(ctx context.Context, client turnRetryClient, id string) error {
+    ++	if err := s.reconcileTurnRetry(ctx, client, id); err != nil {
+    ++		return err
+    ++	}
+    ++	// Reacquire ordinary admission in full after the reconciliation-only
+    ++	// transaction. No permission from that transaction authorizes execution.
+     +	target, err := s.resolveConversation(ctx, conversation.ResolveRequest{ID: id, Operation: "automatic-retry", Method: http.MethodPost, Mutation: true})
+     +	if err != nil {
+     +		return err
+    @@ portal/internal/web/turn_retry.go (new)
+     +	}
+     +	controller := turnretry.Controller{Store: client.RetryStore(), Backend: client.RetryBackend(), Random: rand.Float64}
+     +	return controller.Step(ctx, scope)
+    ++}
+    ++
+    ++// Reconciliation has no execution capability. In particular, the semantic
+    ++// ordinary-mutation proof must not prevent its own unresolved exact receipt
+    ++// from becoming known. All fresh work still uses resolveConversation above.
+    ++func (s *Server) reconcileTurnRetry(ctx context.Context, client turnRetryClient, id string) error {
+    ++	slug, address, valid := parseTeamConversationID(id)
+    ++	if !valid {
+    ++		return errors.New("invalid session identity")
+    ++	}
+    ++	_, unlock, err := s.acquireTransitionContext(ctx, unix.LOCK_SH)
+    ++	if err != nil {
+    ++		return err
+    ++	}
+    ++	defer unlock()
+    ++	if err := s.requireCurrentHostProfile(); err != nil {
+    ++		return err
+    ++	}
+    ++	runtime, err := session.LockRuntimeShared(s.config.AuthorityDir, slug)
+    ++	if err != nil {
+    ++		return err
+    ++	}
+    ++	defer runtime.Close()
+    ++	summary, err := session.Find(s.config.Workspace, slug)
+    ++	if err != nil {
+    ++		return err
+    ++	}
+    ++	if summary.Archived || summary.Lifecycle != "active" || session.RequireRetainedReady(summary, s.config.CodexSocket) != nil {
+    ++		return errors.New("retry session is unavailable")
+    ++	}
+    ++	if receipt, ok := s.currentCreation(slug); ok && receipt.blocksSession() {
+    ++		return errors.New("session initialization has not finished")
+    ++	}
+    ++	if err := RequireObservationReceipts(summary, s.config.UserStateRoot, "", ""); err != nil {
+    ++		return err
+    ++	}
+    ++	service, err := s.teamService(slug)
+    ++	if err != nil {
+    ++		return err
+    ++	}
+    ++	operation, err := service.Store.LockOperation(ctx, slug)
+    ++	if err != nil {
+    ++		return err
+    ++	}
+    ++	defer operation()
+    ++	thread, project := summary.Codex.ThreadID, ""
+    ++	if address != "" {
+    ++		member, err := readyConversationMember(service.Store, slug, thread, address)
+    ++		if err != nil {
+    ++			return err
+    ++		}
+    ++		thread, project = member.Thread, member.ProjectID
+    ++	}
+    ++	conversation := s.messageLock(id)
+    ++	if err := conversation.Lock(ctx); err != nil {
+    ++		return err
+    ++	}
+    ++	defer conversation.Unlock()
+    ++	scope, err := client.RetryScope(ctx, thread)
+    ++	if err != nil {
+    ++		return err
+    ++	}
+    ++	expected := turnretry.Scope{Workspace: s.config.Workspace, Slug: slug, Root: summary.Codex.ThreadID, Thread: thread, Socket: s.config.CodexSocket}
+    ++	if scope != expected {
+    ++		return errors.New("retry target changed")
+    ++	}
+    ++	state, err := client.RetryStore().Load(scope)
+    ++	if errors.Is(err, os.ErrNotExist) {
+    ++		return nil
+    ++	}
+    ++	if err != nil {
+    ++		return err
+    ++	}
+    ++	if !state.Uncertain() {
+    ++		return nil
+    ++	}
+    ++	authority, err := session.LoadRuntimeAuthority(s.config.AuthorityDir, slug, s.config.Workspace)
+    ++	if err != nil || authority.CodexThreadID != scope.Root || authority.CodexSocketPath != scope.Socket || authority.CodexClientVersion != summary.Codex.ClientVersion {
+    ++		return errors.New("retained runtime authority changed")
+    ++	}
+    ++	// Cold identity reads are allowed here; tmux/execution permission remains
+    ++	// a prerequisite of the subsequent strict dispatch admission.
+    ++	if s.config.VerifyThread == nil {
+    ++		return errors.New("conversation identity is unavailable")
+    ++	}
+    ++	cwd := filepath.Join(scope.Workspace, "work", slug)
+    ++	if err := s.config.VerifyThread(ctx, scope.Root, cwd); err != nil {
+    ++		return err
+    ++	}
+    ++	if address != "" {
+    ++		archive, err := service.Client.ProveArchivedThread(ctx, thread, cwd, project)
+    ++		if err != nil {
+    ++			return err
+    ++		}
+    ++		if archive != workspacecodex.ArchiveActive && archive != workspacecodex.ArchiveArchived {
+    ++			return errors.New("retained member identity is unavailable")
+    ++		}
+    ++	}
+    ++	controller := turnretry.Controller{Store: client.RetryStore(), Backend: client.RetryBackend()}
+    ++	return controller.ReconcileOnly(ctx, scope)
+    ++}
+    +
+    + ## portal/internal/web/turn_retry_resolver_test.go (new) ##
+    +@@
+    ++package web
+    ++
+    ++import (
+    ++	"context"
+    ++	"encoding/json"
+    ++	"errors"
+    ++	"fmt"
+    ++	"net"
+    ++	"net/http"
+    ++	"os"
+    ++	"path/filepath"
+    ++	"sync"
+    ++	"testing"
+    ++	"time"
+    ++
+    ++	"github.com/aither64/codex-web/codex"
+    ++	"github.com/aither64/codex-web/conversation"
+    ++	"github.com/aither64/dev-workspace/portal/internal/session"
+    ++	"github.com/aither64/dev-workspace/portal/internal/teamruntime"
+    ++	"github.com/aither64/dev-workspace/portal/internal/turnretry"
+    ++	"github.com/aither64/dev-workspace/portal/internal/workspacecodex"
+    ++	"github.com/coder/websocket"
+    ++)
+    ++
+    ++type resolverRetryClient struct {
+    ++	*workspacecodex.Client
+    ++	cwd string
+    ++}
+    ++
+    ++func (c *resolverRetryClient) ProveArchivedRootThread(context.Context, string, string) (workspacecodex.ArchiveState, error) {
+    ++	return workspacecodex.ArchiveActive, nil
+    ++}
+    ++func (c *resolverRetryClient) ProveArchivedThread(context.Context, string, string, string) (workspacecodex.ArchiveState, error) {
+    ++	return workspacecodex.ArchiveActive, nil
+    ++}
+    ++func (c *resolverRetryClient) ProveMaterializedActiveThread(context.Context, string, string) (workspacecodex.ArchiveState, error) {
+    ++	return workspacecodex.ArchiveActive, nil
+    ++}
+    ++func (c *resolverRetryClient) HeadlessThreadMaterialized(context.Context, string, string, string) (bool, error) {
+    ++	return true, nil
+    ++}
+    ++func (c *resolverRetryClient) ListThreads(context.Context, codex.ThreadListOptions) ([]codex.ThreadMetadata, *string, error) {
+    ++	return []codex.ThreadMetadata{{ID: "thread-1", Cwd: c.cwd, Source: "vscode"}, {ID: "member-thread", Cwd: c.cwd, Source: "vscode"}}, nil, nil
+    ++}
+    ++func (c *resolverRetryClient) LoadedThreadIDs(context.Context) ([]string, error) {
+    ++	return []string{"thread-1", "member-thread"}, nil
+    ++}
+    ++
+    ++type retryWire struct {
+    ++	mu     sync.Mutex
+    ++	cwd    string
+    ++	expose bool
+    ++	starts int
+    ++	items  map[string][]any
+    ++	latest map[string]string
+    ++}
+    ++
+    ++func (w *retryWire) serve(t *testing.T, path string) {
+    ++	t.Helper()
+    ++	listener, err := net.Listen("unix", path)
+    ++	if err != nil {
+    ++		t.Fatal(err)
+    ++	}
+    ++	server := &http.Server{Handler: http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+    ++		conn, err := websocket.Accept(rw, r, nil)
+    ++		if err != nil {
+    ++			return
+    ++		}
+    ++		defer conn.CloseNow()
+    ++		for {
+    ++			_, data, err := conn.Read(context.Background())
+    ++			if err != nil {
+    ++				return
+    ++			}
+    ++			var req map[string]any
+    ++			if json.Unmarshal(data, &req) != nil {
+    ++				return
+    ++			}
+    ++			if req["id"] == nil {
+    ++				continue
+    ++			}
+    ++			params, _ := req["params"].(map[string]any)
+    ++			thread, _ := params["threadId"].(string)
+    ++			w.mu.Lock()
+    ++			var result any
+    ++			var failure any
+    ++			switch req["method"] {
+    ++			case "initialize":
+    ++				result = map[string]any{"userAgent": "codex/fixture"}
+    ++			case "thread/read":
+    ++				result = map[string]any{"thread": map[string]any{"id": thread, "cwd": w.cwd, "source": "vscode", "modelProvider": "fixture", "status": map[string]any{"type": "idle"}}}
+    ++			case "thread/turns/list":
+    ++				turn := w.latest[thread]
+    ++				if turn == "" {
+    ++					turn = "failed"
+    ++				}
+    ++				status := "failed"
+    ++				if turn != "failed" {
+    ++					status = "completed"
+    ++				}
+    ++				result = map[string]any{"data": []any{map[string]any{"id": turn, "status": status, "error": map[string]any{"codexErrorInfo": "cyberPolicy", "message": "synthetic"}}}}
+    ++			case "thread/queue/list":
+    ++				result = map[string]any{"data": []any{}}
+    ++			case "thread/items/list":
+    ++				items := []any{}
+    ++				if w.expose {
+    ++					items = w.items[thread]
+    ++					if items == nil {
+    ++						items = []any{}
+    ++					}
+    ++				}
+    ++				result = map[string]any{"data": items, "nextCursor": nil}
+    ++			case "turn/start":
+    ++				w.starts++
+    ++				id, _ := params["clientUserMessageId"].(string)
+    ++				turn := "accepted-" + thread
+    ++				w.items[thread] = []any{map[string]any{"turnId": turn, "item": map[string]any{"id": "input-" + id, "type": "userMessage", "clientId": id, "content": []any{map[string]any{"type": "text", "text": turnretry.Continuation}}}}}
+    ++				w.latest[thread] = turn
+    ++				result = map[string]any{"turn": map[string]any{}} // Native acceptance, lost usable reply; history not published yet.
+    ++			default:
+    ++				failure = map[string]any{"code": -32000, "message": fmt.Sprint("unexpected native mutation/read: ", req["method"])}
+    ++				t.Errorf("unexpected native RPC %v", req["method"])
+    ++			}
+    ++			w.mu.Unlock()
+    ++			reply := map[string]any{"id": req["id"]}
+    ++			if failure != nil {
+    ++				reply["error"] = failure
+    ++			} else {
+    ++				reply["result"] = result
+    ++			}
+    ++			out, _ := json.Marshal(reply)
+    ++			if err := conn.Write(context.Background(), websocket.MessageText, out); err != nil {
+    ++				return
+    ++			}
+    ++		}
+    ++	})}
+    ++	go func() { _ = server.Serve(listener) }()
+    ++	t.Cleanup(func() { _ = server.Close(); _ = listener.Close() })
+    ++}
+    ++
+    ++func TestTurnRetryResolverRecoversExactNativeLedgerBeforeOrdinaryGate(t *testing.T) {
+    ++	for _, address := range []string{"", "implementer0"} {
+    ++		for _, mode := range []string{"prepared", "absent", "submitting", "cancelled", "cold", "stopped", "foreign", "other-member", "unknown", "generation"} {
+    ++			t.Run(address+"/"+mode, func(t *testing.T) {
+    ++				s := newTestServer(t)
+    ++				cwd := filepath.Join(s.config.Workspace, "work", "example")
+    ++				if err := os.MkdirAll(cwd, 0700); err != nil {
+    ++					t.Fatal(err)
+    ++				}
+    ++				dir, err := os.MkdirTemp("/tmp", "retry-resolver-")
+    ++				if err != nil {
+    ++					t.Fatal(err)
+    ++				}
+    ++				t.Cleanup(func() { _ = os.RemoveAll(dir) })
+    ++				socket := filepath.Join(dir, "native.sock")
+    ++				s.config.CodexSocket = socket
+    ++				manifest := "schema: 1\nslug: example\nrepositories: []\nartifacts: []\ncodex:\n  thread_id: thread-1\n  socket_path: " + socket + "\n  client_version: 0.152.1\n"
+    ++				if err := os.WriteFile(filepath.Join(cwd, "portal.yml"), []byte(manifest), 0600); err != nil {
+    ++					t.Fatal(err)
+    ++				}
+    ++				writeWebTrackingFiles(t, cwd, "active")
+    ++				writeWebRuntimeAuthority(t, s, "example")
+    ++				wire := &retryWire{cwd: cwd, items: map[string][]any{}, latest: map[string]string{}}
+    ++				wire.serve(t, socket)
+    ++				ledger := filepath.Join(s.config.UserStateRoot, "native.json")
+    ++				makeClient := func() *resolverRetryClient {
+    ++					c := workspacecodex.NewWithOptions(socket, s.config.Workspace, codex.ClientOptions{SubmissionLedgerPath: ledger})
+    ++					c.RecoveryRoot = s.config.UserStateRoot
+    ++					c.RetryPolicyResolver = func(context.Context, string) (codex.ThreadPolicy, error) { return codex.ThreadPolicy{}, nil }
+    ++					return &resolverRetryClient{c, cwd}
+    ++				}
+    ++				c := makeClient()
+    ++				defer func() { c.Close() }()
+    ++				s.config.Codex = c
+    ++				service, err := s.teamService("example")
+    ++				if err != nil {
+    ++					t.Fatal(err)
+    ++				}
+    ++				if _, err := service.Store.Update(context.Background(), "example", "thread-1", true, func(r *teamruntime.Roster) error {
+    ++					r.Members = []teamruntime.Member{{Address: "implementer0", Role: "implementer", Thread: "member-thread", Model: "gpt-6.1-sol", Effort: "xhigh", Behavior: "implementer", Access: "workspace_write", State: "ready", AddedAt: time.Now().UTC()}}
+    ++					return nil
+    ++				}); err != nil {
+    ++					t.Fatal(err)
+    ++				}
+    ++				thread, id := "thread-1", "example"
+    ++				if address != "" {
+    ++					thread, id = "member-thread", teamConversationID("example", address)
+    ++				}
+    ++				scope, err := c.RetryScope(context.Background(), thread)
+    ++				if err != nil {
+    ++					t.Fatal(err)
+    ++				}
+    ++				tx, err := c.RetryStore().Lock(context.Background(), scope)
+    ++				if err != nil {
+    ++					t.Fatal(err)
+    ++				}
+    ++				p := turnretry.Snapshot{Epoch: 1, Version: 1, ID: "managed", Turn: "failed", Proven: true, Provider: "fixture", Mode: "default", Options: codex.TurnOptions{Model: "gpt-6.1-sol", ReasoningEffort: "xhigh"}}
+    ++				p.Digest, _ = p.Hash()
+    ++				tx.State.Enroll(turnretry.Observation{})
+    ++				tx.State.AddSnapshot(p)
+    ++				tx.State.Boundary, _ = session.ObservationIdentity(s.config.Workspace, "example", cwd, "thread-1")
+    ++				if err := tx.State.Observe(turnretry.Observation{Turn: "failed", Status: "failed", Code: "cyberPolicy"}, time.Now(), 0); err != nil {
+    ++					t.Fatal(err)
+    ++				}
+    ++				if err := tx.State.Begin(time.Now()); err != nil {
+    ++					t.Fatal(err)
+    ++				}
+    ++				pending := *tx.State.Pending
+    ++				if mode == "cancelled" {
+    ++					tx.State.Cancel("cancelled")
+    ++				}
+    ++				if err := tx.Save(); err != nil {
+    ++					t.Fatal(err)
+    ++				}
+    ++				tx.Close()
+    ++				if mode != "absent" {
+    ++					if err := c.PrepareSendWithOptions(thread, turnretry.Continuation, pending.ID, pending.Action, false, pending.Snapshot.Options); err != nil {
+    ++						t.Fatal(err)
+    ++					}
+    ++				}
+    ++				accepted := mode != "prepared" && mode != "absent"
+    ++				if accepted {
+    ++					_, err := c.Client.Client.ContinueFailedTurn(context.Background(), thread, turnretry.Continuation, pending.ID, pending.Action, "failed", pending.Snapshot.Options)
+    ++					var unknown *codex.UnknownSendOutcomeError
+    ++					if !errors.As(err, &unknown) {
+    ++						t.Fatal("fixture did not leave native submitting", err)
+    ++					}
+    ++				}
+    ++				if mode == "foreign" || mode == "other-member" {
+    ++					foreign := thread
+    ++					if mode == "other-member" {
+    ++						foreign = "thread-1"
+    ++						if thread == foreign {
+    ++							foreign = "member-thread"
+    ++						}
+    ++					}
+    ++					if err := c.PrepareSendWithOptions(foreign, "manual unknown", "foreign-manual", "manual", false, codex.TurnOptions{}); err != nil {
+    ++						t.Fatal(err)
+    ++					}
+    ++				}
+    ++				if mode == "cold" {
+    ++					s.config.RecoverSessions = true
+    ++					if err := s.recoveryStore().Set(context.Background(), "example", "thread-1", socket, false, false); err != nil {
+    ++						t.Fatal(err)
+    ++					}
+    ++				}
+    ++				if mode == "stopped" {
+    ++					s.config.Tmux = "/bin/false"
+    ++				}
+    ++				if accepted {
+    ++					if target, err := s.resolveConversation(context.Background(), conversation.ResolveRequest{ID: id, Operation: "automatic-retry", Mutation: true}); err == nil {
+    ++						target.Release()
+    ++						t.Fatal("fixture bypassed original unresolved gate")
+    ++					}
+    ++				}
+    ++				c.Close()
+    ++				c = makeClient()
+    ++				s.config.Codex = c
+    ++				wire.mu.Lock()
+    ++				wire.expose = mode != "unknown"
+    ++				wire.mu.Unlock()
+    ++				if mode == "generation" {
+    ++					if err := os.Remove(s.config.HostProfile); err != nil {
+    ++						t.Fatal(err)
+    ++					}
+    ++					if err := os.Symlink(t.TempDir(), s.config.HostProfile); err != nil {
+    ++						t.Fatal(err)
+    ++					}
+    ++				}
+    ++				_ = s.stepTurnRetry(context.Background(), c, id)
+    ++				saved, err := c.RetryStore().Load(scope)
+    ++				if err != nil {
+    ++					t.Fatal(err)
+    ++				}
+    ++				if accepted && mode != "unknown" && mode != "generation" {
+    ++					found := false
+    ++					for _, p := range saved.Snapshots {
+    ++						if p.ID == pending.ID && p.Turn == "accepted-"+thread {
+    ++							found = true
+    ++						}
+    ++					}
+    ++					if !found {
+    ++						t.Fatal("resolver prevented exact receipt reconciliation", saved)
+    ++					}
+    ++				}
+    ++				if (mode == "unknown" || mode == "generation") && (!saved.Uncertain() || saved.Pending.ResultTurn != "") {
+    ++					t.Fatal("unknown/generation hold cleared", saved)
+    ++				}
+    ++				if (saved.Pending != nil && saved.Pending.ID != pending.ID) || saved.Attempt != 1 {
+    ++					t.Fatal("recovery changed stable intent")
+    ++				}
+    ++				wire.mu.Lock()
+    ++				starts := wire.starts
+    ++				wire.mu.Unlock()
+    ++				expected := 0
+    ++				if accepted {
+    ++					expected = 1
+    ++				}
+    ++				if starts != expected {
+    ++					t.Fatal("recovery submitted another turn", starts)
+    ++				}
+    ++				if mode == "foreign" || mode == "other-member" {
+    ++					if target, err := s.resolveConversation(context.Background(), conversation.ResolveRequest{ID: id, Operation: "automatic-retry", Mutation: true}); err == nil {
+    ++						target.Release()
+    ++						t.Fatal("foreign unknown hold was bypassed")
+    ++					}
+    ++				}
+    ++				if mode == "prepared" {
+    ++					if err := c.RequireSubmissionAttemptsKnown(context.Background(), thread); err != nil {
+    ++						t.Fatal("exact preparation not retired", err)
+    ++					}
+    ++				}
+    ++			})
+    ++		}
+    ++	}
+     +}
+     
+      ## portal/internal/web/turn_retry_test.go (new) ##
+    @@ portal/internal/workspacecodex/turn_retry.go (new)
+     +		return err
+     +	}
+     +	defer tx.Close()
+    -+	tx.State.Cancel(reason)
+    ++	if reason == "settings_changed" {
+    ++		if err := c.invalidateRetrySettings(ctx, tx); err != nil {
+    ++			return err
+    ++		}
+    ++	} else {
+    ++		tx.State.Cancel(reason)
+    ++	}
+     +	if err := tx.Save(); err != nil {
+     +		return err
+     +	}
+    @@ portal/internal/workspacecodex/turn_retry.go (new)
+     +		return errors.New("retry session incarnation changed")
+     +	}
+     +	tx.State.Boundary = boundary
+    -+	snapshot := turnretry.Snapshot{Version: 1, ID: id, Origin: origin, CommonInstructions: c.retryCommonInstructions, Options: options, TextDigest: textHash(text)}
+    ++	snapshot := turnretry.Snapshot{Epoch: tx.State.Epoch, Version: 1, ID: id, Origin: origin, CommonInstructions: c.retryCommonInstructions, Options: options, TextDigest: textHash(text)}
+     +	snapshot.Options.ThreadPolicy = policy
+     +	provider, err := c.retryProvider(ctx, tx.State.Scope)
+     +	if err != nil {
+    @@ portal/internal/workspacecodex/turn_retry.go (new)
+     +		return err
+     +	}
+     +	snapshot.SocketIdentity = epoch
+    -+	if binding := tx.State.Binding; binding != nil && binding.SocketIdentity == epoch && binding.Provider == provider && binding.CommonInstructions == c.retryCommonInstructions && reflect.DeepEqual(binding.Policy, policy) {
+    ++	if binding := tx.State.Binding; binding != nil && binding.Epoch == tx.State.Epoch && binding.SocketIdentity == epoch && binding.Provider == provider && binding.CommonInstructions == c.retryCommonInstructions && reflect.DeepEqual(binding.Policy, policy) {
+     +		snapshot.BindingDigest = binding.Digest
+     +	}
+     +	settings, err := c.Client.ReadThreadSettings(ctx, tx.State.Scope.Thread)
+    @@ portal/internal/workspacecodex/turn_retry.go (new)
+     +	if err != nil {
+     +		return err
+     +	}
+    -+	b := turnretry.Binding{Provider: provider, SocketIdentity: epoch, CommonInstructions: c.retryCommonInstructions, Policy: policy}
+    ++	b := turnretry.Binding{Epoch: tx.State.Epoch, Provider: provider, SocketIdentity: epoch, CommonInstructions: c.retryCommonInstructions, Policy: policy}
+     +	b.Digest, err = b.Hash()
+     +	if err != nil {
+     +		return err
+    @@ portal/internal/workspacecodex/turn_retry.go (new)
+     +	tx.State.Binding = &b
+     +	for i := range tx.State.Snapshots {
+     +		p := &tx.State.Snapshots[i]
+    -+		if p.BindingDigest == "" && p.SocketIdentity == epoch && p.Provider == provider && p.CommonInstructions == b.CommonInstructions && reflect.DeepEqual(p.Options.ThreadPolicy, policy) {
+    ++		if p.Epoch == tx.State.Epoch && p.BindingDigest == "" && p.SocketIdentity == epoch && p.Provider == provider && p.CommonInstructions == b.CommonInstructions && reflect.DeepEqual(p.Options.ThreadPolicy, policy) {
+     +			p.BindingDigest = b.Digest
+     +			p.Digest, err = p.Hash()
+     +			if err != nil {
+    @@ portal/internal/workspacecodex/turn_retry.go (new)
+     +		return run()
+     +	}
+     +	defer tx.Close()
+    -+	tx.State.Cancel(reason)
+    ++	if reason == "settings_changed" {
+    ++		if err := c.invalidateRetrySettings(ctx, tx); err != nil {
+    ++			return err
+    ++		}
+    ++	} else {
+    ++		tx.State.Cancel(reason)
+    ++	}
+     +	if err := tx.Save(); err != nil {
+     +		return err
+     +	}
+    @@ portal/internal/workspacecodex/turn_retry.go (new)
+     +	}
+     +	return run()
+     +}
+    ++
+    ++func (c *Client) invalidateRetrySettings(ctx context.Context, tx *turnretry.Transaction) error {
+    ++	current, err := c.Client.ReadTurnState(ctx, tx.State.Scope.Thread)
+    ++	if err != nil {
+    ++		return err
+    ++	}
+    ++	return tx.State.InvalidateSettings(current.LatestTurnID)
+    ++}
+     +func (c *Client) UpdateThreadSettings(ctx context.Context, thread string, update codex.ThreadSettingsUpdate) (codex.ThreadSettings, error) {
+     +	var result codex.ThreadSettings
+     +	err := c.cancelRetryAdmission(ctx, thread, "settings_changed", func() error {
+    @@ portal/internal/workspacecodex/turn_retry_proof.go (new)
+     +}
+     +
+     +func proveContributors(scope turnretry.Scope, binding *turnretry.Binding, native codex.TurnContext, contributors []turnretry.Snapshot) (turnretry.Snapshot, error) {
+    -+	if binding == nil || native.ThreadID != scope.Thread || native.TurnID == "" || native.Cwd != filepath.Join(scope.Workspace, "work", scope.Slug) {
+    ++	if binding == nil || binding.Epoch == 0 || native.ThreadID != scope.Thread || native.TurnID == "" || native.Cwd != filepath.Join(scope.Workspace, "work", scope.Slug) {
+     +		return turnretry.Snapshot{}, turnretry.ErrMissingProof
+     +	}
+     +	proof := contributors[0]
+     +	context := map[string]codex.AdditionalContextEntry{}
+     +	ids := []string{}
+     +	for _, p := range contributors {
+    -+		if p.BindingDigest != binding.Digest || p.SocketIdentity != binding.SocketIdentity || p.Provider != binding.Provider || p.CommonInstructions != binding.CommonInstructions || !reflect.DeepEqual(p.Options.ThreadPolicy, binding.Policy) {
+    ++		if p.Epoch != binding.Epoch || p.BindingDigest != binding.Digest || p.SocketIdentity != binding.SocketIdentity || p.Provider != binding.Provider || p.CommonInstructions != binding.CommonInstructions || !reflect.DeepEqual(p.Options.ThreadPolicy, binding.Policy) {
+     +			return turnretry.Snapshot{}, turnretry.ErrMissingProof
+     +		}
+     +		if p.Origin == "queue" && len(p.Options.AdditionalContext) != 0 {
+    @@ portal/internal/workspacecodex/turn_retry_proof.go (new)
+     +	if err != nil {
+     +		return err
+     +	}
+    -+	if state.Binding == nil || state.Binding.Digest != proof.BindingDigest || !proof.Proven {
+    ++	if state.Binding == nil || state.Epoch != proof.Epoch || state.Binding.Epoch != state.Epoch || state.Binding.Digest != proof.BindingDigest || !proof.Proven {
+     +		return turnretry.ErrMissingProof
+     +	}
+     +	epoch, err := session.SocketIdentity(scope.Socket)
+    @@ portal/internal/workspacecodex/turn_retry_test.go (new)
+     +	"time"
+     +
+     +	"github.com/aither64/codex-web/codex"
+    ++	"github.com/aither64/dev-workspace/portal/internal/session"
+     +	"github.com/aither64/dev-workspace/portal/internal/turnretry"
+     +	"github.com/coder/websocket"
+     +)
+     +
+     +func retryProofFixture() (turnretry.Scope, *turnretry.Binding, codex.TurnContext, turnretry.Snapshot) {
+     +	scope := turnretry.Scope{Workspace: "/workspace", Slug: "example", Root: "root", Thread: "member", Socket: "/socket"}
+    -+	b := &turnretry.Binding{SocketIdentity: "epoch", Provider: "selected", CommonInstructions: "common", Policy: codex.ThreadPolicy{DeveloperInstructions: "retained role", Sandbox: "danger-full-access", ApprovalPolicy: "never"}}
+    ++	b := &turnretry.Binding{Epoch: 1, SocketIdentity: "epoch", Provider: "selected", CommonInstructions: "common", Policy: codex.ThreadPolicy{DeveloperInstructions: "retained role", Sandbox: "danger-full-access", ApprovalPolicy: "never"}}
+     +	b.Digest, _ = b.Hash()
+     +	native := codex.TurnContext{ThreadID: "member", TurnID: "executed", Cwd: "/workspace/work/example", Model: "actual-model", ReasoningEffort: "xhigh", CollaborationMode: "plan", ApprovalPolicy: json.RawMessage(`"never"`), SandboxPolicy: json.RawMessage(`{"type":"danger-full-access"}`), ApprovalsReviewer: "user"}
+    -+	p := turnretry.Snapshot{Version: 1, ID: "queue-id", Origin: "queue", TextDigest: textHash("saved input"), Provider: b.Provider, SocketIdentity: b.SocketIdentity, CommonInstructions: b.CommonInstructions, BindingDigest: b.Digest, Options: codex.TurnOptions{Model: "enqueue-model", ReasoningEffort: "low", ThreadPolicy: b.Policy}}
+    ++	p := turnretry.Snapshot{Epoch: 1, Version: 1, ID: "queue-id", Origin: "queue", TextDigest: textHash("saved input"), Provider: b.Provider, SocketIdentity: b.SocketIdentity, CommonInstructions: b.CommonInstructions, BindingDigest: b.Digest, Options: codex.TurnOptions{Model: "enqueue-model", ReasoningEffort: "low", ThreadPolicy: b.Policy}}
+     +	p.Digest, _ = p.Hash()
+     +	return scope, b, native, p
+     +}
+    @@ portal/internal/workspacecodex/turn_retry_test.go (new)
+     +					if err != nil {
+     +						return nil
+     +					}
+    ++					if req["method"] == "thread/turns/list" {
+    ++						if err := writeObject(conn, map[string]any{"id": req["id"], "result": map[string]any{"data": []any{map[string]any{"id": "failed", "status": "failed"}}}}); err != nil {
+    ++							return nil
+    ++						}
+    ++						continue
+    ++					}
+     +					if req["method"] != "thread/read" { // A failed settings RPC must still suppress the pending retry.
+     +						return writeObject(conn, map[string]any{"id": req["id"], "error": map[string]any{"code": -32000, "message": "synthetic settings mutation rejected"}})
+     +					}
+    -+					if err := writeObject(conn, map[string]any{"id": req["id"], "result": map[string]any{"thread": map[string]any{"id": "root", "cwd": cwd, "source": "vscode"}}}); err != nil {
+    ++					if err := writeObject(conn, map[string]any{"id": req["id"], "result": map[string]any{"thread": map[string]any{"id": "root", "cwd": cwd, "source": "vscode", "status": map[string]any{"type": "idle"}}}}); err != nil {
+     +						return nil
+     +					}
+     +				}
+    @@ portal/internal/workspacecodex/turn_retry_test.go (new)
+     +		t.Fatal("ambiguous context accepted")
+     +	}
+     +}
+    ++
+    ++func TestRetrySettingsEpochFencesUnscheduledAndQueuedExecution(t *testing.T) {
+    ++	model, effort, plan, normal := "new-model", "high", "plan", "default"
+    ++	updates := map[string]codex.ThreadSettingsUpdate{"model": {Model: &model}, "effort": {ReasoningEffort: &effort}, "default-to-plan": {CollaborationMode: &plan}, "plan-to-default": {CollaborationMode: &normal}}
+    ++	for name, update := range updates {
+    ++		for _, situation := range []string{"active", "failed-unobserved", "queue-race"} {
+    ++			t.Run(name+"/"+situation, func(t *testing.T) {
+    ++				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+    ++				defer cancel()
+    ++				workspace := t.TempDir()
+    ++				cwd := filepath.Join(workspace, "work", "example")
+    ++				if err := os.MkdirAll(cwd, 0700); err != nil {
+    ++					t.Fatal(err)
+    ++				}
+    ++				current := "manual"
+    ++				status := "failed"
+    ++				if situation != "failed-unobserved" {
+    ++					status = "inProgress"
+    ++				}
+    ++				var client *Client
+    ++				var scope turnretry.Scope
+    ++				socket := serveUnixWebsocket(t, func(conn *websocket.Conn) error {
+    ++					if err := handshake(conn); err != nil {
+    ++						return err
+    ++					}
+    ++					for {
+    ++						req, err := readObject(conn)
+    ++						if err != nil {
+    ++							return nil
+    ++						}
+    ++						var result any
+    ++						switch req["method"] {
+    ++						case "thread/read":
+    ++							result = map[string]any{"thread": map[string]any{"id": "root", "cwd": cwd, "source": "vscode", "modelProvider": "fixture", "model": "new-model", "reasoningEffort": "high", "status": map[string]any{"type": "idle"}}}
+    ++						case "thread/turns/list":
+    ++							result = map[string]any{"data": []any{map[string]any{"id": current, "status": status}}}
+    ++						default:
+    ++							saved, err := client.RetryStore().Load(scope)
+    ++							if err != nil || saved.Epoch != 2 {
+    ++								t.Errorf("settings effect preceded durable epoch: %v %v", saved, err)
+    ++							}
+    ++							// Native queue turnover after the identity read cannot acquire the new epoch.
+    ++							if situation == "queue-race" {
+    ++								current, status = "queued-before-settings", "failed"
+    ++							}
+    ++							if err := writeObject(conn, map[string]any{"id": req["id"], "error": map[string]any{"code": -32000, "message": "synthetic failed settings response"}}); err != nil {
+    ++								return nil
+    ++							}
+    ++							continue
+    ++						}
+    ++						if err := writeObject(conn, map[string]any{"id": req["id"], "result": result}); err != nil {
+    ++							return nil
+    ++						}
+    ++					}
+    ++				})
+    ++				for path, body := range map[string]string{"state.md": "---\nlifecycle: active\n---\n", "plan.md": "# settings boundary\n", "portal.yml": "schema: 1\nslug: example\nrepositories: []\nartifacts: []\ncodex:\n  thread_id: root\n  socket_path: " + socket + "\n  client_version: 0.163.0\n"} {
+    ++					if err := os.WriteFile(filepath.Join(cwd, path), []byte(body), 0600); err != nil {
+    ++						t.Fatal(err)
+    ++					}
+    ++				}
+    ++				client = NewWithOptions(socket, workspace, codex.ClientOptions{})
+    ++				defer client.Close()
+    ++				client.RecoveryRoot = t.TempDir()
+    ++				client.RetryPolicyResolver = func(context.Context, string) (codex.ThreadPolicy, error) { return codex.ThreadPolicy{}, nil }
+    ++				scope = turnretry.Scope{Workspace: workspace, Slug: "example", Root: "root", Thread: "root", Socket: socket}
+    ++				tx, err := client.RetryStore().Lock(ctx, scope)
+    ++				if err != nil {
+    ++					t.Fatal(err)
+    ++				}
+    ++				_, _, native, old := retryProofFixture()
+    ++				old.Options.ThreadPolicy = codex.ThreadPolicy{}
+    ++				old.CommonInstructions = ""
+    ++				old.Provider = "fixture"
+    ++				old.BindingDigest = ""
+    ++				old.SocketIdentity, _ = session.SocketIdentity(socket)
+    ++				old.Turn = "manual"
+    ++				old.Origin = "queue"
+    ++				old.Digest, _ = old.Hash()
+    ++				tx.State.Enroll(turnretry.Observation{})
+    ++				tx.State.AddSnapshot(old)
+    ++				quotaID, _ := turnretry.NewID()
+    ++				tx.State.Cyber = append(tx.State.Cyber, turnretry.Charge{ID: quotaID, AtMS: time.Now().UnixMilli(), Accepted: true})
+    ++				if err := tx.Save(); err != nil {
+    ++					t.Fatal(err)
+    ++				}
+    ++				tx.Close()
+    ++				if _, err := client.UpdateThreadSettings(ctx, "root", update); err == nil {
+    ++					t.Fatal("fixture settings unexpectedly succeeded")
+    ++				}
+    ++				saved, err := client.RetryStore().Load(scope)
+    ++				if err != nil {
+    ++					t.Fatal(err)
+    ++				}
+    ++				if saved.Epoch != 2 || saved.Handled != "manual" || saved.Pending != nil || !saved.Enabled || !saved.Enrolled || len(saved.Cyber) != 1 {
+    ++					t.Fatal("unscheduled execution survived settings boundary", saved)
+    ++				}
+    ++				// A new reader must retain the barrier even after the native RPC failed.
+    ++				if err := client.RetryBackend().Check(ctx, scope, old); !errors.Is(err, turnretry.ErrMissingProof) {
+    ++					t.Fatal("old proof passed current dispatch", err)
+    ++				}
+    ++				tx, err = client.RetryStore().Lock(ctx, scope)
+    ++				if err != nil {
+    ++					t.Fatal(err)
+    ++				}
+    ++				if err := client.captureRetry(ctx, tx, codex.ThreadPolicy{}, "new independently queued task", "new-queue", "queue", codex.TurnOptions{Model: model, ReasoningEffort: effort}); err != nil {
+    ++					t.Fatal(err)
+    ++				}
+    ++				if err := client.recordRetryBinding(ctx, tx, codex.ThreadPolicy{}); err != nil {
+    ++					t.Fatal(err)
+    ++				}
+    ++				binding := tx.State.Binding
+    ++				var fresh turnretry.Snapshot
+    ++				for _, p := range tx.State.Snapshots {
+    ++					if p.ID == old.ID && p.BindingDigest != "" {
+    ++						t.Fatal("stale empty snapshot retrobound")
+    ++					}
+    ++					if p.ID == "new-queue" {
+    ++						fresh = p
+    ++					}
+    ++				}
+    ++				if binding == nil || binding.Epoch != 2 || fresh.Epoch != 2 || fresh.BindingDigest != binding.Digest {
+    ++					t.Fatal("new admission lost current authority")
+    ++				}
+    ++				native.ThreadID, native.Cwd, native.TurnID = "root", cwd, "queued-before-settings"
+    ++				native.Model, native.ReasoningEffort = model, effort
+    ++				if _, err := proveContributors(scope, binding, native, []turnretry.Snapshot{old}); !errors.Is(err, turnretry.ErrMissingProof) {
+    ++					t.Fatal("autoqueue race acquired new authority", err)
+    ++				}
+    ++				if _, err := proveContributors(scope, binding, native, []turnretry.Snapshot{fresh}); err != nil {
+    ++					t.Fatal("new managed queue cannot prove actual settings", err)
+    ++				}
+    ++				tx.Close()
+    ++			})
+    ++		}
+    ++	}
+    ++}
+4:  85f6f73 = 4:  cca4978 deps: pin codex-web failed-turn continuation support

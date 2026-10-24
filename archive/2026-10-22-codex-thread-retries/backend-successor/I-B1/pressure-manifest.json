@@ -1,0 +1,53 @@
+{
+  "status": "REQUIRED unresolved post-review watcher gate; not executed by this preparation",
+  "selector": "^TestRetry",
+  "package": "./internal/workspacecodex",
+  "topLevelNames": [
+    "TestRetryLoadedTerminalStatusController",
+    "TestRetryManagedInputContendsWithController",
+    "TestRetryManagedSettingsIntentCancelsBeforeNativeMutation",
+    "TestRetryPreparedFirstExecutionRetainsOptionsAndOldEpoch",
+    "TestRetryProofRejectsChangedAuthorityAndContributingContext",
+    "TestRetryQueueProofUsesActualExecutionSettingsAndRetainedBinding",
+    "TestRetryRetentionAggregateAndAutomaticAtCap",
+    "TestRetryRetentionCachedProofSuppressedAndNewQueueEligible",
+    "TestRetryRetentionCrashAndLostReceiptRecovery",
+    "TestRetryRetentionManagedSteersBeyond64AndExactReplay",
+    "TestRetryRetentionProtectedQueueFIFOAndPreparedIdentity",
+    "TestRetryRetentionUnknownAutomaticAtCapHoldsManual",
+    "TestRetrySettingsEpochFencesUnscheduledAndQueuedExecution",
+    "TestRetrySteerInheritsNativeTurnSettingsAndAccountsForAllContext",
+    "TestRetrySteerReceiptRetainsValidAdmissionAcrossRestart",
+    "TestRetryWarmSettingsActiveQueueProductionProof",
+    "TestRetryWarmSettingsPreservesUncertainOldTuple",
+    "TestRetryWarmSettingsPromotionRequiresPositiveContinuity",
+    "TestRetryWarmSettingsRefusesEffectBeforeDurableBoundary"
+  ],
+  "topLevelCount": 19,
+  "requiredPressureLeaves": [
+    "TestRetryRetentionAggregateAndAutomaticAtCap/63",
+    "TestRetryRetentionAggregateAndAutomaticAtCap/64",
+    "TestRetryRetentionCachedProofSuppressedAndNewQueueEligible/member=false",
+    "TestRetryRetentionCachedProofSuppressedAndNewQueueEligible/member=true",
+    "TestRetryRetentionCrashAndLostReceiptRecovery/accepted-save",
+    "TestRetryRetentionCrashAndLostReceiptRecovery/after-admission",
+    "TestRetryRetentionCrashAndLostReceiptRecovery/before-save",
+    "TestRetryRetentionCrashAndLostReceiptRecovery/submitting",
+    "TestRetryRetentionManagedSteersBeyond64AndExactReplay/member=false",
+    "TestRetryRetentionManagedSteersBeyond64AndExactReplay/member=true",
+    "TestRetryRetentionProtectedQueueFIFOAndPreparedIdentity/member=false",
+    "TestRetryRetentionProtectedQueueFIFOAndPreparedIdentity/member=true",
+    "TestRetryRetentionProtectedQueueFIFOAndPreparedIdentity/prepared_first_execution_without_admission",
+    "TestRetryRetentionUnknownAutomaticAtCapHoldsManual"
+  ],
+  "pressureLeafCount": 14,
+  "goBudget": "180s",
+  "rationale": "Original full batch reached overall45s with current aggregate parent6s/subcase64 at2s and generic ledger fsync in fixture input43; many durable manual admissions precede this point.180s is a finite watcher execution ceiling, preserves every assertion and permits JSON per-case evidence; no diagnosis/pass inferred from the timeout.",
+  "originalFailure": [
+    "wrapper-focused.json",
+    "wrapper-focused.stdout",
+    "wrapper-focused.stderr",
+    "wrapper-timeout-diagnosis.json"
+  ],
+  "inventoryCorrection": "Complete package scan includes TestRetryPreparedFirstExecutionRetainsOptionsAndOldEpoch from prepared_send_test.go; preliminary turn_retry* scan omitted it. Selector unchanged;19 top names and14 pressure leaves required."
+}

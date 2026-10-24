@@ -1,0 +1,3 @@
+# Direct narrow startup remedy disposition
+
+Lead inspected exactc79->e914c52a diff: only existing s.config.Codex=managed assignment moves before addPolicyMember, whose teamService requires configuredclient. No wire/protocol/authority/contract/assertion change; all production/fork/CJSbytes unchanged. Exact committedtree0144e3da matches quickcompile, sourceclean. Focused inspection+owningcompile18.458s satisfy directreview step9; no confirmation-only reviewer rerun. Source correction accepted. Browser execution stillrequired, previousbrowserfailure preserved; forkall21pass retained at unchangedfixtureboundary, notrerun.

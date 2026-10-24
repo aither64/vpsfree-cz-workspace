@@ -1,0 +1,36 @@
+diff --git a/docs/reference.md b/docs/reference.md
+index e86592f..6367faf 100644
+--- a/docs/reference.md
++++ b/docs/reference.md
+@@ -176,17 +176,23 @@ across restart and reconciliation. Missing proof keeps the task manual.
+ Submission uses the existing schema-3 ledger. An atomic prepared-to-submitting
+ claim grants only one cooperating same-ID caller permission to send. Uncertain
+ outcomes retain `UnknownSendOutcomeError` and can only reconcile the same ID;
+-absence from a history read does not authorize another submission. A preflight
++absence from a history read does not authorize another submission. Native
++acceptance can precede visibility in paginated history. A missing input during
++reconciliation keeps a submitting attempt uncertain. Reconciliation must keep
++the same immutable identity and must not issue a new submission. A preflight
+ that loses admission can leave a prepared attempt, which the owner may retire
+ with `DiscardPreparedSendWithOptions` after proving it was never submitted.
+ 
+-The per-client queue mutex serializes local sends and queue mutations. The
+-embedding application must additionally hold its shared admission fence across
+-the entire dispatch. The native `turn/start` protocol has no expected-turn
+-compare-and-start field: another native writer outside that fence can still
+-race the final observation. This library does not provide atomic exclusion
+-against such a writer. Continuation does not replay original input or tools,
+-and cannot guarantee exactly-once external effects from an interrupted task.
++The per-client queue mutex serializes local sends and queue mutations. Every
++managed writer must additionally hold the application's shared admission fence
++across the entire dispatch. The native `turn/start` protocol has no expected-turn
++compare-and-start field. In Codex 0.163.0, a direct `turn/start` can join an
++active regular turn and apply supplied settings overrides. `SendReceipt.Steered`
++describes the client's chosen RPC path; false does not prove that native
++declined implicit steering. This library provides no atomic exclusion or
++unchanged-settings guarantee against unmanaged direct native writers.
++Continuation does not replay original input or tools, and cannot guarantee
++exactly-once external effects from an interrupted task.
+ 
+ `ReadTurnContext(ctx, threadID, turnID)` supplies trusted Go callers with the
+ exact execution context from a native Codex 0.163.0 rollout. It verifies the

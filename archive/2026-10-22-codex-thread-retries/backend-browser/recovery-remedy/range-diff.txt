@@ -1,0 +1,95 @@
+ 1:  7262c24e =  1:  7262c24e turnretry: retain bounded retry policy and admission state
+ 2:  b3c7187c =  2:  b3c7187c runtime: require retry-capable package transitions
+ 3:  aafaf419 =  3:  aafaf419 portal: continue new managed failed turns through durable retry admission
+ 4:  9ccb4b11 =  4:  9ccb4b11 deps: select codex-web retry activity support
+ 5:  100108b0 =  5:  100108b0 portal: retire accepted retry provenance before bounded admission
+ 6:  9311c15a =  6:  9311c15a portal: admit exact prepared plan requests after mode selection
+ 7:  c8c31ab5 =  7:  c8c31ab5 portal: wait within HTTP budgets for transient runtime contention
+ 8:  9ce6b291 =  8:  9ce6b291 portal: present retry activity inside the conversation viewport
+ 9:  4b4da049 =  9:  4b4da049 portal: release the next draft before message acknowledgment
+10:  59c0eb55 = 10:  59c0eb55 portal: submit question text through its owning action
+11:  4b98ceb2 = 11:  4b98ceb2 host: require support for retained session retry policy
+12:  6817bb6f = 12:  6817bb6f session: allow bounded exclusive runtime acquisition
+13:  91bd8535 = 13:  91bd8535 test: exercise accepted fork source lock recovery through Ruby
+14:  66d8ef32 = 14:  66d8ef32 portal: manage retry policy and activity per retained session
+15:  6723d5a7 ! 15:  f7b6ac60 test: connect retry browser controls to the real backend
+    @@ portal/internal/web/retry_backend_browser_test.go (new)
+     +
+     +	"github.com/aither64/codex-web/codex"
+     +	"github.com/aither64/codex-web/conversation"
+    ++	"github.com/aither64/dev-workspace/portal/internal/session"
+     +	"github.com/aither64/dev-workspace/portal/internal/teamruntime"
+     +	"github.com/aither64/dev-workspace/portal/internal/turnretry"
+     +	"github.com/aither64/dev-workspace/portal/internal/workspacecodex"
+    @@ portal/internal/web/retry_backend_browser_test.go (new)
+     +		wire.turns[thread] = &retryBackendNativeTurn{latest: "initial-" + thread, status: "failed", code: "cyberPolicy"}
+     +	}
+     +	wire.serve(t, socket)
+    ++	if err := (session.RecoveryStore{Root: s.config.UserStateRoot, Workspace: s.config.Workspace}).Set(context.Background(), "example", "thread-1", socket, true, true); err != nil {
+    ++		t.Fatal(err)
+    ++	}
+     +	c := workspacecodex.NewWithOptions(socket, s.config.Workspace, codex.ClientOptions{SubmissionLedgerPath: filepath.Join(s.config.UserStateRoot, "native.json")})
+     +	t.Cleanup(c.Close)
+     +	c.RecoveryRoot = s.config.UserStateRoot
+    @@ portal/internal/web/retry_backend_browser_test.go (new)
+     +	return f
+     +}
+     +
+    ++func TestRetryBackendBrowserFixtureConstruction(t *testing.T) {
+    ++	for _, manual := range []bool{false, true} {
+    ++		for _, member := range []bool{false, true} {
+    ++			name := map[bool]string{false: "retry", true: "manual"}[manual] + "-" + map[bool]string{false: "root", true: "member"}[member]
+    ++			t.Run(name, func(t *testing.T) {
+    ++				f := newRetryBackendBrowserFixture(t, member, manual)
+    ++				store := session.RecoveryStore{Root: f.s.config.UserStateRoot, Workspace: f.s.config.Workspace}
+    ++				recovery, err := store.Load("example")
+    ++				if err != nil {
+    ++					t.Fatal(err)
+    ++				}
+    ++				epoch, err := session.SocketIdentity(f.scope.Socket)
+    ++				if err != nil {
+    ++					t.Fatal(err)
+    ++				}
+    ++				if recovery.Schema != 1 || recovery.Workspace != f.scope.Workspace || recovery.Slug != f.scope.Slug || recovery.ThreadID != f.scope.Root || recovery.SocketPath != f.scope.Socket || recovery.SocketIdentity != epoch || !recovery.Automatic || len(recovery.ActiveThreads) != 2 {
+    ++					t.Fatal("fixture recovery identity is incomplete", recovery)
+    ++				}
+    ++				for _, thread := range []string{"thread-1", "member-thread"} {
+    ++					if !recovery.Active(thread, epoch) || !store.AllowsImplicitResume(f.scope.Socket, thread) {
+    ++						t.Fatal("fixture lacks exact retained execution permission", thread)
+    ++					}
+    ++				}
+    ++				thread, id := "thread-1", "example"
+    ++				if member {
+    ++					thread, id = "member-thread", "example~implementer0"
+    ++				}
+    ++				if f.scope.Thread != thread || f.scope.Root != "thread-1" || f.policy.Incarnation == "" || f.s.config.RecoverSessions {
+    ++					t.Fatal("fixture scope or worker control changed", f.scope, f.policy)
+    ++				}
+    ++				for _, path := range []string{"/api/sessions/example/retry-policy", retryActivityPath(id) + "/retry/activity"} {
+    ++					w := retryRequest(f.s, context.Background(), http.MethodGet, path, "")
+    ++					if w.Code != http.StatusOK {
+    ++						t.Fatal("fixture real Handler is unavailable", path, w.Code, w.Body.String())
+    ++					}
+    ++				}
+    ++				starts := 0
+    ++				if manual {
+    ++					f.manual.mu.Lock()
+    ++					starts = f.manual.starts
+    ++					f.manual.mu.Unlock()
+    ++				} else {
+    ++					f.wire.mu.Lock()
+    ++					starts = f.wire.starts
+    ++					f.wire.mu.Unlock()
+    ++				}
+    ++				if starts != 0 {
+    ++					t.Fatal("fixture construction dispatched a native turn", starts)
+    ++				}
+    ++			})
+    ++		}
+    ++	}
+    ++}
+    ++
+     +func (f *retryBackendBrowserFixture) seed(class string) error {
+     +	ctx := context.Background()
+     +	if err := os.Chmod(filepath.Dir(f.path), 0700); err != nil {
+16:  e914c52a = 16:  82f35c80 systemd: raise the native App Server descriptor limit

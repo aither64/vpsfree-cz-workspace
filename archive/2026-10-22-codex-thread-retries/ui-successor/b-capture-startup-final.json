@@ -1,0 +1,110 @@
+{
+  "head": "5e342788c7178ac1cb93c25591bdc42a83386c6b",
+  "tree": "ed95652b08dc7a5d3e2a54745974a0431bed1bc2",
+  "tested_tree": "ed95652b08dc7a5d3e2a54745974a0431bed1bc2",
+  "clean": true,
+  "remote_verified_head": "5e342788c7178ac1cb93c25591bdc42a83386c6b",
+  "source": "/nix/store/zsp0vphxfm9d9djl0ramnp8idl6cdxcl-source",
+  "narHash": "sha256-3q69ZR3p25RQFwrTcnClBM7QHnMsesdVyZXpm+1AVwI=",
+  "lastModified": 1792785212,
+  "verified_blobs_modes": 561,
+  "base": "bf6d4b0c49600c15e17fe71248807ef43424e932",
+  "deployed_predecessor": "7b8c646974df72e0df3e576d10f09d79823ae004",
+  "reviewed_source": "480231f5127c69ae210f0d17796a57481cdc2e28",
+  "preserved_source_ref": "refs/heads/preserved/2026-10-22-codex-thread-retries-ui-capture-480231f5",
+  "preserved_source_bundle": "b-capture-480231f5.bundle",
+  "full_series": [
+    {
+      "commit": "7262c24e4fbe9dbf8604e73590f9b5ef3d5dce99",
+      "tree": "082d1fa7228113019bb63fa29cdcb82189bc76cc",
+      "subject": "turnretry: retain bounded retry policy and admission state"
+    },
+    {
+      "commit": "b3c7187c6e26e269994433716a0ee719d0a7edf7",
+      "tree": "001755e5b7336ec3f8b8a3a1f7e3545482e3e82e",
+      "subject": "runtime: require retry-capable package transitions"
+    },
+    {
+      "commit": "aafaf4195d695c4641ce4f9342d56a1786f237c3",
+      "tree": "208aa98473f80994320a4e2d9818326723c166e7",
+      "subject": "portal: continue new managed failed turns through durable retry admission"
+    },
+    {
+      "commit": "67b354e814162533f6d19342e4e4513540be70fd",
+      "tree": "6247e6a81949f10ae8ff12cdc71e4a0fe9acc350",
+      "subject": "deps: select codex-web retry activity support"
+    },
+    {
+      "commit": "6dba4c398ba2bf54896734ab88eb449cffcd237f",
+      "tree": "a93b46940e716f3c8d3d40b42ebd8f5b9725f20a",
+      "subject": "portal: retire accepted retry provenance before bounded admission"
+    },
+    {
+      "commit": "6435f157fbb0a7e5084a48a3966f2b531d906036",
+      "tree": "c10a66f5a7756074dc62f0316101cf78183ffdc2",
+      "subject": "portal: admit exact prepared plan requests after mode selection"
+    },
+    {
+      "commit": "b8967dfe58b83c8b82c3fd7980b4d2b58dab589c",
+      "tree": "49df583af5c5694fd6758cbce7958bf1235264d7",
+      "subject": "portal: wait within HTTP budgets for transient runtime contention"
+    },
+    {
+      "commit": "5e342788c7178ac1cb93c25591bdc42a83386c6b",
+      "tree": "ed95652b08dc7a5d3e2a54745974a0431bed1bc2",
+      "subject": "portal: present retry activity inside the conversation viewport"
+    }
+  ],
+  "prior_seven_commits_exact": true,
+  "sole_A_selection": {
+    "commit": "67b354e814162533f6d19342e4e4513540be70fd",
+    "head": "f86290673d752c77b56c70228c3d26aced75e177",
+    "version": "v0.0.0-20261023192737-f86290673d75",
+    "sum": "h1:5iVFEW9ghXtccbfhFB2swLC+UqZYIqEPaRfNOh1bsMM=",
+    "goModSum": "h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=",
+    "narHash": "sha256-jOEXFTr55N88YbPakjlMw/7wsH8ZKr51Ag+Z1QaM25A=",
+    "lastModified": 1792783657,
+    "source": "/nix/store/2fcnmakk5qvazcsqp1kk7rwpq9vc97sk-source",
+    "vendorHash": "sha256-x0Qrgfvcn74v0E6zJ7JKgwBnOGuJNUNTZQz0JdFIqcU=",
+    "vendor_directory": "/tmp/codex-thread-retries-ui-vendor-f8629067"
+  },
+  "consumer_graph": {
+    "Go": "portal/go.mod -> codex-web f862; web client and handler tests consume embedded conversation assets",
+    "Nix": "flake.nix/flake.lock codex-web -> nix/workspace-portal.nix source+version + regenerated vendorHash",
+    "browser": "session.html -> static/app.js -> optional mountRetryActivity(root, {client,conversationKey}); createConversationClient retryActivity/retryNow/stopRetry token-only routes",
+    "policy": "B Settings -> /api/sessions/{slug}/retry-policy exact revision + both booleans; controlled fixture only until later backend package"
+  },
+  "schema_migrations": "none; schema1 retry and schema3 submission unchanged; no new sidecar or policy backend in this milestone",
+  "exact_delta": "only portal/internal/web/retry_activity_browser_test.cjs; production files/A pin/I1 unchanged",
+  "diagnosis": {
+    "observed_failure": "attempt1 expected20 message nodes, got0 at initial load; no pageerrors/requestfailure evidence was emitted",
+    "source_evidence": "paused Playwright clock prevented scheduleRefresh(0) initial sync timer from running; existing mode_refresh_browser_test drains time0 after app readiness",
+    "empirical_cause": "unproved until next controlled browser run; TLS warnings do not establish causality",
+    "remedy": "app readiness witness then page.clock.runFor(0) after goto/reload, preserving frozen time; bounded failure JSON/stderr and screenshot"
+  },
+  "quickchecks": "PASS shipped browser HTTP1.019s; fixture compilation0.046s; final Node syntax; no browser execution",
+  "next_command": "bash /home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/ui-successor/capture-attempt-2.sh",
+  "capture": "lead-owned fresh Luna/low watcher after direct step9 check; exact-head+clean guard, same240s selective fixture/environment; unique capture-attempt-2/screenshots",
+  "not_run": [
+    "browser diagnosis/capture",
+    "native",
+    "long/full checks",
+    "build",
+    "deployment"
+  ],
+  "failed_attempt_1_sha256": {
+    "stdout.log": "fce25b343839635367a5dd9e0feb7f6e594eed140b2db6a6882b5127e91438b3",
+    "stderr.log": "60b469e791ed40ab6fd556236b3dc3ee3c16fec90ba9fc8aa972f8e6bd98707c",
+    "result.json": "f5b77f40c8cfc1e06404e32334809f992646c47a34cf8d3caac5e6ef2de9ae81"
+  },
+  "artifacts_sha256": {
+    "b-capture-startup-exact.patch": "e5b53e280a34812b675c8d98ee66bf36bdbe9e84bf0e76544fa65b7dd0df2f44",
+    "b-capture-startup-range-diff.txt": "fdf1a8c919e5876b6d093ff7c70474cfef7caf75cf779072eb1cbc6cc224ab4a",
+    "b-capture-startup-full.patch": "6a2b12c9e016636b98b14ebc1df4718225cfb5f3c8e79fce5ba2dbad641a930b",
+    "b-capture-startup-final.bundle": "548baf4a3d50db49373e26650c652773835dfaf0b68f871131691dd09342d7e2",
+    "b-capture-startup-quick.log": "a60094dc19196029c4c869eec8d37b0f7163dcb184486a976cab7f9f4f82b1ab",
+    "b-capture-startup-final-syntax.log": "df8a699acd4423f66f38fa89f08cb26920b1959c591bb7db2061b92fea4e341b",
+    "capture.sh": "dc596957169e5742155862d74120d9d853ded4f00aabdf58c330de1f28bf160d",
+    "capture-attempt-2.sh": "3a5c5c16e6a23843d3cfc464b5eb2f69c32a78af859e622b4479af03f277233c"
+  }
+}

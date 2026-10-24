@@ -1,0 +1,209 @@
+{
+  "schema": 1,
+  "recordedAtUTC": "2026-10-24T12:53:22.122604+00:00",
+  "owner": "implementer0",
+  "scope": "source-only recovery18 handoff; uncommitted; owner1 sole Git owner",
+  "reportedCurrentBase": "fda46ca1a45c1f0a0046213448c47d80b976e032",
+  "paths": [
+    {
+      "path": "libexec/workspace-host",
+      "baselineArtifact": "baseline-workspace-host",
+      "baselineSha256": "013d50bbfdceeb6fc6fa3ae20f8c1526cad17d39b9eda2735b0bd00a3aeeadb0",
+      "sha256": "acf46cb6ac8b2efdb85f9328d8dc43984dd53cb1f5b23c422fc5c85148c8ef63",
+      "added": 113,
+      "removed": 0
+    },
+    {
+      "path": "libexec/dev-session",
+      "baselineArtifact": "baseline-dev-session",
+      "baselineSha256": "76e87a9b83dd00d0e153b2f4de0081fa054a125ae3ba10d400b73809baea9a26",
+      "sha256": "396b42fb80a55da8dc1f99fa568197082f6f48f8fecf90c395df86cf94fa39ca",
+      "added": 259,
+      "removed": 4
+    },
+    {
+      "path": "test/workspace_host/failed_creation_delete_recovery_test.rb",
+      "baselineArtifact": null,
+      "baselineSha256": null,
+      "sha256": "9016c87b841534f74f4d090ad9e2bcb883f92084e18c023cdb5996b38cd77a9d",
+      "added": 433,
+      "removed": 0
+    },
+    {
+      "path": "test/dev_session/deletion_recovery_test.rb",
+      "baselineArtifact": "baseline-deletion_recovery_test.rb",
+      "baselineSha256": "2e2e8f5c52c0d10821fb547cfaf5be490565c2a23a3a126e27ea80dc26b1bdf7",
+      "sha256": "217d2a8b8487854d62d754ead7bcebf190f8246f1cb34a7683ff4a861e6f2ffa",
+      "added": 36,
+      "removed": 0
+    },
+    {
+      "path": "test/workspace_host_test.rb",
+      "baselineArtifact": "baseline-workspace_host_test.rb",
+      "baselineSha256": "7bf1df0346a64c5a582a4b97f6f8f87b445702c9a86c8222c48b4859d43b1f98",
+      "sha256": "99801431d6ba6b85c33f94e4e96dffdfc0d51aed930bdd3ecd497fbc316038ba",
+      "added": 1,
+      "removed": 0
+    },
+    {
+      "path": "docs/session-archive-recovery.md",
+      "baselineArtifact": "baseline-session-archive-recovery.md",
+      "baselineSha256": "1bf5934c4a2f12bfe2f0820b7c5781b3da817461ba191a9bd569f1c4a1676cc4",
+      "sha256": "5cf4ea352507dadf85e6510465b446823b6ef10bace4b8c06fed25a6ee6af7f0",
+      "added": 53,
+      "removed": 0
+    }
+  ],
+  "patch": {
+    "path": "final.patch",
+    "sha256": "dc63492758a82348354b6ae66c63264f95c8c0f38734e6b8763dac47efe1756c"
+  },
+  "quickChecks": [
+    {
+      "receipt": "final-host.json",
+      "exit": 0,
+      "seconds": 17.935329128056765,
+      "argv": [
+        "nix",
+        "shell",
+        "nixpkgs#ruby",
+        "nixpkgs#tmux",
+        "nixpkgs#git",
+        "-c",
+        "ruby",
+        "test/workspace_host_test.rb",
+        "--name",
+        "/^test_failed_creation_candidate_/"
+      ]
+    },
+    {
+      "receipt": "final-syntax-2.json",
+      "exit": 0,
+      "seconds": 0.7199023813009262,
+      "argv": [
+        "nix",
+        "shell",
+        "nixpkgs#ruby",
+        "-c",
+        "ruby",
+        "-e",
+        "ARGV.each { |path| abort path unless system(RbConfig.ruby, \"-c\", path) }",
+        "libexec/workspace-host",
+        "libexec/dev-session",
+        "test/workspace_host/failed_creation_delete_recovery_test.rb",
+        "test/dev_session/deletion_recovery_test.rb",
+        "test/workspace_host_test.rb"
+      ]
+    },
+    {
+      "receipt": "final-executor.json",
+      "exit": 0,
+      "seconds": 1.9768157247453928,
+      "argv": [
+        "nix",
+        "shell",
+        "nixpkgs#ruby",
+        "nixpkgs#tmux",
+        "nixpkgs#git",
+        "-c",
+        "ruby",
+        "test/dev_session_test.rb",
+        "--name",
+        "/^test_delete_(subordinate_start|does_not_take_an_unbound|preparation_refusal|keeps_retiring|moves_direct_team)/"
+      ]
+    },
+    {
+      "receipt": "final-unchanged-guards.json",
+      "exit": 0,
+      "seconds": 2.530007155612111,
+      "argv": [
+        "nix",
+        "shell",
+        "nixpkgs#ruby",
+        "nixpkgs#tmux",
+        "nixpkgs#git",
+        "-c",
+        "ruby",
+        "test/workspace_host_test.rb",
+        "--name",
+        "/^(test_candidate_switch_still_refuses_an_unfinished_creation|test_switch_refuses_unfinished_session_lifecycle_operations|test_switch_refuses_an_unfinished_session_creation|test_switch_refuses_an_unfinished_managed_session_creation|test_switch_refuses_an_unfinished_session_fork|test_switch_refuses_an_unfinished_session_start|test_recover_archive_uses_selected_executor_and_only_substitutes_protocol_helper|test_workspace_host_loads_dev_session_only_for_archive_recovery)$/"
+      ]
+    },
+    {
+      "receipt": "aggregate-discovery.json",
+      "exit": 0,
+      "seconds": null,
+      "argv": [
+        "nix",
+        "shell",
+        "nixpkgs#ruby",
+        "-c",
+        "ruby",
+        "test/run_ruby_suite.rb",
+        "--list",
+        "workspace_host_test.rb"
+      ]
+    }
+  ],
+  "finalQuickCounts": {
+    "host": {
+      "tests": 8,
+      "assertions": 209
+    },
+    "executor": {
+      "tests": 5,
+      "assertions": 27
+    },
+    "unchangedGuards": {
+      "tests": 8,
+      "assertions": 45
+    },
+    "all": {
+      "tests": 21,
+      "assertions": 281,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0
+    }
+  },
+  "aggregateDiscovery": {
+    "newCases": [
+      "test_failed_creation_candidate_public_entry_runs_ordinary_deletion_and_exact_replay",
+      "test_failed_creation_candidate_interrupted_ordinary_deletion_replays_one_operation",
+      "test_failed_creation_candidate_refuses_unconfirmed_or_changed_context_before_effects",
+      "test_failed_creation_candidate_source_profile_and_contract_are_exact",
+      "test_failed_creation_candidate_preserves_ordinary_confirmation",
+      "test_failed_creation_candidate_native_retirement_failure_retains_start_and_operation",
+      "test_failed_creation_candidate_replay_refuses_missing_or_conflicting_start_provenance",
+      "test_failed_creation_candidate_accepts_equal_policy_one_contract_without_selecting"
+    ],
+    "all8Discovered": true,
+    "normalLoaderDelta": [
+      "require_relative 'workspace_host/failed_creation_delete_recovery_test'"
+    ]
+  },
+  "consumerEvidence": {
+    "owner": "implementer1",
+    "provisionalReceipt": "../delete-guard/receipt-consumer/handoff.json",
+    "provisionalProducerSha256": "b2d7bd0eb5e2f54065643485e76ca3245fff0859e716f52a071dc2cb9b03e014",
+    "finalProducerSha256": "396b42fb80a55da8dc1f99fa568197082f6f48f8fecf90c395df86cf94fa39ca",
+    "delta": "consumer-producer-final.delta.patch",
+    "reuse": "NOT claimed; final producer differs; owner1/lead owns final bounded consumer rerun/disposition"
+  },
+  "docs": {
+    "mainCopyPass": "lead-copy-pass.json",
+    "exactReplacementReceipt": "lead-copy-applied.json",
+    "sha256": "5cf4ea352507dadf85e6510465b446823b6ef10bace4b8c06fed25a6ee6af7f0"
+  },
+  "evidenceBoundary": "Real public host -> ordinary Ruby CLI confirmation/generation -> real Runner locks/admission/removal serialization/atomic moves/completion. External terminal/native/portal adapters synthetic. Actual Ruby writer -> Go receipt reader evidence separate owner1. No full host/system pass.",
+  "compatibility": "No schema/phase/native API migration or external state action. Only absent->1 or equal1 turnRetrySessionPolicy contract allowance, all other fields exact. Unknown native project/start provenance preserved. Selected generation unchanged.",
+  "sourceFrozen": true,
+  "gitOperations": false,
+  "liveOperations": false,
+  "pending": [
+    "Owner1 final consumer disposition/rerun",
+    "Lead incorporation release and sole owner1 Git commit/publication",
+    "Independent committed final review",
+    "Any later operation requires separate explicit release"
+  ]
+}

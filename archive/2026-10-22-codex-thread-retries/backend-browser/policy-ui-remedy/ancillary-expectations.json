@@ -1,0 +1,62 @@
+{
+  "origins": "Exact base or manualBase TLS fixture origin only",
+  "expectations": [
+    {
+      "method": "GET",
+      "path": "/api/sessions/example/attention",
+      "query": "",
+      "status": 503,
+      "reason": "Minimal fixture does not initialize notifications",
+      "source": "portal/internal/web/notifications.go:477"
+    },
+    {
+      "method": "GET",
+      "path": "/api/browser-notifications",
+      "query": "?registrationId=",
+      "status": 503,
+      "reason": "Fresh fixture context has empty registration ID and no initialized notifications",
+      "source": "portal/internal/web/notifications.go:316; portal/internal/web/static/browser-notifications.js:308"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sessions/example/coordination",
+      "query": "",
+      "status": 503,
+      "reason": "Disposable DevSession has no coordination status reader",
+      "source": "portal/internal/web/coordination.go:15"
+    },
+    {
+      "method": "GET",
+      "path": "/api/codex-providers",
+      "query": "",
+      "status": 503,
+      "reason": "newTestServer deliberately selects an absent provider catalog",
+      "source": "portal/internal/web/server_test.go:4276; portal/internal/web/codex_providers.go:113"
+    },
+    {
+      "method": "GET",
+      "path": "/api/codex-providers",
+      "query": "?session=example",
+      "status": 503,
+      "reason": "newTestServer deliberately selects an absent provider catalog",
+      "source": "portal/internal/web/server_test.go:4276; portal/internal/web/codex_providers.go:113"
+    },
+    {
+      "method": "GET",
+      "path": "/api/codex-limits",
+      "query": "?session=example",
+      "status": 503,
+      "reason": "Session limits first resolves the deliberately absent provider catalog",
+      "source": "portal/internal/web/codex_limits.go:35"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sessions/example/auto-archive",
+      "query": "",
+      "status": 409,
+      "reason": "Disposable DevSession has no auto-archive status fixture",
+      "source": "portal/internal/web/auto_archive.go:53"
+    }
+  ],
+  "invariants": "No prefix or status-wide match. All diagnostics retained. Every unknown or protected retry-policy/activity/action/manual/identity/settings failure stays strict. No interception or subsystem override."
+}

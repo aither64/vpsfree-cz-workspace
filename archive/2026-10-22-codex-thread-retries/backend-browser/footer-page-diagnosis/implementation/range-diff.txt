@@ -1,0 +1,146 @@
+ 1:  7262c24e =  1:  7262c24e turnretry: retain bounded retry policy and admission state
+ 2:  b3c7187c =  2:  b3c7187c runtime: require retry-capable package transitions
+ 3:  aafaf419 =  3:  aafaf419 portal: continue new managed failed turns through durable retry admission
+ 4:  9ccb4b11 =  4:  9ccb4b11 deps: select codex-web retry activity support
+ 5:  100108b0 =  5:  100108b0 portal: retire accepted retry provenance before bounded admission
+ 6:  9311c15a =  6:  9311c15a portal: admit exact prepared plan requests after mode selection
+ 7:  c8c31ab5 =  7:  c8c31ab5 portal: wait within HTTP budgets for transient runtime contention
+ 8:  9ce6b291 =  8:  9ce6b291 portal: present retry activity inside the conversation viewport
+ 9:  4b4da049 =  9:  4b4da049 portal: release the next draft before message acknowledgment
+10:  59c0eb55 = 10:  59c0eb55 portal: submit question text through its owning action
+11:  4b98ceb2 = 11:  4b98ceb2 host: require support for retained session retry policy
+12:  6817bb6f = 12:  6817bb6f session: allow bounded exclusive runtime acquisition
+13:  91bd8535 = 13:  91bd8535 test: exercise accepted fork source lock recovery through Ruby
+14:  66d8ef32 = 14:  66d8ef32 portal: manage retry policy and activity per retained session
+15:  5ddd7415 ! 15:  7408d17e test: connect retry browser controls to the real backend
+    @@ portal/internal/web/retry_backend_browser_test.go (new)
+     +	"net"
+     +	"net/http"
+     +	"net/http/httptest"
+    ++	"net/url"
+     +	"os"
+     +	"os/exec"
+     +	"path/filepath"
+    @@ portal/internal/web/retry_backend_browser_test.go (new)
+     +	"unknown-and-confirmed", "terminal-dismissal", "footer-refresh", "optional-unavailable-manual",
+     +}
+     +
+    ++const retryBackendOlderCursor = "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+    ++
+     +// Only display reads/events are adapted. All delivery, admission, policy,
+     +// receipt and retry methods are inherited from the real managed client.
+     +type retryBackendBrowserDisplay struct {
+    @@ portal/internal/web/retry_backend_browser_test.go (new)
+     +		last++
+     +	}
+     +	if cursor != "" {
+    -+		if cursor != "backend-older" {
+    ++		if cursor != retryBackendOlderCursor {
+     +			return codex.TranscriptPage{}, errors.New("unexpected display cursor")
+     +		}
+     +		first, last = 11, 30
+    @@ portal/internal/web/retry_backend_browser_test.go (new)
+     +	}
+     +	p := codex.TranscriptPage{Transcript: codex.Transcript{ThreadID: thread, LatestTurnID: "display-task", Status: "idle", Model: "retained-model", ReasoningEffort: "xhigh", CollaborationMode: "default", Entries: entries}}
+     +	if cursor == "" {
+    -+		older := "backend-older"
+    ++		older := retryBackendOlderCursor
+     +		p.OlderCursor, p.HasOlder = &older, true
+     +	}
+     +	return p, nil
+    @@ portal/internal/web/retry_backend_browser_test.go (new)
+     +	}
+     +}
+     +
+    ++func TestRetryBackendBrowserHistoryPages(t *testing.T) {
+    ++	for _, member := range []bool{false, true} {
+    ++		t.Run(map[bool]string{false: "root", true: "member"}[member], func(t *testing.T) {
+    ++			f := newRetryBackendBrowserFixture(t, member, false)
+    ++			host := serveRetryBackendBrowser(t, f)
+    ++			client := host.Client()
+    ++			client.Timeout = 5 * time.Second
+    ++			path, thread := "/api/sessions/example/thread/page", "thread-1"
+    ++			if member {
+    ++				path, thread = "/codex/conversations/example~implementer0/thread/page", "member-thread"
+    ++			}
+    ++			read := func(query string) codex.TranscriptPage {
+    ++				t.Helper()
+    ++				response, err := client.Get(host.URL + path + query)
+    ++				if err != nil {
+    ++					t.Fatal(err)
+    ++				}
+    ++				defer response.Body.Close()
+    ++				data, err := io.ReadAll(response.Body)
+    ++				var page codex.TranscriptPage
+    ++				if err != nil || response.StatusCode != http.StatusOK || json.Unmarshal(data, &page) != nil || page.ThreadID != thread {
+    ++					t.Fatalf("real history page: status=%d body=%s error=%v", response.StatusCode, data, err)
+    ++				}
+    ++				return page
+    ++			}
+    ++			checkIDs := func(page codex.TranscriptPage, first, last int) {
+    ++				t.Helper()
+    ++				if len(page.Entries) != last-first+1 {
+    ++					t.Fatalf("history page has %d entries, expected IDs%d–%d", len(page.Entries), first, last)
+    ++				}
+    ++				for index, entry := range page.Entries {
+    ++					if entry.ItemID != fmt.Sprintf("backend-%d", first+index) || entry.Kind != "agentMessage" {
+    ++						t.Fatal("history page changed exact display message identity", entry)
+    ++					}
+    ++				}
+    ++			}
+    ++			before := f.diagnostics()
+    ++			recent := read("")
+    ++			checkIDs(recent, 31, 50)
+    ++			if !recent.HasOlder || recent.OlderCursor == nil || *recent.OlderCursor == "" {
+    ++				t.Fatal("newest page omitted its older continuation", recent)
+    ++			}
+    ++			older := read("?cursor=" + url.QueryEscape(*recent.OlderCursor))
+    ++			checkIDs(older, 11, 30)
+    ++			if older.HasOlder || older.OlderCursor != nil {
+    ++				t.Fatal("oldest display page advertises another page", older)
+    ++			}
+    ++			ids := map[string]bool{}
+    ++			for _, entry := range append(older.Entries, recent.Entries...) {
+    ++				if ids[entry.ItemID] {
+    ++					t.Fatal("history pages overlap", entry.ItemID)
+    ++				}
+    ++				ids[entry.ItemID] = true
+    ++			}
+    ++			if len(ids) != 40 {
+    ++				t.Fatal("history did not retain40 unique messages", len(ids))
+    ++			}
+    ++			if err := f.control("append"); err != nil {
+    ++				t.Fatal(err)
+    ++			}
+    ++			appended := read("")
+    ++			checkIDs(appended, 31, 51)
+    ++			retained := read("?cursor=" + url.QueryEscape(*recent.OlderCursor))
+    ++			checkIDs(retained, 11, 30)
+    ++			if len(appended.Entries)+len(retained.Entries) != 41 || appended.OlderCursor == nil || *appended.OlderCursor != *recent.OlderCursor {
+    ++				t.Fatal("append lost the retained older page or continuation")
+    ++			}
+    ++			reads := f.diagnostics()["displayReads"]
+    ++			response, err := client.Get(host.URL + path + "?cursor=backend-older")
+    ++			if err != nil {
+    ++				t.Fatal(err)
+    ++			}
+    ++			var failure struct{ Code string }
+    ++			err = json.NewDecoder(response.Body).Decode(&failure)
+    ++			response.Body.Close()
+    ++			if err != nil || response.StatusCode != http.StatusBadRequest || failure.Code != "transcript_cursor_invalid" || f.diagnostics()["displayReads"] != reads {
+    ++				t.Fatal("malformed cursor reached the display reader", response.StatusCode, failure, err)
+    ++			}
+    ++			final := f.diagnostics()
+    ++			if final["policyHash"] != before["policyHash"] || final["ledgerHash"] != before["ledgerHash"] || final["starts"] != 0 || final["posts"] != before["posts"] {
+    ++				t.Fatal("history reads changed policy, retry state or native effects", before, final)
+    ++			}
+    ++		})
+    ++	}
+    ++}
+    ++
+     +func TestRetryBackendBrowserPolicyReplyLoss(t *testing.T) {
+     +	for _, member := range []bool{false, true} {
+     +		t.Run(map[bool]string{false: "root", true: "member"}[member], func(t *testing.T) {
+16:  99f19afc = 16:  c52234e0 systemd: raise the native App Server descriptor limit
+17:  2812c586 = 17:  e06452e0 session: retire unknown member reservations during deletion
+18:  a62166a8 = 18:  e22eecab sessions: recover failed creations before package selection

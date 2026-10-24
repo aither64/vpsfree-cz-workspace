@@ -1,0 +1,51 @@
+{
+  "argv": [
+    "nix",
+    "develop",
+    "--no-update-lock-file",
+    "--command",
+    "python3",
+    "-c",
+    "import shutil,subprocess,sys,json; names=['go','gcc','ruby','node','git']; paths={n:shutil.which(n) for n in names}; print(json.dumps({'nixTools':paths}),file=sys.stderr,flush=True); assert all(paths.values()),paths; sys.exit(subprocess.run(sys.argv[1:]).returncode)",
+    "go",
+    "-C",
+    "portal",
+    "test",
+    "-mod=readonly",
+    "./internal/web",
+    "-run",
+    "^(TestRetryBackendBrowserFixtureConstruction|TestRetryBackendBrowserHistoryPages|TestRetryBackendBrowserPolicyReplyLoss)$",
+    "-count=1",
+    "-timeout=30s",
+    "-json"
+  ],
+  "cwd": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/dev-workspace",
+  "exit": 0,
+  "wallSeconds": 22.0775530282408,
+  "passed": [
+    "TestRetryBackendBrowserFixtureConstruction/retry-root",
+    "TestRetryBackendBrowserFixtureConstruction/retry-member",
+    "TestRetryBackendBrowserFixtureConstruction/manual-root",
+    "TestRetryBackendBrowserFixtureConstruction/manual-member",
+    "TestRetryBackendBrowserFixtureConstruction",
+    "TestRetryBackendBrowserHistoryPages/root",
+    "TestRetryBackendBrowserHistoryPages/member",
+    "TestRetryBackendBrowserHistoryPages",
+    "TestRetryBackendBrowserPolicyReplyLoss/root",
+    "TestRetryBackendBrowserPolicyReplyLoss/member",
+    "TestRetryBackendBrowserPolicyReplyLoss"
+  ],
+  "passCount": 11,
+  "failSkip": [],
+  "package": [
+    {
+      "Time": "2026-10-24T16:54:07.350866014+02:00",
+      "Action": "pass",
+      "Package": "github.com/aither64/dev-workspace/portal/internal/web",
+      "Elapsed": 1.22
+    }
+  ],
+  "inputsCount": 274,
+  "inputsUnchanged": true,
+  "importedAMatchesNixSource": true
+}

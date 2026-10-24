@@ -1,0 +1,5 @@
+- **Result:** Failed; the single capture attempt exited 1 after 47,084 ms.
+- **Command:** `bash ui-successor/capture-attempt-4.sh`
+- **Revisions:** codex-web `55e0300b27b6927b1693b3792042762f31a385cc` / tree `b89b91b73ad5a028edfe9e72f6ecf056bde086af`; dev-workspace `e1e165e89b7741a95a5b66dfbd15f8a3c3987285` / tree `c9874dd068d2de9431b12114e0fb91b95f1ad186`. The wrapper recorded `source_changed: false`.
+- **Evidence:** [result.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/ui-successor/capture-attempt-4/result.json), [stdout.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/ui-successor/capture-attempt-4/stdout.log), [stderr.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/ui-successor/capture-attempt-4/stderr.log). The retry activity and required question browser cases passed; composer handoff failed because `#message-uploads` showed “Retry file status” instead of `preserve-readback.txt`.
+- **Process:** Completed; none still running. No retry or diagnosis performed.

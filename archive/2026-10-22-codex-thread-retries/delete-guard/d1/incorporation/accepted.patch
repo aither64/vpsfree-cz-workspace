@@ -1,0 +1,120 @@
+--- a/portal/internal/teamruntime/deletion.go
++++ b/portal/internal/teamruntime/deletion.go
+@@ -81,7 +81,8 @@
+ func deletionCandidates(roster *Roster, unstarted bool) (map[string]bool, error) {
+ 	candidates := make(map[string]bool)
+ 	for _, member := range roster.Members {
+-		if member.Thread != "" {
++		// Valid terminal records keep their existing no-op semantics.
++		if member.State == "removed" || member.Thread != "" {
+ 			continue
+ 		}
+ 		if !unstarted || roster.ForkSource != nil || !projectUUIDPattern.MatchString(member.ProjectID) ||
+@@ -94,10 +95,6 @@
+ 				return nil, fmt.Errorf("member %s has a conflicting removal marker", member.Address)
+ 			}
+ 			candidates[member.Address] = true
+-		case "removed":
+-			if member.RemovedAt == nil || member.RemovedAt.IsZero() {
+-				return nil, fmt.Errorf("member %s has no deletion tombstone time", member.Address)
+-			}
+ 		default:
+ 			return nil, fmt.Errorf("member %s has no confirmed thread", member.Address)
+ 		}
+--- a/portal/internal/teamruntime/deletion_test.go
++++ b/portal/internal/teamruntime/deletion_test.go
+@@ -4,6 +4,7 @@
+ 	"context"
+ 	"encoding/json"
+ 	"errors"
++	"fmt"
+ 	"os"
+ 	"path/filepath"
+ 	"reflect"
+@@ -40,6 +41,11 @@
+ 	if unknown.Thread != "" || !unknown.CreateAttempted || unknown.BootstrapAttempted {
+ 		t.Fatalf("unexpected unknown reservation: %#v", unknown)
+ 	}
++	return deletionFixtureForRoster(t, service, client, unknown)
++}
++
++func deletionFixtureForRoster(t *testing.T, service Service, client *testClient, unknown Member) deletionFixture {
++	t.Helper()
+ 	workspace := service.Store.workspace
+ 	directory := filepath.Join(workspace, "work", "one")
+ 	if err := os.MkdirAll(directory, 0o755); err != nil {
+@@ -364,3 +370,74 @@
+ 		t.Fatal("fresh root reused old project key")
+ 	}
+ }
++
++func TestPrepareDeletePreservesSourceProducedRemovedRecords(t *testing.T) {
++	for _, producer := range []string{"ordinary Remove", "inherited Fork"} {
++		for _, creation := range []string{"ready", "noncreating"} {
++			for _, force := range []bool{false, true} {
++				t.Run(fmt.Sprintf("%s/%s/force=%t", producer, creation, force), func(t *testing.T) {
++					workspace := filepath.Join(t.TempDir(), "workspace")
++					store, err := NewStore(t.TempDir(), workspace)
++					if err != nil {
++						t.Fatal(err)
++					}
++					client := &testClient{projectReadError: errors.New("project verification unavailable")}
++					service := Service{Store: store, Client: client, Workspace: workspace}
++					slug, root := "one", "root-one"
++					if producer == "inherited Fork" {
++						slug, root = "source", "source-root"
++					}
++					if _, err := service.Add(context.Background(), slug, root, filepath.Join(workspace, "work", slug), nil, "reviewer", "gpt-6-sol", "xhigh"); err == nil {
++						t.Fatal("fixture must stop before its native thread start")
++					}
++					client.projectReadError = nil
++					if err := service.Remove(context.Background(), slug, root, "reviewer0"); err != nil {
++						t.Fatalf("produce ordinary unattempted removal: %v", err)
++					}
++					roster, err := store.Load(slug, root)
++					if err != nil {
++						t.Fatal(err)
++					}
++					removed := roster.Members[0]
++					if removed.State != "removed" || removed.RemovedAt == nil || removed.CreateAttempted || removed.Thread != "" || !projectUUIDPattern.MatchString(removed.ProjectID) {
++						t.Fatalf("ordinary Remove did not produce the expected supported tombstone: %#v", removed)
++					}
++					if producer == "inherited Fork" {
++						roster, err = service.Fork(context.Background(), roster, "one", "root-one", filepath.Join(workspace, "work", "one"), nil)
++						if err != nil {
++							t.Fatalf("produce fork-inherited removal: %v", err)
++						}
++						inherited := roster.Members[0]
++						if roster.ForkSource == nil || inherited.State != "removed" || inherited.Thread != "" || inherited.ProjectID != "" || inherited.CreateAttempted || inherited.BootstrapAttempted || !reflect.DeepEqual(inherited.RemovedAt, removed.RemovedAt) {
++							t.Fatalf("Fork did not preserve and clear the expected fields: %#v", inherited)
++						}
++					}
++					fixture := deletionFixtureForRoster(t, service, client, roster.Members[0])
++					manifest := "schema: 1\nslug: one\nrepositories: []\nartifacts: []\ncodex:\n  thread_id: root-one\n"
++					if creation == "ready" {
++						manifest += "creation:\n  state: ready\n"
++					}
++					if err := os.WriteFile(fixture.manifest, []byte(manifest), 0o644); err != nil {
++						t.Fatal(err)
++					}
++					fixture.changeJournal(t, func(value map[string]any) { value["force"] = force })
++					before := deletionRosterBytes(t, fixture)
++					for _, checkOnly := range []bool{true, false, false} {
++						if !checkOnly {
++							fixture.changeJournal(t, func(value map[string]any) { value["phase"] = "thread_retiring" })
++						}
++						if err := service.PrepareDelete(context.Background(), "one", "root-one", deletionTestOperation, checkOnly); err != nil {
++							t.Fatalf("existing valid removal refused (checkOnly=%t): %v", checkOnly, err)
++						}
++						if !reflect.DeepEqual(before, deletionRosterBytes(t, fixture)) {
++							t.Fatal("existing removal identity, time or roster bytes changed")
++						}
++					}
++					if len(client.starts) != 0 || len(client.resumes) != 0 || len(client.bootstrapCalls) != 0 || len(client.sends) != 0 || len(client.archives) != 0 || len(client.deleted) != 0 || len(client.clearedThreads) != 0 || len(client.idleChecks) != 0 {
++						t.Fatal("removed record triggered native work or cleanup")
++					}
++				})
++			}
++		}
++	}
++}

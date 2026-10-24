@@ -1,0 +1,210 @@
+ 1:  7262c24e =  1:  7262c24e turnretry: retain bounded retry policy and admission state
+ 2:  b3c7187c =  2:  b3c7187c runtime: require retry-capable package transitions
+ 3:  aafaf419 =  3:  aafaf419 portal: continue new managed failed turns through durable retry admission
+ 4:  4ff797e5 =  4:  4ff797e5 deps: select codex-web retry activity support
+ 5:  24bf3c0b =  5:  24bf3c0b portal: retire accepted retry provenance before bounded admission
+ 6:  4b368337 =  6:  4b368337 portal: admit exact prepared plan requests after mode selection
+ 7:  07782784 =  7:  07782784 portal: wait within HTTP budgets for transient runtime contention
+ 8:  18767205 !  8:  d1f9df05 portal: present retry activity inside the conversation viewport
+    @@ portal/internal/web/static/style.css: a.icon-button { display: inline-flex; alig
+     
+      ## portal/internal/web/templates/session.html ##
+     @@
+    +   <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="style-nonce" content="{{.StyleNonce}}">
+        <title>{{.Session.Slug}} · Workspace</title>
+    -   <link rel="stylesheet" href="/codex/assets/conversation.css?v=9">
+    +-  <link rel="stylesheet" href="/codex/assets/conversation.css?v=9">
+     -  <link rel="stylesheet" href="/static/style.css?v=22">
+    ++  <link rel="stylesheet" href="/codex/assets/conversation.css?v=10">
+     +  <link rel="stylesheet" href="/static/style.css?v=23">
+        <link rel="stylesheet" href="/codex/assets/uploads.css?v=3">
+      </head>
+ 9:  a570286d !  9:  c7fdeb55 portal: release the next draft before message acknowledgment
+    @@ portal/internal/web/composer_handoff_browser_test.cjs (new)
+     +          await expect(prompt).toHaveValue(`Preserve ${fault}`);
+     +          await expect(page.locator("#message-uploads")).toContainText(`preserve-${fault}.txt`);
+     +          assert.equal(sends.length, before);
+    -+          await page.evaluate(() => {window.composerFault = null;});
+    ++          // Reset only this disposable fixture's selection between fault cases;
+    ++          // retain every original attempt and its immutable attachment IDs.
+    ++          await page.evaluate(key => {window.composerFault = null; localStorage.setItem(key, "[]");}, draftKey);
+     +          await page.reload(); await expect(send).toBeEnabled();
+    -+          // Clear selection through its own supported control, preserving all
+    -+          // recovery attempts. This is disposable fixture state only.
+    -+          for (const remove of await page.locator('#message-uploads button[aria-label^="Remove "]').all()) await remove.click();
+     +          await expect(page.locator("#message-uploads .codex-attachment")).toHaveCount(0);
+     +        }
+     +        phase = "interrupt-while-sending";
+    @@ portal/internal/web/firefox_tabs_acceptance.cjs: function assertBackgroundUnchan
+            questionLatencyMs,visibility:visibleLog,counts:final.counts,dispatches:final.dispatches,journalEntries:final.journalEntries,sendAttempts:final.sendAttempts}));
+     
+      ## portal/internal/web/question_browser_test.go ##
+    +@@ portal/internal/web/question_browser_test.go: import (
+    + 	"github.com/aither64/dev-workspace/portal/internal/teamruntime"
+    + )
+    + 
+    ++// The controlled page fixture owns these two synthetic conversations. Preserve
+    ++// the shared contract fake's strict single-thread verification in other tests.
+    ++type questionBrowserCodex struct{ browserContractCodex }
+    ++
+    ++func (client *questionBrowserCodex) VerifyThread(ctx context.Context, threadID, cwd string) error {
+    ++	if threadID == "member-thread" {
+    ++		return nil
+    ++	}
+    ++	return client.browserContractCodex.VerifyThread(ctx, threadID, cwd)
+    ++}
+    ++
+    ++func (client *questionBrowserCodex) ReadThread(ctx context.Context, threadID string) (codex.Transcript, error) {
+    ++	if err := client.VerifyThread(ctx, threadID, ""); err != nil {
+    ++		return codex.Transcript{}, err
+    ++	}
+    ++	transcript, err := client.browserContractCodex.ReadThread(ctx, threadID)
+    ++	transcript.ThreadID = threadID
+    ++	return transcript, err
+    ++}
+    ++
+    + // Run with PORTAL_BROWSER_TEST=1 and Nix-provided Node, Playwright modules and
+    + // PLAYWRIGHT_BROWSERS_PATH. The browser controls API responses, while the actual
+    + // server supplies the session template, CSP, scripts, styles and upload service.
+    +@@ portal/internal/web/question_browser_test.go: func TestQuestionBrowser(t *testing.T) {
+    + 	}
+    + 	writeWebRuntimeAuthority(t, server, "example")
+    + 	events := make(chan struct{}, 1)
+    +-	server.config.Codex = &browserContractCodex{emptyPrompts: true, events: events, transcript: codex.Transcript{
+    ++	server.config.Codex = &questionBrowserCodex{browserContractCodex{emptyPrompts: true, events: events, transcript: codex.Transcript{
+    + 		ThreadID: "thread-1", Status: "active", CollaborationMode: "plan",
+    +-	}}
+    ++	}}}
+    + 	httpServer := httptest.NewUnstartedServer(nil)
+    + 	server.config.BaseURL = "https://" + httpServer.Listener.Addr().String()
+    + 	server.trustedOrigins = []string{server.config.BaseURL}
+     @@ portal/internal/web/question_browser_test.go: func TestQuestionBrowser(t *testing.T) {
+      	})
+      	httpServer.StartTLS()
+10:  07e75335 ! 10:  9f033875 portal: submit question text through its owning action
+    @@ docs/workspace-portal.md: lists, initially selecting the recommendation or first
+      it to expand one question at a time. Use the numbered question buttons or arrows
+      to navigate without sending or losing drafts;
+     
+    + ## portal/internal/web/auto_archive_test.go ##
+    +@@ portal/internal/web/auto_archive_test.go: func TestAutomaticArchivalPageIsSeparateFromIndex(t *testing.T) {
+    + 	if page.Code != http.StatusOK {
+    + 		t.Fatalf("dedicated route reached slug lookup: %d: %s", page.Code, page.Body.String())
+    + 	}
+    +-	for _, required := range []string{"data-automatic-archival", "workspace-auto-archive-status", "workspace-auto-archive-rows", `href="/"`, `/static/app.js?v=56`} {
+    ++	for _, required := range []string{"data-automatic-archival", "workspace-auto-archive-status", "workspace-auto-archive-rows", `href="/"`, `/static/app.js?v=58`} {
+    + 		if !strings.Contains(page.Body.String(), required) {
+    + 			t.Fatalf("overview lacks %q: %s", required, page.Body.String())
+    + 		}
+    +
+    + ## portal/internal/web/browser_asset_versions_test.go (new) ##
+    +@@
+    ++package web
+    ++
+    ++import (
+    ++	"regexp"
+    ++	"strconv"
+    ++	"testing"
+    ++)
+    ++
+    ++func TestBrowserAssetVersionsForRetryAndQuestionUI(t *testing.T) {
+    ++	read := func(name string) string {
+    ++		t.Helper()
+    ++		data, err := assets.ReadFile(name)
+    ++		if err != nil {
+    ++			t.Fatal(err)
+    ++		}
+    ++		return string(data)
+    ++	}
+    ++	versionAfter := func(source, path string, previous int) int {
+    ++		t.Helper()
+    ++		matches := regexp.MustCompile(regexp.QuoteMeta(path)+`[?]v=([0-9]+)`).FindAllStringSubmatch(source, -1)
+    ++		if len(matches) != 1 {
+    ++			t.Fatalf("expected one versioned %s, got %d", path, len(matches))
+    ++		}
+    ++		version, err := strconv.Atoi(matches[0][1])
+    ++		if err != nil || version <= previous {
+    ++			t.Fatalf("%s reuses cached predecessor identity v%d: %s", path, previous, matches[0][0])
+    ++		}
+    ++		return version
+    ++	}
+    ++	// Deployed conversation.js?v=23 can remain fresh in a browser's HTTP
+    ++	// cache for five minutes and lacks the now mandatory question export.
+    ++	// A fresh page must select a new module URL even after an older page
+    ++	// warmed that cache. Do not replace this with a missing-export fallback.
+    ++	versionAfter(read("static/app.js"), "/codex/assets/conversation.js", 23)
+    ++	session := read("templates/session.html")
+    ++	versionAfter(session, "/codex/assets/conversation.css", 9)
+    ++	versionAfter(session, "/static/style.css", 22)
+    ++	// All consumers of the changed app entry point select the same fresh
+    ++	// bytes, including navigation from index/archival to the conversation.
+    ++	var appVersion int
+    ++	for _, name := range []string{"session.html", "index.html", "automatic-archival.html"} {
+    ++		version := versionAfter(read("templates/"+name), "/static/app.js", 57)
+    ++		if appVersion != 0 && version != appVersion {
+    ++			t.Fatalf("%s selects app v%d, expected v%d", name, version, appVersion)
+    ++		}
+    ++		appVersion = version
+    ++	}
+    ++}
+    +
+      ## portal/internal/web/browser_contract_test.cjs ##
+     @@ portal/internal/web/browser_contract_test.cjs: if (!conversationModulePath) throw new Error("browser contract test requires the
+      (async () => {
+    @@ portal/internal/web/required_question_keyboard_browser_test.cjs (new)
+     +})().catch(error => {console.error(error); process.exitCode = 1;});
+     
+      ## portal/internal/web/static/app.js ##
+    +@@
+    +     return;
+    +   }
+    + 
+    +-  const conversationAssets = await import("/codex/assets/conversation.js?v=23");
+    ++  const conversationAssets = await import("/codex/assets/conversation.js?v=24");
+    +   sharedTranscriptPresentation = conversationAssets.transcriptEntryPresentation;
+    +   sharedTranscriptVisible = conversationAssets.transcriptEntryVisible;
+    +   refreshPolicy = conversationAssets.refreshPolicy;
+     @@
+              } else {
+                field.rows = rows;
+    @@ portal/internal/web/static/app.js
+              return field;
+            };
+            const saveDraft = () => {
+    +
+    + ## portal/internal/web/templates/automatic-archival.html ##
+    +@@
+    +       <div id="workspace-auto-archive-rows"></div>
+    +     </section>
+    +   </main>
+    +-  <script src="/static/app.js?v=56" defer></script>
+    ++  <script src="/static/app.js?v=58" defer></script>
+    + </body>
+    + </html>
+    + {{end}}
+    +
+    + ## portal/internal/web/templates/index.html ##
+    +@@
+    +   <script src="/static/session-attention-store.js?v=4" defer></script>
+    +   <script src="/static/browser-notifications.js?v=6" defer></script>
+    +   <script src="/static/preparation.js?v=5" defer></script>
+    +-  <script src="/static/app.js?v=56" defer></script>
+    ++  <script src="/static/app.js?v=58" defer></script>
+    +   <script src="/static/coordination.js?v=6" defer></script>
+    + </body>
+    + </html>
+    +
+    + ## portal/internal/web/templates/session.html ##
+    +@@
+    +       <div class="dialog-actions"><button type="button" class="quiet" data-dialog-close>Cancel</button><button type="submit" class="danger">Delete session</button></div>
+    +     </form>
+    +   </dialog>
+    +-  <script src="/static/app.js?v=57" defer></script>
+    ++  <script src="/static/app.js?v=58" defer></script>
+    +   <script src="/static/session-attention-store.js?v=4" defer></script>
+    +   <script src="/static/browser-notifications.js?v=6" defer></script>
+    +   <script src="/static/session-attention.js?v=2" defer></script>
+11:  bf1bc72b <  -:  -------- fixup! portal: release the next draft before message acknowledgment
+12:  37a9136d <  -:  -------- fixup! portal: present retry activity inside the conversation viewport
+13:  14ec46fe <  -:  -------- fixup! portal: submit question text through its owning action

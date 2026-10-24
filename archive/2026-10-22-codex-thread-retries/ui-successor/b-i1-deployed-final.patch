@@ -1,0 +1,810 @@
+diff --git a/docs/turn-retry-recovery.md b/docs/turn-retry-recovery.md
+index 4bd84bd4..8d5971ba 100644
+--- a/docs/turn-retry-recovery.md
++++ b/docs/turn-retry-recovery.md
+@@ -5,6 +5,14 @@ The portal retries new managed turns that fail with the native
+ [portal guide](workspace-portal.md#automatic-turn-retries) describes the controls
+ and schedule. This guide covers durable state, admission and recovery.
+ 
++When session retry policy is available, Settings contains separate switches for
++capacity and cybersecurity errors. Both apply to the lead and all current and
++future retained team members. The conversation notice shows the current or
++latest retry chain. Retry now accelerates a scheduled attempt; Stop retrying
++stops that chain without changing the session preferences. Dismiss hides only
++that result in this browser. The notice appears inside the conversation viewport
++and leaves no space when hidden.
++
+ ## Ownership and persistence
+ 
+ Schema-1 records live at
+@@ -131,7 +139,7 @@ blocked state that requires manual continuation. Freeing space or restarting
+ does not enable automatic retry for that result. Persistence errors leave the
+ durable uncertain tuple and generic receipt available for exact reconciliation.
+ 
+-Cancel retry suppresses future continuations but leaves the preference enabled.
++Stop retrying suppresses future continuations but leaves the preference enabled.
+ Disabling also cancels the chain. New input, queue admission/start, settings
+ changes, interruption and explicit lifecycle operations cancel pending work.
+ Cancellation cannot establish that an already-dispatched turn did not run.
+diff --git a/docs/workspace-portal.md b/docs/workspace-portal.md
+index 51bd06a9..ebab7aff 100644
+--- a/docs/workspace-portal.md
++++ b/docs/workspace-portal.md
+@@ -468,11 +468,18 @@ a fresh read.
+ 
+ ## Automatic turn retries
+ 
+-Auto retry is enabled by default for managed lead conversations and ready team
+-members. The checkbox belongs to the selected conversation and persists across
+-portal restarts. Native child threads are excluded. Only new failures after
+-enrollment qualify; installing the feature or enabling the checkbox does not
+-restart an already-failed task.
++Automatic retries are enabled by default for managed lead conversations and
++ready team members. Native child threads are excluded. Only new failures after
++enrollment qualify; installing the feature does not restart an already-failed
++task.
++
++When session retry policy is available, Settings contains separate switches for
++capacity and cybersecurity errors. Both apply to the lead and all current and
++future retained team members. The conversation notice shows the current or
++latest retry chain. Retry now accelerates a scheduled attempt; Stop retrying
++stops that chain without changing the session preferences. Dismiss hides only
++that result in this browser. The notice appears inside the conversation viewport
++and leaves no space when hidden.
+ 
+ A terminal capacity error retries after 15, 30, 60, 120, 240 and 300 seconds,
+ then every 300 seconds until cancelled. Each interval adds up to 10% positive
+@@ -498,14 +505,14 @@ The server still verifies the error code, settings, queue, submission ledger
+ and managed admission. It never resumes a cold thread or clears native error
+ state to make a retry possible.
+ 
+-Cancel retry stops the current chain and leaves Auto retry enabled. Turning the
+-checkbox off also cancels the chain. New input, settings changes, Interrupt and
+-session Stop cancel pending retries. A cancellation after dispatch keeps checking
+-whether that request started; it cannot undo an accepted continuation. Use the existing
+-Interrupt control to interrupt a running turn.
++New input, settings changes, Interrupt and session Stop cancel pending retries.
++A cancellation after dispatch keeps checking whether that request started; it
++cannot undo an accepted continuation. Use the existing Interrupt control to
++interrupt a running turn.
+ 
+-The server schedules work while the browser is closed. The controls display its
+-phase, attempt, quota and deadline; the browser never submits a timed retry.
++The server schedules work while the browser is closed. The optional activity
++notice displays server-reported retry counts, elapsed time and status. It marks
++partial or unavailable evidence. The browser never submits a timed retry.
+ Transport errors, native intermediate retries, ordinary assistant refusals and
+ unrecognized failure codes do not start an automatic chain. The
+ [recovery guide](turn-retry-recovery.md) documents persistence, admission,
+diff --git a/flake.lock b/flake.lock
+index 610287ba..b1e80451 100644
+--- a/flake.lock
++++ b/flake.lock
+@@ -37,17 +37,17 @@
+     "codex-web": {
+       "flake": false,
+       "locked": {
+-        "lastModified": 1792775188,
+-        "narHash": "sha256-tCfdy/lh9LHbvEd6BYO0trM1pUelyv2T63KsQ1iEK90=",
++        "lastModified": 1792783657,
++        "narHash": "sha256-jOEXFTr55N88YbPakjlMw/7wsH8ZKr51Ag+Z1QaM25A=",
+         "owner": "aither64",
+         "repo": "codex-web",
+-        "rev": "ac62eeeb9d8b1fa7b8ed8fb95ba8160acb7efa1c",
++        "rev": "f86290673d752c77b56c70228c3d26aced75e177",
+         "type": "github"
+       },
+       "original": {
+         "owner": "aither64",
+         "repo": "codex-web",
+-        "rev": "ac62eeeb9d8b1fa7b8ed8fb95ba8160acb7efa1c",
++        "rev": "f86290673d752c77b56c70228c3d26aced75e177",
+         "type": "github"
+       }
+     },
+diff --git a/flake.nix b/flake.nix
+index 97642c93..4f41c424 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -5,7 +5,7 @@
+     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+     llm-agents.url = "github:numtide/llm-agents.nix";
+     codex-web = {
+-      url = "github:aither64/codex-web/ac62eeeb9d8b1fa7b8ed8fb95ba8160acb7efa1c";
++      url = "github:aither64/codex-web/f86290673d752c77b56c70228c3d26aced75e177";
+       flake = false;
+     };
+   };
+diff --git a/nix/workspace-portal.nix b/nix/workspace-portal.nix
+index 157cf5da..b940adc6 100644
+--- a/nix/workspace-portal.nix
++++ b/nix/workspace-portal.nix
+@@ -273,7 +273,7 @@ buildGoModule {
+ 
+   inherit src;
+   modRoot = "portal";
+-  vendorHash = "sha256-NZ9hapJobbhvEdxWTtzYJ/3ZeMkSZAqOdewJCsZoL2o=";
++  vendorHash = "sha256-x0Qrgfvcn74v0E6zJ7JKgwBnOGuJNUNTZQz0JdFIqcU=";
+ 
+   postPatch = ''
+     expected=${lib.escapeShellArg codexWebVersion}
+diff --git a/portal/go.mod b/portal/go.mod
+index 6e74eaf6..2bddb458 100644
+--- a/portal/go.mod
++++ b/portal/go.mod
+@@ -4,7 +4,7 @@ go 1.24.0
+ 
+ require (
+ 	github.com/SherClockHolmes/webpush-go v1.4.0
+-	github.com/aither64/codex-web v0.0.0-20261023170628-ac62eeeb9d8b
++	github.com/aither64/codex-web v0.0.0-20261023192737-f86290673d75
+ 	github.com/coder/websocket v1.8.14
+ 	github.com/microcosm-cc/bluemonday v1.0.27
+ 	github.com/yuin/goldmark v1.7.17
+diff --git a/portal/go.sum b/portal/go.sum
+index 4cf20004..fad0e714 100644
+--- a/portal/go.sum
++++ b/portal/go.sum
+@@ -1,7 +1,7 @@
+ github.com/SherClockHolmes/webpush-go v1.4.0 h1:ocnzNKWN23T9nvHi6IfyrQjkIc0oJWv1B1pULsf9i3s=
+ github.com/SherClockHolmes/webpush-go v1.4.0/go.mod h1:XSq8pKX11vNV8MJEMwjrlTkxhAj1zKfxmyhdV7Pd6UA=
+-github.com/aither64/codex-web v0.0.0-20261023170628-ac62eeeb9d8b h1:z09uGj1nKIn7CYBPZ7YZ5rsGF3MwN98tbyHqQln24ds=
+-github.com/aither64/codex-web v0.0.0-20261023170628-ac62eeeb9d8b/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
++github.com/aither64/codex-web v0.0.0-20261023192737-f86290673d75 h1:5iVFEW9ghXtccbfhFB2swLC+UqZYIqEPaRfNOh1bsMM=
++github.com/aither64/codex-web v0.0.0-20261023192737-f86290673d75/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
+ github.com/aymerick/douceur v0.2.0 h1:Mv+mAeH1Q+n9Fr+oyamOlAkUNPWPlA8PPGR0QAaYuPk=
+ github.com/aymerick/douceur v0.2.0/go.mod h1:wlT5vV2O3h55X9m7iVYN0TBM0NH/MmbLnd30/FjWUq4=
+ github.com/coder/websocket v1.8.14 h1:9L0p0iKiNOibykf283eHkKUHHrpG7f65OE3BhhO7v9g=
+diff --git a/portal/internal/web/paging_browser_test.cjs b/portal/internal/web/paging_browser_test.cjs
+index 45ba86b3..42b8671b 100644
+--- a/portal/internal/web/paging_browser_test.cjs
++++ b/portal/internal/web/paging_browser_test.cjs
+@@ -10,7 +10,7 @@ assert.match(source, /conversationAssets\.readTranscriptPage\(client,/);
+ assert.match(source, /conversationAssets\.transcriptEntryKey\(entry,/);
+ assert.doesNotMatch(source, /const createTranscriptHistory\s*=/);
+ assert.doesNotMatch(source, /const readTranscriptPage\s*=/);
+-assert.match(source, /renderThread\(page, \(\) => read\.isCurrent\(\)/);
++assert.match(source, /renderThread\(page, \(\) => historyRead === read && read\.isCurrent\(\) && threadID === currentThreadId/);
+ const historyRead = source.slice(source.indexOf("const runHistoryRead = async"),
+   source.indexOf("const scheduleHistoryRepair =", source.indexOf("const runHistoryRead = async")));
+ assert.match(historyRead, /const readVersion = transcriptHistory\.repairVersion/);
+diff --git a/portal/internal/web/question_browser_test.go b/portal/internal/web/question_browser_test.go
+index d0000d95..04a03774 100644
+--- a/portal/internal/web/question_browser_test.go
++++ b/portal/internal/web/question_browser_test.go
+@@ -1,6 +1,7 @@
+ package web
+ 
+ import (
++	"context"
+ 	"encoding/base64"
+ 	"fmt"
+ 	"net/http"
+@@ -10,6 +11,7 @@ import (
+ 	"path/filepath"
+ 	"strings"
+ 	"testing"
++	"time"
+ 
+ 	"github.com/aither64/codex-web/codex"
+ 	"github.com/aither64/codex-web/conversation"
+@@ -164,8 +166,20 @@ func TestQuestionBrowser(t *testing.T) {
+ 	})
+ 	httpServer.StartTLS()
+ 	defer httpServer.Close()
+-	for _, script := range []string{"portal_improvements_browser_test.cjs", "question_browser_test.cjs", "optional_questions_browser_test.cjs", "page_lifecycle_browser_test.cjs", "presentation_browser_test.cjs", "team_settings_browser_test.cjs", "team_activity_browser_test.cjs", "usability_browser_test.cjs", "repository_review_live_browser_test.cjs", "paging_browser_live_test.cjs", "mode_refresh_browser_test.cjs", "cluster_controls_browser_test.cjs", "recovery_display_browser_test.cjs"} {
++	for _, script := range []string{"portal_improvements_browser_test.cjs", "question_browser_test.cjs", "optional_questions_browser_test.cjs", "page_lifecycle_browser_test.cjs", "presentation_browser_test.cjs", "team_settings_browser_test.cjs", "team_activity_browser_test.cjs", "usability_browser_test.cjs", "repository_review_live_browser_test.cjs", "paging_browser_live_test.cjs", "mode_refresh_browser_test.cjs", "cluster_controls_browser_test.cjs", "recovery_display_browser_test.cjs", "retry_activity_browser_test.cjs"} {
+ 		t.Run(script, func(t *testing.T) {
++			if script == "retry_activity_browser_test.cjs" {
++				store, err := teamruntime.NewStore(server.config.UserStateRoot, server.config.Workspace)
++				if err != nil {
++					t.Fatal(err)
++				}
++				if _, err := store.Update(context.Background(), "example", "thread-1", true, func(roster *teamruntime.Roster) error {
++					roster.Members = []teamruntime.Member{{Address: "implementer0", Role: "implementer", Thread: "member-thread", Model: "gpt-6.1-sol", Effort: "xhigh", Behavior: "implementer", Access: "workspace_write", State: "ready", AddedAt: time.Now().UTC()}}
++					return nil
++				}); err != nil {
++					t.Fatal(err)
++				}
++			}
+ 			command := exec.Command("node", script, httpServer.URL)
+ 			if output, err := command.CombinedOutput(); err != nil {
+ 				t.Fatalf("%s: %v\n%s", script, err, output)
+diff --git a/portal/internal/web/retry_activity_browser_test.cjs b/portal/internal/web/retry_activity_browser_test.cjs
+new file mode 100644
+index 00000000..cd1364ed
+--- /dev/null
++++ b/portal/internal/web/retry_activity_browser_test.cjs
+@@ -0,0 +1,292 @@
++"use strict";
++const assert = require("node:assert/strict");
++const fs = require("node:fs");
++const path = require("node:path");
++const {chromium, expect} = require("@playwright/test");
++const baseURL = process.argv[2];
++const capture = process.env.PORTAL_RETRY_SCREENSHOTS;
++const entries = (first, last) => Array.from({length: last - first + 1}, (_, index) => ({
++  turnId: "task", itemId: `item-${first + index}`, kind: "agentMessage",
++  text: `Saved conversation message ${first + index}.`, turnStatus: "completed",
++  timestamp: new Date(1792770000000 + (first + index) * 1000).toISOString(),
++}));
++const activity = (overrides = {}) => ({
++  chainKey: "fixture-chain-1", class: "capacity", phase: "scheduled",
++  confirmedStarts: 3, unconfirmed: 0, countQuality: "exact", startedAtMs: 30000,
++  elapsedMs: 70000, timingQuality: "exact", finishedAtMs: null,
++  nextAttemptAtMs: 115000, outcome: "", reason: "",
++  retryNowToken: "attempt-1", stopToken: "chain-1", ...overrides,
++});
++
++(async () => {
++  if (capture) fs.mkdirSync(capture, {recursive: true});
++  const browser = await chromium.launch({headless: true, channel: "chromium"});
++  try {
++    for (const mobile of [false, true]) {
++      const page = await browser.newPage({ignoreHTTPSErrors: true,
++        viewport: mobile ? {width: 390, height: 844} : {width: 1440, height: 1000}});
++      const fixtureTime = new Date("2026-10-23T18:00:00Z");
++      await page.clock.install({time: fixtureTime});
++      await page.clock.pauseAt(fixtureTime);
++      const errors = [], writes = [], actions = [];
++      page.on("pageerror", error => errors.push(error.message));
++      let state = null, policy = {revision: "policy-1", capacity: true, cybersecurity: true};
++      let failPolicy = false, conflictPolicy = false, policyAvailable = true, activityAvailable = true;
++      let newer = entries(101, 120), threadReads = 0, threadResponses = 0;
++      let holdTranscript = false;
++      const heldTranscriptReads = [];
++      let legacyAssets = false;
++      await page.addInitScript(() => {
++        window.EventSource = class {
++          constructor() { window.retryFixtureEvents = this; queueMicrotask(() => this.onopen?.()); }
++          addEventListener() {}
++          close() {}
++        };
++      });
++      await page.route("**/codex/assets/conversation.js*", async route => {
++        if (!legacyAssets) return route.continue();
++        const response = await route.fetch();
++        let source = await response.text();
++        // Model an older embedding without the optional paging exports while
++        // retaining its actual renderer/client/assets and the new notice.
++        for (const name of ["createTranscriptHistory", "readTranscriptPage", "transcriptEntryKey"]) {
++          source = source.replace(new RegExp(`export (async )?function ${name}\\(`), (_, async = "") => `${async}function ${name}(`);
++        }
++        return route.fulfill({response, body: source});
++      });
++      const serve = async route => {
++        const url = new URL(route.request().url()), operation = url.pathname.split("/").at(-1);
++        const json = (data, status = 200) => route.fulfill({status, json: data});
++        if (url.pathname.endsWith("/retry-policy")) {
++          if (!policyAvailable) return json({error: "Fixture optional policy unavailable"}, 404);
++          if (route.request().method() === "POST") {
++            const body = route.request().postDataJSON(); writes.push({path: url.pathname, body});
++            if (conflictPolicy) { conflictPolicy = false; policy = {...policy, revision: "other-policy", cybersecurity: false}; return json({error: "Fixture revision changed"}, 409); }
++            policy = {revision: `policy-${writes.length + 1}`, capacity: body.capacity, cybersecurity: body.cybersecurity};
++            return json(policy);
++          }
++          return failPolicy ? json({error: "Fixture unavailable"}, 503) : json(policy);
++        }
++        if (url.pathname.endsWith("/retry/activity")) return activityAvailable ? json({serverNowMs: 100000, activity: state}) : json({error: "Fixture optional activity unavailable"}, 404);
++        if (url.pathname.endsWith("/retry/now") || url.pathname.endsWith("/retry/stop")) {
++          const body = route.request().postDataJSON(); actions.push({operation, body});
++          assert.deepEqual(Object.keys(body), ["token"]);
++          if (operation === "now") state = activity({...state, nextAttemptAtMs: 100000, retryNowToken: ""});
++          else state = activity({...state, phase: "terminal", outcome: "stopped", finishedAtMs: 100000, nextAttemptAtMs: null, retryNowToken: "", stopToken: ""});
++          return json({serverNowMs: 100000, activity: state});
++        }
++        if (url.pathname.endsWith("/retry") || url.pathname.endsWith("/retry/enabled") || url.pathname.endsWith("/retry/cancel")) throw new Error("Removed thread retry control used a legacy route");
++        if (operation === "thread" || operation === "page") {
++          threadReads++;
++          if (holdTranscript) await new Promise(resolve => heldTranscriptReads.push(resolve));
++          threadResponses++;
++          return json({threadId: url.pathname.includes("~") ? "member-thread" : "thread-1",
++            latestTurnId: "task", status: "idle", collaborationMode: "default", model: "model-1",
++            reasoningEffort: "medium", entries: url.searchParams.has("cursor") ? entries(81, 100) : newer,
++            hasOlder: !url.searchParams.has("cursor"), olderCursor: url.searchParams.has("cursor") ? null : "older-1"});
++        }
++        if (operation === "pending" || operation === "queue") return json([]);
++        if (operation === "reconcile") return json({ok: true});
++        if (operation === "activity") return json({currentState: "idle", workingMs: 30000, waitingMs: 10000, idleMs: 10000, coverageComplete: true, stateSinceMs: Date.now(), observedAtMs: Date.now()});
++        if (operation === "details") return json({repositoriesHTML: "", artifactsHTML: ""});
++        return route.continue();
++      };
++      await page.route("**/api/sessions/example/**", serve);
++      await page.route("**/codex/conversations/**", serve);
++      const suffix = mobile ? "mobile" : "desktop";
++      const screenshot = async name => { if (capture) await page.screenshot({path: path.join(capture, `${name}-${suffix}.png`), animations: "disabled"}); };
++      const notice = page.locator("#automatic-turn-retry");
++      const refresh = async () => {
++        await page.evaluate(() => dispatchEvent(new Event("focus")));
++      };
++      const load = async (member, visible = true) => {
++        await page.goto(baseURL + `/example/${member ? "?member=implementer0" : ""}#codex`);
++        await expect(page.locator("#transcript-entries .message")).toHaveCount(newer.length);
++        if (visible) await expect(notice).toBeVisible();
++        else await expect(notice).toBeHidden();
++        await expect(page.locator("#automatic-turn-retry input")).toHaveCount(0);
++      };
++      const scroll = page.locator("#transcript");
++      const bottomDistance = () => scroll.evaluate(node => node.scrollHeight - node.clientHeight - node.scrollTop);
++      await load(false, false);
++      await expect.poll(bottomDistance).toBeLessThanOrEqual(2);
++      // Focus refresh may request both lanes. Hold every transcript response
++      // so its render cannot accidentally supply the footer's missing follow.
++      holdTranscript = true;
++      const initialThreadResponses = threadResponses;
++      state = activity();
++      await refresh();
++      await expect(notice).toBeVisible();
++      await expect.poll(bottomDistance).toBeLessThanOrEqual(2);
++      await expect(notice).toContainText("3");
++      await expect(notice).toContainText(/15s|15 seconds/);
++      await expect(notice.getByRole("button", {name: "Retry now", exact: true})).toBeVisible();
++      await expect(notice.getByRole("button", {name: "Stop retrying", exact: true})).toBeVisible();
++      assert.equal(await page.locator("#transcript > #transcript-entries").count(), 1);
++      assert.equal(await page.locator("#transcript > #automatic-turn-retry").count(), 1);
++      await screenshot("capacity");
++      const announcement = await notice.locator('[role="status"]').textContent();
++      await page.clock.runFor(1000);
++      await expect(notice).toContainText(/14s|14 seconds/);
++      assert.equal(await notice.locator('[role="status"]').textContent(), announcement, "countdown was announced again");
++      assert.equal(actions.length, 0, "browser timer dispatched retry action");
++      const initialHeight = await notice.evaluate(node => node.getBoundingClientRect().height);
++      state = activity({reason: "Synthetic fixture detail. ".repeat(16)});
++      await refresh();
++      await expect.poll(() => notice.evaluate(node => node.getBoundingClientRect().height)).toBeGreaterThan(initialHeight);
++      await expect.poll(bottomDistance).toBeLessThanOrEqual(2);
++      state = activity();
++      await refresh();
++      await expect.poll(() => notice.evaluate(node => node.getBoundingClientRect().height)).toBe(initialHeight);
++      await expect.poll(bottomDistance).toBeLessThanOrEqual(2);
++      assert.equal(threadResponses, initialThreadResponses, "transcript rendering masked the activity-only follow check");
++      holdTranscript = false;
++      for (const release of heldTranscriptReads.splice(0)) release();
++
++      // Both render owners must leave the footer node, focus and selection intact.
++      await page.locator("#message-form textarea").fill("Keep this draft.");
++      await page.locator("#message-form textarea").evaluate(node => { node.focus(); node.setSelectionRange(2, 6); });
++      await scroll.hover(); await page.mouse.wheel(0, -120);
++      await page.clock.runFor(100);
++      await page.evaluate(() => {
++        window.retryFooter = document.getElementById("automatic-turn-retry");
++        const log = document.getElementById("transcript");
++        const message = [...document.querySelectorAll("#transcript-entries .message")].find(node => node.getBoundingClientRect().bottom > log.getBoundingClientRect().top);
++        window.retryAnchor = {node: message, top: message.getBoundingClientRect().top};
++      });
++      state = activity({class: "cybersecurity", nextAttemptAtMs: 100000});
++      await refresh();
++      await expect(notice).toContainText(/Cybersecurity/i);
++      assert.deepEqual(await page.locator("#message-form textarea").evaluate(node => [node.selectionStart, node.selectionEnd, document.activeElement === node]), [2, 6, true]);
++      assert.ok(await page.evaluate(() => Math.abs(window.retryAnchor.node.getBoundingClientRect().top - window.retryAnchor.top) < 2), "notice update shifted a scrolled-up message");
++      assert.ok(await page.evaluate(() => window.retryFooter === document.getElementById("automatic-turn-retry")));
++      await scroll.evaluate(node => { node.scrollTop = node.scrollHeight; });
++      await screenshot("cybersecurity");
++      for (const filter of ["all", "team", "activity", "messages"]) {
++        await page.locator(`[data-transcript-filter="${filter}"]`).click();
++        assert.ok(await page.evaluate(() => window.retryFooter === document.getElementById("automatic-turn-retry")), "filter replaced retry footer");
++      }
++      // A live update and native history prepend retain the same footer and
++      // keep an existing visible message anchored in the scroll owner.
++      newer = entries(101, 121);
++      await page.evaluate(() => window.retryFixtureEvents.onmessage());
++      await page.clock.runFor(300);
++      await expect(page.locator("#transcript-entries .message")).toHaveCount(21);
++      await scroll.hover(); await page.mouse.wheel(0, -10000);
++      await page.clock.runFor(300);
++      await expect(page.locator("#transcript-entries .message")).toHaveCount(41);
++      assert.ok(await page.evaluate(() => window.retryFooter === document.getElementById("automatic-turn-retry")), "backfill removed footer");
++      await scroll.evaluate(node => { node.scrollTop = node.scrollHeight; });
++
++      state = activity({phase: "reconciling", unconfirmed: 1, countQuality: "partial", retryNowToken: "", nextAttemptAtMs: null});
++      await refresh();
++      await expect(notice).toContainText(/unconfirmed|confirm/i);
++      await expect(notice.getByRole("button", {name: "Retry now", exact: true})).toHaveCount(0);
++      await screenshot("unconfirmed");
++      state = activity({phase: "running", retryNowToken: "", nextAttemptAtMs: null});
++      await refresh();
++      await expect(notice).toContainText(/running|progress/i);
++      await screenshot("running");
++
++      for (const [outcome, extra] of [["success", {}], ["stopped", {confirmedStarts: 0}], ["exhausted", {class: "cybersecurity", confirmedStarts: null, countQuality: "unavailable", startedAtMs: null, elapsedMs: null, timingQuality: "unavailable"}]]) {
++        state = activity({chainKey: `result-${outcome}`, phase: "terminal", outcome, retryNowToken: "", stopToken: "", nextAttemptAtMs: null, finishedAtMs: 100000, ...extra});
++        await refresh();
++        await expect(notice).toBeVisible();
++        await expect(notice.getByRole("button", {name: /dismiss/i})).toBeVisible();
++        await scroll.evaluate(node => { node.scrollTop = node.scrollHeight; });
++        await screenshot(outcome);
++      }
++      const dismiss = notice.getByRole("button", {name: /dismiss/i});
++      await dismiss.focus(); await page.keyboard.press("Enter");
++      await expect(notice).toBeHidden();
++      assert.equal(await notice.evaluate(node => node.getBoundingClientRect().height), 0);
++      assert.equal(await scroll.evaluate(node => node.children.length), 2);
++      await screenshot("dismissed");
++      await page.reload();
++      await expect(notice).toBeHidden();
++      state = activity({chainKey: "next-chain"});
++      await refresh(); await expect(notice).toBeVisible();
++      await notice.getByRole("button", {name: "Retry now", exact: true}).click();
++      await expect.poll(() => actions.at(-1)?.operation).toBe("now");
++      assert.equal(actions.at(-1).body.token, "attempt-1");
++      await notice.getByRole("button", {name: "Stop retrying", exact: true}).click();
++      await expect.poll(() => actions.at(-1)?.operation).toBe("stop");
++      assert.equal(actions.at(-1).body.token, "chain-1");
++      assert.equal(writes.length, 0, "chain actions changed session policy");
++
++      await page.locator('[data-session-tab="settings"]').click();
++      const policyPanel = page.locator("#session-retry-policy");
++      await expect(policyPanel).toBeVisible();
++      await expect(policyPanel.getByRole("switch")).toHaveCount(2);
++      await expect(policyPanel).toContainText("lead and all current and future retained team members");
++      const capacity = policyPanel.getByRole("switch", {name: /Retry capacity errors/});
++      const cyber = policyPanel.getByRole("switch", {name: /Retry cybersecurity errors/});
++      await expect(capacity).toBeChecked();
++      await capacity.focus(); await page.keyboard.press("Space");
++      await expect(capacity).not.toBeChecked();
++      await expect(page.locator("#session-retry-policy-status")).toHaveText("Retry settings saved.");
++      assert.deepEqual(writes.at(-1), {path: "/api/sessions/example/retry-policy", body: {capacity: false, cybersecurity: true, expectedRevision: "policy-1"}});
++      conflictPolicy = true;
++      await cyber.click();
++      await expect(page.locator("#session-retry-policy-status")).toContainText("changed elsewhere");
++      await expect(cyber).not.toBeChecked();
++      await screenshot("settings");
++      failPolicy = true; await refresh();
++      await expect(capacity).toBeDisabled();
++      failPolicy = false;
++
++      state = activity({chainKey: "member-chain"});
++      await load(true);
++      await expect(page.locator("#codex-member")).toHaveValue("implementer0");
++      await scroll.evaluate(node => { node.scrollTop = node.scrollHeight; });
++      await screenshot("member");
++      await page.locator('[data-session-tab="settings"]').click();
++      await expect(capacity).not.toBeChecked();
++      await expect(cyber).not.toBeChecked();
++      await capacity.click();
++      await expect(capacity).toBeChecked();
++      assert.equal(writes.at(-1).path, "/api/sessions/example/retry-policy", "member view wrote per-thread preference");
++      state = null;
++      await page.locator('[data-session-tab="codex"]').click();
++      await refresh(); await expect(notice).toBeHidden();
++      assert.equal(await notice.evaluate(node => node.getBoundingClientRect().height), 0);
++      await screenshot("idle");
++
++      for (const count of [1, 0]) {
++        newer = entries(1, count); state = activity({chainKey: `short-${count}`});
++        await page.reload(); await expect(notice).toBeVisible();
++        await expect(page.locator("#transcript-entries .message")).toHaveCount(count);
++        const geometry = await notice.evaluate(node => {
++          const viewport = node.parentElement, bounds = viewport.getBoundingClientRect();
++          return {bottom: node.getBoundingClientRect().bottom,
++            wanted: bounds.bottom - parseFloat(getComputedStyle(viewport).paddingBottom),
++            scrollHeight: viewport.scrollHeight, clientHeight: viewport.clientHeight};
++        });
++        assert.ok(Math.abs(geometry.bottom - geometry.wanted) <= 2, "short conversation footer is not at the viewport bottom: " + JSON.stringify(geometry));
++        assert.ok(geometry.scrollHeight <= geometry.clientHeight + 1, "short notice introduced scrolling");
++        await screenshot(count ? "short" : "empty");
++      }
++      state = null; await refresh(); await expect(notice).toBeHidden();
++      assert.equal(await notice.evaluate(node => node.getBoundingClientRect().height), 0);
++      assert.ok(await scroll.evaluate(node => node.scrollHeight <= node.clientHeight + 1), "idle empty footer leaves spacer");
++
++      // Exercise the full-render compatibility path with the same real DOM.
++      legacyAssets = true; state = activity({chainKey: "legacy-full-render"}); newer = entries(1, 2);
++      await page.reload(); await expect(notice).toBeVisible();
++      await expect(page.locator("#transcript-entries .message")).toHaveCount(2);
++      await page.evaluate(() => { window.retryFooter = document.getElementById("automatic-turn-retry"); });
++      newer = entries(1, 3); await page.evaluate(() => window.retryFixtureEvents.onmessage());
++      await page.clock.runFor(300);
++      await expect(page.locator("#transcript-entries .message")).toHaveCount(3);
++      assert.ok(await page.evaluate(() => window.retryFooter === document.getElementById("automatic-turn-retry")), "full renderer removed footer");
++      activityAvailable = false; policyAvailable = false;
++      await refresh(); await expect(notice).toBeHidden();
++      await page.locator('[data-session-tab="settings"]').click();
++      await expect(policyPanel).toBeHidden();
++      assert.ok(threadReads > 0);
++      assert.deepEqual(errors, []);
++      console.log(JSON.stringify({viewport: suffix, threadReads, preferenceWrites: writes.length, actions: actions.length, screenshots: Boolean(capture)}));
++      await page.close();
++    }
++  } finally { await browser.close(); }
++})().catch(error => { console.error(error); process.exit(1); });
+diff --git a/portal/internal/web/server_test.go b/portal/internal/web/server_test.go
+index b6cb2042..ff009575 100644
+--- a/portal/internal/web/server_test.go
++++ b/portal/internal/web/server_test.go
+@@ -4148,7 +4148,7 @@ func TestShippedBrowserClientMatchesSessionAPI(t *testing.T) {
+ 		t.Fatal(err)
+ 	}
+ 	modulePath := filepath.Join(t.TempDir(), "conversation.mjs")
+-	for _, name := range []string{"uploads.js", "sync.js", "refresh.js", "questions.js", "citations.js", "retry.js"} {
++	for _, name := range []string{"uploads.js", "sync.js", "refresh.js", "questions.js", "citations.js", "retry.js", "retry_activity.js"} {
+ 		dependency, err := http.Get(httpServer.URL + "/codex/assets/" + name)
+ 		if err != nil {
+ 			t.Fatal(err)
+diff --git a/portal/internal/web/static/app.js b/portal/internal/web/static/app.js
+index 7cbb59ff..f578dacc 100644
+--- a/portal/internal/web/static/app.js
++++ b/portal/internal/web/static/app.js
+@@ -343,8 +343,8 @@
+       details: String(entry.details || "").trim(),
+     };
+   };
+-  const captureTranscriptViewState = (container) => ({
+-    disclosures: captureTranscriptDisclosureState(container),
++  const captureTranscriptViewState = (container, messageList = container) => ({
++    disclosures: captureTranscriptDisclosureState(messageList),
+     follow: shouldFollowTranscript(container),
+     scrollTop: container.scrollTop,
+   });
+@@ -375,11 +375,11 @@
+     });
+     return changed;
+   };
+-  const refreshLegacyTranscriptView = (container, view, follow, render) => {
+-    const disclosures = captureTranscriptDisclosureState(container);
++  const refreshLegacyTranscriptView = (container, view, follow, render, messageList = container) => {
++    const disclosures = captureTranscriptDisclosureState(messageList);
+     const previousTop = container.scrollTop;
+     const viewportTop = container.getBoundingClientRect?.().top;
+-    const entries = () => [...container.querySelectorAll("[data-transcript-entry-key]")];
++    const entries = () => [...messageList.querySelectorAll("[data-transcript-entry-key]")];
+     const anchor = !follow && Number.isFinite(viewportTop) ? entries().find((element) =>
+       element.getBoundingClientRect?.().bottom > viewportTop) : null;
+     const anchorKey = anchor?.dataset.transcriptEntryKey;
+@@ -2754,8 +2754,76 @@
+   }) : null;
+   const client = createSessionClient(slug, request, conversation, body.dataset.selectedMember || "");
+   const retryRoot = document.getElementById("automatic-turn-retry");
+-  if (retryRoot && body.dataset.archived !== "true" && conversationAssets.mountRetryControls) {
+-    conversationAssets.mountRetryControls(retryRoot, {client: conversation});
++  if (retryRoot && body.dataset.archived !== "true" && conversationAssets.mountRetryActivity) {
++    conversationAssets.mountRetryActivity(retryRoot, {client: conversation, conversationKey: conversationID});
++  }
++  const retryPolicyPanel = document.getElementById("session-retry-policy");
++  if (retryPolicyPanel) {
++    const capacity = document.getElementById("retry-capacity");
++    const cybersecurity = document.getElementById("retry-cybersecurity");
++    const feedback = document.getElementById("session-retry-policy-status");
++    const path = apiPath(slug, "retry-policy");
++    let saved = null, busy = false, generation = 0, pending = null;
++    const readOnly = body.dataset.archived === "true" || body.dataset.lifecycle !== "active";
++    const valid = value => value && typeof value.revision === "string" && value.revision.length > 0 &&
++      value.revision.length <= 256 && typeof value.capacity === "boolean" && typeof value.cybersecurity === "boolean";
++    const render = () => {
++      capacity.checked = saved?.capacity === true;
++      cybersecurity.checked = saved?.cybersecurity === true;
++      capacity.disabled = cybersecurity.disabled = readOnly || busy || !saved;
++    };
++    const refreshPolicy = async (message = "") => {
++      if (busy) return;
++      pending?.abort();
++      const controller = new AbortController(), current = ++generation;
++      pending = controller;
++      try {
++        const value = await request(path, {signal: controller.signal});
++        if (current !== generation) return;
++        if (!valid(value)) throw new Error("Automatic retry settings are unavailable.");
++        saved = value; retryPolicyPanel.hidden = false; feedback.textContent = message; render();
++      } catch (error) {
++        if (current !== generation || controller.signal.aborted) return;
++        saved = null;
++        // No optional policy capability means no interactive replacement for
++        // the old per-thread control. Manual delivery is independent of it.
++        if (error.status === 404 || error.status === 403) retryPolicyPanel.hidden = true;
++        else { retryPolicyPanel.hidden = false; feedback.textContent = "Automatic retry settings are unavailable."; }
++        render();
++      } finally {
++        if (current === generation) pending = null;
++      }
++    };
++    const changePolicy = async () => {
++      if (busy || !saved || readOnly) { render(); return; }
++      const choice = {capacity: capacity.checked, cybersecurity: cybersecurity.checked, expectedRevision: saved.revision};
++      busy = true; ++generation; pending?.abort(); pending = null;
++      render(); feedback.textContent = "Saving retry settings…";
++      let message = "Retry settings saved.";
++      try {
++        const value = await request(path, {method: "POST", body: JSON.stringify(choice)});
++        if (!valid(value)) throw new Error("Automatic retry settings are unavailable.");
++        saved = value; feedback.textContent = message;
++      } catch (error) {
++        saved = null;
++        message = error.status === 409 ? "Retry settings changed elsewhere. Current settings have been reloaded." :
++          "Could not confirm the change. Current retry settings have been reloaded.";
++      } finally {
++        busy = false; render();
++      }
++      // Observe an uncertain reply; never repeat the preference write.
++      if (!saved) await refreshPolicy(message);
++    };
++    capacity.addEventListener("change", () => { void changePolicy(); });
++    cybersecurity.addEventListener("change", () => { void changePolicy(); });
++    document.addEventListener("session-section-change", event => {
++      if (event.detail === "settings") void refreshPolicy();
++    });
++    addEventListener("focus", () => {
++      if (document.getElementById("settings")?.classList.contains("active")) void refreshPolicy();
++    });
++    addEventListener("pagehide", () => { ++generation; pending?.abort(); });
++    if (document.getElementById("settings")?.classList.contains("active")) void refreshPolicy();
+   }
+   document.getElementById("codex-member")?.addEventListener("change", (event) => {
+     const target = new URL(location.href);
+@@ -3796,9 +3864,10 @@
+     if (pendingLifecycle) failLifecycle(pendingLifecycle, error.message);
+   });
+   const transcript = document.getElementById("transcript");
++  const transcriptEntriesRoot = document.getElementById("transcript-entries");
+   const pending = document.getElementById("pending");
+   const status = document.getElementById("codex-status");
+-  if (!transcript) return;
++  if (!transcript || !transcriptEntriesRoot) return;
+ 
+   const composerView = document.getElementById("message-form") ? createComposerView(
+     document.getElementById("plan-actions"), document.getElementById("message-form"), pending,
+@@ -4233,6 +4302,7 @@
+     scrollbarLastTop = historyScrollTop();
+   });
+   transcriptResize.observe(transcript);
++  if (retryRoot) transcriptResize.observe(retryRoot);
+   document.addEventListener("session-section-change", (event) => {
+     if (event.detail !== "codex") return;
+     resetHistoryNavigation();
+@@ -4444,7 +4514,7 @@
+   };
+ 
+   const renderTranscriptEntries = (entries, disclosureStates) => {
+-    transcript.replaceChildren();
++    transcriptEntriesRoot.replaceChildren();
+     const visibleEntries = transcriptEntriesForFilter(entries, transcriptFilter);
+     let dateKey = "";
+     entries.forEach((entry, index) => {
+@@ -4455,9 +4525,9 @@
+           const separator = document.createElement("div");
+           separator.className = "transcript-date";
+           separator.textContent = timestamp.dateLabel;
+-          transcript.append(separator);
++          transcriptEntriesRoot.append(separator);
+         }
+-        transcript.append(appendMessage(entry, index, entries, disclosureStates));
++        transcriptEntriesRoot.append(appendMessage(entry, index, entries, disclosureStates));
+       }
+     });
+     if (!visibleEntries.length) {
+@@ -4465,17 +4535,17 @@
+       empty.className = "empty";
+       empty.textContent = transcriptFilter === "all" ? "No conversation entries yet." :
+         `No ${transcriptFilter} in this conversation.`;
+-      transcript.append(empty);
++      transcriptEntriesRoot.append(empty);
+     }
+   };
+ 
+   const patchTranscriptEntries = (rows, changed, {follow = false, prepend = false} = {}) => {
+     resetHistoryNavigation();
+-    const oldNodes = new Map([...transcript.children].filter((node) => node.dataset.transcriptEntryKey)
++    const oldNodes = new Map([...transcriptEntriesRoot.children].filter((node) => node.dataset.transcriptEntryKey)
+       .map((node) => [node.dataset.transcriptEntryKey, node]));
+-    const oldDates = new Map([...transcript.children].filter((node) => node.dataset.transcriptDateKey)
++    const oldDates = new Map([...transcriptEntriesRoot.children].filter((node) => node.dataset.transcriptDateKey)
+       .map((node) => [node.dataset.transcriptDateKey, node]));
+-    const anchor = !follow ? [...transcript.children].find((node) =>
++    const anchor = !follow ? [...transcriptEntriesRoot.children].find((node) =>
+       node.getBoundingClientRect().bottom > transcript.getBoundingClientRect().top) : null;
+     const anchorTop = anchor?.getBoundingClientRect().top;
+     const anchorKey = anchor?.dataset.transcriptEntryKey;
+@@ -4514,16 +4584,16 @@
+       desired.push(node);
+     }
+     if (!desired.length) {
+-      const empty = transcript.querySelector(".empty") || document.createElement("p");
++      const empty = transcriptEntriesRoot.querySelector(".empty") || document.createElement("p");
+       empty.className = "empty";
+       empty.textContent = transcriptFilter === "all" ? "No conversation entries yet." :
+         `No ${transcriptFilter} in this conversation.`;
+       desired.push(empty);
+     }
+     const keep = new Set(desired);
+-    for (const node of [...transcript.children]) if (!keep.has(node)) node.remove();
++    for (const node of [...transcriptEntriesRoot.children]) if (!keep.has(node)) node.remove();
+     desired.forEach((node, index) => {
+-      if (transcript.children[index] !== node) transcript.insertBefore(node, transcript.children[index] || null);
++      if (transcriptEntriesRoot.children[index] !== node) transcriptEntriesRoot.insertBefore(node, transcriptEntriesRoot.children[index] || null);
+     });
+     const currentAnchor = anchor?.isConnected ? anchor : desired.find((node) =>
+       (anchorKey && node.dataset.transcriptEntryKey === anchorKey) ||
+@@ -4539,7 +4609,7 @@
+   const saveTranscriptView = () => {
+     const view = transcriptViews.get(transcriptFilter);
+     if (!view) return;
+-    Object.assign(view, captureTranscriptViewState(transcript), {follow: view.follow, initialized: true});
++    Object.assign(view, captureTranscriptViewState(transcript, transcriptEntriesRoot), {follow: view.follow, initialized: true});
+   };
+ 
+   const transcriptTimestamps = createTranscriptTimestampPresentation({
+@@ -4634,7 +4704,7 @@
+     }
+     if (transcriptHistory) patchTranscriptEntries(transcriptHistory.rows, update.changed, {follow, prepend: kind !== "newest"});
+     else refreshLegacyTranscriptView(transcript, view, follow, (disclosures) =>
+-      renderTranscriptEntries(transcriptEntries, disclosures));
++      renderTranscriptEntries(transcriptEntries, disclosures), transcriptEntriesRoot);
+     view.scrollTop = transcript.scrollTop;
+     view.initialized = true;
+     const newOutput = document.getElementById("new-output");
+diff --git a/portal/internal/web/static/style.css b/portal/internal/web/static/style.css
+index 2c4a8829..7abfdc82 100644
+--- a/portal/internal/web/static/style.css
++++ b/portal/internal/web/static/style.css
+@@ -269,7 +269,20 @@ a.icon-button { display: inline-flex; align-items: center; justify-content: cent
+ .member-selector select { width: auto; min-width: 0; max-width: min(18rem, 28vw); margin-top: 0; padding: .38rem .5rem; font-size: .78rem; }
+ .chat-heading { display: flex; align-items: center; gap: .5rem; }
+ .chat-heading .transcript-filters { margin-left: .5rem; margin-right: 0; }
+-.transcript { flex: 1; overflow-y: auto; min-height: 0; padding: 1.2rem .3rem; overscroll-behavior: contain; overflow-anchor: none; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: .7rem; }
++.transcript { flex: 1; overflow-y: auto; min-height: 0; padding: 1.2rem .3rem; overscroll-behavior: contain; overflow-anchor: none; display: flex; flex-direction: column; }
++#transcript-entries { flex: 1 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: .7rem; }
++#automatic-turn-retry { flex: 0 0 auto; --codex-border: var(--line); --codex-accent: var(--accent-2); --codex-surface: var(--panel-2); --codex-muted: var(--muted); }
++#automatic-turn-retry .codex-retry-activity-notice { margin: 0; }
++#automatic-turn-retry:not([hidden]) { margin-top: .8rem; }
++.retry-policy-switch { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; padding: 1rem 0; border-bottom: 1px solid var(--line); }
++.retry-policy-switch > span { display: grid; gap: .3rem; min-width: 0; }
++.retry-policy-switch strong { color: var(--text); }
++.retry-policy-switch input { appearance: none; flex: 0 0 auto; width: 2.8rem; height: 1.6rem; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 1rem; background: var(--panel); cursor: pointer; }
++.retry-policy-switch input::before { content: ""; display: block; width: 1.1rem; height: 1.1rem; margin: .18rem; border-radius: 50%; background: var(--muted); transition: transform .15s ease; }
++.retry-policy-switch input:checked { background: #164735; border-color: var(--accent-2); }
++.retry-policy-switch input:checked::before { transform: translateX(1.15rem); background: var(--accent); }
++.retry-policy-switch input:disabled { cursor: default; opacity: .5; }
++.retry-policy-switch input:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+ .transcript-history .transcript { padding-top: .5rem; }
+ .message p:first-child { margin-top: 0; }
+ .message p:last-child { margin-bottom: 0; }
+diff --git a/portal/internal/web/templates/session.html b/portal/internal/web/templates/session.html
+index 74e2e684..22df21c2 100644
+--- a/portal/internal/web/templates/session.html
++++ b/portal/internal/web/templates/session.html
+@@ -7,7 +7,7 @@
+   <meta name="style-nonce" content="{{.StyleNonce}}">
+   <title>{{.Session.Slug}} · Workspace</title>
+   <link rel="stylesheet" href="/codex/assets/conversation.css?v=9">
+-  <link rel="stylesheet" href="/static/style.css?v=22">
++  <link rel="stylesheet" href="/static/style.css?v=23">
+   <link rel="stylesheet" href="/codex/assets/uploads.css?v=3">
+ </head>
+ <body class="session-body" data-session="{{.Session.Slug}}" data-session-observation="{{.Session.ObservationIdentity}}" data-thread-id="{{if .SelectedThreadID}}{{.SelectedThreadID}}{{else}}{{.Session.Codex.ThreadID}}{{end}}" data-root-thread-id="{{.Session.Codex.ThreadID}}" data-conversation-id="{{.ConversationID}}" data-selected-member="{{.SelectedMember}}" data-lifecycle-target-id="{{.LifecycleTargetID}}" data-target-identity-version="2" data-archived="{{.Session.Archived}}" data-interactive="{{.Session.Interactive}}" data-execution-held="{{.Session.ExecutionHeld}}" data-lifecycle="{{.Session.Lifecycle}}" data-pending-lifecycle="{{.PendingLifecycle}}">
+@@ -78,6 +78,15 @@
+           <dl><dt>Sensitive</dt><dd data-session-sensitivity>{{if .Session.Sensitive}}Yes{{else}}No{{end}}</dd></dl>
+           <p class="muted">Sensitivity is set when the session is created.</p>
+         </section>
++        {{if .Session.Codex.ThreadID}}
++        <section id="session-retry-policy" class="panel" hidden>
++          <h3>Automatic retries</h3>
++          <p id="session-retry-scope" class="muted">Applies to the lead and all current and future retained team members.</p>
++          <label class="retry-policy-switch"><span><strong>Retry capacity errors</strong><span class="muted">Retry when Codex is overloaded.</span></span><input id="retry-capacity" type="checkbox" role="switch" aria-describedby="session-retry-scope" disabled></label>
++          <label class="retry-policy-switch"><span><strong>Retry cybersecurity errors</strong><span class="muted">Up to 30 automatic retries in five minutes.</span></span><input id="retry-cybersecurity" type="checkbox" role="switch" aria-describedby="session-retry-scope" disabled></label>
++          <p id="session-retry-policy-status" class="muted" role="status" aria-live="polite"></p>
++        </section>
++        {{end}}
+         <section class="panel">
+           <h3>Session attention</h3>
+           <p><code>?</code> means an unseen answer or approval request. <code>✓</code> means the lead finished a response and the team is idle. Visiting this session clears attention. <code>R</code> means one machine is reserved; <code>R2</code> means two. Reservations remain until released.</p>
+@@ -105,11 +114,10 @@
+           <button type="button" class="quiet" role="tab" aria-selected="false" data-transcript-filter="activity">Activity</button>
+         </div><label class="member-selector"><span>Member</span><select id="codex-member"><option value="lead">lead</option>{{range .ReadyMembers}}<option value="{{.Address}}"{{if eq .Address $.SelectedMember}} selected{{end}}>{{.Address}}</option>{{end}}</select></label><span id="codex-status" class="badge">Connecting</span></div>
+         <div id="conversation-connection" class="notice warning conversation-connection" role="status" hidden></div>
+-        <div id="automatic-turn-retry" hidden></div>
+         <div id="codex-duration" class="activity-summary" role="status">Loading timing…</div>
+         <div class="transcript-history">
+           <div id="history-controls" class="history-controls" hidden><span id="history-status" role="status"></span><button id="repair-history" type="button" class="quiet" hidden>Retry history</button></div>
+-          <div id="transcript" class="transcript" role="log" aria-label="Codex conversation"><p class="empty">Loading conversation…</p></div>
++          <div id="transcript" class="transcript"><div id="transcript-entries" role="log" aria-label="Codex conversation"><p class="empty">Loading conversation…</p></div><div id="automatic-turn-retry" hidden></div></div>
+         </div>
+         {{if and .Session.RecoveryReady (not .PendingLifecycle)}}<p id="pending-status" class="lane-status" role="status" hidden><span>Loading requests…</span> <button id="pending-retry" type="button" class="quiet" hidden>Retry</button></p><div id="pending" class="pending"></div>{{end}}
+         <section id="optional-questions" class="codex-question-panel" aria-label="Optional questions" hidden></section>
+@@ -271,7 +279,7 @@
+       <div class="dialog-actions"><button type="button" class="quiet" data-dialog-close>Cancel</button><button type="submit" class="danger">Delete session</button></div>
+     </form>
+   </dialog>
+-  <script src="/static/app.js?v=56" defer></script>
++  <script src="/static/app.js?v=57" defer></script>
+   <script src="/static/session-attention-store.js?v=4" defer></script>
+   <script src="/static/browser-notifications.js?v=6" defer></script>
+   <script src="/static/session-attention.js?v=2" defer></script>

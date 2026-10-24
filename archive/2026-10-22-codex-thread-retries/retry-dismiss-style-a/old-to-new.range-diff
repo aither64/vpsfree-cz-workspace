@@ -1,0 +1,48 @@
+1:  df00fa3 = 1:  df00fa3 codex: add exact failed-turn continuation and context reads
+2:  6c82875 = 2:  6c82875 conversation: expose optional application-owned retry controls
+3:  c1f415a = 3:  c1f415a codex: verify failed-turn retries against a private native fixture
+4:  ac62eee = 4:  ac62eee codex: expose exact prepared-send observation proofs
+5:  f862906 = 5:  f862906 conversation: add optional retry activity notices and actions
+6:  55e0300 = 6:  55e0300 conversation: submit question answers with Enter
+7:  a58f070 ! 7:  5743f94 conversation: use an icon to dismiss retry notices
+    @@ Metadata
+      ## Commit message ##
+         conversation: use an icon to dismiss retry notices
+     
+    -    Place terminal retry dismissal in a separate right-side heading cell. Keep
+    -    wrapped titles and metrics clear of the close icon on narrow screens, with an
+    -    explicit accessible name and the existing keyboard focus treatment.
+    +    Place terminal retry dismissal in a separate right-side heading cell. Match
+    +    ordinary dismiss controls with a muted 1.1rem glyph at normal weight, an
+    +    explicit hover/focus surface and a visible keyboard outline. Preserve the
+    +    larger desktop and narrow-screen hit targets and keep wrapped content clear
+    +    of the icon.
+     
+         Retain exact conversation and chain dismissal keys, local storage fallback and
+         active Retry now and Stop retrying controls. No provider or delivery behavior
+    @@ conversation/assets/conversation.css
+        cursor: pointer;
+      }
+     -.codex-retry-activity-actions button:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+    -+.codex-retry-activity-dismiss { grid-column: 2; width: 2rem; padding: 0; border-color: transparent; font-size: 1.5rem; line-height: 1; }
+    ++.codex-retry-activity-dismiss {
+    ++  display: grid;
+    ++  place-items: center;
+    ++  grid-column: 2;
+    ++  width: 2rem;
+    ++  padding: 0;
+    ++  border: 0;
+    ++  border-radius: .2rem;
+    ++  background: transparent;
+    ++  color: var(--codex-muted, light-dark(#53647a, #a8b7ca));
+    ++  font-size: 1.1rem;
+    ++  font-weight: 400;
+    ++  line-height: 1;
+    ++}
+    ++.codex-retry-activity-dismiss:hover, .codex-retry-activity-dismiss:focus-visible {
+    ++  background: var(--codex-surface, light-dark(#e9edf2, #252f3c));
+    ++  color: inherit;
+    ++}
+     +.codex-retry-activity-actions button:focus-visible, .codex-retry-activity-dismiss:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+      .codex-retry-activity-actions button:disabled { opacity: .6; cursor: default; }
+      .codex-retry-activity-actions button[hidden], .codex-retry-activity-notice [hidden] { display: none !important; }

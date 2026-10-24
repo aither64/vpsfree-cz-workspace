@@ -1,0 +1,15 @@
+# Retry browser recovery constructor correction
+
+Frozen SSH-published B `82f35c80ee16a88bd78572f84f4b236dfedcd8b3`, tree `e75b46b4cb4350cfd849abc2fe403ff439d51904`, clean and equal to the focused-test candidate. Only the owning new browser Go file differs from e914 (+58 lines); first14 commits exact, browser15 folded, service16 exact prior patch. CJS assertions, shared/manual helpers, fork fixture, product, A5743/sole9ccb pin, docs, AGENTS and schemas are unchanged. Complete16series/full.diff/e914.delta.diff/range-diff and scope-proof.json are included. No migrations or repeated pin stream.
+
+The retry host omitted RecoveryStore.Set. addPolicyMember then called the real RecoveryStore.Update on a zero-valued missing record, appended member-thread, and correctly failed mandatory root/socket-generation identity validation. The manual constructor already uses Set. The retry constructor now uses that same existing API with its actually bound synthetic socket, before member enrollment; no payload or token is fabricated and no production validation is weakened.
+
+New focused TestRetryBackendBrowserFixtureConstruction covers retry/manual x root/member without Node. It checks the complete loaded recovery tuple and actual SocketIdentity, both active retained execution permissions through AllowsImplicitResume, exact thread/policy scope and workers off, real Handler retry-policy/activity GET200, and zero native starts. Before the fix both retry constructors reproduced the observed identity failure. That first diagnostic also caught my new manual-member test using the upload s- prefix; it was corrected to the existing CJS conversation ID example~implementer0. All original browser assertions remain byte-identical. Final normal JSON has all4leaves+parent/package PASS, wall17.095s/package0.422s, zero skip/fail/missing. Formatting/diff pass; running this selected Go test compiles the entire web package. This is constructor proof, not browser proof.
+
+Preserved e914 dedicated tag/verified bundle, original packet/source metadata and failed attempt2 rawlogs. c79 all21 fork PASS and45e pressure PASS remain untouched and will not repeat. No package/native/browser/CI/live operation was run here. Owner3 retains separate isolated e914 tree for uncommitted deletion-remedy work; its focused compile window was released after these quicks. Main source stays frozen.
+
+New browser-command.py is PREPARED ONLY at this exact head/tree: browser-only360s, full repository Nix PATH/GCC guard, all32 case manifests/five Go names/zero skip/fail/missing, script-owned raw logs/actual exit/elapsed/post-source checks. Unique recovery-remedy/browser-attempt-3 is absent at preparation. Lead owns narrow disposition and fresh watcher execution, final W/C selection and state.md.
+
+No lasting docs or new visible copy are needed for private fixture initialization. Existing recovery/product contracts remain unchanged.
+
+Session: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-22-codex-thread-retries/

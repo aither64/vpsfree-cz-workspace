@@ -1,0 +1,1 @@
+nix path-info --json --recursive /nix/store/vxv7incc59xyhs57548bvp6wrkwnrgkp-aitherdev-nix-store-cleanup-tests

@@ -1,0 +1,1 @@
+nix-store --add-root /home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/verification-build/composed-81d0e68c/roots/C-infra-monitoring-rules-drv --indirect --realise /nix/store/mxjfihp44mkjmih9c843f1d9ci2lfhvk-infra-monitoring-rules.drv

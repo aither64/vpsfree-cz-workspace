@@ -1,0 +1,3 @@
+**METADATA RECOVERY: INCOMPLETE.** The A recursive derivation command exited 0 after 43.182 seconds. The immediate root comparison exited 5, so I stopped as required and did not run B reconstruction or further collection.
+
+The command, full A graph, logs, status, and result are retained under [the recovery RUN directory](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/verification-build/ab-receipt-recovery-d819/). A’s roots remain unconfirmed against the original pairs; output closures and the shard graph were not collected. Original successful test evidence was left unchanged.

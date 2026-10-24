@@ -1,0 +1,22 @@
+diff --git a/docs/session-archive-recovery.md b/docs/session-archive-recovery.md
+index 356b417f0af40f41136138fe69494c557b1a7833..2a0102eea8a377ebd2471dcd0d913e41f76836ad 100644
+--- a/docs/session-archive-recovery.md
++++ b/docs/session-archive-recovery.md
+@@ -366,9 +366,14 @@ Root retirement first proves the recorded thread's archive state. If it is
+ not archived and the index has no candidate, retirement also checks loaded
+ threads and their metadata. The original root must be the only thread matching
+ the session directory and source policy. Missing, ambiguous or changing
+-identities still block removal. History, idle and archive checks still apply;
+-attempt records are cleared only after successful archival or positive proof
+-that the root is already archived.
++identities still block removal. When both discovery paths omit the root,
++retirement requires positive proof of the original persisted, non-ephemeral
++`vscode` root with an empty preview and exact `notLoaded` status. Its canonical
++active rollout must be a regular materialized file; metadata and file identity
++must remain stable through history, terminal-turn idle and resolved-submission
++checks. Discovery absence alone never permits archival, and force does not
++bypass this identity proof. Attempt records are cleared only after successful
++archival or positive proof that the root is already archived.
+ 
+ After interruption, repeat the command with the same source, session and
+ request ID. It validates the original removal operation and private recovery

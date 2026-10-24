@@ -1,0 +1,723 @@
+diff --git a/codex/continuation.go b/codex/continuation.go
+index 064b9f1..a5adb7c 100644
+--- a/codex/continuation.go
++++ b/codex/continuation.go
+@@ -6,7 +6,7 @@ import (
+ 	"strings"
+ )
+ 
+-// ContinueFailedTurn starts a new visible turn only on a loaded, idle thread
++// ContinueFailedTurn starts a new visible turn only on a loaded, quiescent thread
+ // whose latest turn is the exact expected failure. It never resumes, steers,
+ // updates policy, or starts queued work. The application must hold its shared
+ // admission fence and prove unchanged effective settings and execution authority.
+@@ -119,8 +119,8 @@ func (c *Client) continuationIdle(ctx context.Context, threadID, expected string
+ 	if err != nil {
+ 		return err
+ 	}
+-	if state.Status != "idle" || state.LatestTurnID != expected || state.LatestTurnStatus != "failed" {
+-		return errors.New("continuation requires the exact latest failed turn on a loaded idle thread")
++	if !state.IsLoadedFailedTurn(expected) {
++		return errors.New("continuation requires the exact latest failed turn on a loaded quiescent thread")
+ 	}
+ 	if prompts, err := c.PromptsWithItems(ctx, threadID); err != nil {
+ 		return err
+diff --git a/codex/continuation_integration_test.go b/codex/continuation_integration_test.go
+index 545a46d..d2e8ef1 100644
+--- a/codex/continuation_integration_test.go
++++ b/codex/continuation_integration_test.go
+@@ -11,6 +11,7 @@ import (
+ 	"os"
+ 	"os/exec"
+ 	"path/filepath"
++	"slices"
+ 	"strings"
+ 	"sync"
+ 	"sync/atomic"
+@@ -20,16 +21,218 @@ import (
+ 	"github.com/coder/websocket"
+ )
+ 
++// Retain only protocol identities and bounded status diagnostics, never prompts,
++// provider bodies or arbitrary native configuration.
++type retryNativeTrace struct {
++	mu     sync.Mutex
++	events []string
++	total  int
++}
++
++func (trace *retryNativeTrace) record(direction string, data []byte) {
++	var message struct {
++		ID     json.RawMessage `json:"id"`
++		Method string          `json:"method"`
++		Params struct {
++			ThreadID string `json:"threadId"`
++			TurnID   string `json:"turnId"`
++		} `json:"params"`
++		Result struct {
++			Thread struct {
++				ID     string         `json:"id"`
++				Status map[string]any `json:"status"`
++			} `json:"thread"`
++			Turn struct {
++				ID     string `json:"id"`
++				Status string `json:"status"`
++			} `json:"turn"`
++		} `json:"result"`
++		Error *struct {
++			Code    int    `json:"code"`
++			Message string `json:"message"`
++		} `json:"error"`
++	}
++	if json.Unmarshal(data, &message) != nil {
++		return
++	}
++	line := fmt.Sprintf("%s id=%s method=%s thread=%s turn=%s resultThread=%s status=%s resultTurn=%s/%s",
++		direction, message.ID, message.Method, message.Params.ThreadID, message.Params.TurnID,
++		message.Result.Thread.ID, statusValue(message.Result.Thread.Status), message.Result.Turn.ID, message.Result.Turn.Status)
++	if message.Error != nil {
++		line += fmt.Sprintf(" error=%d %.512s", message.Error.Code, message.Error.Message)
++	}
++	trace.mu.Lock()
++	defer trace.mu.Unlock()
++	trace.total++
++	trace.events = append(trace.events, line)
++	if len(trace.events) > 128 {
++		trace.events = trace.events[len(trace.events)-128:]
++	}
++}
++
++func (trace *retryNativeTrace) snapshot() string {
++	trace.mu.Lock()
++	defer trace.mu.Unlock()
++	return fmt.Sprintf("last %d of %d events\n%s", len(trace.events), trace.total, strings.Join(trace.events, "\n"))
++}
++
++func retryNativeDiagnostics(t *testing.T, client *Client, thread string) {
++	t.Helper()
++	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
++	defer cancel()
++	metadata, readErr := client.ReadThreadMetadata(ctx, thread, true)
++	loaded, loadedErr := client.LoadedThreadIDs(ctx)
++	client.watchedMu.Lock()
++	subscribers, generation := client.watched[thread], client.watchedGeneration[thread]
++	client.watchedMu.Unlock()
++	var size int64
++	var statErr error
++	if metadata.Path != nil {
++		var info os.FileInfo
++		info, statErr = os.Stat(*metadata.Path)
++		if statErr == nil {
++			size = info.Size()
++		}
++	}
++	t.Logf("native setup/state: thread=%s status=%s history=%s rolloutPath=%t rolloutBytes=%d stat=%v read=%v loaded=%t loadedRead=%v localSubscribers=%d watchGeneration=%d",
++		thread, statusValue(metadata.Status), metadata.HistoryMode, metadata.Path != nil, size, statErr, readErr, slices.Contains(loaded, thread), loadedErr, subscribers, generation)
++}
++
++func retryNativeStartThread(t *testing.T, ctx context.Context, client *Client, fixture *recoveryIntegrationHarness, projectID, mode string, policy ThreadPolicy) string {
++	t.Helper()
++	thread, err := client.StartThreadWithSettings(ctx, fixture.cwd, map[string]string{}, ThreadSettings{
++		ProjectID: projectID, Model: "gpt-5.5", ReasoningEffort: "low", CollaborationMode: mode, Policy: policy,
++	})
++	if err != nil {
++		t.Fatalf("start private %s thread: %v", mode, err)
++	}
++	unsubscribe := func() {}
++	t.Cleanup(func() {
++		if t.Failed() {
++			retryNativeDiagnostics(t, client, thread)
++		}
++		unsubscribe()
++	})
++	// A fresh native thread is staged until its first history item. Use the
++	// existing managed bootstrap before Send's warm resume; no original user
++	// turn or failure is fabricated, and no inference occurs during setup.
++	marker := "Synthetic retry fixture bootstrap for thread " + thread
++	if err := client.BootstrapHeadlessThread(ctx, thread, fixture.cwd, projectID, marker); err != nil {
++		t.Fatalf("materialize private thread %s: %v", thread, err)
++	}
++	_, stop, err := client.Subscribe(ctx, thread)
++	if err != nil {
++		t.Fatalf("subscribe private thread %s: %v", thread, err)
++	}
++	unsubscribe = stop
++	state, err := client.ReadTurnState(ctx, thread)
++	if err != nil || state.Status != "idle" || state.LatestTurnID != "" {
++		t.Fatalf("fresh materialized thread is not loaded idle: %+v %v", state, err)
++	}
++	t.Logf("private thread ready: id=%s mode=%s persisted bootstrap verified, subscriber attached, no user turn", thread, mode)
++	return thread
++}
++
++func TestRetryNativeFixtureSetup(t *testing.T) {
++	root := t.TempDir()
++	fixture := &recoveryIntegrationHarness{root: root, cwd: root}
++	path := filepath.Join(root, "rollout.jsonl")
++	socket := serveUnixWebsocket(t, func(connection *websocket.Conn) error {
++		if err := handshake(connection); err != nil {
++			return err
++		}
++		materialized := false
++		methods := []string{"thread/start", "thread/read", "thread/inject_items", "thread/read", "thread/read", "thread/resume", "thread/read", "thread/turns/list"}
++		for _, method := range methods {
++			request, err := readObject(connection)
++			if err != nil {
++				return err
++			}
++			if request["method"] != method {
++				return fmt.Errorf("setup RPC order: got %v, want %s", request["method"], method)
++			}
++			params := request["params"].(map[string]any)
++			metadata := freshHeadlessMetadata(path, "project-1")
++			metadata["cwd"], metadata["status"] = root, map[string]any{"type": "idle"}
++			result := map[string]any{"thread": metadata}
++			switch method {
++			case "thread/start":
++				config := params["config"].(map[string]any)
++				env := config["shell_environment_policy"].(map[string]any)["set"]
++				if _, ok := env.(map[string]any); !ok || params["projectId"] != "project-1" {
++					return fmt.Errorf("thread setup lost explicit environment/project: %#v", params)
++				}
++			case "thread/inject_items":
++				if materialized {
++					return errors.New("fixture bootstrap repeated")
++				}
++				items := params["items"].([]any)
++				if len(items) != 1 {
++					return errors.New("fixture bootstrap did not contain one item")
++				}
++				item := items[0].(map[string]any)
++				content := item["content"].([]any)[0].(map[string]any)
++				if item["role"] != "developer" || content["text"] != "Synthetic retry fixture bootstrap for thread thread-1" {
++					return errors.New("fixture fabricated user history")
++				}
++				encoded, err := json.Marshal(item)
++				if err != nil {
++					return err
++				}
++				rollout := fmt.Sprintf("{\"type\":\"session_meta\",\"payload\":{\"id\":\"thread-1\"}}\n{\"type\":\"response_item\",\"payload\":%s}\n", encoded)
++				if err := os.WriteFile(path, []byte(rollout), 0600); err != nil {
++					return err
++				}
++				materialized = true
++			case "thread/resume":
++				if !materialized {
++					return errors.New("fixture resumed before native persistence")
++				}
++			case "thread/turns/list":
++				result = map[string]any{"data": []any{}}
++			}
++			if err := writeObject(connection, map[string]any{"id": request["id"], "result": result}); err != nil {
++				return err
++			}
++		}
++		return nil
++	})
++	client := NewWithOptions(socket, ClientOptions{PreserveThreadInstructionsOnResume: true, ThreadSourceKinds: []string{"vscode"}})
++	t.Cleanup(client.Close)
++	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
++	defer cancel()
++	if thread := retryNativeStartThread(t, ctx, client, fixture, "project-1", "default", ThreadPolicy{}); thread != "thread-1" {
++		t.Fatal("fixture started the wrong native thread", thread)
++	}
++}
++
++func TestRetryNativeTraceIsBoundedAndOmitsPayloads(t *testing.T) {
++	trace := &retryNativeTrace{}
++	for range 200 {
++		trace.record("request", []byte(`{"id":7,"method":"turn/start","params":{"threadId":"thread-1","input":[{"text":"private fixture prompt"}],"config":{"secret":"private fixture config"}}}`))
++	}
++	trace.record("native", []byte(`{"id":7,"error":{"code":-32600,"message":"no rollout found"}}`))
++	snapshot := trace.snapshot()
++	if len(trace.events) != 128 || !strings.Contains(snapshot, "128 of 201") || !strings.Contains(snapshot, "thread=thread-1") || !strings.Contains(snapshot, "error=-32600 no rollout found") || strings.Contains(snapshot, "private fixture") {
++		t.Fatal("unsafe or incomplete native diagnostics", snapshot)
++	}
++}
++
+ // retryNativeProxy forwards the real private App Server protocol unchanged.
+ // Its single test hook can delay a start or discard its accepted reply; it
+ // never manufactures native turn history, context or errors.
+-func retryNativeProxy(t *testing.T, ctx context.Context, fixture *recoveryIntegrationHarness, beforeStart func(), loseReply bool) string {
++func retryNativeProxy(t *testing.T, ctx context.Context, fixture *recoveryIntegrationHarness, beforeStart func(), loseReply bool, traces ...*retryNativeTrace) string {
+ 	t.Helper()
+ 	path := filepath.Join(fixture.root, fmt.Sprintf("proxy-%d.sock", time.Now().UnixNano()))
+ 	listener, err := net.Listen("unix", path)
+ 	if err != nil {
+ 		t.Fatal(err)
+ 	}
++	record := func(direction string, data []byte) {
++		for _, trace := range traces {
++			trace.record(direction, data)
++		}
++	}
+ 	var hooked atomic.Bool
+ 	server := &http.Server{Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+ 		front, err := websocket.Accept(w, r, nil)
+@@ -60,6 +263,7 @@ func retryNativeProxy(t *testing.T, ctx context.Context, fixture *recoveryIntegr
+ 				if err != nil {
+ 					return
+ 				}
++				record("request", data)
+ 				var request struct {
+ 					ID     json.RawMessage `json:"id"`
+ 					Method string          `json:"method"`
+@@ -86,6 +290,7 @@ func retryNativeProxy(t *testing.T, ctx context.Context, fixture *recoveryIntegr
+ 				if err != nil {
+ 					return
+ 				}
++				record("native", data)
+ 				var response struct {
+ 					ID json.RawMessage `json:"id"`
+ 				}
+@@ -198,7 +403,12 @@ func retryNativeWait(t *testing.T, ctx context.Context, client *Client, thread,
+ 	t.Helper()
+ 	for {
+ 		state, err := client.ReadTurnState(ctx, thread)
+-		if err == nil && state.LatestTurnID == turn && state.LatestTurnStatus == status && state.Status == "idle" {
++		quiescent := state.Status == "idle"
++		if status == "failed" {
++			quiescent = state.IsLoadedFailedTurn(turn)
++		}
++		if err == nil && state.LatestTurnID == turn && state.LatestTurnStatus == status && quiescent {
++			t.Logf("native terminal tuple: thread=%s turn=%s turnStatus=%s rawThreadStatus=%s", thread, turn, state.LatestTurnStatus, state.Status)
+ 			return state
+ 		}
+ 		select {
+@@ -235,19 +445,32 @@ func TestPinnedCodexFailedTurnRetryContract(t *testing.T) {
+ 	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
+ 	defer cancel()
+ 	fixture.start()
+-	client := NewWithOptions(fixture.socket, ClientOptions{SubmissionLedgerPath: filepath.Join(fixture.root, "receipts.json"), PreserveThreadInstructionsOnResume: true})
++	trace := &retryNativeTrace{}
++	proxy := retryNativeProxy(t, ctx, fixture, nil, false, trace)
++	client := NewWithOptions(proxy, ClientOptions{SubmissionLedgerPath: filepath.Join(fixture.root, "receipts.json"), PreserveThreadInstructionsOnResume: true, ThreadSourceKinds: []string{"vscode"}})
++	t.Cleanup(func() {
++		if t.Failed() {
++			t.Logf("bounded native RPC trace:\n%s", trace.snapshot())
++		}
++	})
+ 	defer client.Close()
+ 	policy := ThreadPolicy{Sandbox: "danger-full-access", ApprovalPolicy: "never", DeveloperInstructions: "Synthetic fixture instructions."}
+-	newThread := func(mode string) string {
++	project, err := client.CreateProject(ctx, "Synthetic retry fixture", "retry-contract-project")
++	if err != nil {
++		t.Fatal(err)
++	}
++	newThread := func(t *testing.T, mode string) string {
+ 		t.Helper()
+ 		provider.set("success")
+-		thread, err := client.StartThreadWithSettings(ctx, fixture.cwd, map[string]string{}, ThreadSettings{Model: "gpt-5.5", ReasoningEffort: "low", CollaborationMode: mode, Policy: policy})
+-		if err != nil {
+-			t.Fatal(err)
++		thread := retryNativeStartThread(t, ctx, client, fixture, project.ID, mode, policy)
++		if mode == "plan" {
++			if _, err := client.UpdateThreadSettings(ctx, thread, ThreadSettingsUpdate{CollaborationMode: &mode}); err != nil {
++				t.Fatalf("select private thread plan mode before user input: %v", err)
++			}
+ 		}
+ 		return thread
+ 	}
+-	failed := func(thread, kind, id string) SendReceipt {
++	failed := func(t *testing.T, thread, kind, id string) SendReceipt {
+ 		t.Helper()
+ 		provider.set(kind)
+ 		receipt, err := client.SendWithOptions(ctx, thread, "Synthetic fixture request.", id, "fixture:original", TurnOptions{Model: "gpt-5.5", ReasoningEffort: "low", ThreadPolicy: policy})
+@@ -276,12 +499,12 @@ func TestPinnedCodexFailedTurnRetryContract(t *testing.T) {
+ 	}
+ 	for _, mode := range []string{"default", "plan"} {
+ 		t.Run("nonempty continuation "+mode, func(t *testing.T) {
+-			thread := newThread(mode)
++			thread := newThread(t, mode)
+ 			failureKind := "capacity"
+ 			if mode == "default" {
+ 				failureKind = "partial-capacity"
+ 			}
+-			original := failed(thread, failureKind, "original-"+mode)
++			original := failed(t, thread, failureKind, "original-"+mode)
+ 			var partial *TranscriptEntry
+ 			if mode == "default" {
+ 				transcript, err := client.ReadThread(ctx, thread)
+@@ -299,6 +522,9 @@ func TestPinnedCodexFailedTurnRetryContract(t *testing.T) {
+ 				}
+ 			}
+ 			before := retryNativeContext(t, ctx, client, thread, original.TurnID)
++			if before.Model != "gpt-5.5" || before.ReasoningEffort != "low" || before.CollaborationMode != mode {
++				t.Fatalf("original turn did not execute the requested fixture settings: %+v", before)
++			}
+ 			provider.set("success")
+ 			options := TurnOptions{Model: "gpt-5.5", ReasoningEffort: "low", ThreadPolicy: policy, AdditionalContext: map[string]AdditionalContextEntry{"fixture:retry": {Value: "Synthetic retained application context.", Kind: "application"}}}
+ 			text := "Continue the interrupted task from the saved conversation. Inspect the current state before repeating actions."
+@@ -353,9 +579,9 @@ func TestPinnedCodexFailedTurnRetryContract(t *testing.T) {
+ 			}
+ 		})
+ 	}
+-	t.Run("exact cyber terminal", func(t *testing.T) { failed(newThread("default"), "cybersecurity", "cyber-original") })
++	t.Run("exact cyber terminal", func(t *testing.T) { failed(t, newThread(t, "default"), "cybersecurity", "cyber-original") })
+ 	t.Run("automatic queue uses execution context", func(t *testing.T) {
+-		thread := newThread("default")
++		thread := newThread(t, "default")
+ 		provider.set("hold")
+ 		_, err := client.SendWithOptions(ctx, thread, "Hold synthetic fixture.", "queue-active", "fixture:active", TurnOptions{Model: "gpt-5.5", ReasoningEffort: "low", ThreadPolicy: policy})
+ 		if err != nil {
+@@ -402,8 +628,8 @@ func TestPinnedCodexFailedTurnRetryContract(t *testing.T) {
+ 		}
+ 	})
+ 	t.Run("lost accepted reply recreated client", func(t *testing.T) {
+-		thread := newThread("default")
+-		original := failed(thread, "capacity", "lost-original")
++		thread := newThread(t, "default")
++		original := failed(t, thread, "capacity", "lost-original")
+ 		provider.set("success")
+ 		proxy := retryNativeProxy(t, ctx, fixture, nil, true)
+ 		path := filepath.Join(fixture.root, "lost-ledger.json")
+@@ -433,8 +659,8 @@ func TestPinnedCodexFailedTurnRetryContract(t *testing.T) {
+ 		}
+ 	})
+ 	t.Run("native direct busy race compatibility", func(t *testing.T) {
+-		thread := newThread("default")
+-		original := failed(thread, "capacity", "busy-original")
++		thread := newThread(t, "default")
++		original := failed(t, thread, "capacity", "busy-original")
+ 		provider.set("hold")
+ 		manualReady := make(chan SendReceipt, 1)
+ 		proxy := retryNativeProxy(t, ctx, fixture, func() {
+diff --git a/codex/continuation_test.go b/codex/continuation_test.go
+index 52a3a19..568ebdd 100644
+--- a/codex/continuation_test.go
++++ b/codex/continuation_test.go
+@@ -13,6 +13,49 @@ import (
+ 	"github.com/coder/websocket"
+ )
+ 
++func TestTurnStateIsLoadedFailedTurn(t *testing.T) {
++	for _, test := range []struct {
++		name, status, latestID, turnStatus, expectedID string
++		want                                           bool
++	}{
++		{"idle failed", "idle", "failed", "failed", "failed", true},
++		{"loaded error failed", "systemError", "failed", "failed", "failed", true},
++		{"cold failed", "notLoaded", "failed", "failed", "failed", false},
++		{"active failed", "active", "failed", "failed", "failed", false},
++		{"missing status", "", "failed", "failed", "failed", false},
++		{"unknown status", "future", "failed", "failed", "failed", false},
++		{"missing expected", "systemError", "failed", "failed", "", false},
++		{"missing latest", "systemError", "", "failed", "failed", false},
++		{"newer turn", "systemError", "newer", "failed", "failed", false},
++		{"in progress", "systemError", "failed", "inProgress", "failed", false},
++		{"completed", "systemError", "failed", "completed", "failed", false},
++		{"interrupted", "systemError", "failed", "interrupted", "failed", false},
++		{"missing turn status", "systemError", "failed", "", "failed", false},
++		{"unknown turn status", "systemError", "failed", "future", "failed", false},
++	} {
++		t.Run(test.name, func(t *testing.T) {
++			state := TurnState{Status: test.status, LatestTurnID: test.latestID, LatestTurnStatus: test.turnStatus}
++			if got := state.IsLoadedFailedTurn(test.expectedID); got != test.want {
++				t.Fatalf("predicate=%t want=%t for %+v expected=%q", got, test.want, state, test.expectedID)
++			}
++		})
++	}
++}
++
++func TestReadTurnStatePreservesRawStatus(t *testing.T) {
++	for _, status := range []string{"idle", "systemError", "notLoaded", "active"} {
++		t.Run(status, func(t *testing.T) {
++			f := &continuationFixture{state: status, turn: "failed"}
++			client := newTestClient(serveUnixWebsocket(t, f.serve))
++			defer client.Close()
++			state, err := client.ReadTurnState(context.Background(), "thread-1")
++			if err != nil || state.Status != status || state.TerminalFailure == nil || state.TerminalFailure.Code != "serverOverloaded" {
++				t.Fatalf("raw projection changed: %+v %v", state, err)
++			}
++		})
++	}
++}
++
+ func TestReadTurnStateColdTerminalProjection(t *testing.T) {
+ 	for _, test := range []struct {
+ 		name, status string
+@@ -95,13 +138,14 @@ func TestReadTurnStateRejectsMalformedAndRepresentsEmptyHistory(t *testing.T) {
+ }
+ 
+ type continuationFixture struct {
+-	state   string
+-	turn    string
+-	queued  bool
+-	race    bool
+-	unknown bool
+-	starts  atomic.Int32
+-	reads   atomic.Int32
++	state      string
++	turn       string
++	turnStatus string
++	queued     bool
++	race       bool
++	unknown    bool
++	starts     atomic.Int32
++	reads      atomic.Int32
+ }
+ 
+ func (f *continuationFixture) serve(conn *websocket.Conn) error {
+@@ -118,7 +162,10 @@ func (f *continuationFixture) serve(conn *websocket.Conn) error {
+ 		case "thread/read":
+ 			result = map[string]any{"thread": map[string]any{"id": "thread-1", "status": map[string]any{"type": f.state}}}
+ 		case "thread/turns/list":
+-			turn, status := f.turn, "failed"
++			turn, status := f.turn, f.turnStatus
++			if status == "" {
++				status = "failed"
++			}
+ 			if f.race && f.reads.Add(1) > 1 {
+ 				turn, status = "manual", "inProgress"
+ 			}
+@@ -157,70 +204,86 @@ func (f *continuationFixture) serve(conn *websocket.Conn) error {
+ }
+ 
+ func TestContinueFailedTurnAdmissionAndReceipt(t *testing.T) {
+-	for _, name := range []string{"accepted", "active", "cold", "stale", "queue", "new active turn race", "pending request", "other unresolved send", "unknown"} {
+-		t.Run(name, func(t *testing.T) {
+-			f := &continuationFixture{state: "idle", turn: "failed"}
+-			switch name {
+-			case "active":
+-				f.state = "active"
+-			case "cold":
+-				f.state = "notLoaded"
+-			case "stale":
+-				f.turn = "newer"
+-			case "queue":
+-				f.queued = true
+-			case "new active turn race":
+-				f.race = true
+-			case "unknown":
+-				f.unknown = true
+-			}
+-			client := newTestClient(serveUnixWebsocket(t, f.serve))
+-			defer client.Close()
+-			if name == "other unresolved send" {
+-				if err := client.PrepareSend("thread-1", "other", "other", "other", false); err != nil {
+-					t.Fatal(err)
+-				}
+-			}
+-			if name == "pending request" {
+-				if err := client.Ensure(context.Background()); err != nil {
+-					t.Fatal(err)
+-				}
+-				client.pendingMu.Lock()
+-				client.requests[`"pending"`] = PendingRequest{ID: `"pending"`, Method: "item/tool/requestUserInput", connection: client.connection, generation: client.generation, Params: json.RawMessage(`{"threadId":"thread-1","turnId":"failed","itemId":"pending","isBlocking":true,"questions":[{"id":"q","header":"Question","question":"Choose","options":[{"label":"First","description":"First"}]}]}`)}
+-				client.pendingMu.Unlock()
+-			}
+-			receipt, err := client.ContinueFailedTurn(context.Background(), "thread-1", "continue", "stable", "retry:failed:settings", "failed", testTurnOptions())
+-			if name == "accepted" {
+-				if err != nil || receipt.TurnID != "continued" || receipt.Steered {
+-					t.Fatalf("receipt=%+v error=%v", receipt, err)
+-				}
+-				// Reconciliation happens before all current-state checks, even cold.
+-				again, err := client.ContinueFailedTurn(context.Background(), "thread-1", "continue", "stable", "retry:failed:settings", "failed", testTurnOptions())
+-				if err != nil || again != receipt {
+-					t.Fatalf("again=%+v error=%v", again, err)
+-				}
+-				changed := testTurnOptions()
+-				changed.ReasoningEffort = "low"
+-				if _, err := client.ContinueFailedTurn(context.Background(), "thread-1", "continue", "stable", "retry:failed:settings", "failed", changed); err == nil {
+-					t.Fatal("changed options accepted")
+-				}
+-			} else if name == "unknown" {
+-				for range 2 {
+-					var uncertain *UnknownSendOutcomeError
+-					if !errors.As(err, &uncertain) {
+-						t.Fatalf("expected unknown: %v", err)
++	for _, loadedStatus := range []string{"idle", "systemError"} {
++		t.Run(loadedStatus, func(t *testing.T) {
++			for _, name := range []string{"accepted", "active", "cold", "stale", "missing latest", "latest in progress", "latest completed", "latest interrupted", "unknown status", "missing status", "queue", "new active turn race", "pending request", "other unresolved send", "unknown"} {
++				t.Run(name, func(t *testing.T) {
++					f := &continuationFixture{state: loadedStatus, turn: "failed"}
++					switch name {
++					case "active":
++						f.state = "active"
++					case "cold":
++						f.state = "notLoaded"
++					case "stale":
++						f.turn = "newer"
++					case "missing latest":
++						f.turn = ""
++					case "latest in progress":
++						f.turnStatus = "inProgress"
++					case "latest completed":
++						f.turnStatus = "completed"
++					case "latest interrupted":
++						f.turnStatus = "interrupted"
++					case "unknown status":
++						f.state = "future"
++					case "missing status":
++						f.state = ""
++					case "queue":
++						f.queued = true
++					case "new active turn race":
++						f.race = true
++					case "unknown":
++						f.unknown = true
+ 					}
+-					_, err = client.ContinueFailedTurn(context.Background(), "thread-1", "continue", "stable", "retry:failed:settings", "failed", testTurnOptions())
+-				}
+-			} else if err == nil {
+-				t.Fatal("busy continuation accepted")
+-			}
+-			want := int32(0)
+-			if name == "accepted" || name == "unknown" {
+-				want = 1
+-			}
+-			if f.starts.Load() != want {
+-				t.Fatalf("starts=%d, want %d", f.starts.Load(), want)
++					client := newTestClient(serveUnixWebsocket(t, f.serve))
++					defer client.Close()
++					if name == "other unresolved send" {
++						if err := client.PrepareSend("thread-1", "other", "other", "other", false); err != nil {
++							t.Fatal(err)
++						}
++					}
++					if name == "pending request" {
++						if err := client.Ensure(context.Background()); err != nil {
++							t.Fatal(err)
++						}
++						client.pendingMu.Lock()
++						client.requests[`"pending"`] = PendingRequest{ID: `"pending"`, Method: "item/tool/requestUserInput", connection: client.connection, generation: client.generation, Params: json.RawMessage(`{"threadId":"thread-1","turnId":"failed","itemId":"pending","isBlocking":true,"questions":[{"id":"q","header":"Question","question":"Choose","options":[{"label":"First","description":"First"}]}]}`)}
++						client.pendingMu.Unlock()
++					}
++					receipt, err := client.ContinueFailedTurn(context.Background(), "thread-1", "continue", "stable", "retry:failed:settings", "failed", testTurnOptions())
++					if name == "accepted" {
++						if err != nil || receipt.TurnID != "continued" || receipt.Steered {
++							t.Fatalf("receipt=%+v error=%v", receipt, err)
++						}
++						// Reconciliation happens before all current-state checks, even cold.
++						again, err := client.ContinueFailedTurn(context.Background(), "thread-1", "continue", "stable", "retry:failed:settings", "failed", testTurnOptions())
++						if err != nil || again != receipt {
++							t.Fatalf("again=%+v error=%v", again, err)
++						}
++						changed := testTurnOptions()
++						changed.ReasoningEffort = "low"
++						if _, err := client.ContinueFailedTurn(context.Background(), "thread-1", "continue", "stable", "retry:failed:settings", "failed", changed); err == nil {
++							t.Fatal("changed options accepted")
++						}
++					} else if name == "unknown" {
++						for range 2 {
++							var uncertain *UnknownSendOutcomeError
++							if !errors.As(err, &uncertain) {
++								t.Fatalf("expected unknown: %v", err)
++							}
++							_, err = client.ContinueFailedTurn(context.Background(), "thread-1", "continue", "stable", "retry:failed:settings", "failed", testTurnOptions())
++						}
++					} else if err == nil {
++						t.Fatal("busy continuation accepted")
++					}
++					want := int32(0)
++					if name == "accepted" || name == "unknown" {
++						want = 1
++					}
++					if f.starts.Load() != want {
++						t.Fatalf("starts=%d, want %d", f.starts.Load(), want)
++					}
++				})
+ 			}
+ 		})
+ 	}
+diff --git a/codex/recovery_integration_test.go b/codex/recovery_integration_test.go
+index 22e54ac..d73d44a 100644
+--- a/codex/recovery_integration_test.go
++++ b/codex/recovery_integration_test.go
+@@ -296,6 +296,7 @@ func (h *recoveryIntegrationHarness) start() {
+ 	deadline := time.Now().Add(10 * time.Second)
+ 	for {
+ 		if info, err := os.Stat(h.socket); err == nil && info.Mode()&os.ModeSocket != 0 {
++			h.t.Logf("private native started: pid=%d strict-config socket ready", h.command.Process.Pid)
+ 			return
+ 		}
+ 		if time.Now().After(deadline) {
+@@ -307,8 +308,10 @@ func (h *recoveryIntegrationHarness) start() {
+ 
+ func (h *recoveryIntegrationHarness) stop() {
+ 	if h.command != nil {
++		pid := h.command.Process.Pid
+ 		_ = h.command.Process.Kill()
+-		_ = h.command.Wait()
++		err := h.command.Wait()
++		h.t.Logf("private native stopped: pid=%d wait=%v", pid, err)
+ 		h.command = nil
+ 	}
+ }
+diff --git a/codex/turn_state.go b/codex/turn_state.go
+index 893e7bb..3146209 100644
+--- a/codex/turn_state.go
++++ b/codex/turn_state.go
+@@ -23,6 +23,14 @@ type TurnState struct {
+ 	TerminalFailure  *TerminalFailure `json:"terminalFailure"`
+ }
+ 
++// IsLoadedFailedTurn checks only the exact loaded terminal observation. Native
++// systemError can persist after a failed turn until another turn starts. This
++// predicate does not classify errors or prove queue, request or authority holds.
++func (s TurnState) IsLoadedFailedTurn(expectedTurnID string) bool {
++	return expectedTurnID != "" && s.LatestTurnID == expectedTurnID &&
++		s.LatestTurnStatus == "failed" && (s.Status == "idle" || s.Status == "systemError")
++}
++
+ // ReadTurnState is a bounded cold observation. It never loads a thread or
+ // derives failure state from intermediate error notifications or transcript text.
+ func (c *Client) ReadTurnState(ctx context.Context, threadID string) (TurnState, error) {
+diff --git a/docs/reference.md b/docs/reference.md
+index 5108de3..e86592f 100644
+--- a/docs/reference.md
++++ b/docs/reference.md
+@@ -147,12 +147,21 @@ Intermediate errors and `willRetry` notifications do not prove terminal failure.
+ The generated Codex 0.163.0 schema defines `serverOverloaded` and `cyberPolicy`;
+ the embedding application chooses its retry policy.
+ 
++`TurnState.IsLoadedFailedTurn(expectedTurnID)` returns true only when
++`expectedTurnID` is nonempty and matches the latest failed turn, and the raw
++native status is `idle` or `systemError`. Codex 0.163.0 can retain `systemError`
++after a terminal failure until the next turn starts. `TurnState.Status`
++preserves that value. The predicate does not classify the failure or prove
++settings, authority, queue or pending-request conditions. Cold, active, unknown
++and missing statuses, or a different or nonfailed latest turn, return false.
++
+ `ContinueFailedTurn(ctx, threadID, text, stableID, actionContext,
+ expectedFailedTurnID, options)` starts one visible, nonempty continuation turn.
+ It first reconciles an exact accepted/submitting ledger identity, even after
+ new work has changed the thread. A fresh submission requires an already-loaded
+-idle thread, that exact latest failed turn, no pending requests, no native
+-queue and no other unresolved submission. It never resumes, steers, starts a
++thread with no active turn (`idle` or `systemError`), that exact latest failed
++turn, no pending requests, an empty native queue and no other unresolved
++submission. It never resumes, steers, starts a
+ queue, updates settings or reapplies policy. Resume could release saved queues
+ or goals, so it cannot be used to repair a failed continuation preflight.
+ 
+diff --git a/test/codex_protocol_contract.py b/test/codex_protocol_contract.py
+index dc1ecd9..2358c2c 100644
+--- a/test/codex_protocol_contract.py
++++ b/test/codex_protocol_contract.py
+@@ -716,6 +716,25 @@ validate(
+     "thread/loaded/list pagination params",
+ )
+ validate("v2/ThreadReadResponse.json", {"thread": thread}, "thread/read result")
++# Retry admission depends on the exact raw native loaded-status vocabulary.
++# systemError is a status flag, separate from the latest turn's failure code.
++status_schema = json.loads((SCHEMA_DIR / "v2/ThreadReadResponse.json").read_text())
++status_variants = status_schema["definitions"]["ThreadStatus"]["oneOf"]
++status_types = [variant["properties"]["type"]["enum"] for variant in status_variants]
++if sorted(status_types) != [["active"], ["idle"], ["notLoaded"], ["systemError"]]:
++    raise SystemExit(f"native ThreadStatus variants changed: {status_types}")
++active_status = next(v for v in status_variants if v["properties"]["type"]["enum"] == ["active"])
++if "activeFlags" not in active_status["required"]:
++    raise SystemExit("native active ThreadStatus no longer requires activeFlags")
++active_flags = status_schema["definitions"]["ThreadActiveFlag"]["enum"]
++if sorted(active_flags) != ["waitingOnApproval", "waitingOnUserInput"]:
++    raise SystemExit(f"native active flags changed: {active_flags}")
++for raw_status in [
++    {"type": "notLoaded"}, {"type": "idle"}, {"type": "systemError"},
++    {"type": "active", "activeFlags": []},
++    {"type": "active", "activeFlags": active_flags},
++]:
++    validate("v2/ThreadReadResponse.json", {"thread": {**thread, "status": raw_status}}, "raw thread status " + raw_status["type"])
+ validate(
+     "v2/ThreadTurnsListResponse.json",
+     {"data": [transcript_turn]},

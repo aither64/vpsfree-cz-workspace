@@ -1,0 +1,1243 @@
+diff --git a/docs/turn-retry-recovery.md b/docs/turn-retry-recovery.md
+index 2d965e5..ea6c7e0 100644
+--- a/docs/turn-retry-recovery.md
++++ b/docs/turn-retry-recovery.md
+@@ -23,10 +23,16 @@ anonymous charges and inconsistent pending identities fail closed.
+ Directories use mode 0700 and records mode 0600. Writers hold a per-thread
+ interprocess admission lock and replace each record atomically, syncing both
+ file and directory. A record is limited to 1 MiB, each settings snapshot to
+-256 KiB, and a session to 128 thread records. Up to 64 outstanding or current
+-settings snapshots fit within the record limit. Admission refuses before
+-submitting additional work if preserving its evidence would exceed a bound.
+-It does not evict queued or uncertain submissions to make room.
++256 KiB, and a session to 128 thread records.
++
++The record holds up to 64 outstanding or current settings snapshots. To make
++room for new evidence, admission retires only the oldest positively accepted
++snapshots bound to a turn. Unbound queue entries, uncertain submissions and
++pending identities remain protected. Retiring a contributor from the current
++turn disables automatic retry for that exact turn and removes its cached
++execution proof. If that turn later fails, it requires manual continuation. If
++protected evidence fills the count or byte budget, admission refuses before
++sending.
+ 
+ The admission lock is shared by portal, CLI and direct team mutations. Lock
+ ordering is package transition, session runtime, roster operation when needed,
+@@ -94,6 +100,20 @@ The private retry record retains one UUID, action identity, source failure and
+ immutable settings across restart. A lost response enters reconciliation using
+ that exact identity. A new UUID is never a recovery mechanism.
+ 
++Exact delivery reconciliation runs before capturing new retry provenance or
++binding settings. An accepted original UUID returns its existing receipt without
++acquiring newer settings or causing another native send. This includes history
++recovery after browser acknowledgment. Prepared or uncertain input with missing
++admission proof cannot be treated as new input. Keep the original UUID when
++recovering an uncertain response.
++
++Automatic dispatch reserves room for accepted-result bookkeeping before sending.
++If an already accepted result cannot retain another eligibility snapshot,
++reconciliation saves its exact pending identity, result and quota charge in a
++blocked state that requires manual continuation. Freeing space or restarting
++does not enable automatic retry for that result. Persistence errors leave the
++durable uncertain tuple and generic receipt available for exact reconciliation.
++
+ Cancel retry suppresses future continuations but leaves the preference enabled.
+ Disabling also cancels the chain. New input, queue admission/start, settings
+ changes, interruption and explicit lifecycle operations cancel pending work.
+diff --git a/portal/internal/turnretry/controller.go b/portal/internal/turnretry/controller.go
+index 2a518db..863133f 100644
+--- a/portal/internal/turnretry/controller.go
++++ b/portal/internal/turnretry/controller.go
+@@ -145,6 +145,9 @@ func (c Controller) Step(ctx context.Context, scope Scope) error {
+ 			}
+ 			return err
+ 		}
++		if err := c.preflightAccepted(tx); err != nil {
++			return err
++		}
+ 		if err := s.ReserveUnsubmitted(c.now()); err != nil {
+ 			return err
+ 		}
+@@ -208,6 +211,9 @@ func (c Controller) Step(ctx context.Context, scope Scope) error {
+ 	if err != nil || !unsubmitted {
+ 		return err
+ 	}
++	if err := c.preflightAccepted(tx); err != nil {
++		return err
++	}
+ 	if err := s.Begin(c.now()); err != nil {
+ 		return err
+ 	}
+@@ -220,6 +226,23 @@ func (c Controller) Step(ctx context.Context, scope Scope) error {
+ 	return c.dispatch(ctx, tx, *s.Pending)
+ }
+ 
++// Called only after exact positive never-submitted proof. Unknown intents must
++// remain reconciliation-only, including when the provenance record is full.
++func (c Controller) preflightAccepted(tx *Transaction) error {
++	err := tx.State.PreflightAccepted()
++	if err != nil {
++		if errors.Is(err, ErrSnapshotCapacity) {
++			tx.State.Handled = tx.State.Pending.Failure
++			tx.State.Phase, tx.State.Reason, tx.State.Cancelled, tx.State.DeadlineMS, tx.State.Pending = "blocked", "settings_unproven", true, 0, nil
++			if saveErr := tx.Save(); saveErr != nil {
++				return saveErr
++			}
++		}
++		return err
++	}
++	return nil
++}
++
+ func (c Controller) dispatch(ctx context.Context, tx *Transaction, p Pending) error {
+ 	receipt, err := c.Backend.Continue(ctx, tx.State.Scope, p)
+ 	if err == nil {
+diff --git a/portal/internal/turnretry/retention_test.go b/portal/internal/turnretry/retention_test.go
+new file mode 100644
+index 0000000..ec3b70e
+--- /dev/null
++++ b/portal/internal/turnretry/retention_test.go
+@@ -0,0 +1,260 @@
++package turnretry
++
++import (
++	"context"
++	"encoding/json"
++	"errors"
++	"fmt"
++	"os"
++	"reflect"
++	"strings"
++	"testing"
++	"time"
++)
++
++func retentionSnapshot(id, turn string) Snapshot {
++	p := proof(turn)
++	p.ID, p.Origin, p.Proven = id, "steer", false
++	p.Digest, _ = p.Hash()
++	return p
++}
++
++func fillRetention(s *State, turn string, n int) {
++	for i := 0; i < n; i++ {
++		s.Snapshots = append(s.Snapshots, retentionSnapshot(fmt.Sprint("input-", i), turn))
++	}
++}
++
++func TestRetentionAcceptedOnlyAtomicSuppression(t *testing.T) {
++	s := New(fixtureScope())
++	s.Enroll(Observation{})
++	fillRetention(&s, "active", MaxSnapshots-1)
++	if err := s.AddSnapshot(proof("active")); err != nil {
++		t.Fatal(err)
++	}
++	unknown := retentionSnapshot("unknown", "")
++	s.Snapshots[1] = unknown
++	before := s
++	if err := s.AdmitSnapshot(retentionSnapshot("new", ""), "active"); err != nil {
++		t.Fatal(err)
++	}
++	if len(s.Snapshots) > MaxSnapshots || s.Handled != "active" || s.Proof("active") != nil || s.Epoch != before.Epoch || s.Enabled != before.Enabled || !reflect.DeepEqual(s.Cyber, before.Cyber) {
++		t.Fatal("retirement lost suppression or unrelated authority", s)
++	}
++	if !reflect.DeepEqual(s.Snapshots[0], unknown) {
++		t.Fatal("unbound admission was retired", s.Snapshots[0])
++	}
++	s.SetEnabled(false, Observation{"active", "inProgress", ""})
++	s.SetEnabled(true, Observation{"active", "inProgress", ""})
++	if s.Handled != "active" {
++		t.Fatal("reenabling resurrected truncated active turn")
++	}
++	if err := s.InvalidateSettings("active"); err != nil {
++		t.Fatal(err)
++	}
++	if err := s.Observe(Observation{"active", "failed", "cyberPolicy"}, time.Now(), 0); err != nil || s.Pending != nil {
++		t.Fatal("settings resurrected truncated turn", err)
++	}
++}
++
++func TestRetentionProtectedAndByteBudgets(t *testing.T) {
++	for _, bound := range []bool{false, true} {
++		t.Run(fmt.Sprint("bound=", bound), func(t *testing.T) {
++			s := New(fixtureScope())
++			turn := ""
++			if bound {
++				turn = "source"
++			}
++			fillRetention(&s, turn, MaxSnapshots)
++			if bound {
++				id, _ := NewID()
++				s.Pending = &Pending{ID: id, Failure: turn, Action: "exact", Snapshot: proof(turn)}
++			}
++			before, _ := json.Marshal(s)
++			if err := s.AdmitSnapshot(retentionSnapshot("new", ""), turn); !errors.Is(err, ErrSnapshotCapacity) {
++				t.Fatal("protected full record admitted work", err)
++			}
++			after, _ := json.Marshal(s)
++			if string(before) != string(after) {
++				t.Fatal("failed candidate changed valid state")
++			}
++		})
++	}
++	for _, accepted := range []bool{false, true} {
++		t.Run(fmt.Sprint("bytes/accepted=", accepted), func(t *testing.T) {
++			s := New(fixtureScope())
++			turn := ""
++			if accepted {
++				turn = "active"
++			}
++			for i := 0; i < 5; i++ {
++				p := retentionSnapshot(fmt.Sprint(i), turn)
++				p.CommonInstructions = strings.Repeat("x", 200000)
++				p.Digest, _ = p.Hash()
++				s.Snapshots = append(s.Snapshots, p)
++			}
++			p := retentionSnapshot("new", "")
++			p.CommonInstructions = strings.Repeat("x", 100000)
++			p.Digest, _ = p.Hash()
++			err := s.AdmitSnapshot(p, "active")
++			if accepted && err != nil || !accepted && !errors.Is(err, ErrSnapshotCapacity) {
++				t.Fatal("encoded byte budget did not preserve accepted-only boundary", err)
++			}
++			if accepted && (len(s.Snapshots) != 5 || s.Handled != "active") {
++				t.Fatal("byte pressure did not retire exactly one accepted contributor")
++			}
++			data, _ := json.Marshal(s)
++			if len(data)+1 > MaxBytes {
++				t.Fatal("candidate exceeded record budget")
++			}
++		})
++	}
++}
++
++func TestRetentionAcceptedAtProtectedCapConverges(t *testing.T) {
++	c, b, now := controllerFixture(t)
++	scope := fixtureScope()
++	tx, err := c.Store.Lock(context.Background(), scope)
++	if err != nil {
++		t.Fatal(err)
++	}
++	tx.State.Enroll(Observation{})
++	tx.State.Boundary = b.boundary
++	fillRetention(&tx.State, "", MaxSnapshots)
++	id, _ := NewID()
++	tx.State.Pending = &Pending{ID: id, Failure: "failure", Action: "exact", Snapshot: proof("failure"), ChargedAtMS: now.UnixMilli()}
++	tx.State.Cyber = []Charge{{ID: id, AtMS: now.UnixMilli()}}
++	tx.State.Class, tx.State.Phase = "cybersecurity", "submitting"
++	if err := tx.State.PreflightAccepted(); !errors.Is(err, ErrSnapshotCapacity) {
++		t.Fatal("fresh dispatch fit without a result slot", err)
++	}
++	if err := tx.Save(); err != nil {
++		t.Fatal(err)
++	}
++	original := tx.State.Pending.Snapshot
++	tx.Close()
++	b.accepted, b.never = "accepted", false
++	*now = now.Add(10 * time.Minute)
++	for _, status := range []string{"inProgress", "failed", "failed"} {
++		b.o = Observation{"accepted", status, "cyberPolicy"}
++		if err := c.Step(context.Background(), scope); err != nil {
++			t.Fatal(err)
++		}
++		s, err := c.Store.Load(scope)
++		if err != nil || s.Phase != "blocked" || !s.Cancelled || s.Handled != "accepted" || s.Pending.ID != id || s.Pending.ResultTurn != "accepted" || !reflect.DeepEqual(s.Pending.Snapshot, original) || len(s.Snapshots) != MaxSnapshots || s.Proof("accepted") != nil || b.sends != 0 {
++			t.Fatal("known receipt did not converge at protected cap", s, err)
++		}
++		if len(s.Cyber) != 1 || !s.Cyber[0].Accepted || s.Cyber[0].AtMS != now.UnixMilli() {
++			t.Fatal("receipt charge lost or reanchored", s.Cyber)
++		}
++	}
++	tx, _ = c.Store.Lock(context.Background(), scope)
++	tx.State.Snapshots = tx.State.Snapshots[:1]
++	if err := tx.State.Accepted("accepted", now.Add(time.Hour)); err != nil {
++		t.Fatal(err)
++	}
++	if tx.State.Phase != "blocked" || len(tx.State.Snapshots) != 1 || tx.State.Cyber[0].AtMS != now.UnixMilli() {
++		t.Fatal("free space resurrected settled result")
++	}
++	if err := tx.State.Accepted("conflict", *now); err == nil {
++		t.Fatal("conflicting result accepted")
++	}
++	tx.Close()
++}
++
++func TestRetentionFreshAutomaticPreflightAndReceiptSaveFailure(t *testing.T) {
++	c, b, now := controllerFixture(t)
++	scope := fixtureScope()
++	tx, _ := c.Store.Lock(context.Background(), scope)
++	tx.State.Enroll(Observation{})
++	tx.State.Boundary = b.boundary
++	fillRetention(&tx.State, "", MaxSnapshots-1)
++	if err := tx.State.AddSnapshot(proof("failed")); err != nil {
++		t.Fatal(err)
++	}
++	if err := tx.State.Observe(Observation{"failed", "failed", "cyberPolicy"}, *now, 0); err != nil {
++		t.Fatal(err)
++	}
++	if err := tx.Save(); err != nil {
++		t.Fatal(err)
++	}
++	tx.Close()
++	b.o = Observation{"failed", "failed", "cyberPolicy"}
++	if err := c.Step(context.Background(), scope); !errors.Is(err, ErrSnapshotCapacity) {
++		t.Fatal("full protected automatic result slot was not refused", err)
++	}
++	s, _ := c.Store.Load(scope)
++	if b.sends != 0 || s.Pending != nil || len(s.Cyber) != 0 || s.Phase != "blocked" {
++		t.Fatal("preflight consumed quota or submitted", s)
++	}
++	// A persistence failure after native acceptance leaves the original durable
++	// uncertain tuple for exact retry, not a fabricated successful settlement.
++	tx, _ = c.Store.Lock(context.Background(), scope)
++	id, _ := NewID()
++	tx.State.Pending = &Pending{ID: id, Failure: "failed", Action: "exact", Snapshot: proof("failed")}
++	tx.State.Class, tx.State.Phase = "capacity", "submitting"
++	if err := tx.Save(); err != nil {
++		t.Fatal(err)
++	}
++	if err := tx.State.Accepted("accepted", *now); err != nil {
++		t.Fatal(err)
++	}
++	if err := os.Chmod(c.Store.directory()+"/"+scope.Slug, 0500); err != nil {
++		t.Fatal(err)
++	}
++	if err := tx.Save(); err == nil {
++		t.Fatal("receipt persistence failure hidden")
++	}
++	if err := os.Chmod(c.Store.directory()+"/"+scope.Slug, 0700); err != nil {
++		t.Fatal(err)
++	}
++	tx.Close()
++	s, _ = c.Store.Load(scope)
++	if !s.Uncertain() || s.Pending.ID != id || s.Pending.ResultTurn != "" {
++		t.Fatal("failed receipt save overwrote recovery identity")
++	}
++	b.accepted = "accepted"
++	if err := c.ReconcileOnly(context.Background(), scope); err != nil {
++		t.Fatal(err)
++	}
++	if b.sends != 0 {
++		t.Fatal("receipt recovery submitted a new turn")
++	}
++}
++
++func TestRetentionProofAndAcceptedReceiptByteBudget(t *testing.T) {
++	s := New(fixtureScope())
++	for i := 0; i < 4; i++ {
++		p := retentionSnapshot(fmt.Sprint(i), "")
++		p.CommonInstructions = strings.Repeat("x", 200000)
++		p.Digest, _ = p.Hash()
++		s.Snapshots = append(s.Snapshots, p)
++	}
++	p := proof("source")
++	p.CommonInstructions = strings.Repeat("x", 200000)
++	p.Digest, _ = p.Hash()
++	before, _ := json.Marshal(s)
++	if err := s.RetainProof(p); !errors.Is(err, ErrSnapshotCapacity) {
++		t.Fatal("aggregate did not reserve its pending copy", err)
++	}
++	after, _ := json.Marshal(s)
++	if string(before) != string(after) {
++		t.Fatal("refused aggregate changed protected admissions")
++	}
++	id, _ := NewID()
++	s.Pending = &Pending{ID: id, Failure: "source", Action: "exact", Snapshot: p}
++	s.Phase = "reconciling"
++	if err := validate(s.Scope, s); err != nil {
++		t.Fatal(err)
++	}
++	if err := s.PreflightAccepted(); !errors.Is(err, ErrSnapshotCapacity) {
++		t.Fatal("automatic result was not preflighted against encoded bytes", err)
++	}
++	if err := s.Accepted("accepted", time.Now()); err != nil {
++		t.Fatal(err)
++	}
++	data, _ := json.Marshal(s)
++	if len(data)+1 > MaxBytes || len(s.Snapshots) != 4 || s.Phase != "blocked" || s.Pending.ResultTurn != "accepted" || !reflect.DeepEqual(s.Pending.Snapshot, p) {
++		t.Fatal("byte pressure lost exact accepted settlement")
++	}
++}
+diff --git a/portal/internal/turnretry/state.go b/portal/internal/turnretry/state.go
+index 752948b..576045e 100644
+--- a/portal/internal/turnretry/state.go
++++ b/portal/internal/turnretry/state.go
+@@ -20,6 +20,8 @@ const MaxSnapshotBytes = 256 * 1024
+ const CyberLimit = 30
+ const MaxSnapshots = 64
+ 
++const receiptReserveBytes = 8192
++
+ const Continuation = "Continue the interrupted task from the saved conversation. Inspect the current state before repeating actions."
+ 
+ type Scope struct {
+@@ -144,8 +146,9 @@ func (s *State) SetEnabled(enabled bool, baseline Observation) {
+ 	s.Enabled = enabled
+ 	s.Cancel("disabled")
+ 	if enabled {
++		consumed := s.Handled == baseline.Turn
+ 		s.Baseline, s.BaselineActive, s.Handled = baseline.Turn, baseline.Status == "inProgress", baseline.Turn
+-		if s.BaselineActive {
++		if s.BaselineActive && !consumed {
+ 			s.Handled = ""
+ 		}
+ 	}
+@@ -372,30 +375,164 @@ func (s *State) Accepted(turn string, now time.Time) error {
+ 			return errors.New("retry receipt has no quota reservation")
+ 		}
+ 	}
++	alreadySuppressed := s.Pending.ResultTurn == turn && s.Handled == turn
+ 	s.Pending.ResultTurn = turn
++	if !alreadySuppressed {
++		if err := s.RetainSnapshot(s.resultSnapshot(turn), turn); err != nil {
++			if !errors.Is(err, ErrSnapshotCapacity) {
++				return err
++			}
++			// Native acceptance is already known. Preserve the exact receipt and
++			// charge even when no further automatic provenance fits. This is
++			// settlement, never permission to dispatch without admission proof.
++			s.SuppressTurn(turn)
++			s.Phase, s.Reason, s.Cancelled, s.DeadlineMS = "blocked", "settings_unproven", true, 0
++			return nil
++		}
++	}
++	if alreadySuppressed && s.Phase == "blocked" {
++		return nil
++	}
++	s.Phase, s.Reason = "running", ""
++	if s.Cancelled {
++		s.Phase, s.Handled = "cancelled", turn
++	}
++	return nil
++}
++
++func (s *State) resultSnapshot(turn string) Snapshot {
+ 	proof := s.Pending.Snapshot
+ 	proof.ID, proof.Turn, proof.Origin, proof.Proven = s.Pending.ID, turn, "automatic", false
+ 	proof.TextDigest = hash(Continuation)
+ 	proof.NativeContext = nil
+ 	proof.Digest, _ = proof.Hash()
+-	s.AddSnapshot(proof)
+-	s.Phase, s.Reason = "running", ""
+-	if s.Cancelled {
+-		s.Phase, s.Handled = "cancelled", turn
++	return proof
++}
++
++var ErrSnapshotCapacity = errors.New("retry provenance capacity is unavailable")
++
++// SuppressTurn consumes an exact turn whose complete provenance was lost.
++// Pending remains immutable for exact receipt reconciliation.
++func (s *State) SuppressTurn(turn string) {
++	s.Handled = turn
++	kept := make([]Snapshot, 0, len(s.Snapshots))
++	for _, p := range s.Snapshots {
++		if p.Turn == turn && (p.Proven || p.Origin == "executed") && !s.protectedSnapshot(p) {
++			continue
++		}
++		kept = append(kept, p)
+ 	}
+-	return nil
++	s.Snapshots = kept
++}
++
++func (s *State) protectedSnapshot(p Snapshot) bool {
++	return p.Turn == "" || s.Pending != nil && (p.ID == s.Pending.ID || p.ID == s.Pending.Snapshot.ID || p.Turn == s.Pending.Snapshot.Turn)
++}
++
++// AddSnapshot checks the complete candidate before changing the state. It does
++// not discard contributors to make a derived aggregate proof fit.
++func (s *State) AddSnapshot(snapshot Snapshot) error {
++	return s.retainSnapshot(snapshot, "", false, 0)
++}
++
++// RetainSnapshot retires only accepted, turn-bound evidence. A current turn
++// losing a contributor is consumed together with every cached aggregate.
++func (s *State) RetainSnapshot(snapshot Snapshot, currentTurn string) error {
++	return s.retainSnapshot(snapshot, currentTurn, true, 0)
+ }
+ 
+-func (s *State) AddSnapshot(snapshot Snapshot) {
+-	for i := range s.Snapshots {
+-		if s.Snapshots[i].ID == snapshot.ID {
+-			s.Snapshots[i] = snapshot
+-			return
++// Reserve receipt binding before manual admission, or the immutable pending
++// copy before scheduling a fully proved failure. Neither reserve is persisted
++// as a fabricated receipt or submission.
++func (s *State) AdmitSnapshot(snapshot Snapshot, currentTurn string) error {
++	return s.retainSnapshot(snapshot, currentTurn, true, receiptReserveBytes)
++}
++
++func (s *State) RetainProof(snapshot Snapshot) error {
++	data, err := json.Marshal(snapshot)
++	if err != nil {
++		return err
++	}
++	return s.retainSnapshot(snapshot, snapshot.Turn, true, len(data)+receiptReserveBytes)
++}
++
++func (s *State) retainSnapshot(snapshot Snapshot, currentTurn string, retire bool, reserve int) error {
++	candidate := *s
++	candidate.Snapshots = append([]Snapshot{}, s.Snapshots...)
++	found := false
++	for i := range candidate.Snapshots {
++		if candidate.Snapshots[i].ID == snapshot.ID {
++			candidate.Snapshots[i], found = snapshot, true
++			break
+ 		}
+ 	}
+-	// Never evict queued or uncertain admissions to make room. Save enforces
+-	// the bounded record and the caller refuses before submitting new work.
+-	s.Snapshots = append(s.Snapshots, snapshot)
++	if !found {
++		candidate.Snapshots = append(candidate.Snapshots, snapshot)
++	}
++	for {
++		data, err := json.Marshal(candidate)
++		if err != nil {
++			return err
++		}
++		if len(candidate.Snapshots) <= MaxSnapshots && len(data)+1+reserve <= MaxBytes {
++			if err := validate(candidate.Scope, candidate); err != nil {
++				return err
++			}
++			*s = candidate
++			return nil
++		}
++		index := -1
++		if retire {
++			for i, p := range candidate.Snapshots {
++				if p.ID != snapshot.ID && !p.Proven && p.Origin != "executed" && !candidate.protectedSnapshot(p) && (!snapshot.Proven || p.Turn != snapshot.Turn) {
++					index = i
++					break
++				}
++			}
++		}
++		if index < 0 {
++			return ErrSnapshotCapacity
++		}
++		turn := candidate.Snapshots[index].Turn
++		candidate.Snapshots = append(candidate.Snapshots[:index], candidate.Snapshots[index+1:]...)
++		if turn == currentTurn {
++			candidate.SuppressTurn(turn)
++		} else {
++			// An obsolete cached proof must not survive contributor retirement.
++			kept := candidate.Snapshots[:0]
++			for _, p := range candidate.Snapshots {
++				if p.Turn != turn || !p.Proven && p.Origin != "executed" {
++					kept = append(kept, p)
++				}
++			}
++			candidate.Snapshots = kept
++		}
++	}
++}
++
++// PreflightAccepted reserves count and bytes for result bookkeeping before a
++// positively unsubmitted automatic attempt. The 8 KiB margin covers the two
++// native turn-ID copies and quota/phase metadata. A larger actual receipt still
++// settles conservatively in Accepted; it never authorizes a repeat dispatch.
++func (s *State) PreflightAccepted() error {
++	if s.Pending == nil {
++		return errors.New("retry receipt has no exact turn")
++	}
++	preview := *s
++	pending := *s.Pending
++	preview.Pending = &pending
++	preview.Pending.ResultTurn = s.Pending.ID
++	if err := preview.retainSnapshot(preview.resultSnapshot(s.Pending.ID), s.Pending.Failure, true, receiptReserveBytes); err != nil {
++		return err
++	}
++	kept := make([]Snapshot, 0, len(preview.Snapshots))
++	for _, p := range preview.Snapshots {
++		if p.ID != s.Pending.ID {
++			kept = append(kept, p)
++		}
++	}
++	s.Snapshots, s.Handled = kept, preview.Handled
++	return nil
+ }
+ 
+ func NewID() (string, error) {
+diff --git a/portal/internal/turnretry/store.go b/portal/internal/turnretry/store.go
+index 75fac07..f602127 100644
+--- a/portal/internal/turnretry/store.go
++++ b/portal/internal/turnretry/store.go
+@@ -267,7 +267,7 @@ func (t *Transaction) Save() error {
+ 	if err != nil {
+ 		return err
+ 	}
+-	if len(data) > MaxBytes {
++	if len(data)+1 > MaxBytes {
+ 		return errors.New("retry state exceeds 1 MiB")
+ 	}
+ 	path := t.store.path(t.scope)
+diff --git a/portal/internal/workspacecodex/turn_retry.go b/portal/internal/workspacecodex/turn_retry.go
+index 2ca69e5..de52cc4 100644
+--- a/portal/internal/workspacecodex/turn_retry.go
++++ b/portal/internal/workspacecodex/turn_retry.go
+@@ -170,22 +170,14 @@ func (c *Client) captureRetry(ctx context.Context, tx *turnretry.Transaction, po
+ 	if tx.State.Uncertain() {
+ 		return errors.New("automatic submission requires reconciliation before new work")
+ 	}
+-	// Accepted inputs belonging to an older turn cannot contribute to the
+-	// current task. Retain unbound queue/uncertain inputs until exact history
+-	// identifies execution; queue disappearance alone proves nothing.
++	currentTurn := ""
+ 	if origin != "initial" {
+ 		latest, err := c.latestTurn(ctx, tx.State.Scope.Thread)
+ 		if err != nil {
+ 			return err
+ 		}
+ 		if latest != nil {
+-			kept := tx.State.Snapshots[:0]
+-			for _, p := range tx.State.Snapshots {
+-				if p.Turn == "" || p.Turn == latest.ID {
+-					kept = append(kept, p)
+-				}
+-			}
+-			tx.State.Snapshots = kept
++			currentTurn = latest.ID
+ 		}
+ 	}
+ 	// Enrollment precedes the managed send. Latest-state observation by the
+@@ -253,10 +245,56 @@ func (c *Client) captureRetry(ctx context.Context, tx *turnretry.Transaction, po
+ 	if err != nil {
+ 		return err
+ 	}
+-	tx.State.AddSnapshot(snapshot)
++	if err := tx.State.AdmitSnapshot(snapshot, currentTurn); err != nil {
++		return err
++	}
+ 	return tx.Save()
+ }
+ 
++// Generic delivery identity is authoritative even when bounded retry evidence
++// has been retired. Reconciliation precedes cancellation, capture and rebind;
++// accepted input must never acquire today's settings or epoch on replay.
++func (c *Client) reconcileRetrySend(ctx context.Context, tx *turnretry.Transaction, thread, text, id, action string, options codex.TurnOptions) (codex.SendReceipt, bool, error) {
++	receipt, found, err := c.Client.ReconcileSendWithOptions(ctx, thread, text, id, action, options)
++	if err != nil || found {
++		return receipt, found, err
++	}
++	// Reconcile alone deliberately does not distinguish absent from prepared,
++	// and acknowledged accepted IDs may now exist only in native history.
++	attempted, err := c.Client.SendAttemptedWithOptions(ctx, thread, text, id, action, options)
++	if err != nil || !attempted {
++		return codex.SendReceipt{}, false, err
++	}
++	receipt, found, err = c.Client.ReconcileSendWithOptions(ctx, thread, text, id, action, options)
++	if err != nil || found {
++		return receipt, found, err
++	}
++	for _, p := range tx.State.Snapshots {
++		if p.ID == id && p.TextDigest == textHash(text) {
++			return codex.SendReceipt{}, false, nil
++		}
++	}
++	return codex.SendReceipt{}, false, errors.New("earlier submission has no managed admission proof")
++}
++
++func recoverRetryReceipt(tx *turnretry.Transaction, id, text string, receipt codex.SendReceipt) error {
++	for _, p := range tx.State.Snapshots {
++		if p.ID == id {
++			if p.TextDigest != textHash(text) {
++				return errors.New("managed admission identity changed")
++			}
++			if receipt.TurnID != "" && p.Turn == "" {
++				return bindRetryReceipt(tx, id, receipt)
++			}
++			if p.Turn != "" && receipt.TurnID != "" && p.Turn != receipt.TurnID {
++				return errors.New("managed receipt identity changed")
++			}
++			return nil
++		}
++	}
++	return nil // Accepted generic receipt, deliberately retired retry evidence.
++}
++
+ func (c *Client) Send(ctx context.Context, thread, text, id, action string) (codex.SendReceipt, error) {
+ 	return c.SendWithOptions(ctx, thread, text, id, action, codex.TurnOptions{})
+ }
+@@ -270,6 +308,14 @@ func (c *Client) SendWithOptions(ctx context.Context, thread, text, id, action s
+ 		return c.sendWithRecovery(ctx, thread, text, id, action, options)
+ 	}
+ 	defer tx.Close()
++	if receipt, found, err := c.reconcileRetrySend(ctx, tx, thread, text, id, action, options); err != nil || found {
++		if err == nil {
++			if err = recoverRetryReceipt(tx, id, text, receipt); err != nil {
++				err = &codex.UnknownSendOutcomeError{Err: err}
++			}
++		}
++		return receipt, err
++	}
+ 	origin := "send"
+ 	if strings.HasPrefix(action, "team:") {
+ 		origin = "team"
+@@ -334,6 +380,12 @@ func (c *Client) QueueWithPolicy(ctx context.Context, thread, text, id string, p
+ 	if !reflect.DeepEqual(policy, codex.ThreadPolicy{}) && !reflect.DeepEqual(policy, current) {
+ 		return codex.QueueEntry{}, errors.New("managed queue policy changed")
+ 	}
++	if receipt, found, err := c.Client.ReconcileSendWithOptions(ctx, thread, text, id, "", codex.TurnOptions{ThreadPolicy: current}); err != nil || found {
++		if err == nil {
++			err = recoverRetryReceipt(tx, id, text, receipt)
++		}
++		return codex.QueueEntry{ID: receipt.QueuedSubmissionID, ClientUserMessageID: id, Text: text}, err
++	}
+ 	if err := c.captureRetry(ctx, tx, current, text, id, "queue", codex.TurnOptions{ThreadPolicy: current}); err != nil {
+ 		return codex.QueueEntry{}, err
+ 	}
+diff --git a/portal/internal/workspacecodex/turn_retry_proof.go b/portal/internal/workspacecodex/turn_retry_proof.go
+index 6627cfa..41c0e0f 100644
+--- a/portal/internal/workspacecodex/turn_retry_proof.go
++++ b/portal/internal/workspacecodex/turn_retry_proof.go
+@@ -34,6 +34,9 @@ func (b retryBackend) Boundary(_ context.Context, scope turnretry.Scope) (string
+ }
+ 
+ func (b retryBackend) Prove(ctx context.Context, scope turnretry.Scope, state *turnretry.State, turn string) error {
++	if state.Handled == turn {
++		return turnretry.ErrMissingProof
++	}
+ 	if state.Proof(turn) != nil {
+ 		return nil
+ 	}
+@@ -107,15 +110,13 @@ func (b retryBackend) Prove(ctx context.Context, scope turnretry.Scope, state *t
+ 	if err != nil {
+ 		return err
+ 	}
+-	state.AddSnapshot(proof)
+-	// Bound retained history to unresolved admissions and this task's inputs.
+-	kept := []turnretry.Snapshot{}
+-	for _, p := range state.Snapshots {
+-		if p.Turn == "" || p.Turn == turn {
+-			kept = append(kept, p)
++	if err := state.RetainProof(proof); err != nil {
++		if errors.Is(err, turnretry.ErrSnapshotCapacity) {
++			state.SuppressTurn(turn)
++			return turnretry.ErrMissingProof
+ 		}
++		return err
+ 	}
+-	state.Snapshots = kept
+ 	return nil
+ }
+ 
+diff --git a/portal/internal/workspacecodex/turn_retry_retention_test.go b/portal/internal/workspacecodex/turn_retry_retention_test.go
+new file mode 100644
+index 0000000..d1c911d
+--- /dev/null
++++ b/portal/internal/workspacecodex/turn_retry_retention_test.go
+@@ -0,0 +1,512 @@
++package workspacecodex
++
++import (
++	"context"
++	"encoding/json"
++	"errors"
++	"fmt"
++	"os"
++	"reflect"
++	"strings"
++	"sync"
++	"testing"
++	"time"
++
++	"github.com/aither64/codex-web/codex"
++	"github.com/aither64/dev-workspace/portal/internal/turnretry"
++	"github.com/coder/websocket"
++)
++
++type retryRetentionWire struct {
++	mu           sync.Mutex
++	sends        int
++	lostID       string
++	hideHistory  bool
++	failSaveID   string
++	stopBeforeID string
++}
++
++func (r *retryRetentionWire) count() int {
++	r.mu.Lock()
++	defer r.mu.Unlock()
++	return r.sends
++}
++
++func (r *retryRetentionWire) serve(w *retrySettingsWire, conn *websocket.Conn) error {
++	defer conn.CloseNow()
++	if err := handshake(conn); err != nil {
++		return err
++	}
++	for {
++		req, err := readObject(conn)
++		if err != nil {
++			return nil
++		}
++		w.mu.Lock()
++		r.mu.Lock()
++		method, _ := req["method"].(string)
++		p, _ := req["params"].(map[string]any)
++		var result, notify any
++		failure := ""
++		switch {
++		case method == "thread/items/list" && (r.hideHistory || w.items == nil):
++			result = map[string]any{"data": []any{}, "nextCursor": nil}
++		case method == "thread/read" && r.stopBeforeID != "":
++			saved, err := w.client.RetryStore().Load(w.scope)
++			admitted := false
++			for _, snapshot := range saved.Snapshots {
++				admitted = admitted || snapshot.ID == r.stopBeforeID
++			}
++			if err == nil && admitted {
++				failure = "synthetic interruption after durable admission"
++			} else {
++				result, failure, notify = w.reply(req)
++			}
++		case method == "turn/start" || method == "turn/steer":
++			r.sends++
++			id, _ := p["clientUserMessageId"].(string)
++			text := p["input"].([]any)[0].(map[string]any)["text"].(string)
++			if method == "turn/start" {
++				w.turn, w.items = fmt.Sprint("independent-", r.sends), nil
++			} else if p["expectedTurnId"] != w.turn {
++				w.t.Error("manual steer lost exact turn", p)
++			}
++			w.status, w.loaded = "inProgress", "active"
++			input := retrySettingsInput(w.turn, id, text)
++			input[0].(map[string]any)["item"].(map[string]any)["id"] = "native-" + id
++			w.items = append(w.items, input...)
++			w.writeRollout(w.turn)
++			result = map[string]any{"turn": map[string]any{"id": w.turn}}
++			if method == "turn/steer" {
++				result = map[string]any{"turnId": w.turn}
++			}
++			if id == r.lostID {
++				r.hideHistory = true
++				result = map[string]any{}
++			}
++			if id == r.failSaveID {
++				if err := os.Chmod(w.recordDirectory, 0500); err != nil {
++					w.t.Error(err)
++				}
++			}
++		default:
++			result, failure, notify = w.reply(req)
++		}
++		r.mu.Unlock()
++		w.mu.Unlock()
++		reply := map[string]any{"id": req["id"], "result": result}
++		if failure != "" {
++			delete(reply, "result")
++			reply["error"] = map[string]any{"code": -32000, "message": failure}
++		}
++		if err := writeObject(conn, reply); err != nil {
++			return nil
++		}
++		if notify != nil {
++			if err := writeObject(conn, notify); err != nil {
++				return nil
++			}
++		}
++	}
++}
++
++func retryRetentionSend(t *testing.T, w *retrySettingsWire, n int) codex.SendReceipt {
++	t.Helper()
++	id := fmt.Sprintf("00000000-0000-4000-8000-%012d", n)
++	receipt, err := w.client.SendWithOptions(context.Background(), w.thread, fmt.Sprint("input ", n), id, "", codex.TurnOptions{})
++	if err != nil || receipt.TurnID == "" || !receipt.Steered {
++		t.Fatal("managed steer did not reach native", n, receipt, err)
++	}
++	return receipt
++}
++
++func retryRetentionRestart(t *testing.T, w *retrySettingsWire) {
++	t.Helper()
++	old := w.client
++	old.Close()
++	w.mu.Lock()
++	w.client = NewWithOptions(w.scope.Socket, w.scope.Workspace, codex.ClientOptions{DeveloperInstructions: "common lifecycle", PreserveThreadInstructionsOnResume: true, SubmissionLedgerPath: old.submissionLedgerPath})
++	w.client.RecoveryRoot, w.client.RetryPolicyResolver = old.RecoveryRoot, old.RetryPolicyResolver
++	w.mu.Unlock()
++	t.Cleanup(func() { w.client.Close() })
++}
++
++func TestRetryRetentionManagedSteersBeyond64AndExactReplay(t *testing.T) {
++	for _, member := range []bool{false, true} {
++		t.Run(fmt.Sprint("member=", member), func(t *testing.T) {
++			r := &retryRetentionWire{}
++			w := newRetrySettingsWireWithServer(t, member, "default", r.serve)
++			before, _ := w.client.RetryStore().Load(w.scope)
++			for i := 0; i < 64; i++ {
++				retryRetentionSend(t, w, i)
++			}
++			full, err := w.client.RetryStore().Load(w.scope)
++			if err != nil || len(full.Snapshots) != 64 {
++				t.Fatal("did not reproduce deployed full steer shape", len(full.Snapshots), err)
++			}
++			for i := 64; i < 69; i++ {
++				retryRetentionSend(t, w, i)
++			}
++			after, err := w.client.RetryStore().Load(w.scope)
++			if err != nil || len(after.Snapshots) > 64 || after.Handled != "manual" || after.Proof("manual") != nil || after.Epoch != before.Epoch || !reflect.DeepEqual(after.Binding, before.Binding) || !reflect.DeepEqual(after.Cyber, before.Cyber) || after.Enabled != before.Enabled || after.Baseline != before.Baseline {
++				t.Fatal("bounded admission lost suppression or authority", after, err)
++			}
++			// Replaying an evicted accepted UUID must not capture current settings.
++			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
++			defer cancel()
++			retryRetentionRestart(t, w)
++			id := "00000000-0000-4000-8000-000000000000"
++			for _, changed := range []string{"text", "action", "options"} {
++				text, action, options := "input 0", "", (codex.TurnOptions{})
++				switch changed {
++				case "text":
++					text = "changed"
++				case "action":
++					action = "changed"
++				case "options":
++					options.Model = "changed"
++				}
++				if _, err := w.client.SendWithOptions(ctx, w.thread, text, id, action, options); err == nil || !strings.Contains(err.Error(), "message identity was reused") {
++					t.Fatal("changed identity was not rejected by the exact tuple check", changed, err)
++				}
++			}
++			if receipt, err := w.client.Send(ctx, w.thread, "input 0", id, ""); err != nil || receipt.TurnID != "manual" {
++				t.Fatal("evicted original receipt unavailable", receipt, err)
++			}
++			ack, err := w.client.AcknowledgeSends(ctx, w.thread, []codex.SendAcknowledgement{{ClientUserMessageID: id, Digest: textHash("input 0")}})
++			if err != nil || len(ack) != 1 {
++				t.Fatal("browser acknowledgment failed", ack, err)
++			}
++			retryRetentionRestart(t, w)
++			// This is the browser retry:true preflight, followed by actual Send.
++			if found, err := w.client.SendAttempted(ctx, w.thread, "input 0", id, ""); err != nil || !found {
++				t.Fatal("acknowledged exact history was not recovered", found, err)
++			}
++			if _, err := w.client.Send(ctx, w.thread, "input 0", id, ""); err != nil {
++				t.Fatal(err)
++			}
++			final, _ := w.client.RetryStore().Load(w.scope)
++			if !reflect.DeepEqual(final, after) {
++				t.Fatal("accepted replay recaptured or rebound retired provenance")
++			}
++			r.mu.Lock()
++			defer r.mu.Unlock()
++			if r.sends != 69 {
++				t.Fatal("exact replay duplicated native input", r.sends)
++			}
++			t.Logf("64 accepted steers -> 69 distinct accepted steers; ledger/restart/ack/history replays and changed text/action/options: native sends=%d, snapshots=%d", r.sends, len(final.Snapshots))
++		})
++	}
++}
++
++func TestRetryRetentionProtectedQueueFIFOAndPreparedIdentity(t *testing.T) {
++	for _, member := range []bool{false, true} {
++		t.Run(fmt.Sprint("member=", member), func(t *testing.T) {
++			r := &retryRetentionWire{}
++			w := newRetrySettingsWireWithServer(t, member, "default", r.serve)
++			ctx := context.Background()
++			for i := 0; i < 64; i++ {
++				if _, err := w.client.QueueWithPolicy(ctx, w.thread, fmt.Sprint(i), fmt.Sprint("queue-", i), w.policy); err != nil {
++					t.Fatal(err)
++				}
++			}
++			before, _ := w.client.RetryStore().Load(w.scope)
++			for _, queue := range []bool{false, true} {
++				var err error
++				if queue {
++					_, err = w.client.QueueWithPolicy(ctx, w.thread, "fresh", "fresh", w.policy)
++				} else {
++					_, err = w.client.Send(ctx, w.thread, "fresh", "fresh", "")
++				}
++				if !errors.Is(err, turnretry.ErrSnapshotCapacity) {
++					t.Fatal("protected queue evidence was dropped to send", err)
++				}
++			}
++			// Recovery of an existing queue bypasses new capture, never queue add.
++			if entry, err := w.client.QueueWithPolicy(ctx, w.thread, "0", "queue-0", w.policy); err != nil || entry.ID != "queue-0" {
++				t.Fatal("existing queue identity unavailable at cap", entry, err)
++			}
++			after, _ := w.client.RetryStore().Load(w.scope)
++			if !reflect.DeepEqual(before.Snapshots, after.Snapshots) {
++				t.Fatal("protected admissions changed")
++			}
++			w.mu.Lock()
++			defer w.mu.Unlock()
++			if len(w.queue) != 64 {
++				t.Fatal("queue count changed", len(w.queue))
++			}
++			for i, entry := range w.queue {
++				if entry.ClientUserMessageID != fmt.Sprint("queue-", i) {
++					t.Fatal("queue order changed", w.queue)
++				}
++			}
++		})
++	}
++	t.Run("prepared without admission", func(t *testing.T) {
++		r := &retryRetentionWire{}
++		w := newRetrySettingsWireWithServer(t, false, "default", r.serve)
++		if err := w.client.PrepareSendWithOptions(w.thread, "prepared", "prepared", "action", true, codex.TurnOptions{}); err != nil {
++			t.Fatal(err)
++		}
++		if _, err := w.client.Send(context.Background(), w.thread, "prepared", "prepared", "action"); err == nil {
++			t.Fatal("prepared identity with missing admission was treated as fresh")
++		}
++		if r.count() != 0 {
++			t.Fatal("prepared identity replayed")
++		}
++	})
++}
++
++func TestRetryRetentionCrashAndLostReceiptRecovery(t *testing.T) {
++	for _, failure := range []string{"before-save", "after-admission", "submitting", "accepted-save"} {
++		t.Run(failure, func(t *testing.T) {
++			r := &retryRetentionWire{}
++			w := newRetrySettingsWireWithServer(t, false, "default", r.serve)
++			for i := 0; i < 64; i++ {
++				retryRetentionSend(t, w, i)
++			}
++			ctx := context.Background()
++			id, text := "fresh-uncertain", "new original input"
++			r.mu.Lock()
++			switch failure {
++			case "before-save":
++				if err := os.Chmod(w.recordDirectory, 0500); err != nil {
++					t.Fatal(err)
++				}
++			case "after-admission":
++				r.stopBeforeID = id
++			case "submitting":
++				r.lostID = id
++			case "accepted-save":
++				r.failSaveID = id
++			}
++			r.mu.Unlock()
++			_, err := w.client.Send(ctx, w.thread, text, id, "")
++			if err == nil {
++				t.Fatal("injected uncertain/refused outcome was hidden")
++			}
++			if failure == "submitting" || failure == "accepted-save" {
++				var unknown *codex.UnknownSendOutcomeError
++				if !errors.As(err, &unknown) {
++					t.Fatal("postnative failure was not uncertain", err)
++				}
++			}
++			if err := os.Chmod(w.recordDirectory, 0700); err != nil {
++				t.Fatal(err)
++			}
++			r.mu.Lock()
++			firstSends := r.sends
++			r.stopBeforeID, r.failSaveID = "", ""
++			r.mu.Unlock()
++			if failure == "before-save" || failure == "after-admission" {
++				if firstSends != 64 {
++					t.Fatal("native input preceded durable admission", firstSends)
++				}
++			} else if firstSends != 65 {
++				t.Fatal("native accepted fixture did not submit exactly once", firstSends)
++			}
++			retryRetentionRestart(t, w)
++			if failure == "submitting" {
++				if _, err := w.client.Send(ctx, w.thread, text, id, ""); err == nil {
++					t.Fatal("unknown result replayed before history")
++				}
++				r.mu.Lock()
++				r.hideHistory = false
++				r.mu.Unlock()
++			}
++			if receipt, err := w.client.Send(ctx, w.thread, text, id, ""); err != nil || receipt.TurnID != "manual" {
++				t.Fatal("original identity did not recover", receipt, err)
++			}
++			state, err := w.client.RetryStore().Load(w.scope)
++			data, _ := json.Marshal(state)
++			if err != nil || len(state.Snapshots) > 64 || len(data)+1 > turnretry.MaxBytes || state.Handled != "manual" {
++				t.Fatal("recovered state invalid or missing suppression", state, err)
++			}
++			r.mu.Lock()
++			defer r.mu.Unlock()
++			if r.sends != 65 {
++				t.Fatal("crash recovery duplicated original input", r.sends)
++			}
++		})
++	}
++}
++
++func TestRetryRetentionCachedProofSuppressedAndNewQueueEligible(t *testing.T) {
++	for _, member := range []bool{false, true} {
++		t.Run(fmt.Sprint("member=", member), func(t *testing.T) {
++			r := &retryRetentionWire{}
++			w := newRetrySettingsWireWithServer(t, member, "default", r.serve)
++			ctx := context.Background()
++			for i := 0; i < 63; i++ {
++				retryRetentionSend(t, w, i)
++			}
++			tx, _ := w.client.RetryStore().Lock(ctx, w.scope)
++			if err := w.client.RetryBackend().Prove(ctx, w.scope, &tx.State, "manual"); err != nil {
++				t.Fatal(err)
++			}
++			if tx.State.Proof("manual") == nil || len(tx.State.Snapshots) != 64 {
++				t.Fatal("fixture did not create a complete cached aggregate at cap")
++			}
++			if err := tx.Save(); err != nil {
++				t.Fatal(err)
++			}
++			tx.Close()
++			retryRetentionSend(t, w, 64)
++			tx, _ = w.client.RetryStore().Lock(ctx, w.scope)
++			if tx.State.Proof("manual") != nil || tx.State.Handled != "manual" {
++				t.Fatal("retirement kept a cached aggregate")
++			}
++			tx.State.SetEnabled(false, turnretry.Observation{Turn: "manual", Status: "inProgress"})
++			tx.State.SetEnabled(true, turnretry.Observation{Turn: "manual", Status: "inProgress"})
++			if err := tx.Save(); err != nil {
++				t.Fatal(err)
++			}
++			tx.Close()
++			model := "new-model"
++			if _, err := w.client.UpdateThreadSettings(ctx, w.thread, codex.ThreadSettingsUpdate{Model: &model}); err != nil {
++				t.Fatal(err)
++			}
++			retryRetentionRestart(t, w)
++			if _, err := w.client.QueueWithPolicy(ctx, w.thread, "independent queued work", "new-queue", w.policy); err != nil {
++				t.Fatal(err)
++			}
++			w.mu.Lock()
++			w.status, w.loaded = "failed", "systemError"
++			// Deliberately partial history cannot resurrect the cached aggregate.
++			w.items = w.items[len(w.items)-1:]
++			w.writeRollout("manual")
++			w.mu.Unlock()
++			controller := turnretry.Controller{Store: w.client.RetryStore(), Backend: w.client.RetryBackend()}
++			if err := controller.Step(ctx, w.scope); err != nil {
++				t.Fatal(err)
++			}
++			s, _ := controller.Store.Load(w.scope)
++			if s.Pending != nil || s.Proof("manual") != nil || s.Handled != "manual" {
++				t.Fatal("restart/settings/optout restored truncated-turn eligibility")
++			}
++			w.mu.Lock()
++			w.turn, w.status, w.loaded, w.queue = "new-queue-turn", "failed", "systemError", nil
++			w.items = retrySettingsInput(w.turn, "new-queue", "independent queued work")
++			w.writeRollout(w.turn)
++			w.mu.Unlock()
++			if err := controller.Step(ctx, w.scope); err != nil {
++				t.Fatal("new independent task lost complete-proof eligibility", err)
++			}
++			s, _ = controller.Store.Load(w.scope)
++			if s.Pending == nil || s.Pending.Failure != "new-queue-turn" || s.Phase != "scheduled" || s.Pending.Snapshot.Options.Model != model {
++				t.Fatal("new epoch/queue did not schedule from exact context", s)
++			}
++		})
++	}
++}
++
++func TestRetryRetentionAggregateAndAutomaticAtCap(t *testing.T) {
++	for _, count := range []int{63, 64} {
++		t.Run(fmt.Sprint(count), func(t *testing.T) {
++			r := &retryRetentionWire{}
++			w := newRetrySettingsWireWithServer(t, false, "default", r.serve)
++			for i := 0; i < count; i++ {
++				retryRetentionSend(t, w, i)
++			}
++			w.mu.Lock()
++			w.status, w.loaded = "failed", "systemError"
++			w.mu.Unlock()
++			now := time.Now()
++			controller := turnretry.Controller{Store: w.client.RetryStore(), Backend: w.client.RetryBackend(), Clock: func() time.Time { return now }}
++			err := controller.Step(context.Background(), w.scope)
++			if count == 64 && !errors.Is(err, turnretry.ErrMissingProof) || count == 63 && err != nil {
++				t.Fatal("aggregate budget returned unexpected outcome", err)
++			}
++			s, err := controller.Store.Load(w.scope)
++			if err != nil || len(s.Snapshots) > 64 {
++				t.Fatal("aggregate saved an invalid candidate", err)
++			}
++			if count == 63 {
++				now = time.UnixMilli(s.DeadlineMS)
++				if err := controller.Step(context.Background(), w.scope); !errors.Is(err, turnretry.ErrSnapshotCapacity) {
++					t.Fatal("automatic receipt slot was not preflighted", err)
++				}
++			}
++			s, err = controller.Store.Load(w.scope)
++			if err != nil || s.Phase != "blocked" || s.Handled != "manual" || r.count() != count {
++				t.Fatal("cap pressure dispatched or lost manual-only failure", s, err, r.count())
++			}
++		})
++	}
++}
++
++func TestRetryRetentionUnknownAutomaticAtCapHoldsManual(t *testing.T) {
++	r := &retryRetentionWire{}
++	w := newRetrySettingsWireWithServer(t, false, "default", r.serve)
++	retryRetentionSend(t, w, 1)
++	w.mu.Lock()
++	w.status, w.loaded = "failed", "systemError"
++	w.mu.Unlock()
++	now := time.Now()
++	controller := turnretry.Controller{Store: w.client.RetryStore(), Backend: w.client.RetryBackend(), Clock: func() time.Time { return now }}
++	ctx := context.Background()
++	if err := controller.Step(ctx, w.scope); err != nil {
++		t.Fatal(err)
++	}
++	s, _ := controller.Store.Load(w.scope)
++	id := s.Pending.ID
++	r.mu.Lock()
++	r.lostID = id
++	r.mu.Unlock()
++	now = time.UnixMilli(s.DeadlineMS)
++	if err := controller.Step(ctx, w.scope); err == nil {
++		t.Fatal("fixture did not preserve genuine submitting uncertainty")
++	}
++	tx, _ := controller.Store.Lock(ctx, w.scope)
++	original := *tx.State.Pending
++	for len(tx.State.Snapshots) < 64 {
++		p := tx.State.Snapshots[0]
++		p.ID, p.Turn = fmt.Sprint("protected-", len(tx.State.Snapshots)), ""
++		p.Digest, _ = p.Hash()
++		if err := tx.State.AddSnapshot(p); err != nil {
++			t.Fatal(err)
++		}
++	}
++	if err := tx.Save(); err != nil {
++		t.Fatal(err)
++	}
++	tx.Close()
++	if _, err := w.client.Send(ctx, w.thread, "new work", "new-work", ""); err == nil {
++		t.Fatal("unknown automatic input did not hold manual admission")
++	}
++	s, _ = controller.Store.Load(w.scope)
++	if !s.Uncertain() || !reflect.DeepEqual(*s.Pending, original) || len(s.Snapshots) != 64 {
++		t.Fatal("manual admission altered pending identity or queue evidence")
++	}
++	r.mu.Lock()
++	r.hideHistory = false
++	r.mu.Unlock()
++	retryRetentionRestart(t, w)
++	controller.Store, controller.Backend = w.client.RetryStore(), w.client.RetryBackend()
++	if err := controller.ReconcileOnly(ctx, w.scope); err != nil {
++		t.Fatal(err)
++	}
++	s, _ = controller.Store.Load(w.scope)
++	if s.Phase != "blocked" || s.Pending.ID != id || s.Pending.ResultTurn == "" || len(s.Snapshots) != 64 || r.count() != 2 {
++		t.Fatal("known accepted result did not settle without a 65th record", s, r.count())
++	}
++	result := s.Pending.ResultTurn
++	for _, status := range []string{"inProgress", "failed", "failed"} {
++		w.mu.Lock()
++		w.status = status
++		if status == "failed" {
++			w.loaded = "systemError"
++		}
++		w.mu.Unlock()
++		retryRetentionRestart(t, w)
++		controller.Backend = w.client.RetryBackend()
++		if err := controller.Step(ctx, w.scope); err != nil {
++			t.Fatal(err)
++		}
++		s, err := controller.Store.Load(w.scope)
++		if err != nil || s.Phase != "blocked" || s.Pending.ID != id || s.Pending.ResultTurn != result || !reflect.DeepEqual(s.Pending.Snapshot, original.Snapshot) || s.Handled != result || len(s.Snapshots) != 64 || r.count() != 2 {
++			t.Fatal("accepted protected-cap result rearmed after restart", s, err)
++		}
++	}
++	t.Logf("all 64 protected snapshots preserved; exact accepted automatic UUID settled/reloaded active+failed: native sends=%d (one manual source, one automatic, zero repeats)", r.count())
++}

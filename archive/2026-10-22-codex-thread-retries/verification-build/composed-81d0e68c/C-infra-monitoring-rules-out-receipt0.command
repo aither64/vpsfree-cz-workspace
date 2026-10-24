@@ -1,0 +1,1 @@
+nix-store --add-root /home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/verification-build/composed-81d0e68c/roots/C-infra-monitoring-rules-out --indirect --realise /nix/store/kadqclhigcq5ica78z22110slajdfxwv-infra-monitoring-rules

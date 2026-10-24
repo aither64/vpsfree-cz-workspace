@@ -1,0 +1,118 @@
+commit df00fa36c820fc7a62ee5b8dd6e1745940ff8e15
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Thu Oct 22 16:28:43 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Thu Oct 22 20:12:03 2026 +0200
+
+    codex: add exact failed-turn continuation and context reads
+    
+    Expose cold latest-turn failure metadata and exact native execution context
+    without guessing from current defaults. The context projection validates
+    Codex 0.163.0 rollout identities and supported policy shapes while keeping
+    prompts, instructions and application authority out of the returned value.
+    
+    Continue an exact failed turn only while its thread is already loaded and
+    quiescent, with raw idle or systemError status and an exact terminal turn.
+    Preserve original options and reconcile durable receipts before fresh
+    admission checks. An atomic submitting claim prevents competing clients
+    from dispatching the same identity twice. This path never resumes, steers
+    or writes policy; applications retain the shared admission and authority
+    fences, including the native protocol's lack of compare-and-start.
+    
+    Keep the schema-3 submission ledger and existing send behavior compatible.
+
+commit 6c828759440705c632e1902fa8309ccac446b050
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Thu Oct 22 16:30:46 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Thu Oct 22 20:12:03 2026 +0200
+
+    conversation: expose optional application-owned retry controls
+    
+    Add an optional retry provider and capability without changing the required
+    App Server client interface. Resolve each opaque conversation through the
+    application and keep preference/cancel writes behind existing origin,
+    payload and shared mutation-lock checks. The provider retains durable
+    policy, authority and scheduling.
+    
+    Offer an opt-in Auto retry checkbox, server-relative countdown, quota
+    status and Cancel retry control. Read authoritative state after reload,
+    focus and uncertain writes; the browser never starts a continuation.
+    Cancellation preserves the preference and cannot retract dispatched work.
+    Existing embeddings keep their current interface with retry controls off.
+
+commit c1f415ad5602c23e6443cced73cb59267a796f05
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Thu Oct 22 16:54:04 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Thu Oct 22 20:12:03 2026 +0200
+
+    codex: verify failed-turn retries against a private native fixture
+    
+    Share the existing recovery fixture's private home, native process and
+    loopback Responses provider with a focused failed-turn contract test.
+    Synthetic failure events exercise terminal classification and retained
+    command output without real keys or policy-triggering requests.
+    
+    Check nonempty continuation settings, native queue execution context and
+    recreated-client recovery after a dropped accepted reply. A transparent
+    protocol proxy also forces competing native work after the final preflight,
+    so native busy-turn behavior remains an explicit deployment gate rather
+    than an assumption made from fake transport tests.
+
+commit ac62eeeb9d8b1fa7b8ed8fb95ba8160acb7efa1c
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Fri Oct 23 19:06:28 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Fri Oct 23 19:06:28 2026 +0200
+
+    codex: expose exact prepared-send observation proofs
+    
+    Distinguish an exact unsubmitted preparation from accepted, submitting or
+    queue-owned work without changing SendAttempted semantics. Applications can
+    exclude that one preparation from submission observation while retaining
+    ordinary checks for every other attempt and queue deletion.
+    
+    Keep the original identity, options, steering flag and ledger unchanged.
+    The proof does not authorize dispatch or replace application admission
+    fences. Existing native and durable state formats remain compatible.
+
+commit f86290673d752c77b56c70228c3d26aced75e177
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Fri Oct 23 21:27:37 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Fri Oct 23 21:27:37 2026 +0200
+
+    conversation: add optional retry activity notices and actions
+    
+    Expose safe retry-chain observations through an optional provider and token-only
+    Now and Stop routes. Resolve trusted conversation authority for every call and
+    retain the existing origin, payload and mutation-lock boundaries. Keep legacy
+    retry providers and the required App Server client interface unchanged.
+    
+    Offer a reusable footer notice with confirmed starts, uncertain submissions,
+    server-relative countdowns and honest elapsed-time quality through execution
+    and frozen results. Dismiss each exact conversation and chain locally, including
+    when browser storage is unavailable. Coalesce observations and reconcile lost
+    action responses by reading; the browser never dispatches a continuation.
+    
+    Applications own scheduling, durable policy, cancellation and transcript scroll
+    behavior. Native protocols and submission formats are unchanged.
+
+commit 55e0300b27b6927b1693b3792042762f31a385cc
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Fri Oct 23 22:05:04 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Fri Oct 23 22:05:04 2026 +0200
+
+    conversation: submit question answers with Enter
+    
+    Activate each question textarea's existing submit button on plain Enter and
+    retain Shift+Enter for newlines. Share the binding across optional inline and
+    pinned questions and the pending JSON editor, preserving their validation,
+    authority and exact delivery paths.
+    
+    Leave composition, modified shortcuts and option widgets alone. Suppress held
+    Enter repeats and respect disabled, hidden and read-only controls. Export the
+    small binding for applications with their own question forms; the main composer
+    and durable sender are unchanged.

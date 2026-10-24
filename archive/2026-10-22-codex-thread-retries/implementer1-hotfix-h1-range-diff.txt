@@ -1,0 +1,58 @@
+1:  570d900 ! 1:  ed2a75b portal: retire accepted retry provenance before bounded admission
+    @@ docs/turn-retry-recovery.md: The private retry record retains one UUID, action i
+      Disabling also cancels the chain. New input, queue admission/start, settings
+      changes, interruption and explicit lifecycle operations cancel pending work.
+     
+    + ## portal/cmd/workspace-portal/coordination_test.go ##
+    +@@ portal/cmd/workspace-portal/coordination_test.go: func TestCoordinationNotificationRetainsSettingsAndDeduplicatesNativeDelivery(t
+    + 							turns = append(turns, map[string]any{"id": "active-turn", "status": "inProgress"})
+    + 						}
+    + 						result = map[string]any{"data": turns}
+    ++					case "thread/items/list":
+    ++						result = map[string]any{"data": []any{}, "nextCursor": nil}
+    + 					case "turn/start", "turn/steer":
+    + 						want := "turn/start"
+    + 						if active {
+    +
+      ## portal/internal/turnretry/controller.go ##
+     @@ portal/internal/turnretry/controller.go: func (c Controller) Step(ctx context.Context, scope Scope) error {
+      			}
+    @@ portal/internal/turnretry/controller.go: func (c Controller) Step(ctx context.Co
+     +	if err != nil {
+     +		if errors.Is(err, ErrSnapshotCapacity) {
+     +			tx.State.Handled = tx.State.Pending.Failure
+    -+			tx.State.Phase, tx.State.Reason, tx.State.Cancelled, tx.State.DeadlineMS, tx.State.Pending = "blocked", "settings_unproven", true, 0, nil
+    ++			tx.State.Phase, tx.State.Reason, tx.State.Cancelled, tx.State.DeadlineMS = "blocked", "settings_unproven", true, 0
+     +			if saveErr := tx.Save(); saveErr != nil {
+     +				return saveErr
+     +			}
+    @@ portal/internal/turnretry/retention_test.go (new)
+     +	if err := tx.State.Observe(Observation{"failed", "failed", "cyberPolicy"}, *now, 0); err != nil {
+     +		t.Fatal(err)
+     +	}
+    ++	originalPending := *tx.State.Pending
+    ++	originalCyber := append([]Charge{}, tx.State.Cyber...)
+     +	if err := tx.Save(); err != nil {
+     +		t.Fatal(err)
+     +	}
+    @@ portal/internal/turnretry/retention_test.go (new)
+     +		t.Fatal("full protected automatic result slot was not refused", err)
+     +	}
+     +	s, _ := c.Store.Load(scope)
+    -+	if b.sends != 0 || s.Pending != nil || len(s.Cyber) != 0 || s.Phase != "blocked" {
+    ++	if b.sends != 0 || s.Pending == nil || !reflect.DeepEqual(*s.Pending, originalPending) || !reflect.DeepEqual(s.Cyber, originalCyber) || s.Phase != "blocked" {
+     +		t.Fatal("preflight consumed quota or submitted", s)
+     +	}
+    ++	for i := 0; i < 2; i++ {
+    ++		restarted := Controller{Store: c.Store, Backend: b, Clock: c.Clock}
+    ++		if err := restarted.Step(context.Background(), scope); err != nil {
+    ++			t.Fatal(err)
+    ++		}
+    ++		s, err := c.Store.Load(scope)
+    ++		if err != nil || s.Pending == nil || !reflect.DeepEqual(*s.Pending, originalPending) || !reflect.DeepEqual(s.Cyber, originalCyber) || s.Phase != "blocked" || s.Uncertain() || s.Pending.ResultTurn != "" || s.Pending.ChargedAtMS != originalPending.ChargedAtMS || s.Handled != "failed" || b.sends != 0 {
+    ++			t.Fatal("blocked preflight lost its tuple or rearmed after reload", s, err)
+    ++		}
+    ++	}
+     +	// A persistence failure after native acceptance leaves the original durable
+     +	// uncertain tuple for exact retry, not a fabricated successful settlement.
+     +	tx, _ = c.Store.Lock(context.Background(), scope)

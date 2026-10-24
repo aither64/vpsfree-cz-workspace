@@ -1,0 +1,5624 @@
+package codex
+
+import (
+	"context"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"net"
+	"net/http"
+	"os"
+	"path/filepath"
+	"regexp"
+	"slices"
+	"sort"
+	"strings"
+	"sync"
+	"sync/atomic"
+	"time"
+	"unicode/utf8"
+
+	"github.com/coder/websocket"
+	"golang.org/x/sys/unix"
+)
+
+const (
+	readLimit          = 64 * 1024 * 1024
+	queueLedgerMaxSize = 16 * 1024 * 1024
+	recentTurnLimit    = 20
+
+	turnOptionMaxScalarBytes                 = 4 * 1024
+	turnOptionMaxAdditionalContextEntries    = 32
+	turnOptionMaxAdditionalContextKeyBytes   = 256
+	turnOptionMaxAdditionalContextValueBytes = 64 * 1024
+	turnOptionMaxAdditionalContextBytes      = 256 * 1024
+)
+
+var errQueueLedgerTooLarge = fmt.Errorf("queue attempt ledger exceeds %d bytes", queueLedgerMaxSize)
+
+// TransportError identifies a connection failure or request deadline, separate
+// from an App Server RPC refusal or invalid response. Retrying an observation
+// is safe; mutations still require their durable outcome reconciliation.
+type TransportError struct{ Err error }
+
+func (e *TransportError) Error() string { return e.Err.Error() }
+func (e *TransportError) Unwrap() error { return e.Err }
+
+var threadMCPNamePattern = regexp.MustCompile(`^[a-z][a-z0-9_]{0,63}$`)
+
+type rpcMessage struct {
+	ID     json.RawMessage `json:"id,omitempty"`
+	Method string          `json:"method,omitempty"`
+	Params json.RawMessage `json:"params,omitempty"`
+	Result json.RawMessage `json:"result,omitempty"`
+	Error  *rpcError       `json:"error,omitempty"`
+}
+
+type rpcError struct {
+	Code    int             `json:"code"`
+	Message string          `json:"message"`
+	Data    json.RawMessage `json:"data,omitempty"`
+}
+
+type rpcCallError struct {
+	code    int
+	message string
+}
+
+type ProjectNotFoundError struct {
+	ProjectID string
+	Cause     error
+}
+
+type ThreadNotFoundError struct {
+	ThreadID string
+	Cause    error
+}
+
+func (e *ThreadNotFoundError) Error() string {
+	return fmt.Sprintf("Codex thread not found: %s", e.ThreadID)
+}
+
+func (e *ThreadNotFoundError) Unwrap() error { return e.Cause }
+
+// IsThreadNotFound reports the App Server's exact missing-thread response for
+// a read of the specified thread. Other RPC failures remain uncertain.
+func IsThreadNotFound(err error, threadID string) bool {
+	var missing *ThreadNotFoundError
+	if errors.As(err, &missing) {
+		return missing.ThreadID == threadID
+	}
+	var call *rpcCallError
+	return errors.As(err, &call) && call.code == -32001 && call.message == "thread not found"
+}
+
+func (e *ProjectNotFoundError) Error() string {
+	return fmt.Sprintf("Codex project not found: %s", e.ProjectID)
+}
+
+func (e *ProjectNotFoundError) Unwrap() error { return e.Cause }
+
+// IsProjectNotFound reports the App Server's exact missing-project response.
+func IsProjectNotFound(err error, projectID string) bool {
+	var missing *ProjectNotFoundError
+	if errors.As(err, &missing) {
+		return missing.ProjectID == projectID
+	}
+	var call *rpcCallError
+	return errors.As(err, &call) && call.code == -32602 &&
+		call.message == "project not found: "+projectID
+}
+
+func (e *rpcCallError) Error() string {
+	return fmt.Sprintf("Codex RPC %d: %s", e.code, e.message)
+}
+
+type response struct {
+	result json.RawMessage
+	err    error
+}
+
+type pendingCall struct {
+	generation uint64
+	channel    chan response
+}
+
+type PendingRequest struct {
+	ID         string `json:"id"`
+	token      string
+	Method     string          `json:"method"`
+	Params     json.RawMessage `json:"params"`
+	generation uint64
+	connection *websocket.Conn
+	claimed    bool
+	receivedAt time.Time
+	snoozed    bool
+}
+
+type Prompt struct {
+	ID                        string         `json:"id"`
+	Token                     string         `json:"token,omitempty"`
+	Method                    string         `json:"method"`
+	Kind                      string         `json:"kind"`
+	ThreadID                  string         `json:"threadId"`
+	TurnID                    string         `json:"turnId,omitempty"`
+	ItemID                    string         `json:"itemId,omitempty"`
+	Params                    map[string]any `json:"params"`
+	Item                      map[string]any `json:"item,omitempty"`
+	AuthorityAvailable        bool           `json:"authorityAvailable"`
+	Error                     string         `json:"error,omitempty"`
+	AvailableDecisions        []string       `json:"availableDecisions,omitempty"`
+	Questions                 []Question     `json:"questions,omitempty"`
+	IsBlocking                bool           `json:"isBlocking"`
+	AutoResolutionMS          *uint64        `json:"autoResolutionMs,omitempty"`
+	AutoResolutionVisibleAtMS int64          `json:"autoResolutionVisibleAtMs,omitempty"`
+	AutoResolutionAtMS        int64          `json:"autoResolutionAtMs,omitempty"`
+	AutoResolveSnoozed        bool           `json:"autoResolveSnoozed,omitempty"`
+}
+
+type Question struct {
+	ID       string   `json:"id"`
+	Header   string   `json:"header"`
+	Question string   `json:"question"`
+	IsSecret bool     `json:"isSecret"`
+	IsOther  bool     `json:"isOther"`
+	Options  []Option `json:"options,omitempty"`
+}
+
+type Option struct {
+	Label       string `json:"label"`
+	Description string `json:"description"`
+}
+
+type Transcript struct {
+	ThreadID          string            `json:"threadId"`
+	Status            string            `json:"status"`
+	LatestTurnID      string            `json:"latestTurnId,omitempty"`
+	Model             string            `json:"model,omitempty"`
+	ReasoningEffort   string            `json:"reasoningEffort,omitempty"`
+	CollaborationMode string            `json:"collaborationMode,omitempty"`
+	Entries           []TranscriptEntry `json:"entries"`
+}
+
+type TranscriptPage struct {
+	Transcript
+	OlderCursor     *string `json:"olderCursor"`
+	HasOlder        bool    `json:"hasOlder"`
+	MetadataPending bool    `json:"metadataPending"`
+}
+
+type TranscriptEntry struct {
+	Communication           *TranscriptCommunication `json:"communication,omitempty"`
+	Citations               []CitationSpan           `json:"citations,omitempty"`
+	CitationsPending        bool                     `json:"citationsPending,omitempty"`
+	Delivery                string                   `json:"delivery,omitempty"`
+	Questions               []AsyncQuestion          `json:"questions,omitempty"`
+	QuestionReplies         []AsyncQuestionReply     `json:"questionReplies,omitempty"`
+	DisplayText             *string                  `json:"displayText,omitempty"`
+	Attachments             []Attachment             `json:"attachments,omitempty"`
+	TurnID                  string                   `json:"turnId,omitempty"`
+	TurnStatus              string                   `json:"turnStatus,omitempty"`
+	ItemID                  string                   `json:"itemId,omitempty"`
+	ClientUserMessageID     string                   `json:"clientUserMessageId,omitempty"`
+	ClientUserMessageDigest string                   `json:"clientUserMessageDigest,omitempty"`
+	Kind                    string                   `json:"kind"`
+	Summary                 string                   `json:"summary,omitempty"`
+	Text                    string                   `json:"text,omitempty"`
+	HTML                    string                   `json:"html,omitempty"`
+	Details                 string                   `json:"details,omitempty"`
+	Timestamp               string                   `json:"timestamp,omitempty"`
+	TimestampApproximate    bool                     `json:"timestampApproximate,omitempty"`
+	Activity                *TranscriptActivity      `json:"activity,omitempty"`
+}
+
+// TranscriptCommunication is an application-owned presentation hint. It does
+// not authenticate a sender or authorize access to another conversation.
+type TranscriptCommunication struct {
+	Kind string `json:"kind"`
+	From string `json:"from,omitempty"`
+	To   string `json:"to,omitempty"`
+}
+
+type SendReceipt struct {
+	QueuedSubmissionID  string `json:"queuedSubmissionId,omitempty"`
+	TurnID              string `json:"turnId"`
+	ClientUserMessageID string `json:"clientUserMessageId"`
+	Steered             bool   `json:"steered"`
+}
+
+// AdditionalContextEntry is application-owned context for one opaque source.
+// Codex clients send only the App Server's application kind.
+type AdditionalContextEntry struct {
+	Value string `json:"value"`
+	Kind  string `json:"kind"`
+}
+
+// TurnOptions selects optional App Server turn settings. Empty Model and
+// ReasoningEffort leave the corresponding App Server setting unchanged.
+// AdditionalContext is keyed by an opaque application source identifier.
+type TurnOptions struct {
+	Model             string                            `json:"model,omitempty"`
+	ReasoningEffort   string                            `json:"reasoningEffort,omitempty"`
+	AdditionalContext map[string]AdditionalContextEntry `json:"additionalContext,omitempty"`
+	ThreadPolicy      ThreadPolicy                      `json:"threadPolicy,omitempty"`
+}
+
+// ThreadPolicy supplies application-owned instructions and sandbox access for
+// a persistent thread. The client combines DeveloperInstructions with its
+// common lifecycle instructions whenever the policy is explicitly applied.
+// MCPServer is a single application-owned, explicitly approved tool that must
+// be rebound on every member resume; App Server does not retain it otherwise.
+type ThreadPolicy struct {
+	DeveloperInstructions string           `json:"developerInstructions,omitempty"`
+	Sandbox               string           `json:"sandbox,omitempty"`
+	ApprovalPolicy        string           `json:"approvalPolicy,omitempty"`
+	MCPServer             *ThreadMCPServer `json:"mcpServer,omitempty"`
+}
+
+// ThreadMCPServer binds one stdio MCP tool to a trusted thread policy. It is
+// intentionally narrow: the application chooses the command and arguments;
+// the model can call only Tool. Callers must enforce their own tool semantics.
+type ThreadMCPServer struct {
+	Name    string   `json:"name"`
+	Command string   `json:"command"`
+	Args    []string `json:"args"`
+	Tool    string   `json:"tool"`
+}
+
+type normalizedAdditionalContextEntry struct {
+	Source string `json:"source"`
+	Value  string `json:"value"`
+	Kind   string `json:"kind"`
+}
+
+type normalizedTurnOptions struct {
+	Model             string                             `json:"model,omitempty"`
+	ReasoningEffort   string                             `json:"reasoningEffort,omitempty"`
+	AdditionalContext []normalizedAdditionalContextEntry `json:"additionalContext,omitempty"`
+	ThreadPolicy      ThreadPolicy                       `json:"threadPolicy,omitempty"`
+	Digest            string                             `json:"-"`
+}
+
+type turnOptionsIdentity struct {
+	Version           int                                `json:"version"`
+	Model             string                             `json:"model,omitempty"`
+	ReasoningEffort   string                             `json:"reasoningEffort,omitempty"`
+	AdditionalContext []normalizedAdditionalContextEntry `json:"additionalContext,omitempty"`
+	ThreadPolicy      *ThreadPolicy                      `json:"threadPolicy,omitempty"`
+}
+
+func normalizeTurnOptions(options TurnOptions) (normalizedTurnOptions, error) {
+	if err := validateThreadPolicy(options.ThreadPolicy); err != nil {
+		return normalizedTurnOptions{}, err
+	}
+	if err := validateTurnOptionScalar("model", options.Model); err != nil {
+		return normalizedTurnOptions{}, err
+	}
+	if err := validateTurnOptionScalar("reasoning effort", options.ReasoningEffort); err != nil {
+		return normalizedTurnOptions{}, err
+	}
+	if len(options.AdditionalContext) > turnOptionMaxAdditionalContextEntries {
+		return normalizedTurnOptions{}, fmt.Errorf(
+			"additional context has more than %d entries", turnOptionMaxAdditionalContextEntries,
+		)
+	}
+	context := make([]normalizedAdditionalContextEntry, 0, len(options.AdditionalContext))
+	totalBytes := 0
+	for source, entry := range options.AdditionalContext {
+		if source == "" || !utf8.ValidString(source) || len(source) > turnOptionMaxAdditionalContextKeyBytes {
+			return normalizedTurnOptions{}, fmt.Errorf(
+				"additional context source must be valid Unicode between 1 and %d bytes",
+				turnOptionMaxAdditionalContextKeyBytes,
+			)
+		}
+		if entry.Kind != "application" {
+			return normalizedTurnOptions{}, errors.New("additional context kind must be application")
+		}
+		if !utf8.ValidString(entry.Value) || len(entry.Value) > turnOptionMaxAdditionalContextValueBytes {
+			return normalizedTurnOptions{}, fmt.Errorf(
+				"additional context value must be valid Unicode and at most %d bytes",
+				turnOptionMaxAdditionalContextValueBytes,
+			)
+		}
+		totalBytes += len(source) + len(entry.Value)
+		if totalBytes > turnOptionMaxAdditionalContextBytes {
+			return normalizedTurnOptions{}, fmt.Errorf(
+				"additional context exceeds %d bytes", turnOptionMaxAdditionalContextBytes,
+			)
+		}
+		context = append(context, normalizedAdditionalContextEntry{
+			Source: source, Value: entry.Value, Kind: entry.Kind,
+		})
+	}
+	sort.Slice(context, func(i, j int) bool { return context[i].Source < context[j].Source })
+	var policyIdentity *ThreadPolicy
+	if options.ThreadPolicy != (ThreadPolicy{}) {
+		policy := options.ThreadPolicy
+		policyIdentity = &policy
+	}
+	identity := turnOptionsIdentity{
+		Version: 1, Model: options.Model, ReasoningEffort: options.ReasoningEffort,
+		AdditionalContext: context, ThreadPolicy: policyIdentity,
+	}
+	encoded, err := json.Marshal(identity)
+	if err != nil {
+		return normalizedTurnOptions{}, fmt.Errorf("encode turn options: %w", err)
+	}
+	digest := sha256.Sum256(encoded)
+	return normalizedTurnOptions{
+		Model: options.Model, ReasoningEffort: options.ReasoningEffort,
+		AdditionalContext: context, ThreadPolicy: options.ThreadPolicy, Digest: fmt.Sprintf("%x", digest),
+	}, nil
+}
+
+func validateThreadPolicy(policy ThreadPolicy) error {
+	if !utf8.ValidString(policy.DeveloperInstructions) || len(policy.DeveloperInstructions) > 64*1024 {
+		return errors.New("thread developer instructions must be valid Unicode and at most 64 KiB")
+	}
+	if policy.Sandbox != "" && policy.Sandbox != "read-only" && policy.Sandbox != "workspace-write" && policy.Sandbox != "danger-full-access" {
+		return errors.New("thread sandbox must be read-only, workspace-write or danger-full-access")
+	}
+	if policy.ApprovalPolicy != "" && policy.ApprovalPolicy != "never" {
+		return errors.New("thread approval policy must be empty or never")
+	}
+	if server := policy.MCPServer; server != nil {
+		if !threadMCPNamePattern.MatchString(server.Name) || !threadMCPNamePattern.MatchString(server.Tool) {
+			return errors.New("thread MCP server and tool names must be lowercase safe identifiers")
+		}
+		if !filepath.IsAbs(server.Command) || filepath.Clean(server.Command) != server.Command ||
+			!utf8.ValidString(server.Command) || strings.ContainsRune(server.Command, 0) || len(server.Command) > 4096 {
+			return errors.New("thread MCP command must be a canonical absolute path")
+		}
+		if len(server.Args) == 0 || len(server.Args) > 64 {
+			return errors.New("thread MCP server requires between 1 and 64 arguments")
+		}
+		for _, arg := range server.Args {
+			if arg == "" || !utf8.ValidString(arg) || strings.ContainsRune(arg, 0) || len(arg) > 4096 {
+				return errors.New("thread MCP arguments must be nonempty valid Unicode without NUL")
+			}
+		}
+	}
+	return nil
+}
+
+func validateProjectID(projectID string) error {
+	if !utf8.ValidString(projectID) || len(projectID) > 512 ||
+		(projectID != "" && strings.TrimSpace(projectID) == "") {
+		return errors.New("thread project ID must be valid nonblank Unicode and at most 512 bytes")
+	}
+	return nil
+}
+
+func validateTurnOptionScalar(name, value string) error {
+	if value == "" {
+		return nil
+	}
+	if !utf8.ValidString(value) || len(value) > turnOptionMaxScalarBytes {
+		return fmt.Errorf("%s must be valid Unicode and at most %d bytes", name, turnOptionMaxScalarBytes)
+	}
+	return nil
+}
+
+func zeroTurnOptionsDigest() string {
+	options, err := normalizeTurnOptions(TurnOptions{})
+	if err != nil {
+		panic(err)
+	}
+	return options.Digest
+}
+
+// effectiveTurnOptionsDigest preserves the schema-3 zero-option wire form:
+// an omitted digest is the canonical zero options identity.
+func effectiveTurnOptionsDigest(stored string) string {
+	if stored == "" {
+		return zeroTurnOptionsDigest()
+	}
+	return stored
+}
+
+// persistedTurnOptionsDigest never adds a field to an ordinary schema-3
+// attempt. This keeps zero-option ledgers readable by the parent client.
+func persistedTurnOptionsDigest(digest string) string {
+	if digest == zeroTurnOptionsDigest() {
+		return ""
+	}
+	return digest
+}
+
+func (options normalizedTurnOptions) additionalContextParameter() map[string]map[string]string {
+	if len(options.AdditionalContext) == 0 {
+		return nil
+	}
+	context := make(map[string]map[string]string, len(options.AdditionalContext))
+	for _, entry := range options.AdditionalContext {
+		context[entry.Source] = map[string]string{"value": entry.Value, "kind": entry.Kind}
+	}
+	return context
+}
+
+type SendAcknowledgement struct {
+	ClientUserMessageID string `json:"clientUserMessageId"`
+	Digest              string `json:"digest"`
+}
+
+type ThreadSettings struct {
+	Model string `json:"model,omitempty"`
+	// ModelProvider is a lifecycle override, not a thread/settings/update field.
+	ModelProvider     string       `json:"modelProvider,omitempty"`
+	ReasoningEffort   string       `json:"reasoningEffort,omitempty"`
+	CollaborationMode string       `json:"collaborationMode,omitempty"`
+	Policy            ThreadPolicy `json:"policy,omitempty"`
+	ProjectID         string       `json:"projectId,omitempty"`
+}
+
+// ProjectMetadata is the identity returned by the App Server project catalog.
+type ProjectMetadata struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+// CreateProject is retry-safe when the caller retains the same idempotency key.
+func (c *Client) CreateProject(ctx context.Context, name, idempotencyKey string) (ProjectMetadata, error) {
+	if name == "" || idempotencyKey == "" {
+		return ProjectMetadata{}, errors.New("project name and idempotency key are required")
+	}
+	var response struct {
+		Project ProjectMetadata `json:"project"`
+	}
+	err := c.Request(ctx, "project/create", map[string]any{
+		"name": name, "roots": []any{}, "idempotencyKey": idempotencyKey,
+	}, &response)
+	if err != nil {
+		return ProjectMetadata{}, err
+	}
+	if response.Project.ID == "" {
+		return ProjectMetadata{}, errors.New("project/create returned no project identity")
+	}
+	return response.Project, nil
+}
+
+func (c *Client) ReadProject(ctx context.Context, projectID string) (ProjectMetadata, error) {
+	if projectID == "" {
+		return ProjectMetadata{}, errors.New("project ID is required")
+	}
+	var response struct {
+		Project ProjectMetadata `json:"project"`
+	}
+	if err := c.Request(ctx, "project/read", map[string]any{"projectId": projectID}, &response); err != nil {
+		if IsProjectNotFound(err, projectID) {
+			return ProjectMetadata{}, &ProjectNotFoundError{ProjectID: projectID, Cause: err}
+		}
+		return ProjectMetadata{}, err
+	}
+	if response.Project.ID != projectID {
+		return ProjectMetadata{}, errors.New("project/read returned the wrong project identity")
+	}
+	return response.Project, nil
+}
+
+type ThreadSettingsUpdate struct {
+	Model             *string `json:"model,omitempty"`
+	ReasoningEffort   *string `json:"reasoningEffort,omitempty"`
+	CollaborationMode *string `json:"collaborationMode,omitempty"`
+}
+
+// ThreadMetadata is the App Server identity and persistence metadata used by
+// applications that own thread recovery and archival policy.
+type ThreadMetadata struct {
+	ID           string            `json:"id"`
+	Cwd          string            `json:"cwd"`
+	ProjectID    *string           `json:"projectId"`
+	ForkedFromID string            `json:"forkedFromId"`
+	Source       any               `json:"source"`
+	UpdatedAt    int64             `json:"updatedAt"`
+	Path         *string           `json:"path"`
+	Preview      string            `json:"preview"`
+	Ephemeral    *bool             `json:"ephemeral"`
+	HistoryMode  string            `json:"historyMode"`
+	Status       map[string]any    `json:"status"`
+	Turns        *[]map[string]any `json:"turns"`
+}
+
+type ThreadListOptions struct {
+	Cwd           string
+	ProjectID     string
+	SourceKinds   []string
+	Archived      *bool
+	Limit         int
+	SortDirection string
+	Cursor        string
+
+	// UseStateDBOnly skips scanning JSONL rollouts to repair thread metadata.
+	// False omits the option, preserving the server's scan-and-repair behavior.
+	UseStateDBOnly bool
+}
+
+type CollaborationMode struct {
+	Name string `json:"name"`
+	Mode string `json:"mode"`
+}
+
+// AccountRateLimits contains the legacy allowance and any named allowance buckets.
+// Optional account and credit fields remain absent when the backend cannot report them.
+type AccountRateLimits struct {
+	RateLimits          RateLimitSnapshot            `json:"rateLimits"`
+	RateLimitsByLimitID map[string]RateLimitSnapshot `json:"rateLimitsByLimitId"`
+	AccountID           *string                      `json:"accountId,omitempty"`
+	ResetCredits        *RateLimitResetCredits       `json:"rateLimitResetCredits,omitempty"`
+}
+
+type RateLimitSnapshot struct {
+	LimitID   string           `json:"limitId"`
+	Primary   *RateLimitWindow `json:"primary"`
+	Secondary *RateLimitWindow `json:"secondary"`
+	Credits   *CreditsSnapshot `json:"credits,omitempty"`
+}
+
+type CreditsSnapshot struct {
+	HasCredits bool    `json:"hasCredits"`
+	Unlimited  bool    `json:"unlimited"`
+	Balance    *string `json:"balance"`
+}
+
+type RateLimitResetCredits struct {
+	AvailableCount int64                  `json:"availableCount"`
+	Credits        []RateLimitResetCredit `json:"credits"`
+}
+
+type RateLimitResetCredit struct {
+	ID          string  `json:"id"`
+	ResetType   string  `json:"resetType"`
+	Status      string  `json:"status"`
+	GrantedAt   int64   `json:"grantedAt"`
+	ExpiresAt   *int64  `json:"expiresAt"`
+	Title       *string `json:"title"`
+	Description *string `json:"description"`
+}
+
+type ResetCreditResult struct {
+	Outcome string `json:"outcome"`
+}
+
+// RateLimitWindow describes usage over a reported duration. Primary and
+// secondary positions do not imply a particular duration. ResetsAt is Unix time
+// in seconds; nil duration or reset time means the server did not report it.
+type RateLimitWindow struct {
+	UsedPercent        int    `json:"usedPercent"`
+	WindowDurationMins *int64 `json:"windowDurationMins"`
+	ResetsAt           *int64 `json:"resetsAt"`
+}
+
+type QueueEntry struct {
+	DisplayText         *string      `json:"displayText,omitempty"`
+	Attachments         []Attachment `json:"attachments,omitempty"`
+	ID                  string       `json:"id"`
+	Text                string       `json:"text"`
+	ClientUserMessageID string       `json:"clientUserMessageId"`
+}
+
+type cachedThreadSettings struct {
+	generation uint64
+	revision   uint64
+	settings   ThreadSettings
+}
+
+type threadItemEntry struct {
+	TurnID string         `json:"turnId"`
+	Item   map[string]any `json:"item"`
+}
+
+type queueAttemptLedger struct {
+	Schema     int                                        `json:"schema"`
+	Attempts   map[string]map[string]string               `json:"attempts"`
+	Sends      map[string]map[string]sendAttempt          `json:"sends,omitempty"`
+	Deletions  map[string]map[string]queueDeletionAttempt `json:"deletions,omitempty"`
+	Operations map[string]string                          `json:"retirements,omitempty"`
+}
+
+type queueDeletionAttempt struct {
+	ClientUserMessageID string `json:"clientUserMessageId"`
+	Digest              string `json:"digest"`
+}
+
+type sendAttempt struct {
+	Digest        string       `json:"digest"`
+	State         string       `json:"state"`
+	Context       string       `json:"context,omitempty"`
+	OptionsDigest string       `json:"optionsDigest,omitempty"`
+	Options       *TurnOptions `json:"options,omitempty"`
+	Steered       bool         `json:"steered"`
+	TurnID        string       `json:"turnId,omitempty"`
+}
+
+type UnknownSendOutcomeError struct {
+	Err error
+}
+
+func (e *UnknownSendOutcomeError) Error() string {
+	return fmt.Sprintf("message outcome is still unknown; retry with the same browser attempt: %v", e.Err)
+}
+
+func (e *UnknownSendOutcomeError) Unwrap() error { return e.Err }
+
+type ReasoningEffortOption struct {
+	ReasoningEffort string `json:"reasoningEffort"`
+	Description     string `json:"description"`
+}
+
+type Model struct {
+	ID                        string                  `json:"id"`
+	Model                     string                  `json:"model"`
+	DisplayName               string                  `json:"displayName"`
+	Description               string                  `json:"description"`
+	IsDefault                 bool                    `json:"isDefault"`
+	DefaultReasoningEffort    string                  `json:"defaultReasoningEffort"`
+	SupportedReasoningEfforts []ReasoningEffortOption `json:"supportedReasoningEfforts"`
+}
+
+func ResolveNewThreadSettings(
+	models []Model, requested ThreadSettings, defaults ThreadSettings,
+) (ThreadSettings, error) {
+	if defaults.Model == "" || defaults.ReasoningEffort == "" {
+		return ThreadSettings{}, errors.New("default Codex model and reasoning effort are required")
+	}
+	var selected *Model
+	for index := range models {
+		candidate := &models[index]
+		if requested.Model != "" {
+			if candidate.Model == requested.Model {
+				selected = candidate
+				break
+			}
+		} else if candidate.Model == defaults.Model {
+			if selected != nil {
+				return ThreadSettings{}, fmt.Errorf(
+					"Codex model catalog has more than one %q model", defaults.Model,
+				)
+			}
+			selected = candidate
+		}
+	}
+	if selected == nil {
+		if requested.Model == "" {
+			return ThreadSettings{}, fmt.Errorf(
+				"required default Codex model %q is not available", defaults.Model,
+			)
+		}
+		return ThreadSettings{}, fmt.Errorf("Codex model %q is not available", requested.Model)
+	}
+
+	supports := func(effort string) bool {
+		return slices.ContainsFunc(
+			selected.SupportedReasoningEfforts,
+			func(option ReasoningEffortOption) bool { return option.ReasoningEffort == effort },
+		)
+	}
+	effort := requested.ReasoningEffort
+	if effort == "" && supports(defaults.ReasoningEffort) {
+		effort = defaults.ReasoningEffort
+	}
+	if effort == "" && requested.Model != "" && supports(selected.DefaultReasoningEffort) {
+		effort = selected.DefaultReasoningEffort
+	}
+	if effort == "" {
+		return ThreadSettings{}, fmt.Errorf(
+			"Codex model %s does not support the required default reasoning effort %q",
+			selected.DisplayName, defaults.ReasoningEffort,
+		)
+	}
+	if !supports(effort) {
+		return ThreadSettings{}, fmt.Errorf(
+			"reasoning effort %q is not available for %s", effort, selected.DisplayName,
+		)
+	}
+	return ThreadSettings{Model: selected.Model, ReasoningEffort: effort}, nil
+}
+
+func ResolveForkThreadSettings(
+	models []Model, source ThreadSettings, requested ThreadSettings,
+) (ThreadSettings, error) {
+	desired := source
+	if requested.Model != "" {
+		desired.Model = requested.Model
+	}
+	if requested.ReasoningEffort != "" {
+		desired.ReasoningEffort = requested.ReasoningEffort
+	}
+	if desired.Model == "" || desired.ReasoningEffort == "" {
+		return ThreadSettings{}, errors.New("source Codex thread has incomplete settings")
+	}
+	var selected *Model
+	for index := range models {
+		candidate := &models[index]
+		if candidate.Model != desired.Model {
+			continue
+		}
+		if selected != nil {
+			return ThreadSettings{}, fmt.Errorf(
+				"Codex model catalog has more than one %q model", desired.Model,
+			)
+		}
+		selected = candidate
+	}
+	if selected == nil {
+		return ThreadSettings{}, fmt.Errorf("Codex model %q is not available", desired.Model)
+	}
+	if !slices.ContainsFunc(
+		selected.SupportedReasoningEfforts,
+		func(option ReasoningEffortOption) bool {
+			return option.ReasoningEffort == desired.ReasoningEffort
+		},
+	) {
+		return ThreadSettings{}, fmt.Errorf(
+			"reasoning effort %q is not available for %s",
+			desired.ReasoningEffort,
+			selected.DisplayName,
+		)
+	}
+	return ThreadSettings{
+		Model: desired.Model, ReasoningEffort: desired.ReasoningEffort,
+	}, nil
+}
+
+type Client struct {
+	citationMu        sync.Mutex
+	citationCache     map[string]*citationThread
+	historyPageMu     sync.Mutex
+	historyPageLimit  int
+	socket            string
+	ephemeral         *ephemeralSink // private utility only; installed before Ensure
+	options           ClientOptions
+	activityNamespace string
+	observer          *observerState
+	turnHistoryMu     sync.Mutex
+	turnHistory       map[string]*threadHistoryCache
+	idleTurnHistory   []string
+	pageMu            sync.Mutex
+	pageCursors       map[string]pageContinuation
+	pageMetadata      map[string]*pageMetadataCache
+	pageContext       context.Context
+	pageCancel        context.CancelFunc
+	pageClock         func() time.Time
+	pageRebuildCount  uint64
+	pageRebuildBytes  uint64
+	pageRebuildTime   time.Duration
+
+	ensureMu     sync.Mutex
+	connectionMu sync.Mutex
+	connection   *websocket.Conn
+	generation   uint64
+	ready        uint64
+	closed       bool
+	writeMu      sync.Mutex
+	nextID       atomic.Uint64
+
+	pendingMu         sync.Mutex
+	pending           map[uint64]pendingCall
+	requests          map[string]PendingRequest
+	notices           map[string][]Prompt
+	pendingRevisionMu sync.Mutex
+	pendingSequence   uint64
+	pendingReset      uint64
+	pendingRevisions  map[string]uint64
+
+	subscribersMu sync.Mutex
+	subscribers   map[chan struct{}]string
+
+	settingsMu       sync.Mutex
+	settingsRevision uint64
+	threadSettings   map[string]cachedThreadSettings
+	settingsChanged  chan struct{}
+	settingsUpdateMu sync.Mutex
+	settingsUpdates  map[string]*sync.Mutex
+	queueMu          sync.Mutex
+	queueUpdates     map[string]*sync.Mutex
+	queueAttempts    map[string]map[string]string
+	sendAttempts     map[string]map[string]sendAttempt
+	queueDeletions   map[string]map[string]queueDeletionAttempt
+	operations       map[string]string
+	queueLedgerPath  string
+	queueLedgerLock  *os.File
+
+	watchedMu         sync.Mutex
+	watched           map[string]int
+	watchedGeneration map[string]uint64
+	watchLocks        map[string]*sync.Mutex
+	liveItemTimes     map[string]*liveTurnTimestamps // protected by watchedMu
+}
+
+type ClientInfo struct {
+	Name    string `json:"name"`
+	Title   string `json:"title,omitempty"`
+	Version string `json:"version"`
+}
+
+type ClientOptions struct {
+	// HistoryReader optionally isolates history I/O; its owner must close it.
+	HistoryReader         HistoryReader
+	ClientInfo            ClientInfo
+	DeveloperInstructions string
+	// PreserveThreadInstructionsOnResume omits an instruction override from
+	// unscoped resumes, preserving each thread's persisted policy. Explicit
+	// starts, resumes, sends, and reconciliation still apply their policy.
+	PreserveThreadInstructionsOnResume bool
+	RuntimeWorkspaceRoots              []string
+	ThreadSourceKinds                  []string
+	NonBlockingUserInput               *NonBlockingUserInputPolicy
+	// SubmissionLedgerPath selects application-owned durable retry storage.
+	// Empty preserves the compatibility path next to the App Server socket.
+	SubmissionLedgerPath string
+	// LegacySubmissionLedgerPath imports an existing ledger once, under both
+	// ledger locks. The caller must exclude writers using the predecessor path
+	// after migration, including when rolling its application back.
+	LegacySubmissionLedgerPath string
+	// AllowImplicitResume gates subscription loading and watch restoration on
+	// every connection generation. It must use application-owned state without
+	// calling this client. Nil retains ordinary subscription behavior. Explicit
+	// activation and sends remain the caller's responsibility.
+	AllowImplicitResume func(threadID string) bool
+	// LifecycleSettings resolves application-owned provider and retained model
+	// settings immediately before every start, resume, fork and reconnect resume.
+	// An empty thread ID denotes a new thread. Explicit model/effort parameters
+	// take precedence; the resolved provider takes precedence over caller input.
+	// The resolver may perform reads, but must not issue lifecycle requests.
+	LifecycleSettings func(context.Context, string) (ThreadSettings, error)
+	// LifecycleRequestSettings additionally identifies the trusted destination
+	// directory, including for new threads and forks. When set it takes precedence
+	// over LifecycleSettings. The application must resolve and authorize this
+	// directory before calling the client; it is not a browser authorization API.
+	LifecycleRequestSettings func(context.Context, LifecycleRequest) (ThreadSettings, error)
+	// ObserverOnly prevents responses, unsupported-request rejections and
+	// thread-setting overrides. Use a dedicated client for passive monitoring.
+	ObserverOnly     bool
+	ActivityRecorder *ActivityRecorder
+}
+
+// NonBlockingUserInputPolicy opts a client into automatically answering
+// nonblocking user-input requests after an application-defined grace period.
+// A nil policy leaves every request pending until the application responds.
+type NonBlockingUserInputPolicy struct {
+	HiddenGrace      time.Duration
+	VisibleCountdown time.Duration
+}
+
+func DefaultSocket() string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return ""
+	}
+	return filepath.Join(home, ".codex", "app-server-control", "app-server-control.sock")
+}
+
+func New(socket string) *Client {
+	return NewWithOptions(socket, ClientOptions{})
+}
+
+func NewWithOptions(socket string, options ClientOptions) *Client {
+	if socket == "" {
+		socket = DefaultSocket()
+	}
+	if options.ClientInfo.Name == "" {
+		options.ClientInfo.Name = "codex-web"
+	}
+	if options.ClientInfo.Title == "" {
+		options.ClientInfo.Title = "Codex Web"
+	}
+	if options.ClientInfo.Version == "" {
+		options.ClientInfo.Version = "0.1.0"
+	}
+	options.RuntimeWorkspaceRoots = append([]string(nil), options.RuntimeWorkspaceRoots...)
+	options.ThreadSourceKinds = append([]string(nil), options.ThreadSourceKinds...)
+	queueLedgerPath := options.SubmissionLedgerPath
+	if queueLedgerPath == "" {
+		queueLedgerPath = socket + ".submission-attempts-v3.json"
+	}
+	if options.NonBlockingUserInput != nil {
+		if options.NonBlockingUserInput.HiddenGrace < 0 ||
+			options.NonBlockingUserInput.VisibleCountdown < 0 {
+			panic("codex: nonblocking user-input durations cannot be negative")
+		}
+		policy := *options.NonBlockingUserInput
+		options.NonBlockingUserInput = &policy
+	}
+	var observer *observerState
+	if options.ObserverOnly {
+		observer = newObserverState()
+	}
+	pageContext, pageCancel := context.WithCancel(context.Background())
+	return &Client{
+		observer:    observer,
+		pageContext: pageContext, pageCancel: pageCancel,
+		pageCursors: make(map[string]pageContinuation), pageMetadata: make(map[string]*pageMetadataCache),
+		socket: socket, options: options, activityNamespace: randomActivityNamespace(), pending: make(map[uint64]pendingCall),
+		requests: make(map[string]PendingRequest), notices: make(map[string][]Prompt),
+		subscribers: make(map[chan struct{}]string), watched: make(map[string]int),
+		watchedGeneration: make(map[string]uint64), watchLocks: make(map[string]*sync.Mutex),
+		liveItemTimes:  make(map[string]*liveTurnTimestamps),
+		threadSettings: make(map[string]cachedThreadSettings), settingsChanged: make(chan struct{}),
+		settingsUpdates: make(map[string]*sync.Mutex),
+		queueUpdates:    make(map[string]*sync.Mutex), queueAttempts: make(map[string]map[string]string),
+		sendAttempts:    make(map[string]map[string]sendAttempt),
+		queueDeletions:  make(map[string]map[string]queueDeletionAttempt),
+		operations:      make(map[string]string),
+		queueLedgerPath: queueLedgerPath,
+	}
+}
+
+func (c *Client) Ensure(ctx context.Context) error {
+	c.ensureMu.Lock()
+	defer c.ensureMu.Unlock()
+	c.connectionMu.Lock()
+	if c.closed {
+		c.connectionMu.Unlock()
+		return errors.New("Codex client is closed")
+	}
+	if c.connection != nil && c.ready == c.generation {
+		c.connectionMu.Unlock()
+		return nil
+	}
+	if c.connection != nil {
+		c.connectionMu.Unlock()
+		return &TransportError{Err: errors.New("Codex App Server connection is still initializing")}
+	}
+	transport := &http.Transport{DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
+		return (&net.Dialer{}).DialContext(ctx, "unix", c.socket)
+	}}
+	connection, _, err := websocket.Dial(ctx, "ws://localhost/", &websocket.DialOptions{
+		HTTPClient: &http.Client{Transport: transport},
+	})
+	if err != nil {
+		c.connectionMu.Unlock()
+		return &TransportError{Err: fmt.Errorf("connect to Codex App Server at %s: %w", c.socket, err)}
+	}
+	connection.SetReadLimit(readLimit)
+	if c.ephemeral != nil {
+		connection.SetReadLimit(ephemeralFrameLimit)
+	}
+	c.generation++
+	generation := c.generation
+	c.connection = connection
+	if c.observer != nil {
+		c.observer.connectionContext, c.observer.cancelConnection = context.WithCancel(c.observer.context)
+	}
+	c.connectionMu.Unlock()
+	go c.readLoop(connection, generation)
+
+	initializeCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	if err := c.requestOn(initializeCtx, connection, generation, "initialize", map[string]any{
+		"capabilities": map[string]any{"experimentalApi": true},
+		"clientInfo":   c.options.ClientInfo,
+	}, nil); err != nil {
+		connection.CloseNow()
+		c.markDisconnected(connection, generation, err)
+		return err
+	}
+	message, _ := json.Marshal(map[string]any{"method": "initialized"})
+	if err := c.writeOn(initializeCtx, connection, generation, message); err != nil {
+		return fmt.Errorf("send initialized notification: %w", err)
+	}
+	c.connectionMu.Lock()
+	if c.connection != connection || c.generation != generation {
+		c.connectionMu.Unlock()
+		return &TransportError{Err: errors.New("Codex App Server connection changed during initialization")}
+	}
+	c.ready = generation
+	c.connectionMu.Unlock()
+	c.restoreWatched()
+	return nil
+}
+
+func (c *Client) Close() {
+	c.pageCancel()
+	c.pageMu.Lock()
+	clear(c.pageCursors)
+	clear(c.pageMetadata)
+	c.pageMu.Unlock()
+	c.connectionMu.Lock()
+	c.closed = true
+	if c.observer != nil {
+		c.observer.cancel()
+		c.observer.clearQueue()
+	}
+	connection := c.connection
+	generation := c.generation
+	c.connectionMu.Unlock()
+	if connection != nil {
+		connection.CloseNow()
+		c.markDisconnected(connection, generation, errors.New("client closed"))
+	}
+	c.queueMu.Lock()
+	if c.queueLedgerLock != nil {
+		_ = c.queueLedgerLock.Close()
+		c.queueLedgerLock = nil
+	}
+	c.queueMu.Unlock()
+}
+
+func (c *Client) Request(ctx context.Context, method string, params any, result any) error {
+	if c.options.ObserverOnly {
+		switch method {
+		case "thread/read", "thread/turns/list", "thread/items/list", "thread/list":
+		default:
+			return errors.New("observer client cannot mutate or answer a thread")
+		}
+	}
+	if err := c.Ensure(ctx); err != nil {
+		return err
+	}
+	return c.requestConnected(ctx, method, params, result)
+}
+
+func (c *Client) requestConnected(ctx context.Context, method string, params any, result any) error {
+	return c.requestConnectedGeneration(ctx, 0, method, params, result)
+}
+
+func (c *Client) requestConnectedGeneration(ctx context.Context, expectedGeneration uint64, method string, params any, result any) error {
+	c.connectionMu.Lock()
+	connection := c.connection
+	generation := c.generation
+	ready := c.ready
+	var disconnected context.Context
+	if c.observer != nil {
+		disconnected = c.observer.connectionContext
+	}
+	c.connectionMu.Unlock()
+	if expectedGeneration != 0 && generation != expectedGeneration {
+		return &TransportError{Err: errors.New("Codex App Server connection changed before request admission")}
+	}
+	if connection == nil || ready != generation {
+		return &TransportError{Err: errors.New("Codex App Server is disconnected or initializing")}
+	}
+	if c.observer != nil {
+		select {
+		case c.observer.slots <- struct{}{}:
+		case <-ctx.Done():
+			return &TransportError{Err: ctx.Err()}
+		case <-disconnected.Done():
+			return &TransportError{Err: errors.New("Codex App Server disconnected before request admission")}
+		}
+		defer func() { <-c.observer.slots }()
+		if err := ctx.Err(); err != nil {
+			return &TransportError{Err: err}
+		}
+		if disconnected.Err() != nil {
+			return &TransportError{Err: errors.New("Codex App Server disconnected before request admission")}
+		}
+		// Queue admission does not consume the observer's per-RPC timeout. The
+		// caller deadline still bounds the entire operation, including its queue.
+		admitted, cancel := context.WithTimeout(ctx, observerRPCTimeout)
+		defer cancel()
+		ctx = admitted
+	}
+	params, provider, err := c.lifecycleParams(ctx, method, params)
+	if err != nil {
+		return err
+	}
+	if provider == "" {
+		return c.requestOn(ctx, connection, generation, method, params, result)
+	}
+	var response json.RawMessage
+	if err := c.requestOn(ctx, connection, generation, method, params, &response); err != nil {
+		return err
+	}
+	var routing struct {
+		ModelProvider string `json:"modelProvider"`
+	}
+	if err := json.Unmarshal(response, &routing); err != nil {
+		return fmt.Errorf("decode Codex lifecycle routing: %w", err)
+	}
+	if routing.ModelProvider != provider {
+		return fmt.Errorf("Codex lifecycle provider mismatch: requested %q, effective %q", provider, routing.ModelProvider)
+	}
+	if result == nil {
+		return nil
+	}
+	return json.Unmarshal(response, result)
+}
+
+func (c *Client) requestOn(
+	ctx context.Context,
+	connection *websocket.Conn,
+	generation uint64,
+	method string,
+	params any,
+	result any,
+) error {
+	id := c.nextID.Add(1)
+	responseChannel := make(chan response, 1)
+	c.pendingMu.Lock()
+	c.pending[id] = pendingCall{generation: generation, channel: responseChannel}
+	c.pendingMu.Unlock()
+	defer func() {
+		c.pendingMu.Lock()
+		delete(c.pending, id)
+		c.pendingMu.Unlock()
+	}()
+
+	message, err := json.Marshal(map[string]any{"id": id, "method": method, "params": params})
+	if err != nil {
+		return err
+	}
+	if err := c.writeOn(ctx, connection, generation, message); err != nil {
+		return err
+	}
+	select {
+	case response := <-responseChannel:
+		if response.err != nil {
+			return response.err
+		}
+		if result == nil || len(response.result) == 0 {
+			return nil
+		}
+		if err := json.Unmarshal(response.result, result); err != nil {
+			return fmt.Errorf("decode %s response: %w", method, err)
+		}
+		return nil
+	case <-ctx.Done():
+		return &TransportError{Err: ctx.Err()}
+	}
+}
+
+func (c *Client) writeOn(ctx context.Context, connection *websocket.Conn, generation uint64, data []byte) error {
+	return c.writeOffer(ctx, connection, generation, data, nil)
+}
+
+// A claim can wait behind other writes. Validate it after acquiring writeMu and
+// keep retirement/admission serialized until the response has been written.
+func (c *Client) writeOffer(ctx context.Context, connection *websocket.Conn, generation uint64, data []byte, offer *PendingRequest) error {
+	c.writeMu.Lock()
+	defer c.writeMu.Unlock()
+	c.connectionMu.Lock()
+	if connection == nil || c.connection != connection || c.generation != generation {
+		c.connectionMu.Unlock()
+		return &TransportError{Err: errConnectionChanged}
+	}
+	if offer != nil {
+		c.pendingMu.Lock()
+		current, ok := c.requests[offer.ID]
+		if !ok || !current.claimed || current.token != offer.token || current.generation != generation || current.connection != connection {
+			c.pendingMu.Unlock()
+			c.connectionMu.Unlock()
+			return promptError("prompt_changed", "This question is no longer pending.")
+		}
+	}
+	c.connectionMu.Unlock()
+	err := connection.Write(ctx, websocket.MessageText, data)
+	if offer != nil {
+		if err == nil {
+			delete(c.requests, offer.ID)
+			c.bumpPendingLocked(requestThreadID(*offer))
+		}
+		c.pendingMu.Unlock()
+	}
+	if err != nil {
+		c.markDisconnected(connection, generation, err)
+	}
+	if err != nil {
+		return &TransportError{Err: err}
+	}
+	return nil
+}
+
+func (c *Client) readLoop(connection *websocket.Conn, generation uint64) {
+	for {
+		kind, data, err := connection.Read(context.Background())
+		if err != nil {
+			c.markDisconnected(connection, generation, err)
+			return
+		}
+		var message rpcMessage
+		if c.ephemeral != nil {
+			if kind != websocket.MessageText {
+				c.ephemeral.fail(ErrEphemeralProtocol)
+				return
+			}
+			if !c.ephemeral.decode(data, &message) {
+				return
+			}
+		} else if err := json.Unmarshal(data, &message); err != nil {
+			continue
+		}
+		if c.ephemeral != nil && c.ephemeral.handle(c, connection, generation, message) {
+			continue
+		}
+		if c.options.ActivityRecorder != nil {
+			threadID := threadIDFromParams(message.Params)
+			c.watchedMu.Lock()
+			watched := c.watched[threadID] > 0
+			c.watchedMu.Unlock()
+			if watched {
+				c.options.ActivityRecorder.observe(c.activityConnection(generation), message, time.Now().UnixMilli())
+			}
+		}
+		if message.Method != "" && len(message.ID) != 0 {
+			if c.options.ObserverOnly {
+				c.broadcast(threadIDFromParams(message.Params))
+				continue
+			}
+			key := string(message.ID)
+			request := PendingRequest{
+				ID: key, Method: message.Method, Params: message.Params,
+				generation: generation, connection: connection, receivedAt: time.Now(),
+			}
+			prompt, promptErr := c.normalizePrompt(request)
+			if promptErr != nil {
+				c.rejectUnsupported(request, promptErr)
+				continue
+			}
+			if !c.admitPrompt(&request) {
+				continue
+			}
+			if prompt.Kind == "userInput" && !prompt.IsBlocking &&
+				c.options.NonBlockingUserInput != nil {
+				policy := c.options.NonBlockingUserInput
+				go c.autoResolveUserInput(
+					request.ID, prompt.ThreadID, request.token, policy.HiddenGrace+policy.VisibleCountdown,
+				)
+			}
+			c.broadcast(prompt.ThreadID)
+			continue
+		}
+		if message.Method == "serverRequest/resolved" {
+			c.handleResolved(message.Params, generation)
+		}
+		if message.Method == "thread/settings/updated" {
+			c.handleThreadSettingsUpdated(message.Params, generation)
+		}
+		if message.Method == "thread/closed" {
+			thread := threadIDFromParams(message.Params)
+			c.watchedMu.Lock()
+			delete(c.watchedGeneration, thread)
+			c.watchedMu.Unlock()
+			c.invalidateThreadSettings(thread)
+			c.options.ActivityRecorder.disconnected(c.activityConnection(generation), thread)
+		}
+		if message.Method == "item/started" || message.Method == "item/completed" {
+			c.observeItemTimestamp(message.Method, message.Params)
+		}
+		if message.Method != "" {
+			c.broadcast(threadIDFromParams(message.Params))
+		}
+		if len(message.ID) == 0 {
+			continue
+		}
+		var id uint64
+		if err := json.Unmarshal(message.ID, &id); err != nil {
+			continue
+		}
+		c.pendingMu.Lock()
+		call, ok := c.pending[id]
+		c.pendingMu.Unlock()
+		if !ok || call.generation != generation {
+			continue
+		}
+		var reply response
+		if message.Error != nil {
+			reply = response{err: &rpcCallError{code: message.Error.Code, message: message.Error.Message}}
+		} else {
+			reply = response{result: message.Result}
+		}
+		if c.ephemeral == nil {
+			call.channel <- reply
+		} else {
+			select {
+			case call.channel <- reply:
+			default:
+				c.ephemeral.fail(ErrEphemeralProtocol)
+			}
+		}
+	}
+}
+
+// Admission and disconnect use the same lock order so a retired reader cannot
+// restore a stale offer after disconnect has removed its requests.
+func (c *Client) admitPrompt(request *PendingRequest) bool {
+	c.connectionMu.Lock()
+	defer c.connectionMu.Unlock()
+	if c.connection != request.connection || c.generation != request.generation || c.connection == nil {
+		return false
+	}
+	c.pendingMu.Lock()
+	defer c.pendingMu.Unlock()
+	if current, ok := c.requests[request.ID]; ok && current.generation == request.generation {
+		return false
+	}
+	request.token = rand.Text()
+	c.requests[request.ID] = *request
+	c.bumpPendingLocked(requestThreadID(*request))
+	return true
+}
+
+func (c *Client) autoResolveUserInput(id, threadID, token string, delay time.Duration) {
+	timer := time.NewTimer(delay)
+	defer timer.Stop()
+	<-timer.C
+	request, ok := c.claimAutoResolvableUserInput(id, threadID, token)
+	if !ok {
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	_ = c.finishResponse(ctx, request, map[string]any{
+		"answers": map[string]map[string][]string{},
+	})
+}
+
+func (c *Client) claimAutoResolvableUserInput(id, threadID, token string) (PendingRequest, bool) {
+	c.connectionMu.Lock()
+	defer c.connectionMu.Unlock()
+	c.pendingMu.Lock()
+	defer c.pendingMu.Unlock()
+	request, ok := c.requests[id]
+	if !ok || request.claimed || request.snoozed || request.token != token ||
+		request.generation != c.generation || request.connection != c.connection || c.connection == nil {
+		return PendingRequest{}, false
+	}
+	prompt, err := c.normalizePrompt(request)
+	if err != nil || prompt.Kind != "userInput" || prompt.ThreadID != threadID || prompt.IsBlocking {
+		return PendingRequest{}, false
+	}
+	request.claimed = true
+	c.requests[id] = request
+	c.bumpPendingLocked(threadID)
+	c.broadcast(threadID)
+	return request, true
+}
+
+func (c *Client) SnoozeUserInput(id, threadID string) error {
+	return c.snoozeUserInput(id, threadID, "")
+}
+
+func (c *Client) snoozeUserInput(id, threadID, token string) error {
+	c.connectionMu.Lock()
+	defer c.connectionMu.Unlock()
+	c.pendingMu.Lock()
+	defer c.pendingMu.Unlock()
+	request, ok := c.requests[id]
+	if !ok || request.claimed {
+		return promptError("prompt_changed", "This question is no longer pending.")
+	}
+	if request.generation != c.generation || request.connection != c.connection || c.connection == nil ||
+		(token != "" && request.token != token) {
+		return promptError("prompt_changed", "This question needs to be refreshed.")
+	}
+	prompt, err := c.normalizePrompt(request)
+	if err != nil {
+		return err
+	}
+	if prompt.ThreadID != threadID || prompt.Kind != "userInput" {
+		return errors.New("this request does not support auto-resolution control")
+	}
+	if request.snoozed {
+		return nil
+	}
+	request.snoozed = true
+	c.requests[id] = request
+	c.bumpPendingLocked(threadID)
+	c.broadcast(threadID)
+	return nil
+}
+
+func (c *Client) handleThreadSettingsUpdated(params json.RawMessage, generation uint64) {
+	var notification struct {
+		ThreadID       string `json:"threadId"`
+		ThreadSettings struct {
+			Model             string `json:"model"`
+			Effort            string `json:"effort"`
+			CollaborationMode struct {
+				Mode string `json:"mode"`
+			} `json:"collaborationMode"`
+		} `json:"threadSettings"`
+	}
+	if json.Unmarshal(params, &notification) != nil || notification.ThreadID == "" ||
+		notification.ThreadSettings.Model == "" ||
+		notification.ThreadSettings.CollaborationMode.Mode == "" {
+		return
+	}
+	settings := ThreadSettings{
+		Model:             notification.ThreadSettings.Model,
+		ReasoningEffort:   notification.ThreadSettings.Effort,
+		CollaborationMode: notification.ThreadSettings.CollaborationMode.Mode,
+	}
+	c.cacheThreadSettings(notification.ThreadID, settings, generation)
+}
+
+func (c *Client) cacheThreadSettings(threadID string, settings ThreadSettings, generation uint64) {
+	c.settingsMu.Lock()
+	c.settingsRevision++
+	c.threadSettings[threadID] = cachedThreadSettings{
+		generation: generation, revision: c.settingsRevision, settings: settings,
+	}
+	close(c.settingsChanged)
+	c.settingsChanged = make(chan struct{})
+	c.settingsMu.Unlock()
+}
+
+func (c *Client) handleResolved(params json.RawMessage, generation uint64) {
+	var resolved struct {
+		RequestID json.RawMessage `json:"requestId"`
+	}
+	if json.Unmarshal(params, &resolved) != nil {
+		return
+	}
+	c.pendingMu.Lock()
+	request := c.requests[string(resolved.RequestID)]
+	threadID := threadIDFromParams(request.Params)
+	if request.generation == generation {
+		delete(c.requests, string(resolved.RequestID))
+		c.bumpPendingLocked(threadID)
+	}
+	c.pendingMu.Unlock()
+	c.broadcast(threadID)
+	c.prunePendingRevision(threadID)
+}
+
+func (c *Client) rejectUnsupported(request PendingRequest, cause error) {
+	threadID := threadIDFromParams(request.Params)
+	if recorder := c.options.ActivityRecorder; recorder != nil {
+		recorder.resolveRequest(c.activityConnection(request.generation), threadID, request.ID, time.Now().UnixMilli())
+	}
+	if threadID != "" {
+		prompt := Prompt{
+			ID: request.ID, Method: request.Method, Kind: "unsupported",
+			ThreadID: threadID, Error: cause.Error(),
+		}
+		_ = json.Unmarshal(request.Params, &prompt.Params)
+		c.pendingMu.Lock()
+		notices := append(c.notices[threadID], prompt)
+		if len(notices) > 20 {
+			notices = notices[len(notices)-20:]
+		}
+		c.notices[threadID] = notices
+		c.bumpPendingLocked(threadID)
+		c.pendingMu.Unlock()
+	}
+	var rawID any
+	if json.Unmarshal([]byte(request.ID), &rawID) == nil {
+		message, _ := json.Marshal(map[string]any{
+			"id": rawID,
+			"error": map[string]any{
+				"code":    -32601,
+				"message": "Codex web client does not support this App Server request",
+			},
+		})
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		_ = c.writeOn(ctx, request.connection, request.generation, message)
+	}
+	c.broadcast(threadID)
+}
+
+func threadIDFromParams(params json.RawMessage) string {
+	var value struct {
+		ThreadID string `json:"threadId"`
+	}
+	_ = json.Unmarshal(params, &value)
+	return value.ThreadID
+}
+
+func (c *Client) markDisconnected(connection *websocket.Conn, generation uint64, cause error) {
+	c.connectionMu.Lock()
+	if c.connection != connection || c.generation != generation {
+		c.connectionMu.Unlock()
+		return
+	}
+	c.connection = nil
+	c.ready = 0
+	if c.ephemeral != nil {
+		c.ephemeral.fail(ErrEphemeralServer)
+	}
+	if c.observer != nil && c.observer.cancelConnection != nil {
+		c.observer.cancelConnection()
+		c.observer.clearQueue()
+	}
+	c.options.ActivityRecorder.disconnected(c.activityConnection(generation), "")
+	c.pendingMu.Lock()
+	for id, call := range c.pending {
+		if call.generation != generation {
+			continue
+		}
+		select {
+		case call.channel <- response{err: &TransportError{Err: fmt.Errorf("Codex App Server disconnected: %w", cause)}}:
+		default:
+		}
+		delete(c.pending, id)
+	}
+	c.pendingRevisionMu.Lock()
+	c.pendingSequence++
+	c.pendingReset = c.pendingSequence
+	c.pendingRevisions = nil
+	c.pendingRevisionMu.Unlock()
+	for id, request := range c.requests {
+		if request.generation == generation {
+			delete(c.requests, id)
+		}
+	}
+	c.pendingMu.Unlock()
+	c.settingsMu.Lock()
+	c.threadSettings = make(map[string]cachedThreadSettings)
+	close(c.settingsChanged)
+	c.settingsChanged = make(chan struct{})
+	c.settingsMu.Unlock()
+	c.connectionMu.Unlock()
+	connection.CloseNow()
+	c.broadcast("")
+}
+
+func (c *Client) Subscribe(ctx context.Context, threadID string) (<-chan struct{}, func(), error) {
+	if err := c.options.ActivityRecorder.retain(ctx, threadID, true); err != nil {
+		return nil, nil, err
+	}
+	c.retainTurnHistory(threadID, true)
+	channel := make(chan struct{}, 1)
+	c.watchedMu.Lock()
+	c.watched[threadID]++
+	c.watchedMu.Unlock()
+	c.subscribersMu.Lock()
+	c.subscribers[channel] = threadID
+	c.subscribersMu.Unlock()
+	unsubscribe := func() {
+		removed := false
+		c.subscribersMu.Lock()
+		if _, ok := c.subscribers[channel]; ok {
+			delete(c.subscribers, channel)
+			close(channel)
+			removed = true
+		}
+		c.subscribersMu.Unlock()
+		if removed {
+			c.removeWatch(threadID)
+		}
+	}
+	if err := c.Ensure(ctx); err != nil {
+		unsubscribe()
+		return nil, nil, err
+	}
+	if err := c.resumeWatched(ctx, threadID); err != nil {
+		unsubscribe()
+		return nil, nil, err
+	}
+	return channel, unsubscribe, nil
+}
+
+func (c *Client) removeWatch(threadID string) {
+	defer c.options.ActivityRecorder.release(threadID, true)
+	defer c.releaseTurnHistory(threadID, true)
+	transition := c.watchLock(threadID)
+	transition.Lock()
+	defer transition.Unlock()
+	c.watchedMu.Lock()
+	removed := false
+	if c.watched[threadID] <= 1 {
+		delete(c.watched, threadID)
+		delete(c.watchedGeneration, threadID)
+		delete(c.liveItemTimes, threadID)
+		removed = true
+	} else {
+		c.watched[threadID]--
+	}
+	c.watchedMu.Unlock()
+	if removed {
+		c.prunePendingRevision(threadID)
+		c.connectionMu.Lock()
+		generation := c.generation
+		c.connectionMu.Unlock()
+		c.options.ActivityRecorder.disconnected(c.activityConnection(generation), threadID)
+		c.options.ActivityRecorder.retire(threadID)
+		c.invalidateThreadSettings(threadID)
+		go c.unsubscribeThread(threadID)
+	}
+}
+
+func (c *Client) invalidateThreadSettings(threadID string) {
+	c.settingsMu.Lock()
+	delete(c.threadSettings, threadID)
+	close(c.settingsChanged)
+	c.settingsChanged = make(chan struct{})
+	c.settingsMu.Unlock()
+}
+
+func (c *Client) restoreWatched() {
+	c.watchedMu.Lock()
+	threadIDs := make([]string, 0, len(c.watched))
+	for threadID := range c.watched {
+		threadIDs = append(threadIDs, threadID)
+	}
+	c.watchedMu.Unlock()
+	if c.observer != nil {
+		c.restoreObserved(threadIDs)
+		return
+	}
+	for _, threadID := range threadIDs {
+		go func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			if err := c.resumeWatched(ctx, threadID); err != nil {
+				c.recordWatchError(threadID, err)
+			}
+		}()
+	}
+}
+
+// RefreshThreadSubscription rejoins an application-reopened thread on the same
+// connection. It never adds a watch or bypasses AllowImplicitResume. Applications
+// call it after a scoped native close/reopen, once their execution fence opens.
+func (c *Client) RefreshThreadSubscription(ctx context.Context, thread string) error {
+	c.watchedMu.Lock()
+	watched := c.watched[thread] > 0
+	delete(c.watchedGeneration, thread)
+	c.watchedMu.Unlock()
+	if !watched {
+		return nil
+	}
+	if err := c.Ensure(ctx); err != nil {
+		return err
+	}
+	return c.resumeWatched(ctx, thread)
+}
+
+func (c *Client) resumeWatched(ctx context.Context, threadID string) error {
+	return c.resumeWatchedGeneration(ctx, threadID, 0)
+}
+
+func (c *Client) resumeWatchedGeneration(ctx context.Context, threadID string, expectedGeneration uint64) error {
+	lock := c.watchLock(threadID)
+	lock.Lock()
+	defer lock.Unlock()
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	c.connectionMu.Lock()
+	generation := c.generation
+	c.connectionMu.Unlock()
+	if expectedGeneration != 0 && generation != expectedGeneration {
+		return errors.New("Codex App Server connection changed before watch restoration")
+	}
+	c.watchedMu.Lock()
+	if c.watched[threadID] == 0 || c.watchedGeneration[threadID] == generation {
+		c.watchedMu.Unlock()
+		return nil
+	}
+	c.watchedMu.Unlock()
+	if allowed := c.options.AllowImplicitResume; allowed != nil && !allowed(threadID) {
+		return errors.New("conversation execution is held")
+	}
+	requestGeneration := uint64(0)
+	if c.observer != nil || c.options.AllowImplicitResume != nil {
+		requestGeneration = generation
+	}
+	var result map[string]any
+	if err := c.requestConnectedGeneration(ctx, requestGeneration, "thread/resume", c.threadResumeParams(threadID), &result); err != nil {
+		return err
+	}
+	c.connectionMu.Lock()
+	if c.connection == nil || c.generation != generation || c.ready != generation {
+		// Observer restoration can win the same-watch race with Subscribe.
+		// Share its accepted result even if the transport immediately closes;
+		// the next generation still resumes again without stale coverage.
+		if c.observer != nil && c.generation == generation {
+			c.watchedMu.Lock()
+			if c.watched[threadID] > 0 {
+				c.watchedGeneration[threadID] = generation
+			}
+			c.watchedMu.Unlock()
+		}
+		c.connectionMu.Unlock()
+		// The server accepted the subscription before disconnecting. Retain
+		// the watch for reconnection, without starting coverage on this stale
+		// transport or turning a successful Subscribe into an error.
+		return nil
+	}
+	c.watchedMu.Lock()
+	if c.watched[threadID] > 0 {
+		c.watchedGeneration[threadID] = generation
+	}
+	c.watchedMu.Unlock()
+	c.options.ActivityRecorder.connected(threadID, c.activityConnection(generation), time.Now().UnixMilli())
+	if c.observer != nil {
+		c.clearWatchError(threadID)
+	}
+	c.connectionMu.Unlock()
+	if c.observer == nil {
+		c.clearWatchError(threadID)
+	}
+	return nil
+}
+
+func (c *Client) unsubscribeThread(threadID string) {
+	lock := c.watchLock(threadID)
+	lock.Lock()
+	defer lock.Unlock()
+	c.watchedMu.Lock()
+	if c.watched[threadID] > 0 {
+		c.watchedMu.Unlock()
+		return
+	}
+	c.watchedMu.Unlock()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	var result map[string]any
+	_ = c.requestConnected(ctx, "thread/unsubscribe", map[string]any{"threadId": threadID}, &result)
+	c.clearWatchError(threadID)
+}
+
+func (c *Client) watchLock(threadID string) *sync.Mutex {
+	c.watchedMu.Lock()
+	defer c.watchedMu.Unlock()
+	lock := c.watchLocks[threadID]
+	if lock == nil {
+		lock = &sync.Mutex{}
+		c.watchLocks[threadID] = lock
+	}
+	return lock
+}
+
+func (c *Client) recordWatchError(threadID string, err error) {
+	c.pendingMu.Lock()
+	message := Prompt{
+		ID: "watch:" + threadID, Kind: "connection", ThreadID: threadID,
+		Error: "Unable to resume this Codex thread: " + err.Error(),
+	}
+	notices := c.notices[threadID]
+	replaced := false
+	for index := range notices {
+		if notices[index].ID == message.ID {
+			notices[index] = message
+			replaced = true
+		}
+	}
+	if !replaced {
+		notices = append(notices, message)
+	}
+	c.notices[threadID] = notices
+	c.bumpPendingLocked(threadID)
+	c.pendingMu.Unlock()
+	c.broadcast(threadID)
+}
+
+func (c *Client) clearWatchError(threadID string) {
+	c.pendingMu.Lock()
+	notices := c.notices[threadID]
+	for index := range notices {
+		if notices[index].ID == "watch:"+threadID {
+			notices = append(notices[:index], notices[index+1:]...)
+			c.bumpPendingLocked(threadID)
+			defer c.broadcast(threadID)
+			break
+		}
+	}
+	c.notices[threadID] = notices
+	c.pendingMu.Unlock()
+	c.prunePendingRevision(threadID)
+}
+
+// PendingRevision reads an in-memory invalidation token, without native RPCs or
+// durable ledger access. The value is meaningful only within this client.
+func (c *Client) PendingRevision(threadID string) uint64 {
+	c.pendingRevisionMu.Lock()
+	defer c.pendingRevisionMu.Unlock()
+	return max(c.pendingReset, c.pendingRevisions[threadID])
+}
+
+// Caller holds pendingMu. Advance before publishing the corresponding hint.
+func (c *Client) bumpPendingLocked(threadID string) {
+	c.pendingRevisionMu.Lock()
+	defer c.pendingRevisionMu.Unlock()
+	if threadID == "" {
+		return
+	}
+	c.pendingSequence++
+	if c.pendingRevisions == nil {
+		c.pendingRevisions = make(map[string]uint64)
+	}
+	c.pendingRevisions[threadID] = c.pendingSequence
+}
+
+// Tokens need live watchers or a retained pending/notice projection, just as
+// their underlying thread state does. Call without pendingMu held.
+func (c *Client) prunePendingRevision(threadID string) {
+	c.watchedMu.Lock()
+	defer c.watchedMu.Unlock()
+	if c.watched[threadID] != 0 {
+		return
+	}
+	c.pendingMu.Lock()
+	defer c.pendingMu.Unlock()
+	if len(c.notices[threadID]) != 0 {
+		return
+	}
+	for _, request := range c.requests {
+		if requestThreadID(request) == threadID {
+			return
+		}
+	}
+	c.pendingRevisionMu.Lock()
+	delete(c.pendingRevisions, threadID)
+	c.pendingRevisionMu.Unlock()
+}
+
+func (c *Client) broadcast(threadID string) {
+	c.subscribersMu.Lock()
+	defer c.subscribersMu.Unlock()
+	for channel, subscribedThreadID := range c.subscribers {
+		if threadID != "" && subscribedThreadID != threadID {
+			continue
+		}
+		select {
+		case channel <- struct{}{}:
+		default:
+		}
+	}
+}
+
+func (c *Client) Prompts(threadID string) []Prompt {
+	c.connectionMu.Lock()
+	defer c.connectionMu.Unlock()
+	c.pendingMu.Lock()
+	defer c.pendingMu.Unlock()
+	result := make([]Prompt, 0, len(c.notices[threadID])+len(c.requests))
+	result = append(result, c.notices[threadID]...)
+	for _, request := range c.requests {
+		if request.claimed || request.generation != c.generation || request.connection != c.connection {
+			continue
+		}
+		prompt, err := c.normalizePrompt(request)
+		if err == nil && prompt.ThreadID == threadID {
+			result = append(result, prompt)
+		}
+	}
+	sort.Slice(result, func(i, j int) bool { return result[i].ID < result[j].ID })
+	return result
+}
+
+func (c *Client) PromptsWithItems(ctx context.Context, threadID string) ([]Prompt, error) {
+	prompts := c.Prompts(threadID)
+	itemIDs := make([]string, 0, len(prompts))
+	for _, prompt := range prompts {
+		if requiresThreadItem(prompt.Kind) {
+			itemIDs = append(itemIDs, prompt.ItemID)
+		}
+	}
+	if len(itemIDs) == 0 {
+		return prompts, nil
+	}
+	items, err := c.threadItems(ctx, threadID, itemIDs...)
+	if err != nil {
+		return nil, err
+	}
+	for index := range prompts {
+		if !requiresThreadItem(prompts[index].Kind) {
+			continue
+		}
+		item, ok := items[prompts[index].ItemID]
+		if ok && itemTypeMatches(prompts[index].Kind, stringValue(item["type"])) {
+			prompts[index].Item = item
+			prompts[index].AuthorityAvailable = true
+		}
+	}
+	return prompts, nil
+}
+
+func (c *Client) RespondDecision(ctx context.Context, id, threadID, decision string) error {
+	return c.respondDecision(ctx, id, threadID, "", decision)
+}
+
+func (c *Client) respondDecision(ctx context.Context, id, threadID, token, decision string) error {
+	request, prompt, err := c.claim(id, threadID, token)
+	if err != nil {
+		return err
+	}
+	if !slices.Contains(prompt.AvailableDecisions, decision) {
+		c.releaseClaim(request)
+		return promptError("invalid_response", "This decision was not offered by Codex.")
+	}
+	if requiresThreadItem(prompt.Kind) {
+		items, itemErr := c.threadItems(ctx, threadID, prompt.ItemID)
+		item, ok := items[prompt.ItemID]
+		if itemErr != nil || !ok || !itemTypeMatches(prompt.Kind, stringValue(item["type"])) {
+			c.releaseClaim(request)
+			if itemErr != nil {
+				return fmt.Errorf("load approval authority: %w", itemErr)
+			}
+			return errors.New("matching approval item is unavailable; review this request in the terminal")
+		}
+	}
+	var result any
+	switch prompt.Kind {
+	case "command", "fileChange":
+		result = map[string]any{"decision": decision}
+	default:
+		c.releaseClaim(request)
+		return errors.New("this request does not accept a decision")
+	}
+	return c.finishResponse(ctx, request, result)
+}
+
+func (c *Client) RespondAnswers(ctx context.Context, id, threadID string, answers map[string]map[string][]string) error {
+	return c.respondAnswers(ctx, id, threadID, "", answers)
+}
+
+func (c *Client) respondAnswers(ctx context.Context, id, threadID, token string, answers map[string]map[string][]string) error {
+	request, prompt, err := c.claim(id, threadID, token)
+	if err != nil {
+		return err
+	}
+	if prompt.Kind != "userInput" {
+		c.releaseClaim(request)
+		return promptError("invalid_response", "This request does not accept answers.")
+	}
+	if err := validateAnswers(prompt, answers); err != nil {
+		c.releaseClaim(request)
+		return &PromptResponseError{Code: "invalid_response", NotSent: true, Err: err}
+	}
+	return c.finishResponse(ctx, request, map[string]any{"answers": answers})
+}
+
+func validateAnswers(prompt Prompt, answers map[string]map[string][]string) error {
+	if len(answers) != len(prompt.Questions) {
+		return errors.New("answers do not match the offered questions")
+	}
+	for _, question := range prompt.Questions {
+		answer, ok := answers[question.ID]
+		values := answer["answers"]
+		if !ok || len(answer) != 1 || len(values) > 2 {
+			return fmt.Errorf("question %q has an invalid answer", question.ID)
+		}
+		if len(values) == 0 {
+			continue
+		}
+		for _, value := range values {
+			if strings.TrimSpace(value) == "" {
+				return fmt.Errorf("question %q has a blank answer", question.ID)
+			}
+		}
+		if len(question.Options) == 0 {
+			if len(values) != 1 || !validUserNote(values[0]) {
+				return fmt.Errorf("question %q requires one free-form answer", question.ID)
+			}
+			continue
+		}
+		offered := false
+		for _, option := range question.Options {
+			if option.Label == values[0] {
+				offered = true
+				break
+			}
+		}
+		if !offered && !(question.IsOther && len(values) == 1 && validUserNote(values[0])) {
+			return fmt.Errorf("answer to question %q was not offered", question.ID)
+		}
+		if offered && len(values) == 2 && !validUserNote(values[1]) {
+			return fmt.Errorf("question %q has an invalid option note", question.ID)
+		}
+	}
+	return nil
+}
+
+func validUserNote(value string) bool {
+	const prefix = "user_note: "
+	return strings.HasPrefix(value, prefix) && strings.TrimSpace(strings.TrimPrefix(value, prefix)) != ""
+}
+
+func (c *Client) claim(id, threadID, token string) (PendingRequest, Prompt, error) {
+	c.connectionMu.Lock()
+	defer c.connectionMu.Unlock()
+	c.pendingMu.Lock()
+	defer c.pendingMu.Unlock()
+	request, ok := c.requests[id]
+	if !ok || request.claimed {
+		return PendingRequest{}, Prompt{}, promptError("prompt_changed", "This question is no longer pending.")
+	}
+	if request.generation != c.generation || request.connection != c.connection || c.connection == nil ||
+		(token != "" && request.token != token) {
+		return PendingRequest{}, Prompt{}, promptError("prompt_changed", "This question needs to be refreshed.")
+	}
+	prompt, err := c.normalizePrompt(request)
+	if err != nil {
+		return PendingRequest{}, Prompt{}, err
+	}
+	if prompt.ThreadID != threadID {
+		return PendingRequest{}, Prompt{}, errors.New("request belongs to another thread")
+	}
+	request.claimed = true
+	c.requests[id] = request
+	c.bumpPendingLocked(threadID)
+	c.broadcast(threadID)
+	return request, prompt, nil
+}
+
+func (c *Client) releaseClaim(request PendingRequest) {
+	c.pendingMu.Lock()
+	current, ok := c.requests[request.ID]
+	if ok && current.generation == request.generation && current.token == request.token {
+		current.claimed = false
+		c.requests[request.ID] = current
+		c.bumpPendingLocked(requestThreadID(request))
+	}
+	c.pendingMu.Unlock()
+	c.broadcast(requestThreadID(request))
+}
+
+func (c *Client) finishResponse(ctx context.Context, request PendingRequest, result any) error {
+	if c.options.ObserverOnly {
+		return errors.New("observer client cannot answer a thread")
+	}
+	var rawID any
+	if err := json.Unmarshal([]byte(request.ID), &rawID); err != nil {
+		c.releaseClaim(request)
+		return err
+	}
+	message, err := json.Marshal(map[string]any{"id": rawID, "result": result})
+	if err != nil {
+		c.releaseClaim(request)
+		return err
+	}
+	if err := c.writeOffer(ctx, request.connection, request.generation, message, &request); err != nil {
+		c.releaseClaim(request)
+		var responseError *PromptResponseError
+		if errors.As(err, &responseError) {
+			return err
+		}
+		return &PromptResponseError{Code: "prompt_transport", NotSent: errors.Is(err, errConnectionChanged), Err: err}
+	}
+	c.broadcast(requestThreadID(request))
+	c.prunePendingRevision(requestThreadID(request))
+	return nil
+}
+
+func normalizePrompt(request PendingRequest) (Prompt, error) {
+	var params map[string]any
+	if err := json.Unmarshal(request.Params, &params); err != nil {
+		return Prompt{}, err
+	}
+	prompt := Prompt{
+		ID: request.ID, Token: request.token, Method: request.Method, ThreadID: stringValue(params["threadId"]),
+		ItemID: stringValue(params["itemId"]), TurnID: stringValue(params["turnId"]), Params: params,
+	}
+	switch request.Method {
+	case "item/commandExecution/requestApproval":
+		prompt.Kind = "command"
+		prompt.IsBlocking = requestPolicyFor(request.Method).blocking
+		decisions, decisionsPresent := params["availableDecisions"].([]any)
+		if decisionsPresent {
+			for _, decision := range decisions {
+				if value, ok := decision.(string); ok && slices.Contains([]string{"accept", "acceptForSession", "decline", "cancel"}, value) {
+					prompt.AvailableDecisions = append(prompt.AvailableDecisions, value)
+				}
+			}
+		} else {
+			prompt.AvailableDecisions = []string{"accept", "acceptForSession", "decline", "cancel"}
+		}
+	case "item/fileChange/requestApproval":
+		prompt.Kind = "fileChange"
+		prompt.IsBlocking = requestPolicyFor(request.Method).blocking
+		prompt.AvailableDecisions = []string{"accept", "acceptForSession", "decline", "cancel"}
+	case "item/permissions/requestApproval":
+		prompt.Kind = "terminalOnly"
+		prompt.IsBlocking = requestPolicyFor(request.Method).blocking
+	case "item/tool/requestUserInput":
+		prompt.Kind = "userInput"
+		prompt.AuthorityAvailable = true
+		prompt.IsBlocking = requestPolicyFor(request.Method).blocking
+		if raw, exists := params["isBlocking"]; exists {
+			blocking, ok := raw.(bool)
+			if !ok {
+				return Prompt{}, errors.New("request_user_input has an invalid isBlocking value")
+			}
+			prompt.IsBlocking = blocking
+		}
+		if raw, exists := params["autoResolutionMs"]; exists && raw != nil {
+			milliseconds, ok := raw.(float64)
+			if !ok || milliseconds < 0 || milliseconds != float64(uint64(milliseconds)) {
+				return Prompt{}, errors.New("request_user_input has an invalid autoResolutionMs value")
+			}
+			value := uint64(milliseconds)
+			prompt.AutoResolutionMS = &value
+		}
+		questions, err := normalizeQuestions(params["questions"])
+		if err != nil {
+			return Prompt{}, err
+		}
+		prompt.Questions = questions
+	default:
+		return Prompt{}, fmt.Errorf("unsupported request method %q", request.Method)
+	}
+	if prompt.ThreadID == "" {
+		return Prompt{}, errors.New("request has no thread id")
+	}
+	return prompt, nil
+}
+
+func (c *Client) normalizePrompt(request PendingRequest) (Prompt, error) {
+	prompt, err := normalizePrompt(request)
+	policy := c.options.NonBlockingUserInput
+	if err != nil || policy == nil || prompt.Kind != "userInput" || prompt.IsBlocking ||
+		request.receivedAt.IsZero() {
+		return prompt, err
+	}
+	visibleAt := request.receivedAt.Add(policy.HiddenGrace)
+	deadline := visibleAt.Add(policy.VisibleCountdown)
+	prompt.AutoResolutionVisibleAtMS = visibleAt.UnixMilli()
+	prompt.AutoResolutionAtMS = deadline.UnixMilli()
+	prompt.AutoResolveSnoozed = request.snoozed
+	return prompt, nil
+}
+
+func normalizeQuestions(value any) ([]Question, error) {
+	rawQuestions, ok := value.([]any)
+	if !ok || len(rawQuestions) == 0 {
+		return nil, errors.New("request_user_input has no questions")
+	}
+	questions := make([]Question, 0, len(rawQuestions))
+	seen := make(map[string]struct{})
+	for _, raw := range rawQuestions {
+		item, ok := raw.(map[string]any)
+		if !ok {
+			return nil, errors.New("request_user_input contains an invalid question")
+		}
+		question := Question{
+			ID: stringValue(item["id"]), Header: stringValue(item["header"]),
+			Question: stringValue(item["question"]),
+		}
+		question.IsSecret, _ = item["isSecret"].(bool)
+		question.IsOther, _ = item["isOther"].(bool)
+		if question.ID == "" || question.Header == "" || question.Question == "" {
+			return nil, errors.New("request_user_input question is missing required text")
+		}
+		if _, ok := seen[question.ID]; ok {
+			return nil, fmt.Errorf("request_user_input repeats question id %q", question.ID)
+		}
+		seen[question.ID] = struct{}{}
+		if rawOptions, ok := item["options"].([]any); ok {
+			for _, rawOption := range rawOptions {
+				option, ok := rawOption.(map[string]any)
+				if !ok || stringValue(option["label"]) == "" {
+					return nil, fmt.Errorf("request_user_input question %q has an invalid option", question.ID)
+				}
+				question.Options = append(question.Options, Option{
+					Label: stringValue(option["label"]), Description: stringValue(option["description"]),
+				})
+			}
+		}
+		questions = append(questions, question)
+	}
+	return questions, nil
+}
+
+func requiresThreadItem(kind string) bool {
+	return kind == "command" || kind == "fileChange"
+}
+
+func itemTypeMatches(kind, itemType string) bool {
+	return (kind == "command" && itemType == "commandExecution") ||
+		(kind == "fileChange" && itemType == "fileChange")
+}
+
+func requestThreadID(request PendingRequest) string {
+	return threadIDFromParams(request.Params)
+}
+
+func (c *Client) threadItems(
+	ctx context.Context, threadID string, itemIDs ...string,
+) (map[string]map[string]any, error) {
+	wanted := make(map[string]struct{}, len(itemIDs))
+	for _, itemID := range itemIDs {
+		wanted[itemID] = struct{}{}
+	}
+	if len(wanted) == 0 {
+		return map[string]map[string]any{}, nil
+	}
+	items := make(map[string]map[string]any, len(wanted))
+	err := c.walkThreadItems(ctx, threadID, func(entry threadItemEntry) (bool, error) {
+		id := stringValue(entry.Item["id"])
+		if _, ok := wanted[id]; ok {
+			items[id] = entry.Item
+			delete(wanted, id)
+		}
+		return len(wanted) == 0, nil
+	})
+	return items, err
+}
+
+func (c *Client) walkThreadItems(
+	ctx context.Context, threadID string, visit func(threadItemEntry) (bool, error),
+) error {
+	seenCursors := make(map[string]struct{})
+	seenIDs := make(map[string]struct{})
+	var cursor string
+	for {
+		params := map[string]any{
+			"threadId": threadID, "limit": 100, "sortDirection": "desc",
+		}
+		if cursor != "" {
+			params["cursor"] = cursor
+		}
+		var page struct {
+			Data       *[]threadItemEntry `json:"data"`
+			NextCursor *string            `json:"nextCursor"`
+		}
+		if err := c.Request(ctx, "thread/items/list", params, &page); err != nil {
+			return err
+		}
+		if page.Data == nil {
+			return errors.New("thread/items/list returned no data")
+		}
+		for _, entry := range *page.Data {
+			id := stringValue(entry.Item["id"])
+			if entry.TurnID == "" || entry.Item == nil || id == "" {
+				return errors.New("thread/items/list returned an invalid item entry")
+			}
+			if _, exists := seenIDs[id]; exists {
+				return fmt.Errorf("thread/items/list repeated item %q", id)
+			}
+			seenIDs[id] = struct{}{}
+			stop, err := visit(entry)
+			if err != nil {
+				return err
+			}
+			if stop {
+				return nil
+			}
+		}
+		if page.NextCursor == nil {
+			return nil
+		}
+		if *page.NextCursor == "" {
+			return errors.New("thread/items/list returned an empty pagination cursor")
+		}
+		if _, exists := seenCursors[*page.NextCursor]; exists {
+			return errors.New("thread/items/list repeated a pagination cursor")
+		}
+		seenCursors[*page.NextCursor] = struct{}{}
+		cursor = *page.NextCursor
+	}
+}
+
+func inputText(inputs []map[string]any) string {
+	parts := make([]string, 0, len(inputs))
+	for _, input := range inputs {
+		if stringValue(input["type"]) != "text" {
+			parts = append(parts, "[non-text input]")
+			continue
+		}
+		parts = append(parts, stringValue(input["text"]))
+	}
+	return strings.Join(parts, "\n")
+}
+
+func userMessageText(item map[string]any) (string, error) {
+	content, ok := item["content"].([]any)
+	if !ok {
+		return "", errors.New("user message has invalid content")
+	}
+	inputs := make([]map[string]any, 0, len(content))
+	for _, value := range content {
+		input, ok := value.(map[string]any)
+		if !ok {
+			return "", errors.New("user message has invalid input")
+		}
+		inputs = append(inputs, input)
+	}
+	return inputText(inputs), nil
+}
+
+func (c *Client) queueUpdateLock(threadID string) *sync.Mutex {
+	c.queueMu.Lock()
+	defer c.queueMu.Unlock()
+	lock := c.queueUpdates[threadID]
+	if lock == nil {
+		lock = &sync.Mutex{}
+		c.queueUpdates[threadID] = lock
+	}
+	return lock
+}
+
+func queueTextDigest(text string) string {
+	digest := sha256.Sum256([]byte(text))
+	return fmt.Sprintf("%x", digest)
+}
+
+func (c *Client) loadQueueLedgerLocked() error {
+	c.connectionMu.Lock()
+	closed := c.closed
+	c.connectionMu.Unlock()
+	if closed {
+		return errors.New("Codex client is closed")
+	}
+	if c.queueLedgerLock != nil {
+		return errors.New("submission ledger transaction is already active")
+	}
+	lockPath := c.queueLedgerPath + ".lock"
+	if c.options.LegacySubmissionLedgerPath != "" {
+		if err := os.MkdirAll(filepath.Dir(c.queueLedgerPath), 0700); err != nil {
+			return err
+		}
+	}
+	lockFD, err := unix.Open(
+		lockPath, unix.O_CREAT|unix.O_RDWR|unix.O_CLOEXEC|unix.O_NOFOLLOW, 0o600,
+	)
+	if err != nil {
+		return fmt.Errorf("open submission ledger lock: %w", err)
+	}
+	lockFile := os.NewFile(uintptr(lockFD), lockPath)
+	lockInfo, err := lockFile.Stat()
+	if err != nil || !lockInfo.Mode().IsRegular() || lockInfo.Mode().Perm() != 0o600 {
+		_ = lockFile.Close()
+		return errors.New("submission ledger lock must be a mode-0600 regular file")
+	}
+	if err := unix.Flock(int(lockFile.Fd()), unix.LOCK_EX); err != nil {
+		_ = lockFile.Close()
+		return fmt.Errorf("lock submission ledger: %w", err)
+	}
+	c.queueLedgerLock = lockFile
+	readPath := c.queueLedgerPath
+	info, err := os.Lstat(readPath)
+	if errors.Is(err, os.ErrNotExist) && c.options.LegacySubmissionLedgerPath != "" {
+		legacy := c.options.LegacySubmissionLedgerPath
+		if legacy == c.queueLedgerPath {
+			return c.failQueueLedgerLocked(errors.New("legacy ledger must use a different path"))
+		}
+		if _, statErr := os.Lstat(legacy); statErr == nil {
+			fd, lockErr := unix.Open(legacy+".lock", unix.O_CREAT|unix.O_RDWR|unix.O_CLOEXEC|unix.O_NOFOLLOW, 0600)
+			if lockErr != nil {
+				return c.failQueueLedgerLocked(lockErr)
+			}
+			defer unix.Close(fd)
+			if lockErr := unix.Flock(fd, unix.LOCK_EX); lockErr != nil {
+				return c.failQueueLedgerLocked(lockErr)
+			}
+			defer unix.Flock(fd, unix.LOCK_UN)
+			readPath = legacy
+			info, err = os.Lstat(readPath)
+		} else if !errors.Is(statErr, os.ErrNotExist) {
+			return c.failQueueLedgerLocked(statErr)
+		}
+	}
+	if errors.Is(err, os.ErrNotExist) {
+		c.queueAttempts = make(map[string]map[string]string)
+		c.sendAttempts = make(map[string]map[string]sendAttempt)
+		c.queueDeletions = make(map[string]map[string]queueDeletionAttempt)
+		c.operations = make(map[string]string)
+		return nil
+	}
+	if err != nil {
+		return c.failQueueLedgerLocked(fmt.Errorf("inspect queue attempt ledger: %w", err))
+	}
+	if !info.Mode().IsRegular() || info.Mode().Perm() != 0o600 {
+		return c.failQueueLedgerLocked(
+			errors.New("queue attempt ledger must be a mode-0600 regular file"),
+		)
+	}
+	if info.Size() > queueLedgerMaxSize {
+		return c.failQueueLedgerLocked(errQueueLedgerTooLarge)
+	}
+	file, err := os.Open(readPath)
+	if err != nil {
+		return c.failQueueLedgerLocked(fmt.Errorf("open queue attempt ledger: %w", err))
+	}
+	defer file.Close()
+	decoder := json.NewDecoder(file)
+	decoder.DisallowUnknownFields()
+	var ledger queueAttemptLedger
+	if err := decoder.Decode(&ledger); err != nil {
+		return c.failQueueLedgerLocked(fmt.Errorf("decode queue attempt ledger: %w", err))
+	}
+	if ledger.Schema != 3 || ledger.Attempts == nil {
+		return c.failQueueLedgerLocked(errors.New("queue attempt ledger has an invalid schema"))
+	}
+	var trailing any
+	if err := decoder.Decode(&trailing); !errors.Is(err, io.EOF) {
+		return c.failQueueLedgerLocked(
+			errors.New("queue attempt ledger contains trailing JSON data"),
+		)
+	}
+	if ledger.Sends == nil {
+		ledger.Sends = make(map[string]map[string]sendAttempt)
+	}
+	if ledger.Operations == nil {
+		ledger.Operations = make(map[string]string)
+	}
+	if ledger.Deletions == nil {
+		ledger.Deletions = make(map[string]map[string]queueDeletionAttempt)
+	}
+	for threadID, attempts := range ledger.Attempts {
+		if threadID == "" || attempts == nil {
+			return c.failQueueLedgerLocked(
+				errors.New("queue attempt ledger contains an invalid thread"),
+			)
+		}
+		for clientID, digest := range attempts {
+			if clientID == "" || !validSubmissionDigest(digest) {
+				return c.failQueueLedgerLocked(
+					errors.New("queue attempt ledger contains an invalid attempt"),
+				)
+			}
+		}
+	}
+	for threadID, attempts := range ledger.Sends {
+		if threadID == "" || attempts == nil {
+			return c.failQueueLedgerLocked(
+				errors.New("queue attempt ledger contains an invalid send thread"),
+			)
+		}
+		for clientID, attempt := range attempts {
+			effectiveOptionsDigest := effectiveTurnOptionsDigest(attempt.OptionsDigest)
+			if clientID == "" || !validSubmissionDigest(attempt.Digest) ||
+				!validSubmissionDigest(effectiveOptionsDigest) ||
+				!validSendAttemptState(attempt) {
+				return c.failQueueLedgerLocked(
+					errors.New("queue attempt ledger contains an invalid send attempt"),
+				)
+			}
+			if attempt.Options != nil {
+				stored, optionsErr := normalizeTurnOptions(*attempt.Options)
+				if optionsErr != nil || stored.Digest != effectiveOptionsDigest {
+					return c.failQueueLedgerLocked(errors.New("queue attempt ledger contains invalid send options"))
+				}
+			}
+			if attempt.OptionsDigest == zeroTurnOptionsDigest() {
+				// A pre-release options-aware client could have written the
+				// canonical zero digest. Normalize it only in memory so the
+				// next ordinary ledger write restores parent-reader bytes.
+				attempt.OptionsDigest = ""
+				attempts[clientID] = attempt
+			}
+		}
+	}
+	for threadID, attempts := range ledger.Deletions {
+		if threadID == "" || attempts == nil {
+			return c.failQueueLedgerLocked(
+				errors.New("queue attempt ledger contains an invalid deletion thread"),
+			)
+		}
+		for queuedID, attempt := range attempts {
+			if queuedID == "" || attempt.ClientUserMessageID == "" ||
+				!validSubmissionDigest(attempt.Digest) {
+				return c.failQueueLedgerLocked(
+					errors.New("queue attempt ledger contains an invalid deletion attempt"),
+				)
+			}
+		}
+	}
+	for key, value := range ledger.Operations {
+		if !filepath.IsAbs(key) || value == "" {
+			return c.failQueueLedgerLocked(
+				errors.New("queue attempt ledger contains an invalid operation marker"),
+			)
+		}
+	}
+	c.queueAttempts = ledger.Attempts
+	c.sendAttempts = ledger.Sends
+	c.queueDeletions = ledger.Deletions
+	c.operations = ledger.Operations
+	if readPath != c.queueLedgerPath {
+		if err := c.writeQueueLedgerLocked(); err != nil {
+			return c.failQueueLedgerLocked(err)
+		}
+	}
+	return nil
+}
+
+func (c *Client) releaseQueueLedgerLocked() {
+	if c.queueLedgerLock == nil {
+		return
+	}
+	_ = c.queueLedgerLock.Close()
+	c.queueLedgerLock = nil
+}
+
+func (c *Client) failQueueLedgerLocked(err error) error {
+	c.releaseQueueLedgerLocked()
+	return err
+}
+
+func queueLedgerTransaction[T any](
+	c *Client, transaction func() (T, error),
+) (T, error) {
+	c.queueMu.Lock()
+	defer c.queueMu.Unlock()
+	if err := c.loadQueueLedgerLocked(); err != nil {
+		var zero T
+		return zero, err
+	}
+	defer c.releaseQueueLedgerLocked()
+	return transaction()
+}
+
+func queueLedgerAction(c *Client, action func() error) error {
+	_, err := queueLedgerTransaction(c, func() (struct{}, error) {
+		return struct{}{}, action()
+	})
+	return err
+}
+
+func validSendAttemptState(attempt sendAttempt) bool {
+	switch attempt.State {
+	case "prepared", "submitting":
+		return attempt.TurnID == ""
+	case "accepted":
+		return attempt.TurnID != ""
+	default:
+		return false
+	}
+}
+
+func (c *Client) writeQueueLedgerLocked() error {
+	if c.queueLedgerLock == nil {
+		return errors.New("submission ledger transaction is not active")
+	}
+	directory := filepath.Dir(c.queueLedgerPath)
+	encoded, err := json.Marshal(queueAttemptLedger{
+		Schema: 3, Attempts: c.queueAttempts, Sends: c.sendAttempts,
+		Deletions: c.queueDeletions, Operations: c.operations,
+	})
+	if err != nil {
+		return fmt.Errorf("encode queue attempt ledger: %w", err)
+	}
+	encoded = append(encoded, '\n')
+	if len(encoded) > queueLedgerMaxSize {
+		return errQueueLedgerTooLarge
+	}
+	temporary, err := os.CreateTemp(directory, ".submission-attempts-*")
+	if err != nil {
+		return fmt.Errorf("create queue attempt ledger: %w", err)
+	}
+	temporaryPath := temporary.Name()
+	defer os.Remove(temporaryPath)
+	if err := temporary.Chmod(0o600); err != nil {
+		temporary.Close()
+		return fmt.Errorf("protect queue attempt ledger: %w", err)
+	}
+	if _, err := temporary.Write(encoded); err != nil {
+		temporary.Close()
+		return fmt.Errorf("write queue attempt ledger: %w", err)
+	}
+	if err := temporary.Sync(); err != nil {
+		temporary.Close()
+		return fmt.Errorf("sync queue attempt ledger: %w", err)
+	}
+	if err := temporary.Close(); err != nil {
+		return fmt.Errorf("close queue attempt ledger: %w", err)
+	}
+	if err := os.Rename(temporaryPath, c.queueLedgerPath); err != nil {
+		return fmt.Errorf("replace queue attempt ledger: %w", err)
+	}
+	directoryHandle, err := os.Open(directory)
+	if err != nil {
+		return fmt.Errorf("open queue attempt ledger directory: %w", err)
+	}
+	defer directoryHandle.Close()
+	if err := directoryHandle.Sync(); err != nil {
+		return fmt.Errorf("sync queue attempt ledger directory: %w", err)
+	}
+	return nil
+}
+
+func validSubmissionDigest(digest string) bool {
+	if len(digest) != 64 {
+		return false
+	}
+	for _, character := range digest {
+		if !strings.ContainsRune("0123456789abcdef", character) {
+			return false
+		}
+	}
+	return true
+}
+
+func (c *Client) queueAttempt(threadID, clientID, text string) (bool, error) {
+	return queueLedgerTransaction(c, func() (bool, error) {
+		digest, ok := c.queueAttempts[threadID][clientID]
+		if ok && digest != queueTextDigest(text) {
+			return false, errors.New("queued message identity was reused with different text")
+		}
+		return ok, nil
+	})
+}
+
+func (c *Client) recordQueueAttempt(threadID, clientID, text string) error {
+	return queueLedgerAction(c, func() error {
+		attempts := c.queueAttempts
+		digest := queueTextDigest(text)
+		if existing, ok := attempts[threadID][clientID]; ok {
+			if existing != digest {
+				return errors.New("queued message identity was reused with different text")
+			}
+			return nil
+		}
+		// Queueing must not turn an earlier send receipt (or unknown outcome)
+		// into another native submission after the caller reconciled it.
+		if send, ok := c.sendAttempts[threadID][clientID]; ok &&
+			(send.State != "prepared" || send.Steered || send.Digest != digest) {
+			return errors.New("earlier message attempt must be reconciled before queueing")
+		}
+		if attempts[threadID] == nil {
+			attempts[threadID] = make(map[string]string)
+		}
+		attempts[threadID][clientID] = digest
+		if err := c.writeQueueLedgerLocked(); err != nil {
+			delete(attempts[threadID], clientID)
+			if len(attempts[threadID]) == 0 {
+				delete(attempts, threadID)
+			}
+			return err
+		}
+		return nil
+	})
+}
+
+func (c *Client) sendAttempt(
+	threadID, clientID, text, context string,
+) (sendAttempt, bool, error) {
+	return c.sendAttemptWithOptions(
+		threadID, clientID, text, context, zeroTurnOptionsDigest(),
+	)
+}
+
+func (c *Client) sendAttemptWithOptions(
+	threadID, clientID, text, context, optionsDigest string,
+) (sendAttempt, bool, error) {
+	type result struct {
+		attempt sendAttempt
+		found   bool
+	}
+	value, err := queueLedgerTransaction(c, func() (result, error) {
+		attempt, ok := c.sendAttempts[threadID][clientID]
+		if ok && (attempt.Digest != queueTextDigest(text) || attempt.Context != context ||
+			effectiveTurnOptionsDigest(attempt.OptionsDigest) != optionsDigest) {
+			return result{}, errors.New("message identity was reused for another action")
+		}
+		return result{attempt: attempt, found: ok}, nil
+	})
+	return value.attempt, value.found, err
+}
+
+func (c *Client) recordSendAttempt(
+	threadID, clientID, text, context string, steered bool,
+) error {
+	return c.recordSendAttemptWithOptions(
+		threadID, clientID, text, context, steered, TurnOptions{},
+	)
+}
+
+func (c *Client) recordSendAttemptWithOptions(
+	threadID, clientID, text, context string, steered bool, options TurnOptions,
+) error {
+	normalized, err := normalizeTurnOptions(options)
+	if err != nil {
+		return err
+	}
+	optionsDigest := normalized.Digest
+	return queueLedgerAction(c, func() error {
+		digest := queueTextDigest(text)
+		if existing, ok := c.sendAttempts[threadID][clientID]; ok {
+			if existing.Digest != digest || existing.Context != context || existing.Steered != steered ||
+				effectiveTurnOptionsDigest(existing.OptionsDigest) != optionsDigest {
+				return errors.New("message identity was reused for another action")
+			}
+			return nil
+		}
+		if c.sendAttempts[threadID] == nil {
+			c.sendAttempts[threadID] = make(map[string]sendAttempt)
+		}
+		attempt := sendAttempt{
+			Digest: digest, State: "prepared", Context: context,
+			OptionsDigest: persistedTurnOptionsDigest(optionsDigest), Steered: steered,
+		}
+		if optionsDigest != zeroTurnOptionsDigest() {
+			copied := cloneTurnOptions(options)
+			attempt.Options = &copied
+		}
+		c.sendAttempts[threadID][clientID] = attempt
+		if err := c.writeQueueLedgerLocked(); err != nil {
+			delete(c.sendAttempts[threadID], clientID)
+			if len(c.sendAttempts[threadID]) == 0 {
+				delete(c.sendAttempts, threadID)
+			}
+			return err
+		}
+		return nil
+	})
+}
+
+func cloneTurnOptions(options TurnOptions) TurnOptions {
+	copy := options
+	if options.AdditionalContext != nil {
+		copy.AdditionalContext = make(map[string]AdditionalContextEntry, len(options.AdditionalContext))
+		for source, entry := range options.AdditionalContext {
+			copy.AdditionalContext[source] = entry
+		}
+	}
+	if options.ThreadPolicy.MCPServer != nil {
+		server := *options.ThreadPolicy.MCPServer
+		server.Args = slices.Clone(server.Args)
+		copy.ThreadPolicy.MCPServer = &server
+	}
+	return copy
+}
+
+// OriginalSendOptions retrieves the exact options reserved by a prior send.
+// An application can use them to retry the same message after its defaults
+// change, without submitting a turn under a different model or policy.
+func (c *Client) OriginalSendOptions(threadID, text, clientID, actionContext string) (TurnOptions, bool, error) {
+	type result struct {
+		options TurnOptions
+		found   bool
+	}
+	value, err := queueLedgerTransaction(c, func() (result, error) {
+		attempt, found := c.sendAttempts[threadID][clientID]
+		if !found {
+			return result{}, nil
+		}
+		if attempt.Digest != queueTextDigest(text) || attempt.Context != actionContext {
+			return result{}, errors.New("message identity was reused for another action")
+		}
+		if attempt.Options == nil {
+			if effectiveTurnOptionsDigest(attempt.OptionsDigest) != zeroTurnOptionsDigest() {
+				return result{}, errors.New("original message options are unavailable")
+			}
+			return result{found: true}, nil
+		}
+		return result{options: cloneTurnOptions(*attempt.Options), found: true}, nil
+	})
+	return value.options, value.found, err
+}
+
+func (c *Client) markSendSubmitting(threadID, clientID string) error {
+	return queueLedgerAction(c, func() error {
+		attempt, ok := c.sendAttempts[threadID][clientID]
+		if !ok {
+			return errors.New("prepared message attempt disappeared")
+		}
+		if attempt.State == "submitting" {
+			return nil
+		}
+		if attempt.State != "prepared" {
+			return errors.New("message attempt was already accepted")
+		}
+		attempt.State = "submitting"
+		c.sendAttempts[threadID][clientID] = attempt
+		if err := c.writeQueueLedgerLocked(); err != nil {
+			attempt.State = "prepared"
+			c.sendAttempts[threadID][clientID] = attempt
+			return err
+		}
+		return nil
+	})
+}
+
+func (c *Client) markSendAccepted(threadID, clientID string, receipt SendReceipt) error {
+	return queueLedgerAction(c, func() error {
+		attempt, ok := c.sendAttempts[threadID][clientID]
+		if !ok {
+			return errors.New("submitted message attempt disappeared")
+		}
+		if receipt.TurnID == "" || receipt.ClientUserMessageID != clientID ||
+			receipt.Steered != attempt.Steered {
+			return errors.New("accepted message receipt does not match its attempt")
+		}
+		if attempt.State == "accepted" {
+			if attempt.TurnID != receipt.TurnID {
+				return errors.New("message identity was accepted by another turn")
+			}
+			return nil
+		}
+		if attempt.State != "submitting" {
+			return errors.New("message attempt was accepted before submission")
+		}
+		previous := attempt
+		attempt.State = "accepted"
+		attempt.TurnID = receipt.TurnID
+		c.sendAttempts[threadID][clientID] = attempt
+		if err := c.writeQueueLedgerLocked(); err != nil {
+			c.sendAttempts[threadID][clientID] = previous
+			return err
+		}
+		return nil
+	})
+}
+
+// AcknowledgeSends releases durable attempts only after their browser-owned
+// identities and text are also proven in the Codex transcript. An accepted
+// receipt additionally has to match its recorded turn. This server-side proof
+// keeps a lost acknowledgement response safely retryable after compaction.
+func (c *Client) AcknowledgeSends(
+	ctx context.Context, threadID string, acknowledgements []SendAcknowledgement,
+) ([]string, error) {
+	lock := c.queueUpdateLock(threadID)
+	lock.Lock()
+	defer lock.Unlock()
+
+	digests := make(map[string]string, len(acknowledgements))
+	expectedTurns := make(map[string]string)
+	if err := queueLedgerAction(c, func() error {
+		for _, acknowledgement := range acknowledgements {
+			digest := acknowledgement.Digest
+			if !validSubmissionDigest(digest) {
+				return errors.New("message acknowledgement has an invalid digest")
+			}
+			digests[acknowledgement.ClientUserMessageID] = digest
+			attempt, found := c.sendAttempts[threadID][acknowledgement.ClientUserMessageID]
+			if found && attempt.Digest != digest {
+				return errors.New("message identity was reused with different text")
+			}
+			if found && attempt.State == "accepted" {
+				expectedTurns[acknowledgement.ClientUserMessageID] = attempt.TurnID
+			}
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	proven := make(map[string]string, len(digests))
+	if len(digests) > 0 {
+		err := c.walkThreadItems(ctx, threadID, func(entry threadItemEntry) (bool, error) {
+			if stringValue(entry.Item["type"]) != "userMessage" {
+				return false, nil
+			}
+			clientID := stringValue(entry.Item["clientId"])
+			digest, wanted := digests[clientID]
+			if !wanted {
+				return false, nil
+			}
+			if entry.TurnID == "" {
+				return false, errors.New("acknowledged message has no turn identity")
+			}
+			if expectedTurn := expectedTurns[clientID]; expectedTurn != "" &&
+				entry.TurnID != expectedTurn {
+				return false, errors.New("message identity was accepted by another turn")
+			}
+			text, err := userMessageText(entry.Item)
+			if err != nil {
+				return false, fmt.Errorf("acknowledged message has invalid history: %w", err)
+			}
+			if queueTextDigest(text) != digest {
+				return false, errors.New("message identity was reused with different text")
+			}
+			proven[clientID] = entry.TurnID
+			return len(proven) == len(digests), nil
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return queueLedgerTransaction(c, func() ([]string, error) {
+		removed := make(map[string]sendAttempt)
+		for clientID := range proven {
+			attempt, found := c.sendAttempts[threadID][clientID]
+			if !found {
+				continue
+			}
+			if attempt.Digest != digests[clientID] {
+				return nil, errors.New("message identity changed during acknowledgement")
+			}
+			if attempt.State == "accepted" && attempt.TurnID != proven[clientID] {
+				return nil, errors.New("message identity was accepted by another turn")
+			}
+			removed[clientID] = attempt
+			delete(c.sendAttempts[threadID], clientID)
+		}
+		if len(c.sendAttempts[threadID]) == 0 {
+			delete(c.sendAttempts, threadID)
+		}
+		if len(removed) > 0 {
+			if err := c.writeQueueLedgerLocked(); err != nil {
+				if c.sendAttempts[threadID] == nil {
+					c.sendAttempts[threadID] = make(map[string]sendAttempt)
+				}
+				for clientID, attempt := range removed {
+					c.sendAttempts[threadID][clientID] = attempt
+				}
+				return nil, err
+			}
+		}
+		acknowledged := make([]string, 0, len(proven))
+		for _, acknowledgement := range acknowledgements {
+			if _, found := proven[acknowledgement.ClientUserMessageID]; found {
+				acknowledged = append(acknowledged, acknowledgement.ClientUserMessageID)
+			}
+		}
+		return acknowledged, nil
+	})
+}
+
+func (c *Client) clearQueueAttempt(threadID, clientID string) error {
+	return queueLedgerAction(c, func() error {
+		attempts := c.queueAttempts[threadID]
+		digest, ok := attempts[clientID]
+		if !ok {
+			return nil
+		}
+		delete(attempts, clientID)
+		if len(attempts) == 0 {
+			delete(c.queueAttempts, threadID)
+		}
+		if err := c.writeQueueLedgerLocked(); err != nil {
+			if c.queueAttempts[threadID] == nil {
+				c.queueAttempts[threadID] = make(map[string]string)
+			}
+			c.queueAttempts[threadID][clientID] = digest
+			return err
+		}
+		return nil
+	})
+}
+
+func (c *Client) queueDeletionAttempt(
+	threadID, queuedSubmissionID string,
+) (queueDeletionAttempt, bool, error) {
+	type result struct {
+		attempt queueDeletionAttempt
+		found   bool
+	}
+	value, err := queueLedgerTransaction(c, func() (result, error) {
+		attempt, ok := c.queueDeletions[threadID][queuedSubmissionID]
+		return result{attempt: attempt, found: ok}, nil
+	})
+	return value.attempt, value.found, err
+}
+
+func (c *Client) recordQueueDeletionAttempt(
+	threadID string, target QueueEntry,
+) (queueDeletionAttempt, error) {
+	return queueLedgerTransaction(c, func() (queueDeletionAttempt, error) {
+		attempt := queueDeletionAttempt{
+			ClientUserMessageID: target.ClientUserMessageID,
+			Digest:              queueTextDigest(target.Text),
+		}
+		if existing, ok := c.queueDeletions[threadID][target.ID]; ok {
+			if existing != attempt {
+				return queueDeletionAttempt{}, errors.New("queued deletion identity changed")
+			}
+			return existing, nil
+		}
+		if c.queueDeletions[threadID] == nil {
+			c.queueDeletions[threadID] = make(map[string]queueDeletionAttempt)
+		}
+		c.queueDeletions[threadID][target.ID] = attempt
+		if err := c.writeQueueLedgerLocked(); err != nil {
+			delete(c.queueDeletions[threadID], target.ID)
+			if len(c.queueDeletions[threadID]) == 0 {
+				delete(c.queueDeletions, threadID)
+			}
+			return queueDeletionAttempt{}, err
+		}
+		return attempt, nil
+	})
+}
+
+func (c *Client) clearQueueDeletionAndAttempt(
+	threadID, queuedSubmissionID, clientID string,
+) error {
+	return queueLedgerAction(c, func() error {
+		deletion, deleting := c.queueDeletions[threadID][queuedSubmissionID]
+		digest, queued := c.queueAttempts[threadID][clientID]
+		send, prepared := c.sendAttempts[threadID][clientID]
+		prepared = prepared && send.State == "prepared" && !send.Steered && send.Digest == digest && queued
+		if deleting && deletion.ClientUserMessageID != clientID {
+			return errors.New("queued deletion is bound to another message")
+		}
+		delete(c.queueDeletions[threadID], queuedSubmissionID)
+		if len(c.queueDeletions[threadID]) == 0 {
+			delete(c.queueDeletions, threadID)
+		}
+		delete(c.queueAttempts[threadID], clientID)
+		if prepared {
+			delete(c.sendAttempts[threadID], clientID)
+		}
+		if len(c.queueAttempts[threadID]) == 0 {
+			delete(c.queueAttempts, threadID)
+		}
+		if err := c.writeQueueLedgerLocked(); err != nil {
+			if prepared {
+				c.sendAttempts[threadID][clientID] = send
+			}
+			if deleting {
+				if c.queueDeletions[threadID] == nil {
+					c.queueDeletions[threadID] = make(map[string]queueDeletionAttempt)
+				}
+				c.queueDeletions[threadID][queuedSubmissionID] = deletion
+			}
+			if queued {
+				if c.queueAttempts[threadID] == nil {
+					c.queueAttempts[threadID] = make(map[string]string)
+				}
+				c.queueAttempts[threadID][clientID] = digest
+			}
+			return err
+		}
+		return nil
+	})
+}
+
+func (c *Client) RequireSubmissionAttemptsResolved(ctx context.Context, threadID string) error {
+	return c.requireSubmissionAttempts(ctx, threadID, false)
+}
+
+// RequireSubmissionAttemptsKnown accepts exact native queue receipts as known
+// work without loading the thread. Unlike Resolved, queued work may remain;
+// callers must apply their own idle/empty-queue gate before retirement.
+func (c *Client) RequireSubmissionAttemptsKnown(ctx context.Context, threadID string) error {
+	return c.requireSubmissionAttempts(ctx, threadID, true)
+}
+
+// RequireSubmissionAttemptsKnownExceptPreparedSend excludes only an exact,
+// nonqueued prepared send while checking every other submission normally.
+// It does not authorize dispatch or any other change to the thread.
+func (c *Client) RequireSubmissionAttemptsKnownExceptPreparedSend(
+	ctx context.Context, threadID, text, clientID, actionContext string, options TurnOptions,
+) error {
+	normalized, err := normalizeTurnOptions(options)
+	if err != nil {
+		return err
+	}
+	lock := c.queueUpdateLock(threadID)
+	lock.Lock()
+	defer lock.Unlock()
+	prepared, err := c.isPreparedSendWithOptions(
+		threadID, text, clientID, actionContext, normalized.Digest,
+	)
+	if err != nil {
+		return err
+	}
+	if !prepared {
+		return errors.New("message has no exact unsubmitted preparation")
+	}
+	return c.requireSubmissionAttemptsExcept(ctx, threadID, true, clientID)
+}
+
+func (c *Client) requireSubmissionAttempts(ctx context.Context, threadID string, allowQueued bool) error {
+	return c.requireSubmissionAttemptsExcept(ctx, threadID, allowQueued, "")
+}
+
+func (c *Client) requireSubmissionAttemptsExcept(ctx context.Context, threadID string, allowQueued bool, ownPreparedID string) error {
+	deletionCount, err := queueLedgerTransaction(c, func() (int, error) { return len(c.queueDeletions[threadID]), nil })
+	if err != nil {
+		return err
+	}
+	if deletionCount != 0 {
+		return fmt.Errorf("Codex thread %s has %d unresolved queue deletion(s); reopen its queue and retry deletion", threadID, deletionCount)
+	}
+
+	type resolutionSnapshot struct {
+		queueAttempts       map[string]string
+		unresolvedSendCount int
+	}
+	snapshot, err := queueLedgerTransaction(c, func() (resolutionSnapshot, error) {
+		attempts := make(map[string]string, len(c.queueAttempts[threadID]))
+		for clientID, digest := range c.queueAttempts[threadID] {
+			attempts[clientID] = digest
+		}
+		unresolved := 0
+		for clientID, attempt := range c.sendAttempts[threadID] {
+			if ownPreparedID != "" && clientID == ownPreparedID && attempt.State == "prepared" {
+				continue
+			}
+			// A prepared send may have been delegated to the native queue. Its
+			// exact queue identity is proved below, retaining options and context
+			// in the unchanged ledger without inventing a turn receipt.
+			if attempt.State != "accepted" &&
+				(attempt.State != "prepared" || attempt.Steered || attempts[clientID] != attempt.Digest) {
+				unresolved++
+			}
+		}
+		return resolutionSnapshot{
+			queueAttempts: attempts, unresolvedSendCount: unresolved,
+		}, nil
+	})
+	if err != nil {
+		return err
+	}
+	if snapshot.unresolvedSendCount > 0 {
+		return fmt.Errorf(
+			"Codex thread %s has %d unresolved message attempt(s)",
+			threadID, snapshot.unresolvedSendCount,
+		)
+	}
+	queueAttempts := snapshot.queueAttempts
+	if len(queueAttempts) == 0 {
+		return nil
+	}
+
+	resolved := make(map[string]string)
+	if allowQueued {
+		entries, err := c.ListQueue(ctx, threadID)
+		if err != nil {
+			return fmt.Errorf("reconcile queued message attempts: %w", err)
+		}
+		for _, entry := range entries {
+			if _, tracked := queueAttempts[entry.ClientUserMessageID]; !tracked {
+				continue
+			}
+			digest := queueTextDigest(entry.Text)
+			if existing, ok := resolved[entry.ClientUserMessageID]; ok && existing != digest {
+				return errors.New("queued message identity was reused with different text")
+			}
+			resolved[entry.ClientUserMessageID] = digest
+		}
+	}
+	err = c.walkThreadItems(ctx, threadID, func(entry threadItemEntry) (bool, error) {
+		if stringValue(entry.Item["type"]) != "userMessage" {
+			return false, nil
+		}
+		clientID := stringValue(entry.Item["clientId"])
+		if _, tracked := queueAttempts[clientID]; !tracked {
+			return false, nil
+		}
+		text, err := userMessageText(entry.Item)
+		if err != nil {
+			return false, fmt.Errorf("queued message attempt has invalid history: %w", err)
+		}
+		digest := queueTextDigest(text)
+		if existing, ok := resolved[clientID]; ok && existing != digest {
+			return false, errors.New("queued message identity was reused with different text")
+		}
+		resolved[clientID] = digest
+		return len(resolved) == len(queueAttempts), nil
+	})
+	if err != nil {
+		return fmt.Errorf("reconcile queued message attempts: %w", err)
+	}
+	unknown := 0
+	for clientID, digest := range queueAttempts {
+		resolvedDigest, ok := resolved[clientID]
+		if ok && resolvedDigest != digest {
+			return errors.New("queued message identity was reused with different text")
+		}
+		if !ok {
+			unknown++
+		}
+	}
+	if unknown > 0 {
+		return fmt.Errorf("Codex thread %s has %d unresolved queued message attempt(s)", threadID, unknown)
+	}
+	return nil
+}
+
+// ThreadOperationAttempt returns the thread bound to a durable operation for
+// directory. Directory is the canonical absolute working directory used as
+// the operation identity.
+func (c *Client) ThreadOperationAttempt(directory string) (string, error) {
+	if !filepath.IsAbs(directory) || filepath.Clean(directory) != directory {
+		return "", errors.New("thread operation directory must be canonical and absolute")
+	}
+	return queueLedgerTransaction(c, func() (string, error) {
+		return c.operations[directory], nil
+	})
+}
+
+// RecordThreadOperationAttempt durably binds an operation for directory to one
+// thread. Repeating the same binding is safe; rebinding fails closed.
+func (c *Client) RecordThreadOperationAttempt(directory, threadID string) error {
+	if !filepath.IsAbs(directory) || filepath.Clean(directory) != directory {
+		return errors.New("thread operation directory must be canonical and absolute")
+	}
+	if strings.TrimSpace(threadID) == "" {
+		return errors.New("thread operation requires a thread id")
+	}
+	return queueLedgerAction(c, func() error {
+		if existing := c.operations[directory]; existing != "" {
+			if existing != threadID {
+				return errors.New("thread operation directory is already bound to another thread")
+			}
+			return nil
+		}
+		c.operations[directory] = threadID
+		if err := c.writeQueueLedgerLocked(); err != nil {
+			delete(c.operations, directory)
+			return err
+		}
+		return nil
+	})
+}
+
+// ClearConversationAttempts clears all durable submission and operation state
+// for threadID after the caller has proved that the conversation is retired.
+func (c *Client) ClearConversationAttempts(threadID, directory string) error {
+	if strings.TrimSpace(threadID) == "" {
+		return errors.New("conversation attempt cleanup requires a thread id")
+	}
+	if !filepath.IsAbs(directory) || filepath.Clean(directory) != directory {
+		return errors.New("conversation attempt cleanup directory must be canonical and absolute")
+	}
+	return queueLedgerAction(c, func() error {
+		queueAttempts, queued := c.queueAttempts[threadID]
+		sendAttempts, sent := c.sendAttempts[threadID]
+		queueDeletions, deleting := c.queueDeletions[threadID]
+		operationValue, operationPending := c.operations[directory]
+		if operationPending && operationValue != threadID {
+			return errors.New("operation key is bound to another conversation")
+		}
+		if !queued && !sent && !deleting && !operationPending {
+			return nil
+		}
+		delete(c.queueAttempts, threadID)
+		delete(c.sendAttempts, threadID)
+		delete(c.queueDeletions, threadID)
+		delete(c.operations, directory)
+		if err := c.writeQueueLedgerLocked(); err != nil {
+			if queued {
+				c.queueAttempts[threadID] = queueAttempts
+			}
+			if sent {
+				c.sendAttempts[threadID] = sendAttempts
+			}
+			if deleting {
+				c.queueDeletions[threadID] = queueDeletions
+			}
+			if operationPending {
+				c.operations[directory] = operationValue
+			}
+			return err
+		}
+		return nil
+	})
+}
+
+// CompactAcceptedSendOptions discards original options for accepted sends in
+// an application-owned context. Their digests and receipts still bind retries
+// to the exact message and options. Callers must supply those options on retry;
+// OriginalSendOptions cannot recover nonzero options after compaction.
+func (c *Client) CompactAcceptedSendOptions(contextPrefix string) error {
+	if contextPrefix == "" {
+		return errors.New("send option compaction requires a context prefix")
+	}
+	return queueLedgerAction(c, func() error {
+		type savedOption struct {
+			threadID, clientID string
+			options            *TurnOptions
+		}
+		var changed []savedOption
+		for threadID, attempts := range c.sendAttempts {
+			for clientID, attempt := range attempts {
+				if attempt.State != "accepted" || attempt.Options == nil ||
+					!strings.HasPrefix(attempt.Context, contextPrefix) {
+					continue
+				}
+				changed = append(changed, savedOption{threadID, clientID, attempt.Options})
+				attempt.Options = nil
+				attempts[clientID] = attempt
+			}
+		}
+		if len(changed) == 0 {
+			return nil
+		}
+		if err := c.writeQueueLedgerLocked(); err != nil {
+			for _, saved := range changed {
+				attempt := c.sendAttempts[saved.threadID][saved.clientID]
+				attempt.Options = saved.options
+				c.sendAttempts[saved.threadID][saved.clientID] = attempt
+			}
+			return err
+		}
+		return nil
+	})
+}
+
+// ClearRetiredThreadAttempts removes only one proven-retired thread's durable
+// submission state. It deliberately preserves directory retirement markers,
+// including the root session's marker during member cleanup.
+func (c *Client) ClearRetiredThreadAttempts(threadID string) error {
+	if strings.TrimSpace(threadID) == "" {
+		return errors.New("thread attempt cleanup requires a thread id")
+	}
+	return queueLedgerAction(c, func() error {
+		queued, hasQueued := c.queueAttempts[threadID]
+		sent, hasSent := c.sendAttempts[threadID]
+		deletions, hasDeletions := c.queueDeletions[threadID]
+		if !hasQueued && !hasSent && !hasDeletions {
+			return nil
+		}
+		delete(c.queueAttempts, threadID)
+		delete(c.sendAttempts, threadID)
+		delete(c.queueDeletions, threadID)
+		if err := c.writeQueueLedgerLocked(); err != nil {
+			if hasQueued {
+				c.queueAttempts[threadID] = queued
+			}
+			if hasSent {
+				c.sendAttempts[threadID] = sent
+			}
+			if hasDeletions {
+				c.queueDeletions[threadID] = deletions
+			}
+			return err
+		}
+		return nil
+	})
+}
+
+func stringValue(value any) string {
+	result, _ := value.(string)
+	return result
+}
+
+func (c *Client) settingsParams(settings ThreadSettings, params map[string]any, config map[string]any) {
+	_, existingThread := params["threadId"]
+	c.applyThreadPolicy(params, settings.Policy, !existingThread || settings.Policy != (ThreadPolicy{}))
+	applyThreadMCP(config, settings.Policy)
+	if settings.Model != "" {
+		params["model"] = settings.Model
+	}
+	if settings.ModelProvider != "" {
+		params["modelProvider"] = settings.ModelProvider
+	}
+	if settings.ReasoningEffort != "" {
+		config["model_reasoning_effort"] = settings.ReasoningEffort
+	}
+}
+
+func applyThreadMCP(config map[string]any, policy ThreadPolicy) {
+	server := policy.MCPServer
+	if server == nil {
+		return
+	}
+	config["mcp_servers"] = map[string]any{
+		server.Name: map[string]any{
+			"command":       server.Command,
+			"args":          append([]string(nil), server.Args...),
+			"required":      true,
+			"enabled_tools": []string{server.Tool},
+			"tools":         map[string]any{server.Tool: map[string]any{"approval_mode": "approve"}},
+		},
+	}
+}
+
+func (c *Client) applyThreadPolicy(params map[string]any, policy ThreadPolicy, explicit bool) {
+	if !explicit && c.options.PreserveThreadInstructionsOnResume {
+		return
+	}
+	if policy.DeveloperInstructions != "" && c.options.DeveloperInstructions != "" {
+		params["developerInstructions"] = c.options.DeveloperInstructions + "\n\n" + policy.DeveloperInstructions
+	} else if policy.DeveloperInstructions != "" {
+		params["developerInstructions"] = policy.DeveloperInstructions
+	} else if c.options.DeveloperInstructions != "" {
+		params["developerInstructions"] = c.options.DeveloperInstructions
+	}
+	if policy.Sandbox != "" {
+		params["sandbox"] = policy.Sandbox
+	}
+	if policy.ApprovalPolicy != "" {
+		params["approvalPolicy"] = policy.ApprovalPolicy
+	}
+}
+
+func (c *Client) addRuntimeWorkspaceRoots(params map[string]any) error {
+	if len(c.options.RuntimeWorkspaceRoots) == 0 {
+		return nil
+	}
+	roots := make([]string, 0, len(c.options.RuntimeWorkspaceRoots))
+	for _, root := range c.options.RuntimeWorkspaceRoots {
+		if !filepath.IsAbs(root) || filepath.Clean(root) != root {
+			return fmt.Errorf("runtime workspace root is not canonical: %q", root)
+		}
+		if !slices.Contains(roots, root) {
+			roots = append(roots, root)
+		}
+	}
+	params["runtimeWorkspaceRoots"] = roots
+	return nil
+}
+
+func (c *Client) StartThread(ctx context.Context, cwd string, environment map[string]string) (string, error) {
+	return c.StartThreadWithSettings(ctx, cwd, environment, ThreadSettings{})
+}
+
+func (c *Client) StartThreadWithSettings(
+	ctx context.Context, cwd string, environment map[string]string, settings ThreadSettings,
+) (string, error) {
+	if err := validateThreadPolicy(settings.Policy); err != nil {
+		return "", err
+	}
+	if err := validateProjectID(settings.ProjectID); err != nil {
+		return "", err
+	}
+	var response struct {
+		Thread struct {
+			ID        string  `json:"id"`
+			Cwd       string  `json:"cwd"`
+			ProjectID *string `json:"projectId"`
+		} `json:"thread"`
+	}
+	config := map[string]any{
+		"shell_environment_policy": map[string]any{"set": environment},
+	}
+	params := map[string]any{
+		"cwd":    cwd,
+		"config": config,
+	}
+	if err := c.addRuntimeWorkspaceRoots(params); err != nil {
+		return "", err
+	}
+	c.settingsParams(settings, params, config)
+	if settings.ProjectID != "" {
+		params["projectId"] = settings.ProjectID
+	}
+	if err := c.Request(ctx, "thread/start", params, &response); err != nil {
+		return "", err
+	}
+	if response.Thread.ID == "" || response.Thread.Cwd != cwd {
+		return "", errors.New("thread/start returned no thread id or the wrong working directory")
+	}
+	if settings.ProjectID != "" && (response.Thread.ProjectID == nil || *response.Thread.ProjectID != settings.ProjectID) {
+		return "", errors.New("thread/start returned the wrong project ID")
+	}
+	return response.Thread.ID, nil
+}
+
+func (c *Client) ResumeThread(ctx context.Context, threadID, cwd string, environment map[string]string) (string, error) {
+	return c.ResumeThreadWithSettings(ctx, threadID, cwd, environment, ThreadSettings{})
+}
+
+// ReconcileThreadInstructions refreshes the package-owned thread instruction
+// without interrupting or changing an active turn.
+func (c *Client) ReconcileThreadInstructions(ctx context.Context, threadID string) error {
+	return c.ReconcileThreadInstructionsWithPolicy(ctx, threadID, ThreadPolicy{})
+}
+
+// ReconcileThreadInstructionsWithPolicy refreshes the common instructions and
+// an application-owned thread policy only while the thread is idle.
+func (c *Client) ReconcileThreadInstructionsWithPolicy(ctx context.Context, threadID string, policy ThreadPolicy) error {
+	if err := validateThreadPolicy(policy); err != nil {
+		return err
+	}
+	if err := c.RequireThreadTurnsIdle(ctx, threadID); err != nil {
+		return err
+	}
+	return c.resumeThreadWithPolicy(ctx, threadID, policy, true)
+}
+
+func (c *Client) ResumeThreadWithSettings(
+	ctx context.Context, threadID, cwd string, environment map[string]string, settings ThreadSettings,
+) (string, error) {
+	if err := validateThreadPolicy(settings.Policy); err != nil {
+		return "", err
+	}
+	if settings.ProjectID != "" {
+		return "", errors.New("thread project ID can only be selected at start")
+	}
+	var response struct {
+		Thread struct {
+			ID  string `json:"id"`
+			Cwd string `json:"cwd"`
+		} `json:"thread"`
+	}
+	config := map[string]any{
+		"shell_environment_policy": map[string]any{"set": environment},
+	}
+	params := c.threadResumeParams(threadID)
+	params["cwd"] = cwd
+	params["config"] = config
+	c.settingsParams(settings, params, config)
+	if err := c.resumeApplyingExecutionPolicy(ctx, threadID, params, settings.Policy, &response); err != nil {
+		return "", err
+	}
+	if response.Thread.ID != threadID || response.Thread.Cwd != cwd {
+		return "", errors.New("thread/resume returned the wrong thread or working directory")
+	}
+	return response.Thread.ID, nil
+}
+
+func (c *Client) OpenThread(ctx context.Context, threadID, cwd string, environment map[string]string) (string, error) {
+	return c.OpenThreadWithSettings(ctx, threadID, cwd, environment, ThreadSettings{})
+}
+
+func (c *Client) OpenThreadWithSettings(
+	ctx context.Context, threadID, cwd string, environment map[string]string, settings ThreadSettings,
+) (string, error) {
+	if threadID != "" {
+		return c.ResumeThreadWithSettings(ctx, threadID, cwd, environment, settings)
+	}
+	return c.StartThreadWithSettings(ctx, cwd, environment, settings)
+}
+
+func (c *Client) LoadedThreadIDs(ctx context.Context) ([]string, error) {
+	ids := make([]string, 0)
+	seenCursors := make(map[string]struct{})
+	var cursor string
+	for {
+		params := map[string]any{"limit": 100}
+		if cursor != "" {
+			params["cursor"] = cursor
+		}
+		var page struct {
+			Data       *[]string `json:"data"`
+			NextCursor *string   `json:"nextCursor"`
+		}
+		if err := c.Request(ctx, "thread/loaded/list", params, &page); err != nil {
+			return nil, err
+		}
+		if page.Data == nil {
+			return nil, errors.New("thread/loaded/list returned no data")
+		}
+		for _, id := range *page.Data {
+			if id == "" {
+				return nil, errors.New("thread/loaded/list returned an empty thread id")
+			}
+			ids = append(ids, id)
+		}
+		if page.NextCursor == nil {
+			return ids, nil
+		}
+		if *page.NextCursor == "" {
+			return nil, errors.New("thread/loaded/list returned an empty pagination cursor")
+		}
+		if _, exists := seenCursors[*page.NextCursor]; exists {
+			return nil, errors.New("thread/loaded/list repeated a pagination cursor")
+		}
+		seenCursors[*page.NextCursor] = struct{}{}
+		cursor = *page.NextCursor
+	}
+}
+
+func (c *Client) ReadThreadMetadata(
+	ctx context.Context, threadID string, excludeTurns bool,
+) (ThreadMetadata, error) {
+	var response struct {
+		Thread ThreadMetadata `json:"thread"`
+	}
+	params := map[string]any{"threadId": threadID}
+	if excludeTurns {
+		params["excludeTurns"] = true
+	}
+	if err := c.Request(ctx, "thread/read", params, &response); err != nil {
+		if IsThreadNotFound(err, threadID) {
+			return ThreadMetadata{}, &ThreadNotFoundError{ThreadID: threadID, Cause: err}
+		}
+		return ThreadMetadata{}, err
+	}
+	if response.Thread.ID != threadID {
+		return ThreadMetadata{}, errors.New("thread/read returned the wrong thread")
+	}
+	return response.Thread, nil
+}
+
+func (c *Client) ListThreads(
+	ctx context.Context, options ThreadListOptions,
+) ([]ThreadMetadata, *string, error) {
+	if err := validateProjectID(options.ProjectID); err != nil {
+		return nil, nil, err
+	}
+	params := map[string]any{}
+	if options.Cwd != "" {
+		params["cwd"] = options.Cwd
+	}
+	if options.ProjectID != "" {
+		params["projectId"] = options.ProjectID
+	}
+	if len(options.SourceKinds) > 0 {
+		params["sourceKinds"] = append([]string(nil), options.SourceKinds...)
+	}
+	if options.Archived != nil {
+		params["archived"] = *options.Archived
+	}
+	if options.Limit > 0 {
+		params["limit"] = options.Limit
+	}
+	if options.SortDirection != "" {
+		params["sortDirection"] = options.SortDirection
+	}
+	if options.Cursor != "" {
+		params["cursor"] = options.Cursor
+	}
+	if options.UseStateDBOnly {
+		params["useStateDbOnly"] = true
+	}
+	var page struct {
+		Data       *[]ThreadMetadata `json:"data"`
+		NextCursor *string           `json:"nextCursor"`
+	}
+	if err := c.Request(ctx, "thread/list", params, &page); err != nil {
+		return nil, nil, err
+	}
+	if page.Data == nil {
+		return nil, nil, errors.New("thread/list returned no data")
+	}
+	if options.ProjectID != "" {
+		for _, thread := range *page.Data {
+			if thread.ProjectID == nil || *thread.ProjectID != options.ProjectID {
+				return nil, nil, errors.New("thread/list returned a thread outside the requested project")
+			}
+		}
+	}
+	return *page.Data, page.NextCursor, nil
+}
+
+func (c *Client) UnarchiveThread(ctx context.Context, threadID string) (ThreadMetadata, error) {
+	var response struct {
+		Thread ThreadMetadata `json:"thread"`
+	}
+	if err := c.Request(ctx, "thread/unarchive", map[string]any{"threadId": threadID}, &response); err != nil {
+		return ThreadMetadata{}, err
+	}
+	if response.Thread.ID != threadID {
+		return ThreadMetadata{}, errors.New("thread/unarchive returned the wrong thread")
+	}
+	return response.Thread, nil
+}
+
+func (c *Client) ArchiveThread(ctx context.Context, threadID string) error {
+	return c.Request(ctx, "thread/archive", map[string]any{"threadId": threadID}, nil)
+}
+
+func (c *Client) ListModels(ctx context.Context) ([]Model, error) {
+	models := make([]Model, 0)
+	seenCursors := make(map[string]struct{})
+	var cursor string
+	for {
+		params := map[string]any{"limit": 100, "includeHidden": false}
+		if cursor != "" {
+			params["cursor"] = cursor
+		}
+		var page struct {
+			Data       *[]Model `json:"data"`
+			NextCursor *string  `json:"nextCursor"`
+		}
+		if err := c.Request(ctx, "model/list", params, &page); err != nil {
+			return nil, err
+		}
+		if page.Data == nil {
+			return nil, errors.New("model/list returned no data")
+		}
+		models = append(models, (*page.Data)...)
+		if page.NextCursor == nil {
+			return models, nil
+		}
+		if *page.NextCursor == "" {
+			return nil, errors.New("model/list returned an empty pagination cursor")
+		}
+		if _, ok := seenCursors[*page.NextCursor]; ok {
+			return nil, errors.New("model/list repeated a pagination cursor")
+		}
+		seenCursors[*page.NextCursor] = struct{}{}
+		cursor = *page.NextCursor
+	}
+}
+
+// ReadAccountRateLimits reads the connected account's current allowances.
+// Applications decide which buckets to display and authorize account-level
+// reads separately from the conversation handler.
+func (c *Client) ReadAccountRateLimits(ctx context.Context) (AccountRateLimits, error) {
+	var limits AccountRateLimits
+	err := c.Request(ctx, "account/rateLimits/read", nil, &limits)
+	return limits, err
+}
+
+// ConsumeRateLimitResetCredit redeems one reset. Reuse the key for every retry
+// of the same logical attempt; an empty creditID lets the backend select a credit.
+// Applications must authorize this account-level mutation independently.
+func (c *Client) ConsumeRateLimitResetCredit(ctx context.Context, key, creditID string) (ResetCreditResult, error) {
+	var result ResetCreditResult
+	if strings.TrimSpace(key) == "" {
+		return result, errors.New("reset idempotency key is required")
+	}
+	params := map[string]string{"idempotencyKey": key}
+	if creditID != "" {
+		params["creditId"] = creditID
+	}
+	err := c.Request(ctx, "account/rateLimitResetCredit/consume", params, &result)
+	if err == nil {
+		switch result.Outcome {
+		case "reset", "alreadyRedeemed", "nothingToReset", "noCredit":
+		default:
+			err = errors.New("unknown reset-credit outcome")
+		}
+	}
+	return result, err
+}
+
+func (c *Client) ListCollaborationModes(ctx context.Context) ([]CollaborationMode, error) {
+	var response struct {
+		Data *[]struct {
+			Name string  `json:"name"`
+			Mode *string `json:"mode"`
+		} `json:"data"`
+	}
+	if err := c.Request(ctx, "collaborationMode/list", map[string]any{}, &response); err != nil {
+		return nil, err
+	}
+	if response.Data == nil {
+		return nil, errors.New("collaborationMode/list returned no data")
+	}
+	modes := make([]CollaborationMode, 0, len(*response.Data))
+	seen := make(map[string]struct{})
+	for _, entry := range *response.Data {
+		if entry.Mode == nil || *entry.Mode == "" || entry.Name == "" {
+			continue
+		}
+		if _, exists := seen[*entry.Mode]; exists {
+			return nil, fmt.Errorf("collaborationMode/list repeated mode %q", *entry.Mode)
+		}
+		seen[*entry.Mode] = struct{}{}
+		modes = append(modes, CollaborationMode{Name: entry.Name, Mode: *entry.Mode})
+	}
+	return modes, nil
+}
+
+func (c *Client) cachedSettings(threadID string) (cachedThreadSettings, <-chan struct{}, bool) {
+	c.connectionMu.Lock()
+	generation := c.generation
+	ready := c.ready
+	c.connectionMu.Unlock()
+	c.settingsMu.Lock()
+	defer c.settingsMu.Unlock()
+	entry, ok := c.threadSettings[threadID]
+	if !ok || entry.generation != generation || ready != generation {
+		entry = cachedThreadSettings{}
+		ok = false
+	}
+	return entry, c.settingsChanged, ok
+}
+
+func (c *Client) waitForSettings(
+	ctx context.Context,
+	threadID string,
+	after uint64,
+	match func(ThreadSettings) bool,
+) (cachedThreadSettings, error) {
+	for {
+		entry, changed, ok := c.cachedSettings(threadID)
+		if ok && entry.revision > after && (match == nil || match(entry.settings)) {
+			return entry, nil
+		}
+		select {
+		case <-ctx.Done():
+			return cachedThreadSettings{}, fmt.Errorf("wait for Codex thread settings: %w", ctx.Err())
+		case <-changed:
+		}
+	}
+}
+
+type threadSettingsMetadata struct {
+	settings ThreadSettings
+	path     string
+}
+
+func (c *Client) settingsRevisionSnapshot() uint64 {
+	c.settingsMu.Lock()
+	defer c.settingsMu.Unlock()
+	return c.settingsRevision
+}
+
+func (c *Client) readThreadSettingsMetadata(
+	ctx context.Context, threadID string,
+) (threadSettingsMetadata, error) {
+	var metadata struct {
+		Thread map[string]any `json:"thread"`
+	}
+	if err := c.Request(ctx, "thread/read", map[string]any{
+		"threadId": threadID, "excludeTurns": true,
+	}, &metadata); err != nil {
+		return threadSettingsMetadata{}, err
+	}
+	if metadata.Thread == nil || stringValue(metadata.Thread["id"]) != threadID {
+		return threadSettingsMetadata{}, errors.New("thread/read returned the wrong settings thread")
+	}
+	model := stringValue(metadata.Thread["model"])
+	if model == "" {
+		return threadSettingsMetadata{}, errors.New("thread/read returned incomplete current settings")
+	}
+	path := stringValue(metadata.Thread["path"])
+	if path == "" {
+		return threadSettingsMetadata{}, errors.New("thread/read returned no rollout path")
+	}
+	return threadSettingsMetadata{path: path, settings: ThreadSettings{
+		Model:           model,
+		ReasoningEffort: stringValue(metadata.Thread["reasoningEffort"]),
+	}}, nil
+
+}
+
+func (c *Client) ReadThreadSettings(ctx context.Context, threadID string) (ThreadSettings, error) {
+	metadata, err := c.readThreadSettingsMetadata(ctx, threadID)
+	if err != nil {
+		return ThreadSettings{}, err
+	}
+	return metadata.settings, nil
+}
+
+func (c *Client) refreshThreadSettings(ctx context.Context, threadID string) (cachedThreadSettings, error) {
+	const stabilityAttempts = 3
+	for attempt := 0; attempt < stabilityAttempts; attempt++ {
+		before := c.settingsRevisionSnapshot()
+		first, err := c.readThreadSettingsMetadata(ctx, threadID)
+		if err != nil {
+			return cachedThreadSettings{}, err
+		}
+		firstMode, err := collaborationModeFromRollout(first.path)
+		if err != nil {
+			return cachedThreadSettings{}, fmt.Errorf("read current collaboration mode: %w", err)
+		}
+		second, err := c.readThreadSettingsMetadata(ctx, threadID)
+		if err != nil {
+			return cachedThreadSettings{}, err
+		}
+		secondMode, err := collaborationModeFromRollout(second.path)
+		if err != nil {
+			return cachedThreadSettings{}, fmt.Errorf("read current collaboration mode: %w", err)
+		}
+		after := c.settingsRevisionSnapshot()
+		if before != after || first != second || firstMode != secondMode {
+			continue
+		}
+		first.settings.CollaborationMode = firstMode
+		return cachedThreadSettings{revision: after, settings: first.settings}, nil
+	}
+	return cachedThreadSettings{}, errors.New("Codex thread settings did not stabilize while being read")
+}
+
+func (c *Client) settingsUpdateLock(threadID string) *sync.Mutex {
+	c.settingsUpdateMu.Lock()
+	defer c.settingsUpdateMu.Unlock()
+	lock := c.settingsUpdates[threadID]
+	if lock == nil {
+		lock = &sync.Mutex{}
+		c.settingsUpdates[threadID] = lock
+	}
+	return lock
+}
+
+func (c *Client) UpdateThreadSettings(
+	ctx context.Context, threadID string, update ThreadSettingsUpdate,
+) (ThreadSettings, error) {
+	if update.ReasoningEffort != nil && *update.ReasoningEffort == "" {
+		return ThreadSettings{}, errors.New("Codex cannot clear reasoning effort on an existing thread")
+	}
+	lock := c.settingsUpdateLock(threadID)
+	lock.Lock()
+	defer lock.Unlock()
+	watchTransition := c.watchLock(threadID)
+	watchTransition.Lock()
+	defer watchTransition.Unlock()
+	if err := c.resumeThread(ctx, threadID); err != nil {
+		return ThreadSettings{}, fmt.Errorf("subscribe to Codex thread settings: %w", err)
+	}
+	current, err := c.refreshThreadSettings(ctx, threadID)
+	if err != nil {
+		return ThreadSettings{}, err
+	}
+	desired := current.settings
+	if update.Model != nil {
+		desired.Model = *update.Model
+	}
+	if update.ReasoningEffort != nil {
+		desired.ReasoningEffort = *update.ReasoningEffort
+	}
+	if update.CollaborationMode != nil {
+		desired.CollaborationMode = *update.CollaborationMode
+	}
+	if desired.Model == "" || desired.CollaborationMode == "" {
+		return ThreadSettings{}, errors.New("Codex returned incomplete current thread settings")
+	}
+	if desired == current.settings {
+		return desired, nil
+	}
+	params := map[string]any{"threadId": threadID}
+	if update.Model != nil {
+		params["model"] = desired.Model
+	}
+	if update.ReasoningEffort != nil {
+		params["effort"] = nil
+		if desired.ReasoningEffort != "" {
+			params["effort"] = desired.ReasoningEffort
+		}
+	}
+	if update.CollaborationMode != nil {
+		// The thread-level developer instruction is independent of collaboration
+		// mode instructions. Keep this nil so Codex supplies the built-in Default
+		// or Plan instructions instead of replacing them with the lifecycle policy.
+		modeSettings := map[string]any{
+			"model":                  desired.Model,
+			"reasoning_effort":       nil,
+			"developer_instructions": nil,
+		}
+		if desired.ReasoningEffort != "" {
+			modeSettings["reasoning_effort"] = desired.ReasoningEffort
+		}
+		params["collaborationMode"] = map[string]any{
+			"mode": desired.CollaborationMode, "settings": modeSettings,
+		}
+	}
+	var response map[string]any
+	if err := c.Request(ctx, "thread/settings/update", params, &response); err != nil {
+		return ThreadSettings{}, err
+	}
+	updated, err := c.waitForSettings(
+		ctx,
+		threadID,
+		current.revision,
+		func(actual ThreadSettings) bool {
+			if update.CollaborationMode != nil {
+				return actual == desired
+			}
+			return (update.Model == nil || actual.Model == desired.Model) &&
+				(update.ReasoningEffort == nil || actual.ReasoningEffort == desired.ReasoningEffort)
+		},
+	)
+	if err != nil {
+		return ThreadSettings{}, err
+	}
+	return updated.settings, nil
+}
+
+func (c *Client) ForkThread(
+	ctx context.Context, threadID, cwd string, environment map[string]string, settings ThreadSettings,
+) (string, error) {
+	if err := validateThreadPolicy(settings.Policy); err != nil {
+		return "", err
+	}
+	if settings.ProjectID != "" {
+		return "", errors.New("thread project ID cannot be selected when forking")
+	}
+	if err := c.RequireThreadTurnsIdle(ctx, threadID); err != nil {
+		return "", err
+	}
+	config := map[string]any{"shell_environment_policy": map[string]any{"set": environment}}
+	params := map[string]any{
+		"threadId": threadID, "cwd": cwd, "excludeTurns": true,
+		"deferGoalContinuation": true,
+		"config":                config,
+	}
+	if err := c.addRuntimeWorkspaceRoots(params); err != nil {
+		return "", err
+	}
+	c.settingsParams(settings, params, config)
+	var response struct {
+		Thread struct {
+			ID           string `json:"id"`
+			Cwd          string `json:"cwd"`
+			ForkedFromID string `json:"forkedFromId"`
+		} `json:"thread"`
+	}
+	if err := c.Request(ctx, "thread/fork", params, &response); err != nil {
+		return "", err
+	}
+	if response.Thread.ID == "" || response.Thread.ID == threadID || response.Thread.Cwd != cwd ||
+		response.Thread.ForkedFromID != threadID {
+		return "", errors.New("thread/fork returned invalid thread metadata")
+	}
+	return response.Thread.ID, nil
+}
+
+func (c *Client) SetName(ctx context.Context, threadID, name string) error {
+	return c.Request(ctx, "thread/name/set", map[string]any{"threadId": threadID, "name": name}, nil)
+}
+
+func (c *Client) ReadThread(ctx context.Context, threadID string) (Transcript, error) {
+	if c.options.HistoryReader != nil {
+		return c.readRecentThread(ctx, threadID)
+	}
+	var metadata struct {
+		Thread map[string]any `json:"thread"`
+	}
+	if err := c.Request(ctx, "thread/read", map[string]any{
+		"threadId": threadID, "excludeTurns": true,
+	}, &metadata); err != nil {
+		return Transcript{}, fmt.Errorf("read Codex thread metadata: %w", err)
+	}
+	if metadata.Thread == nil {
+		return Transcript{}, errors.New("thread/read returned no thread")
+	}
+	if stringValue(metadata.Thread["id"]) != threadID {
+		return Transcript{}, errors.New("thread/read returned the wrong thread")
+	}
+	transcript := Transcript{
+		ThreadID:          threadID,
+		Status:            statusValue(metadata.Thread["status"]),
+		Model:             stringValue(metadata.Thread["model"]),
+		ReasoningEffort:   stringValue(metadata.Thread["reasoningEffort"]),
+		CollaborationMode: "default",
+		Entries:           make([]TranscriptEntry, 0),
+	}
+	if settings, _, ok := c.cachedSettings(threadID); ok {
+		transcript.CollaborationMode = settings.settings.CollaborationMode
+	}
+	var page struct {
+		Data *[]map[string]any `json:"data"`
+	}
+	if err := c.Request(ctx, "thread/turns/list", map[string]any{
+		"threadId": threadID, "limit": recentTurnLimit, "sortDirection": "desc", "itemsView": "full",
+	}, &page); err != nil {
+		if c.freshThreadMissingSourceRollout(metadata.Thread, threadID, err) {
+			return transcript, nil
+		}
+		return Transcript{}, fmt.Errorf("read Codex thread turns: %w", err)
+	}
+	if page.Data == nil {
+		return Transcript{}, errors.New("thread/turns/list returned no data")
+	}
+	slices.Reverse(*page.Data)
+	for _, turn := range *page.Data {
+		transcript.LatestTurnID = stringValue(turn["id"])
+		transcript.Entries = append(transcript.Entries, transcriptEntries(turn)...)
+	}
+	wanted := make(map[transcriptItemKey]bool, len(transcript.Entries))
+	for _, entry := range transcript.Entries {
+		if entry.ItemID != "" {
+			wanted[transcriptItemKey{entry.TurnID, entry.ItemID}] = true
+		}
+	}
+	rollout, err := readRolloutMetadata(stringValue(metadata.Thread["path"]), wanted)
+	if err == nil && rollout.mode != "" {
+		transcript.CollaborationMode = rollout.mode
+	}
+	c.applyTranscriptTimestamps(threadID, transcript.Entries, rollout.itemTimes)
+	file, _ := pageFile(stringValue(metadata.Thread["path"]))
+	c.presentCitations(threadID, pageIdentity(metadata.Thread), stringValue(metadata.Thread["path"]), c.pageGeneration(), file, transcript.Entries, c.pagedHistoryRequest)
+	return transcript, nil
+}
+
+func (c *Client) freshThreadMissingSourceRollout(thread map[string]any, threadID string, err error) bool {
+	var rpcErr *rpcCallError
+	if !errors.As(err, &rpcErr) || rpcErr.code != -32600 ||
+		!slices.Contains([]string{
+			"invalid paginated history lineage for " + threadID + ": missing source rollout",
+			"thread " + threadID + " is not materialized yet; thread/turns/list is unavailable before first user message",
+		}, rpcErr.message) {
+		return false
+	}
+	if stringValue(thread["id"]) != threadID || !c.threadSource(thread["source"]) ||
+		stringValue(thread["historyMode"]) != "paginated" || stringValue(thread["preview"]) != "" ||
+		stringValue(thread["forkedFromId"]) != "" ||
+		!slices.Contains([]string{"idle", "notLoaded"}, statusValue(thread["status"])) {
+		return false
+	}
+	ephemeral, ok := thread["ephemeral"].(bool)
+	if !ok || ephemeral {
+		return false
+	}
+	path := stringValue(thread["path"])
+	if path == "" || !filepath.IsAbs(path) || filepath.Clean(path) != path {
+		return false
+	}
+	turns, exists := thread["turns"]
+	if !exists || turns == nil {
+		return false
+	}
+	items, ok := turns.([]any)
+	if !ok || len(items) != 0 {
+		return false
+	}
+	_, statErr := os.Stat(path)
+	return errors.Is(statErr, os.ErrNotExist)
+}
+
+func (c *Client) VerifyThread(ctx context.Context, threadID, cwd string) error {
+	var metadata struct {
+		Thread map[string]any `json:"thread"`
+	}
+	if err := c.Request(ctx, "thread/read", map[string]any{
+		"threadId": threadID, "excludeTurns": true,
+	}, &metadata); err != nil {
+		return err
+	}
+	if metadata.Thread == nil || stringValue(metadata.Thread["id"]) != threadID ||
+		stringValue(metadata.Thread["cwd"]) != cwd {
+		return errors.New("Codex thread does not match the trusted working directory")
+	}
+	return nil
+}
+
+func (c *Client) RequireThreadIdle(ctx context.Context, threadID, cwd string) error {
+	if err := c.VerifyThread(ctx, threadID, cwd); err != nil {
+		return err
+	}
+	if err := c.RequireThreadTurnsIdle(ctx, threadID); err != nil {
+		return err
+	}
+	prompts, err := c.PromptsWithItems(ctx, threadID)
+	if err != nil {
+		return fmt.Errorf("inspect pending Codex requests: %w", err)
+	}
+	if len(prompts) > 0 {
+		return fmt.Errorf("Codex thread %s has %d pending request(s)", threadID, len(prompts))
+	}
+	queued, err := c.ListQueue(ctx, threadID)
+	if err != nil {
+		return fmt.Errorf("inspect queued Codex messages: %w", err)
+	}
+	if len(queued) > 0 {
+		return fmt.Errorf("Codex thread %s has %d queued message(s)", threadID, len(queued))
+	}
+	return c.RequireSubmissionAttemptsResolved(ctx, threadID)
+}
+
+func (c *Client) RequireThreadTurnsIdle(ctx context.Context, threadID string) error {
+	var page struct {
+		Data *[]struct {
+			ID     string `json:"id"`
+			Status string `json:"status"`
+		} `json:"data"`
+	}
+	if err := c.Request(ctx, "thread/turns/list", map[string]any{
+		"threadId": threadID, "limit": 1, "sortDirection": "desc", "itemsView": "notLoaded",
+	}, &page); err != nil {
+		var metadata struct {
+			Thread map[string]any `json:"thread"`
+		}
+		if readErr := c.Request(ctx, "thread/read", map[string]any{"threadId": threadID}, &metadata); readErr == nil &&
+			c.freshThreadMissingSourceRollout(metadata.Thread, threadID, err) {
+			return nil
+		}
+		return err
+	}
+	if page.Data == nil {
+		return errors.New("thread/turns/list returned no data")
+	}
+	if len(*page.Data) == 0 {
+		return nil
+	}
+	turn := (*page.Data)[0]
+	if turn.ID == "" || !slices.Contains([]string{"completed", "failed", "interrupted"}, turn.Status) {
+		return fmt.Errorf("Codex thread %s is not idle (latest turn %s has status %q)", threadID, turn.ID, turn.Status)
+	}
+	return nil
+}
+
+func transcriptEntries(turn map[string]any) []TranscriptEntry {
+	turnID := stringValue(turn["id"])
+	turnStatus := statusValue(turn["status"])
+	entries := make([]TranscriptEntry, 0)
+	items, _ := turn["items"].([]any)
+	for _, raw := range items {
+		item, ok := raw.(map[string]any)
+		if !ok {
+			entries = append(entries, TranscriptEntry{TurnID: turnID, Kind: "unknown", Summary: "Unknown Codex event", Details: jsonDetails(raw)})
+			continue
+		}
+		entry := TranscriptEntry{
+			TurnID: turnID, TurnStatus: turnStatus,
+			ItemID: stringValue(item["id"]), Kind: stringValue(item["type"]),
+		}
+		switch entry.Kind {
+		case "userMessage":
+			entry.Text = textContent(item["content"])
+			entry.QuestionReplies = parseAsyncQuestionReplies(entry.Text)
+			if len(entry.QuestionReplies) > 0 {
+				display := asyncQuestionReplyText(entry.QuestionReplies)
+				entry.DisplayText = &display
+			}
+			entry.ClientUserMessageID = stringValue(item["clientId"])
+			if canonicalText, err := userMessageText(item); err == nil {
+				entry.ClientUserMessageDigest = queueTextDigest(canonicalText)
+			}
+		case "agentMessage":
+			entry.Text = stringValue(item["text"])
+			entry.Delivery = stringValue(item["delivery"])
+			entry.Questions = asyncQuestions(entry.ItemID, item["questions"])
+		case "commandExecution":
+			entry.Summary = "$ " + stringValue(item["command"])
+			entry.Details = stringValue(item["aggregatedOutput"])
+			if entry.Details == "" {
+				entry.Details = jsonDetails(map[string]any{"status": item["status"], "exitCode": item["exitCode"]})
+			}
+		case "fileChange":
+			entry.Summary = "File changes"
+			if status := statusValue(item["status"]); status != "" {
+				entry.Summary += " · " + status
+			}
+			entry.Details = jsonDetails(item["changes"])
+		case "mcpToolCall":
+			server := stringValue(item["server"])
+			if server == "" {
+				server = "MCP"
+			}
+			tool := stringValue(item["tool"])
+			if tool == "" {
+				tool = "call"
+			}
+			entry.Summary = "Tool · " + server + "/" + tool
+			value := item["result"]
+			if value == nil {
+				value = item["error"]
+			}
+			if value == nil {
+				value = item["arguments"]
+			}
+			entry.Details = jsonDetails(value)
+		case "reasoning":
+			entry.Text = strings.Join(stringValues(item["summary"]), "\n")
+			if strings.TrimSpace(entry.Text) == "" {
+				continue
+			}
+			entry.Summary = "Reasoning summary"
+		case "plan":
+			entry.Summary = "Plan"
+			entry.Text = stringValue(item["text"])
+		case "webSearch", "collabAgentToolCall", "subAgentActivity":
+			normalizeTranscriptActivity(&entry, item)
+		default:
+			if entry.Kind == "" {
+				entry.Kind = "unknown"
+			}
+			entry.Summary = "Codex event · " + entry.Kind
+			entry.Details = jsonDetails(item)
+		}
+		entries = append(entries, entry)
+	}
+	if failure := turn["error"]; failure != nil {
+		entries = append(entries, transcriptFailureEntry(turnID, failure))
+	} else if status := statusValue(turn["status"]); status == "failed" || status == "error" {
+		entries = append(entries, TranscriptEntry{TurnID: turnID, Kind: "error", Summary: "Turn " + status})
+	}
+	applyTurnTimestamps(entries, turn)
+	return entries
+}
+
+func transcriptFailureEntry(turnID string, failure any) TranscriptEntry {
+	entry := TranscriptEntry{TurnID: turnID, Kind: "error", Summary: "Turn failed"}
+	if object, ok := failure.(map[string]any); ok {
+		if message := strings.TrimSpace(stringValue(object["message"])); message != "" {
+			entry.Text = message
+			if stringValue(object["codexErrorInfo"]) != "serverOverloaded" {
+				entry.Details = jsonDetails(failure)
+			}
+			return entry
+		}
+	}
+	if message, ok := failure.(string); ok && strings.TrimSpace(message) != "" {
+		entry.Text = message
+		return entry
+	}
+	entry.Details = jsonDetails(failure)
+	return entry
+}
+
+func statusValue(value any) string {
+	if status := stringValue(value); status != "" {
+		return status
+	}
+	if object, ok := value.(map[string]any); ok {
+		return stringValue(object["type"])
+	}
+	return ""
+}
+
+func textContent(value any) string {
+	parts, _ := value.([]any)
+	text := make([]string, 0, len(parts))
+	for _, raw := range parts {
+		part, ok := raw.(map[string]any)
+		if ok && stringValue(part["type"]) == "text" {
+			text = append(text, stringValue(part["text"]))
+		}
+	}
+	return strings.Join(text, "\n")
+}
+
+func stringValues(value any) []string {
+	values, _ := value.([]any)
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		if text, ok := value.(string); ok {
+			result = append(result, text)
+		}
+	}
+	return result
+}
+
+func jsonDetails(value any) string {
+	if value == nil {
+		return ""
+	}
+	data, err := json.MarshalIndent(value, "", "  ")
+	if err != nil {
+		return "unable to render event details"
+	}
+	return string(data)
+}
+
+func (c *Client) resumeThread(ctx context.Context, threadID string) error {
+	return c.resumeThreadWithPolicy(ctx, threadID, ThreadPolicy{}, false)
+}
+
+// ActivateThread loads a retained conversation with the application's policy.
+// Loading can execute saved queues or active goals; callers must obtain explicit
+// user intent before calling this method for a cold conversation.
+func (c *Client) ActivateThread(ctx context.Context, threadID string, policy ThreadPolicy) error {
+	return c.ActivateThreadWithSettings(ctx, threadID, ThreadSettings{Policy: policy})
+}
+
+// ActivateThreadWithSettings applies settings as part of the explicit load,
+// without replacing the retained working directory or shell environment.
+func (c *Client) ActivateThreadWithSettings(ctx context.Context, threadID string, settings ThreadSettings) error {
+	policy := settings.Policy
+	if err := validateThreadPolicy(policy); err != nil {
+		return err
+	}
+	params := c.threadResumeParams(threadID)
+	config := map[string]any{}
+	c.settingsParams(settings, params, config)
+	if policy.MCPServer != nil {
+		applyThreadMCP(config, policy)
+	}
+	if len(config) != 0 {
+		params["config"] = config
+	}
+	var response struct {
+		Thread struct {
+			ID string `json:"id"`
+		} `json:"thread"`
+	}
+	if err := c.resumeApplyingExecutionPolicy(ctx, threadID, params, policy, &response); err != nil {
+		return err
+	}
+	if response.Thread.ID != threadID {
+		return errors.New("thread/resume returned another thread")
+	}
+	return nil
+}
+
+// HasActiveGoal reads durable goal state without loading the conversation.
+func (c *Client) HasActiveGoal(ctx context.Context, threadID string) (bool, error) {
+	var result struct {
+		Goal *struct {
+			ThreadID string `json:"threadId"`
+			Status   string `json:"status"`
+		} `json:"goal"`
+	}
+	if err := c.Request(ctx, "thread/goal/get", map[string]any{"threadId": threadID}, &result); err != nil {
+		var call *rpcCallError
+		if errors.As(err, &call) && call.code == -32600 && call.message == "goals feature is disabled" {
+			return false, nil
+		}
+		return false, err
+	}
+	if result.Goal == nil {
+		return false, nil
+	}
+	if result.Goal.ThreadID != threadID {
+		return false, errors.New("thread/goal/get returned another thread")
+	}
+	switch result.Goal.Status {
+	case "active":
+		return true, nil
+	case "paused", "blocked", "usageLimited", "budgetLimited", "complete":
+		return false, nil
+	default:
+		return false, errors.New("thread/goal/get returned an unknown goal status")
+	}
+}
+
+func (c *Client) resumeThreadWithPolicy(ctx context.Context, threadID string, policy ThreadPolicy, explicit bool) error {
+	var response map[string]any
+	params := c.threadResumeParams(threadID)
+	c.applyThreadPolicy(params, policy, explicit)
+	if policy.MCPServer != nil {
+		config := map[string]any{}
+		applyThreadMCP(config, policy)
+		params["config"] = config
+	}
+	return c.resumeApplyingExecutionPolicy(ctx, threadID, params, policy, &response)
+}
+
+// Warm resumes retain native permissions. Apply settings before resuming a
+// loaded thread so newly released queues/goals see the policy. Cold resumes
+// receive the policy in their load request. Settings updates affect subsequent
+// turns and preserve an already running turn's captured permissions.
+func (c *Client) resumeApplyingExecutionPolicy(ctx context.Context, threadID string, resume map[string]any, policy ThreadPolicy, response any) error {
+	update := executionPolicyUpdate(threadID, policy)
+	applied, err := c.applyLoadedExecutionPolicy(ctx, threadID, update)
+	if err != nil {
+		return err
+	}
+	if err := c.Request(ctx, "thread/resume", resume, response); err != nil {
+		return err
+	}
+	if len(update) != 0 && !applied {
+		return c.Request(ctx, "thread/settings/update", update, nil)
+	}
+	return nil
+}
+
+func executionPolicyUpdate(threadID string, policy ThreadPolicy) map[string]any {
+	update := map[string]any{"threadId": threadID}
+	if policy.Sandbox == "danger-full-access" {
+		update["sandboxPolicy"] = map[string]any{"type": "dangerFullAccess"}
+	}
+	if policy.ApprovalPolicy != "" {
+		update["approvalPolicy"] = policy.ApprovalPolicy
+	}
+	if len(update) == 1 {
+		return nil
+	}
+	return update
+}
+
+func (c *Client) applyLoadedExecutionPolicy(ctx context.Context, threadID string, update map[string]any) (bool, error) {
+	if len(update) == 0 {
+		return false, nil
+	}
+	metadata, err := c.ReadThreadMetadata(ctx, threadID, true)
+	if err != nil {
+		return false, err
+	}
+	if metadata.Status["type"] == "notLoaded" {
+		return false, nil
+	}
+	if err := c.Request(ctx, "thread/settings/update", update, nil); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (c *Client) threadResumeParams(threadID string) map[string]any {
+	params := map[string]any{"threadId": threadID, "excludeTurns": true}
+	if !c.options.ObserverOnly {
+		c.applyThreadPolicy(params, ThreadPolicy{}, false)
+	}
+	return params
+}
+
+func (c *Client) ListQueue(ctx context.Context, threadID string) ([]QueueEntry, error) {
+	entries := make([]QueueEntry, 0)
+	seenCursors := make(map[string]struct{})
+	seenIDs := make(map[string]struct{})
+	var cursor string
+	for {
+		params := map[string]any{"threadId": threadID, "limit": 100}
+		if cursor != "" {
+			params["cursor"] = cursor
+		}
+		var page struct {
+			Data *[]struct {
+				ID                  string           `json:"id"`
+				Input               []map[string]any `json:"input"`
+				ClientUserMessageID string           `json:"clientUserMessageId"`
+			} `json:"data"`
+			NextCursor *string `json:"nextCursor"`
+		}
+		if err := c.Request(ctx, "thread/queue/list", params, &page); err != nil {
+			return nil, err
+		}
+		if page.Data == nil {
+			return nil, errors.New("thread/queue/list returned no data")
+		}
+		for _, submission := range *page.Data {
+			if submission.ID == "" || submission.ClientUserMessageID == "" {
+				return nil, errors.New("thread/queue/list returned an invalid submission")
+			}
+			if _, exists := seenIDs[submission.ID]; exists {
+				return nil, fmt.Errorf("thread/queue/list repeated submission %q", submission.ID)
+			}
+			seenIDs[submission.ID] = struct{}{}
+			entries = append(entries, QueueEntry{
+				ID:                  submission.ID,
+				Text:                inputText(submission.Input),
+				ClientUserMessageID: submission.ClientUserMessageID,
+			})
+		}
+		if page.NextCursor == nil {
+			return entries, nil
+		}
+		if *page.NextCursor == "" {
+			return nil, errors.New("thread/queue/list returned an empty pagination cursor")
+		}
+		if _, exists := seenCursors[*page.NextCursor]; exists {
+			return nil, errors.New("thread/queue/list repeated a pagination cursor")
+		}
+		seenCursors[*page.NextCursor] = struct{}{}
+		cursor = *page.NextCursor
+	}
+}
+
+func (c *Client) Queue(ctx context.Context, threadID, text, clientID string) (QueueEntry, error) {
+	return c.QueueWithPolicy(ctx, threadID, text, clientID, ThreadPolicy{})
+}
+
+// QueueWithPolicy prepares loaded-thread permissions before adding work, since
+// native queue additions can execute immediately. It never loads a cold thread.
+func (c *Client) QueueWithPolicy(ctx context.Context, threadID, text, clientID string, policy ThreadPolicy) (QueueEntry, error) {
+	if err := validateThreadPolicy(policy); err != nil {
+		return QueueEntry{}, err
+	}
+	lock := c.queueUpdateLock(threadID)
+	lock.Lock()
+	defer lock.Unlock()
+	attempted, err := c.queueAttempt(threadID, clientID, text)
+	if err != nil {
+		return QueueEntry{}, err
+	}
+	if attempted {
+		existing, found, err := c.queuedOrStartedByClientID(ctx, threadID, clientID, text)
+		if err != nil {
+			return QueueEntry{}, err
+		}
+		if found {
+			return existing, nil
+		}
+		return QueueEntry{}, errors.New(
+			"previous queued message outcome is still unknown; refusing to submit it again",
+		)
+	}
+	if _, err := c.applyLoadedExecutionPolicy(ctx, threadID, executionPolicyUpdate(threadID, policy)); err != nil {
+		return QueueEntry{}, err
+	}
+	var response struct {
+		Submission struct {
+			ID                  string           `json:"id"`
+			Input               []map[string]any `json:"input"`
+			ClientUserMessageID string           `json:"clientUserMessageId"`
+		} `json:"queuedSubmission"`
+	}
+	if err := c.recordQueueAttempt(threadID, clientID, text); err != nil {
+		return QueueEntry{}, fmt.Errorf("record queue attempt before submission: %w", err)
+	}
+	requestErr := c.Request(ctx, "thread/queue/add", map[string]any{
+		"threadId":            threadID,
+		"input":               []map[string]any{{"type": "text", "text": text}},
+		"clientUserMessageId": clientID,
+	}, &response)
+	responseText := inputText(response.Submission.Input)
+	if requestErr == nil && response.Submission.ID != "" &&
+		response.Submission.ClientUserMessageID == clientID && responseText == text {
+		return QueueEntry{
+			ID: response.Submission.ID, Text: text, ClientUserMessageID: clientID,
+		}, nil
+	}
+	existing, found, reconcileErr := c.queuedOrStartedByClientID(ctx, threadID, clientID, text)
+	if reconcileErr != nil {
+		if requestErr != nil {
+			return QueueEntry{}, fmt.Errorf("%w; queue reconciliation failed: %v", requestErr, reconcileErr)
+		}
+		return QueueEntry{}, fmt.Errorf("thread/queue/add returned an invalid submission; reconciliation failed: %w", reconcileErr)
+	}
+	if found {
+		return existing, nil
+	}
+	if requestErr != nil {
+		return QueueEntry{}, requestErr
+	}
+	return QueueEntry{}, errors.New(
+		"thread/queue/add returned an invalid submission; refusing to retry an unknown outcome",
+	)
+}
+
+func (c *Client) queuedOrStartedByClientID(
+	ctx context.Context, threadID, clientID, text string,
+) (QueueEntry, bool, error) {
+	entries, err := c.ListQueue(ctx, threadID)
+	if err != nil {
+		return QueueEntry{}, false, err
+	}
+	for _, entry := range entries {
+		if entry.ClientUserMessageID != clientID {
+			continue
+		}
+		if entry.Text != text {
+			return QueueEntry{}, false, errors.New("queued message identity was reused with different text")
+		}
+		return entry, true, nil
+	}
+	return c.startedByClientID(ctx, threadID, clientID, text)
+}
+
+func (c *Client) startedByClientID(
+	ctx context.Context, threadID, clientID, text string,
+) (QueueEntry, bool, error) {
+	var result QueueEntry
+	found := false
+	err := c.walkThreadItems(ctx, threadID, func(entry threadItemEntry) (bool, error) {
+		if stringValue(entry.Item["type"]) != "userMessage" ||
+			stringValue(entry.Item["clientId"]) != clientID {
+			return false, nil
+		}
+		startedText, err := userMessageText(entry.Item)
+		if err != nil {
+			return false, fmt.Errorf("started queued message is invalid: %w", err)
+		}
+		if startedText != text {
+			return false, errors.New("queued message identity was reused with different text")
+		}
+		result = QueueEntry{
+			ID: stringValue(entry.Item["id"]), Text: startedText,
+			ClientUserMessageID: clientID,
+		}
+		found = true
+		return true, nil
+	})
+	if err != nil {
+		return QueueEntry{}, false, err
+	}
+	return result, found, nil
+}
+
+func (c *Client) waitForStartedByClientID(
+	ctx context.Context, threadID, clientID, text string,
+) (bool, error) {
+	for attempt := 0; attempt < 6; attempt++ {
+		_, found, err := c.startedByClientID(ctx, threadID, clientID, text)
+		if err != nil || found {
+			return found, err
+		}
+		if attempt == 5 {
+			break
+		}
+		timer := time.NewTimer(50 * time.Millisecond)
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			return false, ctx.Err()
+		case <-timer.C:
+		}
+	}
+	return false, nil
+}
+
+func (c *Client) sentByClientID(
+	ctx context.Context, threadID, clientID, text string,
+) (SendReceipt, bool, error) {
+	var receipt SendReceipt
+	found := false
+	err := c.walkThreadItems(ctx, threadID, func(entry threadItemEntry) (bool, error) {
+		if found {
+			if entry.TurnID == receipt.TurnID {
+				receipt.Steered = true
+			}
+			return true, nil
+		}
+		if stringValue(entry.Item["type"]) != "userMessage" ||
+			stringValue(entry.Item["clientId"]) != clientID {
+			return false, nil
+		}
+		sentText, err := userMessageText(entry.Item)
+		if err != nil {
+			return false, fmt.Errorf("sent message is invalid: %w", err)
+		}
+		if sentText != text {
+			return false, errors.New("message identity was reused with different text")
+		}
+		if entry.TurnID == "" {
+			return false, errors.New("sent message has no turn identity")
+		}
+		receipt = SendReceipt{TurnID: entry.TurnID, ClientUserMessageID: clientID}
+		found = true
+		return false, nil
+	})
+	if err != nil {
+		return SendReceipt{}, false, err
+	}
+	return receipt, found, nil
+}
+
+func (c *Client) waitForSentByClientID(
+	ctx context.Context, threadID, clientID, text string,
+) (SendReceipt, bool, error) {
+	for attempt := 0; attempt < 6; attempt++ {
+		receipt, found, err := c.sentByClientID(ctx, threadID, clientID, text)
+		if err != nil || found {
+			return receipt, found, err
+		}
+		if attempt == 5 {
+			break
+		}
+		timer := time.NewTimer(50 * time.Millisecond)
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			return SendReceipt{}, false, ctx.Err()
+		case <-timer.C:
+		}
+	}
+	return SendReceipt{}, false, nil
+}
+
+func (c *Client) DeleteQueueEntry(ctx context.Context, threadID, id string) error {
+	return c.DeleteQueueEntryWithCompletion(ctx, threadID, id, nil)
+}
+
+// DeleteQueueEntryWithCompletion retains the existing deletion intent until the
+// application durably records completion. The callback must be idempotent.
+func (c *Client) DeleteQueueEntryWithCompletion(ctx context.Context, threadID, id string, complete func() error) error {
+	updateLock := c.queueUpdateLock(threadID)
+	updateLock.Lock()
+	defer updateLock.Unlock()
+
+	attempt, attempted, err := c.queueDeletionAttempt(threadID, id)
+	if err != nil {
+		return err
+	}
+	entries, err := c.ListQueue(ctx, threadID)
+	if err != nil {
+		return err
+	}
+	var target *QueueEntry
+	for index := range entries {
+		if entries[index].ID == id {
+			target = &entries[index]
+			break
+		}
+	}
+	if target == nil {
+		if attempted {
+			return c.finishAbsentQueueDeletion(ctx, threadID, id, attempt, complete)
+		}
+		return errors.New("queued message was not found")
+	}
+	if target.ClientUserMessageID == "" {
+		return errors.New("queued message has no client identity")
+	}
+	current := queueDeletionAttempt{
+		ClientUserMessageID: target.ClientUserMessageID,
+		Digest:              queueTextDigest(target.Text),
+	}
+	if attempted {
+		if current != attempt {
+			return errors.New("queued message changed after deletion was requested")
+		}
+	} else {
+		attempt, err = c.recordQueueDeletionAttempt(threadID, *target)
+		if err != nil {
+			return err
+		}
+	}
+	var response struct {
+		Deleted bool `json:"deleted"`
+	}
+	if err := c.Request(ctx, "thread/queue/delete", map[string]any{
+		"threadId": threadID, "queuedSubmissionId": id,
+	}, &response); err != nil {
+		entries, reconcileErr := c.ListQueue(ctx, threadID)
+		if reconcileErr == nil && !queueContainsSubmission(entries, id) {
+			return c.finishAbsentQueueDeletion(ctx, threadID, id, attempt, complete)
+		}
+		return err
+	}
+	if !response.Deleted {
+		entries, err := c.ListQueue(ctx, threadID)
+		if err != nil {
+			return err
+		}
+		if queueContainsSubmission(entries, id) {
+			return errors.New("queued message deletion was not accepted")
+		}
+		return c.finishAbsentQueueDeletion(ctx, threadID, id, attempt, complete)
+	}
+	if complete != nil {
+		if err := complete(); err != nil {
+			return err
+		}
+	}
+	return c.clearQueueDeletionAndAttempt(threadID, id, attempt.ClientUserMessageID)
+}
+
+// ReconcileQueueDeletionsWithCompletion finishes only recorded deletions whose
+// queue entry is already absent. It never deletes a still-present queue entry,
+// so an application can call it under mutation authority before reading a queue.
+func (c *Client) ReconcileQueueDeletionsWithCompletion(ctx context.Context, threadID string, complete func(string) error) error {
+	lock := c.queueUpdateLock(threadID)
+	lock.Lock()
+	defer lock.Unlock()
+	attempts, err := queueLedgerTransaction(c, func() (map[string]queueDeletionAttempt, error) {
+		result := make(map[string]queueDeletionAttempt)
+		for id, attempt := range c.queueDeletions[threadID] {
+			result[id] = attempt
+		}
+		return result, nil
+	})
+	if err != nil || len(attempts) == 0 {
+		return err
+	}
+	entries, err := c.ListQueue(ctx, threadID)
+	if err != nil {
+		return err
+	}
+	for id, attempt := range attempts {
+		if queueContainsSubmission(entries, id) {
+			continue
+		}
+		callback := func() error {
+			if complete != nil {
+				return complete(id)
+			}
+			return nil
+		}
+		if err := c.finishAbsentQueueDeletion(ctx, threadID, id, attempt, callback); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func queueContainsSubmission(entries []QueueEntry, queuedSubmissionID string) bool {
+	for _, entry := range entries {
+		if entry.ID == queuedSubmissionID {
+			return true
+		}
+	}
+	return false
+}
+
+func (c *Client) finishAbsentQueueDeletion(
+	ctx context.Context, threadID, queuedSubmissionID string, attempt queueDeletionAttempt, complete func() error,
+) error {
+	started, err := c.queueDeletionWasStarted(ctx, threadID, attempt)
+	if err != nil {
+		return err
+	}
+	if !started && complete != nil {
+		if err := complete(); err != nil {
+			return err
+		}
+	}
+	if err := c.clearQueueDeletionAndAttempt(
+		threadID, queuedSubmissionID, attempt.ClientUserMessageID,
+	); err != nil {
+		return err
+	}
+	if started {
+		return errors.New("queued message was started before it could be deleted")
+	}
+	return nil
+}
+
+func (c *Client) queueDeletionWasStarted(
+	ctx context.Context, threadID string, attempt queueDeletionAttempt,
+) (bool, error) {
+	found := false
+	err := c.walkThreadItems(ctx, threadID, func(entry threadItemEntry) (bool, error) {
+		if stringValue(entry.Item["type"]) != "userMessage" ||
+			stringValue(entry.Item["clientId"]) != attempt.ClientUserMessageID {
+			return false, nil
+		}
+		text, err := userMessageText(entry.Item)
+		if err != nil {
+			return false, fmt.Errorf("deleted queued message has invalid history: %w", err)
+		}
+		if queueTextDigest(text) != attempt.Digest {
+			return false, errors.New("deleted queued message identity was reused with different text")
+		}
+		found = true
+		return true, nil
+	})
+	if err != nil {
+		return false, fmt.Errorf("inspect deleted queued message history: %w", err)
+	}
+	return found, nil
+}
+
+func (c *Client) StartQueue(ctx context.Context, threadID, queuedSubmissionID string) error {
+	return c.StartQueueWithPolicy(ctx, threadID, queuedSubmissionID, ThreadPolicy{})
+}
+
+// StartQueueWithPolicy rebinds an application-owned member policy immediately
+// before starting a queued turn. App Server does not retain MCP configuration
+// across resumes, so queued member work needs the same policy as direct sends.
+func (c *Client) StartQueueWithPolicy(ctx context.Context, threadID, queuedSubmissionID string, policy ThreadPolicy) error {
+	if err := validateThreadPolicy(policy); err != nil {
+		return err
+	}
+	lock := c.queueUpdateLock(threadID)
+	lock.Lock()
+	defer lock.Unlock()
+	entries, err := c.ListQueue(ctx, threadID)
+	if err != nil {
+		return err
+	}
+	if len(entries) == 0 {
+		return errors.New("queued message was not found")
+	}
+	if entries[0].ID != queuedSubmissionID {
+		return errors.New("only the first queued message can be started")
+	}
+	target := &entries[0]
+	if err := c.resumeThreadWithPolicy(ctx, threadID, policy, policy != (ThreadPolicy{})); err != nil {
+		return err
+	}
+	if _, found, err := c.startedByClientID(
+		ctx, threadID, target.ClientUserMessageID, target.Text,
+	); err != nil {
+		return err
+	} else if found {
+		return nil
+	}
+	var response struct {
+		Turn struct {
+			ID     string `json:"id"`
+			Status string `json:"status"`
+		} `json:"turn"`
+	}
+	requestErr := c.Request(ctx, "thread/queue/start", map[string]any{
+		"threadId": threadID, "queuedSubmissionId": queuedSubmissionID,
+	}, &response)
+	if requestErr != nil || response.Turn.ID == "" || response.Turn.Status != "inProgress" {
+		if found, err := c.waitForStartedByClientID(
+			ctx, threadID, target.ClientUserMessageID, target.Text,
+		); err == nil && found {
+			return nil
+		} else if err != nil {
+			if requestErr != nil {
+				return fmt.Errorf("%w; queue start reconciliation failed: %v", requestErr, err)
+			}
+			return fmt.Errorf("queue start reconciliation failed: %w", err)
+		}
+		if requestErr != nil {
+			return requestErr
+		}
+		return errors.New("thread/queue/start returned an invalid turn")
+	}
+	return nil
+}
+
+// DiscardPreparedSend retires an exact request that has not been submitted.
+// Already absent attempts are retired. Submitting and accepted attempts are
+// retained and return false; callers must reconcile their delivery instead.
+func (c *Client) DiscardPreparedSend(threadID, text, clientID, actionContext string) (bool, error) {
+	return c.DiscardPreparedSendWithOptions(
+		threadID, text, clientID, actionContext, TurnOptions{},
+	)
+}
+
+// DiscardPreparedSendWithOptions retires a prepared attempt only when its
+// exact turn options match the durable attempt identity.
+func (c *Client) DiscardPreparedSendWithOptions(
+	threadID, text, clientID, actionContext string, options TurnOptions,
+) (bool, error) {
+	normalizedOptions, err := normalizeTurnOptions(options)
+	if err != nil {
+		return false, err
+	}
+	lock := c.queueUpdateLock(threadID)
+	lock.Lock()
+	defer lock.Unlock()
+	return queueLedgerTransaction(c, func() (bool, error) {
+		attempt, found := c.sendAttempts[threadID][clientID]
+		if !found {
+			return true, nil
+		}
+		if attempt.Digest != queueTextDigest(text) || attempt.Context != actionContext ||
+			effectiveTurnOptionsDigest(attempt.OptionsDigest) != normalizedOptions.Digest {
+			return false, errors.New("message identity was reused for another action")
+		}
+		if attempt.State != "prepared" || c.queueAttempts[threadID][clientID] != "" {
+			return false, nil
+		}
+		delete(c.sendAttempts[threadID], clientID)
+		if len(c.sendAttempts[threadID]) == 0 {
+			delete(c.sendAttempts, threadID)
+		}
+		if err := c.writeQueueLedgerLocked(); err != nil {
+			if c.sendAttempts[threadID] == nil {
+				c.sendAttempts[threadID] = make(map[string]sendAttempt)
+			}
+			c.sendAttempts[threadID][clientID] = attempt
+			return false, err
+		}
+		return true, nil
+	})
+}
+
+// ReconcileSend recovers an existing accepted or submitting attempt without
+// submitting a message. Prepared and absent attempts are left untouched.
+func (c *Client) ReconcileSend(
+	ctx context.Context, threadID, text, clientUserMessageID, actionContext string,
+) (SendReceipt, bool, error) {
+	return c.ReconcileSendWithOptions(
+		ctx, threadID, text, clientUserMessageID, actionContext, TurnOptions{},
+	)
+}
+
+// ReconcileSendWithOptions recovers an existing accepted or submitting exact
+// attempt without submitting a message. Prepared and absent attempts remain
+// untouched.
+func (c *Client) ReconcileSendWithOptions(
+	ctx context.Context, threadID, text, clientUserMessageID, actionContext string,
+	options TurnOptions,
+) (SendReceipt, bool, error) {
+	normalizedOptions, err := normalizeTurnOptions(options)
+	if err != nil {
+		return SendReceipt{}, false, err
+	}
+	lock := c.queueUpdateLock(threadID)
+	lock.Lock()
+	defer lock.Unlock()
+	attempt, _, err := c.sendAttemptWithOptions(
+		threadID, clientUserMessageID, text, actionContext, normalizedOptions.Digest,
+	)
+	if err != nil {
+		return SendReceipt{}, false, err
+	}
+	queued, err := c.queueAttempt(threadID, clientUserMessageID, text)
+	if err != nil {
+		return SendReceipt{}, false, err
+	}
+	if queued {
+		entry, found, err := c.queuedOrStartedByClientID(ctx, threadID, clientUserMessageID, text)
+		if err != nil {
+			return SendReceipt{}, false, err
+		}
+		if !found {
+			return SendReceipt{}, false, &UnknownSendOutcomeError{Err: errors.New("earlier queued send outcome is unknown")}
+		}
+		return SendReceipt{ClientUserMessageID: clientUserMessageID, QueuedSubmissionID: entry.ID}, true, nil
+	}
+	return c.reconcileSend(ctx, threadID, text, clientUserMessageID, attempt)
+}
+
+func (c *Client) reconcileSend(
+	ctx context.Context, threadID, text, clientUserMessageID string, attempt sendAttempt,
+) (SendReceipt, bool, error) {
+	if attempt.State == "accepted" {
+		return SendReceipt{
+			TurnID: attempt.TurnID, ClientUserMessageID: clientUserMessageID,
+			Steered: attempt.Steered,
+		}, true, nil
+	}
+	if attempt.State == "submitting" {
+		receipt, found, err := c.sentByClientID(
+			ctx, threadID, clientUserMessageID, text,
+		)
+		if err != nil {
+			return SendReceipt{}, false, err
+		}
+		if found {
+			receipt.Steered = attempt.Steered
+			if err := c.markSendAccepted(threadID, clientUserMessageID, receipt); err != nil {
+				return SendReceipt{}, false, &UnknownSendOutcomeError{Err: fmt.Errorf(
+					"message was accepted but its receipt could not be recorded: %w", err,
+				)}
+			}
+			return receipt, true, nil
+		}
+		return SendReceipt{}, false, &UnknownSendOutcomeError{
+			Err: errors.New("the earlier attempt is not present in Codex history yet"),
+		}
+	}
+	return SendReceipt{}, false, nil
+}
+
+func (c *Client) Send(
+	ctx context.Context, threadID, text, clientUserMessageID, actionContext string,
+) (SendReceipt, error) {
+	return c.SendWithOptions(
+		ctx, threadID, text, clientUserMessageID, actionContext, TurnOptions{},
+	)
+}
+
+// SendWithOptions submits a client-correlated message with optional App Server
+// turn settings. Model and ReasoningEffort are sent only when this call starts
+// an idle turn. AdditionalContext is valid for both turn/start and turn/steer,
+// so it accompanies the message on the active turn rather than changing that
+// turn's model or effort.
+func (c *Client) SendWithOptions(
+	ctx context.Context, threadID, text, clientUserMessageID, actionContext string,
+	options TurnOptions,
+) (SendReceipt, error) {
+	normalizedOptions, err := normalizeTurnOptions(options)
+	if err != nil {
+		return SendReceipt{}, err
+	}
+	lock := c.queueUpdateLock(threadID)
+	lock.Lock()
+	defer lock.Unlock()
+	attempt, attempted, err := c.sendAttemptWithOptions(
+		threadID, clientUserMessageID, text, actionContext, normalizedOptions.Digest,
+	)
+	if err != nil {
+		return SendReceipt{}, err
+	}
+	queued, err := c.queueAttempt(threadID, clientUserMessageID, text)
+	if err != nil {
+		return SendReceipt{}, err
+	}
+	if queued {
+		entry, found, err := c.queuedOrStartedByClientID(ctx, threadID, clientUserMessageID, text)
+		if err != nil {
+			return SendReceipt{}, err
+		}
+		if !found {
+			return SendReceipt{}, &UnknownSendOutcomeError{Err: errors.New("earlier queued send outcome is unknown")}
+		}
+		return SendReceipt{ClientUserMessageID: clientUserMessageID, QueuedSubmissionID: entry.ID}, nil
+	}
+	if receipt, found, err := c.reconcileSend(ctx, threadID, text, clientUserMessageID, attempt); err != nil || found {
+		return receipt, err
+	}
+	if err := c.resumeThreadWithPolicy(ctx, threadID, normalizedOptions.ThreadPolicy, normalizedOptions.ThreadPolicy != (ThreadPolicy{})); err != nil {
+		return SendReceipt{}, err
+	}
+	turnID, err := c.ActiveTurnID(ctx, threadID)
+	if err != nil {
+		return SendReceipt{}, err
+	}
+	steered := turnID != ""
+	if attempted && attempt.Steered != steered {
+		return SendReceipt{}, errors.New("prepared message no longer matches the thread state")
+	}
+	input := []map[string]any{{"type": "text", "text": text}}
+	if !attempted {
+		if err := c.recordSendAttemptWithOptions(
+			threadID, clientUserMessageID, text, actionContext, steered, options,
+		); err != nil {
+			return SendReceipt{}, fmt.Errorf("record message attempt before submission: %w", err)
+		}
+	}
+	if err := c.markSendSubmitting(threadID, clientUserMessageID); err != nil {
+		return SendReceipt{}, fmt.Errorf("record message attempt before submission: %w", err)
+	}
+	reconcile := func(requestErr error) (SendReceipt, error) {
+		reconcileContext, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		receipt, found, reconcileErr := c.waitForSentByClientID(
+			reconcileContext, threadID, clientUserMessageID, text,
+		)
+		if found && reconcileErr == nil {
+			receipt.Steered = steered
+			if err := c.markSendAccepted(threadID, clientUserMessageID, receipt); err != nil {
+				return SendReceipt{}, &UnknownSendOutcomeError{Err: fmt.Errorf(
+					"message was accepted but its receipt could not be recorded: %w", err,
+				)}
+			}
+			return receipt, nil
+		}
+		if reconcileErr != nil {
+			requestErr = fmt.Errorf("%w; history reconciliation failed: %v", requestErr, reconcileErr)
+		}
+		return SendReceipt{}, &UnknownSendOutcomeError{Err: requestErr}
+	}
+	if turnID != "" {
+		var response struct {
+			TurnID string `json:"turnId"`
+		}
+		params := map[string]any{
+			"threadId": threadID, "expectedTurnId": turnID, "input": input,
+			"clientUserMessageId": clientUserMessageID,
+		}
+		if additionalContext := normalizedOptions.additionalContextParameter(); additionalContext != nil {
+			params["additionalContext"] = additionalContext
+		}
+		err := c.Request(ctx, "turn/steer", params, &response)
+		if err != nil {
+			return reconcile(err)
+		}
+		if response.TurnID != turnID {
+			return reconcile(errors.New("turn/steer returned the wrong turn"))
+		}
+		return c.finishAcceptedSend(threadID, SendReceipt{
+			TurnID: turnID, ClientUserMessageID: clientUserMessageID, Steered: true,
+		})
+	}
+	var response struct {
+		Turn struct {
+			ID string `json:"id"`
+		} `json:"turn"`
+	}
+	params := map[string]any{
+		"threadId": threadID, "input": input,
+		"clientUserMessageId": clientUserMessageID,
+	}
+	if normalizedOptions.Model != "" {
+		params["model"] = normalizedOptions.Model
+	}
+	if normalizedOptions.ReasoningEffort != "" {
+		params["effort"] = normalizedOptions.ReasoningEffort
+	}
+	if additionalContext := normalizedOptions.additionalContextParameter(); additionalContext != nil {
+		params["additionalContext"] = additionalContext
+	}
+	err = c.Request(ctx, "turn/start", params, &response)
+	if err != nil {
+		return reconcile(err)
+	}
+	if response.Turn.ID == "" {
+		return reconcile(errors.New("turn/start returned no turn"))
+	}
+	return c.finishAcceptedSend(threadID, SendReceipt{
+		TurnID: response.Turn.ID, ClientUserMessageID: clientUserMessageID,
+	})
+}
+
+func (c *Client) finishAcceptedSend(
+	threadID string, receipt SendReceipt,
+) (SendReceipt, error) {
+	if err := c.markSendAccepted(threadID, receipt.ClientUserMessageID, receipt); err != nil {
+		return SendReceipt{}, &UnknownSendOutcomeError{Err: fmt.Errorf(
+			"message was accepted but its receipt could not be recorded: %w", err,
+		)}
+	}
+	return receipt, nil
+}
+
+func (c *Client) PrepareSend(
+	threadID, text, clientUserMessageID, context string, steered bool,
+) error {
+	return c.PrepareSendWithOptions(
+		threadID, text, clientUserMessageID, context, steered, TurnOptions{},
+	)
+}
+
+// PrepareSendWithOptions durably reserves an exact message identity and its
+// turn options before a caller performs another related state transition.
+func (c *Client) PrepareSendWithOptions(
+	threadID, text, clientUserMessageID, context string, steered bool, options TurnOptions,
+) error {
+	lock := c.queueUpdateLock(threadID)
+	lock.Lock()
+	defer lock.Unlock()
+	return c.recordSendAttemptWithOptions(
+		threadID, clientUserMessageID, text, context, steered, options,
+	)
+}
+
+// IsPreparedSendWithOptions reports whether the exact durable send is prepared
+// and has no queue attempt. It neither submits nor changes the preparation.
+func (c *Client) IsPreparedSendWithOptions(
+	threadID, text, clientID, actionContext string, options TurnOptions,
+) (bool, error) {
+	normalized, err := normalizeTurnOptions(options)
+	if err != nil {
+		return false, err
+	}
+	lock := c.queueUpdateLock(threadID)
+	lock.Lock()
+	defer lock.Unlock()
+	return c.isPreparedSendWithOptions(threadID, text, clientID, actionContext, normalized.Digest)
+}
+
+// The caller holds queueUpdateLock across this proof and any related checks.
+func (c *Client) isPreparedSendWithOptions(
+	threadID, text, clientID, actionContext, optionsDigest string,
+) (bool, error) {
+	return queueLedgerTransaction(c, func() (bool, error) {
+		attempt, found := c.sendAttempts[threadID][clientID]
+		if !found {
+			return false, nil
+		}
+		if attempt.Digest != queueTextDigest(text) || attempt.Context != actionContext ||
+			effectiveTurnOptionsDigest(attempt.OptionsDigest) != optionsDigest {
+			return false, errors.New("message identity was reused for another action")
+		}
+		_, queued := c.queueAttempts[threadID][clientID]
+		return attempt.State == "prepared" && !queued, nil
+	})
+}
+
+func (c *Client) SendAttempted(
+	ctx context.Context, threadID, text, clientUserMessageID, context string,
+) (bool, error) {
+	return c.SendAttemptedWithOptions(
+		ctx, threadID, text, clientUserMessageID, context, TurnOptions{},
+	)
+}
+
+// SendAttemptedWithOptions discovers a history-accepted exact attempt and
+// records it with the supplied turn-options identity.
+func (c *Client) SendAttemptedWithOptions(
+	ctx context.Context, threadID, text, clientUserMessageID, context string,
+	options TurnOptions,
+) (bool, error) {
+	normalizedOptions, err := normalizeTurnOptions(options)
+	if err != nil {
+		return false, err
+	}
+	lock := c.queueUpdateLock(threadID)
+	lock.Lock()
+	defer lock.Unlock()
+	_, found, err := c.sendAttemptWithOptions(
+		threadID, clientUserMessageID, text, context, normalizedOptions.Digest,
+	)
+	if err != nil || found {
+		return found, err
+	}
+	receipt, found, err := c.sentByClientID(ctx, threadID, clientUserMessageID, text)
+	if err != nil || !found {
+		return found, err
+	}
+	if err := c.recordSendAttemptWithOptions(
+		threadID, clientUserMessageID, text, context, receipt.Steered, options,
+	); err != nil {
+		return false, err
+	}
+	if err := c.markSendSubmitting(threadID, clientUserMessageID); err != nil {
+		return false, err
+	}
+	if err := c.markSendAccepted(threadID, clientUserMessageID, receipt); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (c *Client) EnsureInitialMessage(ctx context.Context, threadID, cwd, text string, allowUnmaterializedStart bool) error {
+	return c.EnsureInitialMessageWithOptions(
+		ctx, threadID, cwd, text, allowUnmaterializedStart, TurnOptions{},
+	)
+}
+
+// EnsureInitialMessageWithOptions creates the initial message only for a fresh
+// idle thread under the caller's durable first-submission grant, including a
+// root with persisted metadata but no turns. Existing matching history never
+// replays optional model, effort, or application context against turn/start.
+func (c *Client) EnsureInitialMessageWithOptions(
+	ctx context.Context, threadID, cwd, text string, allowUnmaterializedStart bool,
+	options TurnOptions,
+) error {
+	normalizedOptions, err := normalizeTurnOptions(options)
+	if err != nil {
+		return err
+	}
+	materialized, err := c.HistoryMaterialized(ctx, threadID, cwd)
+	if err != nil {
+		return err
+	}
+	if materialized {
+		matched, empty, err := c.initialMessageState(ctx, threadID, text)
+		if err != nil {
+			return err
+		}
+		if matched {
+			return nil
+		}
+		if !allowUnmaterializedStart || !empty {
+			return errors.New("materialized Codex thread has no initial user request")
+		}
+		// Native Codex can flush session metadata before the first turn. A
+		// complete empty turn page and the caller's one-time submission grant
+		// permit that root to start, after rechecking its idle identity.
+		if err := c.requireFreshInitialThread(ctx, threadID, cwd); err != nil {
+			return err
+		}
+	} else if !allowUnmaterializedStart {
+		return errors.New("initial request may already have been accepted by the unmaterialized Codex thread")
+	}
+	params := map[string]any{
+		"threadId": threadID, "input": []map[string]any{{"type": "text", "text": text}},
+	}
+	if normalizedOptions.Model != "" {
+		params["model"] = normalizedOptions.Model
+	}
+	if normalizedOptions.ReasoningEffort != "" {
+		params["effort"] = normalizedOptions.ReasoningEffort
+	}
+	if additionalContext := normalizedOptions.additionalContextParameter(); additionalContext != nil {
+		params["additionalContext"] = additionalContext
+	}
+	if err := c.Request(ctx, "turn/start", params, nil); err != nil {
+		return err
+	}
+	return c.waitForInitialMessage(ctx, threadID, cwd, text)
+}
+
+func (c *Client) waitForInitialMessage(ctx context.Context, threadID, cwd, text string) error {
+	ticker := time.NewTicker(25 * time.Millisecond)
+	defer ticker.Stop()
+	for {
+		materialized, err := c.HistoryMaterialized(ctx, threadID, cwd)
+		if err != nil {
+			if !initialRolloutPending(err) {
+				return err
+			}
+		}
+		if materialized {
+			matched, err := c.initialMessageMatches(ctx, threadID, text)
+			if err != nil {
+				if !initialHistoryPending(err) {
+					return err
+				}
+			}
+			if matched {
+				return nil
+			}
+		}
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("wait for persisted initial Codex request: %w", ctx.Err())
+		case <-ticker.C:
+		}
+	}
+}
+
+func initialRolloutPending(err error) bool {
+	var rpcErr *rpcCallError
+	return errors.As(err, &rpcErr) && rpcErr.code == -32603 &&
+		strings.HasPrefix(rpcErr.message, "failed to read thread:") &&
+		strings.Contains(rpcErr.message, "rollout at ") &&
+		strings.HasSuffix(rpcErr.message, " is empty")
+}
+
+func initialHistoryPending(err error) bool {
+	var rpcErr *rpcCallError
+	return errors.As(err, &rpcErr) && rpcErr.code == -32601 &&
+		rpcErr.message == "list_turns is not supported yet"
+}
+
+func (c *Client) initialMessageMatches(ctx context.Context, threadID, text string) (bool, error) {
+	matched, _, err := c.initialMessageState(ctx, threadID, text)
+	return matched, err
+}
+
+func (c *Client) initialMessageState(ctx context.Context, threadID, text string) (matched, empty bool, err error) {
+	if err := c.resumeThread(ctx, threadID); err != nil {
+		return false, false, err
+	}
+	var page struct {
+		Data *[]struct {
+			Items []struct {
+				Type    string `json:"type"`
+				Content []struct {
+					Type string `json:"type"`
+					Text string `json:"text"`
+				} `json:"content"`
+			} `json:"items"`
+		} `json:"data"`
+		NextCursor *string `json:"nextCursor"`
+	}
+	if err := c.Request(ctx, "thread/turns/list", map[string]any{
+		"threadId": threadID, "limit": 1, "sortDirection": "asc", "itemsView": "full",
+	}, &page); err != nil {
+		return false, false, err
+	}
+	if page.Data == nil {
+		return false, false, errors.New("thread/turns/list returned no data")
+	}
+	if len(*page.Data) == 0 {
+		return false, page.NextCursor == nil || *page.NextCursor == "", nil
+	}
+	var initialRequests []string
+	for _, item := range (*page.Data)[0].Items {
+		if item.Type != "userMessage" {
+			continue
+		}
+		var parts []string
+		for _, content := range item.Content {
+			if content.Type != "text" {
+				return false, false, errors.New("Codex thread has a non-text initial request")
+			}
+			parts = append(parts, content.Text)
+		}
+		initialRequests = append(initialRequests, strings.TrimSpace(strings.Join(parts, "\n")))
+	}
+	if len(initialRequests) == 0 {
+		return false, false, nil
+	}
+	if len(initialRequests) != 1 || initialRequests[0] != strings.TrimSpace(text) {
+		return false, false, errors.New("Codex thread already has a different initial request")
+	}
+	return true, false, nil
+}
+
+// requireFreshInitialThread complements the complete empty turn page. It does
+// not supply the caller's durable first-submission grant or authorize a retry.
+func (c *Client) requireFreshInitialThread(ctx context.Context, threadID, cwd string) error {
+	var metadata struct {
+		Thread struct {
+			ID           string            `json:"id"`
+			Cwd          string            `json:"cwd"`
+			Source       any               `json:"source"`
+			Ephemeral    *bool             `json:"ephemeral"`
+			HistoryMode  string            `json:"historyMode"`
+			Preview      string            `json:"preview"`
+			ForkedFromID *string           `json:"forkedFromId"`
+			Status       map[string]any    `json:"status"`
+			Turns        *[]map[string]any `json:"turns"`
+		} `json:"thread"`
+	}
+	if err := c.Request(ctx, "thread/read", map[string]any{"threadId": threadID}, &metadata); err != nil {
+		return err
+	}
+	t := metadata.Thread
+	if t.ID != threadID || t.Cwd != cwd || !c.threadSource(t.Source) ||
+		t.Ephemeral == nil || *t.Ephemeral || t.HistoryMode != "paginated" ||
+		t.Preview != "" || (t.ForkedFromID != nil && *t.ForkedFromID != "") ||
+		statusValue(t.Status) != "idle" || t.Turns == nil || len(*t.Turns) != 0 {
+		return errors.New("initial request requires a fresh idle application thread")
+	}
+	return nil
+}
+
+func (c *Client) HistoryMaterialized(ctx context.Context, threadID, cwd string) (bool, error) {
+	var metadata struct {
+		Thread struct {
+			ID          string            `json:"id"`
+			Cwd         string            `json:"cwd"`
+			Path        *string           `json:"path"`
+			Preview     string            `json:"preview"`
+			Source      any               `json:"source"`
+			Ephemeral   *bool             `json:"ephemeral"`
+			HistoryMode string            `json:"historyMode"`
+			Status      map[string]any    `json:"status"`
+			Turns       *[]map[string]any `json:"turns"`
+		} `json:"thread"`
+	}
+	if err := c.Request(ctx, "thread/read", map[string]any{"threadId": threadID}, &metadata); err != nil {
+		return false, err
+	}
+	if metadata.Thread.ID != threadID {
+		return false, errors.New("thread/read returned the wrong thread")
+	}
+	if metadata.Thread.Cwd != cwd {
+		return false, errors.New("thread/read returned the wrong working directory")
+	}
+	if metadata.Thread.Path == nil {
+		return false, errors.New("thread/read returned no rollout path")
+	}
+	path := *metadata.Thread.Path
+	if path == "" || !filepath.IsAbs(path) || filepath.Clean(path) != path {
+		return false, errors.New("thread/read returned an invalid rollout path")
+	}
+	info, err := os.Stat(path)
+	if errors.Is(err, os.ErrNotExist) {
+		fresh := c.threadSource(metadata.Thread.Source) &&
+			metadata.Thread.Ephemeral != nil && !*metadata.Thread.Ephemeral &&
+			metadata.Thread.HistoryMode == "paginated" &&
+			metadata.Thread.Preview == "" &&
+			statusValue(metadata.Thread.Status) == "idle" &&
+			metadata.Thread.Turns != nil && len(*metadata.Thread.Turns) == 0
+		if !fresh {
+			turnCount := -1
+			if metadata.Thread.Turns != nil {
+				turnCount = len(*metadata.Thread.Turns)
+			}
+			ephemeral := "missing"
+			if metadata.Thread.Ephemeral != nil {
+				ephemeral = fmt.Sprint(*metadata.Thread.Ephemeral)
+			}
+			return false, fmt.Errorf(
+				"unmaterialized Codex thread is not a fresh idle application thread "+
+					"(source=%s ephemeral=%s historyMode=%q previewEmpty=%t status=%q turns=%d)",
+				sourceDescription(metadata.Thread.Source), ephemeral,
+				metadata.Thread.HistoryMode, metadata.Thread.Preview == "",
+				statusValue(metadata.Thread.Status), turnCount,
+			)
+		}
+		return false, nil
+	}
+	if err != nil {
+		return false, fmt.Errorf("inspect Codex thread rollout: %w", err)
+	}
+	if !info.Mode().IsRegular() {
+		return false, errors.New("Codex thread rollout is not a regular file")
+	}
+	return true, nil
+}
+
+func (c *Client) threadSource(value any) bool {
+	source, ok := value.(string)
+	return ok && slices.Contains(c.options.ThreadSourceKinds, source)
+}
+
+func sourceDescription(value any) string {
+	encoded, err := json.Marshal(value)
+	if err != nil {
+		return "<invalid>"
+	}
+	return string(encoded)
+}
+
+func (c *Client) Interrupt(ctx context.Context, threadID string) error {
+	turnID, err := c.ActiveTurnID(ctx, threadID)
+	if err != nil {
+		return err
+	}
+	if turnID == "" {
+		return errors.New("thread has no active turn")
+	}
+	return c.Request(ctx, "turn/interrupt", map[string]any{"threadId": threadID, "turnId": turnID}, nil)
+}
+
+// ActiveTurnID returns the current in-progress turn, or an empty string when
+// the thread is idle.
+func (c *Client) ActiveTurnID(ctx context.Context, threadID string) (string, error) {
+	var page struct {
+		Data *[]struct {
+			ID     string `json:"id"`
+			Status string `json:"status"`
+		} `json:"data"`
+	}
+	if err := c.Request(ctx, "thread/turns/list", map[string]any{
+		"threadId": threadID, "limit": 1, "sortDirection": "desc", "itemsView": "notLoaded",
+	}, &page); err != nil {
+		return "", err
+	}
+	if page.Data == nil {
+		return "", errors.New("thread/turns/list returned no data")
+	}
+	if len(*page.Data) == 1 && (*page.Data)[0].Status == "inProgress" {
+		return (*page.Data)[0].ID, nil
+	}
+	return "", nil
+}

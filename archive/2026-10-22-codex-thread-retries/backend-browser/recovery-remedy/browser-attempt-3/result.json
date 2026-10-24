@@ -1,0 +1,65 @@
+{
+  "head": "82f35c80ee16a88bd78572f84f4b236dfedcd8b3",
+  "tree": "e75b46b4cb4350cfd849abc2fe403ff439d51904",
+  "startedAt": "2026-10-24T11:31:55.023335+00:00",
+  "stages": [
+    {
+      "stage": "browser",
+      "command": [
+        "nix",
+        "develop",
+        "--no-update-lock-file",
+        "--command",
+        "python3",
+        "-c",
+        "import shutil,subprocess,sys,json; names=['go','gcc','ruby','node','git']; paths={n:shutil.which(n) for n in names}; print(json.dumps({'nixTools':paths}),file=sys.stderr,flush=True); assert all(paths.values()),paths; sys.exit(subprocess.run(sys.argv[1:]).returncode)",
+        "go",
+        "-C",
+        "portal",
+        "test",
+        "-mod=readonly",
+        "./internal/web",
+        "-run",
+        "^TestRetryBackendBrowser$",
+        "-count=1",
+        "-json",
+        "-timeout=360s"
+      ],
+      "actualExit": 1,
+      "elapsed": 23.634141808375716,
+      "missing": [
+        "TestRetryBackendBrowser",
+        "TestRetryBackendBrowser/desktop-member",
+        "TestRetryBackendBrowser/desktop-root",
+        "TestRetryBackendBrowser/mobile-member",
+        "TestRetryBackendBrowser/mobile-root"
+      ],
+      "missingRun": [],
+      "failed": [
+        "TestRetryBackendBrowser/desktop-root",
+        "TestRetryBackendBrowser/desktop-member",
+        "TestRetryBackendBrowser/mobile-root",
+        "TestRetryBackendBrowser/mobile-member",
+        "TestRetryBackendBrowser",
+        "package"
+      ],
+      "skipped": [],
+      "invalidJSON": [],
+      "caseErrors": [
+        "desktop-root: [Errno 2] No such file or directory: '/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/backend-browser/recovery-remedy/browser-attempt-3/browser/artifacts/desktop-root/manifest.json'",
+        "desktop-member: [Errno 2] No such file or directory: '/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/backend-browser/recovery-remedy/browser-attempt-3/browser/artifacts/desktop-member/manifest.json'",
+        "mobile-root: [Errno 2] No such file or directory: '/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/backend-browser/recovery-remedy/browser-attempt-3/browser/artifacts/mobile-root/manifest.json'",
+        "mobile-member: [Errno 2] No such file or directory: '/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/backend-browser/recovery-remedy/browser-attempt-3/browser/artifacts/mobile-member/manifest.json'"
+      ],
+      "after": [
+        "82f35c80ee16a88bd78572f84f4b236dfedcd8b3",
+        "e75b46b4cb4350cfd849abc2fe403ff439d51904"
+      ],
+      "clean": true,
+      "pass": false
+    }
+  ],
+  "pass": false,
+  "elapsed": 23.68396724201739,
+  "scriptSHA256": "d85a954fdc543404245878e281926a8a203d168e9aabc82a466fcb947d631224"
+}

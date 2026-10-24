@@ -1,0 +1,77 @@
+--- prepared-original/config-read-ws-once.go
++++ config-read-ws-once.go
+@@ -93,6 +93,8 @@
+ 	PeerAfter              *peerID   `json:"peerAfter,omitempty"`
+ 	After                  *identity `json:"after,omitempty"`
+ 	Success                bool      `json:"success"`
++	ConfigReadAttempted    bool      `json:"configReadAttempted"`
++	ConfigReadFullyWritten bool      `json:"configReadFullyWritten"`
+ 	ErrorCategory          string    `json:"errorCategory,omitempty"`
+ 	PostcheckErrorCategory string    `json:"postcheckErrorCategory,omitempty"`
+ }
+@@ -325,6 +327,34 @@
+ 		return category("request_write_outcome_uncertain")
+ 	}
+ 	return nil
++}
++
++// Connection-only exchanges are shared with the disposable fixture. The live
++// caller retains all native, claim and socket guards around these exchanges.
++func initialize(ctx context.Context, c *websocket.Conn) error {
++	initCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
++	defer cancel()
++	if err := write(initCtx, c, `{"id":1,"method":"initialize","params":{"capabilities":{"experimentalApi":true},"clientInfo":{"name":"dev-workspace-network-recovery","title":"Development Workspace network recovery","version":"0.1.0"}}}`); err != nil {
++		return err
++	}
++	if err := response(initCtx, c, 1); err != nil {
++		return err
++	}
++	return write(initCtx, c, `{"method":"initialized"}`)
++}
++
++func readConfig(ctx context.Context, c *websocket.Conn, r *receipt) error {
++	if ctx.Err() != nil {
++		return category("request_deadline_before_write")
++	}
++	// Sole config/read write site. false proves this Write was never entered;
++	// true with FullyWritten=false leaves native acceptance uncertain.
++	r.ConfigReadAttempted = true
++	if c.Write(ctx, websocket.MessageText, []byte(`{"id":2,"method":"config/read","params":{"includeLayers":false}}`)) != nil {
++		return category("request_write_outcome_uncertain")
++	}
++	r.ConfigReadFullyWritten = true
++	return response(ctx, c, 2)
+ }
+ 
+ func perform(ctx context.Context, start time.Time, r *receipt) (err error) {
+@@ -384,26 +414,14 @@
+ 	// closes only this short-lived client connection, never the native service.
+ 	wsConn = c
+ 	c.SetReadLimit(64 * 1024 * 1024) // Same bound as the pinned production client.
+-	initCtx, initCancel := context.WithTimeout(rpcCtx, 10*time.Second)
+-	defer initCancel()
+-	if err = write(initCtx, c, `{"id":1,"method":"initialize","params":{"capabilities":{"experimentalApi":true},"clientInfo":{"name":"dev-workspace-network-recovery","title":"Development Workspace network recovery","version":"0.1.0"}}}`); err != nil {
++	if err = initialize(rpcCtx, c); err != nil {
+ 		return err
+ 	}
+-	if err = response(initCtx, c, 1); err != nil {
++	r.BeforeRequest, err = snapshot(rpcCtx)
++	if err != nil {
+ 		return err
+ 	}
+-	if err = write(initCtx, c, `{"method":"initialized"}`); err != nil {
+-		return err
+-	}
+-	r.BeforeRequest, err = snapshot(rpcCtx)
+-	if err != nil {
+-		return err
+-	}
+-	// Sole config/read write site. cwd is omitted, rather than null/empty.
+-	if err = write(rpcCtx, c, `{"id":2,"method":"config/read","params":{"includeLayers":false}}`); err != nil {
+-		return err
+-	}
+-	return response(rpcCtx, c, 2)
++	return readConfig(rpcCtx, c, r)
+ }
+ 
+ func main() {

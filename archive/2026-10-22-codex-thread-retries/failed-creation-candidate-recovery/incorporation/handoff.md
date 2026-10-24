@@ -1,0 +1,13 @@
+# Recovery18 final review handoff
+
+B `8e9186132efc0636d6bcaaccf663dad43a799bf4`, tree `68de977e4ae31ba524206e1ca1a7d78b417f2963`, clean and SSH published. Base `bf6d4b0c49600c15e17fe71248807ef43424e932`; first17 exact through `fda46ca1a45c1f0a0046213448c47d80b976e032`.
+
+One cohesive logical18 owns the public candidate-only failed-direct-creation deletion entry, its ordinary executor context/terminal-start evidence transfer, focused Ruby producer and Go receipt-consumer tests, one aggregate loader require and owning recovery documentation. Seven paths only. The reviewed predecessor and failed evidence are retained; see preservation.json and verified before-recovery18.bundle. full-final.diff/final18.series.txt cover the entire branch, recovery18.delta.diff isolates the new boundary, range-diff.txt proves retained first17. No database migrations or schema/phase changes; no new pin stream. Sole9ccb4b11 selects A5743f94c; assets, AGENTS and other product code unchanged from fda46ca1 outside these7paths.
+
+Quick results: owner0 host8tests209assertions, executor5tests27, unchangedguards8tests45, all zero failure/error/skip, Ruby syntax5files PASS. Final consumer same2topnames/11tests-subtests PASS, zero failure/skip, Go13.374s; all Go/module inputs and frozen Ruby/approved docs/test hashes bind to this commit. Original provisional consumer evidence is preserved separately. Producer and consumer are two source-bound fixtures; no full-system pass. Approved prose exact5cf4ea35.
+
+High risk: persistent session state, destructive-operation admission, interrupted-operation ownership and candidate/predecessor compatibility. Retained affected final review is coordinated by the lead under mandatory-change-review; all4lanes apply to this new boundary while prior findings/dispositions remain retained. The trusted local operator boundary in B AGENTS applies. Public entry must retain ordinary exact target/confirmation/locks/journals, selected profile/native/protocol binding, only absent-to1/equal1 policy contract exception, exact request/root/roster/start bytes and same-operation replay. Incomplete or ambiguous provenance must refuse. No selected generation change or receipt/native absence inference.
+
+No live deletion, profile selection, restart, integration or deployment has occurred here. Browser32/package/native remain held for lead review disposition and fresh utility release; prior fork21/pressure successes remain scoped and are not repeated. Separate historical CI failures stay unresolved. browser-preparation.json binds the unexecuted unique browser-only guard.
+
+Portal: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-22-codex-thread-retries/

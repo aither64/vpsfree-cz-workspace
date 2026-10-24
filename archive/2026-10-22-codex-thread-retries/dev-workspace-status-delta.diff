@@ -1,0 +1,454 @@
+diff --git a/docs/workspace-portal.md b/docs/workspace-portal.md
+index b0a273e..a293549 100644
+--- a/docs/workspace-portal.md
++++ b/docs/workspace-portal.md
+@@ -490,6 +490,14 @@ request or tool calls. Retries require proof of the original model, effort,
+ provider, mode and authorized execution binding. Missing proof leaves the task
+ for manual continuation. Queue work and recovery holds take precedence.
+ 
++The native thread must remain loaded, with the exact failed turn still current
++and no active work or pending requests. Codex 0.163.0 can report `systemError`
++after a terminal failure until another turn starts. Retry accepts this loaded
++status as well as `idle`; the status alone does not make a failure eligible.
++The server still verifies the error code, settings, queue, submission ledger
++and managed admission. It never resumes a cold thread or clears native error
++state to make a retry possible.
++
+ Cancel retry stops the current chain and leaves Auto retry enabled. Turning the
+ checkbox off also cancels the chain. New input, settings changes, Interrupt and
+ session Stop cancel pending retries. A cancellation after dispatch keeps checking
+diff --git a/flake.lock b/flake.lock
+index afc4e6a..adab45f 100644
+--- a/flake.lock
++++ b/flake.lock
+@@ -37,17 +37,17 @@
+     "codex-web": {
+       "flake": false,
+       "locked": {
+-        "lastModified": 1792687928,
+-        "narHash": "sha256-+spYLvVf3GNpJR0Y9GN01AxeNqnOyTD8RAtR0CUjY6w=",
++        "lastModified": 1792690899,
++        "narHash": "sha256-cqEMNpK9xm1hb4Z1qgog1AqGPbuvJvc5fuBBNcBYqP0=",
+         "owner": "aither64",
+         "repo": "codex-web",
+-        "rev": "b6d3a92ff85edbcd661b193c2319951eb4a71725",
++        "rev": "665fd35e3b29e07c29cd990c2067a3dba295fbf7",
+         "type": "github"
+       },
+       "original": {
+         "owner": "aither64",
+         "repo": "codex-web",
+-        "rev": "b6d3a92ff85edbcd661b193c2319951eb4a71725",
++        "rev": "665fd35e3b29e07c29cd990c2067a3dba295fbf7",
+         "type": "github"
+       }
+     },
+diff --git a/flake.nix b/flake.nix
+index a1c59b7..3ee00ff 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -5,7 +5,7 @@
+     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+     llm-agents.url = "github:numtide/llm-agents.nix";
+     codex-web = {
+-      url = "github:aither64/codex-web/b6d3a92ff85edbcd661b193c2319951eb4a71725";
++      url = "github:aither64/codex-web/665fd35e3b29e07c29cd990c2067a3dba295fbf7";
+       flake = false;
+     };
+   };
+diff --git a/nix/workspace-portal.nix b/nix/workspace-portal.nix
+index b8dd715..51c64fd 100644
+--- a/nix/workspace-portal.nix
++++ b/nix/workspace-portal.nix
+@@ -273,7 +273,7 @@ buildGoModule {
+ 
+   inherit src;
+   modRoot = "portal";
+-  vendorHash = "sha256-jkLE8bzUevxNx/LcZ80p70u3ZH4k4eZq23rw8Bcjtb8=";
++  vendorHash = "sha256-CHVIE5thHZknsvi1uSHlPGgd2C88kA42ar7uOZ7bhVc=";
+ 
+   postPatch = ''
+     expected=${lib.escapeShellArg codexWebVersion}
+diff --git a/portal/cmd/workspace-portal/turn_retry_native_integration_test.go b/portal/cmd/workspace-portal/turn_retry_native_integration_test.go
+index d1ce32a..349a4d5 100644
+--- a/portal/cmd/workspace-portal/turn_retry_native_integration_test.go
++++ b/portal/cmd/workspace-portal/turn_retry_native_integration_test.go
+@@ -87,13 +87,17 @@ func TestNativeTurnRetryController(t *testing.T) {
+ 		t.Fatal(err)
+ 	}
+ 	defer func() { cancel(); _ = command.Wait() }()
++	lastObservation := "no native turn observation"
+ 	wait := func(label string, check func() bool) {
+ 		t.Helper()
+ 		for !check() {
+ 			select {
+ 			case <-ctx.Done():
+ 				data, _ := os.ReadFile(log.Name())
+-				t.Fatalf("%s: %v native log: %s", label, ctx.Err(), data)
++				if len(data) > 8192 {
++					data = data[len(data)-8192:]
++				}
++				t.Fatalf("%s: %v last observation: %s native log tail: %s", label, ctx.Err(), lastObservation, data)
+ 			case <-time.After(20 * time.Millisecond):
+ 			}
+ 		}
+@@ -104,6 +108,22 @@ func TestNativeTurnRetryController(t *testing.T) {
+ 	t.Setenv("DEV_WORKSPACE_CODEX_HOME", home)
+ 	client := newCodexClient(socket, workspace, stateRoot)
+ 	defer func() { client.Close() }()
++	observations := map[string]string{}
++	observationCount := 0
++	readState := func(label, thread string) (codex.TurnState, error) {
++		state, err := client.ReadTurnState(ctx, thread)
++		summary := fmt.Sprintf("thread=%s status=%s latest=%s turnStatus=%s failure=%v readError=%v", thread, state.Status, state.LatestTurnID, state.LatestTurnStatus, state.TerminalFailure, err)
++		if len(summary) > 2048 {
++			summary = summary[:2048]
++		}
++		lastObservation = label + ": " + summary
++		if observations[label] != summary && observationCount < 20 {
++			observations[label] = summary
++			observationCount++
++			t.Log(lastObservation)
++		}
++		return state, err
++	}
+ 	policy := codex.ThreadPolicy{DeveloperInstructions: "Synthetic managed retry contract.", Sandbox: "danger-full-access", ApprovalPolicy: "never"}
+ 	client.RetryPolicyResolver = func(context.Context, string) (codex.ThreadPolicy, error) { return policy, nil }
+ 	for name, content := range map[string]string{"plan.md": "# Synthetic retry\n", "state.md": "---\nlifecycle: active\n---\n", "portal.yml": "schema: 1\nslug: example\nrepositories: []\nartifacts: []\n"} {
+@@ -133,7 +153,7 @@ func TestNativeTurnRetryController(t *testing.T) {
+ 		t.Fatal(err)
+ 	}
+ 	wait("terminal capacity failure", func() bool {
+-		s, err := client.ReadTurnState(ctx, thread)
++		s, err := readState("terminal capacity failure", thread)
+ 		return err == nil && s.TerminalFailure != nil && s.TerminalFailure.Code == "serverOverloaded"
+ 	})
+ 	scope, err := client.RetryScope(ctx, thread)
+@@ -143,8 +163,9 @@ func TestNativeTurnRetryController(t *testing.T) {
+ 	now := time.Now()
+ 	controller := turnretry.Controller{Store: client.RetryStore(), Backend: client.RetryBackend(), Clock: func() time.Time { return now }, Random: func() float64 { return 0 }}
+ 	wait("managed execution proof", func() bool {
+-		_ = controller.Step(ctx, scope)
++		stepErr := controller.Step(ctx, scope)
+ 		s, err := controller.Store.Load(scope)
++		lastObservation = fmt.Sprintf("managed proof step=%v phase=%s reason=%s load=%v", stepErr, s.Phase, s.Reason, err)
+ 		return err == nil && s.Phase == "scheduled"
+ 	})
+ 	scheduled, err := controller.Store.Load(scope)
+@@ -162,9 +183,24 @@ func TestNativeTurnRetryController(t *testing.T) {
+ 	if err != nil || retained.Pending.ID != id || retained.DeadlineMS != deadline {
+ 		t.Fatal("controller restart lost the saved retry identity", err)
+ 	}
+-	wait("loaded idle retry source", func() bool {
+-		s, err := client.ReadTurnState(ctx, thread)
+-		return err == nil && s.Status == "idle" && s.LatestTurnID == retained.Pending.Failure && s.LatestTurnStatus == "failed"
++	loaded, loadedErr := client.LoadedThreadIDs(ctx)
++	metadata, metadataErr := client.ReadThreadMetadata(ctx, thread, false)
++	rollout := "no rollout path"
++	if metadata.Path != nil {
++		if relative, err := filepath.Rel(root, *metadata.Path); err == nil && filepath.IsLocal(relative) {
++			info, statErr := os.Stat(*metadata.Path)
++			rollout = fmt.Sprintf("path=%s statError=%v", relative, statErr)
++			if statErr == nil {
++				rollout += fmt.Sprintf(" bytes=%d regular=%t", info.Size(), info.Mode().IsRegular())
++			}
++		} else {
++			rollout = "rollout path outside private fixture"
++		}
++	}
++	t.Logf("source setup loaded=%v loadedError=%v metadataError=%v %s", loaded[:min(len(loaded), 20)], loadedErr, metadataErr, rollout)
++	wait("loaded failed retry source", func() bool {
++		s, err := readState("loaded failed retry source", thread)
++		return err == nil && s.IsLoadedFailedTurn(retained.Pending.Failure)
+ 	})
+ 	// Default enrollment in another independent controller consumes this old
+ 	// failed turn and cannot send it. It uses separate disposable private state.
+@@ -197,7 +233,7 @@ func TestNativeTurnRetryController(t *testing.T) {
+ 	}
+ 	var continued string
+ 	wait("native continuation completion", func() bool {
+-		s, err := client.ReadTurnState(ctx, thread)
++		s, err := readState("native continuation completion", thread)
+ 		if err == nil && s.LatestTurnID == nativeTurn && s.LatestTurnStatus == "completed" {
+ 			continued = s.LatestTurnID
+ 			return true
+@@ -266,12 +302,13 @@ func TestNativeTurnRetryController(t *testing.T) {
+ 		t.Fatal(err)
+ 	}
+ 	wait("second terminal failure", func() bool {
+-		s, err := client.ReadTurnState(ctx, thread)
++		s, err := readState("second terminal failure", thread)
+ 		return err == nil && s.LatestTurnID != continued && s.TerminalFailure != nil && s.TerminalFailure.Code == "serverOverloaded"
+ 	})
+ 	wait("second managed schedule", func() bool {
+-		_ = controller.Step(ctx, scope)
++		stepErr := controller.Step(ctx, scope)
+ 		s, err := controller.Store.Load(scope)
++		lastObservation = fmt.Sprintf("second schedule step=%v phase=%s reason=%s load=%v", stepErr, s.Phase, s.Reason, err)
+ 		return err == nil && s.Phase == "scheduled"
+ 	})
+ 	state, _ := controller.Store.Load(scope)
+diff --git a/portal/go.mod b/portal/go.mod
+index 6df0fe8..1620759 100644
+--- a/portal/go.mod
++++ b/portal/go.mod
+@@ -4,7 +4,7 @@ go 1.24.0
+ 
+ require (
+ 	github.com/SherClockHolmes/webpush-go v1.4.0
+-	github.com/aither64/codex-web v0.0.0-20261022165208-b6d3a92ff85e
++	github.com/aither64/codex-web v0.0.0-20261022174139-665fd35e3b29
+ 	github.com/coder/websocket v1.8.14
+ 	github.com/microcosm-cc/bluemonday v1.0.27
+ 	github.com/yuin/goldmark v1.7.17
+diff --git a/portal/go.sum b/portal/go.sum
+index 3f2becc..4cf625c 100644
+--- a/portal/go.sum
++++ b/portal/go.sum
+@@ -1,7 +1,7 @@
+ github.com/SherClockHolmes/webpush-go v1.4.0 h1:ocnzNKWN23T9nvHi6IfyrQjkIc0oJWv1B1pULsf9i3s=
+ github.com/SherClockHolmes/webpush-go v1.4.0/go.mod h1:XSq8pKX11vNV8MJEMwjrlTkxhAj1zKfxmyhdV7Pd6UA=
+-github.com/aither64/codex-web v0.0.0-20261022165208-b6d3a92ff85e h1:4yUJFjAkN0HrhqzCm/Ahn4mIYmCn575wfho9cJdEsgc=
+-github.com/aither64/codex-web v0.0.0-20261022165208-b6d3a92ff85e/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
++github.com/aither64/codex-web v0.0.0-20261022174139-665fd35e3b29 h1:f/EidDRWElptMLPzfruEDa4i+bPxzXunaUwm7xmrvpg=
++github.com/aither64/codex-web v0.0.0-20261022174139-665fd35e3b29/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
+ github.com/aymerick/douceur v0.2.0 h1:Mv+mAeH1Q+n9Fr+oyamOlAkUNPWPlA8PPGR0QAaYuPk=
+ github.com/aymerick/douceur v0.2.0/go.mod h1:wlT5vV2O3h55X9m7iVYN0TBM0NH/MmbLnd30/FjWUq4=
+ github.com/coder/websocket v1.8.14 h1:9L0p0iKiNOibykf283eHkKUHHrpG7f65OE3BhhO7v9g=
+diff --git a/portal/internal/workspacecodex/turn_retry_proof.go b/portal/internal/workspacecodex/turn_retry_proof.go
+index 98feedb..6627cfa 100644
+--- a/portal/internal/workspacecodex/turn_retry_proof.go
++++ b/portal/internal/workspacecodex/turn_retry_proof.go
+@@ -208,8 +208,8 @@ func (b retryBackend) Check(ctx context.Context, scope turnretry.Scope, proof tu
+ 	if err != nil {
+ 		return err
+ 	}
+-	if s.Status != "idle" || s.LatestTurnID != proof.Turn || s.LatestTurnStatus != "failed" {
+-		return errors.New("retry failed turn is no longer idle and current")
++	if !s.IsLoadedFailedTurn(proof.Turn) {
++		return errors.New("retry requires the exact latest failed turn on a loaded thread")
+ 	}
+ 	// Current managed mode/access changes cancel the chain under this same
+ 	// admission fence. Exact failed-turn context plus the unchanged managed
+diff --git a/portal/internal/workspacecodex/turn_retry_settings_test.go b/portal/internal/workspacecodex/turn_retry_settings_test.go
+index ada9ef1..fd051f1 100644
+--- a/portal/internal/workspacecodex/turn_retry_settings_test.go
++++ b/portal/internal/workspacecodex/turn_retry_settings_test.go
+@@ -33,6 +33,9 @@ type retrySettingsWire struct {
+ 	queue                                  []codex.QueueEntry
+ 	items                                  []any
+ 	resumes, settings, policyUpdates       int
++	starts                                 int
++	failureCode                            string
++	pendingQuestion                        bool
+ 	boundary                               bool
+ 	change                                 string
+ 	recordDirectory                        string
+@@ -41,7 +44,7 @@ type retrySettingsWire struct {
+ func newRetrySettingsWire(t *testing.T, member bool, initialMode string) *retrySettingsWire {
+ 	t.Helper()
+ 	workspace := t.TempDir()
+-	w := &retrySettingsWire{t: t, thread: "root", turn: "manual", status: "inProgress", loaded: "active", provider: "fixture", model: "old-model", effort: "low", mode: initialMode}
++	w := &retrySettingsWire{t: t, thread: "root", turn: "manual", status: "inProgress", loaded: "active", provider: "fixture", model: "old-model", effort: "low", mode: initialMode, failureCode: "serverOverloaded"}
+ 	if member {
+ 		w.thread = "member"
+ 	}
+@@ -154,7 +157,17 @@ func (w *retrySettingsWire) serve(conn *websocket.Conn) error {
+ 		}
+ 		w.mu.Lock()
+ 		result, failure, notify := w.reply(req)
++		var question any
++		if w.pendingQuestion && req["method"] == "thread/read" {
++			w.pendingQuestion = false
++			question = map[string]any{"id": "fixture-question", "method": "item/tool/requestUserInput", "params": map[string]any{"threadId": w.thread, "turnId": w.turn, "itemId": "question-item", "questions": []any{map[string]any{"id": "q", "header": "Fixture", "question": "Synthetic pending question", "options": nil}}}}
++		}
+ 		w.mu.Unlock()
++		if question != nil {
++			if err := writeObject(conn, question); err != nil {
++				return nil
++			}
++		}
+ 		reply := map[string]any{"id": req["id"], "result": result}
+ 		if failure != "" {
+ 			delete(reply, "result")
+@@ -180,7 +193,7 @@ func (w *retrySettingsWire) reply(req map[string]any) (any, string, any) {
+ 		}
+ 		return map[string]any{"thread": map[string]any{"id": w.thread, "cwd": w.cwd, "source": "vscode", "path": w.rollout, "modelProvider": w.provider, "model": w.model, "reasoningEffort": w.effort, "status": map[string]any{"type": w.loaded}}}, "", nil
+ 	case "thread/turns/list":
+-		return map[string]any{"data": []any{map[string]any{"id": w.turn, "status": w.status, "error": map[string]any{"codexErrorInfo": "serverOverloaded", "message": "synthetic capacity"}}}}, "", nil
++		return map[string]any{"data": []any{map[string]any{"id": w.turn, "status": w.status, "error": map[string]any{"codexErrorInfo": w.failureCode, "message": "synthetic terminal error"}}}}, "", nil
+ 	case "thread/resume":
+ 		w.resumes++
+ 		if !w.bound {
+@@ -256,6 +269,21 @@ func (w *retrySettingsWire) reply(req map[string]any) (any, string, any) {
+ 		return map[string]any{"queuedSubmission": map[string]any{"id": entry.ID, "clientUserMessageId": entry.ClientUserMessageID, "input": p["input"]}}, "", nil
+ 	case "thread/items/list":
+ 		return map[string]any{"data": w.items, "nextCursor": nil}, "", nil
++	case "thread/queue/list":
++		entries := []any{}
++		for _, entry := range w.queue {
++			entries = append(entries, map[string]any{"id": entry.ID, "clientUserMessageId": entry.ClientUserMessageID, "input": []any{map[string]any{"type": "text", "text": entry.Text}}})
++		}
++		return map[string]any{"data": entries, "nextCursor": nil}, "", nil
++	case "turn/start":
++		w.starts++
++		text := p["input"].([]any)[0].(map[string]any)["text"].(string)
++		if p["model"] != w.model || p["effort"] != w.effort || text != turnretry.Continuation {
++			w.t.Error("automatic input changed proven settings or continuation", p)
++		}
++		w.turn, w.status, w.loaded = "automatic", "inProgress", "active"
++		w.items = retrySettingsInput(w.turn, p["clientUserMessageId"].(string), text)
++		return map[string]any{"turn": map[string]any{"id": w.turn}}, "", nil
+ 	default:
+ 		w.t.Errorf("unexpected native call: %v", req["method"])
+ 		return nil, "unexpected synthetic call", nil
+diff --git a/portal/internal/workspacecodex/turn_retry_status_test.go b/portal/internal/workspacecodex/turn_retry_status_test.go
+new file mode 100644
+index 0000000..70ff706
+--- /dev/null
++++ b/portal/internal/workspacecodex/turn_retry_status_test.go
+@@ -0,0 +1,144 @@
++package workspacecodex
++
++import (
++	"context"
++	"fmt"
++	"testing"
++	"time"
++
++	"github.com/aither64/codex-web/codex"
++	"github.com/aither64/dev-workspace/portal/internal/turnretry"
++)
++
++// Use actual managed admission, native-style execution proof and the real
++// backend/controller/continuation composition, not a status-predicate mock.
++func TestRetryLoadedTerminalStatusController(t *testing.T) {
++	for _, status := range []string{"idle", "systemError"} {
++		for _, code := range []string{"serverOverloaded", "cyberPolicy"} {
++			for _, hold := range []string{"", "cold", "active", "unknown-status", "newer", "completed", "in-progress", "unknown-code", "binding", "provider", "queue", "prompt", "ledger"} {
++				t.Run(fmt.Sprintf("%s/%s/%s", status, code, hold), func(t *testing.T) {
++					w := newRetrySettingsWire(t, false, "default")
++					ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
++					defer cancel()
++					if _, err := w.client.QueueWithPolicy(ctx, w.thread, "managed task", "managed-client", w.policy); err != nil {
++						t.Fatal(err)
++					}
++					w.mu.Lock()
++					w.turn, w.status, w.loaded, w.failureCode = "failed-source", "failed", status, code
++					w.queue = nil // Native execution consumed the admitted queue entry.
++					w.items = retrySettingsInput(w.turn, "managed-client", "managed task")
++					w.writeRollout(w.turn)
++					resumes, settings, policies := w.resumes, w.settings, w.policyUpdates
++					w.mu.Unlock()
++					now := time.Now()
++					controller := turnretry.Controller{Store: w.client.RetryStore(), Backend: w.client.RetryBackend(), Clock: func() time.Time { return now }}
++					if hold == "newer" {
++						tx, err := controller.Store.Lock(ctx, w.scope)
++						if err != nil {
++							t.Fatal(err)
++						}
++						if err := controller.Backend.Prove(ctx, w.scope, &tx.State, "failed-source"); err != nil {
++							t.Fatal(err)
++						}
++						proof := *tx.State.Proof("failed-source")
++						if err := tx.Save(); err != nil {
++							t.Fatal(err)
++						}
++						tx.Close()
++						w.mu.Lock()
++						w.turn = "new-independent-turn"
++						w.mu.Unlock()
++						if err := controller.Backend.Check(ctx, w.scope, proof); err == nil {
++							t.Fatal("newer turn passed source identity check")
++						}
++					}
++					// First pass schedules capacity; cyber may dispatch immediately.
++					// Install holds before observing either class.
++					w.mu.Lock()
++					switch hold {
++					case "cold":
++						w.loaded = "notLoaded"
++					case "active":
++						w.loaded = "active"
++					case "unknown-status":
++						w.loaded = "futureStatus"
++					case "completed":
++						w.status = "completed"
++					case "in-progress":
++						w.status, w.loaded = "inProgress", "active"
++					case "unknown-code":
++						w.failureCode = "unknownFailure"
++					case "provider":
++						w.provider = "different-provider"
++					case "queue":
++						w.queue = []codex.QueueEntry{{ID: "competing", ClientUserMessageID: "competing-client", Text: "new user input"}}
++					case "prompt":
++						w.pendingQuestion = true
++					}
++					w.mu.Unlock()
++					if hold == "binding" {
++						tx, err := controller.Store.Lock(ctx, w.scope)
++						if err != nil {
++							t.Fatal(err)
++						}
++						tx.State.Binding = nil
++						if err := tx.Save(); err != nil {
++							t.Fatal(err)
++						}
++						tx.Close()
++					}
++					if hold == "ledger" {
++						if err := w.client.Client.PrepareSendWithOptions(w.thread, "other uncertain input", "foreign-id", "other-action", false, codex.TurnOptions{}); err != nil {
++							t.Fatal(err)
++						}
++					}
++					firstErr := controller.Step(ctx, w.scope)
++					saved, err := controller.Store.Load(w.scope)
++					if err != nil {
++						t.Fatal(err)
++					}
++					var dispatchErr error
++					if saved.Phase == "scheduled" && saved.Pending != nil {
++						// Check must agree for both native loaded statuses while the
++						// exact historical proof and ordinary authority still match.
++						if hold == "" && w.client.RetryBackend().Check(ctx, w.scope, saved.Pending.Snapshot) != nil {
++							t.Fatal("loaded terminal source lost proven binding")
++						}
++						now = time.UnixMilli(saved.DeadlineMS)
++						dispatchErr = controller.Step(ctx, w.scope)
++					}
++					w.mu.Lock()
++					starts := w.starts
++					if w.resumes != resumes || w.settings != settings || w.policyUpdates != policies {
++						t.Error("automatic check/dispatch mutated loaded settings")
++					}
++					w.mu.Unlock()
++					if hold == "" {
++						if firstErr != nil || dispatchErr != nil || starts != 1 {
++							t.Fatalf("loaded failed continuation: starts=%d observe=%v dispatch=%v", starts, firstErr, dispatchErr)
++						}
++						saved, err = controller.Store.Load(w.scope)
++						if err != nil || saved.Pending == nil || saved.Pending.ResultTurn != "automatic" || saved.Phase != "running" {
++							t.Fatal("native receipt not bound", saved, err)
++						}
++					} else if starts != 0 {
++						t.Fatalf("hold %s admitted automatic native input", hold)
++					}
++					if hold == "ledger" && w.client.RequireSubmissionAttemptsKnown(ctx, w.thread) == nil {
++						t.Fatal("foreign ledger hold was erased")
++					}
++					if hold == "queue" {
++						w.mu.Lock()
++						if len(w.queue) != 1 {
++							t.Error("native queue hold was changed")
++						}
++						w.mu.Unlock()
++					}
++					if hold == "prompt" && len(w.client.Prompts(w.thread)) == 0 {
++						t.Fatal("pending request hold was not established")
++					}
++				})
++			}
++		}
++	}
++}

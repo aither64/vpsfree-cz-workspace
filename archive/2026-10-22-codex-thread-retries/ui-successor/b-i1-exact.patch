@@ -1,0 +1,94 @@
+diff --git a/portal/internal/web/retry_activity_browser_test.cjs b/portal/internal/web/retry_activity_browser_test.cjs
+index b74dbd93..cd1364ed 100644
+--- a/portal/internal/web/retry_activity_browser_test.cjs
++++ b/portal/internal/web/retry_activity_browser_test.cjs
+@@ -30,9 +30,11 @@ const activity = (overrides = {}) => ({
+       await page.clock.pauseAt(fixtureTime);
+       const errors = [], writes = [], actions = [];
+       page.on("pageerror", error => errors.push(error.message));
+-      let state = activity(), policy = {revision: "policy-1", capacity: true, cybersecurity: true};
++      let state = null, policy = {revision: "policy-1", capacity: true, cybersecurity: true};
+       let failPolicy = false, conflictPolicy = false, policyAvailable = true, activityAvailable = true;
+-      let newer = entries(101, 120), threadReads = 0;
++      let newer = entries(101, 120), threadReads = 0, threadResponses = 0;
++      let holdTranscript = false;
++      const heldTranscriptReads = [];
+       let legacyAssets = false;
+       await page.addInitScript(() => {
+         window.EventSource = class {
+@@ -76,6 +78,8 @@ const activity = (overrides = {}) => ({
+         if (url.pathname.endsWith("/retry") || url.pathname.endsWith("/retry/enabled") || url.pathname.endsWith("/retry/cancel")) throw new Error("Removed thread retry control used a legacy route");
+         if (operation === "thread" || operation === "page") {
+           threadReads++;
++          if (holdTranscript) await new Promise(resolve => heldTranscriptReads.push(resolve));
++          threadResponses++;
+           return json({threadId: url.pathname.includes("~") ? "member-thread" : "thread-1",
+             latestTurnId: "task", status: "idle", collaborationMode: "default", model: "model-1",
+             reasoningEffort: "medium", entries: url.searchParams.has("cursor") ? entries(81, 100) : newer,
+@@ -95,27 +99,49 @@ const activity = (overrides = {}) => ({
+       const refresh = async () => {
+         await page.evaluate(() => dispatchEvent(new Event("focus")));
+       };
+-      const load = async member => {
++      const load = async (member, visible = true) => {
+         await page.goto(baseURL + `/example/${member ? "?member=implementer0" : ""}#codex`);
+         await expect(page.locator("#transcript-entries .message")).toHaveCount(newer.length);
+-        await expect(notice).toBeVisible();
++        if (visible) await expect(notice).toBeVisible();
++        else await expect(notice).toBeHidden();
+         await expect(page.locator("#automatic-turn-retry input")).toHaveCount(0);
+       };
+-      await load(false);
++      const scroll = page.locator("#transcript");
++      const bottomDistance = () => scroll.evaluate(node => node.scrollHeight - node.clientHeight - node.scrollTop);
++      await load(false, false);
++      await expect.poll(bottomDistance).toBeLessThanOrEqual(2);
++      // Focus refresh may request both lanes. Hold every transcript response
++      // so its render cannot accidentally supply the footer's missing follow.
++      holdTranscript = true;
++      const initialThreadResponses = threadResponses;
++      state = activity();
++      await refresh();
++      await expect(notice).toBeVisible();
++      await expect.poll(bottomDistance).toBeLessThanOrEqual(2);
+       await expect(notice).toContainText("3");
+       await expect(notice).toContainText(/15s|15 seconds/);
+       await expect(notice.getByRole("button", {name: "Retry now", exact: true})).toBeVisible();
+       await expect(notice.getByRole("button", {name: "Stop retrying", exact: true})).toBeVisible();
+       assert.equal(await page.locator("#transcript > #transcript-entries").count(), 1);
+       assert.equal(await page.locator("#transcript > #automatic-turn-retry").count(), 1);
+-      const scroll = page.locator("#transcript");
+-      await scroll.evaluate(node => { node.scrollTop = node.scrollHeight; });
+       await screenshot("capacity");
+       const announcement = await notice.locator('[role="status"]').textContent();
+       await page.clock.runFor(1000);
+       await expect(notice).toContainText(/14s|14 seconds/);
+       assert.equal(await notice.locator('[role="status"]').textContent(), announcement, "countdown was announced again");
+       assert.equal(actions.length, 0, "browser timer dispatched retry action");
++      const initialHeight = await notice.evaluate(node => node.getBoundingClientRect().height);
++      state = activity({reason: "Synthetic fixture detail. ".repeat(16)});
++      await refresh();
++      await expect.poll(() => notice.evaluate(node => node.getBoundingClientRect().height)).toBeGreaterThan(initialHeight);
++      await expect.poll(bottomDistance).toBeLessThanOrEqual(2);
++      state = activity();
++      await refresh();
++      await expect.poll(() => notice.evaluate(node => node.getBoundingClientRect().height)).toBe(initialHeight);
++      await expect.poll(bottomDistance).toBeLessThanOrEqual(2);
++      assert.equal(threadResponses, initialThreadResponses, "transcript rendering masked the activity-only follow check");
++      holdTranscript = false;
++      for (const release of heldTranscriptReads.splice(0)) release();
+ 
+       // Both render owners must leave the footer node, focus and selection intact.
+       await page.locator("#message-form textarea").fill("Keep this draft.");
+diff --git a/portal/internal/web/static/app.js b/portal/internal/web/static/app.js
+index 7a3e1fcd..f578dacc 100644
+--- a/portal/internal/web/static/app.js
++++ b/portal/internal/web/static/app.js
+@@ -4302,6 +4302,7 @@
+     scrollbarLastTop = historyScrollTop();
+   });
+   transcriptResize.observe(transcript);
++  if (retryRoot) transcriptResize.observe(retryRoot);
+   document.addEventListener("session-section-change", (event) => {
+     if (event.detail !== "codex") return;
+     resetHistoryNavigation();

@@ -1,0 +1,3 @@
+**Result: incomplete; verification driver not run.** The required A/B repository guidance file was missing at `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/A/AGENTS.md` (read returned exit 1). The packet says to stop if required guidance cannot be read.
+
+Session identity matched: `dev-session current` returned `2026-10-22-codex-thread-retries`; both environment markers matched the packet’s slug and workspace. No verification process was started, so there is no command result, elapsed time, evidence path, or running process to report.

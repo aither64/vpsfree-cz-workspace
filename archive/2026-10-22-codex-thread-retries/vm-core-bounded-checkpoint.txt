@@ -1,0 +1,80 @@
+vm-test-run-dev-workspace-session-recovery-boot> machine # [  232.505657] systemd[702]: Reloading finished in 897 ms.
+vm-test-run-dev-workspace-session-recovery-boot> machine # [  232.694929] runuser[1796]: pam_unix(runuser:session): session closed for user developer
+vm-test-run-dev-workspace-session-recovery-boot> machine: waiting for success: runuser -u developer -- env XDG_RUNTIME_DIR=/run/user/1000 sh -c '/nix/store/xqnbm0vgqcq9b1b54c80qj9s0qhbwa08-python3-3.13.15/bin/python3 -c '"'"'import json; d=json.load(open('"'"'"'"'"'"'"'"'/home/developer/.local/state/dev-workspaces/providers/fixture/state.json'"'"'"'"'"'"'"'"')); o=d['"'"'"'"'"'"'"'"'operation'"'"'"'"'"'"'"'"']; expected=(o['"'"'"'"'"'"'"'"'phase'"'"'"'"'"'"'"'"'] == '"'"'"'"'"'"'"'"'applied'"'"'"'"'"'"'"'"'); terminal=o['"'"'"'"'"'"'"'"'phase'"'"'"'"'"'"'"'"'] in ['"'"'"'"'"'"'"'"'applied'"'"'"'"'"'"'"'"','"'"'"'"'"'"'"'"'failed'"'"'"'"'"'"'"'"','"'"'"'"'"'"'"'"'canceled'"'"'"'"'"'"'"'"']; assert expected or terminal; print('"'"'"'"'"'"'"'"'PROVIDER_EXPECTED_RESULT'"'"'"'"'"'"'"'"' if expected else '"'"'"'"'"'"'"'"'PROVIDER_UNEXPECTED_TERMINAL'"'"'"'"'"'"'"'"')'"'"''
+vm-test-run-dev-workspace-session-recovery-boot> machine # [  232.846265] runuser[1876]: pam_unix(runuser:session): session opened for user developer(uid=1000) by (uid=0)
+vm-test-run-dev-workspace-session-recovery-boot> machine # [  233.002417] python3[553]: 127.0.0.1 - - [22/Oct/2026 19:12:17] "GET /v1/models HTTP/1.1" 200 -
+vm-test-run-dev-workspace-session-recovery-boot> machine # Traceback (most recent call last):
+vm-test-run-dev-workspace-session-recovery-boot> machine #   File "<string>", line 1, in <module>
+vm-test-run-dev-workspace-session-recovery-boot> machine #     import json; d=json.load(open('/home/developer/.local/state/dev-workspaces/providers/fixture/state.json')); o=d['operation']; expected=(o['phase'] == 'applied'); terminal=o['phase'] in ['applied','failed','canceled']; assert expected or terminal; print('PROVIDER_EXPECTED_RESULT' if expected else 'PROVIDER_UNEXPECTED_TERMINAL')
+vm-test-run-dev-workspace-session-recovery-boot> machine #                                                                                                                                                                                                                                      ^^^^^^^^^^^^^^^^^^^^
+vm-test-run-dev-workspace-session-recovery-boot> machine # AssertionError
+vm-test-run-dev-workspace-session-recovery-boot> machine # [  233.393577] runuser[1876]: pam_unix(runuser:session): session closed for user developer
+vm-test-run-dev-workspace-session-recovery-boot> machine # [  234.582866] runuser[1920]: pam_unix(runuser:session): session opened for user developer(uid=1000) by (uid=0)
+vm-test-run-dev-workspace-session-recovery-boot> machine # [  234.896458] runuser[1920]: pam_unix(runuser:session): session closed for user developer
+vm-test-run-dev-workspace-session-recovery-boot> machine: (finished: waiting for success: runuser -u developer -- env XDG_RUNTIME_DIR=/run/user/1000 sh -c '/nix/store/xqnbm0vgqcq9b1b54c80qj9s0qhbwa08-python3-3.13.15/bin/python3 -c '"'"'import json; d=json.load(open('"'"'"'"'"'"'"'"'/home/developer/.local/state/dev-workspaces/providers/fixture/state.json'"'"'"'"'"'"'"'"')); o=d['"'"'"'"'"'"'"'"'operation'"'"'"'"'"'"'"'"']; expected=(o['"'"'"'"'"'"'"'"'phase'"'"'"'"'"'"'"'"'] == '"'"'"'"'"'"'"'"'applied'"'"'"'"'"'"'"'"'); terminal=o['"'"'"'"'"'"'"'"'phase'"'"'"'"'"'"'"'"'] in ['"'"'"'"'"'"'"'"'applied'"'"'"'"'"'"'"'"','"'"'"'"'"'"'"'"'failed'"'"'"'"'"'"'"'"','"'"'"'"'"'"'"'"'canceled'"'"'"'"'"'"'"'"']; assert expected or terminal; print('"'"'"'"'"'"'"'"'PROVIDER_EXPECTED_RESULT'"'"'"'"'"'"'"'"' if expected else '"'"'"'"'"'"'"'"'PROVIDER_UNEXPECTED_TERMINAL'"'"'"'"'"'"'"'"')'"'"'', in 2.20 seconds)
+vm-test-run-dev-workspace-session-recovery-boot> machine: must succeed: runuser -u developer -- env XDG_RUNTIME_DIR=/run/user/1000 sh -c '/nix/store/60a92ypy1s9x36vhprqff39r7pycaz5i-dev-workspace-0.2.0/bin/workspace-host provider status fixture'
+vm-test-run-dev-workspace-session-recovery-boot> machine # [  235.004773] runuser[1922]: pam_unix(runuser:session): session opened for user developer(uid=1000) by (uid=0)
+vm-test-run-dev-workspace-session-recovery-boot> machine # [  236.608457] runuser[1922]: pam_unix(runuser:session): session closed for user developer
+vm-test-run-dev-workspace-session-recovery-boot> machine: (finished: must succeed: runuser -u developer -- env XDG_RUNTIME_DIR=/run/user/1000 sh -c '/nix/store/60a92ypy1s9x36vhprqff39r7pycaz5i-dev-workspace-0.2.0/bin/workspace-host provider status fixture', in 1.71 seconds)
+vm-test-run-dev-workspace-session-recovery-boot> machine: must succeed: runuser -u developer -- env XDG_RUNTIME_DIR=/run/user/1000 sh -c 'systemctl --user show workspace-codex@fixture.service -p MainPID --value'
+vm-test-run-dev-workspace-session-recovery-boot> machine # [  236.707148] runuser[1938]: pam_unix(runuser:session): session opened for user developer(uid=1000) by (uid=0)
+vm-test-run-dev-workspace-session-recovery-boot> machine # [  236.832757] runuser[1938]: pam_unix(runuser:session): session closed for user developer
+vm-test-run-dev-workspace-session-recovery-boot> machine: (finished: must succeed: runuser -u developer -- env XDG_RUNTIME_DIR=/run/user/1000 sh -c 'systemctl --user show workspace-codex@fixture.service -p MainPID --value', in 0.22 seconds)
+vm-test-run-dev-workspace-session-recovery-boot> machine: must succeed: kill -0 1762
+vm-test-run-dev-workspace-session-recovery-boot> machine: (finished: must succeed: kill -0 1762, in 0.04 seconds)
+vm-test-run-dev-workspace-session-recovery-boot> machine: must succeed: kill 1762
+vm-test-run-dev-workspace-session-recovery-boot> machine: (finished: must succeed: kill 1762, in 0.06 seconds)
+vm-test-run-dev-workspace-session-recovery-boot> machine: waiting for unit user@1000.service
+vm-test-run-dev-workspace-session-recovery-boot> machine: (finished: waiting for unit user@1000.service, in 0.19 seconds)
+vm-test-run-dev-workspace-session-recovery-boot> machine: waiting for success: runuser -u developer -- env XDG_RUNTIME_DIR=/run/user/1000 systemctl --user is-active workspace-tmux@fixture
+vm-test-run-dev-workspace-session-recovery-boot> machine # [  237.259906] runuser[1955]: pam_unix(runuser:session): session opened for user developer(uid=1000) by (uid=0)
+vm-test-run-dev-workspace-session-recovery-boot> machine # [  237.330603] runuser[1955]: pam_unix(runuser:session): session closed for user developer
+vm-test-run-dev-workspace-session-recovery-boot> machine: (finished: waiting for success: runuser -u developer -- env XDG_RUNTIME_DIR=/run/user/1000 systemctl --user is-active workspace-tmux@fixture, in 0.23 seconds)
+vm-test-run-dev-workspace-session-recovery-boot> machine: must succeed: runuser -u developer -- env XDG_RUNTIME_DIR=/run/user/1000 sh -c 'systemctl --user is-enabled workspace-tmux@fixture'
+vm-test-run-dev-workspace-session-recovery-boot> machine # [  237.455755] runuser[1957]: pam_unix(runuser:session): session opened for user developer(uid=1000) by (uid=0)
+vm-test-run-dev-workspace-session-recovery-boot> machine # [  237.566710] runuser[1957]: pam_unix(runuser:session): session closed for user developer
+vm-test-run-dev-workspace-session-recovery-boot> machine: (finished: must succeed: runuser -u developer -- env XDG_RUNTIME_DIR=/run/user/1000 sh -c 'systemctl --user is-enabled workspace-tmux@fixture', in 0.22 seconds)
+vm-test-run-dev-workspace-session-recovery-boot> machine: waiting for success: runuser -u developer -- env XDG_RUNTIME_DIR=/run/user/1000 systemctl --user is-active workspace-codex@fixture
+vm-test-run-dev-workspace-session-recovery-boot> machine # [  237.676928] runuser[1968]: pam_unix(runuser:session): session opened for user developer(uid=1000) by (uid=0)
+vm-test-run-dev-workspace-session-recovery-boot> machine # [  237.781625] runuser[1968]: pam_unix(runuser:session): session closed for user developer
+vm-test-run-dev-workspace-session-recovery-boot> machine: (finished: waiting for success: runuser -u developer -- env XDG_RUNTIME_DIR=/run/user/1000 systemctl --user is-active workspace-codex@fixture, in 0.23 seconds)
+vm-test-run-dev-workspace-session-recovery-boot> machine: must succeed: runuser -u developer -- env XDG_RUNTIME_DIR=/run/user/1000 sh -c 'systemctl --user is-enabled workspace-codex@fixture'
+vm-test-run-dev-workspace-session-recovery-boot> machine # [  237.932686] runuser[1970]: pam_unix(runuser:session): session opened for user developer(uid=1000) by (uid=0)
+vm-test-run-dev-workspace-session-recovery-boot> machine # [  238.103592] runuser[1970]: pam_unix(runuser:session): session closed for user developer
+vm-test-run-dev-workspace-session-recovery-boot> machine: (finished: must succeed: runuser -u developer -- env XDG_RUNTIME_DIR=/run/user/1000 sh -c 'systemctl --user is-enabled workspace-codex@fixture', in 0.32 seconds)
+vm-test-run-dev-workspace-session-recovery-boot> machine: waiting for success: runuser -u developer -- env XDG_RUNTIME_DIR=/run/user/1000 systemctl --user is-active workspace-portal@fixture
+vm-test-run-dev-workspace-session-recovery-boot> machine # [  238.263698] runuser[1977]: pam_unix(runuser:session): session opened for user developer(uid=1000) by (uid=0)
+vm-test-run-dev-workspace-session-recovery-boot> machine # [  238.321208] runuser[1977]: pam_unix(runuser:session): session closed for user developer
+vm-test-run-dev-workspace-session-recovery-boot> machine: (finished: waiting for success: runuser -u developer -- env XDG_RUNTIME_DIR=/run/user/1000 systemctl --user is-active workspace-portal@fixture, in 0.21 seconds)
+vm-test-run-dev-workspace-session-recovery-boot> machine: must succeed: runuser -u developer -- env XDG_RUNTIME_DIR=/run/user/1000 sh -c 'systemctl --user is-enabled workspace-portal@fixture'
+vm-test-run-dev-workspace-session-recovery-boot> machine # [  238.419414] runuser[1979]: pam_unix(runuser:session): session opened for user developer(uid=1000) by (uid=0)
+vm-test-run-dev-workspace-session-recovery-boot> machine # [  238.516370] runuser[1979]: pam_unix(runuser:session): session closed for user developer
+vm-test-run-dev-workspace-session-recovery-boot> machine: (finished: must succeed: runuser -u developer -- env XDG_RUNTIME_DIR=/run/user/1000 sh -c 'systemctl --user is-enabled workspace-portal@fixture', in 0.19 seconds)
+vm-test-run-dev-workspace-session-recovery-boot> machine: waiting for success: runuser -u developer -- env XDG_RUNTIME_DIR=/run/user/1000 systemctl --user is-active workspace-router
+vm-test-run-dev-workspace-session-recovery-boot> machine # [  238.642792] runuser[1986]: pam_unix(runuser:session): session opened for user developer(uid=1000) by (uid=0)
+vm-test-run-dev-workspace-session-recovery-boot> machine # [  238.752426] runuser[1986]: pam_unix(runuser:session): session closed for user developer
+vm-test-run-dev-workspace-session-recovery-boot> machine: (finished: waiting for success: runuser -u developer -- env XDG_RUNTIME_DIR=/run/user/1000 systemctl --user is-active workspace-router, in 0.25 seconds)
+vm-test-run-dev-workspace-session-recovery-boot> machine: must succeed: runuser -u developer -- env XDG_RUNTIME_DIR=/run/user/1000 sh -c 'systemctl --user is-enabled workspace-router'
+vm-test-run-dev-workspace-session-recovery-boot> machine # [  238.873341] runuser[1988]: pam_unix(runuser:session): session opened for user developer(uid=1000) by (uid=0)
+vm-test-run-dev-workspace-session-recovery-boot> machine # [  238.987684] runuser[1988]: pam_unix(runuser:session): session closed for user developer
+vm-test-run-dev-workspace-session-recovery-boot> machine: (finished: must succeed: runuser -u developer -- env XDG_RUNTIME_DIR=/run/user/1000 sh -c 'systemctl --user is-enabled workspace-router', in 0.22 seconds)
+vm-test-run-dev-workspace-session-recovery-boot> machine: must succeed: runuser -u developer -- env XDG_RUNTIME_DIR=/run/user/1000 sh -c 'systemctl --user show workspace-portal@fixture -p After --value'
+vm-test-run-dev-workspace-session-recovery-boot> machine # [  239.105740] runuser[1992]: pam_unix(runuser:session): session opened for user developer(uid=1000) by (uid=0)
+vm-test-run-dev-workspace-session-recovery-boot> machine # [  239.306350] runuser[1992]: pam_unix(runuser:session): session closed for user developer
+vm-test-run-dev-workspace-session-recovery-boot> machine: (finished: must succeed: runuser -u developer -- env XDG_RUNTIME_DIR=/run/user/1000 sh -c 'systemctl --user show workspace-portal@fixture -p After --value', in 0.32 seconds)
+vm-test-run-dev-workspace-session-recovery-boot> machine: waiting for success: runuser -u developer -- env XDG_RUNTIME_DIR=/run/user/1000 test -S /run/user/1000/dev-workspaces/fixture/app-server.sock
+vm-test-run-dev-workspace-session-recovery-boot> machine # [  239.452853] runuser[1999]: pam_unix(runuser:session): session opened for user developer(uid=1000) by (uid=0)
+vm-test-run-dev-workspace-session-recovery-boot> machine # [  239.511898] runuser[1999]: pam_unix(runuser:session): session closed for user developer
+vm-test-run-dev-workspace-session-recovery-boot> machine: (finished: waiting for success: runuser -u developer -- env XDG_RUNTIME_DIR=/run/user/1000 test -S /run/user/1000/dev-workspaces/fixture/app-server.sock, in 0.21 seconds)
+vm-test-run-dev-workspace-session-recovery-boot> machine: waiting for success: runuser -u developer -- env XDG_RUNTIME_DIR=/run/user/1000 test -S /run/user/1000/dev-workspaces/fixture/tmux.sock
+vm-test-run-dev-workspace-session-recovery-boot> machine # [  239.659503] runuser[2008]: pam_unix(runuser:session): session opened for user developer(uid=1000) by (uid=0)
+vm-test-run-dev-workspace-session-recovery-boot> machine # [  239.753769] runuser[2008]: pam_unix(runuser:session): session closed for user developer
+vm-test-run-dev-workspace-session-recovery-boot> machine: (finished: waiting for success: runuser -u developer -- env XDG_RUNTIME_DIR=/run/user/1000 test -S /run/user/1000/dev-workspaces/fixture/tmux.sock, in 0.25 seconds)
+vm-test-run-dev-workspace-session-recovery-boot> (finished: subtest: new scoped requests preserve the daemon and foreign processes, in 180.40 seconds)
+vm-test-run-dev-workspace-session-recovery-boot> (finished: run the VM test script, in 637.73 seconds)
+vm-test-run-dev-workspace-session-recovery-boot> test script finished in 637.89s
+vm-test-run-dev-workspace-session-recovery-boot> cleanup
+vm-test-run-dev-workspace-session-recovery-boot> kill QemuMachine (pid 12)
+vm-test-run-dev-workspace-session-recovery-boot> machine # qemu-system-x86_64: terminating on signal 15 from pid 6 (/nix/store/xqnbm0vgqcq9b1b54c80qj9s0qhbwa08-python3-3.13.15/bin/python3.13)
+vm-test-run-dev-workspace-session-recovery-boot> (finished: cleanup, in 0.27 seconds)
+[{"drvPath":"/nix/store/m9q5gqjfn8yqcvyw05l78hg775l64w8d-vm-test-run-dev-workspace-host-module-idempotency.drv","outputs":{"out":"/nix/store/apfrvraxc5szzskp68bigip5i0i3vypr-vm-test-run-dev-workspace-host-module-idempotency"}},{"drvPath":"/nix/store/mbrc60gilws7hcs57cqirphzybp02w32-vm-test-run-dev-workspace-session-recovery-boot.drv","outputs":{"out":"/nix/store/igsh9mgzw28n498z6i9i3s3jq5n6s4lb-vm-test-run-dev-workspace-session-recovery-boot"}}]

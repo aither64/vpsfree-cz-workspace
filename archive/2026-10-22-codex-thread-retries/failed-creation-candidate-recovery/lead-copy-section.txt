@@ -1,0 +1,53 @@
+## Deleting a failed direct creation before a package switch
+
+A failed direct creation can block package selection when the selected
+executor cannot finish its deletion. Use the candidate's public recovery entry
+only after authorizing deletion of that exact session:
+
+```sh
+/path/to/candidate/bin/workspace-host recover-failed-creation-delete \
+  --source /path/to/exact/source --workspace NAME --session SLUG \
+  --request-id UUID
+```
+
+The supplied source must build the same candidate package that runs this
+command. That candidate must differ from the selected package. During deletion,
+the command holds the package transition lock and verifies the selected profile
+token, native executable and protocol. Ordinary deletion still asks for
+confirmation, checks resource ownership and records its lifecycle journal.
+The selected profile and services stay in place.
+
+The runtime contracts must match exactly, with one exception: a candidate
+declaring `turnRetrySessionPolicy: 1` may recover a predecessor that omits this
+field. Both may also declare `1`. Any other difference blocks recovery.
+
+Recovery requires the exact failed new-session request, direct team snapshot,
+retained root and roster. The creating manifest must explicitly record both
+`initial_goal_attempted: false` and `initial_goal_sent: false`. An interrupted
+terminal-start journal belongs to this creation only when its slug and tmux
+identity match the creating CLI journal and retained runtime identity.
+Other start, fork or lifecycle conflicts remain blockers.
+
+The ordinary deletion owner repeats these checks under its existing locks.
+After preflight and root quiescence, it durably records `thread_retiring` and
+atomically moves the unchanged start journal to private recovery as `start.json`.
+It then performs normal member and root retirement. For a member whose start
+outcome is unknown, the preserved roster retains its project and attempted-start
+provenance. This does not prove that the native thread is absent or remove its
+project. Private recovery retains the start, creation, team and tracking records.
+
+After interruption, repeat the command with the same source, session and
+request ID. It validates the original removal operation and private recovery
+when tracking has moved. Missing or conflicting provenance blocks recovery.
+Completed removal evidence makes an exact replay a no-op while the failed
+receipt remains available. A missing target alone never proves completion.
+
+After the command returns and releases the transition lock, reconcile the
+original request through the selected portal's ordinary
+`GET /api/session-creations/UUID`. This status request can retire the failed
+creation receipt after proving completed deletion. Do not invoke creation retry
+or start another session. If reconciliation cannot prove completed deletion,
+stop and retain the receipt and recovery records. After it retires the receipt,
+use the normal forward package switch. Its unfinished-operation and capability
+checks still apply. A ready replacement is unaffected.
+

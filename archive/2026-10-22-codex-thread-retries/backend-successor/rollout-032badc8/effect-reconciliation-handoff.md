@@ -1,0 +1,14 @@
+# Exact old625e removal: read-only effect reconciliation
+
+Observed 2026-10-24 16:54:19Z; all inventoried records remained unchanged at the end recheck. Sanitized receipt: `effect-reconciliation-20261024T165419Z.json` (SHA256 `57cd50c795e3d26bf60c72189cb72942de15031f2a888207e9c9297524339e2f`). Raw snapshots and command streams are mode0600 in the new private directory named in that receipt. Original operation evidence was preserved.
+
+- Operation `198ff95148b957a0e2fd2f3f73d9c49410d80550dd488e7bdb29ad5e962bb43c`, created 16:50:29.014548Z, is `prepared` / `thread_retiring`, force=false. The matching private recovery directory contains only `recovery.json` and `start.json`; no completion record is present.
+- Source start is absent; private `start.json` is byte-exact to the original (SHA256 `9d019c977412df26518c51b78eb06dda8e3a4e82303bfdbf7d0a482bbce0a3c1`). Creation journal, work manifest, failed receipt and request preparation remain at their original paths, byte-identical to the previous preserved observation. Tracking and worktree directories remain present; no private tracking/creation/team move is visible.
+- Roster revision changed20→24. Architect0, implementer0 and implementer1 now record `archived`, retaining their original known thread/project IDs. Reviewer0 records `removed`; its threadId remains empty, createAttempted=true and original project `01a16d77-7491-7000-8a7d-46711538faef` are preserved. These are recorded roster effects; native states were not queried.
+- New ordinary authority is schema1/state`creating`, exactly binding managed tmux `$207`, original nonce `834ceec5d66b2f409e78fdd348b52bf9f3b60e031e2ffae113988bda65f0d0dc`, root `01a16d77-3723-7732-85bb-cec0be2de793`, workspace, sockets and version0.163.0. That exact terminal and its three live shell panes remain. No pane contents or command lines were read.
+- NativePID3387667, InvocationID84b92a0a..., startticks1162579375 and executable/UID remain unchanged. Native, tmux, selected portal and coordinator unit identities remain active with NRestarts0. Profile185-link still selects1zk. Exact machine claim201af6 remains held by owner7cbe for machine:vpsfree:aitherdev.
+- The original CLI transcript contains the thread-retirement discovery refusal for the retained root. This inspection makes no independent native-thread absence or no-effect claim. Root retirement and ordinary deletion completion remain unproved. Unknown reviewer provenance remains unknown.
+
+Stop for architect/lead disposition. No replay, portal GET reconciliation, native/model/history/per-thread request, authority installation, source/Git/test/build, switch/deploy or lifecycle mutation was performed. Coordinator/replacement records were untouched and the machine stays held.
+
+Session: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-22-codex-thread-retries/

@@ -1,0 +1,80 @@
+ 1:  7262c24e =  1:  7262c24e turnretry: retain bounded retry policy and admission state
+ 2:  b3c7187c =  2:  b3c7187c runtime: require retry-capable package transitions
+ 3:  aafaf419 =  3:  aafaf419 portal: continue new managed failed turns through durable retry admission
+ 4:  9ccb4b11 !  4:  65e58006 deps: select codex-web retry activity support
+    @@ flake.lock
+            "locked": {
+     -        "lastModified": 1792612976,
+     -        "narHash": "sha256-VKTZcWXrTjE7DKFjye4hig3Kg3vWcg6T/vEw+2D8PLA=",
+    -+        "lastModified": 1792826794,
+    -+        "narHash": "sha256-HFvEQcsmYJ3MIrsgGyterS1/3jnJrxrqYrRRovrarto=",
+    ++        "lastModified": 1792852844,
+    ++        "narHash": "sha256-tWV8OX1uCr9fjcCvZBgwYYn+O9XvM1xpY+kPv4vgFSY=",
+              "owner": "aither64",
+              "repo": "codex-web",
+     -        "rev": "ea64ef57fdd2ff5fd60715b62f2d1696bc0133e5",
+    -+        "rev": "5743f94c2fbd01b65438847d2e2bab0f01df32ae",
+    ++        "rev": "11ec57d2203fc735696fe75a837d47da55a5c6af",
+              "type": "github"
+            },
+            "original": {
+              "owner": "aither64",
+              "repo": "codex-web",
+     -        "rev": "ea64ef57fdd2ff5fd60715b62f2d1696bc0133e5",
+    -+        "rev": "5743f94c2fbd01b65438847d2e2bab0f01df32ae",
+    ++        "rev": "11ec57d2203fc735696fe75a837d47da55a5c6af",
+              "type": "github"
+            }
+          },
+    @@ flake.nix
+          llm-agents.url = "github:numtide/llm-agents.nix";
+          codex-web = {
+     -      url = "github:aither64/codex-web/ea64ef57fdd2ff5fd60715b62f2d1696bc0133e5";
+    -+      url = "github:aither64/codex-web/5743f94c2fbd01b65438847d2e2bab0f01df32ae";
+    ++      url = "github:aither64/codex-web/11ec57d2203fc735696fe75a837d47da55a5c6af";
+            flake = false;
+          };
+        };
+    @@ nix/workspace-portal.nix: buildGoModule {
+        inherit src;
+        modRoot = "portal";
+     -  vendorHash = "sha256-ABmwKlrjiXjFrrtplRaw2fmMDlv/gxWfufEMA0vjXNQ=";
+    -+  vendorHash = "sha256-bNeFZMHChen0znapzj7liBwO6YluoxWeZQUO35rVOHc=";
+    ++  vendorHash = "sha256-GcniWcl+4lS5swtWoGZYG04oa5uNtBjfYrKxVaiW1us=";
+      
+        postPatch = ''
+          expected=${lib.escapeShellArg codexWebVersion}
+    @@ portal/go.mod: go 1.24.0
+      require (
+      	github.com/SherClockHolmes/webpush-go v1.4.0
+     -	github.com/aither64/codex-web v0.0.0-20261021200256-ea64ef57fdd2
+    -+	github.com/aither64/codex-web v0.0.0-20261024072634-5743f94c2fbd
+    ++	github.com/aither64/codex-web v0.0.0-20261024144044-11ec57d2203f
+      	github.com/coder/websocket v1.8.14
+      	github.com/microcosm-cc/bluemonday v1.0.27
+      	github.com/yuin/goldmark v1.7.17
+    @@ portal/go.sum
+      github.com/SherClockHolmes/webpush-go v1.4.0/go.mod h1:XSq8pKX11vNV8MJEMwjrlTkxhAj1zKfxmyhdV7Pd6UA=
+     -github.com/aither64/codex-web v0.0.0-20261021200256-ea64ef57fdd2 h1:8Lsxt7NqJnmuZEfApQCqLRKDXQ98RhbANH1mL1kHHkc=
+     -github.com/aither64/codex-web v0.0.0-20261021200256-ea64ef57fdd2/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
+    -+github.com/aither64/codex-web v0.0.0-20261024072634-5743f94c2fbd h1:kl5V+eAacBcbN3S/ZoxUUnvVXW7le9mnhlBhxgQyJiQ=
+    -+github.com/aither64/codex-web v0.0.0-20261024072634-5743f94c2fbd/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
+    ++github.com/aither64/codex-web v0.0.0-20261024144044-11ec57d2203f h1:cod93lovFHu5adtEqQy7QyE1E5YIFJrTkCnjB3phFgw=
+    ++github.com/aither64/codex-web v0.0.0-20261024144044-11ec57d2203f/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
+      github.com/aymerick/douceur v0.2.0 h1:Mv+mAeH1Q+n9Fr+oyamOlAkUNPWPlA8PPGR0QAaYuPk=
+      github.com/aymerick/douceur v0.2.0/go.mod h1:wlT5vV2O3h55X9m7iVYN0TBM0NH/MmbLnd30/FjWUq4=
+      github.com/coder/websocket v1.8.14 h1:9L0p0iKiNOibykf283eHkKUHHrpG7f65OE3BhhO7v9g=
+ 5:  100108b0 =  5:  fb9d7b63 portal: retire accepted retry provenance before bounded admission
+ 6:  9311c15a =  6:  78d7b878 portal: admit exact prepared plan requests after mode selection
+ 7:  c8c31ab5 =  7:  721a5e16 portal: wait within HTTP budgets for transient runtime contention
+ 8:  9ce6b291 =  8:  549589ae portal: present retry activity inside the conversation viewport
+ 9:  4b4da049 =  9:  7cd6ca98 portal: release the next draft before message acknowledgment
+10:  59c0eb55 = 10:  9ce8335d portal: submit question text through its owning action
+11:  4b98ceb2 = 11:  7844c9c3 host: require support for retained session retry policy
+12:  6817bb6f = 12:  3ee30ea4 session: allow bounded exclusive runtime acquisition
+13:  91bd8535 = 13:  016d45fa test: exercise accepted fork source lock recovery through Ruby
+14:  66d8ef32 = 14:  7cf53953 portal: manage retry policy and activity per retained session
+15:  7408d17e = 15:  9c29a829 test: connect retry browser controls to the real backend
+16:  c52234e0 = 16:  aa7dc087 systemd: raise the native App Server descriptor limit
+17:  e06452e0 = 17:  8593c42e session: retire unknown member reservations during deletion
+18:  e22eecab = 18:  10182241 sessions: recover failed creations before package selection

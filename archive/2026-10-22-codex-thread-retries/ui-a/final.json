@@ -1,0 +1,143 @@
+{
+  "session": "2026-10-22-codex-thread-retries",
+  "at": "2026-10-23T19:29:36.151033+00:00",
+  "repository": "codex-web",
+  "worktree": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/codex-web",
+  "branch": "2026-10-22-codex-thread-retries",
+  "remote": "git@github.com:aither64/codex-web.git",
+  "base": "ea64ef57fdd2ff5fd60715b62f2d1696bc0133e5",
+  "deployed_head": "ac62eeeb9d8b1fa7b8ed8fb95ba8160acb7efa1c",
+  "deployed_tree": "c0066833953974d27019c40754301a45a58868b0",
+  "head": "f86290673d752c77b56c70228c3d26aced75e177",
+  "tree": "0ed8092438d2f0a70838828573bbfd187b73393f",
+  "tested_tree": "0ed8092438d2f0a70838828573bbfd187b73393f",
+  "source_clean": true,
+  "remote_proof": "ref: refs/heads/master\tHEAD\nea64ef57fdd2ff5fd60715b62f2d1696bc0133e5\tHEAD\nf86290673d752c77b56c70228c3d26aced75e177\trefs/heads/2026-10-22-codex-thread-retries\nea64ef57fdd2ff5fd60715b62f2d1696bc0133e5\trefs/heads/master",
+  "complete_series": "commit df00fa36c820fc7a62ee5b8dd6e1745940ff8e15\nAuthor:     Jakub Skokan <jakub.skokan@havefun.cz>\nAuthorDate: Thu Oct 22 16:28:43 2026 +0200\nCommit:     Jakub Skokan <jakub.skokan@havefun.cz>\nCommitDate: Thu Oct 22 20:12:03 2026 +0200\n\n    codex: add exact failed-turn continuation and context reads\n    \n    Expose cold latest-turn failure metadata and exact native execution context\n    without guessing from current defaults. The context projection validates\n    Codex 0.163.0 rollout identities and supported policy shapes while keeping\n    prompts, instructions and application authority out of the returned value.\n    \n    Continue an exact failed turn only while its thread is already loaded and\n    quiescent, with raw idle or systemError status and an exact terminal turn.\n    Preserve original options and reconcile durable receipts before fresh\n    admission checks. An atomic submitting claim prevents competing clients\n    from dispatching the same identity twice. This path never resumes, steers\n    or writes policy; applications retain the shared admission and authority\n    fences, including the native protocol's lack of compare-and-start.\n    \n    Keep the schema-3 submission ledger and existing send behavior compatible.\n\ncommit 6c828759440705c632e1902fa8309ccac446b050\nAuthor:     Jakub Skokan <jakub.skokan@havefun.cz>\nAuthorDate: Thu Oct 22 16:30:46 2026 +0200\nCommit:     Jakub Skokan <jakub.skokan@havefun.cz>\nCommitDate: Thu Oct 22 20:12:03 2026 +0200\n\n    conversation: expose optional application-owned retry controls\n    \n    Add an optional retry provider and capability without changing the required\n    App Server client interface. Resolve each opaque conversation through the\n    application and keep preference/cancel writes behind existing origin,\n    payload and shared mutation-lock checks. The provider retains durable\n    policy, authority and scheduling.\n    \n    Offer an opt-in Auto retry checkbox, server-relative countdown, quota\n    status and Cancel retry control. Read authoritative state after reload,\n    focus and uncertain writes; the browser never starts a continuation.\n    Cancellation preserves the preference and cannot retract dispatched work.\n    Existing embeddings keep their current interface with retry controls off.\n\ncommit c1f415ad5602c23e6443cced73cb59267a796f05\nAuthor:     Jakub Skokan <jakub.skokan@havefun.cz>\nAuthorDate: Thu Oct 22 16:54:04 2026 +0200\nCommit:     Jakub Skokan <jakub.skokan@havefun.cz>\nCommitDate: Thu Oct 22 20:12:03 2026 +0200\n\n    codex: verify failed-turn retries against a private native fixture\n    \n    Share the existing recovery fixture's private home, native process and\n    loopback Responses provider with a focused failed-turn contract test.\n    Synthetic failure events exercise terminal classification and retained\n    command output without real keys or policy-triggering requests.\n    \n    Check nonempty continuation settings, native queue execution context and\n    recreated-client recovery after a dropped accepted reply. A transparent\n    protocol proxy also forces competing native work after the final preflight,\n    so native busy-turn behavior remains an explicit deployment gate rather\n    than an assumption made from fake transport tests.\n\ncommit ac62eeeb9d8b1fa7b8ed8fb95ba8160acb7efa1c\nAuthor:     Jakub Skokan <jakub.skokan@havefun.cz>\nAuthorDate: Fri Oct 23 19:06:28 2026 +0200\nCommit:     Jakub Skokan <jakub.skokan@havefun.cz>\nCommitDate: Fri Oct 23 19:06:28 2026 +0200\n\n    codex: expose exact prepared-send observation proofs\n    \n    Distinguish an exact unsubmitted preparation from accepted, submitting or\n    queue-owned work without changing SendAttempted semantics. Applications can\n    exclude that one preparation from submission observation while retaining\n    ordinary checks for every other attempt and queue deletion.\n    \n    Keep the original identity, options, steering flag and ledger unchanged.\n    The proof does not authorize dispatch or replace application admission\n    fences. Existing native and durable state formats remain compatible.\n\ncommit f86290673d752c77b56c70228c3d26aced75e177\nAuthor:     Jakub Skokan <jakub.skokan@havefun.cz>\nAuthorDate: Fri Oct 23 21:27:37 2026 +0200\nCommit:     Jakub Skokan <jakub.skokan@havefun.cz>\nCommitDate: Fri Oct 23 21:27:37 2026 +0200\n\n    conversation: add optional retry activity notices and actions\n    \n    Expose safe retry-chain observations through an optional provider and token-only\n    Now and Stop routes. Resolve trusted conversation authority for every call and\n    retain the existing origin, payload and mutation-lock boundaries. Keep legacy\n    retry providers and the required App Server client interface unchanged.\n    \n    Offer a reusable footer notice with confirmed starts, uncertain submissions,\n    server-relative countdowns and honest elapsed-time quality through execution\n    and frozen results. Dismiss each exact conversation and chain locally, including\n    when browser storage is unavailable. Coalesce observations and reconcile lost\n    action responses by reading; the browser never dispatches a continuation.\n    \n    Applications own scheduling, durable policy, cancellation and transcript scroll\n    behavior. Native protocols and submission formats are unchanged.",
+  "delta_inventory": "README.md                                     |   1 +\n conversation/assets/conversation.css          |  52 ++++++\n conversation/assets/conversation.js           |   4 +\n conversation/assets/retry_activity.js         | 186 +++++++++++++++++++++\n conversation/handler.go                       |  26 +--\n conversation/retry_activity.go                | 154 ++++++++++++++++++\n conversation/retry_activity_test.go           | 224 ++++++++++++++++++++++++++\n docs/reference.md                             |  66 ++++++++\n flake.nix                                     |   2 +-\n test/retry_activity_browser_contract_test.cjs | 130 +++++++++++++++\n 10 files changed, 833 insertions(+), 12 deletions(-)",
+  "delta_files": "M\tREADME.md\nM\tconversation/assets/conversation.css\nM\tconversation/assets/conversation.js\nA\tconversation/assets/retry_activity.js\nM\tconversation/handler.go\nA\tconversation/retry_activity.go\nA\tconversation/retry_activity_test.go\nM\tdocs/reference.md\nM\tflake.nix\nA\ttest/retry_activity_browser_contract_test.cjs",
+  "old_new_range_diff": "1:  df00fa3 = 1:  df00fa3 codex: add exact failed-turn continuation and context reads\n2:  6c82875 = 2:  6c82875 conversation: expose optional application-owned retry controls\n3:  c1f415a = 3:  c1f415a codex: verify failed-turn retries against a private native fixture\n4:  ac62eee = 4:  ac62eee codex: expose exact prepared-send observation proofs\n-:  ------- > 5:  f862906 conversation: add optional retry activity notices and actions",
+  "migration_provenance": "No database, native, submission or retry-ledger schema migrations. New browser-local dismissal keys only. New successor undeployed; preceding four commits are actual deployed lineage and retained byte-identically. No repeated dependency/channel pin streams in A successor. Legacy optional RetryProvider remains supported for other embeddings.",
+  "history_disposition": "Append exactly one coherent optional activity API/renderer/test/docs milestone. The prior four deployed commits are unchanged ancestors. No fixups or superseded undeployed approaches.",
+  "checks": {
+    "go-conversation-final": {
+      "exit": 0,
+      "elapsed": 2.425170060247183
+    },
+    "go-retry-race-final": {
+      "exit": 0,
+      "elapsed": 8.65416674874723
+    },
+    "node-final": {
+      "exit": 0,
+      "elapsed": 1.9549667369574308
+    },
+    "push": {
+      "exit": 0,
+      "elapsed": 2.096342619508505
+    },
+    "source-metadata": {
+      "exit": 0,
+      "elapsed": 0.18271087855100632
+    },
+    "go-module": {
+      "exit": 0,
+      "elapsed": 9.3415193464607
+    }
+  },
+  "go_metadata": {
+    "Path": "github.com/aither64/codex-web",
+    "Version": "v0.0.0-20261023192737-f86290673d75",
+    "Query": "f86290673d752c77b56c70228c3d26aced75e177",
+    "Info": "/home/aither/go/pkg/mod/cache/download/github.com/aither64/codex-web/@v/v0.0.0-20261023192737-f86290673d75.info",
+    "GoMod": "/home/aither/go/pkg/mod/cache/download/github.com/aither64/codex-web/@v/v0.0.0-20261023192737-f86290673d75.mod",
+    "Zip": "/home/aither/go/pkg/mod/cache/download/github.com/aither64/codex-web/@v/v0.0.0-20261023192737-f86290673d75.zip",
+    "Dir": "/home/aither/go/pkg/mod/github.com/aither64/codex-web@v0.0.0-20261023192737-f86290673d75",
+    "Sum": "h1:5iVFEW9ghXtccbfhFB2swLC+UqZYIqEPaRfNOh1bsMM=",
+    "GoModSum": "h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=",
+    "Origin": {
+      "VCS": "git",
+      "URL": "https://github.com/aither64/codex-web",
+      "Hash": "f86290673d752c77b56c70228c3d26aced75e177"
+    }
+  },
+  "nix_metadata": {
+    "description": "Reusable Codex App Server web integration",
+    "fingerprint": "341c4751077bb56f9e4c649046feef88c885fbe0bdc3f64d689e926dfa35363b",
+    "lastModified": 1792783657,
+    "locked": {
+      "__final": true,
+      "lastModified": 1792783657,
+      "narHash": "sha256-jOEXFTr55N88YbPakjlMw/7wsH8ZKr51Ag+Z1QaM25A=",
+      "ref": "refs/heads/2026-10-22-codex-thread-retries",
+      "rev": "f86290673d752c77b56c70228c3d26aced75e177",
+      "revCount": 113,
+      "type": "git",
+      "url": "file:///home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/codex-web"
+    },
+    "locks": {
+      "nodes": {
+        "nixpkgs": {
+          "locked": {
+            "lastModified": 1788921488,
+            "narHash": "sha256-8+xWRxEkD6l217cIUdRxfeUGS9lQX0hVtUuNVsBaDzk=",
+            "owner": "NixOS",
+            "repo": "nixpkgs",
+            "rev": "6aefcda9401be8acc2b74244fb3b37520ea1f0a8",
+            "type": "github"
+          },
+          "original": {
+            "owner": "NixOS",
+            "ref": "nixos-26.05",
+            "repo": "nixpkgs",
+            "type": "github"
+          }
+        },
+        "root": {
+          "inputs": {
+            "nixpkgs": "nixpkgs"
+          }
+        }
+      },
+      "root": "root",
+      "version": 7
+    },
+    "original": {
+      "type": "git",
+      "url": "file:///home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/codex-web"
+    },
+    "originalUrl": "git+file:///home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/codex-web",
+    "path": "/nix/store/2fcnmakk5qvazcsqp1kk7rwpq9vc97sk-source",
+    "resolved": {
+      "type": "git",
+      "url": "file:///home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/codex-web"
+    },
+    "resolvedUrl": "git+file:///home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/codex-web",
+    "revCount": 113,
+    "revision": "f86290673d752c77b56c70228c3d26aced75e177",
+    "url": "git+file:///home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/codex-web?ref=refs/heads/2026-10-22-codex-thread-retries&rev=f86290673d752c77b56c70228c3d26aced75e177"
+  },
+  "source_identity_receipt": "ui-a/source-identity.json",
+  "source_verified_file_count": 115,
+  "bundle": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/ui-a/codex-web-ui-f8629067.bundle",
+  "bundle_sha256": "8ed7cdc1747786cd7f85a8386e9ab591f29a180c9f437609c7c26ea151332637",
+  "bundle_verify": "The bundle contains this ref:\nf86290673d752c77b56c70228c3d26aced75e177 refs/heads/2026-10-22-codex-thread-retries\nThe bundle requires this ref:\nea64ef57fdd2ff5fd60715b62f2d1696bc0133e5 \nThe bundle uses this hash algorithm: sha1\n/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/ui-a/codex-web-ui-f8629067.bundle is okay\n",
+  "docs": [
+    "README.md",
+    "docs/reference.md"
+  ],
+  "copy_review": "Lead direct writing pass approved complete ui-a/copy-inventory.txt except title changed exactly to Cybersecurity error. Final reference precision ui-a/copy-final.diff covers document-local fallback through remount.",
+  "api": "Optional RetryActivityProvider/Target.RetryActivity/Capabilities.RetryActivity; GET retry/activity, POST retry/now|stop token-only. Fixed saved shared DTO. Required Client unchanged. Export mountRetryActivity, retryActivityPresentation and three optional client methods.",
+  "risk": "Public optional cross-project API and browser presentation, request authorization retained; independent general/architecture/scope/risk lanes required. Lead owns retained reviewer assignment.",
+  "remaining": "B final pin/vendor integration; independent review; actual B template controlled desktop/mobile screenshots and user visual acceptance before backend expansion/long checks/deploy.",
+  "not_run": [
+    "native tests",
+    "long checks",
+    "builds",
+    "screenshots",
+    "deployment",
+    "integration",
+    "lifecycle"
+  ],
+  "portal": "https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-22-codex-thread-retries/"
+}

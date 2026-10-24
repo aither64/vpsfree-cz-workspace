@@ -1,0 +1,3 @@
+# Direct recovery-constructor fix disposition
+
+Lead inspected e914->82f35c80: only owning browserGo changed, uses existing RecoveryStore.Set with actual bound socket before member enrollment plus four real constructor/Handler regressions. This corrects invalid missing recovery metadata within assessed fixture setup, no new product/wire/API/DTO/authority boundary or weakened assertion. Focused4leaves/parent/package PASS, no skips, exactcommittedteste75b46b4 clean. Direct step9 accepted; no confirmation-only review rerun. Browserexecution remains required, originalfailures preserved. Fork21pass/pressurepass retained at unchanged boundary, no repeats.

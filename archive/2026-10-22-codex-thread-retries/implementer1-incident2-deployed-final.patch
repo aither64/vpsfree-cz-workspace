@@ -1,0 +1,1447 @@
+diff --git a/docs/turn-retry-recovery.md b/docs/turn-retry-recovery.md
+index ea6c7e05..4bd84bd4 100644
+--- a/docs/turn-retry-recovery.md
++++ b/docs/turn-retry-recovery.md
+@@ -38,9 +38,9 @@ The admission lock is shared by portal, CLI and direct team mutations. Lock
+ ordering is package transition, session runtime, roster operation when needed,
+ conversation mutex, then per-thread admission. Atomic state writes and native
+ queue/submission-ledger operations occur inside that admission fence. They do
+-not acquire an outer roster or conversation lock. No timer sleeps under these
+-locks. Two scheduler workers serve retained roots and ready team members
+-without requiring a browser connection.
++not acquire an outer roster or conversation lock. The retry scheduler does not
++sleep while holding these locks. Two scheduler workers serve retained roots and
++ready team members without requiring a browser connection.
+ 
+ First enrollment reads a conservative terminal baseline. A failure already
+ present at that boundary is consumed. A proven active turn can qualify when it
+@@ -103,10 +103,27 @@ that exact identity. A new UUID is never a recovery mechanism.
+ Exact delivery reconciliation runs before capturing new retry provenance or
+ binding settings. An accepted original UUID returns its existing receipt without
+ acquiring newer settings or causing another native send. This includes history
+-recovery after browser acknowledgment. Prepared or uncertain input with missing
++recovery after browser acknowledgment. An uncertain submission with missing
+ admission proof cannot be treated as new input. Keep the original UUID when
+ recovering an uncertain response.
+ 
++Plan implementation reserves its original message identity before changing Plan
++mode to Default. An exact prepared entry in the generic submission ledger, with
++no queue attempt, can acquire its first managed admission after that explicit
++settings change. This preserves the original UUID, text, plan action, options
++and steering intent. It does not rewrite earlier retry snapshots or admit a
++submitting or queue-owned attempt as new work. Exact receipt recovery runs
++before plan freshness and ordinary activity checks. Every other unresolved
++submission still receives the ordinary checks.
++
++Browser mutations wait for a temporary exclusive session-runtime lock within
++their existing request deadline. After acquiring the lock, the server checks
++the current package, lifecycle, provider and conversation authority again. A
++timeout or changed authority refuses admission without sending input or changing
++settings. Lifecycle commands retain their existing immediate lock refusal
++behavior. Recover an uncertain response using the original browser submission
++identity.
++
+ Automatic dispatch reserves room for accepted-result bookkeeping before sending.
+ If an already accepted result cannot retain another eligibility snapshot,
+ reconciliation saves its exact pending identity, result and quota charge in a
+diff --git a/flake.lock b/flake.lock
+index 0f55e507..610287ba 100644
+--- a/flake.lock
++++ b/flake.lock
+@@ -37,17 +37,17 @@
+     "codex-web": {
+       "flake": false,
+       "locked": {
+-        "lastModified": 1792692723,
+-        "narHash": "sha256-L7N67MpgM8DcQUcaI7Tx+oc693ZmmQm3mFqqO22LKiY=",
++        "lastModified": 1792775188,
++        "narHash": "sha256-tCfdy/lh9LHbvEd6BYO0trM1pUelyv2T63KsQ1iEK90=",
+         "owner": "aither64",
+         "repo": "codex-web",
+-        "rev": "c1f415ad5602c23e6443cced73cb59267a796f05",
++        "rev": "ac62eeeb9d8b1fa7b8ed8fb95ba8160acb7efa1c",
+         "type": "github"
+       },
+       "original": {
+         "owner": "aither64",
+         "repo": "codex-web",
+-        "rev": "c1f415ad5602c23e6443cced73cb59267a796f05",
++        "rev": "ac62eeeb9d8b1fa7b8ed8fb95ba8160acb7efa1c",
+         "type": "github"
+       }
+     },
+diff --git a/flake.nix b/flake.nix
+index 5546c650..97642c93 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -5,7 +5,7 @@
+     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+     llm-agents.url = "github:numtide/llm-agents.nix";
+     codex-web = {
+-      url = "github:aither64/codex-web/c1f415ad5602c23e6443cced73cb59267a796f05";
++      url = "github:aither64/codex-web/ac62eeeb9d8b1fa7b8ed8fb95ba8160acb7efa1c";
+       flake = false;
+     };
+   };
+diff --git a/nix/workspace-portal.nix b/nix/workspace-portal.nix
+index 4f830a64..157cf5da 100644
+--- a/nix/workspace-portal.nix
++++ b/nix/workspace-portal.nix
+@@ -273,7 +273,7 @@ buildGoModule {
+ 
+   inherit src;
+   modRoot = "portal";
+-  vendorHash = "sha256-CUZc7zj3bNr75y+7Rv3mPjEtVLT+iUNaLQ7EOH7RkQE=";
++  vendorHash = "sha256-NZ9hapJobbhvEdxWTtzYJ/3ZeMkSZAqOdewJCsZoL2o=";
+ 
+   postPatch = ''
+     expected=${lib.escapeShellArg codexWebVersion}
+diff --git a/portal/go.mod b/portal/go.mod
+index 70bd633f..6e74eaf6 100644
+--- a/portal/go.mod
++++ b/portal/go.mod
+@@ -4,7 +4,7 @@ go 1.24.0
+ 
+ require (
+ 	github.com/SherClockHolmes/webpush-go v1.4.0
+-	github.com/aither64/codex-web v0.0.0-20261022181203-c1f415ad5602
++	github.com/aither64/codex-web v0.0.0-20261023170628-ac62eeeb9d8b
+ 	github.com/coder/websocket v1.8.14
+ 	github.com/microcosm-cc/bluemonday v1.0.27
+ 	github.com/yuin/goldmark v1.7.17
+diff --git a/portal/go.sum b/portal/go.sum
+index f49ea04f..4cf20004 100644
+--- a/portal/go.sum
++++ b/portal/go.sum
+@@ -1,7 +1,7 @@
+ github.com/SherClockHolmes/webpush-go v1.4.0 h1:ocnzNKWN23T9nvHi6IfyrQjkIc0oJWv1B1pULsf9i3s=
+ github.com/SherClockHolmes/webpush-go v1.4.0/go.mod h1:XSq8pKX11vNV8MJEMwjrlTkxhAj1zKfxmyhdV7Pd6UA=
+-github.com/aither64/codex-web v0.0.0-20261022181203-c1f415ad5602 h1:2ziyC3nOv4CwKI1+axdbJA+fDEt3pPuZEY5eSyZ3HyM=
+-github.com/aither64/codex-web v0.0.0-20261022181203-c1f415ad5602/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
++github.com/aither64/codex-web v0.0.0-20261023170628-ac62eeeb9d8b h1:z09uGj1nKIn7CYBPZ7YZ5rsGF3MwN98tbyHqQln24ds=
++github.com/aither64/codex-web v0.0.0-20261023170628-ac62eeeb9d8b/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
+ github.com/aymerick/douceur v0.2.0 h1:Mv+mAeH1Q+n9Fr+oyamOlAkUNPWPlA8PPGR0QAaYuPk=
+ github.com/aymerick/douceur v0.2.0/go.mod h1:wlT5vV2O3h55X9m7iVYN0TBM0NH/MmbLnd30/FjWUq4=
+ github.com/coder/websocket v1.8.14 h1:9L0p0iKiNOibykf283eHkKUHHrpG7f65OE3BhhO7v9g=
+diff --git a/portal/internal/session/authority.go b/portal/internal/session/authority.go
+index 6cec6819..dd675787 100644
+--- a/portal/internal/session/authority.go
++++ b/portal/internal/session/authority.go
+@@ -10,6 +10,7 @@ import (
+ 	"os"
+ 	"os/exec"
+ 	"strings"
++	"time"
+ 
+ 	"golang.org/x/sys/unix"
+ )
+@@ -46,6 +47,12 @@ func LockRuntimeShared(directory, slug string) (*RuntimeLock, error) {
+ 	return lockRuntime(directory, slug, ".lock", unix.LOCK_SH)
+ }
+ 
++// LockRuntimeSharedContext lets HTTP callers wait for a legitimate exclusive
++// operation within their request budget. Lifecycle callers remain fail-fast.
++func LockRuntimeSharedContext(ctx context.Context, directory, slug string) (*RuntimeLock, error) {
++	return lockRuntimeContext(ctx, directory, slug, ".lock", unix.LOCK_SH)
++}
++
+ // LockCreation and LockRuntimeExclusive use the CLI's creation-then-session
+ // lock order when reserving a destination that does not yet have an authority.
+ func LockCreation(directory, slug string) (*RuntimeLock, error) {
+@@ -57,6 +64,10 @@ func LockRuntimeExclusive(directory, slug string) (*RuntimeLock, error) {
+ }
+ 
+ func lockRuntime(directory, slug, suffix string, mode int) (*RuntimeLock, error) {
++	return lockRuntimeContext(nil, directory, slug, suffix, mode)
++}
++
++func lockRuntimeContext(ctx context.Context, directory, slug, suffix string, mode int) (*RuntimeLock, error) {
+ 	if directory == "" || !ValidSlug(slug) {
+ 		return nil, errors.New("runtime locking is not configured")
+ 	}
+@@ -70,11 +81,32 @@ func lockRuntime(directory, slug, suffix string, mode int) (*RuntimeLock, error)
+ 	if err != nil {
+ 		return nil, fmt.Errorf("open runtime session lock: %w", err)
+ 	}
+-	if err := unix.Flock(int(session.Fd()), mode|unix.LOCK_NB); err != nil {
+-		session.Close()
+-		return nil, fmt.Errorf("session is changing: %w", err)
++	for {
++		if ctx != nil && ctx.Err() != nil {
++			session.Close()
++			return nil, ctx.Err()
++		}
++		err := unix.Flock(int(session.Fd()), mode|unix.LOCK_NB)
++		if err == nil {
++			if ctx != nil && ctx.Err() != nil {
++				session.Close()
++				return nil, ctx.Err()
++			}
++			return &RuntimeLock{session: session}, nil
++		}
++		if ctx == nil || !errors.Is(err, unix.EWOULDBLOCK) && !errors.Is(err, unix.EAGAIN) {
++			session.Close()
++			return nil, fmt.Errorf("session is changing: %w", err)
++		}
++		timer := time.NewTimer(10 * time.Millisecond)
++		select {
++		case <-ctx.Done():
++			timer.Stop()
++			session.Close()
++			return nil, ctx.Err()
++		case <-timer.C:
++		}
+ 	}
+-	return &RuntimeLock{session: session}, nil
+ }
+ 
+ func openAuthorityDirectory(directory string) (int, error) {
+diff --git a/portal/internal/session/authority_wait_test.go b/portal/internal/session/authority_wait_test.go
+new file mode 100644
+index 00000000..348eb0bb
+--- /dev/null
++++ b/portal/internal/session/authority_wait_test.go
+@@ -0,0 +1,57 @@
++package session
++
++import (
++	"context"
++	"errors"
++	"os"
++	"testing"
++	"time"
++)
++
++func TestRuntimeSharedContextWaitCancelAndRelease(t *testing.T) {
++	dir := t.TempDir()
++	if err := os.Chmod(dir, 0700); err != nil {
++		t.Fatal(err)
++	}
++	exclusive, err := LockRuntimeExclusive(dir, "example")
++	if err != nil {
++		t.Fatal(err)
++	}
++	defer exclusive.Close()
++	if shared, err := LockRuntimeShared(dir, "example"); err == nil {
++		shared.Close()
++		t.Fatal("fail-fast API stopped refusing exclusive owner")
++	}
++	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
++	defer cancel()
++	if shared, err := LockRuntimeSharedContext(ctx, dir, "example"); !errors.Is(err, context.DeadlineExceeded) {
++		if shared != nil {
++			shared.Close()
++		}
++		t.Fatal("wait ignored its deadline", err)
++	}
++	ctx, cancel = context.WithCancel(context.Background())
++	result := make(chan error, 1)
++	go func() {
++		shared, err := LockRuntimeSharedContext(ctx, dir, "example")
++		if shared != nil {
++			shared.Close()
++		}
++		result <- err
++	}()
++	cancel()
++	if err := <-result; !errors.Is(err, context.Canceled) {
++		t.Fatal(err)
++	}
++	exclusive.Close()
++	shared, err := LockRuntimeSharedContext(context.Background(), dir, "example")
++	if err != nil {
++		t.Fatal(err)
++	}
++	shared.Close()
++	final, err := LockRuntimeExclusive(dir, "example")
++	if err != nil {
++		t.Fatal("cancelled waiter leaked its descriptor lock", err)
++	}
++	final.Close()
++}
+diff --git a/portal/internal/teamruntime/observation.go b/portal/internal/teamruntime/observation.go
+index 4b5cb6f5..351a3212 100644
+--- a/portal/internal/teamruntime/observation.go
++++ b/portal/internal/teamruntime/observation.go
+@@ -64,6 +64,14 @@ func retainedObservationIdentities(roster *Roster) [][3]string {
+ // It proves the current roster, project, persistence and unknown-writer state;
+ // it neither adopts a discovered root nor supplies creation provenance.
+ func (service Service) ObserveRetained(ctx context.Context, slug, rootThreadID, identity string) (Observation, error) {
++	return service.observeRetained(ctx, slug, rootThreadID, identity, nil)
++}
++
++func (service Service) ObserveRetainedExceptPreparedRoot(ctx context.Context, slug, rootThreadID, identity string, prepared workspacecodex.PreparedSend) (Observation, error) {
++	return service.observeRetained(ctx, slug, rootThreadID, identity, &prepared)
++}
++
++func (service Service) observeRetained(ctx context.Context, slug, rootThreadID, identity string, prepared *workspacecodex.PreparedSend) (Observation, error) {
+ 	if service.Store == nil || service.Client == nil {
+ 		return Observation{}, errors.New("retained observation runtime is unavailable")
+ 	}
+@@ -107,7 +115,19 @@ func (service Service) ObserveRetained(ctx context.Context, slug, rootThreadID,
+ 			default:
+ 				return errors.New("retained archival state is unknown")
+ 			}
+-			observation, err := observer.ObserveThreadIdentity(ctx, thread, cwd, project, state)
++			var observation workspacecodex.ThreadObservation
++			var err error
++			if address == "lead" && prepared != nil {
++				exact, ok := service.Client.(interface {
++					ObserveThreadIdentityExceptPreparedSend(context.Context, string, string, string, workspacecodex.ArchiveState, workspacecodex.PreparedSend) (workspacecodex.ThreadObservation, error)
++				})
++				if !ok {
++					return errors.New("semantic conversation observer is unavailable")
++				}
++				observation, err = exact.ObserveThreadIdentityExceptPreparedSend(ctx, thread, cwd, project, state, *prepared)
++			} else {
++				observation, err = observer.ObserveThreadIdentity(ctx, thread, cwd, project, state)
++			}
+ 			if err != nil {
+ 				return err
+ 			}
+diff --git a/portal/internal/web/plan_delivery.go b/portal/internal/web/plan_delivery.go
+new file mode 100644
+index 00000000..3ef9a086
+--- /dev/null
++++ b/portal/internal/web/plan_delivery.go
+@@ -0,0 +1,127 @@
++package web
++
++import (
++	"context"
++	"errors"
++	"net/http"
++	"path/filepath"
++	"strings"
++
++	"github.com/aither64/codex-web/codex"
++	"github.com/aither64/dev-workspace/portal/internal/session"
++	"github.com/aither64/dev-workspace/portal/internal/workspacecodex"
++)
++
++type preparedPlanClient interface {
++	IsPreparedSendWithOptions(string, string, string, string, codex.TurnOptions) (bool, error)
++}
++
++var errPlanDeliveryIdentity = errors.New("retained runtime authority changed")
++
++func planDeliveryIdentity(body implementPlanRequest) *workspacecodex.PreparedSend {
++	action := strings.TrimSpace(body.Action)
++	if (action != "same" && action != "recover") || !queueClientMessageIDPattern.MatchString(strings.TrimSpace(body.ClientUserMessageID)) || !messageDigestPattern.MatchString(strings.TrimSpace(body.PlanSHA256)) {
++		return nil
++	}
++	context := "plan:" + strings.TrimSpace(body.PlanSHA256)
++	if body.PlanContextVersion == 2 && strings.TrimSpace(body.PlanTurnID) != "" {
++		context = "plan:" + strings.TrimSpace(body.PlanTurnID) + ":" + strings.TrimSpace(body.PlanSHA256)
++	} else if action != "recover" || body.PlanContextVersion != 0 {
++		return nil
++	}
++	return &workspacecodex.PreparedSend{Text: "Implement the plan.", ID: strings.TrimSpace(body.ClientUserMessageID), Action: context}
++}
++
++// Called under package/runtime admission, before the activity-known gate. It
++// can only reconcile the exact request or select its prepared observation;
++// neither operation grants execution or changes settings.
++func (s *Server) reconcilePlanDelivery(w http.ResponseWriter, r *http.Request, summary *session.Summary, body implementPlanRequest) (*workspacecodex.PreparedSend, bool) {
++	p := planDeliveryIdentity(body)
++	client, ok := s.config.Codex.(preparedPlanClient)
++	if p == nil || !ok {
++		return nil, false
++	}
++	fail := func(err error) (*workspacecodex.PreparedSend, bool) {
++		s.writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": err.Error()})
++		return nil, true
++	}
++	ctx := r.Context()
++	if err := s.requirePlanDeliveryIdentity(ctx, summary); err != nil {
++		return fail(err)
++	}
++	service, err := s.teamService(summary.Slug)
++	if err != nil {
++		return fail(err)
++	}
++	unlock, err := service.Store.LockOperation(ctx, summary.Slug)
++	if err != nil {
++		return fail(err)
++	}
++	defer unlock()
++	conversation := s.messageLock(summary.Slug)
++	if err := conversation.Lock(ctx); err != nil {
++		return fail(err)
++	}
++	defer conversation.Unlock()
++	if err := s.requirePlanDeliveryIdentity(ctx, summary); err != nil {
++		return fail(err)
++	}
++	thread := summary.Codex.ThreadID
++	receipt, found, err := s.config.Codex.ReconcileSend(ctx, thread, p.Text, p.ID, p.Action)
++	if err != nil {
++		return fail(err)
++	}
++	if !found {
++		// Acknowledgment can compact an accepted ledger entry. The generic
++		// exact history recovery preserves its delivery identity and receipt.
++		if _, err = s.config.Codex.SendAttempted(ctx, thread, p.Text, p.ID, p.Action); err != nil {
++			return fail(err)
++		}
++		receipt, found, err = s.config.Codex.ReconcileSend(ctx, thread, p.Text, p.ID, p.Action)
++		if err != nil {
++			return fail(err)
++		}
++	}
++	if found {
++		s.writeJSON(w, http.StatusAccepted, receipt)
++		return nil, true
++	}
++	prepared, err := client.IsPreparedSendWithOptions(thread, p.Text, p.ID, p.Action, p.Options)
++	if err != nil {
++		return fail(err)
++	}
++	if prepared {
++		return p, false
++	}
++	return nil, false
++}
++
++func (s *Server) requirePlanDeliveryIdentity(ctx context.Context, expected *session.Summary) error {
++	if err := s.requireProviderAdmission(expected.Slug); err != nil {
++		return err
++	}
++	current, err := session.Find(s.config.Workspace, expected.Slug)
++	if err != nil {
++		return err
++	}
++	if current.Archived || current.Lifecycle != "active" || current.Codex != expected.Codex || current.Root != expected.Root || session.RequireRetainedReady(current, s.config.CodexSocket) != nil {
++		return errPlanDeliveryIdentity
++	}
++	if err := RequireObservationReceipts(current, s.config.UserStateRoot, "", ""); err != nil {
++		return err
++	}
++	authority, err := session.LoadRuntimeAuthority(s.config.AuthorityDir, current.Slug, s.config.Workspace)
++	if err != nil {
++		return err
++	}
++	if authority.State != "ready" || authority.CodexThreadID != current.Codex.ThreadID || authority.CodexSocketPath != current.Codex.SocketPath || authority.CodexClientVersion != current.Codex.ClientVersion {
++		return errPlanDeliveryIdentity
++	}
++	if err := authority.VerifyTmux(ctx, s.config.Tmux); err != nil {
++		return err
++	}
++	if s.config.VerifyThread == nil {
++		return errPlanDeliveryIdentity
++	}
++	return s.config.VerifyThread(ctx, current.Codex.ThreadID, filepath.Join(s.config.Workspace, current.Root, current.Slug))
++}
+diff --git a/portal/internal/web/plan_delivery_test.go b/portal/internal/web/plan_delivery_test.go
+new file mode 100644
+index 00000000..44575311
+--- /dev/null
++++ b/portal/internal/web/plan_delivery_test.go
+@@ -0,0 +1,502 @@
++package web
++
++import (
++	"context"
++	"encoding/json"
++	"fmt"
++	"net"
++	"net/http"
++	"net/http/httptest"
++	"os"
++	"path/filepath"
++	"reflect"
++	"strings"
++	"sync"
++	"testing"
++	"time"
++
++	"github.com/aither64/codex-web/codex"
++	"github.com/aither64/dev-workspace/portal/internal/session"
++	"github.com/aither64/dev-workspace/portal/internal/teamruntime"
++	"github.com/aither64/dev-workspace/portal/internal/turnretry"
++	"github.com/aither64/dev-workspace/portal/internal/workspacecodex"
++	"github.com/coder/websocket"
++)
++
++const planDeliveryID = "00000000-0000-4000-8000-000000000071"
++const deliveryPlan = "Implement the saved synthetic plan."
++
++type planDeliveryWire struct {
++	mu                                        sync.Mutex
++	t                                         *testing.T
++	cwd, rollout, mode, latest, status        string
++	starts, updates, resumes                  int
++	items                                     []any
++	lost, hide, failSettings, failReceiptSave bool
++	failAdmissionSave, stopAfterAdmission     bool
++	client                                    *workspacecodex.Client
++}
++
++func (p *planDeliveryWire) writeMode() {
++	line, _ := json.Marshal(map[string]any{"type": "turn_context", "payload": map[string]any{"turn_id": p.latest, "cwd": p.cwd, "model": "retained-model", "effort": "xhigh", "collaboration_mode": map[string]any{"mode": p.mode}}})
++	if err := os.WriteFile(p.rollout, append(line, '\n'), 0600); err != nil {
++		p.t.Error(err)
++	}
++}
++
++func (p *planDeliveryWire) serve(socket string) {
++	listener, err := net.Listen("unix", socket)
++	if err != nil {
++		p.t.Fatal(err)
++	}
++	server := &http.Server{Handler: http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
++		conn, err := websocket.Accept(rw, r, nil)
++		if err != nil {
++			return
++		}
++		defer conn.CloseNow()
++		for {
++			_, data, err := conn.Read(context.Background())
++			if err != nil {
++				return
++			}
++			var req map[string]any
++			if json.Unmarshal(data, &req) != nil {
++				return
++			}
++			if req["id"] == nil {
++				continue
++			}
++			params, _ := req["params"].(map[string]any)
++			thread, _ := params["threadId"].(string)
++			p.mu.Lock()
++			var result any = map[string]any{}
++			failure := ""
++			var notify any
++			switch req["method"] {
++			case "initialize":
++				result = map[string]any{"userAgent": "codex/fixture"}
++			case "thread/read":
++				result = map[string]any{"thread": map[string]any{"id": thread, "cwd": p.cwd, "path": p.rollout, "source": "vscode", "modelProvider": "fixture", "model": "retained-model", "reasoningEffort": "xhigh", "status": map[string]any{"type": "idle"}}}
++			case "thread/turns/list":
++				items := []any{}
++				if p.latest == "plan-turn" {
++					items = append(items, map[string]any{"id": "plan-item", "type": "plan", "text": deliveryPlan})
++				}
++				result = map[string]any{"data": []any{map[string]any{"id": p.latest, "status": p.status, "items": items}}}
++			case "thread/items/list":
++				items := p.items
++				if items == nil || p.hide {
++					items = []any{}
++				}
++				result = map[string]any{"data": items, "nextCursor": nil}
++			case "thread/queue/list":
++				result = map[string]any{"data": []any{}}
++			case "thread/queue/add":
++				result = map[string]any{"queuedSubmission": map[string]any{"id": "queued", "clientUserMessageId": params["clientUserMessageId"], "input": params["input"]}}
++			case "thread/resume":
++				p.resumes++
++				if p.stopAfterAdmission {
++					scope := turnretry.Scope{Workspace: filepath.Dir(filepath.Dir(p.cwd)), Slug: "example", Root: "thread-1", Thread: thread, Socket: socket}
++					state, err := p.client.RetryStore().Load(scope)
++					if err != nil {
++						p.t.Error(err)
++					}
++					for _, snapshot := range state.Snapshots {
++						if snapshot.ID == planDeliveryID {
++							failure = "synthetic interruption after durable admission"
++						}
++					}
++				}
++				result = map[string]any{"thread": map[string]any{"id": thread}}
++			case "thread/settings/update":
++				if mode, ok := params["collaborationMode"].(map[string]any); ok {
++					p.updates++
++					if p.failSettings {
++						failure = "synthetic settings refusal"
++						break
++					}
++					p.mode = mode["mode"].(string)
++					p.writeMode()
++					if p.failAdmissionSave {
++						paths, _ := filepath.Glob(filepath.Join(p.client.RecoveryRoot, "turn-retries", "*", "example"))
++						for _, path := range paths {
++							if err := os.Chmod(path, 0500); err != nil {
++								p.t.Error(err)
++							}
++						}
++					}
++					notify = map[string]any{"method": "thread/settings/updated", "params": map[string]any{"threadId": thread, "threadSettings": map[string]any{"model": "retained-model", "effort": "xhigh", "collaborationMode": map[string]any{"mode": p.mode}}}}
++				}
++			case "turn/start", "turn/steer":
++				p.starts++
++				text := params["input"].([]any)[0].(map[string]any)["text"].(string)
++				id := params["clientUserMessageId"].(string)
++				if text != "Implement the plan." && text != "manual message" {
++					p.t.Error("delivery changed input", text)
++				}
++				p.latest, p.status = "implementation", "inProgress"
++				p.items = []any{map[string]any{"turnId": p.latest, "item": map[string]any{"id": "input-" + id, "type": "userMessage", "clientId": id, "content": []any{map[string]any{"type": "text", "text": text}}}}}
++				result = map[string]any{"turn": map[string]any{"id": p.latest}}
++				if p.lost {
++					p.hide = true
++					result = map[string]any{"turn": map[string]any{}}
++				}
++				if p.failReceiptSave {
++					paths, _ := filepath.Glob(filepath.Join(p.client.RecoveryRoot, "turn-retries", "*", "example"))
++					for _, path := range paths {
++						if err := os.Chmod(path, 0500); err != nil {
++							p.t.Error(err)
++						}
++					}
++				}
++			default:
++				failure = fmt.Sprint("unexpected plan fixture RPC: ", req["method"])
++				p.t.Error(failure)
++			}
++			p.mu.Unlock()
++			reply := map[string]any{"id": req["id"], "result": result}
++			if failure != "" {
++				delete(reply, "result")
++				reply["error"] = map[string]any{"code": -32000, "message": failure}
++			}
++			out, _ := json.Marshal(reply)
++			if conn.Write(context.Background(), websocket.MessageText, out) != nil {
++				return
++			}
++			if notify != nil {
++				out, _ = json.Marshal(notify)
++				if conn.Write(context.Background(), websocket.MessageText, out) != nil {
++					return
++				}
++			}
++		}
++	})}
++	go func() { _ = server.Serve(listener) }()
++	p.t.Cleanup(func() { _ = server.Close(); _ = listener.Close() })
++}
++
++type planDeliveryFixture struct {
++	s              *Server
++	wire           *planDeliveryWire
++	client         *planDeliveryClient
++	ledger, socket string
++}
++
++type planDeliveryClient struct {
++	*resolverRetryClient
++	stateRoot, workspace string
++}
++
++func (c *planDeliveryClient) ListThreads(context.Context, codex.ThreadListOptions) ([]codex.ThreadMetadata, *string, error) {
++	threads := []codex.ThreadMetadata{{ID: "thread-1", Cwd: c.cwd, Source: "vscode"}}
++	store, err := teamruntime.NewStore(c.stateRoot, c.workspace)
++	if err != nil {
++		return nil, nil, err
++	}
++	roster, err := store.Load("example", "thread-1")
++	if err != nil && !os.IsNotExist(err) {
++		return nil, nil, err
++	}
++	if roster != nil {
++		for _, member := range roster.Members {
++			threads = append(threads, codex.ThreadMetadata{ID: member.Thread, Cwd: c.cwd, Source: "vscode"})
++		}
++	}
++	return threads, nil, nil
++}
++
++func (c *planDeliveryClient) LoadedThreadIDs(ctx context.Context) ([]string, error) {
++	threads, _, err := c.ListThreads(ctx, codex.ThreadListOptions{})
++	ids := []string{}
++	for _, thread := range threads {
++		ids = append(ids, thread.ID)
++	}
++	return ids, err
++}
++
++func newPlanDeliveryFixture(t *testing.T) *planDeliveryFixture {
++	t.Helper()
++	s := newTestServer(t)
++	dir, err := os.MkdirTemp("/tmp", "plan-delivery-")
++	if err != nil {
++		t.Fatal(err)
++	}
++	t.Cleanup(func() { _ = os.RemoveAll(dir) })
++	socket := filepath.Join(dir, "native.sock")
++	s.config.CodexSocket = socket
++	cwd := filepath.Join(s.config.Workspace, "work", "example")
++	if err := os.MkdirAll(cwd, 0700); err != nil {
++		t.Fatal(err)
++	}
++	w := &planDeliveryWire{t: t, cwd: cwd, rollout: filepath.Join(dir, "rollout.jsonl"), mode: "plan", latest: "plan-turn", status: "completed"}
++	w.writeMode()
++	w.serve(socket)
++	manifest := "schema: 1\nslug: example\nrepositories: []\nartifacts: []\ncodex:\n  thread_id: thread-1\n  socket_path: " + socket + "\n  client_version: 0.152.1\n"
++	if err := os.WriteFile(filepath.Join(cwd, "portal.yml"), []byte(manifest), 0600); err != nil {
++		t.Fatal(err)
++	}
++	writeWebTrackingFiles(t, cwd, "active")
++	writeWebRuntimeAuthority(t, s, "example")
++	if err := (session.RecoveryStore{Root: s.config.UserStateRoot, Workspace: s.config.Workspace}).Set(context.Background(), "example", "thread-1", socket, true, true); err != nil {
++		t.Fatal(err)
++	}
++	f := &planDeliveryFixture{s: s, wire: w, ledger: filepath.Join(s.config.UserStateRoot, "native.json"), socket: socket}
++	f.restart(t)
++	t.Cleanup(func() {
++		paths, _ := filepath.Glob(filepath.Join(s.config.UserStateRoot, "turn-retries", "*", "example"))
++		for _, path := range paths {
++			_ = os.Chmod(path, 0700)
++		}
++	})
++	return f
++}
++
++func (f *planDeliveryFixture) restart(t *testing.T) {
++	t.Helper()
++	if f.client != nil {
++		f.client.Close()
++	}
++	c := workspacecodex.NewWithOptions(f.socket, f.s.config.Workspace, codex.ClientOptions{SubmissionLedgerPath: f.ledger, PreserveThreadInstructionsOnResume: true})
++	c.RecoveryRoot = f.s.config.UserStateRoot
++	c.RetryPolicyResolver = func(context.Context, string) (codex.ThreadPolicy, error) { return codex.ThreadPolicy{}, nil }
++	f.client = &planDeliveryClient{&resolverRetryClient{c, f.wire.cwd}, f.s.config.UserStateRoot, f.s.config.Workspace}
++	f.s.config.Codex = f.client
++	f.wire.mu.Lock()
++	f.wire.client = c
++	f.wire.mu.Unlock()
++	t.Cleanup(c.Close)
++}
++
++func (f *planDeliveryFixture) request(ctx context.Context, id, turn, action string) *httptest.ResponseRecorder {
++	body := fmt.Sprintf(`{"action":%q,"planContextVersion":2,"planTurnId":%q,"planSha256":%q,"clientUserMessageId":%q}`, action, turn, planDigest(deliveryPlan), id)
++	r := httptest.NewRequest(http.MethodPost, "/api/sessions/example/implement-plan", strings.NewReader(body)).WithContext(ctx)
++	r.Header.Set("Origin", f.s.config.BaseURL)
++	r.Header.Set("Content-Type", "application/json")
++	w := httptest.NewRecorder()
++	f.s.Handler().ServeHTTP(w, r)
++	return w
++}
++
++func TestPlanDeliveryManagedHTTPFreshAndPreparedRestart(t *testing.T) {
++	for _, stage := range []string{"fresh", "prepared-plan", "prepared-default", "settings-refusal"} {
++		t.Run(stage, func(t *testing.T) {
++			f := newPlanDeliveryFixture(t)
++			ctx := context.Background()
++			if stage != "fresh" {
++				if err := f.client.PrepareSend("thread-1", "Implement the plan.", planDeliveryID, "plan:plan-turn:"+planDigest(deliveryPlan), false); err != nil {
++					t.Fatal(err)
++				}
++				if stage == "prepared-default" {
++					mode := "default"
++					if _, err := f.client.UpdateThreadSettings(ctx, "thread-1", codex.ThreadSettingsUpdate{CollaborationMode: &mode}); err != nil {
++						t.Fatal(err)
++					}
++				}
++				if stage == "settings-refusal" {
++					f.wire.mu.Lock()
++					f.wire.failSettings = true
++					f.wire.mu.Unlock()
++					first := f.request(ctx, planDeliveryID, "plan-turn", "same")
++					if first.Code < 400 {
++						t.Fatal("settings refusal hidden", first.Code)
++					}
++					f.wire.mu.Lock()
++					f.wire.failSettings = false
++					f.wire.mu.Unlock()
++				}
++				f.restart(t)
++			}
++			response := f.request(ctx, planDeliveryID, "plan-turn", "same")
++			if response.Code != http.StatusAccepted {
++				t.Fatal(response.Code, response.Body.String())
++			}
++			f.wire.mu.Lock()
++			starts, updates := f.wire.starts, f.wire.updates
++			f.wire.mu.Unlock()
++			if starts != 1 {
++				t.Fatal("plan delivery did not preserve original single send", starts)
++			}
++			scope, err := f.client.RetryScope(ctx, "thread-1")
++			if err != nil {
++				t.Fatal(err)
++			}
++			state, err := f.client.RetryStore().Load(scope)
++			if err != nil {
++				t.Fatal(err)
++			}
++			if len(state.Snapshots) != 1 || state.Snapshots[0].Epoch != state.Epoch || state.Snapshots[0].ID != planDeliveryID || state.Snapshots[0].Turn != "implementation" {
++				t.Fatal("admission used stale epoch or changed identity", state)
++			}
++			before := state
++			f.restart(t)
++			for _, action := range []string{"same", "recover"} {
++				response = f.request(ctx, planDeliveryID, "plan-turn", action)
++				if response.Code != http.StatusAccepted {
++					t.Fatal("original receipt recovery blocked", response.Code, response.Body.String())
++				}
++			}
++			if ack, err := f.client.AcknowledgeSends(ctx, "thread-1", []codex.SendAcknowledgement{{ClientUserMessageID: planDeliveryID, Digest: planDigest("Implement the plan.")}}); err != nil || len(ack) != 1 {
++				t.Fatal(ack, err)
++			}
++			f.restart(t)
++			response = f.request(ctx, planDeliveryID, "plan-turn", "same")
++			if response.Code != http.StatusAccepted {
++				t.Fatal("acknowledged receipt not recovered before stale-plan gate", response.Code, response.Body.String())
++			}
++			after, err := f.client.RetryStore().Load(scope)
++			if err != nil || !reflect.DeepEqual(before, after) {
++				t.Fatal("receipt replay recaptured settings", err)
++			}
++			f.wire.mu.Lock()
++			defer f.wire.mu.Unlock()
++			if f.wire.starts != starts || f.wire.updates != updates {
++				t.Fatal("replay dispatched or changed mode", f.wire.starts, f.wire.updates)
++			}
++		})
++	}
++}
++
++func TestPlanDeliveryPreparedExceptionKeepsOtherUnknownsAndIdentity(t *testing.T) {
++	for _, change := range []string{"text", "action", "options", "another-root-send", "member-send", "stale-plan", "active-steering"} {
++		t.Run(change, func(t *testing.T) {
++			f := newPlanDeliveryFixture(t)
++			text, action, options := "Implement the plan.", "plan:plan-turn:"+planDigest(deliveryPlan), (codex.TurnOptions{})
++			if change == "text" {
++				text = "changed"
++			}
++			if change == "action" {
++				action = "changed"
++			}
++			if change == "options" {
++				options.Model = "changed"
++			}
++			if err := f.client.PrepareSendWithOptions("thread-1", text, planDeliveryID, action, change == "active-steering", options); err != nil {
++				t.Fatal(err)
++			}
++			if change == "another-root-send" {
++				if err := f.client.PrepareSend("thread-1", "other", "other", "other", false); err != nil {
++					t.Fatal(err)
++				}
++			}
++			if change == "member-send" {
++				service, err := f.s.teamService("example")
++				if err != nil {
++					t.Fatal(err)
++				}
++				if _, err = service.Store.Update(context.Background(), "example", "thread-1", true, func(r *teamruntime.Roster) error {
++					r.Members = []teamruntime.Member{{Address: "implementer0", Role: "implementer", Thread: "member-thread", Model: "gpt-6.1-sol", Effort: "xhigh", Behavior: "implementer", Access: "workspace_write", State: "ready", AddedAt: time.Now().UTC()}}
++					return nil
++				}); err != nil {
++					t.Fatal(err)
++				}
++				if err := f.client.PrepareSend("member-thread", "other", "other", "other", false); err != nil {
++					t.Fatal(err)
++				}
++			}
++			turn := "plan-turn"
++			if change == "stale-plan" {
++				turn = "older"
++			}
++			response := f.request(context.Background(), planDeliveryID, turn, "same")
++			if response.Code < 400 {
++				t.Fatal("invalid exception admitted", change, response.Code)
++			}
++			f.wire.mu.Lock()
++			defer f.wire.mu.Unlock()
++			if f.wire.starts != 0 {
++				t.Fatal("invalid exception sent", change)
++			}
++		})
++	}
++}
++
++func TestPlanDeliverySubmittingAndAcceptedSaveRecovery(t *testing.T) {
++	for _, lost := range []bool{false, true} {
++		t.Run(fmt.Sprint("lost=", lost), func(t *testing.T) {
++			f := newPlanDeliveryFixture(t)
++			f.wire.mu.Lock()
++			f.wire.lost = lost
++			f.wire.failReceiptSave = !lost
++			f.wire.mu.Unlock()
++			first := f.request(context.Background(), planDeliveryID, "plan-turn", "same")
++			if first.Code != http.StatusServiceUnavailable {
++				t.Fatal("uncertainty hidden", first.Code, first.Body.String())
++			}
++			paths, _ := filepath.Glob(filepath.Join(f.client.RecoveryRoot, "turn-retries", "*", "example"))
++			for _, path := range paths {
++				if err := os.Chmod(path, 0700); err != nil {
++					t.Fatal(err)
++				}
++			}
++			f.restart(t)
++			if lost {
++				unknown := f.request(context.Background(), planDeliveryID, "plan-turn", "same")
++				if unknown.Code != http.StatusServiceUnavailable {
++					t.Fatal("unknown was replayed", unknown.Code)
++				}
++			}
++			f.wire.mu.Lock()
++			f.wire.hide = false
++			f.wire.mu.Unlock()
++			recovered := f.request(context.Background(), planDeliveryID, "plan-turn", "same")
++			if recovered.Code != http.StatusAccepted {
++				t.Fatal(recovered.Code, recovered.Body.String())
++			}
++			f.wire.mu.Lock()
++			defer f.wire.mu.Unlock()
++			if f.wire.starts != 1 || f.wire.updates != 1 {
++				t.Fatal("same-ID recovery repeated native or settings", f.wire.starts, f.wire.updates)
++			}
++		})
++	}
++}
++
++func TestPlanDeliveryAdmissionPersistenceBoundaries(t *testing.T) {
++	for _, after := range []bool{false, true} {
++		t.Run(fmt.Sprint("after=", after), func(t *testing.T) {
++			f := newPlanDeliveryFixture(t)
++			f.wire.mu.Lock()
++			f.wire.failAdmissionSave, f.wire.stopAfterAdmission = !after, after
++			f.wire.mu.Unlock()
++			first := f.request(context.Background(), planDeliveryID, "plan-turn", "same")
++			if first.Code < 400 {
++				t.Fatal("interrupted admission succeeded", first.Code)
++			}
++			paths, _ := filepath.Glob(filepath.Join(f.client.RecoveryRoot, "turn-retries", "*", "example"))
++			for _, path := range paths {
++				if err := os.Chmod(path, 0700); err != nil {
++					t.Fatal(err)
++				}
++			}
++			scope, err := f.client.RetryScope(context.Background(), "thread-1")
++			if err != nil {
++				t.Fatal(err)
++			}
++			state, err := f.client.RetryStore().Load(scope)
++			if err != nil || (len(state.Snapshots) == 1) != after || len(state.Snapshots) > 1 {
++				t.Fatal("interruption crossed admission boundary", state, err)
++			}
++			prepared, err := f.client.IsPreparedSendWithOptions("thread-1", "Implement the plan.", planDeliveryID, "plan:plan-turn:"+planDigest(deliveryPlan), codex.TurnOptions{})
++			if err != nil || !prepared {
++				t.Fatal("original prepared identity was lost", prepared, err)
++			}
++			f.wire.mu.Lock()
++			if f.wire.starts != 0 || f.wire.updates != 1 {
++				t.Fatal("interruption sent or repeated settings", f.wire.starts, f.wire.updates)
++			}
++			f.wire.failAdmissionSave, f.wire.stopAfterAdmission = false, false
++			f.wire.mu.Unlock()
++			f.restart(t)
++			recovered := f.request(context.Background(), planDeliveryID, "plan-turn", "same")
++			if recovered.Code != http.StatusAccepted {
++				t.Fatal(recovered.Code, recovered.Body.String())
++			}
++			f.wire.mu.Lock()
++			defer f.wire.mu.Unlock()
++			if f.wire.starts != 1 || f.wire.updates != 1 {
++				t.Fatal("recovery repeated delivery or settings", f.wire.starts, f.wire.updates)
++			}
++		})
++	}
++}
+diff --git a/portal/internal/web/runtime_wait_test.go b/portal/internal/web/runtime_wait_test.go
+new file mode 100644
+index 00000000..b2ca7f75
+--- /dev/null
++++ b/portal/internal/web/runtime_wait_test.go
+@@ -0,0 +1,157 @@
++package web
++
++import (
++	"context"
++	"fmt"
++	"net/http"
++	"net/http/httptest"
++	"os"
++	"path/filepath"
++	"strings"
++	"sync/atomic"
++	"testing"
++	"time"
++
++	"github.com/aither64/codex-web/codex"
++	"github.com/aither64/dev-workspace/portal/internal/session"
++	"github.com/aither64/dev-workspace/portal/internal/teamruntime"
++)
++
++func TestHTTPMutationWaitsForRuntimeExclusiveOwner(t *testing.T) {
++	for _, route := range []string{"plan", "message", "queue", "queue/reconcile", "member-message", "member-queue", "member-queue/reconcile"} {
++		for _, outcome := range []string{"released", "deadline", "generation", "authority", "lifecycle", "cold"} {
++			if route != "plan" && outcome != "released" && outcome != "deadline" {
++				continue
++			}
++			t.Run(route+"/"+outcome, func(t *testing.T) {
++				f := newPlanDeliveryFixture(t)
++				var cold atomic.Bool
++				verify := f.s.config.VerifyThread
++				f.s.config.VerifyThread = func(ctx context.Context, thread, cwd string) error {
++					if cold.Load() {
++						return fmt.Errorf("synthetic cold execution hold")
++					}
++					return verify(ctx, thread, cwd)
++				}
++				id := "example"
++				if strings.HasPrefix(route, "member-") {
++					service, err := f.s.teamService("example")
++					if err != nil {
++						t.Fatal(err)
++					}
++					member := teamruntime.Member{Address: "implementer0", Role: "implementer", Thread: "member-thread", Model: "gpt-6.1-sol", Effort: "xhigh", Behavior: "implementer", Access: "workspace_write", State: "ready", AddedAt: time.Now().UTC()}
++					if _, err := service.Store.Update(context.Background(), "example", "thread-1", true, func(r *teamruntime.Roster) error { r.Members = []teamruntime.Member{member}; return nil }); err != nil {
++						t.Fatal(err)
++					}
++					f.client.RetryPolicyResolver = func(ctx context.Context, thread string) (policy codex.ThreadPolicy, err error) {
++						if thread == member.Thread {
++							return service.MemberTurnPolicy("example", "thread-1", member)
++						}
++						return policy, nil
++					}
++					id = teamConversationID("example", "implementer0")
++					if err := (session.RecoveryStore{Root: f.s.config.UserStateRoot, Workspace: f.s.config.Workspace}).Update(context.Background(), "example", func(r *session.Recovery) error {
++						r.ActiveThreads = append(r.ActiveThreads, "member-thread")
++						return nil
++					}); err != nil {
++						t.Fatal(err)
++					}
++				}
++				exclusive, err := session.LockRuntimeExclusive(f.s.config.AuthorityDir, "example")
++				if err != nil {
++					t.Fatal(err)
++				}
++				defer exclusive.Close()
++				ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
++				defer cancel()
++				var deadlineCancel context.CancelFunc
++				if outcome == "deadline" {
++					ctx, deadlineCancel = context.WithTimeout(ctx, 60*time.Millisecond)
++					defer deadlineCancel()
++				}
++				started := make(chan struct{})
++				result := make(chan *httptest.ResponseRecorder, 1)
++				go func() {
++					close(started)
++					if route == "plan" {
++						result <- f.request(ctx, planDeliveryID, "plan-turn", "same")
++						return
++					}
++					operation := strings.TrimPrefix(route, "member-")
++					body := fmt.Sprintf(`{"message":"manual message","clientUserMessageId":%q}`, planDeliveryID)
++					if operation == "queue/reconcile" {
++						body = `{}`
++					}
++					r := httptest.NewRequest(http.MethodPost, "/codex/conversations/"+id+"/"+operation, strings.NewReader(body)).WithContext(ctx)
++					r.Header.Set("Origin", f.s.config.BaseURL)
++					r.Header.Set("Content-Type", "application/json")
++					w := httptest.NewRecorder()
++					f.s.Handler().ServeHTTP(w, r)
++					result <- w
++				}()
++				<-started
++				select {
++				case response := <-result:
++					t.Fatal("request did not wait for exclusive owner", response.Code, response.Body.String())
++				case <-time.After(30 * time.Millisecond):
++				}
++				f.wire.mu.Lock()
++				starts, updates := f.wire.starts, f.wire.updates
++				f.wire.mu.Unlock()
++				if starts != 0 || updates != 0 {
++					t.Fatal("waiting request mutated native state", starts, updates)
++				}
++				switch outcome {
++				case "deadline":
++					response := <-result
++					if response.Code < 400 {
++						t.Fatal("deadline proceeded", response.Code)
++					}
++				case "generation":
++					if err := os.Remove(f.s.config.HostProfile); err != nil {
++						t.Fatal(err)
++					}
++					if err := os.Symlink(t.TempDir(), f.s.config.HostProfile); err != nil {
++						t.Fatal(err)
++					}
++				case "authority":
++					if err := os.Remove(filepath.Join(f.s.config.AuthorityDir, "example.json")); err != nil {
++						t.Fatal(err)
++					}
++				case "lifecycle":
++					writeWebTrackingFiles(t, f.wire.cwd, "complete")
++				case "cold":
++					cold.Store(true)
++				}
++				exclusive.Close()
++				if outcome != "deadline" {
++					response := <-result
++					if outcome == "released" && response.Code >= 400 {
++						t.Fatal(response.Code, response.Body.String())
++					}
++					if outcome != "released" && response.Code < 400 {
++						t.Fatal("changed admission proceeded after wait", outcome, response.Code)
++					}
++				}
++				f.wire.mu.Lock()
++				starts, updates = f.wire.starts, f.wire.updates
++				f.wire.mu.Unlock()
++				want := 0
++				if outcome == "released" && (route == "plan" || strings.HasSuffix(route, "message")) {
++					want = 1
++				}
++				if starts != want {
++					t.Fatal("runtime wait lost delivery exclusion", starts, want)
++				}
++				if outcome != "released" && updates != 0 {
++					t.Fatal("refused wait changed settings")
++				}
++				check, err := session.LockRuntimeExclusive(f.s.config.AuthorityDir, "example")
++				if err != nil {
++					t.Fatal("request leaked runtime lock", err)
++				}
++				check.Close()
++			})
++		}
++	}
++}
+diff --git a/portal/internal/web/server.go b/portal/internal/web/server.go
+index 81ab26aa..c5232d43 100644
+--- a/portal/internal/web/server.go
++++ b/portal/internal/web/server.go
+@@ -2027,12 +2027,31 @@ func (s *Server) sessionAPIForSummary(
+ 		return
+ 	}
+ 	if r.Method == http.MethodPost || r.Method == http.MethodDelete {
+-		lock, err := session.LockRuntimeShared(s.config.AuthorityDir, summary.Slug)
++		ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
++		defer cancel()
++		r = r.WithContext(ctx)
++		var planBody *implementPlanRequest
++		if len(parts) == 2 && parts[1] == "implement-plan" {
++			body, ok := s.decodeImplementPlanRequest(w, r)
++			if !ok {
++				return
++			}
++			planBody = &body
++		}
++		lock, err := session.LockRuntimeSharedContext(ctx, s.config.AuthorityDir, summary.Slug)
+ 		if err != nil {
+ 			s.writeJSON(w, http.StatusConflict, map[string]string{"error": err.Error()})
+ 			return
+ 		}
+ 		defer lock.Close()
++		if err := s.requireCurrentHostProfile(); err != nil {
++			s.writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": err.Error()})
++			return
++		}
++		if receipt, ok := s.currentCreation(summary.Slug); ok && receipt.blocksSession() {
++			s.writeJSON(w, http.StatusConflict, map[string]string{"error": "session initialization has not finished"})
++			return
++		}
+ 		owner, journalErr := session.PendingLifecycle(s.config.Workspace, summary.Slug)
+ 		if journalErr != nil {
+ 			s.writeJSON(w, http.StatusConflict, map[string]string{"error": journalErr.Error()})
+@@ -2050,7 +2069,15 @@ func (s *Server) sessionAPIForSummary(
+ 			return
+ 		}
+ 		s.normalizeInteractivity(r.Context(), summary)
+-		if err := s.requireOrdinaryRetainedMutation(r.Context(), summary); err != nil {
++		var prepared *workspacecodex.PreparedSend
++		if planBody != nil {
++			var done bool
++			prepared, done = s.reconcilePlanDelivery(w, r, summary, *planBody)
++			if done {
++				return
++			}
++		}
++		if err := s.requireOrdinaryRetainedMutationExceptPrepared(ctx, summary, prepared); err != nil {
+ 			s.writeJSON(w, http.StatusConflict, map[string]string{"error": err.Error()})
+ 			return
+ 		}
+@@ -2058,6 +2085,10 @@ func (s *Server) sessionAPIForSummary(
+ 			s.writeJSON(w, http.StatusConflict, map[string]string{"error": "session is not ready for browser changes"})
+ 			return
+ 		}
++		if planBody != nil {
++			s.implementPlanRequest(w, r, summary, *planBody)
++			return
++		}
+ 	}
+ 	if len(parts) == 2 && r.Method == http.MethodPost && parts[1] == "implement-plan" {
+ 		s.implementPlan(w, r, summary)
+@@ -2456,39 +2487,53 @@ type implementPlanRequest struct {
+ 	BrowserNotificationsEnabled *bool   `json:"browserNotificationsEnabled,omitempty"`
+ }
+ 
+-func (s *Server) implementPlan(w http.ResponseWriter, r *http.Request, summary *session.Summary) {
++func (s *Server) decodeImplementPlanRequest(w http.ResponseWriter, r *http.Request) (implementPlanRequest, bool) {
+ 	r.Body = http.MaxBytesReader(w, r.Body, session.MaxFormRequestBodyBytes)
+ 	var payload json.RawMessage
+ 	if !s.decodeJSON(w, r, &payload) {
+-		return
++		return implementPlanRequest{}, false
+ 	}
+ 	if err := rejectDuplicateCreationJSONKeys(payload); err != nil {
+ 		s.writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON request"})
+-		return
++		return implementPlanRequest{}, false
+ 	}
+ 	var raw map[string]json.RawMessage
+ 	if err := json.Unmarshal(payload, &raw); err != nil || raw == nil {
+ 		s.writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON request"})
+-		return
++		return implementPlanRequest{}, false
+ 	}
+ 	if err := validateBrowserNotificationPreference(raw); err != nil {
+ 		s.writeError(w, r, http.StatusBadRequest, err.Error())
+-		return
++		return implementPlanRequest{}, false
+ 	}
+ 	var body implementPlanRequest
+ 	decoder := json.NewDecoder(bytes.NewReader(payload))
+ 	decoder.DisallowUnknownFields()
+ 	if err := decoder.Decode(&body); err != nil || decoder.Decode(&struct{}{}) != io.EOF {
+ 		s.writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON request"})
+-		return
++		return implementPlanRequest{}, false
+ 	}
+ 	if strings.TrimSpace(body.Action) == "new" {
+ 		for _, field := range []string{"model", "reasoningEffort", "team", "catalogDigest", "provider"} {
+ 			if value, ok := raw[field]; ok && bytes.Equal(bytes.TrimSpace(value), []byte("null")) {
+ 				s.writeJSON(w, http.StatusBadRequest, map[string]string{"error": "managed creation fields must be omitted instead of null"})
+-				return
++				return implementPlanRequest{}, false
+ 			}
+ 		}
++	}
++	return body, true
++}
++
++func (s *Server) implementPlan(w http.ResponseWriter, r *http.Request, summary *session.Summary) {
++	body, ok := s.decodeImplementPlanRequest(w, r)
++	if !ok {
++		return
++	}
++	s.implementPlanRequest(w, r, summary, body)
++}
++
++func (s *Server) implementPlanRequest(w http.ResponseWriter, r *http.Request, summary *session.Summary, body implementPlanRequest) {
++	if strings.TrimSpace(body.Action) == "new" {
+ 		destination, err := creationDestination(strings.TrimSpace(body.Name), strings.TrimSpace(body.CreationDate))
+ 		if err != nil {
+ 			s.writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+@@ -3512,6 +3557,10 @@ func (s *Server) normalizeInteractivity(parent context.Context, summary *session
+ // observation. Busy is governed by the requested operation; unknown submissions
+ // or another same-CWD identity never authorize a write.
+ func (s *Server) requireOrdinaryRetainedMutation(ctx context.Context, summary *session.Summary) error {
++	return s.requireOrdinaryRetainedMutationExceptPrepared(ctx, summary, nil)
++}
++
++func (s *Server) requireOrdinaryRetainedMutationExceptPrepared(ctx context.Context, summary *session.Summary, prepared *workspacecodex.PreparedSend) error {
+ 	if err := s.requireProviderAdmission(summary.Slug); err != nil {
+ 		return err
+ 	}
+@@ -3540,7 +3589,12 @@ func (s *Server) requireOrdinaryRetainedMutation(ctx context.Context, summary *s
+ 	if err != nil {
+ 		return err
+ 	}
+-	observation, err := service.ObserveRetained(ctx, summary.Slug, summary.Codex.ThreadID, identity)
++	var observation teamruntime.Observation
++	if prepared != nil {
++		observation, err = service.ObserveRetainedExceptPreparedRoot(ctx, summary.Slug, summary.Codex.ThreadID, identity, *prepared)
++	} else {
++		observation, err = service.ObserveRetained(ctx, summary.Slug, summary.Codex.ThreadID, identity)
++	}
+ 	if err != nil || !observation.ActivityKnown {
+ 		return errors.New("retained conversation or submission proof is unavailable")
+ 	}
+@@ -3612,11 +3666,23 @@ func (s *Server) resolveConversation(
+ 		return conversation.Target{}, errors.New("session has no verified Codex thread")
+ 	}
+ 	if request.Mutation {
+-		runtimeLock, err := session.LockRuntimeShared(s.config.AuthorityDir, summary.Slug)
++		var runtimeLock *session.RuntimeLock
++		var err error
++		if request.Operation == "automatic-retry" {
++			runtimeLock, err = session.LockRuntimeShared(s.config.AuthorityDir, summary.Slug)
++		} else {
++			runtimeLock, err = session.LockRuntimeSharedContext(ctx, s.config.AuthorityDir, summary.Slug)
++		}
+ 		if err != nil {
+ 			return conversation.Target{}, fmt.Errorf("lock session runtime: %w", err)
+ 		}
+ 		releases = append(releases, func() { _ = runtimeLock.Close() })
++		if err := s.requireCurrentHostProfile(); err != nil {
++			return conversation.Target{}, err
++		}
++		if receipt, ok := s.currentCreation(slug); ok && receipt.blocksSession() {
++			return conversation.Target{}, errors.New("session initialization has not finished")
++		}
+ 		owner, err := session.PendingLifecycle(s.config.Workspace, summary.Slug)
+ 		if err != nil {
+ 			return conversation.Target{}, err
+diff --git a/portal/internal/workspacecodex/observation.go b/portal/internal/workspacecodex/observation.go
+index fb1b1125..61a5a2b4 100644
+--- a/portal/internal/workspacecodex/observation.go
++++ b/portal/internal/workspacecodex/observation.go
+@@ -161,6 +161,23 @@ func (c *Client) ObserveThread(ctx context.Context, threadID, cwd string) (Threa
+ // ObserveThreadIdentity is bounded and read-only. A caller with a retained team
+ // must bracket this primitive with its owning project/materialization proof.
+ func (c *Client) ObserveThreadIdentity(ctx context.Context, threadID, cwd, projectID string, state ArchiveState) (ThreadObservation, error) {
++	return c.observeThreadIdentity(ctx, threadID, cwd, projectID, state, c.RequireSubmissionAttemptsKnown)
++}
++
++// PreparedSend is an exact request-local delivery identity, never a wildcard
++// observation exception or permission to submit native work.
++type PreparedSend struct {
++	Text, ID, Action string
++	Options          codex.TurnOptions
++}
++
++func (c *Client) ObserveThreadIdentityExceptPreparedSend(ctx context.Context, threadID, cwd, projectID string, state ArchiveState, prepared PreparedSend) (ThreadObservation, error) {
++	return c.observeThreadIdentity(ctx, threadID, cwd, projectID, state, func(ctx context.Context, thread string) error {
++		return c.Client.RequireSubmissionAttemptsKnownExceptPreparedSend(ctx, thread, prepared.Text, prepared.ID, prepared.Action, prepared.Options)
++	})
++}
++
++func (c *Client) observeThreadIdentity(ctx context.Context, threadID, cwd, projectID string, state ArchiveState, known func(context.Context, string) error) (ThreadObservation, error) {
+ 	if !observationID(threadID, true) || !filepath.IsAbs(cwd) || filepath.Clean(cwd) != cwd {
+ 		return ThreadObservation{}, observationFailure("identity_invalid", "Conversation observation requires an exact identity and directory.")
+ 	}
+@@ -246,7 +263,7 @@ func (c *Client) ObserveThreadIdentity(ctx context.Context, threadID, cwd, proje
+ 		}
+ 		// The public owner proves resolution but exposes no attempt snapshot.
+ 		// An error is unknown activity; no private ledger or error text is parsed.
+-		if err := c.RequireSubmissionAttemptsKnown(ctx, threadID); err != nil {
++		if err := known(ctx, threadID); err != nil {
+ 			return ThreadObservation{}, observationReadFailure(err, "submission_unverified", "Conversation submissions cannot be proved resolved.")
+ 		}
+ 	} else {
+diff --git a/portal/internal/workspacecodex/prepared_send_test.go b/portal/internal/workspacecodex/prepared_send_test.go
+new file mode 100644
+index 00000000..0c5119da
+--- /dev/null
++++ b/portal/internal/workspacecodex/prepared_send_test.go
+@@ -0,0 +1,66 @@
++package workspacecodex
++
++import (
++	"context"
++	"fmt"
++	"reflect"
++	"testing"
++
++	"github.com/aither64/codex-web/codex"
++	"github.com/aither64/dev-workspace/portal/internal/turnretry"
++)
++
++func TestRetryPreparedFirstExecutionRetainsOptionsAndOldEpoch(t *testing.T) {
++	for _, member := range []bool{false, true} {
++		for _, existing := range []bool{false, true} {
++			t.Run(fmt.Sprintf("member=%t/existing=%t", member, existing), func(t *testing.T) {
++				r := &retryRetentionWire{}
++				w := newRetrySettingsWireWithServer(t, member, "plan", r.serve)
++				ctx := context.Background()
++				options := codex.TurnOptions{Model: "original-model", ReasoningEffort: "xhigh", ThreadPolicy: w.policy, AdditionalContext: map[string]codex.AdditionalContextEntry{"managed": {Kind: "application", Value: "immutable context"}}}
++				if err := w.client.PrepareSendWithOptions(w.thread, "prepared input", "prepared-id", "plan:original", true, options); err != nil {
++					t.Fatal(err)
++				}
++				var oldSnapshot turnretry.Snapshot
++				if existing {
++					tx, err := w.client.RetryStore().Lock(ctx, w.scope)
++					if err != nil {
++						t.Fatal(err)
++					}
++					if err := w.client.captureRetry(ctx, tx, w.policy, "prepared input", "prepared-id", "steer", options); err != nil {
++						t.Fatal(err)
++					}
++					oldSnapshot = tx.State.Snapshots[0]
++					tx.Close()
++				}
++				model := "later-model"
++				if _, err := w.client.UpdateThreadSettings(ctx, w.thread, codex.ThreadSettingsUpdate{Model: &model}); err != nil {
++					t.Fatal(err)
++				}
++				if _, err := w.client.SendWithOptions(ctx, w.thread, "prepared input", "prepared-id", "plan:original", options); err != nil {
++					t.Fatal(err)
++				}
++				original, found, err := w.client.OriginalSendOptions(w.thread, "prepared input", "prepared-id", "plan:original")
++				if err != nil || !found || !reflect.DeepEqual(original, options) {
++					t.Fatal("generic original options changed", original, err)
++				}
++				state, err := w.client.RetryStore().Load(w.scope)
++				if err != nil || len(state.Snapshots) != 1 {
++					t.Fatal(err, state)
++				}
++				p := state.Snapshots[0]
++				if existing {
++					old := oldSnapshot
++					if p.Epoch != old.Epoch || p.BindingDigest != old.BindingDigest || p.Options.Model != old.Options.Model || p.Digest != old.Digest {
++						t.Fatal("prepared path retrobound an old snapshot")
++					}
++				} else if p.Epoch != state.Epoch || !reflect.DeepEqual(p.Options, options) {
++					t.Fatal("first admission lost exact authorized original options", p)
++				}
++				if _, err := w.client.SendWithOptions(ctx, w.thread, "prepared input", "prepared-id", "plan:original", options); err != nil || r.count() != 1 {
++					t.Fatal("prepared recovery repeated delivery", err, r.count())
++				}
++			})
++		}
++	}
++}
+diff --git a/portal/internal/workspacecodex/turn_retry.go b/portal/internal/workspacecodex/turn_retry.go
+index de52cc44..3af1a6ea 100644
+--- a/portal/internal/workspacecodex/turn_retry.go
++++ b/portal/internal/workspacecodex/turn_retry.go
+@@ -274,6 +274,9 @@ func (c *Client) reconcileRetrySend(ctx context.Context, tx *turnretry.Transacti
+ 			return codex.SendReceipt{}, false, nil
+ 		}
+ 	}
++	if prepared, err := c.Client.IsPreparedSendWithOptions(thread, text, id, action, options); err != nil || prepared {
++		return codex.SendReceipt{}, false, err
++	}
+ 	return codex.SendReceipt{}, false, errors.New("earlier submission has no managed admission proof")
+ }
+ 
+diff --git a/portal/internal/workspacecodex/turn_retry_retention_test.go b/portal/internal/workspacecodex/turn_retry_retention_test.go
+index d1c911da..f81f1f17 100644
+--- a/portal/internal/workspacecodex/turn_retry_retention_test.go
++++ b/portal/internal/workspacecodex/turn_retry_retention_test.go
+@@ -49,6 +49,15 @@ func (r *retryRetentionWire) serve(w *retrySettingsWire, conn *websocket.Conn) e
+ 		var result, notify any
+ 		failure := ""
+ 		switch {
++		case method == "thread/resume" && w.bound && p["developerInstructions"] != nil:
++			config, _ := p["config"].(map[string]any)
++			servers, _ := config["mcp_servers"].(map[string]any)
++			server, _ := servers["team"].(map[string]any)
++			if p["developerInstructions"] != "common lifecycle\n\n"+w.policy.DeveloperInstructions || p["sandbox"] != w.policy.Sandbox || p["approvalPolicy"] != w.policy.ApprovalPolicy || server["command"] != w.policy.MCPServer.Command {
++				w.t.Error("explicit prepared send changed authorized instructions/MCP/access", p)
++			}
++			w.resumes++
++			result = map[string]any{"thread": map[string]any{"id": w.thread}}
+ 		case method == "thread/items/list" && (r.hideHistory || w.items == nil):
+ 			result = map[string]any{"data": []any{}, "nextCursor": nil}
+ 		case method == "thread/read" && r.stopBeforeID != "":
+@@ -242,17 +251,17 @@ func TestRetryRetentionProtectedQueueFIFOAndPreparedIdentity(t *testing.T) {
+ 			}
+ 		})
+ 	}
+-	t.Run("prepared without admission", func(t *testing.T) {
++	t.Run("prepared first execution without admission", func(t *testing.T) {
+ 		r := &retryRetentionWire{}
+ 		w := newRetrySettingsWireWithServer(t, false, "default", r.serve)
+ 		if err := w.client.PrepareSendWithOptions(w.thread, "prepared", "prepared", "action", true, codex.TurnOptions{}); err != nil {
+ 			t.Fatal(err)
+ 		}
+-		if _, err := w.client.Send(context.Background(), w.thread, "prepared", "prepared", "action"); err == nil {
+-			t.Fatal("prepared identity with missing admission was treated as fresh")
++		if _, err := w.client.Send(context.Background(), w.thread, "prepared", "prepared", "action"); err != nil {
++			t.Fatal("positive exact prepared intent could not acquire first execution admission", err)
+ 		}
+-		if r.count() != 0 {
+-			t.Fatal("prepared identity replayed")
++		if r.count() != 1 {
++			t.Fatal("prepared identity did not execute exactly once")
+ 		}
+ 	})
+ }

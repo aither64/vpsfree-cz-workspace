@@ -1,0 +1,35 @@
+{{define "source-file"}}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="style-nonce" content="{{.StyleNonce}}">
+  <title>File · {{.DisplayLabel}}</title>
+  <link rel="stylesheet" href="/static/style.css?v=22">
+  <link rel="stylesheet" href="/static/repository-review.css?v=3">
+  <link rel="stylesheet" href="/static/source-file.css?v=2">
+  <script type="module" src="/static/source-file.js?v=3"></script>
+</head>
+<body>
+  <main class="source-file-page">
+    <nav><a href="/">{{.DisplayLabel}}</a>{{if .Session}} · <a href="/{{.Session.Slug}}/">Back to session</a>{{end}}</nav>
+    {{if .Error}}<p class="notice warning" role="alert">{{.Error}}</p>{{else}}
+    <section id="source-file"{{if .Session}} data-slug="{{.Session.Slug}}"{{end}}{{if .SourceFileAPI}} data-file-api="{{.SourceFileAPI}}"{{end}} aria-labelledby="source-file-title">
+      <header class="source-file-heading">
+        <div><h1 id="source-file-title">File</h1><p id="source-file-version" class="muted"></p></div>
+        <div class="source-file-actions">
+          <button id="source-file-mode" type="button" class="quiet icon-button" title="Show preview" aria-label="Show preview" hidden>◉</button>
+          <button id="source-file-copy" type="button" class="quiet icon-button" title="Copy link" aria-label="Copy link">↗</button>
+          <button id="source-file-copy-content" type="button" class="quiet icon-button" title="Copy content" aria-label="Copy content" disabled>⧉</button>
+          <a id="source-file-download" class="button-link icon-button" title="Download file" aria-label="Download file" href="#" download hidden>↓</a>
+        </div>
+      </header>
+      <p id="source-file-notice" class="notice" role="status">Loading file…</p>
+      <div id="source-file-content" class="file-content"></div>
+    </section>
+    {{end}}
+  </main>
+</body>
+</html>
+{{end}}

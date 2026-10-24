@@ -1,0 +1,1 @@
+nix-store --add-root /home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/verification-build/composed-81d0e68c/roots/W-deployment-contract-out --indirect --realise /nix/store/8kdciijhnpw0xjw0k2nc8jrnafz67kc8-dev-workspace-deployment-contract-tests

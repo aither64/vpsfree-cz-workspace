@@ -1,0 +1,28 @@
+{
+  "head": "e7ccc364f8b52e66af33e8f4ffe178eaa9e1547a",
+  "tree": "72ee1924492404722c731694ffeec44def7aba2c",
+  "evidence": {
+    "capture-attempt-5/stdout.log": "2c4a5537920fdd77a0dc590d74cc6b3ccef352410e2c90ba3eb160ecf6b4a271",
+    "capture-attempt-5/stderr.log": "60b469e791ed40ab6fd556236b3dc3ee3c16fec90ba9fc8aa972f8e6bd98707c",
+    "capture-attempt-5/result.json": "7dc78b78c02364bbf65b3984d0d4e43e3ccd9f2457db076e52a31f7ecc5bebdd"
+  },
+  "observed": {
+    "member": true,
+    "phase": "load",
+    "messageRequests": 0,
+    "uploadGETStatus": [
+      404,
+      404
+    ],
+    "notice": "Upload scope is unavailable",
+    "rootFalseIteration": "All assertions through interrupt boundary completed; inferred from sequential control flow reaching member=true load, not a separately passing test result."
+  },
+  "sourceChain": [
+    "question_browser_test.go questionBrowserCodex lacks teamruntime.Client",
+    "resolveUploads: uploads.go65 calls resolveConversation",
+    "resolveConversation: server.go3734 calls teamService for member target",
+    "teamService: server.go2163 type assertion fails",
+    "uploads.go unavailable maps resolver failure to404"
+  ],
+  "remedy": "Private test adapter only; unavailable embedded team lifecycle interface, no fake native success; real Handler root/member upload contract before next browser capture."
+}

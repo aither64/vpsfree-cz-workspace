@@ -1,0 +1,150 @@
+ 1:  7262c24e =  1:  7262c24e turnretry: retain bounded retry policy and admission state
+ 2:  b3c7187c =  2:  b3c7187c runtime: require retry-capable package transitions
+ 3:  aafaf419 =  3:  aafaf419 portal: continue new managed failed turns through durable retry admission
+ 4:  4ff797e5 =  4:  4ff797e5 deps: select codex-web retry activity support
+ 5:  24bf3c0b =  5:  24bf3c0b portal: retire accepted retry provenance before bounded admission
+ 6:  4b368337 =  6:  4b368337 portal: admit exact prepared plan requests after mode selection
+ 7:  07782784 =  7:  07782784 portal: wait within HTTP budgets for transient runtime contention
+ 8:  d1f9df05 !  8:  337af0b6 portal: present retry activity inside the conversation viewport
+    @@ portal/internal/web/retry_activity_browser_test.cjs (new)
+     +          return rect ? {top: rect.top, bottom: rect.bottom, height: rect.height} : null;
+     +        };
+     +        window.retryGeometry = (label, detail = {}) => {
+    ++          if (label === "wheel" && detail.deltaY < 0) window.retryUpwardWheels = (window.retryUpwardWheels || 0) + 1;
+    ++          if (label === "scroll") window.retryScrollEvents = (window.retryScrollEvents || 0) + 1;
+     +          const anchor = window.retryAnchor?.node;
+     +          const value = {label, ...detail, scrollTop: log.scrollTop, scrollHeight: log.scrollHeight,
+     +            clientHeight: log.clientHeight, viewport: bounds(log), footer: bounds(footer), footerHidden: footer.hidden,
+    @@ portal/internal/web/retry_activity_browser_test.cjs (new)
+     +      await page.locator("#message-form textarea").evaluate(node => { node.focus(); node.setSelectionRange(2, 6); });
+     +      phase = "scrolled-up-notice";
+     +      await page.evaluate(() => window.retryGeometry("before-wheel"));
+    ++      const beforeWheel = await scroll.evaluate(node => ({top: node.scrollTop,
+    ++        wheels: window.retryUpwardWheels || 0, scrolls: window.retryScrollEvents || 0}));
+     +      await scroll.hover(); await page.mouse.wheel(0, -120);
+    ++      // mouse.wheel resolves before native input delivery. The frozen JS clock
+    ++      // cannot establish that the compositor has scrolled or follow has paused.
+    ++      await expect.poll(() => scroll.evaluate((node, before) =>
+    ++        (window.retryUpwardWheels || 0) > before.wheels &&
+    ++        (window.retryScrollEvents || 0) > before.scrolls && node.scrollTop < before.top - 48 &&
+    ++        node.scrollHeight - node.clientHeight - node.scrollTop > 48, beforeWheel)).toBe(true);
+     +      await page.clock.runFor(100);
+     +      await page.evaluate(() => {
+     +        window.retryFooter = document.getElementById("automatic-turn-retry");
+ 9:  c7fdeb55 !  9:  fe795082 portal: release the next draft before message acknowledgment
+    @@ portal/internal/web/composer_handoff_browser_test.cjs (new)
+     +      const threadId = member ? "member-thread" : "thread-1", label = member ? "mobile" : "desktop";
+     +      let entries = [], holdReads = false, holdAck = true, ackCount = 0, interruptCount = 0, queueCount = 0;
+     +      let lost = false, phase = "startup";
+    ++      let threadReads = 0, threadResponses = 0, streamHints = 0, lastTranscript = null;
+    ++      const transcriptTimeline = [];
+    ++      const trace = (event, detail = {}) => {
+    ++        transcriptTimeline.push({event, phase, ...detail});
+    ++        if (transcriptTimeline.length > 100) transcriptTimeline.shift();
+    ++      };
+     +      page.on("pageerror", error => errors.push(error.message));
+     +      await page.addInitScript(() => {
+     +        window.EventSource = class {
+    @@ portal/internal/web/composer_handoff_browser_test.cjs (new)
+     +        const operation = new URL(route.request().url()).pathname.split("/").at(-1);
+     +        const json = (data, status = 200) => route.fulfill({status, json: data});
+     +        if (operation === "thread" || operation === "page") {
+    ++          const read = ++threadReads;
+    ++          trace("request", {read, held: holdReads});
+     +          if (holdReads) await new Promise(resolve => readHolds.push(resolve));
+    -+          return json({threadId, latestTurnId: "turn-1", status: "active", collaborationMode: "default",
+    -+            model: "model-1", reasoningEffort: "medium", entries, hasOlder: false});
+    ++          const payload = {threadId, latestTurnId: "turn-1", status: "active", collaborationMode: "default",
+    ++            model: "model-1", reasoningEffort: "medium", entries, hasOlder: false};
+    ++          lastTranscript = {read, response: ++threadResponses, identities: entries.filter(entry => entry.clientUserMessageId)
+    ++            .map(entry => ({id: entry.clientUserMessageId, digest: entry.clientUserMessageDigest}))};
+    ++          trace("fulfill", lastTranscript);
+    ++          return json(payload);
+     +        }
+     +        if (operation === "pending" || operation === "queue" && route.request().method() === "GET") return json([]);
+     +        if (operation === "queue") {queueCount++; return json({queued: true});}
+    @@ portal/internal/web/composer_handoff_browser_test.cjs (new)
+     +        .filter(key => key.startsWith(`workspace-portal.send-attempt.example.${thread}.`))
+     +        .map(key => ({...JSON.parse(sessionStorage.getItem(key)), id: key.split(".").at(-1)})), threadId);
+     +      const release = () => {assert(held.length, "message request reached barrier"); held.shift()();};
+    -+      const refresh = async () => {await page.evaluate(() => dispatchEvent(new Event("focus")));};
+    ++      const refresh = async (identity = null) => {
+    ++        const before = threadResponses;
+    ++        trace("stream-hint", {hint: ++streamHints});
+    ++        await page.evaluate(() => window.composerFixtureEvents.onmessage());
+    ++        await expect.poll(() => threadResponses).toBeGreaterThan(before);
+    ++        if (identity) await expect.poll(() => lastTranscript?.identities.some(value =>
+    ++          value.id === identity.id && value.digest === identity.digest)).toBe(true);
+    ++      };
+     +      const load = async () => {
+     +        phase = "load";
+     +        await page.goto(baseURL + `/example/${member ? "?member=implementer0" : ""}#codex`);
+    @@ portal/internal/web/composer_handoff_browser_test.cjs (new)
+     +        await prompt.fill(observed.message);
+     +        entries = [{turnId: "turn-1", itemId: "observed", kind: "userMessage", text: observed.message,
+     +          clientUserMessageId: observed.clientUserMessageId, clientUserMessageDigest: digest(observed.message)}];
+    -+        await refresh(); await expect(page.locator("#transcript-entries")).toContainText(observed.message);
+    ++        await refresh({id: observed.clientUserMessageId, digest: digest(observed.message)});
+    ++        await expect(page.locator("#transcript-entries")).toContainText(observed.message);
+    ++        await expect.poll(async () => (await stored()).some(value => value.id === observed.clientUserMessageId &&
+    ++          value.state === "observed" && value.transcriptDigest === digest(observed.message))).toBe(true);
+    ++        assert.equal(held.length, 1, "transcript proof arrived while the original reply remained held");
+    ++        assert.equal(ackCount, 0, "an in-flight original cannot be acknowledged yet");
+     +        lost = true; release(); await expect(send).toBeEnabled();
+     +        await expect(prompt).toHaveValue(observed.message);
+     +        await expect.poll(() => ackCount).toBeGreaterThan(0);
+    @@ portal/internal/web/composer_handoff_browser_test.cjs (new)
+     +        assert.deepEqual(errors, []);
+     +      } catch (error) {
+     +        console.error(JSON.stringify({fixture: "composer-handoff", member, phase, pageErrors: errors,
+    -+          messageRequests: sends.length, held: held.length, ackCount, interruptCount, queueCount}));
+    ++          messageRequests: sends.length, held: held.length, ackCount, interruptCount, queueCount,
+    ++          threadReads, threadResponses, streamHints, holdReads, readHolds: readHolds.length, lastTranscript, transcriptTimeline}));
+     +        throw error;
+     +      } finally {
+     +        for (const resume of [...held.splice(0), ...readHolds.splice(0)]) resume();
+10:  9f033875 ! 10:  e1e165e8 portal: submit question text through its owning action
+    @@ portal/internal/web/required_question_keyboard_browser_test.cjs (new)
+     +const baseURL = process.argv[2];
+     +(async () => {
+     +  const browser = await chromium.launch({headless: true, channel: "chromium"});
+    ++  let diagnose = null;
+     +  try {
+     +    const page = await browser.newPage({ignoreHTTPSErrors: true}), errors = [], responses = [], dialogs = [];
+    -+    let pending = [], acceptUnanswered = false;
+    ++    let pending = [], acceptUnanswered = false, phase = "keyboard";
+    ++    diagnose = async () => ({fixture: "required-question-keyboard", phase, pageErrors: errors,
+    ++      responses: responses.length, dialogs: dialogs.length, controls: await page.locator(".input-wizard").evaluateAll(forms => forms.map(form => ({
+    ++        question: form.querySelector(".wizard-question")?.textContent,
+    ++        radios: [...form.querySelectorAll('[name="answer-choice"]')].map(input => ({value: input.value, checked: input.checked,
+    ++          label: input.closest("label")?.textContent})),
+    ++        next: form.querySelector('[name="question-next"]')?.textContent,
+    ++      })))});
+     +    page.on("pageerror", error => errors.push(error.message));
+     +    page.on("dialog", async dialog => {
+     +      dialogs.push(dialog.message());
+    @@ portal/internal/web/required_question_keyboard_browser_test.cjs (new)
+     +    assert.deepEqual(responses[0].answers, {choice: {answers: ["user_note: First answer"]}, second: {answers: []}, third: {answers: ["user_note: Last answer"]}});
+     +
+     +    // Mouse actions use the same requestSubmit path exactly once per page.
+    ++    phase = "mouse-actions";
+     +    pending = [question("click")]; await refresh(); await step("Which approach?");
+    -+    await wizard.getByRole("radio", {name: "First", exact: true}).check();
+    ++    const first = wizard.locator('input[name="answer-choice"][value="First"]');
+    ++    await first.check(); await expect(first).toBeChecked();
+     +    await wizard.getByRole("button", {name: "Next", exact: true}).click(); await step("Additional detail?");
+     +    assert.equal(responses.length, 1);
+     +    await field.fill("Second click answer");
+    @@ portal/internal/web/required_question_keyboard_browser_test.cjs (new)
+     +    await expect(wizard).toHaveCount(0); assert.equal(responses.length, 2);
+     +    assert.deepEqual(errors, []);
+     +    console.log("Required question wizard: Enter, newline, IME/modifiers, validation, saved progression and exactly-once click/submit passed.");
+    ++  } catch (error) {
+    ++    try {if (diagnose) console.error(JSON.stringify(await diagnose()));} catch (_) {}
+    ++    throw error;
+     +  } finally {await browser.close();}
+     +})().catch(error => {console.error(error); process.exitCode = 1;});
+     
+11:  bc4e87dc <  -:  -------- fixup! portal: present retry activity inside the conversation viewport
+12:  74bae32e <  -:  -------- fixup! portal: release the next draft before message acknowledgment
+13:  92a38808 <  -:  -------- fixup! portal: submit question text through its owning action

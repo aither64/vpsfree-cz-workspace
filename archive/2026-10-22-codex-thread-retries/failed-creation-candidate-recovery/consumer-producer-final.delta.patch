@@ -1,0 +1,136 @@
+--- provisional-tested/dev-session
++++ final/dev-session
+@@ -2375,6 +2375,9 @@
+     # observation releases the session locks before the host invokes the CLI.
+     def with_verified_failed_creation_delete(slug, request_id:)
+       validate_part!(slug, 'session slug')
++      unless request_id.is_a?(String) && request_id.match?(/\A[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\z/)
++        raise Error, 'failed-creation recovery requires a canonical request UUID'
++      end
+       with_lifecycle_access(slug, 'delete', operation_id: nil) do
+         with_creation_lock(slug) do
+           with_slug_lock(slug) do
+@@ -2388,12 +2391,12 @@
+     end
+ 
+     FailedCreationDeleteContext = Struct.new(
+-      :slug, :root, :receipt, :request_id, :operation, :completed, :start_path, :start_bytes, :creation_nonce,
++      :slug, :root, :receipt, :request_id, :operation, :completed, :start_path, :start_bytes, :creation_nonce, :force,
+       keyword_init: true
+     ) do
+       def identity
+         {'root' => root, 'receipt' => receipt, 'request' => request_id,
+-         'operation' => operation, 'completed' => completed}
++         'operation' => operation, 'completed' => completed, 'force' => force}
+       end
+     end
+     private_constant :FailedCreationDeleteContext
+@@ -6140,6 +6143,10 @@
+     end
+ 
+     def failed_creation_delete_context(slug, request_id: nil)
++      conflicts = (LIFECYCLE_JOURNAL_NAMES.values - ['removal']) + %w[fork archive-cleanup agent-teams-migration]
++      if conflicts.any? { |name| path_exists?(File.join(File.dirname(creation_journal_file(slug)), "#{slug}.#{name}.json")) }
++        raise Error, 'conflicting session operation blocks failed-creation deletion recovery'
++      end
+       workspace_id = "#{File.basename(workspace)}-#{Digest::SHA256.hexdigest(workspace)[0, 16]}"
+       portal = File.join(@workspace_state_root, 'portal', workspace_id)
+       receipt = failed_creation_delete_json(File.join(portal, 'creations', "#{slug}.json"),
+@@ -6149,7 +6156,7 @@
+         model: receipt['model'], effort: receipt['effort'], direct_team: preset)
+       unless receipt['state'] == 'failed' && receipt['validated'] == true && receipt.dig('request', 'kind') == 'new' &&
+              receipt['receiptId'].is_a?(String) && receipt['receiptId'].match?(/\A[0-9a-f]{64}\z/) &&
+-             receipt['goal'].is_a?(String) && !receipt['goal'].empty?
++             receipt['goal'].is_a?(String) && !receipt['goal'].empty? && receipt.dig('request', 'goal') == receipt['goal']
+         raise Error, 'deletion recovery requires an exact failed direct new-session receipt'
+       end
+       directory = File.join(portal, 'session-preparations')
+@@ -6207,6 +6214,9 @@
+       roster = failed_creation_delete_json(roster_path, 'failed creation roster', maximum: 256 * 1024)
+       require_failed_creation_delete_roster!(roster, slug, root, preset)
+       nonce = journal.fetch('tmux_identity')
++      if @codex_version && manifest.dig('codex', 'client_version') != @codex_version
++        raise Error, 'failed-creation root uses a different native protocol identity'
++      end
+       start_path = failed_creation_recovery_record(start_journal_file(slug), recovery, 'start.json')
+       start_bytes = nil
+       if start_path
+@@ -6223,7 +6233,7 @@
+           raise Error, 'completed failed-creation removal still has live session state'
+         end
+       else
+-        authority = @selected_authority
++        authority = @authority_dir ? load_session_authority(slug, required: false) : nil
+         if authority && (authority['tmux_identity'] != nonce || authority['codex_thread_id'] != root || authority['codex_socket_path'] != @codex_socket)
+           raise Error, 'failed-creation authority does not match the retained root and terminal identity'
+         end
+@@ -6236,7 +6246,7 @@
+       end
+       FailedCreationDeleteContext.new(slug:, root:, receipt: receipt.fetch('receiptId'),
+         request_id: preparation.fetch('requestId'), operation: removal && removal['operation_id'],
+-        completed: !!completed, start_path:, start_bytes:, creation_nonce: nonce).freeze
++        completed: !!completed, start_path:, start_bytes:, creation_nonce: nonce, force: removal && removal['force']).freeze
+     end
+ 
+     def failed_creation_recovery_record(source, recovery, name, optional: false)
+@@ -6263,12 +6273,16 @@
+       expected = preset['members'].to_h { |member| [member.fetch('address'), member] }
+       addresses = []
+       roster['members'].each do |member|
++        raise Error, 'failed-creation roster has an invalid member' unless member.is_a?(Hash)
+         spec = expected[member['address']]
+         unless spec && %w[role model reasoningEffort behavior purpose access instructions].all? { |key| member.fetch(key, '') == spec.fetch(key, '') } &&
+                %w[creating ready archived removed].include?(member['state'])
+           raise Error, 'failed-creation member settings or retirement state changed'
+         end
+         addresses << member['address']
++        unless member['threadId'].is_a?(String)
++          raise Error, 'failed-creation member has an invalid thread identity'
++        end
+         next unless member['threadId'] == ''
+         unless %w[creating removed].include?(member['state']) && member['createAttempted'] == true &&
+                member.fetch('bootstrapAttempted', false) == false && member.fetch('retireIntent', '') == '' &&
+@@ -6292,12 +6306,25 @@
+         next unless metadata['schema'] == 1 && metadata['slug'] == slug && metadata['workspace'] == workspace &&
+                     metadata['state'] == 'removed' && metadata['phase'] == 'removed' && metadata['tracking'] == 'work' &&
+                     metadata['recovery'] == directory && metadata['operation_id'].is_a?(String) && metadata['operation_id'].match?(/\A[0-9a-f]{64}\z/)
++        required = %w[schema slug workspace created_at operation_id state phase force tracking recovery removed_at]
++        allowed = required + %w[git_tracked worktrees worktrees_sealed]
++        unless (required - metadata.keys).empty? && (metadata.keys - allowed).empty? &&
++               [true, false].include?(metadata['force']) &&
++               (!metadata.key?('git_tracked') || [true, false].include?(metadata['git_tracked'])) &&
++               (!metadata.key?('worktrees') || valid_removal_worktree_inventory?(slug, metadata['worktrees'])) &&
++               (!metadata.key?('worktrees_sealed') || [true, false].include?(metadata['worktrees_sealed'])) &&
++               (!metadata['worktrees_sealed'] || metadata.key?('worktrees'))
++          raise Error, 'completed failed-creation removal has an invalid recovery receipt'
++        end
+         validate_removal_recovery!(slug, metadata)
++        Time.iso8601(metadata.fetch('created_at'))
+         Time.iso8601(metadata.fetch('removed_at'))
+         metadata
+       end
+       raise Error, 'completed failed-creation deletion is ambiguous' if candidates.length > 1
+       candidates.first
++    rescue ArgumentError, KeyError => e
++      raise Error, "invalid completed failed-creation removal: #{e.message}"
+     end
+ 
+     def transfer_failed_creation_start!(slug, removal, context)
+@@ -6306,6 +6333,7 @@
+       current = failed_creation_delete_context(slug, request_id: context.request_id)
+       unless current.root == context.root && current.receipt == context.receipt &&
+              current.creation_nonce == context.creation_nonce && current.operation == removal.fetch('operation_id') &&
++             current.force == removal.fetch('force') &&
+              current.start_bytes == context.start_bytes
+         raise Error, 'failed-creation identity changed before terminal-start ownership transfer'
+       end
+@@ -8163,7 +8191,8 @@
+       end
+       return if request[:admitted]
+ 
+-      reject_conflicting_lifecycle_journal!(slug, operation: request[:operation])
++      deletion_context = failed_creation_start_context(slug) if request[:operation] == 'delete'
++      reject_conflicting_lifecycle_journal!(slug, operation: request[:operation], deletion_context:)
+       journal = lifecycle_access_journal(slug, request[:operation])
+       unless journal == request[:journal] || (journal && journal == request[:operation_id])
+         raise Error, 'another lifecycle operation started while waiting; retry its original request'

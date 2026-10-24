@@ -1,0 +1,407 @@
+diff --git a/flake.lock b/flake.lock
+index c64411d..afc4e6a 100644
+--- a/flake.lock
++++ b/flake.lock
+@@ -37,17 +37,17 @@
+     "codex-web": {
+       "flake": false,
+       "locked": {
+-        "lastModified": 1792680956,
+-        "narHash": "sha256-O3GWvvYTSDKG3Ybsj0xbmEzGMLLSF09wv4iKc2DeIsU=",
++        "lastModified": 1792687928,
++        "narHash": "sha256-+spYLvVf3GNpJR0Y9GN01AxeNqnOyTD8RAtR0CUjY6w=",
+         "owner": "aither64",
+         "repo": "codex-web",
+-        "rev": "d2d74f931cc50e39345c6c15931748062ee51951",
++        "rev": "b6d3a92ff85edbcd661b193c2319951eb4a71725",
+         "type": "github"
+       },
+       "original": {
+         "owner": "aither64",
+         "repo": "codex-web",
+-        "rev": "d2d74f931cc50e39345c6c15931748062ee51951",
++        "rev": "b6d3a92ff85edbcd661b193c2319951eb4a71725",
+         "type": "github"
+       }
+     },
+diff --git a/flake.nix b/flake.nix
+index 27d99f3..a1c59b7 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -5,7 +5,7 @@
+     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+     llm-agents.url = "github:numtide/llm-agents.nix";
+     codex-web = {
+-      url = "github:aither64/codex-web/d2d74f931cc50e39345c6c15931748062ee51951";
++      url = "github:aither64/codex-web/b6d3a92ff85edbcd661b193c2319951eb4a71725";
+       flake = false;
+     };
+   };
+diff --git a/nix/workspace-portal.nix b/nix/workspace-portal.nix
+index c79683f..b8dd715 100644
+--- a/nix/workspace-portal.nix
++++ b/nix/workspace-portal.nix
+@@ -273,7 +273,7 @@ buildGoModule {
+ 
+   inherit src;
+   modRoot = "portal";
+-  vendorHash = "sha256-E0SeFk5IWAfvK4zbU9E/d5wODCS5i1NGqQj8btaw6ho=";
++  vendorHash = "sha256-jkLE8bzUevxNx/LcZ80p70u3ZH4k4eZq23rw8Bcjtb8=";
+ 
+   postPatch = ''
+     expected=${lib.escapeShellArg codexWebVersion}
+diff --git a/portal/cmd/workspace-portal/turn_retry_native_integration_test.go b/portal/cmd/workspace-portal/turn_retry_native_integration_test.go
+index a2892fa..d1ce32a 100644
+--- a/portal/cmd/workspace-portal/turn_retry_native_integration_test.go
++++ b/portal/cmd/workspace-portal/turn_retry_native_integration_test.go
+@@ -4,7 +4,9 @@ package main
+ 
+ import (
+ 	"context"
++	"crypto/sha256"
+ 	"encoding/json"
++	"errors"
+ 	"fmt"
+ 	"net/http"
+ 	"net/http/httptest"
+@@ -150,14 +152,20 @@ func TestNativeTurnRetryController(t *testing.T) {
+ 		t.Fatal(err)
+ 	}
+ 	id, deadline := scheduled.Pending.ID, scheduled.DeadlineMS
+-	client.Close()
+-	client = newCodexClient(socket, workspace, stateRoot)
+-	client.RetryPolicyResolver = func(context.Context, string) (codex.ThreadPolicy, error) { return policy, nil }
+-	controller.Store, controller.Backend = client.RetryStore(), client.RetryBackend()
++	// Recreate the controller from durable state while retaining the native
++	// subscriber. Closing an idle thread's last subscriber can unload it; fresh
++	// automatic dispatch must never repair that cold hold. The actual client
++	// restart below occurs after native acceptance, when only reconciliation is
++	// required and no loaded-thread permission may be inferred from this test.
++	controller = turnretry.Controller{Store: client.RetryStore(), Backend: client.RetryBackend(), Clock: func() time.Time { return now }, Random: func() float64 { return 0 }}
+ 	retained, err := controller.Store.Load(scope)
+ 	if err != nil || retained.Pending.ID != id || retained.DeadlineMS != deadline {
+-		t.Fatal("portal restart lost the saved retry identity", err)
++		t.Fatal("controller restart lost the saved retry identity", err)
+ 	}
++	wait("loaded idle retry source", func() bool {
++		s, err := client.ReadTurnState(ctx, thread)
++		return err == nil && s.Status == "idle" && s.LatestTurnID == retained.Pending.Failure && s.LatestTurnStatus == "failed"
++	})
+ 	// Default enrollment in another independent controller consumes this old
+ 	// failed turn and cannot send it. It uses separate disposable private state.
+ 	baseline := turnretry.Controller{Store: turnretry.Store{Root: filepath.Join(root, "baseline-state"), Workspace: workspace}, Backend: client.RetryBackend(), Clock: func() time.Time { return now }}
+@@ -171,17 +179,26 @@ func TestNativeTurnRetryController(t *testing.T) {
+ 	barrier.Store(true)
+ 	now = time.UnixMilli(deadline)
+ 	// The proxy removes the actual accepted reply and hides history until restart.
+-	if err := controller.Step(ctx, scope); err == nil {
+-		t.Fatal("lost native reply did not remain uncertain")
+-	}
++	stepErr := controller.Step(ctx, scope)
+ 	uncertain, err := controller.Store.Load(scope)
+-	if err != nil || !uncertain.Uncertain() || uncertain.Pending.ID != id {
+-		t.Fatal("native uncertainty lost exact intent", err)
++	nativeState, nativeErr := client.ReadTurnState(ctx, thread)
++	starts, acceptedStarts, hidden, nativeThread, nativeClientID, nativeTurn, nativeFailure := barrier.snapshot()
++	t.Logf("uncertain dispatch step=%v phase=%s reason=%s native=%+v nativeErr=%v barrier starts=%d accepted=%d hiddenHistory=%d receiptTurn=%s failure=%s", stepErr, uncertain.Phase, uncertain.Reason, nativeState, nativeErr, starts, acceptedStarts, hidden, nativeTurn, nativeFailure)
++	var unknown *codex.UnknownSendOutcomeError
++	if !errors.As(stepErr, &unknown) || err != nil || !uncertain.Uncertain() || uncertain.Pending.ID != id {
++		t.Fatalf("native uncertainty lost exact intent: step=%v load=%v phase=%s reason=%s", stepErr, err, uncertain.Phase, uncertain.Reason)
++	}
++	if starts != 1 || acceptedStarts != 1 || hidden == 0 || nativeThread != thread || nativeClientID != id || nativeTurn == "" || nativeFailure != "" {
++		t.Fatal("barrier did not hide exactly one genuine native acceptance")
++	}
++	retryNativeRequireSubmitting(t, stateRoot, thread, *uncertain.Pending)
++	if err := client.RequireSubmissionAttemptsKnown(ctx, thread); err == nil {
++		t.Fatal("genuine native submitting ledger did not hold ordinary mutation")
+ 	}
+ 	var continued string
+ 	wait("native continuation completion", func() bool {
+ 		s, err := client.ReadTurnState(ctx, thread)
+-		if err == nil && s.LatestTurnID != uncertain.Pending.Failure && s.LatestTurnStatus == "completed" {
++		if err == nil && s.LatestTurnID == nativeTurn && s.LatestTurnStatus == "completed" {
+ 			continued = s.LatestTurnID
+ 			return true
+ 		}
+@@ -225,6 +242,22 @@ func TestNativeTurnRetryController(t *testing.T) {
+ 	if err := client.RequireSubmissionAttemptsKnown(ctx, thread); err != nil {
+ 		t.Fatal("native submitting ledger was not reconciled", err)
+ 	}
++	page, err := client.ReadThreadPage(ctx, thread, "")
++	if err != nil {
++		t.Fatal(err)
++	}
++	inputs := 0
++	for _, entry := range page.Entries {
++		if entry.Kind == "userMessage" && entry.ClientUserMessageID == id {
++			inputs++
++			if entry.TurnID != continued || entry.ClientUserMessageDigest != fmt.Sprintf("%x", sha256.Sum256([]byte(turnretry.Continuation))) {
++				t.Fatal("reconciled native input changed exact turn or continuation")
++			}
++		}
++	}
++	if inputs != 1 {
++		t.Fatalf("native continuation input count=%d, want exactly one", inputs)
++	}
+ 	accepted := uncertain
+ 	// A fresh managed failure schedules another chain; disabling before its
+ 	// deadline must prevent an actual model request even after time advances.
+@@ -262,3 +295,34 @@ func TestNativeTurnRetryController(t *testing.T) {
+ 	}
+ 	t.Logf("private native controller retained UUID %s across restart; %s -> %s, requests=%d", id, accepted.Pending.Failure, continued, requests.Load())
+ }
++
++// Inspect the real A writer's private receipt ledger; never seed or rewrite it.
++func retryNativeRequireSubmitting(t *testing.T, stateRoot, thread string, pending turnretry.Pending) {
++	t.Helper()
++	paths, err := filepath.Glob(filepath.Join(stateRoot, "submissions", "*.json"))
++	if err != nil || len(paths) != 1 {
++		t.Fatalf("native submission ledger paths=%v error=%v", paths, err)
++	}
++	data, err := os.ReadFile(paths[0])
++	if err != nil {
++		t.Fatal(err)
++	}
++	var ledger struct {
++		Schema int `json:"schema"`
++		Sends  map[string]map[string]struct {
++			Digest  string `json:"digest"`
++			State   string `json:"state"`
++			Context string `json:"context"`
++			Turn    string `json:"turnId"`
++			Steered bool   `json:"steered"`
++		} `json:"sends"`
++	}
++	if err := json.Unmarshal(data, &ledger); err != nil {
++		t.Fatal(err)
++	}
++	attempt := ledger.Sends[thread][pending.ID]
++	if ledger.Schema != 3 || attempt.State != "submitting" || attempt.Context != pending.Action || attempt.Digest != fmt.Sprintf("%x", sha256.Sum256([]byte(turnretry.Continuation))) || attempt.Turn != "" || attempt.Steered {
++		t.Fatalf("native ledger did not retain exact submitting attempt: schema=%d attempt=%+v", ledger.Schema, attempt)
++	}
++	t.Logf("native schema3 submitting thread=%s client=%s", thread, pending.ID)
++}
+diff --git a/portal/cmd/workspace-portal/turn_retry_native_proxy_test.go b/portal/cmd/workspace-portal/turn_retry_native_proxy_test.go
+index 3c6a335..7b69a90 100644
+--- a/portal/cmd/workspace-portal/turn_retry_native_proxy_test.go
++++ b/portal/cmd/workspace-portal/turn_retry_native_proxy_test.go
+@@ -5,6 +5,7 @@ package main
+ import (
+ 	"context"
+ 	"encoding/json"
++	"fmt"
+ 	"io"
+ 	"log"
+ 	"net"
+@@ -15,18 +16,61 @@ import (
+ 	"sync"
+ 	"sync/atomic"
+ 	"testing"
++	"time"
+ 
++	"github.com/aither64/codex-web/codex"
+ 	"github.com/aither64/dev-workspace/portal/internal/session"
+ 	portalweb "github.com/aither64/dev-workspace/portal/internal/web"
+ 	"github.com/aither64/dev-workspace/portal/internal/workspacecodex"
+ 	"github.com/coder/websocket"
+ )
+ 
+-// Hold hides receipt history and removes only a turn/start response's usable
+-// receipt after the real native daemon accepted it. Native state stays intact.
+-func retryNativeReceiptBarrier(t *testing.T, ctx context.Context, native, proxy string) *atomic.Bool {
++type retryNativeBarrier struct {
++	atomic.Bool
++	mu                              sync.Mutex
++	starts, accepted, hiddenHistory int
++	thread, clientID, turn, failure string
++}
++
++func (b *retryNativeBarrier) snapshot() (starts, accepted, hidden int, thread, clientID, turn, failure string) {
++	b.mu.Lock()
++	defer b.mu.Unlock()
++	return b.starts, b.accepted, b.hiddenHistory, b.thread, b.clientID, b.turn, b.failure
++}
++
++type retryNativeStart struct{ Thread, ClientID string }
++
++// Only an actual successful native receipt is hidden. RPC errors and missing
++// receipts stay visible; neither can establish native acceptance for this test.
++func (b *retryNativeBarrier) receipt(t *testing.T, start retryNativeStart, reply map[string]json.RawMessage) bool {
++	var result struct {
++		Turn struct {
++			ID string `json:"id"`
++		} `json:"turn"`
++	}
++	failure := string(reply["error"])
++	accepted := (failure == "" || failure == "null") && json.Unmarshal(reply["result"], &result) == nil && result.Turn.ID != ""
++	b.mu.Lock()
++	defer b.mu.Unlock()
++	if accepted {
++		b.accepted++
++		b.thread, b.clientID, b.turn = start.Thread, start.ClientID, result.Turn.ID
++		t.Logf("native barrier accepted thread=%s client=%s turn=%s", start.Thread, start.ClientID, result.Turn.ID)
++	} else {
++		if failure == "" || failure == "null" {
++			failure = "native turn/start returned no successful turn receipt"
++		}
++		b.failure = failure[:min(len(failure), 1024)]
++		t.Logf("native barrier preserved rejected/missing receipt: %s", b.failure)
++	}
++	return accepted
++}
++
++// Hold hides receipt history and removes a successful turn/start response's
++// usable receipt after native acceptance. Native state stays intact.
++func retryNativeReceiptBarrier(t *testing.T, ctx context.Context, native, proxy string) *retryNativeBarrier {
+ 	t.Helper()
+-	hold := &atomic.Bool{}
++	hold := &retryNativeBarrier{}
+ 	listener, err := net.Listen("unix", proxy)
+ 	if err != nil {
+ 		t.Fatal(err)
+@@ -50,7 +94,7 @@ func retryNativeReceiptBarrier(t *testing.T, ctx context.Context, native, proxy
+ 		defer up.CloseNow()
+ 		up.SetReadLimit(16 << 20)
+ 		var mu sync.Mutex
+-		starts := map[string]bool{}
++		starts := map[string]retryNativeStart{}
+ 		done := make(chan struct{})
+ 		go func() {
+ 			defer close(done)
+@@ -63,11 +107,10 @@ func retryNativeReceiptBarrier(t *testing.T, ctx context.Context, native, proxy
+ 				var reply map[string]json.RawMessage
+ 				if json.Unmarshal(data, &reply) == nil && reply["id"] != nil {
+ 					mu.Lock()
+-					drop := starts[string(reply["id"])]
++					start, armed := starts[string(reply["id"])]
+ 					delete(starts, string(reply["id"]))
+ 					mu.Unlock()
+-					if drop {
+-						delete(reply, "error")
++					if armed && hold.receipt(t, start, reply) {
+ 						reply["result"] = json.RawMessage(`{"turn":{}}`)
+ 						data, _ = json.Marshal(reply)
+ 					}
+@@ -86,9 +129,16 @@ func retryNativeReceiptBarrier(t *testing.T, ctx context.Context, native, proxy
+ 			var req struct {
+ 				ID     json.RawMessage `json:"id"`
+ 				Method string          `json:"method"`
++				Params struct {
++					Thread   string `json:"threadId"`
++					ClientID string `json:"clientUserMessageId"`
++				} `json:"params"`
+ 			}
+ 			_ = json.Unmarshal(data, &req)
+ 			if hold.Load() && req.Method == "thread/items/list" {
++				hold.mu.Lock()
++				hold.hiddenHistory++
++				hold.mu.Unlock()
+ 				out, _ := json.Marshal(map[string]any{"id": req.ID, "result": map[string]any{"data": []any{}, "nextCursor": nil}})
+ 				if down.Write(ctx, websocket.MessageText, out) != nil {
+ 					return
+@@ -97,8 +147,11 @@ func retryNativeReceiptBarrier(t *testing.T, ctx context.Context, native, proxy
+ 			}
+ 			if hold.Load() && req.Method == "turn/start" {
+ 				mu.Lock()
+-				starts[string(req.ID)] = true
++				starts[string(req.ID)] = retryNativeStart{req.Params.Thread, req.Params.ClientID}
+ 				mu.Unlock()
++				hold.mu.Lock()
++				hold.starts++
++				hold.mu.Unlock()
+ 			}
+ 			if up.Write(ctx, kind, data) != nil {
+ 				return
+@@ -110,6 +163,65 @@ func retryNativeReceiptBarrier(t *testing.T, ctx context.Context, native, proxy
+ 	return hold
+ }
+ 
++func TestNativeRetryReceiptBarrierRequiresSuccessfulReceipt(t *testing.T) {
++	for _, outcome := range []string{"accepted", "rpc-error", "missing-receipt"} {
++		t.Run(outcome, func(t *testing.T) {
++			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
++			defer cancel()
++			native := threadCommandAppServer(t, func(conn *websocket.Conn) error {
++				defer conn.CloseNow()
++				if err := threadCommandHandshake(conn); err != nil {
++					return err
++				}
++				req, err := threadCommandReadObject(conn)
++				if err != nil || req["method"] != "turn/start" {
++					return fmt.Errorf("expected turn/start: %v %v", req, err)
++				}
++				reply := map[string]any{"id": req["id"], "result": map[string]any{"turn": map[string]any{}}}
++				if outcome == "accepted" {
++					reply["result"] = map[string]any{"turn": map[string]any{"id": "actual-native-turn"}}
++				}
++				if outcome == "rpc-error" {
++					delete(reply, "result")
++					reply["error"] = map[string]any{"code": -32600, "message": "synthetic rejection"}
++				}
++				if err := threadCommandWriteObject(conn, reply); err != nil {
++					return err
++				}
++				_, _ = threadCommandReadObject(conn) // Keep transport alive until the caller closes it.
++				return nil
++			})
++			dir, err := os.MkdirTemp("/tmp", "retry-barrier-")
++			if err != nil {
++				t.Fatal(err)
++			}
++			t.Cleanup(func() { _ = os.RemoveAll(dir) })
++			proxy := filepath.Join(dir, "proxy.sock")
++			barrier := retryNativeReceiptBarrier(t, ctx, native, proxy)
++			barrier.Store(true)
++			client := codex.New(proxy)
++			defer client.Close()
++			var result struct {
++				Turn struct {
++					ID string `json:"id"`
++				} `json:"turn"`
++			}
++			err = client.Request(ctx, "turn/start", map[string]any{"threadId": "thread", "clientUserMessageId": "client"}, &result)
++			starts, accepted, _, thread, clientID, turn, failure := barrier.snapshot()
++			if starts != 1 || result.Turn.ID != "" {
++				t.Fatal("unexpected native receipt barrier result", starts, result)
++			}
++			if outcome == "accepted" {
++				if err != nil || accepted != 1 || thread != "thread" || clientID != "client" || turn != "actual-native-turn" || failure != "" {
++					t.Fatal("successful native receipt not retained", err, accepted, turn, failure)
++				}
++			} else if accepted != 0 || failure == "" || (outcome == "rpc-error" && (err == nil || !strings.Contains(err.Error(), "synthetic rejection"))) {
++				t.Fatal("native rejection was hidden or counted as acceptance", err, accepted, failure)
++			}
++		})
++	}
++}
++
+ func retryNativePortal(t *testing.T, root, workspace, stateRoot, socket, thread string, client *workspacecodex.Client) *portalweb.Server {
+ 	t.Helper()
+ 	authorityDir := filepath.Join(root, "authority")
+diff --git a/portal/go.mod b/portal/go.mod
+index a375a93..6df0fe8 100644
+--- a/portal/go.mod
++++ b/portal/go.mod
+@@ -4,7 +4,7 @@ go 1.24.0
+ 
+ require (
+ 	github.com/SherClockHolmes/webpush-go v1.4.0
+-	github.com/aither64/codex-web v0.0.0-20261022145556-d2d74f931cc5
++	github.com/aither64/codex-web v0.0.0-20261022165208-b6d3a92ff85e
+ 	github.com/coder/websocket v1.8.14
+ 	github.com/microcosm-cc/bluemonday v1.0.27
+ 	github.com/yuin/goldmark v1.7.17
+diff --git a/portal/go.sum b/portal/go.sum
+index 38d1aa9..3f2becc 100644
+--- a/portal/go.sum
++++ b/portal/go.sum
+@@ -1,7 +1,7 @@
+ github.com/SherClockHolmes/webpush-go v1.4.0 h1:ocnzNKWN23T9nvHi6IfyrQjkIc0oJWv1B1pULsf9i3s=
+ github.com/SherClockHolmes/webpush-go v1.4.0/go.mod h1:XSq8pKX11vNV8MJEMwjrlTkxhAj1zKfxmyhdV7Pd6UA=
+-github.com/aither64/codex-web v0.0.0-20261022145556-d2d74f931cc5 h1:nbOCpXupS5nR/+rpg4hxSYE9wverErBiPbV6/1+EgnU=
+-github.com/aither64/codex-web v0.0.0-20261022145556-d2d74f931cc5/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
++github.com/aither64/codex-web v0.0.0-20261022165208-b6d3a92ff85e h1:4yUJFjAkN0HrhqzCm/Ahn4mIYmCn575wfho9cJdEsgc=
++github.com/aither64/codex-web v0.0.0-20261022165208-b6d3a92ff85e/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
+ github.com/aymerick/douceur v0.2.0 h1:Mv+mAeH1Q+n9Fr+oyamOlAkUNPWPlA8PPGR0QAaYuPk=
+ github.com/aymerick/douceur v0.2.0/go.mod h1:wlT5vV2O3h55X9m7iVYN0TBM0NH/MmbLnd30/FjWUq4=
+ github.com/coder/websocket v1.8.14 h1:9L0p0iKiNOibykf283eHkKUHHrpG7f65OE3BhhO7v9g=

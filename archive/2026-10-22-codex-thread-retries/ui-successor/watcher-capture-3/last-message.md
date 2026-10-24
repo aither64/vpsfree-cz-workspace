@@ -1,0 +1,5 @@
+**Result: incomplete.** I did not run the capture operation because its frozen-source precondition did not match: the packet specifies dev-workspace revision `B9f03387583185d213c14ca09af190bcc27a7f309` (tree `d73fbad45383f236a926f81a6be10931b79f4830`), while the wrapper’s `capture.sh` requires revision `9f03387583185d213c14ca09af190bcc27a7f309`. The worktree is clean, but at that different revision. The packet’s other frozen revision, `A55e0300b27b6927b1693b3792042762f31a385cc`, was not verified.
+
+Session identity and watcher policy matched: the session markers and `dev-session current` resolve to the assigned session; the installed utility config specifies `danger-full-access` and approval `never`, and the catalog file hash matched the policy record.
+
+No capture command was run, so there is no exit status, elapsed time, or capture log to report. I made no source edits or retries. The parent owns resolution of the revision discrepancy before any new operation.

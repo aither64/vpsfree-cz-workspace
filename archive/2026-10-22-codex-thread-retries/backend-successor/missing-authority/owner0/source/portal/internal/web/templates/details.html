@@ -1,0 +1,57 @@
+{{define "repositories"}}
+        {{if .RepositoryWarning}}<p class="notice warning">{{.RepositoryWarning}}</p>{{end}}
+        <div class="section-heading"><h2>Repositories</h2><span>{{len .Repositories}}</span></div>
+        <div class="repo-grid">
+        {{range .Repositories}}
+          <article class="panel repo-card" data-repository-id="{{.ReviewID}}" data-repository-name="{{.Name}}" data-repository-head="{{if $.Session.Archived}}{{.HeadSHA}}{{else}}{{.LocalHeadSHA}}{{end}}">
+            <div data-repository-status>
+            <div class="repo-title"><h3>{{.Name}}</h3>{{if not $.Session.Archived}}{{if eq .PushStatus "exactly-pushed"}}<span class="badge active">Pushed</span>{{else if eq .PushStatus "not-pushed"}}<span class="badge warning">Not pushed</span>{{else if eq .PushStatus "remote-ahead"}}<span class="badge warning">{{if .Origin}}{{.Origin.Label}}{{else}}Remote{{end}} ahead</span>{{else if eq .PushStatus "divergent"}}<span class="badge danger">Diverged</span>{{else}}<span class="badge warning">Unknown</span>{{end}}{{end}}</div>
+            <dl>
+              <dt>Branch</dt><dd><code>{{.Branch}}</code></dd>
+              {{if $.Session.Archived}}
+                {{if .HeadSHA}}<dt>Final HEAD</dt><dd><code>{{shortSHA .HeadSHA}}</code></dd>{{end}}
+              {{else}}
+                {{if .LocalHeadSHA}}<dt>Local HEAD</dt><dd><code>{{shortSHA .LocalHeadSHA}}</code></dd>{{end}}
+                {{if .RemoteHeadSHA}}<dt>{{if .Origin}}{{.Origin.Label}}{{else}}Remote{{end}} HEAD</dt><dd><code>{{shortSHA .RemoteHeadSHA}}</code></dd>{{end}}
+              {{end}}
+              {{if .DefaultBranch}}<dt>Default branch</dt><dd><code>{{.DefaultBranch}}</code></dd>{{end}}
+            </dl>
+            <nav class="link-row">
+              {{if .OriginLinks}}{{if .OriginLinks.RepositoryURL}}<a href="{{.OriginLinks.RepositoryURL}}" target="_blank" rel="noreferrer">Origin ↗</a>{{end}}{{end}}
+              {{if $.Session.Archived}}
+                {{if .OriginLinks}}{{if .OriginLinks.CompareURL}}<a href="{{.OriginLinks.CompareURL}}" target="_blank" rel="noreferrer" aria-label="Compare on {{.Origin.Label}}">Compare ↗</a>{{end}}{{end}}
+                {{if .OriginLinks}}{{if .OriginLinks.BranchURL}}<a href="{{.OriginLinks.BranchURL}}" target="_blank" rel="noreferrer">Final revision</a>{{end}}{{end}}
+              {{else if .RemoteHeadSHA}}
+                {{if .OriginLinks}}{{if .OriginLinks.CompareURL}}<a href="{{.OriginLinks.CompareURL}}" target="_blank" rel="noreferrer" aria-label="Compare on {{.Origin.Label}}">Compare ↗</a>{{end}}{{end}}
+                {{if .OriginLinks}}{{if .OriginLinks.BranchURL}}<a href="{{.OriginLinks.BranchURL}}" target="_blank" rel="noreferrer">Branch</a>{{end}}{{end}}
+              {{end}}
+              {{if .OriginLinks}}{{if .OriginLinks.WorkflowsURL}}<a href="{{.OriginLinks.WorkflowsURL}}" target="_blank" rel="noreferrer">Actions</a>{{end}}{{end}}
+            </nav>
+            {{if .StatusError}}<p class="notice warning">Repository: {{.StatusError}}</p>{{end}}
+            {{if .OriginError}}<p class="notice warning">{{if .Origin}}{{.Origin.Label}}{{else}}Repository origin{{end}}: {{.OriginError}}</p>{{end}}
+            {{$workflows := workflowSummary .}}{{if $workflows.Show}}{{if $workflows.HasRuns}}
+            <details class="repository-workflows" data-repository-workflows>
+              <summary>Workflows <span class="repository-workflow-counters">{{range $workflows.Counters}}<span class="repository-workflow-counter {{.Class}}" role="group" aria-label="{{.AccessibleLabel}}" title="{{.Title}}"><span>{{.Label}}</span> <strong>{{.Value}}</strong></span>{{end}}</span></summary>
+              <div class="repository-workflow-body" data-repository-workflow-runs>
+                <div class="runs"><h4>Workflows for this revision</h4>{{range .Runs}}{{if .URL}}<a href="{{.URL}}" target="_blank" rel="noreferrer">{{else}}<span>{{end}}<span class="run-state {{if .Conclusion}}{{.Conclusion}}{{else}}{{.Status}}{{end}}" title="Status: {{.Status}}{{if .Conclusion}}; conclusion: {{.Conclusion}}{{end}}">{{if .Conclusion}}{{.Conclusion}}{{else if eq .Status "in_progress"}}in progress{{else}}{{.Status}}{{end}}</span>{{.WorkflowName}} <code>{{shortSHA .HeadSHA}}</code>{{if .URL}}</a>{{else}}</span>{{end}}{{end}}</div>
+              </div>
+            </details>{{else}}<p class="repository-workflows-compact" role="note" aria-label="{{$workflows.CompactLabel}}" title="{{$workflows.CompactTitle}}">{{$workflows.CompactText}}</p>{{end}}{{end}}
+            </div>
+            <div class="repository-review-actions"><button type="button" data-review-branch disabled>Compare</button>{{if not $.Session.Archived}}<button type="button" class="quiet" data-review-worktree="staged">Staged changes</button><button type="button" class="quiet" data-review-worktree="unstaged">Unstaged changes</button>{{end}}<button type="button" class="quiet" data-review-refresh>Refresh commits</button></div>
+            <p class="repository-head-change notice warning" hidden>The branch has changed. Refresh commits to review it.</p>
+            <details class="repository-history">
+              <summary>Local commits <span class="repository-history-summary muted" data-repository-history-summary>Loading totals…</span></summary>
+              <div data-repository-commits><p class="muted">Loading local commits…</p></div>
+            </details>
+          </article>
+        {{else}}<p class="empty">Codex has not added any repository worktrees yet.</p>{{end}}
+        </div>
+{{end}}
+
+{{define "artifact-list"}}
+ {{range artifactTree .Artifacts}}{{template "artifact-node" .}}{{end}}
+{{end}}
+{{define "artifact-node"}}
+ {{if .Artifact}}<button type="button" class="artifact-select quiet" data-artifact-path="{{.Artifact.Path}}" data-artifact-label="{{.Artifact.Label}}" title="{{.Artifact.Label}} · {{.Artifact.Path}}"><span>{{.Name}}</span></button>
+ {{else}}<details class="artifact-directory" data-artifact-directory="{{.Directory}}" open><summary title="{{.Directory}}">{{.Name}}</summary><div>{{range .Children}}{{template "artifact-node" .}}{{end}}</div></details>{{end}}
+{{end}}

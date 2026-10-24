@@ -1,0 +1,69 @@
+diff --git a/portal/internal/web/composer_handoff_browser_test.cjs b/portal/internal/web/composer_handoff_browser_test.cjs
+index acf55e8f..e730db9d 100644
+--- a/portal/internal/web/composer_handoff_browser_test.cjs
++++ b/portal/internal/web/composer_handoff_browser_test.cjs
+@@ -16,11 +16,28 @@ const digest = text => createHash("sha256").update(text).digest("hex");
+       let lost = false, phase = "startup";
+       let threadReads = 0, threadResponses = 0, streamHints = 0, lastTranscript = null;
+       const transcriptTimeline = [];
++      const uploadTimeline = [];
++      const traceUpload = (event, detail = {}) => {
++        uploadTimeline.push({sequence: (uploadTimeline.at(-1)?.sequence || 0) + 1, event, phase, ...detail});
++        if (uploadTimeline.length > 100) uploadTimeline.shift();
++      };
+       const trace = (event, detail = {}) => {
+         transcriptTimeline.push({event, phase, ...detail});
+         if (transcriptTimeline.length > 100) transcriptTimeline.shift();
+       };
+       page.on("pageerror", error => errors.push(error.message));
++      page.on("request", request => {
++        const pathname = new URL(request.url()).pathname;
++        if (pathname.startsWith("/uploads/")) traceUpload("request", {path: pathname, method: request.method()});
++      });
++      page.on("response", response => {
++        const pathname = new URL(response.url()).pathname;
++        if (pathname.startsWith("/uploads/")) traceUpload("response", {path: pathname, status: response.status()});
++      });
++      page.on("requestfailed", request => {
++        const pathname = new URL(request.url()).pathname;
++        if (pathname.startsWith("/uploads/")) traceUpload("request-failed", {path: pathname, error: request.failure()?.errorText});
++      });
+       await page.addInitScript(() => {
+         window.EventSource = class {
+           constructor() {window.composerFixtureEvents = this; queueMicrotask(() => this.onopen?.());}
+@@ -98,7 +115,16 @@ const digest = text => createHash("sha256").update(text).digest("hex");
+         await expect(send).toBeEnabled();
+       };
+       const attach = async name => {
++        traceUpload("attach-wait", {name, control: await page.evaluate(() => {
++          const toggle = document.querySelector("#message-upload-controls .codex-upload-toggle");
++          return {mounted: Boolean(toggle), disabled: toggle?.disabled};
++        })});
++        // Direct picker injection bypasses the disabled attachment menu. Match
++        // its real admission boundary, including after a document reload.
++        await expect(page.locator("#message-upload-controls .codex-upload-toggle")).toBeEnabled();
++        traceUpload("attach-ready", {name});
+         await page.locator('#message-form input[type=file]').setInputFiles({name, mimeType: "text/plain", buffer: Buffer.from(name)});
++        traceUpload("picker-selected", {name});
+         await expect(page.locator("#message-uploads")).toContainText(name);
+         await expect(page.locator("#message-uploads .codex-attachment-detail").last()).toContainText("Ready");
+         return page.evaluate(key => JSON.parse(localStorage.getItem(key)).map(file => file.id), draftKey);
+@@ -201,9 +227,17 @@ const digest = text => createHash("sha256").update(text).digest("hex");
+         await expect(prompt).toHaveValue("Keep next selection");
+         assert.deepEqual(errors, []);
+       } catch (error) {
++        const uploadState = await page.evaluate(() => ({
++          hidden: document.getElementById("message-uploads")?.hidden,
++          toggleDisabled: document.querySelector("#message-upload-controls .codex-upload-toggle")?.disabled,
++          noticeHidden: document.querySelector("#message-uploads .codex-upload-notice")?.hidden,
++          notice: document.querySelector("#message-uploads .codex-upload-notice")?.textContent?.slice(0, 1024),
++          retryHidden: document.querySelector("#message-uploads button")?.hidden,
++        })).catch(() => null);
+         console.error(JSON.stringify({fixture: "composer-handoff", member, phase, pageErrors: errors,
+           messageRequests: sends.length, held: held.length, ackCount, interruptCount, queueCount,
+-          threadReads, threadResponses, streamHints, holdReads, readHolds: readHolds.length, lastTranscript, transcriptTimeline}));
++          threadReads, threadResponses, streamHints, holdReads, readHolds: readHolds.length, lastTranscript, transcriptTimeline,
++          uploadState, uploadTimeline}));
+         throw error;
+       } finally {
+         for (const resume of [...held.splice(0), ...readHolds.splice(0)]) resume();

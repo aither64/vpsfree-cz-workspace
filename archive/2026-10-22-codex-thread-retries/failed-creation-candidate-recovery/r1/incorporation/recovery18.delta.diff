@@ -1,0 +1,1332 @@
+diff --git a/docs/session-archive-recovery.md b/docs/session-archive-recovery.md
+index 1b5eefdd..42489b51 100644
+--- a/docs/session-archive-recovery.md
++++ b/docs/session-archive-recovery.md
+@@ -315,6 +315,59 @@ recovery reconstructs its exact final journal identity through the cleanup
+ owner, revalidates the saved state and finishes the ordinary receipt cleanup.
+ An incomplete receipt without its journal remains a refusal.
+ 
++## Deleting a failed direct creation before a package switch
++
++A failed direct creation can block package selection when the selected
++executor cannot finish its deletion. Use the candidate's public recovery entry
++only after authorizing deletion of that exact session:
++
++```sh
++/path/to/candidate/bin/workspace-host recover-failed-creation-delete \
++  --source /path/to/exact/source --workspace NAME --session SLUG \
++  --request-id UUID
++```
++
++The supplied source must build the same candidate package that runs this
++command. That candidate must differ from the selected package. During deletion,
++the command holds the package transition lock and verifies the selected profile
++token, native executable and protocol. Ordinary deletion still asks for
++confirmation, checks resource ownership and records its lifecycle journal.
++The selected profile and services stay in place.
++
++The runtime contracts must match exactly, with one exception: a candidate
++declaring `turnRetrySessionPolicy: 1` may recover a predecessor that omits this
++field. Both may also declare `1`. Any other difference blocks recovery.
++
++Recovery requires the exact failed new-session request, direct team snapshot,
++retained root and roster. The creating manifest must explicitly record both
++`initial_goal_attempted: false` and `initial_goal_sent: false`. An interrupted
++terminal-start journal belongs to this creation only when its slug and tmux
++identity match the creating CLI journal and retained runtime identity.
++Other start, fork or lifecycle conflicts remain blockers.
++
++The ordinary deletion owner repeats these checks under its existing locks.
++After preflight and root quiescence, it durably records `thread_retiring` and
++atomically moves the unchanged start journal to private recovery as `start.json`.
++It then performs normal member and root retirement. For a member whose start
++outcome is unknown, the preserved roster retains its project and attempted-start
++provenance. This does not prove that the native thread is absent or remove its
++project. Private recovery retains the start, creation, team and tracking records.
++
++After interruption, repeat the command with the same source, session and
++request ID. It validates the original removal operation and private recovery
++when tracking has moved. Missing or conflicting provenance blocks recovery.
++Completed removal evidence makes an exact replay a no-op while the failed
++receipt remains available. A missing target alone never proves completion.
++
++After the command returns and releases the transition lock, reconcile the
++original request through the selected portal's ordinary
++`GET /api/session-creations/UUID`. This status request can retire the failed
++creation receipt after proving completed deletion. Do not invoke creation retry
++or start another session. If reconciliation cannot prove completed deletion,
++stop and retain the receipt and recovery records. After it retires the receipt,
++use the normal forward package switch. Its unfinished-operation and capability
++checks still apply. A ready replacement is unaffected.
++
+ ## Threadless conversation absence
+ 
+ Threadless readiness combines fail-closed public indexed queries for unassigned
+diff --git a/libexec/dev-session b/libexec/dev-session
+index 5cecd63a..944911e3 100755
+--- a/libexec/dev-session
++++ b/libexec/dev-session
+@@ -2371,6 +2371,36 @@ module DevSession
+       end
+     end
+ 
++    # The host entry and ordinary deletion share one context reader. This
++    # observation releases the session locks before the host invokes the CLI.
++    def with_verified_failed_creation_delete(slug, request_id:)
++      validate_part!(slug, 'session slug')
++      unless request_id.is_a?(String) && request_id.match?(/\A[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\z/)
++        raise Error, 'failed-creation recovery requires a canonical request UUID'
++      end
++      with_lifecycle_access(slug, 'delete', operation_id: nil) do
++        with_creation_lock(slug) do
++          with_slug_lock(slug) do
++            select_tmux_for_slug!(slug)
++            context = failed_creation_delete_context(slug, request_id:)
++            reject_conflicting_lifecycle_journal!(slug, operation: 'delete', deletion_context: context)
++            context.identity
++          end
++        end
++      end
++    end
++
++    FailedCreationDeleteContext = Struct.new(
++      :slug, :root, :receipt, :request_id, :operation, :completed, :start_path, :start_bytes, :creation_nonce, :force,
++      keyword_init: true
++    ) do
++      def identity
++        {'root' => root, 'receipt' => receipt, 'request' => request_id,
++         'operation' => operation, 'completed' => completed, 'force' => force}
++      end
++    end
++    private_constant :FailedCreationDeleteContext
++
+     def delete(input, as_is:, force:, operation_id: nil)
+       slug = lookup_slug(input, as_is:)
+       with_lifecycle_access(slug, 'delete', operation_id:) do
+@@ -2385,7 +2415,8 @@ module DevSession
+       with_creation_lock(slug) do
+         with_slug_lock(slug) do
+           select_tmux_for_slug!(slug)
+-          reject_conflicting_lifecycle_journal!(slug, operation: 'delete')
++          deletion_context = failed_creation_start_context(slug)
++          reject_conflicting_lifecycle_journal!(slug, operation: 'delete', deletion_context:)
+           coordination_store.require_lifecycle_idle!(workspace, slug)
+           coordination_store.require_lifecycle_capacity!(workspace, slug, 'delete') unless load_removal_journal(slug)
+           ensure_retirement_identity!(slug, cleanup_session(slug))
+@@ -2407,6 +2438,7 @@ module DevSession
+             quiesced = quiesce_native_client!(slug, plan.session)
+             advance_removal!(slug, removal, 'thread_retiring')
+           end
++          transfer_failed_creation_start!(slug, removal, deletion_context) if deletion_context
+           if removal_phase_before?(removal, 'thread_retired')
+             prepare_team_delete!(slug, removal, check_only: false)
+             sync_team_lifecycle!(slug, removal.fetch('force') ? 'retire' : 'archive')
+@@ -4218,7 +4250,7 @@ module DevSession
+ 
+     # Hash only operation identities: wall-clock correction does not change
+     # which completed deletions an accepted request has already observed.
+-    def completed_removal_history(slug)
++    def completed_removal_history(slug, excluding_operation: nil)
+       root = removal_recovery_root_path
+       return Digest::SHA256.hexdigest('') unless path_exists?(root)
+ 
+@@ -4239,7 +4271,7 @@ module DevSession
+         end
+         metadata.fetch('operation_id')
+       end
+-      Digest::SHA256.hexdigest(operations.uniq.sort.join("\n"))
++      Digest::SHA256.hexdigest((operations.uniq - [excluding_operation]).sort.join("\n"))
+     rescue JSON::ParserError, KeyError, ArgumentError => e
+       raise Error, "invalid creation deletion recovery: #{e.message}"
+     end
+@@ -6092,6 +6124,235 @@ module DevSession
+       root
+     end
+ 
++    def failed_creation_start_context(slug)
++      removal = load_removal_journal(slug)
++      retained_creation = removal && [creation_journal_file(slug), File.join(removal.fetch('recovery'), 'creation.json')].any? do |path|
++        next false unless path_exists?(path)
++        journal = failed_creation_delete_json(path, 'deletion creation context')
++        journal['schema'] == 3 && journal['state'] == 'creating'
++      end
++      return unless path_exists?(start_journal_file(slug)) || retained_creation ||
++                    (removal && path_exists?(File.join(removal.fetch('recovery'), 'start.json')))
++
++      failed_creation_delete_context(slug)
++    end
++
++    def failed_creation_delete_json(path, label, maximum: AUTHORITY_MAX_SIZE)
++      raise Error, "#{label} is a symlink: #{path}" if File.symlink?(path)
++      read_private_json_object(path, label, max_size: maximum, mode: 0o600)
++    end
++
++    def failed_creation_delete_context(slug, request_id: nil)
++      conflicts = (LIFECYCLE_JOURNAL_NAMES.values - ['removal']) + %w[fork archive-cleanup agent-teams-migration]
++      if conflicts.any? { |name| path_exists?(File.join(File.dirname(creation_journal_file(slug)), "#{slug}.#{name}.json")) }
++        raise Error, 'conflicting session operation blocks failed-creation deletion recovery'
++      end
++      workspace_id = "#{File.basename(workspace)}-#{Digest::SHA256.hexdigest(workspace)[0, 16]}"
++      portal = File.join(@workspace_state_root, 'portal', workspace_id)
++      receipt = failed_creation_delete_json(File.join(portal, 'creations', "#{slug}.json"),
++                                            'failed creation receipt', maximum: 12 * MAX_MESSAGE_BYTES + 16_384)
++      preset = receipt['directTeam']
++      validate_current_direct_portal_receipt!(receipt, {'receipt_id' => receipt['receiptId']}, slug,
++        model: receipt['model'], effort: receipt['effort'], direct_team: preset)
++      unless receipt['state'] == 'failed' && receipt['validated'] == true && receipt.dig('request', 'kind') == 'new' &&
++             receipt['receiptId'].is_a?(String) && receipt['receiptId'].match?(/\A[0-9a-f]{64}\z/) &&
++             receipt['goal'].is_a?(String) && !receipt['goal'].empty? && receipt.dig('request', 'goal') == receipt['goal']
++        raise Error, 'deletion recovery requires an exact failed direct new-session receipt'
++      end
++      directory = File.join(portal, 'session-preparations')
++      names = request_id ? ["#{request_id}.json"] : Dir.children(directory)
++      raise Error, 'too many failed-creation preparation candidates' if names.length > 512
++      records = names.filter_map do |name|
++        next unless name.match?(/\A[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.json\z/)
++        record = failed_creation_delete_json(File.join(directory, name), 'failed creation preparation',
++                                             maximum: 2 * (12 * MAX_MESSAGE_BYTES + 16_384) + 16_384)
++        next unless request_id || record['slug'] == slug
++        next if !request_id && (record['receiptId'] != receipt['receiptId'] || record['epoch'] != receipt['deletionHistorySha256'])
++        unless record['schema'] == 1 && record['workspace'] == workspace && record['slug'] == slug &&
++               record['requestId'] == name.delete_suffix('.json') && record['state'] == 'handed_off' &&
++               record['inputVersion'] == 1 && record['receiptId'] == receipt['receiptId'] &&
++               record['epoch'] == receipt['deletionHistorySha256'] && record['handoff'] == receipt['request'] &&
++               record.dig('snapshot', 'preset') == preset && record.dig('snapshot', 'goal') == receipt['goal']
++          raise Error, 'failed-creation preparation does not match the exact accepted request'
++        end
++        record
++      end
++      raise Error, 'failed-creation request identity is missing or ambiguous' unless records.length == 1
++      preparation = records.fetch(0)
++      removal = failed_creation_delete_removal(slug, epoch: receipt.fetch('deletionHistorySha256'))
++      recovery = removal && removal.fetch('recovery')
++      completed = removal && removal['phase'] == 'removed'
++      source_tracking = work_dir(slug)
++      private_tracking = recovery && File.join(recovery, 'work')
++      if path_exists?(archive_dir(slug)) || (private_tracking && path_exists?(private_tracking) && path_exists?(source_tracking))
++        raise Error, 'failed-creation tracking has a conflicting location'
++      end
++      tracking = path_exists?(source_tracking) ? source_tracking : private_tracking
++      raise Error, 'failed-creation tracking has no validated private recovery' unless tracking
++      manifest = load_portal_manifest(File.join(tracking, PORTAL_MANIFEST), required: true, expected_slug: slug)
++      creation = manifest.fetch('creation', {})
++      root = manifest.dig('codex', 'thread_id')
++      unless manifest['schema'] == 2 && !manifest.key?('forked_from') &&
++             root.is_a?(String) && root.match?(/\A[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\z/) &&
++             manifest.dig('codex', 'socket_path') == @codex_socket && creation['state'] == 'creating' &&
++             creation['initial_goal_attempted'] == false && creation['initial_goal_sent'] == false &&
++             creation['goal_sha256'] == Digest::SHA256.hexdigest(receipt.fetch('goal'))
++        raise Error, 'failed-creation deletion requires the exact root and explicitly unsubmitted initial goal'
++      end
++      journal_path = failed_creation_recovery_record(creation_journal_file(slug), recovery, 'creation.json')
++      journal = failed_creation_delete_json(journal_path, 'failed creation journal')
++      journal_keys = %w[schema slug goal_sha256 run_codex state model effort direct_team tmux_identity]
++      journal_keys += %w[provider sensitive].select { |key| journal.key?(key) }
++      unless journal.keys.sort == journal_keys.sort && journal['slug'] == slug && journal['run_codex'] == true &&
++             journal['schema'] == 3 && journal['state'] == 'creating' && journal['model'] == preset['leadModel'] &&
++             journal['effort'] == preset['leadEffort'] && valid_creation_provider?(journal) &&
++             journal['tmux_identity'].is_a?(String) && journal['tmux_identity'].match?(/\A[0-9a-f]{64}\z/) &&
++             journal['direct_team'] == preset && journal['goal_sha256'] == creation['goal_sha256'] &&
++             journal.fetch('provider', nil) == receipt.fetch('request').fetch('provider', nil)
++        raise Error, 'failed-creation journal changed from the accepted request'
++      end
++      roster_path = failed_creation_recovery_record(direct_team_state_path(slug), recovery, 'team.json')
++      roster = failed_creation_delete_json(roster_path, 'failed creation roster', maximum: 256 * 1024)
++      require_failed_creation_delete_roster!(roster, slug, root, preset)
++      nonce = journal.fetch('tmux_identity')
++      if @codex_version && manifest.dig('codex', 'client_version') != @codex_version
++        raise Error, 'failed-creation root uses a different native protocol identity'
++      end
++      start_path = failed_creation_recovery_record(start_journal_file(slug), recovery, 'start.json')
++      start_bytes = nil
++      if start_path
++        start = failed_creation_delete_json(start_path, 'failed creation subordinate start')
++        unless start.keys.sort == %w[schema slug state tmux_identity] && start['schema'] == 1 &&
++               start['slug'] == slug && start['state'] == 'creating' && start['tmux_identity'] == nonce
++          raise Error, 'terminal-start reservation does not match the failed creation identity'
++        end
++        start_bytes = File.binread(start_path).freeze
++      end
++      if completed
++        unless !path_exists?(source_tracking) && !path_exists?(worktrees_dir(slug)) &&
++               (!@authority_dir || !path_exists?(authority_file(slug))) && !path_exists?(lifecycle_journal_file(slug, 'delete'))
++          raise Error, 'completed failed-creation removal still has live session state'
++        end
++      else
++        authority = @authority_dir ? load_session_authority(slug, required: false) : nil
++        if authority && (authority['tmux_identity'] != nonce || authority['codex_thread_id'] != root || authority['codex_socket_path'] != @codex_socket)
++          raise Error, 'failed-creation authority does not match the retained root and terminal identity'
++        end
++        terminal = @tmux.session(slug)
++        if terminal && (!managed_by_workspace?(terminal) || terminal.identity_token != nonce ||
++                        terminal.codex_thread_id != root || terminal.codex_socket_path != @codex_socket)
++          raise Error, 'failed-creation terminal does not match the retained root and creation identity'
++        end
++        validate_authority_session!(slug, terminal, require_creation_identity: true) if terminal && authority
++      end
++      FailedCreationDeleteContext.new(slug:, root:, receipt: receipt.fetch('receiptId'),
++        request_id: preparation.fetch('requestId'), operation: removal && removal['operation_id'],
++        completed: !!completed, start_path:, start_bytes:, creation_nonce: nonce, force: removal && removal['force']).freeze
++    end
++
++    def failed_creation_recovery_record(source, recovery, name, optional: false)
++      destination = recovery && File.join(recovery, name)
++      if path_exists?(source) && destination && path_exists?(destination)
++        raise Error, 'conflicting live and private failed-creation recovery records'
++      end
++      return source if path_exists?(source)
++      return destination if destination && path_exists?(destination)
++      return nil if optional
++
++      raise Error, "failed-creation recovery record is missing: #{name}"
++    end
++
++    def require_failed_creation_delete_roster!(roster, slug, root, preset)
++      unless roster['schema'] == 1 && roster['workspace'] == workspace && roster['slug'] == slug &&
++             roster['rootThreadId'] == root && !roster.key?('forkSource') &&
++             roster['presetId'] == preset['id'] && roster['catalogDigest'] == preset['catalogDigest'] &&
++             roster['teamDigest'] == preset['teamDigest'] && roster['leadModel'] == preset['leadModel'] &&
++             roster['leadEffort'] == preset['leadEffort'] && roster.fetch('leadInstructions', '') == preset.fetch('leadInstructions', '') &&
++             roster['members'].is_a?(Array) && roster['members'].length == preset['members'].length
++        raise Error, 'failed-creation roster does not match the retained root and accepted team'
++      end
++      expected = preset['members'].to_h { |member| [member.fetch('address'), member] }
++      addresses = []
++      roster['members'].each do |member|
++        raise Error, 'failed-creation roster has an invalid member' unless member.is_a?(Hash)
++        spec = expected[member['address']]
++        unless spec && %w[role model reasoningEffort behavior purpose access instructions].all? { |key| member.fetch(key, '') == spec.fetch(key, '') } &&
++               %w[creating ready archived removed].include?(member['state'])
++          raise Error, 'failed-creation member settings or retirement state changed'
++        end
++        addresses << member['address']
++        unless member['threadId'].is_a?(String)
++          raise Error, 'failed-creation member has an invalid thread identity'
++        end
++        next unless member['threadId'] == ''
++        unless %w[creating removed].include?(member['state']) && member['createAttempted'] == true &&
++               member.fetch('bootstrapAttempted', false) == false && member.fetch('retireIntent', '') == '' &&
++               member['projectId'].is_a?(String) && member['projectId'].match?(/\A[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\z/) &&
++               (member['state'] != 'removed' || member['removedAt'].is_a?(String))
++          raise Error, 'failed-creation member has no eligible retained unknown-start provenance'
++        end
++      end
++      raise Error, 'failed-creation roster repeats a member' unless addresses.uniq.length == addresses.length
++    end
++
++    def failed_creation_delete_removal(slug, epoch:)
++      journal = load_removal_journal(slug)
++      # The accepted epoch includes prior slug owners, never this deletion.
++      history = completed_removal_history(slug, excluding_operation: journal && journal.fetch('operation_id'))
++      if journal || path_exists?(work_dir(slug))
++        raise Error, 'failed-creation deletion history changed from the accepted request' unless history == epoch
++
++        return journal
++      end
++      root = removal_recovery_root_path
++      return nil unless path_exists?(root)
++      candidates = Dir.children(root).sort.filter_map do |name|
++        next unless name.include?("-#{slug}-")
++        directory = File.join(root, name)
++        metadata = failed_creation_delete_json(File.join(directory, 'recovery.json'), 'completed removal receipt')
++        next unless metadata['schema'] == 1 && metadata['slug'] == slug && metadata['workspace'] == workspace &&
++                    metadata['state'] == 'removed' && metadata['phase'] == 'removed' && metadata['tracking'] == 'work' &&
++                    metadata['recovery'] == directory && metadata['operation_id'].is_a?(String) && metadata['operation_id'].match?(/\A[0-9a-f]{64}\z/)
++        required = %w[schema slug workspace created_at operation_id state phase force tracking recovery removed_at]
++        allowed = required + %w[git_tracked worktrees worktrees_sealed]
++        unless (required - metadata.keys).empty? && (metadata.keys - allowed).empty? &&
++               [true, false].include?(metadata['force']) &&
++               (!metadata.key?('git_tracked') || [true, false].include?(metadata['git_tracked'])) &&
++               (!metadata.key?('worktrees') || valid_removal_worktree_inventory?(slug, metadata['worktrees'])) &&
++               (!metadata.key?('worktrees_sealed') || [true, false].include?(metadata['worktrees_sealed'])) &&
++               (!metadata['worktrees_sealed'] || metadata.key?('worktrees'))
++          raise Error, 'completed failed-creation removal has an invalid recovery receipt'
++        end
++        validate_removal_recovery!(slug, metadata)
++        Time.iso8601(metadata.fetch('created_at'))
++        Time.iso8601(metadata.fetch('removed_at'))
++        metadata
++      end
++      candidates.select! do |metadata|
++        completed_removal_history(slug, excluding_operation: metadata.fetch('operation_id')) == epoch
++      end
++      raise Error, 'completed failed-creation deletion is ambiguous' if candidates.length > 1
++      candidates.first
++    rescue ArgumentError, KeyError => e
++      raise Error, "invalid completed failed-creation removal: #{e.message}"
++    end
++
++    def transfer_failed_creation_start!(slug, removal, context)
++      raise Error, 'subordinate start requires a validated deletion context' unless context.is_a?(FailedCreationDeleteContext) && context.slug == slug
++      raise Error, 'subordinate start ownership requires durable thread_retiring' if removal_phase_before?(removal, 'thread_retiring')
++      current = failed_creation_delete_context(slug, request_id: context.request_id)
++      unless current.root == context.root && current.receipt == context.receipt &&
++             current.creation_nonce == context.creation_nonce && current.operation == removal.fetch('operation_id') &&
++             current.force == removal.fetch('force') &&
++             current.start_bytes == context.start_bytes
++        raise Error, 'failed-creation identity changed before terminal-start ownership transfer'
++      end
++      return unless current.start_path
++      return if current.start_path == File.join(removal.fetch('recovery'), 'start.json')
++
++      move_to_removal_recovery!(current.start_path, removal.fetch('recovery'), 'start.json')
++    end
++
+     def removal_recovery_root_path
+       workspace_id = "#{File.basename(workspace)}-#{Digest::SHA256.hexdigest(workspace)[0, 16]}"
+       File.join(@workspace_state_root, 'removed', workspace_id)
+@@ -6158,13 +6419,16 @@ module DevSession
+       File.join(lifecycle_journal_root, "#{slug}.#{name}.json")
+     end
+ 
+-    def reject_conflicting_lifecycle_journal!(slug, operation: nil)
++    def reject_conflicting_lifecycle_journal!(slug, operation: nil, deletion_context: nil)
+       root = File.dirname(creation_journal_file(slug))
+       if path_exists?(ArchiveCleanup.new(self, slug).path) && operation != 'archive'
+         raise Error,
+               "session archive is unfinished: #{slug}; retry dev-session archive with the original options"
+       end
+-      if path_exists?(start_journal_file(slug)) && !%w[start revive].include?(operation)
++      subordinate_start = operation == 'delete' && deletion_context.is_a?(FailedCreationDeleteContext) &&
++                          deletion_context.slug == slug && deletion_context.start_path == start_journal_file(slug) &&
++                          File.binread(deletion_context.start_path) == deletion_context.start_bytes
++      if path_exists?(start_journal_file(slug)) && !%w[start revive].include?(operation) && !subordinate_start
+         raise Error,
+               "session start is unfinished: #{slug}; retry dev-session start with the original options"
+       end
+@@ -7937,7 +8201,8 @@ module DevSession
+       end
+       return if request[:admitted]
+ 
+-      reject_conflicting_lifecycle_journal!(slug, operation: request[:operation])
++      deletion_context = failed_creation_start_context(slug) if request[:operation] == 'delete'
++      reject_conflicting_lifecycle_journal!(slug, operation: request[:operation], deletion_context:)
+       journal = lifecycle_access_journal(slug, request[:operation])
+       unless journal == request[:journal] || (journal && journal == request[:operation_id])
+         raise Error, 'another lifecycle operation started while waiting; retry its original request'
+diff --git a/libexec/workspace-host b/libexec/workspace-host
+index 52a24271..0917edf9 100755
+--- a/libexec/workspace-host
++++ b/libexec/workspace-host
+@@ -432,6 +432,7 @@ module DevWorkspaceHost
+       when 'run-coordinator' then run_coordinator(argv)
+       when 'coordination-bootstrap' then coordination_bootstrap(argv)
+       when 'recover-archive' then recover_archive(argv)
++      when 'recover-failed-creation-delete' then recover_failed_creation_delete(argv)
+       when 'rollback' then with_current_generation_lock { rollback(argv) }
+       when 'suspend' then with_current_generation_lock { suspend(argv) }
+       when 'resume' then with_current_generation_lock { resume_services(argv) }
+@@ -477,6 +478,7 @@ module DevWorkspaceHost
+           workspace-host register NAME ROOT [--hostname HOST] [--alias HOST] [--replace]
+           workspace-host unregister NAME
+           workspace-host switch --source PATH [--from-candidate]
++          workspace-host recover-failed-creation-delete --source PATH --workspace NAME --session SLUG --request-id UUID
+           workspace-host rollback
+           workspace-host suspend
+           workspace-host resume
+@@ -882,6 +884,117 @@ module DevWorkspaceHost
+       end
+     end
+ 
++    # A candidate can repair an eligible failed creation before the unchanged
++    # package-switch guard permits selection. Ordinary deletion owns all effects.
++    def recover_failed_creation_delete(argv)
++      options = {}
++      OptionParser.new do |opts|
++        %w[source workspace session request-id].each do |name|
++          opts.on("--#{name} VALUE") { |value| options[name] = value }
++        end
++      end.parse!(argv)
++      unless argv.empty? && options.keys.sort == %w[request-id session source workspace] &&
++             options.fetch('workspace').match?(NAME) && valid_session_identity?(options.fetch('session')) &&
++             options.fetch('request-id').match?(/\A[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\z/)
++        raise Error, 'failed-creation deletion recovery requires --source, --workspace, --session and --request-id'
++      end
++      token = profile_link_token
++      raise Error, 'failed-creation deletion recovery requires a selected predecessor profile' unless token && File.symlink?(@profile)
++
++      predecessor = File.realpath(@profile)
++      source = File.realpath(File.expand_path(options.fetch('source')))
++      source_identity = coordination_source_identity(source)
++      packages = capture!('nix', 'build', '--no-link', '--print-out-paths', source).lines.map(&:strip).reject(&:empty?).uniq
++      raise Error, 'failed-creation recovery source did not build exactly one package' unless packages.length == 1
++
++      candidate = File.realpath(packages.fetch(0))
++      unless candidate == File.realpath(package_root) && candidate != predecessor &&
++             %w[bin/workspace-host bin/workspace-portal libexec/workspace-portal/dev-session].all? { |name| File.executable?(File.join(candidate, name)) }
++        raise Error, 'failed-creation deletion recovery requires the exact unselected source package'
++      end
++      require_failed_creation_recovery_contract!(predecessor, candidate)
++      selected_codex = File.realpath(active_codex)
++      check_codex(selected_codex)
++      with_transition_lock do
++        require_failed_creation_recovery_generation!(token, predecessor, selected_codex)
++        raise Error, 'failed-creation recovery source changed during preparation' unless source_identity == coordination_source_identity(source)
++
++        require_compatible_development_cluster_helpers!(candidate)
++        require_compatible_runtime_authorities!(candidate)
++        require_compatible_session_recovery!(candidate)
++        require_compatible_provider_state!(candidate)
++        require_compatible_sensitive_sessions!(candidate)
++        coordination_store.require_compatible!(candidate)
++        entry = registry.find(options.fetch('workspace'))
++        raise Error, 'failed-creation recovery workspace is not registered' unless entry
++
++        require_provider_admission!(entry)
++        slug = options.fetch('session')
++        identity = failed_creation_delete_identity!(entry, slug, options.fetch('request-id'))
++        unless identity.fetch('completed')
++          request = ['delete', slug, '--as-is']
++          request << '--force' if identity.fetch('force') == true
++          environment, command, arguments = dev_session_invocation(
++            entry, request, transition_lock: false, package: candidate
++          )
++          # Only this public, source-bound entry hands predecessor authority to
++          # the candidate ordinary executor while owning transition exclusion.
++          arguments[arguments.index('--expected-host-generation') + 1] = predecessor
++          system_env_interactive!(environment, command, *arguments)
++        end
++        require_failed_creation_recovery_generation!(token, predecessor, selected_codex)
++        completed = failed_creation_delete_identity!(entry, slug, options.fetch('request-id'))
++        unless completed.fetch('completed') && completed.fetch('root') == identity.fetch('root') &&
++               completed.fetch('receipt') == identity.fetch('receipt') &&
++               (!identity['operation'] || (completed.fetch('operation') == identity.fetch('operation') && completed.fetch('force') == identity.fetch('force')))
++          raise Error, 'failed-creation deletion did not complete its exact ordinary removal operation'
++        end
++        @out.puts "recovered failed-creation deletion: #{entry.fetch('name')}/#{slug}"
++      end
++      # Portal reconciliation takes its own shared transition lock. The caller
++      # performs that separate exact-request operation after this entry returns.
++    end
++
++    def require_failed_creation_recovery_generation!(token, predecessor, selected_codex)
++      unless token == profile_link_token && File.symlink?(@profile) &&
++             File.realpath(@profile) == predecessor && File.realpath(active_codex) == selected_codex
++        raise Error, 'selected workspace package or Codex changed during failed-creation deletion recovery'
++      end
++    end
++
++    def require_failed_creation_recovery_contract!(predecessor, candidate)
++      old, current = [predecessor, candidate].map do |package|
++        path = File.join(package, 'share/workspace-portal/runtime-contract.json')
++        parse_strict_json_object(File.binread(path, 64 * 1024 + 1), 'failed-creation recovery contract', 64 * 1024)
++      end
++      addition = 'turnRetrySessionPolicy'
++      unless current.eql?(RUNTIME_CONTRACT) && current[addition].is_a?(Integer) && current[addition] == 1 &&
++             (!old.key?(addition) || (old[addition].is_a?(Integer) && old[addition] == 1)) &&
++             old.reject { |key, _| key == addition }.eql?(current.reject { |key, _| key == addition }) &&
++             current.fetch('devSessionFlags').include?('--portal-command') && current['lifecycleJournals'] == LIFECYCLE_JOURNALS
++        raise Error, 'selected predecessor has an incompatible failed-creation recovery contract'
++      end
++    rescue SystemCallError => e
++      raise Error, "failed-creation recovery contract is unavailable: #{e.message}"
++    end
++
++    def failed_creation_delete_identity!(entry, slug, request_id)
++      load_archive_recovery_executor!
++      verifier = failed_creation_delete_verifier(entry)
++      verifier.with_verified_failed_creation_delete(slug, request_id:)
++    rescue DevSession::Error => e
++      raise Error, "failed-creation deletion verification failed: #{e.message}"
++    end
++
++    def failed_creation_delete_verifier(entry)
++      DevSession::Runner.new(
++        workspace: entry.fetch('root'), authority_dir: instance_runtime(entry).fetch(:authority),
++        tmux_socket: instance_runtime(entry).fetch(:tmux), codex_socket: instance_runtime(entry).fetch(:codex),
++        codex_command: active_codex, codex_version: codex_version(active_codex),
++        env: @env.to_h, require_runtime: false
++      )
++    end
++
+     def with_verified_archive_recovery(entry, slug, journal, runtime, environment, selected_version: nil)
+       load_archive_recovery_executor!
+       begin
+diff --git a/portal/internal/web/creation_test.go b/portal/internal/web/creation_test.go
+index 89cff7d9..e25702a1 100644
+--- a/portal/internal/web/creation_test.go
++++ b/portal/internal/web/creation_test.go
+@@ -1436,8 +1436,11 @@ func TestCreationRetiresDeletedReadySlugBeforeAcceptingAnotherRequest(t *testing
+ }
+ 
+ func TestCreationEvidenceGapDeletionRetiresTheExactRequest(t *testing.T) {
+-	for _, kind := range []string{"new", "plan", "fork"} {
++	for _, kind := range []string{"new", "plan", "fork", "direct-new-schema3"} {
+ 		for _, state := range []string{"paused", "failed"} {
++			if kind == "direct-new-schema3" && state != "failed" {
++				continue
++			}
+ 			t.Run(kind+"/"+state, func(t *testing.T) {
+ 				server := newTestServer(t)
+ 				started := time.Now().UTC().Add(-time.Minute)
+@@ -1445,7 +1448,15 @@ func TestCreationEvidenceGapDeletionRetiresTheExactRequest(t *testing.T) {
+ 					Request:   creationRequest{Kind: kind, Slug: "2026-09-12-deleted-" + kind, Goal: "Original goal"},
+ 					ReceiptID: strings.Repeat("d", 64), Attempt: 1, State: state, StartedAt: started.Format(time.RFC3339Nano),
+ 					Validated: true, Goal: "Original goal", Model: "model-1", Effort: "high"}
+-				if kind != "new" {
++				if kind == "direct-new-schema3" {
++					preset := teamruntime.Preset{ID: "delegated", Name: "Full team", Description: "A lead and reviewer thread",
++						CatalogDigest: strings.Repeat("a", 64), TeamDigest: strings.Repeat("b", 64),
++						LeadModel: receipt.Model, LeadEffort: receipt.Effort, Roles: []string{"lead", "reviewer0"},
++						Members: []teamruntime.MemberSpec{{Role: "reviewer", Address: "reviewer0", Model: receipt.Model, Effort: receipt.Effort, Behavior: "reviewer", Access: "read_only"}}}
++					receipt.Schema, receipt.Request.Kind, receipt.Request.Team = 3, "new", preset.ID
++					receipt.Request.CatalogDigest, receipt.DirectTeam = preset.CatalogDigest, &preset
++				}
++				if receipt.Request.Kind != "new" {
+ 					receipt.Request.Source = "source"
+ 					receipt.Request.SourceThreadID = "source-thread"
+ 					receipt.Request.SourceIdentity = strings.Repeat("f", 64)
+@@ -1477,6 +1488,7 @@ func TestCreationEvidenceGapDeletionRetiresTheExactRequest(t *testing.T) {
+ runner = DevSession::Runner.new(workspace: ARGV.fetch(1), env: ENV.to_h.merge('DEV_WORKSPACES_STATE' => ARGV.fetch(2), 'PATH' => ''))
+ slug = ARGV.fetch(3)
+ removal = runner.send(:prepare_removal!, slug, force: false)
++exit 0 if ARGV[4] == 'prepared-only'
+ %w[validated thread_retiring thread_retired clusters_released worktrees_removed runtime_retired].each { |phase| runner.send(:advance_removal!, slug, removal, phase) }
+ runner.send(:preserve_removed_state!, slug, removal, nil)
+ runner.send(:advance_removal!, slug, removal, 'tracking_preserved')
+@@ -1485,6 +1497,25 @@ runner.send(:finalize_removal!, slug, removal)
+ removal['removed_at'] = '2000-01-01T00:00:00Z'
+ runner.send(:write_removal_metadata!, removal.fetch('recovery'), removal)
+ `
++				if receipt.Schema == 3 {
++					partial := exec.Command("ruby", "-e", script, "../../../libexec/dev-session", server.config.Workspace, server.config.UserStateRoot, receipt.Request.Slug, "prepared-only")
++					if output, err := partial.CombinedOutput(); err != nil {
++						t.Fatalf("prepare incomplete deletion: %v\n%s", err, output)
++					}
++					history, err := session.CompletedRemovalHistory(server.config.Workspace, receipt.Request.Slug, server.config.UserStateRoot)
++					if err != nil || history != receipt.DeletionHistorySHA256 {
++						t.Fatal("incomplete removal changed completed history", history, err)
++					}
++					incomplete, err := New(server.config)
++					if err != nil {
++						t.Fatalf("reload valid schema-3 failed receipt: %v", err)
++					}
++					current, ok := incomplete.currentCreation(receipt.Request.Slug)
++					incomplete.Close()
++					if !ok || current.Schema != 3 || current.State != "failed" || current.ReceiptID != receipt.ReceiptID || current.Attempt != receipt.Attempt {
++						t.Fatal("incomplete removal retired or changed exact failed receipt", current)
++					}
++				}
+ 				command := exec.Command("ruby", "-e", script, "../../../libexec/dev-session", server.config.Workspace, server.config.UserStateRoot, receipt.Request.Slug)
+ 				if output, err := command.CombinedOutput(); err != nil {
+ 					t.Fatalf("delete fixture: %v\n%s", err, output)
+@@ -1502,12 +1533,23 @@ runner.send(:write_removal_metadata!, removal.fetch('recovery'), removal)
+ 					t.Fatal(err)
+ 				}
+ 				defer restored.Close()
+-				if _, ok := restored.currentCreation(receipt.Request.Slug); !ok {
+-					t.Fatal("retired during an active destination mutation")
++				if current, ok := restored.currentCreation(receipt.Request.Slug); !ok || current.Schema != receipt.Schema || current.State != state || current.ReceiptID != receipt.ReceiptID || current.Attempt != receipt.Attempt {
++					t.Fatal("retired or changed exact request during an active destination mutation", current)
+ 				}
+ 				if err := unix.Flock(int(lock.Fd()), unix.LOCK_UN); err != nil {
+ 					t.Fatal(err)
+ 				}
++				dispatchMarker := ""
++				if receipt.Schema == 3 {
++					directory := t.TempDir()
++					dispatchMarker = filepath.Join(directory, "creation-dispatched")
++					t.Setenv("CREATION_UNEXPECTED_DISPATCH", dispatchMarker)
++					helper := filepath.Join(directory, "dev-session")
++					if err := os.WriteFile(helper, []byte("#!/bin/sh\n: >\"$CREATION_UNEXPECTED_DISPATCH\"\nexit 1\n"), 0755); err != nil {
++						t.Fatal(err)
++					}
++					restored.config.DevSession = fixtureDevSessionCommand(t, restored.config.Workspace, helper)
++				}
+ 				stale := postCreation(t, restored, "/api/sessions/"+receipt.Request.Slug+"/creation/retry", fmt.Sprintf(`{"receiptId":%q,"attempt":1}`, receipt.ReceiptID), "application/json")
+ 				if stale.Code != http.StatusNotFound {
+ 					t.Fatalf("deleted request remained retryable: %d", stale.Code)
+@@ -1531,6 +1573,11 @@ runner.send(:write_removal_metadata!, removal.fetch('recovery'), removal)
+ 				if stale.Code != http.StatusConflict {
+ 					t.Fatal("old retry targeted the new request")
+ 				}
++				if dispatchMarker != "" {
++					if _, err := os.Stat(dispatchMarker); !os.IsNotExist(err) {
++						t.Fatal("receipt reconciliation dispatched creation", err)
++					}
++				}
+ 			})
+ 		}
+ 	}
+diff --git a/test/dev_session/deletion_recovery_test.rb b/test/dev_session/deletion_recovery_test.rb
+index 2560d51c..5f4a05bc 100644
+--- a/test/dev_session/deletion_recovery_test.rb
++++ b/test/dev_session/deletion_recovery_test.rb
+@@ -3,6 +3,42 @@
+ require_relative '../support/dev_session_test_case'
+ 
+ class DevSessionTest < Minitest::Test
++  def test_delete_subordinate_start_requires_typed_validated_context
++    with_workspace do |workspace|
++      slug = '2026-06-06-demo'
++      runner = runner_for(workspace)
++      runner.ensure_tracking_files(slug)
++      path = runner.send(:start_journal_file, slug)
++      bytes = JSON.generate('schema' => 1, 'slug' => slug, 'state' => 'creating', 'tmux_identity' => 'a' * 64)
++      File.write(path, bytes)
++      File.chmod(0o600, path)
++      context = {slug: slug, start_path: path, start_bytes: bytes}
++      assert_raises(DevSession::Error) do
++        runner.send(:reject_conflicting_lifecycle_journal!, slug, operation: 'delete', deletion_context: context)
++      end
++      assert_equal(bytes, File.binread(path))
++      assert_raises(DevSession::Error) { runner.send(:reject_conflicting_lifecycle_journal!, slug, operation: 'archive') }
++      runner.send(:reject_conflicting_lifecycle_journal!, slug, operation: 'start')
++      assert_equal(bytes, File.binread(path))
++    end
++  end
++
++  def test_delete_does_not_take_an_unbound_terminal_start_reservation
++    with_workspace do |workspace|
++      slug = '2026-06-06-demo'
++      runner = runner_for(workspace)
++      runner.ensure_tracking_files(slug)
++      path = runner.send(:start_journal_file, slug)
++      bytes = JSON.generate('schema' => 1, 'slug' => slug, 'state' => 'creating', 'tmux_identity' => 'a' * 64)
++      File.write(path, bytes)
++      File.chmod(0o600, path)
++      runner.define_singleton_method(:quiesce_native_client!) { |*| raise 'unbound start reached native quiescence' }
++      assert_raises(DevSession::Error) { runner.delete(slug, as_is: true, force: false) }
++      assert_equal(bytes, File.binread(path))
++      refute(File.exist?(runner.send(:lifecycle_journal_file, slug, 'delete')))
++    end
++  end
++
+   def test_delete_moves_direct_team_roster_to_private_recovery
+     with_workspace do |workspace|
+       slug = '2026-06-06-demo'
+diff --git a/test/workspace_host/failed_creation_delete_recovery_test.rb b/test/workspace_host/failed_creation_delete_recovery_test.rb
+new file mode 100644
+index 00000000..5bb65b73
+--- /dev/null
++++ b/test/workspace_host/failed_creation_delete_recovery_test.rb
+@@ -0,0 +1,618 @@
++# frozen_string_literal: true
++
++require_relative '../support/workspace_host_test_case'
++require_relative 'suspension_test'
++load File.expand_path('../../libexec/dev-session', __dir__) unless defined?(DevSession::Runner)
++
++class WorkspaceHostTest < Minitest::Test
++  class FailedCreationNoTerminal
++    attr_accessor :terminal
++    def session(*) = terminal
++    def session_by_id(*) = nil
++    def managed_session_identities = []
++    def current_session_identity(*) = nil
++  end
++
++  class FailedCreationConfirmation < StringIO
++    def tty? = true
++  end
++
++  module FailedCreationFaults
++    attr_accessor :fixture_host
++
++    private
++
++    def advance_removal!(slug, removal, phase)
++      super
++      fail_deletion_fixture!(phase)
++    end
++
++    def move_to_removal_recovery!(source, recovery, name)
++      fail_deletion_fixture!('during_move') if name == 'start.json'
++      super
++      fail_deletion_fixture!('after_move') if name == 'start.json'
++    end
++
++    def preserve_removed_state!(*args)
++      super
++      fail_deletion_fixture!('tracking_moved')
++    end
++
++    def fail_deletion_fixture!(phase)
++      return unless fixture_host.deletion_fault == phase && !fixture_host.deletion_fault_fired
++      fixture_host.deletion_fault_fired = true
++      raise DevSession::Error, "injected deletion failure: #{phase}"
++    end
++  end
++
++  module FailedCreationHostFixture
++    attr_accessor :deletion_fault, :deletion_fault_fired, :confirmation_answer,
++                  :turnover_before_lock, :native_turnover_before_lock, :native_turnover_command, :fixture_terminal, :reject_selected_protocol
++    attr_reader :deletion_invocations
++
++    private
++
++    def with_transition_lock(mode = File::LOCK_EX, &block)
++      if turnover_before_lock
++        self.turnover_before_lock = false
++        File.unlink(@profile)
++        File.symlink(candidate, @profile)
++      end
++      if native_turnover_before_lock
++        self.native_turnover_before_lock = false
++        root = File.join(@state, 'codex', 'current')
++        File.unlink(root)
++        File.symlink(File.dirname(File.dirname(native_turnover_command)), root)
++      end
++      super(mode, &block)
++    end
++
++    def check_codex(command)
++      super
++      raise DevWorkspaceHost::Error, 'selected protocol fixture refused' if reject_selected_protocol
++    end
++
++    def failed_creation_delete_verifier(entry)
++      runner = super
++      inject_disposable_terminal(runner)
++      runner
++    end
++
++    def inject_disposable_terminal(runner)
++      terminal = FailedCreationNoTerminal.new
++      terminal.terminal = fixture_terminal
++      runner.instance_variable_set(:@tmux, terminal)
++      runner.instance_variable_set(:@default_tmux, terminal)
++      runner.instance_variable_set(:@tmux_injected, true)
++      runner
++    end
++
++    def system_env_interactive!(environment, command, *arguments)
++      (@deletion_invocations ||= []) << [environment, command, arguments]
++      cli = DevSession::CLI.new(arguments, input: FailedCreationConfirmation.new(confirmation_answer || "yes\n"),
++                               out: @out, err: @err, env: environment)
++      owner = self
++      cli.define_singleton_method(:runner) do
++        value = super()
++        owner.send(:inject_disposable_terminal, value)
++        value.extend(FailedCreationFaults)
++        value.fixture_host = owner
++        value
++      end
++      status = cli.run
++      raise DevWorkspaceHost::Error, 'ordinary deletion executor refused' unless status.zero?
++    end
++  end
++
++  def test_failed_creation_candidate_public_entry_runs_ordinary_deletion_and_exact_replay
++    with_failed_creation_candidate do |host, paths|
++      initial = %i[start creation roster].to_h { |key| [key, File.binread(paths.fetch(key))] }
++      token = host.send(:profile_link_token)
++      assert_equal(0, invoke_failed_creation_candidate(host, paths), host.instance_variable_get(:@err).string)
++      recovery = completed_failed_creation_recovery(host, paths)
++      assert_equal(initial[:start], File.binread(File.join(recovery, 'start.json')))
++      assert_equal(initial[:creation], File.binread(File.join(recovery, 'creation.json')))
++      assert_equal(initial[:roster], File.binread(File.join(recovery, 'team.json')))
++      assert_equal('removed', JSON.parse(File.read(File.join(recovery, 'recovery.json')))['phase'])
++      refute(File.exist?(paths.fetch(:tracking)))
++      refute(File.exist?(paths.fetch(:start)))
++      assert_equal(token, host.send(:profile_link_token))
++      assert_equal(paths.fetch(:predecessor), File.realpath(host.instance_variable_get(:@profile)))
++      assert_equal(1, host.deletion_invocations.length)
++      _, command, args = host.deletion_invocations.first
++      assert_equal(File.join(paths.fetch(:candidate), 'libexec/workspace-portal/dev-session'), command)
++      assert_equal(paths.fetch(:predecessor), args.fetch(args.index('--expected-host-generation') + 1))
++      assert_equal(['delete', paths.fetch(:slug), '--as-is'], args[(args.index('--') + 1)..])
++      refute_includes(args, '--transition-lock')
++      refute_includes(args, '--force')
++      assert_equal(0, invoke_failed_creation_candidate(host, paths))
++      assert_equal(1, host.deletion_invocations.length, 'completed replay must not start another deletion')
++      assert_equal(token, host.send(:profile_link_token))
++      refute(host.events.any? { |e| %i[profile_set configured consumers_restarted].include?(e.first) })
++      calls = File.readlines(paths.fetch(:calls), chomp: true).map { |line| JSON.parse(line) }
++      refute(calls.any? { |call| (call & %w[start create bootstrap ensure-initial project/delete]).any? })
++      assert(calls.any? { |call| call[0, 2] == %w[team prepare-delete] })
++      assert(calls.any? { |call| call[0, 2] == %w[thread retire] })
++      lock = File.open(host.send(:transition_lock_file), File::RDWR)
++      assert(lock.flock(File::LOCK_EX | File::LOCK_NB), 'host must release exclusion before portal reconciliation')
++      lock.close
++      error = assert_raises(DevWorkspaceHost::Error) { host.send(:require_no_unfinished_lifecycle_operations!) }
++      assert_includes(error.message, 'portal direct creation', 'ordinary portal still owns the failed receipt')
++    end
++  end
++
++  def test_failed_creation_candidate_reused_slug_binds_current_epoch_and_preserves_history
++    with_failed_creation_candidate do |host, paths|
++      previous = {}
++      3.times do |index|
++        current = %i[start creation roster].to_h { |key| [key, File.binread(paths.fetch(key))] }
++        before = Dir.glob(File.join(host.instance_variable_get(:@state), 'removed', paths.fetch(:workspace_id), '*'))
++        assert_equal(0, invoke_failed_creation_candidate(host, paths), "history=#{index}: #{host.instance_variable_get(:@err).string}")
++        after = Dir.glob(File.join(host.instance_variable_get(:@state), 'removed', paths.fetch(:workspace_id), '*'))
++        added = after - before
++        assert_equal(1, added.length, 'each accepted creation owns one new removal')
++        recovery = added.fetch(0)
++        %i[start creation roster].zip(%w[start.json creation.json team.json]).each do |key, name|
++          assert_equal(current.fetch(key), File.binread(File.join(recovery, name)))
++        end
++        assert_equal(index + 1, host.deletion_invocations.length)
++        assert_equal(0, invoke_failed_creation_candidate(host, paths), 'completed replay binds only the current epoch')
++        assert_equal(index + 1, host.deletion_invocations.length, 'replay must not create another removal')
++        previous.each { |path, bytes| assert_equal(bytes, File.binread(path), path) }
++        Dir.glob(File.join(recovery, '**', '*'), File::FNM_DOTMATCH).select { |path| File.file?(path) }.each do |path|
++          previous[path] = File.binread(path)
++        end
++        previous[paths.fetch(:preparation_path)] = File.binread(paths.fetch(:preparation_path))
++        renew_failed_creation_candidate(paths, index + 1) if index < 2
++      end
++    end
++  end
++
++  def test_failed_creation_candidate_reused_slug_interruption_keeps_current_operation
++    with_failed_creation_candidate do |host, paths|
++      assert_equal(0, invoke_failed_creation_candidate(host, paths))
++      old_bytes = {}
++      2.times do |index|
++        Dir.glob(File.join(paths.fetch(:removal_root), '*')).each do |recovery|
++          old_bytes.merge!(failed_creation_recovery_bytes(recovery))
++        end
++        old_bytes[paths.fetch(:preparation_path)] = File.binread(paths.fetch(:preparation_path))
++        renew_failed_creation_candidate(paths, index + 1)
++        host.deletion_fault_fired = false
++        host.deletion_fault = 'tracking_moved'
++        assert_equal(1, invoke_failed_creation_candidate(host, paths))
++        removal_path = paths.fetch(:start).sub('.start.json', '.removal.json')
++        removal = JSON.parse(File.read(removal_path))
++        refute(old_bytes.key?(File.join(removal.fetch('recovery'), 'recovery.json')))
++        refute(File.exist?(paths.fetch(:tracking)))
++        assert_equal(0, invoke_failed_creation_candidate(host, paths), host.instance_variable_get(:@err).string)
++        completed = JSON.parse(File.read(File.join(removal.fetch('recovery'), 'recovery.json')))
++        assert_equal(removal.fetch('operation_id'), completed.fetch('operation_id'))
++        count = host.deletion_invocations.length
++        assert_equal(0, invoke_failed_creation_candidate(host, paths))
++        assert_equal(count, host.deletion_invocations.length)
++        old_bytes.each { |path, bytes| assert_equal(bytes, File.binread(path), path) }
++      end
++    end
++  end
++
++  def test_failed_creation_candidate_replay_refuses_changed_or_ambiguous_history
++    %w[extra_operation duplicate_operation malformed_history wrong_private_root].each do |kind|
++      with_failed_creation_candidate do |host, paths|
++        assert_equal(0, invoke_failed_creation_candidate(host, paths))
++        recovery = completed_failed_creation_recovery(host, paths)
++        preserved = failed_creation_recovery_bytes(recovery)
++        if kind == 'wrong_private_root'
++          path = File.join(recovery, 'work', 'portal.yml')
++          manifest = YAML.safe_load(File.read(path))
++          manifest.fetch('codex')['thread_id'] = '99999999-1111-7111-8111-111111111111'
++          File.write(path, YAML.dump(manifest))
++          preserved[path] = File.binread(path)
++        else
++          other = recovery + '-additional'
++          FileUtils.cp_r(recovery, other)
++          File.chmod(0o700, other)
++          marker = File.join(other, 'recovery.json')
++          metadata = JSON.parse(File.read(marker))
++          metadata['recovery'] = other
++          metadata['operation_id'] = '0' * 64 if kind == 'extra_operation'
++          File.write(marker, kind == 'malformed_history' ? '{' : JSON.generate(metadata))
++          File.chmod(0o600, marker)
++          preserved.merge!(failed_creation_recovery_bytes(other))
++        end
++        count = host.deletion_invocations.length
++        assert_equal(1, invoke_failed_creation_candidate(host, paths), kind)
++        assert_equal(count, host.deletion_invocations.length, kind)
++        preserved.each { |path, bytes| assert_equal(bytes, File.binread(path), path) }
++      end
++    end
++  end
++
++  def test_failed_creation_candidate_reused_slug_preserves_exact_preparation_checks
++    %w[explicit_old_request malformed_old_preparation current_ambiguity].each do |kind|
++      with_failed_creation_candidate do |host, paths|
++        assert_equal(0, invoke_failed_creation_candidate(host, paths))
++        previous = paths.dup
++        old_preparation = File.binread(paths.fetch(:preparation_path))
++        renew_failed_creation_candidate(paths, 1)
++        if kind == 'explicit_old_request'
++          paths[:request] = previous.fetch(:request)
++        elsif kind == 'malformed_old_preparation'
++          File.write(previous.fetch(:preparation_path), '{')
++        else
++          other = JSON.parse(File.read(paths.fetch(:preparation_path)))
++          other['requestId'] = '99999999-1111-4111-8111-111111111111'
++          path = File.join(File.dirname(paths.fetch(:preparation_path)), "#{other.fetch('requestId')}.json")
++          File.write(path, JSON.generate(other))
++          File.chmod(0o600, path)
++        end
++        assert_equal(1, invoke_failed_creation_candidate(host, paths), kind)
++        assert(File.directory?(paths.fetch(:tracking)))
++        if kind != 'malformed_old_preparation'
++          assert_equal(old_preparation, File.binread(previous.fetch(:preparation_path)))
++        end
++      end
++    end
++  end
++
++  def test_failed_creation_candidate_prior_history_does_not_prove_missing_current_removal
++    with_failed_creation_candidate do |host, paths|
++      assert_equal(0, invoke_failed_creation_candidate(host, paths))
++      renew_failed_creation_candidate(paths, 1)
++      tracking = paths.fetch(:tracking)
++      displaced = tracking + '-displaced'
++      File.rename(tracking, displaced)
++      count = host.deletion_invocations.length
++      assert_equal(1, invoke_failed_creation_candidate(host, paths), 'old history cannot prove current deletion')
++      assert_equal(count, host.deletion_invocations.length)
++      assert(File.file?(paths.fetch(:start)))
++      File.rename(displaced, tracking)
++      receipt = JSON.parse(File.read(paths.fetch(:receipt_path)))
++      receipt['deletionHistorySha256'] = Digest::SHA256.hexdigest('')
++      File.write(paths.fetch(:receipt_path), JSON.generate(receipt))
++      preparation = JSON.parse(File.read(paths.fetch(:preparation_path)))
++      preparation['epoch'] = receipt.fetch('deletionHistorySha256')
++      File.write(paths.fetch(:preparation_path), JSON.generate(preparation))
++      assert_equal(1, invoke_failed_creation_candidate(host, paths), 'live tracking cannot replay an old epoch')
++      assert_equal(count, host.deletion_invocations.length)
++    end
++  end
++
++  def test_failed_creation_candidate_interrupted_ordinary_deletion_replays_one_operation
++    %w[validated thread_retiring during_move after_move tracking_moved].each do |phase|
++      with_failed_creation_candidate do |host, paths|
++        bytes = File.binread(paths.fetch(:start))
++        host.deletion_fault = phase
++        assert_equal(1, invoke_failed_creation_candidate(host, paths), phase)
++        assert(host.deletion_fault_fired, "fault was not reached: #{phase}: #{host.instance_variable_get(:@err).string}")
++        journals = Dir.glob(File.join(File.dirname(paths.fetch(:start)), '*.removal.json'))
++        if phase == 'validated'
++          assert_equal(bytes, File.binread(paths.fetch(:start)))
++          assert_empty(journals, 'pre-retirement failure keeps ordinary discard behavior')
++        else
++          assert_equal(1, journals.length)
++          operation = JSON.parse(File.read(journals.first)).fetch('operation_id')
++          assert_equal(0, invoke_failed_creation_candidate(host, paths), "#{phase}: #{host.instance_variable_get(:@err).string}")
++          recovery = completed_failed_creation_recovery(host, paths)
++          assert_equal(operation, JSON.parse(File.read(File.join(recovery, 'recovery.json'))).fetch('operation_id'))
++          assert_equal(bytes, File.binread(File.join(recovery, 'start.json')))
++          next
++        end
++        assert_equal(0, invoke_failed_creation_candidate(host, paths), host.instance_variable_get(:@err).string)
++      end
++    end
++  end
++
++  def test_failed_creation_candidate_refuses_unconfirmed_or_changed_context_before_effects
++    %w[request root attempted missing_sent nonce start_slug oversized duplicate start_missing receipt_ready preparation_receipt member_project member_bootstrap fork archive migration authority terminal].each do |kind|
++      with_failed_creation_candidate do |host, paths|
++        case kind
++        when 'request' then paths = paths.merge(request: '99999999-9999-4999-8999-999999999999')
++        when 'root', 'attempted', 'missing_sent'
++          x = YAML.safe_load(File.read(paths.fetch(:manifest)))
++          x['codex']['thread_id'] = '22222222-2222-7222-8222-222222222222' if kind == 'root'
++          x['creation']['initial_goal_attempted'] = true if kind == 'attempted'
++          x['creation'].delete('initial_goal_sent') if kind == 'missing_sent'
++          File.write(paths.fetch(:manifest), YAML.dump(x))
++        when 'nonce', 'start_slug'
++          x = JSON.parse(File.read(paths.fetch(:start)))
++          x[kind == 'nonce' ? 'tmux_identity' : 'slug'] = kind == 'nonce' ? 'f' * 64 : 'wrong'
++          File.write(paths.fetch(:start), JSON.generate(x))
++        when 'oversized' then File.write(paths.fetch(:start), 'x' * 65_537)
++        when 'duplicate' then File.write(paths.fetch(:start), '{"schema":1,"schema":1}')
++        when 'start_missing' then File.unlink(paths.fetch(:start))
++        when 'receipt_ready'
++          path = paths.fetch(:receipt_path)
++          x = JSON.parse(File.read(path)); x['state'] = 'ready'
++          File.write(path, JSON.generate(x))
++        when 'preparation_receipt'
++          path = paths.fetch(:preparation_path)
++          x = JSON.parse(File.read(path)); x['receiptId'] = '0' * 64
++          File.write(path, JSON.generate(x))
++        when 'member_project', 'member_bootstrap'
++          x = JSON.parse(File.read(paths.fetch(:roster)))
++          x['members'].first[kind == 'member_project' ? 'projectId' : 'bootstrapAttempted'] = kind == 'member_project' ? 'legacy' : true
++          File.write(paths.fetch(:roster), JSON.generate(x))
++        when 'fork', 'archive', 'migration'
++          suffix = {'fork' => 'fork', 'archive' => 'archive', 'migration' => 'agent-teams-migration'}.fetch(kind)
++          File.write(File.join(File.dirname(paths.fetch(:start)), "#{paths.fetch(:slug)}.#{suffix}.json"), '{}')
++        when 'terminal'
++          host.fixture_terminal = DevSession::Tmux::Session.new(id: '$fake', name: paths.fetch(:slug),
++            mark: '1', slug: paths.fetch(:slug), workspace: paths.fetch(:entry).fetch('root'),
++            identity_token: 'f' * 64, codex_thread_id: paths.fetch(:root_thread),
++            codex_socket_path: host.send(:instance_runtime, paths.fetch(:entry)).fetch(:codex))
++        when 'authority'
++          directory = host.send(:instance_runtime, paths.fetch(:entry)).fetch(:authority)
++          FileUtils.mkdir_p(directory)
++          File.write(File.join(directory, paths.fetch(:slug) + '.json'), '{}')
++          File.chmod(0o600, File.join(directory, paths.fetch(:slug) + '.json'))
++        end
++        assert_equal(1, invoke_failed_creation_candidate(host, paths), kind)
++        assert_nil(host.deletion_invocations, kind)
++        assert(File.directory?(paths.fetch(:tracking)), kind)
++        assert_equal(paths.fetch(:predecessor), File.realpath(host.instance_variable_get(:@profile)), kind)
++      end
++    end
++  end
++
++  def test_failed_creation_candidate_source_profile_and_contract_are_exact
++    %w[source turnover native protocol contract policy_zero policy_string current_contract].each do |kind|
++      with_failed_creation_candidate do |host, paths|
++        case kind
++        when 'source' then host.executing_package = paths.fetch(:predecessor)
++        when 'turnover' then host.turnover_before_lock = true
++        when 'protocol' then host.reject_selected_protocol = true
++        when 'native'
++          host.native_turnover_command = make_codex(paths.fetch(:root), 'native-turnover')
++          host.native_turnover_before_lock = true
++        else
++          package = kind == 'current_contract' ? paths.fetch(:candidate) : paths.fetch(:predecessor)
++          path = File.join(package, 'share/workspace-portal/runtime-contract.json')
++          x = JSON.parse(File.read(path))
++          case kind
++          when 'contract', 'current_contract' then x['trackingMaxBytes'] += 1
++          when 'policy_zero' then x['turnRetrySessionPolicy'] = 0
++          when 'policy_string' then x['turnRetrySessionPolicy'] = '1'
++          end
++          File.write(path, JSON.generate(x))
++        end
++        assert_equal(1, invoke_failed_creation_candidate(host, paths), kind)
++        assert_nil(host.deletion_invocations, kind)
++      end
++    end
++  end
++
++  def test_failed_creation_candidate_preserves_ordinary_confirmation
++    with_failed_creation_candidate do |host, paths|
++      host.confirmation_answer = "no\n"
++      assert_equal(1, invoke_failed_creation_candidate(host, paths))
++      assert(File.exist?(paths.fetch(:start)))
++      assert(File.directory?(paths.fetch(:tracking)))
++      assert_empty(Dir.glob(File.join(File.dirname(paths.fetch(:start)), '*.removal.json')))
++    end
++  end
++
++  def test_failed_creation_candidate_native_retirement_failure_retains_start_and_operation
++    with_failed_creation_candidate do |host, paths|
++      bytes = File.binread(paths.fetch(:start))
++      File.write(paths.fetch(:fault_marker), 'fail')
++      assert_equal(1, invoke_failed_creation_candidate(host, paths))
++      path = paths.fetch(:start).sub('.start.json', '.removal.json')
++      removal = JSON.parse(File.read(path))
++      assert_equal('thread_retiring', removal.fetch('phase'))
++      refute(File.exist?(paths.fetch(:start)))
++      assert_equal(bytes, File.binread(File.join(removal.fetch('recovery'), 'start.json')))
++      File.unlink(paths.fetch(:fault_marker))
++      assert_equal(0, invoke_failed_creation_candidate(host, paths), host.instance_variable_get(:@err).string)
++      completed = JSON.parse(File.read(File.join(removal.fetch('recovery'), 'recovery.json')))
++      assert_equal(removal.fetch('operation_id'), completed.fetch('operation_id'))
++    end
++  end
++
++  def test_failed_creation_candidate_replay_refuses_missing_or_conflicting_start_provenance
++    %w[missing conflicting].each do |kind|
++      with_failed_creation_candidate do |host, paths|
++        host.deletion_fault = 'after_move'
++        assert_equal(1, invoke_failed_creation_candidate(host, paths))
++        removal_path = paths.fetch(:start).sub('.start.json', '.removal.json')
++        removal = JSON.parse(File.read(removal_path))
++        private_start = File.join(removal.fetch('recovery'), 'start.json')
++        if kind == 'missing'
++          File.unlink(private_start)
++        else
++          File.write(paths.fetch(:start), File.binread(private_start))
++          File.chmod(0o600, paths.fetch(:start))
++        end
++        count = host.deletion_invocations.length
++        assert_equal(1, invoke_failed_creation_candidate(host, paths), kind)
++        assert_equal(count, host.deletion_invocations.length, 'invalid provenance reached ordinary executor')
++        assert_equal(removal.fetch('operation_id'), JSON.parse(File.read(removal_path)).fetch('operation_id'))
++      end
++    end
++  end
++
++  def test_failed_creation_candidate_accepts_equal_policy_one_contract_without_selecting
++    with_failed_creation_candidate do |host, paths|
++      path = File.join(paths.fetch(:predecessor), 'share/workspace-portal/runtime-contract.json')
++      File.write(path, JSON.generate(DevWorkspaceHost::RUNTIME_CONTRACT))
++      token = host.send(:profile_link_token)
++      assert_equal(0, invoke_failed_creation_candidate(host, paths), host.instance_variable_get(:@err).string)
++      assert_equal(token, host.send(:profile_link_token))
++    end
++  end
++
++  private
++
++  def failed_creation_recovery_bytes(recovery)
++    Dir.glob(File.join(recovery, '**', '*'), File::FNM_DOTMATCH).select { |path| File.file?(path) }.to_h do |path|
++      [path, File.binread(path)]
++    end
++  end
++
++  def renew_failed_creation_candidate(paths, index)
++    root = paths.fetch(:removal_root)
++    recoveries = Dir.glob(File.join(root, '*'))
++    previous = recoveries.find { |path| YAML.safe_load(File.read(File.join(path, 'work', 'portal.yml'))).dig('codex', 'thread_id') == paths.fetch(:root_thread) }
++    raise 'previous disposable creation has no preserved tracking' unless previous
++
++    FileUtils.cp_r(File.join(previous, 'work'), paths.fetch(:tracking))
++    %i[start creation roster].zip(%w[start.json creation.json team.json]).each do |key, name|
++      FileUtils.cp(File.join(previous, name), paths.fetch(key))
++      File.chmod(0o600, paths.fetch(key))
++    end
++    operations = recoveries.map { |path| JSON.parse(File.read(File.join(path, 'recovery.json'))).fetch('operation_id') }
++    epoch = Digest::SHA256.hexdigest(operations.uniq.sort.join("\n"))
++    request = format('%08x-1111-4111-8111-111111111111', index + 1)
++    thread = format('%08x-1111-7111-8111-111111111111', index + 1)
++    nonce = Digest::SHA256.hexdigest("disposable creation #{index}")
++    manifest = YAML.safe_load(File.read(paths.fetch(:manifest)))
++    manifest.fetch('codex')['thread_id'] = thread
++    File.write(paths.fetch(:manifest), YAML.dump(manifest))
++    %i[start creation].each do |key|
++      record = JSON.parse(File.read(paths.fetch(key)))
++      record['tmux_identity'] = nonce
++      File.write(paths.fetch(key), JSON.generate(record))
++    end
++    roster = JSON.parse(File.read(paths.fetch(:roster)))
++    roster['rootThreadId'] = thread
++    roster.fetch('members').first['projectId'] = format('%08x-2222-7222-8222-222222222222', index + 1)
++    File.write(paths.fetch(:roster), JSON.generate(roster))
++    receipt = JSON.parse(File.read(paths.fetch(:receipt_path)))
++    receipt['receiptId'] = Digest::SHA256.hexdigest("disposable receipt #{index}")
++    receipt['deletionHistorySha256'] = epoch
++    File.write(paths.fetch(:receipt_path), JSON.generate(receipt))
++    preparation = JSON.parse(File.read(paths.fetch(:preparation_path)))
++    preparation.merge!('requestId' => request, 'receiptId' => receipt.fetch('receiptId'), 'epoch' => epoch)
++    paths[:request] = request
++    paths[:root_thread] = thread
++    paths[:preparation_path] = File.join(File.dirname(paths.fetch(:preparation_path)), "#{request}.json")
++    File.write(paths.fetch(:preparation_path), JSON.generate(preparation))
++    File.chmod(0o600, paths.fetch(:preparation_path))
++  end
++
++  def invoke_failed_creation_candidate(host, paths)
++    host.run('workspace-host', ['recover-failed-creation-delete', '--source', paths.fetch(:source),
++      '--workspace', 'example-workspace', '--session', paths.fetch(:slug), '--request-id', paths.fetch(:request)])
++  end
++
++  def completed_failed_creation_recovery(host, paths)
++    root = File.join(host.instance_variable_get(:@state), 'removed', paths.fetch(:workspace_id))
++    matches = Dir.glob(File.join(root, "*-#{paths.fetch(:slug)}-*"))
++    assert_equal(1, matches.length)
++    matches.first
++  end
++
++  def with_failed_creation_candidate
++    with_transition_host do |host, paths|
++      host.send(:root_codex, paths.fetch(:old_codex), paths.fetch(:current_root))
++      assert_equal(0, host.run('workspace-host', ['switch', '--source', paths.fetch(:source)]))
++      predecessor = File.realpath(host.instance_variable_get(:@profile))
++      candidate = make_package(paths.fetch(:root), 'failed-creation-candidate')
++      host.candidate = candidate
++      host.executing_package = candidate
++      host.extend(FailedCreationHostFixture)
++      [predecessor, candidate].each do |package|
++        contract = Marshal.load(Marshal.dump(DevWorkspaceHost::RUNTIME_CONTRACT))
++        contract.delete('turnRetrySessionPolicy') if package == predecessor
++        File.write(File.join(package, 'share/workspace-portal/runtime-contract.json'), JSON.generate(contract))
++        executor = File.join(package, 'libexec/workspace-portal/dev-session')
++        FileUtils.mkdir_p(File.dirname(executor))
++        File.write(executor, "#!/bin/sh\nexit 0\n")
++        File.chmod(0o755, executor)
++      end
++      entry = host.send(:registry).find('example-workspace')
++      workspace = entry.fetch('root')
++      slug = '2026-10-24-failed-recovery'
++      request = '11111111-1111-4111-8111-111111111111'
++      root_thread = '11111111-1111-7111-8111-111111111111'
++      workspace_id = "#{File.basename(workspace)}-#{Digest::SHA256.hexdigest(workspace)[0, 16]}"
++      state = host.instance_variable_get(:@state)
++      portal = File.join(state, 'portal', workspace_id)
++      preset = {'id' => 'delegated', 'name' => 'Team', 'description' => 'Disposable team',
++        'catalogDigest' => 'a' * 64, 'teamDigest' => 'b' * 64, 'roles' => %w[lead reviewer0],
++        'leadModel' => 'gpt-6.1-sol', 'leadEffort' => 'xhigh', 'leadInstructions' => 'Lead the task.',
++        'members' => [{'address' => 'reviewer0', 'role' => 'reviewer', 'behavior' => 'reviewer',
++          'purpose' => 'review', 'access' => 'read_only', 'model' => 'gpt-6.1-sol',
++          'reasoningEffort' => 'xhigh', 'instructions' => 'Review assigned changes.'}]}
++      nonce = 'd' * 64
++      goal = "Disposable initial request.\n"
++      receipt_id = 'e' * 64
++      epoch = Digest::SHA256.hexdigest('')
++      accepted = {'kind' => 'new', 'slug' => slug, 'goal' => goal, 'team' => preset['id'], 'catalogDigest' => preset['catalogDigest']}
++      receipt = {'schema' => 3, 'workspace' => workspace, 'request' => accepted, 'receiptId' => receipt_id,
++        'deletionHistorySha256' => epoch, 'attempt' => 2, 'state' => 'failed', 'phase' => 'initializing',
++        'error' => 'Unknown reviewer start.', 'validated' => true, 'goal' => goal,
++        'model' => preset['leadModel'], 'effort' => preset['leadEffort'], 'directTeam' => preset,
++        'startedAt' => '2026-10-24T10:00:00Z', 'updatedAt' => '2026-10-24T10:00:01Z'}
++      preparation = {'schema' => 1, 'workspace' => workspace, 'requestId' => request, 'inputVersion' => 1,
++        'inputDigest' => 'f' * 64, 'snapshotDigest' => 'a' * 64, 'receiptId' => receipt_id,
++        'attempt' => 1, 'state' => 'handed_off', 'phase' => 'initializing', 'slug' => slug, 'epoch' => epoch,
++        'snapshot' => {'input' => {'rawPrompt' => goal}, 'goal' => goal, 'preset' => preset}, 'handoff' => accepted}
++      runtime = host.send(:instance_runtime, entry)
++      tracking = File.join(workspace, 'work', slug)
++      FileUtils.mkdir_p(tracking)
++      File.write(File.join(tracking, 'plan.md'), "# Disposable task\n")
++      File.write(File.join(tracking, 'state.md'), "---\nlifecycle: active\n---\n# State\n")
++      manifest = File.join(tracking, 'portal.yml')
++      File.write(manifest, YAML.dump('schema' => 2, 'slug' => slug,
++        'codex' => {'thread_id' => root_thread, 'socket_path' => runtime.fetch(:codex), 'client_version' => '1.2.3'},
++        'creation' => {'state' => 'creating', 'initial_goal_attempted' => false, 'initial_goal_sent' => false,
++                       'goal_sha256' => Digest::SHA256.hexdigest(goal)}, 'repositories' => [], 'artifacts' => []))
++      locks = File.join(workspace, 'worktrees', '.locks')
++      FileUtils.mkdir_p(locks)
++      creation = File.join(locks, slug + '.creation.json')
++      start = File.join(locks, slug + '.start.json')
++      roster = File.join(state, 'codex-teams', workspace_id, slug + '.json')
++      member = preset['members'].first.merge('index' => 0, 'threadId' => '', 'state' => 'creating',
++        'projectId' => '22222222-2222-7222-8222-222222222222', 'createAttempted' => true,
++        'addedAt' => '2026-10-24T10:00:00Z')
++      records = {
++        File.join(portal, 'creations', slug + '.json') => receipt,
++        File.join(portal, 'session-preparations', request + '.json') => preparation,
++        creation => {'schema' => 3, 'slug' => slug, 'goal_sha256' => Digest::SHA256.hexdigest(goal),
++          'run_codex' => true, 'model' => preset['leadModel'], 'effort' => preset['leadEffort'],
++          'direct_team' => preset, 'state' => 'creating', 'tmux_identity' => nonce},
++        start => {'schema' => 1, 'slug' => slug, 'state' => 'creating', 'tmux_identity' => nonce},
++        roster => {'schema' => 1, 'workspace' => workspace, 'slug' => slug, 'rootThreadId' => root_thread,
++          'revision' => 1, 'createdAt' => '2026-10-24T10:00:00Z', 'updatedAt' => '2026-10-24T10:00:01Z', 'presetId' => preset['id'], 'catalogDigest' => preset['catalogDigest'],
++          'teamDigest' => preset['teamDigest'], 'leadModel' => preset['leadModel'], 'leadEffort' => preset['leadEffort'],
++          'leadInstructions' => preset['leadInstructions'], 'members' => [member]}
++      }
++      records.each do |path, object|
++        FileUtils.mkdir_p(File.dirname(path), mode: 0o700)
++        File.write(path, JSON.generate(object) + "\n")
++        File.chmod(0o600, path)
++      end
++      calls = File.join(paths.fetch(:root), 'external-calls.jsonl')
++      fault_marker = File.join(paths.fetch(:root), 'native-retirement-failure')
++      # Ruby owns the real admission, phase writers, atomic moves and completion.
++      # The external portal adapter checks call ordering; Go deletion tests own
++      # unknown-reservation tombstones and confirmed native-thread retirement.
++      helper = File.join(candidate, 'bin/workspace-portal')
++      File.write(helper, <<~SCRIPT)
++        #!#{RbConfig.ruby}
++        require 'json'
++        File.open(#{calls.dump}, 'a') { |file| file.puts JSON.generate(ARGV) }
++        abort 'injected native retirement failure' if ARGV[0, 2] == ['thread', 'retire'] && File.exist?(#{fault_marker.dump})
++        if ARGV[0, 2] == ['team', 'prepare-delete']
++          record = JSON.parse(File.read(#{File.join(locks, slug + '.removal.json').dump}))
++          abort 'wrong ordinary removal phase' unless record.fetch('phase') == (ARGV.include?('--check-only') ? 'validated' : 'thread_retiring')
++        end
++      SCRIPT
++      File.chmod(0o755, helper)
++      cluster = File.join(paths.fetch(:root), 'disposable-cluster')
++      File.write(cluster, "#!/bin/sh\nif [ \"$1\" = cleanup-paths ]; then printf '%s\\n' '{\"schema\":1,\"paths\":[]}'; fi\n")
++      File.chmod(0o755, cluster)
++      catalog_path = host.instance_variable_get(:@env).fetch('DEV_WORKSPACES_EXTENSION_CATALOG')
++      catalog = JSON.parse(File.read(catalog_path))
++      catalog['clusterProviders'].each { |provider| provider['command'] = cluster }
++      File.write(catalog_path, JSON.generate(catalog))
++      host.events.clear
++      yield host, paths.merge(predecessor:, candidate:, entry:, slug:, request:, workspace_id:,
++                             tracking:, manifest:, start:, creation:, roster:, calls:, fault_marker:, root_thread:,
++                             removal_root: File.join(state, 'removed', workspace_id),
++                             receipt_path: File.join(portal, 'creations', slug + '.json'),
++                             preparation_path: File.join(portal, 'session-preparations', request + '.json'))
++    end
++  end
++end
+diff --git a/test/workspace_host_test.rb b/test/workspace_host_test.rb
+index ba16b705..02ce1650 100644
+--- a/test/workspace_host_test.rb
++++ b/test/workspace_host_test.rb
+@@ -8,5 +8,6 @@ require_relative 'workspace_host/agent_team_registration_test'
+ require_relative 'workspace_host/suspension_test'
+ require_relative 'workspace_host/live_switch_test'
+ require_relative 'workspace_host/archive_recovery_test'
++require_relative 'workspace_host/failed_creation_delete_recovery_test'
+ require_relative 'workspace_host/codex_provider_test'
+ require_relative 'workspace_host/provider_sessions_test'

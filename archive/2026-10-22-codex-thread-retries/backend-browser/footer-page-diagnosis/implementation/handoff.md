@@ -1,0 +1,11 @@
+# Footer page cursor final source
+
+Published clean B `e22eecab01a691225f7464f0c8965526648f442a`, tree `1aaa3b356b09875de643d9a1d76c1bd624ae3a7d`. First14 exact; owning15 contains the cursor correction;16–18 retain byte-identical patches and messages. Final tree equals the frozen quick candidate and differs from preserved a621 only in the owning Go fixture. CJS/all32/40→41/footer/anchor/draft/loss/readback/onePOST assertions, product/docs/A/pins/AGENTS remain exact. No schemas, APIs or migrations change.
+
+The allowed local display reader now emits/accepts a32-character cursor matching the real pinned public HTTP contract. ActualTLS root/member regression passes3tests/subtests, zero fail/skip, Go0.406s: newest20 exact IDs31–50, returnedcursor older200/20 IDs11–30/nonoverlap40; append21+older20=41; malformedold13 remains400 before reader; policy/ledger/native starts/policyPOST unchanged. Both old-cursor leaves fail400 with the same regression assertions. All267Go/module/CJS input hashes match before/after and committedsource. No unrelated quick repeated during publication.
+
+Prior a621 review/sourcepacket75/guard/verifiedbundle/all38attempt8 files and originalattempt7 remain preserved. Attempt8's six completed cases are scoped evidence, not a32-case pass. Architect's separate source-only eighthcase check found no extra package/blocker and caused no source/assertion change. Precision retained: settingsWrites counts collaborationMode updates only; byte-unchanged corrupt policy proves no repair/write, while source path establishes no prerequisite policy read.
+
+All586Git blobs/modes/NAR and full locked graph verified; graph/A5743 identical to a621. Complete18series/fullfinaldiff/a621delta/rangediff and replayequality are retained here. Browser-attempt9 is PREPARED ONLY, exacthead/clean/all32/fourvariants/360s/fullNix+GCC/pinnedPlaywright; uniqueoutputuncreated. Lead retains affected final review and freshwatcher release; global execution remains held. No browser/package/native/CI/live/pin/lifecycle/default integration action.
+
+Existing product/recovery docs need no change because production behavior remains byte-identical. Temporary fixture/verification history belongs here. Portal: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-22-codex-thread-retries/

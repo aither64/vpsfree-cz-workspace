@@ -1,0 +1,1 @@
+nix build --no-link --no-write-lock-file --print-build-logs --json .#checks.x86_64-linux.deployment-contract .#checks.x86_64-linux.agent-instructions .#checks.x86_64-linux.agent-team-policy .#checks.x86_64-linux.cluster-provider-composition

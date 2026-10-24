@@ -1,0 +1,25 @@
+{
+  "stage": "browser",
+  "command": [
+    "nix",
+    "develop",
+    "--no-update-lock-file",
+    "--command",
+    "python3",
+    "-c",
+    "import shutil,subprocess,sys,json; names=['go','gcc','ruby','node','git']; paths={n:shutil.which(n) for n in names}; print(json.dumps({'nixTools':paths}),file=sys.stderr,flush=True); assert all(paths.values()),paths; sys.exit(subprocess.run(sys.argv[1:]).returncode)",
+    "go",
+    "-C",
+    "portal",
+    "test",
+    "-mod=readonly",
+    "./internal/web",
+    "-run",
+    "^TestRetryBackendBrowser$",
+    "-count=1",
+    "-json",
+    "-timeout=360s"
+  ],
+  "actualExit": 1,
+  "elapsed": 22.808781638741493
+}

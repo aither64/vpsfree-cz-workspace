@@ -1,0 +1,13 @@
+diff --git a/portal/cmd/workspace-portal/coordination_test.go b/portal/cmd/workspace-portal/coordination_test.go
+index 7d957ae..0c2f962 100644
+--- a/portal/cmd/workspace-portal/coordination_test.go
++++ b/portal/cmd/workspace-portal/coordination_test.go
+@@ -54,6 +54,8 @@ func TestCoordinationNotificationRetainsSettingsAndDeduplicatesNativeDelivery(t
+ 							turns = append(turns, map[string]any{"id": "active-turn", "status": "inProgress"})
+ 						}
+ 						result = map[string]any{"data": turns}
++					case "thread/items/list":
++						result = map[string]any{"data": []any{}, "nextCursor": nil}
+ 					case "turn/start", "turn/steer":
+ 						want := "turn/start"
+ 						if active {

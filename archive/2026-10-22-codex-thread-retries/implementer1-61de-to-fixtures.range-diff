@@ -1,0 +1,39 @@
+1:  7262c24 = 1:  7262c24 turnretry: retain bounded retry policy and admission state
+2:  b3c7187 = 2:  b3c7187 runtime: require retry-capable package transitions
+3:  5347f5d ! 3:  cc00214 portal: continue new managed failed turns through durable retry admission
+    @@ portal/cmd/workspace-portal/codex_provider_scoped.go: func scopedProviderCommand
+      					return err
+      				}
+     
+    + ## portal/cmd/workspace-portal/coordination_test.go ##
+    +@@ portal/cmd/workspace-portal/coordination_test.go: func TestCoordinationNotificationRetainsSettingsAndDeduplicatesNativeDelivery(t
+    + 					switch request["method"] {
+    + 					case "thread/read":
+    + 						metadata := threadCommandFreshMetadata(thread, cwd, rollout)
+    ++						metadata["modelProvider"] = "notification-fixture"
+    + 						metadata["model"], metadata["reasoningEffort"] = "retained-model", "xhigh"
+    + 						result = map[string]any{"thread": metadata}
+    + 					case "thread/resume":
+    +
+      ## portal/cmd/workspace-portal/main.go ##
+     @@ portal/cmd/workspace-portal/main.go: func newCodexClientWithHistory(socket, workspace string, history codex.HistoryRe
+      		SubmissionLedgerPath: ledgerPath, LegacySubmissionLedgerPath: legacyPath,
+    @@ portal/internal/web/server.go: func (s *Server) resolveConversation(
+      		Activity:          s.activityProvider(),
+      		Release:           func() { once.Do(release) },
+     
+    + ## portal/internal/web/server_test.go ##
+    +@@ portal/internal/web/server_test.go: func TestShippedBrowserClientMatchesSessionAPI(t *testing.T) {
+    + 		t.Fatal(err)
+    + 	}
+    + 	modulePath := filepath.Join(t.TempDir(), "conversation.mjs")
+    +-	for _, name := range []string{"uploads.js", "sync.js", "refresh.js", "questions.js", "citations.js"} {
+    ++	for _, name := range []string{"uploads.js", "sync.js", "refresh.js", "questions.js", "citations.js", "retry.js"} {
+    + 		dependency, err := http.Get(httpServer.URL + "/codex/assets/" + name)
+    + 		if err != nil {
+    + 			t.Fatal(err)
+    +
+      ## portal/internal/web/static/app.js ##
+     @@
+          return;
+4:  61de5e2 = 4:  e0fb123 deps: pin codex-web failed-turn continuation support

@@ -1,0 +1,7 @@
+# Final fixture-corrected runtime pin refresh
+
+RELEASED source pins only to sole W/C owner implementer2. Exact published B b3a6eb2fc0b41cf0cb965bf4c39991815d9df734/treeb75ca581a5fe8da4902a8c702993887a8e390fa6. NAR sha256-66oPdEj2gNM/Ty43eiF9xYqCfEWQnTCAFV3yMI9sRwQ= /lastModified1792866977; owner1 persisted-empty-root/native-input-fix/source-proof.json. Parent verified exact one-line fixture-only delta/587 inputs/history and retained independent913 review by direct narrow-fix acceptance. Real one-case native producer on final b3a6eb2f PASS; result persisted-empty-root/native-producer-b3a6eb2f/result.json.
+
+From Wd108c773e2ef682210baaf69de2195e9b735e066/C376c8e4a67a48fb2d2fdfa799ee4227e8c83b6c0, preserve bases9f6968eb/50d263d4/inherited prefix, A11ec/extension767/native0.163/all other graph exactly. Only B identity substitutions. Reuse current reconstruction/records, immediate913 refs only, no duplicate bundles/archival or broad hash campaign. Normal nested W update/C confctl channel set; one folded pin each, knownquick hooks/format/deployment-contract/diff, exactoldlease SSH publication/independent remote proofs. Compact final/handoff/full-tree reconstruction/full ranges/series/diffs/no-migration proof for parent mechanical review reuse.
+
+No build/test/native/browser/CI/live/recovery/claim/integration/lifecycle. Parent owns final package/composition gate after mechanical acceptance, then separate original198ff continuation/GET/activation. No additional substantive reviewer turn for mechanical pins or exact fixture literal correction.

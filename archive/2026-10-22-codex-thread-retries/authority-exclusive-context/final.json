@@ -1,0 +1,111 @@
+{
+  "session": "2026-10-22-codex-thread-retries",
+  "at": "2026-10-24T08:21:08.170565+00:00",
+  "owner": "implementer0",
+  "worktree": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/dev-workspace",
+  "state": "Scoped uncommitted files frozen; owner1 sole B Git owner.",
+  "files": [
+    {
+      "path": "portal/internal/session/authority.go",
+      "before_sha256": "d53850a624824e565161c3a41e082f031b60e9a92397a2f02eb2c046d5685abe",
+      "after_sha256": "a16684b52ed3c1f8499147d0b2d29b40c88ec1b81c9a415d0d0257017ae6d52c",
+      "added": 6,
+      "deleted": 0
+    },
+    {
+      "path": "portal/internal/session/authority_exclusive_context_test.go",
+      "before_sha256": null,
+      "after_sha256": "5823330cac97ba5982a793512381112a45e8d6100737ff8f86a9a327dcc16fb0",
+      "added": 225,
+      "deleted": 0
+    }
+  ],
+  "patch": "authority-exclusive-context/owned.patch",
+  "patch_sha256": "02fd79a91858355f4f926b7ff5a4e046accfaa0fa442efe7bb5a6c1857dd0af8",
+  "interface": "func LockRuntimeExclusiveContext(ctx context.Context, directory, slug string) (*RuntimeLock, error)",
+  "implementation": "Exactly lockRuntimeContext(ctx, directory, slug, \".lock\", unix.LOCK_EX); removing wrapper/comment reproduces initial authority.go bytes exactly.",
+  "new_test_functions": [
+    "TestRuntimeExclusiveContextWaitsForSharedAndExclusive",
+    "TestRuntimeExclusiveContextCanceledBeforeAcquisition",
+    "TestRuntimeExclusiveContextQueuedCancellationAndDeadlineReleaseLock",
+    "TestRuntimeExclusiveRemainsFailFast"
+  ],
+  "new_subcases": 10,
+  "existing_regression": "TestRuntimeSharedContextWaitCancelAndRelease",
+  "checks": {
+    "format": {
+      "exit": 0,
+      "elapsed": 0.39564717933535576
+    },
+    "focused": {
+      "exit": 0,
+      "elapsed": 3.0031764786690474
+    },
+    "focused-race": {
+      "exit": 0,
+      "elapsed": 5.470853308215737
+    }
+  },
+  "commands": {
+    "focused": {
+      "argv": [
+        "nix",
+        "shell",
+        "--inputs-from",
+        "..",
+        "nixpkgs#go",
+        "nixpkgs#gcc",
+        "-c",
+        "go",
+        "test",
+        "-mod=readonly",
+        "./internal/session",
+        "-run",
+        "TestRuntimeExclusive(Context|RemainsFailFast)|TestRuntimeSharedContextWaitCancelAndRelease",
+        "-count=1"
+      ],
+      "cwd": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/dev-workspace/portal",
+      "time": "2026-10-24T08:19:54.746794+00:00"
+    },
+    "focused-race": {
+      "argv": [
+        "nix",
+        "shell",
+        "--inputs-from",
+        "..",
+        "nixpkgs#go",
+        "nixpkgs#gcc",
+        "-c",
+        "go",
+        "test",
+        "-mod=readonly",
+        "-race",
+        "./internal/session",
+        "-run",
+        "TestRuntimeExclusive(Context|RemainsFailFast)|TestRuntimeSharedContextWaitCancelAndRelease",
+        "-count=1"
+      ],
+      "cwd": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/dev-workspace/portal",
+      "time": "2026-10-24T08:19:54.757876+00:00"
+    }
+  },
+  "result": "Five matched top-level tests, including four new functions/ten subcases and existing SH wait regression. Normal0.301s/race1.401s PASS. No skips in selected source.",
+  "synchronization": "Context.Done test barrier fires only after the existing loop meets flock contention. Hold release/cancel use channels; deadline cases await actual context deadlines. One-second select bounds catch stuck/failfast regression, no arbitrary sleeps. Real flock uses separate opens in disposable mode0700 tempdirs.",
+  "coverage": [
+    "SH and EX owners hold the same session.lock while EX context waits",
+    "release admits one actual EX and excludes additional SH until close",
+    "pre-canceled and expired contexts receive no lock",
+    "cancellation/deadline after actual contention receives no EX",
+    "subsequent failfast EX succeeds after holder release proving no leaked lock",
+    "existing noncontext EX refuses contention promptly",
+    "existing context SH wait/cancel/release behavior retained"
+  ],
+  "prior_ruby_handoff": "Rechecked all3currentbytes against ruby-retry-policy-guard/final.json after_sha256, unchanged.",
+  "comment": "LockRuntimeExclusiveContext lets HTTP and bootstrap callers wait for exclusive runtime access within their context budget. Fail-fast callers are unchanged.",
+  "docs": "No separate docs edit; owner1 owns policy/bootstrap documentation and consumes additive wrapper directly. No UI copy or error text changes.",
+  "compatibility": "Private loop, lock filenames/modes/ownership, existing failfast APIs/callers, lock ordering, generations/timeouts and all other source unchanged by this unit. No schema/state migration.",
+  "not_done": "No Git command/stage/commit/push, A edits, runtime/package/lifecycle/claim/live/native/browser/full/build/CI operations. Existing test state only.",
+  "handoff": "Owner1 may inspect/stage exact2paths through sole serialized B Git stream after lead acceptance; no duplicate apply needed. Files frozen pending findings.",
+  "portal": "https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-22-codex-thread-retries/",
+  "report_hash_correction": "Lead message837cc625-315d-4635-a538-bc27d67a99b6 contained an incorrect provisional patch hash. Corrected immediately by6d503288-a5c8-4d2b-afb2-47293afddfbd to the tool-generated02fd79a91858355f4f926b7ff5a4e046accfaa0fa442efe7bb5a6c1857dd0af8; source/results unchanged. B owner received only authoritativefinalreceipt/hash in message6115fd1c-8823-4887-b7d5-2a7fe132602d."
+}

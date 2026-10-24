@@ -1,0 +1,84 @@
+{
+  "recordedAtUTC": "2026-10-24T12:12:10.940028+00:00",
+  "owner": "implementer3",
+  "session": "2026-10-22-codex-thread-retries",
+  "sourceRoot": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/dev-workspace-delete-guard",
+  "base": "ef773d223e946f1b5ca453f217a600b7e463e8b7",
+  "baseTree": "f900fd6de795cfb1b3380fa61d0aa23c2b6646fd",
+  "baseVerifiedFromImmutableSource": "/nix/store/sfykz795m1ca4rpszhg8p14n6p21zhmv-source",
+  "scope": "D1 only: every valid existing removed member is a no-op before new unknown eligibility. Creating checks unchanged; no native absence claim.",
+  "patch": {
+    "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/delete-guard/d1/d1.patch",
+    "sha256": "b8f60cf82ef1f74cc5a502be3f01d7cc31699b3e29164029a4b3f3051132df4a",
+    "bytes": 5525
+  },
+  "files": [
+    {
+      "path": "portal/internal/teamruntime/deletion.go",
+      "baseSha256": "6d80cf8a30d53e79e1e945b0705440a4da100916fe5e23169a29aba5e8dab0df",
+      "sha256": "6b9d88fda00f8c384ed62c5e5c608ec4bc0b357bdc6f4aae2911fc051bc78170",
+      "bytes": 8889
+    },
+    {
+      "path": "portal/internal/teamruntime/deletion_test.go",
+      "baseSha256": "5bb805db8fe8a8e4eea8fec4dc2e403cebb0a073c9eb45eb675425f54c696ea1",
+      "sha256": "9acca0ca3eb76c43d9ad90721639a4f2c6296a0e1708fd59bd2590122ff2ccff",
+      "bytes": 18225
+    }
+  ],
+  "otherOriginalPathsUnchanged": [
+    "docs/dev-sessions.md",
+    "libexec/dev-session",
+    "portal/cmd/workspace-portal/deletion_test.go",
+    "portal/cmd/workspace-portal/main.go",
+    "portal/internal/teamruntime/runtime.go",
+    "test/dev_session/deletion_recovery_test.rb"
+  ],
+  "originalPacketPreserved": {
+    "patchSha256": "e6ffd5fb48a27d8cb4cce596e360da6138393f0a1e543daada95fbfee1aad8b5",
+    "handoffSha256": "b7aa5d43b21a14c17037a72a7fc542b2acc635ff5845a95002af9a842f6f3146"
+  },
+  "checks": {
+    "red": {
+      "command": "nix develop --no-update-lock-file --command go -C portal test -mod=readonly ./internal/teamruntime -run ^TestPrepareDeletePreservesSourceProducedRemovedRecords$ -count=1 -timeout 30s",
+      "exit": 1,
+      "wallSeconds": 3.471,
+      "failedCases": 8,
+      "result": "D1 reproduced in every source-produced Remove/Fork \u00d7 ready/noncreating \u00d7 force/nonforce case",
+      "log": "red.log"
+    },
+    "green": {
+      "command": "nix develop --no-update-lock-file --command go -C portal test -mod=readonly ./internal/teamruntime -run ^TestPrepareDelete -count=1 -timeout 30s -json",
+      "exit": 0,
+      "wallSeconds": 6.219,
+      "packageSeconds": 2.89,
+      "passedTestsAndSubtests": 40,
+      "failed": [],
+      "log": "green.log",
+      "coverage": [
+        "actual ordinary Remove result with CreateAttempted=false",
+        "actual Fork-inherited removed result with cleared thread/project/attempts",
+        "ready and absent creation blocks",
+        "force and non-force",
+        "check-only, apply and exact repeated replay preserve full roster bytes/removal time/identity",
+        "no native start, resume, bootstrap, send, archive, delete, cleanup or idle work for removed records",
+        "existing new-unknown tombstone exact replay and all creating refusal cases"
+      ]
+    },
+    "format": {
+      "command": "nix develop --no-update-lock-file --command gofmt -l portal/internal/teamruntime/deletion.go portal/internal/teamruntime/deletion_test.go",
+      "exit": 0,
+      "result": "empty formatted-file list"
+    },
+    "race": "Not repeated: D1 changes a terminal-state predicate and adds serial producer regressions; no lock or concurrent execution code changed.",
+    "otherQuickChecks": "Ruby/command files and the other six original deliverable paths are byte-unchanged; no unrelated checks repeated."
+  },
+  "delivery": "Scoped uncommitted two-file incremental patch only; owner1 retains Git and folds into deletion17. Direct review step9 remains lead-owned.",
+  "operations": "No Git mutation, main-tree write, doc/DTO/flag/schema expansion, browser/long/native/live action or recreation.",
+  "deliveryReports": {
+    "leadCompletionMessageId": "627d2718-71bb-4414-8aaa-7b95ee71876f",
+    "leadConfirmed": true,
+    "owner1MessageId": "1b0e77ff-36e4-44ca-bca7-f195e208e0aa",
+    "owner1DirectDispatch": "refused before dispatch: another dev-session command changing our session; lead sent exact hashes/receipt for normal forwarding"
+  }
+}

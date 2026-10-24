@@ -1,0 +1,39 @@
+{
+  "run": 40024500854,
+  "head": "e7ccc364f8b52e66af33e8f4ffe178eaa9e1547a",
+  "conclusion": "failure",
+  "jobs": {
+    "creation": "failure",
+    "fast": "success",
+    "archive": "success",
+    "host": "skipped"
+  },
+  "failedStep": "Packaged browser and native session creation",
+  "case": "failed naming creates usable sessions with distinct fallback names / naming-collision",
+  "observed": {
+    "state": "failed",
+    "phase": "stopped",
+    "error": "session is changing: resource temporarily unavailable",
+    "assertion": "creation_acceptance_browser.cjs49 rejects terminal failed while waiting for ready",
+    "logLines": [
+      4644,
+      4646,
+      4647,
+      4659
+    ]
+  },
+  "source": "portal/internal/session/authority.go89-99 returns exact session-is-changing diagnostic from nonblocking flock refusal; source has contextless fail-fast path and context wait path. This is a returned terminal failure, not browser readiness timeout.",
+  "limit": "Logs do not identify the competing lock owner or its interval, nor prove lifecycle/product regression or harmless scheduling. No empirical root cause beyond exact lock-refusal symptom is inferred. Prior9f explicit-fork failure is a different case with similar diagnostic, not a proven identical cause.",
+  "unchangedTo207": [
+    "portal/internal/session/authority.go",
+    "portal/internal/web/creation.go",
+    "test/creation_acceptance_browser.cjs",
+    "nix/tests/session-creation.nix"
+  ],
+  "actions": "Full failed-job/step logs and metadata retained. No rerun, poll, cancellation, source correction or native/build operation. Frozen207 review/capture6 hold unchanged.",
+  "artifacts": {
+    "ci-e7-failure-metadata.json": "cf97e3b78105d8528b7afa34ed8ce9bb6f59259d823f4ec02b3f531cfd8c1fb9",
+    "ci-e7-failure.log": "e9dedc8310994c589da9d6050890ae14d311d66336242b0c03cad6280db18e6c",
+    "b-terminal-x-ci-snapshot.json": "1e841412ec9e4bf55124716dc9496838b760819b759d89cf95cef821d90b9fba"
+  }
+}

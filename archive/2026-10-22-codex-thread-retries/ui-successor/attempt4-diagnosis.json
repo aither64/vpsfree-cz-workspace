@@ -1,0 +1,25 @@
+{
+  "head": "e1e165e89b7741a95a5b66dfbd15f8a3c3987285",
+  "tree": "c9874dd068d2de9431b12114e0fb91b95f1ad186",
+  "evidence": {
+    "capture-attempt-4/stdout.log": "d45d8d0849f7fea6bf5203c86089c49bf8680528ca5610ed7f3cb17ae7469ec2",
+    "capture-attempt-4/stderr.log": "60b469e791ed40ab6fd556236b3dc3ee3c16fec90ba9fc8aa972f8e6bd98707c",
+    "capture-attempt-4/result.json": "3f23b9196843e6f7b6730dce16811885ee8f709bb06c56435ca321819c76dfc1"
+  },
+  "observed": {
+    "failedFixture": "composer_handoff_browser_test.cjs",
+    "phase": "readback",
+    "point": "attach102, before enabling readback injection185",
+    "messages": 9,
+    "heldReplies": 0,
+    "acks": 2,
+    "received": "hidden upload root text contains always-created Retry file status button",
+    "passedFixtures": [
+      "retry_activity_browser_test.cjs desktop+mobile",
+      "required_question_keyboard_browser_test.cjs"
+    ]
+  },
+  "sourceFinding": "After fault-case reload fixture awaited only Send, while initial load also awaited upload-toggle readiness. mountUploads.add ignores file selection until limits metadata exists. Direct hidden-picker setInputFiles bypasses disabled Add attachments UI.",
+  "limit": "Readiness race is source-backed; original run lacks upload request/readiness timeline, so empirical cause remains unproved. No product/upload-client error assumed.",
+  "remedy": "Await actual upload toggle before every attach; keep exact filename/Ready/zero-request/draft/identity assertions and add bounded upload diagnostics. Passing fixtures and all other blobs stay byte-identical."
+}

@@ -1,0 +1,55 @@
+{
+  "stage": "browser",
+  "command": [
+    "nix",
+    "develop",
+    "--no-update-lock-file",
+    "--command",
+    "python3",
+    "-c",
+    "import shutil,subprocess,sys,json; names=['go','gcc','ruby','node','git']; paths={n:shutil.which(n) for n in names}; print(json.dumps({'nixTools':paths}),file=sys.stderr,flush=True); assert all(paths.values()),paths; sys.exit(subprocess.run(sys.argv[1:]).returncode)",
+    "go",
+    "-C",
+    "portal",
+    "test",
+    "-mod=readonly",
+    "./internal/web",
+    "-run",
+    "^TestRetryBackendBrowser$",
+    "-count=1",
+    "-json",
+    "-timeout=360s"
+  ],
+  "actualExit": 1,
+  "elapsed": 49.3279433734715,
+  "missing": [
+    "TestRetryBackendBrowser",
+    "TestRetryBackendBrowser/desktop-member",
+    "TestRetryBackendBrowser/desktop-root",
+    "TestRetryBackendBrowser/mobile-member",
+    "TestRetryBackendBrowser/mobile-root"
+  ],
+  "missingRun": [],
+  "failed": [
+    "TestRetryBackendBrowser/desktop-root",
+    "TestRetryBackendBrowser/desktop-member",
+    "TestRetryBackendBrowser/mobile-root",
+    "TestRetryBackendBrowser/mobile-member",
+    "TestRetryBackendBrowser",
+    "package"
+  ],
+  "skipped": [],
+  "invalidJSON": [],
+  "caseErrors": [
+    "desktop-root: [Errno 2] No such file or directory: '/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/failed-creation-candidate-recovery/r1/incorporation/browser-attempt-7/browser/artifacts/desktop-root/manifest.json'",
+    "desktop-member: [Errno 2] No such file or directory: '/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/failed-creation-candidate-recovery/r1/incorporation/browser-attempt-7/browser/artifacts/desktop-member/manifest.json'",
+    "mobile-root: [Errno 2] No such file or directory: '/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/failed-creation-candidate-recovery/r1/incorporation/browser-attempt-7/browser/artifacts/mobile-root/manifest.json'",
+    "mobile-member: [Errno 2] No such file or directory: '/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/failed-creation-candidate-recovery/r1/incorporation/browser-attempt-7/browser/artifacts/mobile-member/manifest.json'"
+  ],
+  "after": [
+    "f75f79e545c29ec9e741d33504c3ce741a3a9dd4",
+    "c3f0b49b920ad4d8778f711014cb37dba4296e4c"
+  ],
+  "clean": true,
+  "pass": false
+}

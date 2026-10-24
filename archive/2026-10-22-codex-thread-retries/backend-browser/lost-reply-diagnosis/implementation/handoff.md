@@ -1,0 +1,11 @@
+# Lost-policy-reply fixture correction
+
+Clean published B `a62166a87658e16baa0efdddfea3a448ebebcc28`, tree `49dee759cd203a94eb898c6af5f67fbe99474028`. Complete18series/fullfinaldiff/rangediff retained. First14 exact; owning15 amended;16–18 patches/messages byteexact after replay. The final tree differs from preserved f75 only in portal/internal/web/retry_backend_browser_test.go. All product/assets/pins/docs/AGENTS/CJS bytes unchanged. No schemas or migrations.
+
+The fixture commits its unmodified real handler, forwards the actual status/headers with actual complete JSON Content-Length, flushes, then closes before the body. Root/member TLS regression requires the committed headers, unexpectedEOF body, durable changed-policy readback/new revision and exactlyone policyPOST/drop with zero native starts/unchangedledger. The original headerless transport fails both new leaves; the corrected bounded selector passes8 tests/subtests with zero failures/skips, Go0.773s. All Go/module/CJS input hashes match the committed candidate tree. No real browser/native execution occurred in this quick.
+
+This addresses a fixture transport seam, not an established product defect. Exact pinned Chromium source permits automatic retry before headers on reused connections; original attempt7 did not measure internal replay count. Full failed attempt7 and source/packet/guard/ref/verifiedbundle are preserved. Original CJS uncertainty/readback/onePOST/all32 assertions remain exact. No error filtering or route/DTO/provider substitution added.
+
+Source proof verifies all586Git blobs/modes, no extra/missing paths, independentNAR and unchanged full locked input graph/A5743. Finalbundle verified. Browser-attempt8 guard is PREPARED ONLY: exacthead/clean+fullNix/GCC/pinnedPlaywright+all32/zero-skips/360s; unique output uncreated. Retained affected final review is lead-owned and global execution remains held. No package/native/build/CI/live/pin/lifecycle/default integration action.
+
+No product documentation update is needed: production behavior and recovery contract are byte-identical. These temporary fixture/execution facts belong here. Portal: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-22-codex-thread-retries/

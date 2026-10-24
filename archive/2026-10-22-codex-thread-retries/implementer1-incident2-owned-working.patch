@@ -1,0 +1,508 @@
+diff --git a/docs/turn-retry-recovery.md b/docs/turn-retry-recovery.md
+index ea6c7e0..4bd84bd 100644
+--- a/docs/turn-retry-recovery.md
++++ b/docs/turn-retry-recovery.md
+@@ -38,9 +38,9 @@ The admission lock is shared by portal, CLI and direct team mutations. Lock
+ ordering is package transition, session runtime, roster operation when needed,
+ conversation mutex, then per-thread admission. Atomic state writes and native
+ queue/submission-ledger operations occur inside that admission fence. They do
+-not acquire an outer roster or conversation lock. No timer sleeps under these
+-locks. Two scheduler workers serve retained roots and ready team members
+-without requiring a browser connection.
++not acquire an outer roster or conversation lock. The retry scheduler does not
++sleep while holding these locks. Two scheduler workers serve retained roots and
++ready team members without requiring a browser connection.
+ 
+ First enrollment reads a conservative terminal baseline. A failure already
+ present at that boundary is consumed. A proven active turn can qualify when it
+@@ -103,10 +103,27 @@ that exact identity. A new UUID is never a recovery mechanism.
+ Exact delivery reconciliation runs before capturing new retry provenance or
+ binding settings. An accepted original UUID returns its existing receipt without
+ acquiring newer settings or causing another native send. This includes history
+-recovery after browser acknowledgment. Prepared or uncertain input with missing
++recovery after browser acknowledgment. An uncertain submission with missing
+ admission proof cannot be treated as new input. Keep the original UUID when
+ recovering an uncertain response.
+ 
++Plan implementation reserves its original message identity before changing Plan
++mode to Default. An exact prepared entry in the generic submission ledger, with
++no queue attempt, can acquire its first managed admission after that explicit
++settings change. This preserves the original UUID, text, plan action, options
++and steering intent. It does not rewrite earlier retry snapshots or admit a
++submitting or queue-owned attempt as new work. Exact receipt recovery runs
++before plan freshness and ordinary activity checks. Every other unresolved
++submission still receives the ordinary checks.
++
++Browser mutations wait for a temporary exclusive session-runtime lock within
++their existing request deadline. After acquiring the lock, the server checks
++the current package, lifecycle, provider and conversation authority again. A
++timeout or changed authority refuses admission without sending input or changing
++settings. Lifecycle commands retain their existing immediate lock refusal
++behavior. Recover an uncertain response using the original browser submission
++identity.
++
+ Automatic dispatch reserves room for accepted-result bookkeeping before sending.
+ If an already accepted result cannot retain another eligibility snapshot,
+ reconciliation saves its exact pending identity, result and quota charge in a
+diff --git a/flake.lock b/flake.lock
+index 0f55e50..610287b 100644
+--- a/flake.lock
++++ b/flake.lock
+@@ -37,17 +37,17 @@
+     "codex-web": {
+       "flake": false,
+       "locked": {
+-        "lastModified": 1792692723,
+-        "narHash": "sha256-L7N67MpgM8DcQUcaI7Tx+oc693ZmmQm3mFqqO22LKiY=",
++        "lastModified": 1792775188,
++        "narHash": "sha256-tCfdy/lh9LHbvEd6BYO0trM1pUelyv2T63KsQ1iEK90=",
+         "owner": "aither64",
+         "repo": "codex-web",
+-        "rev": "c1f415ad5602c23e6443cced73cb59267a796f05",
++        "rev": "ac62eeeb9d8b1fa7b8ed8fb95ba8160acb7efa1c",
+         "type": "github"
+       },
+       "original": {
+         "owner": "aither64",
+         "repo": "codex-web",
+-        "rev": "c1f415ad5602c23e6443cced73cb59267a796f05",
++        "rev": "ac62eeeb9d8b1fa7b8ed8fb95ba8160acb7efa1c",
+         "type": "github"
+       }
+     },
+diff --git a/flake.nix b/flake.nix
+index 5546c65..97642c9 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -5,7 +5,7 @@
+     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+     llm-agents.url = "github:numtide/llm-agents.nix";
+     codex-web = {
+-      url = "github:aither64/codex-web/c1f415ad5602c23e6443cced73cb59267a796f05";
++      url = "github:aither64/codex-web/ac62eeeb9d8b1fa7b8ed8fb95ba8160acb7efa1c";
+       flake = false;
+     };
+   };
+diff --git a/nix/workspace-portal.nix b/nix/workspace-portal.nix
+index 4f830a6..157cf5d 100644
+--- a/nix/workspace-portal.nix
++++ b/nix/workspace-portal.nix
+@@ -273,7 +273,7 @@ buildGoModule {
+ 
+   inherit src;
+   modRoot = "portal";
+-  vendorHash = "sha256-CUZc7zj3bNr75y+7Rv3mPjEtVLT+iUNaLQ7EOH7RkQE=";
++  vendorHash = "sha256-NZ9hapJobbhvEdxWTtzYJ/3ZeMkSZAqOdewJCsZoL2o=";
+ 
+   postPatch = ''
+     expected=${lib.escapeShellArg codexWebVersion}
+diff --git a/portal/go.mod b/portal/go.mod
+index 70bd633..6e74eaf 100644
+--- a/portal/go.mod
++++ b/portal/go.mod
+@@ -4,7 +4,7 @@ go 1.24.0
+ 
+ require (
+ 	github.com/SherClockHolmes/webpush-go v1.4.0
+-	github.com/aither64/codex-web v0.0.0-20261022181203-c1f415ad5602
++	github.com/aither64/codex-web v0.0.0-20261023170628-ac62eeeb9d8b
+ 	github.com/coder/websocket v1.8.14
+ 	github.com/microcosm-cc/bluemonday v1.0.27
+ 	github.com/yuin/goldmark v1.7.17
+diff --git a/portal/go.sum b/portal/go.sum
+index f49ea04..4cf2000 100644
+--- a/portal/go.sum
++++ b/portal/go.sum
+@@ -1,7 +1,7 @@
+ github.com/SherClockHolmes/webpush-go v1.4.0 h1:ocnzNKWN23T9nvHi6IfyrQjkIc0oJWv1B1pULsf9i3s=
+ github.com/SherClockHolmes/webpush-go v1.4.0/go.mod h1:XSq8pKX11vNV8MJEMwjrlTkxhAj1zKfxmyhdV7Pd6UA=
+-github.com/aither64/codex-web v0.0.0-20261022181203-c1f415ad5602 h1:2ziyC3nOv4CwKI1+axdbJA+fDEt3pPuZEY5eSyZ3HyM=
+-github.com/aither64/codex-web v0.0.0-20261022181203-c1f415ad5602/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
++github.com/aither64/codex-web v0.0.0-20261023170628-ac62eeeb9d8b h1:z09uGj1nKIn7CYBPZ7YZ5rsGF3MwN98tbyHqQln24ds=
++github.com/aither64/codex-web v0.0.0-20261023170628-ac62eeeb9d8b/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
+ github.com/aymerick/douceur v0.2.0 h1:Mv+mAeH1Q+n9Fr+oyamOlAkUNPWPlA8PPGR0QAaYuPk=
+ github.com/aymerick/douceur v0.2.0/go.mod h1:wlT5vV2O3h55X9m7iVYN0TBM0NH/MmbLnd30/FjWUq4=
+ github.com/coder/websocket v1.8.14 h1:9L0p0iKiNOibykf283eHkKUHHrpG7f65OE3BhhO7v9g=
+diff --git a/portal/internal/session/authority.go b/portal/internal/session/authority.go
+index 6cec681..dd67578 100644
+--- a/portal/internal/session/authority.go
++++ b/portal/internal/session/authority.go
+@@ -10,6 +10,7 @@ import (
+ 	"os"
+ 	"os/exec"
+ 	"strings"
++	"time"
+ 
+ 	"golang.org/x/sys/unix"
+ )
+@@ -46,6 +47,12 @@ func LockRuntimeShared(directory, slug string) (*RuntimeLock, error) {
+ 	return lockRuntime(directory, slug, ".lock", unix.LOCK_SH)
+ }
+ 
++// LockRuntimeSharedContext lets HTTP callers wait for a legitimate exclusive
++// operation within their request budget. Lifecycle callers remain fail-fast.
++func LockRuntimeSharedContext(ctx context.Context, directory, slug string) (*RuntimeLock, error) {
++	return lockRuntimeContext(ctx, directory, slug, ".lock", unix.LOCK_SH)
++}
++
+ // LockCreation and LockRuntimeExclusive use the CLI's creation-then-session
+ // lock order when reserving a destination that does not yet have an authority.
+ func LockCreation(directory, slug string) (*RuntimeLock, error) {
+@@ -57,6 +64,10 @@ func LockRuntimeExclusive(directory, slug string) (*RuntimeLock, error) {
+ }
+ 
+ func lockRuntime(directory, slug, suffix string, mode int) (*RuntimeLock, error) {
++	return lockRuntimeContext(nil, directory, slug, suffix, mode)
++}
++
++func lockRuntimeContext(ctx context.Context, directory, slug, suffix string, mode int) (*RuntimeLock, error) {
+ 	if directory == "" || !ValidSlug(slug) {
+ 		return nil, errors.New("runtime locking is not configured")
+ 	}
+@@ -70,11 +81,32 @@ func lockRuntime(directory, slug, suffix string, mode int) (*RuntimeLock, error)
+ 	if err != nil {
+ 		return nil, fmt.Errorf("open runtime session lock: %w", err)
+ 	}
+-	if err := unix.Flock(int(session.Fd()), mode|unix.LOCK_NB); err != nil {
+-		session.Close()
+-		return nil, fmt.Errorf("session is changing: %w", err)
++	for {
++		if ctx != nil && ctx.Err() != nil {
++			session.Close()
++			return nil, ctx.Err()
++		}
++		err := unix.Flock(int(session.Fd()), mode|unix.LOCK_NB)
++		if err == nil {
++			if ctx != nil && ctx.Err() != nil {
++				session.Close()
++				return nil, ctx.Err()
++			}
++			return &RuntimeLock{session: session}, nil
++		}
++		if ctx == nil || !errors.Is(err, unix.EWOULDBLOCK) && !errors.Is(err, unix.EAGAIN) {
++			session.Close()
++			return nil, fmt.Errorf("session is changing: %w", err)
++		}
++		timer := time.NewTimer(10 * time.Millisecond)
++		select {
++		case <-ctx.Done():
++			timer.Stop()
++			session.Close()
++			return nil, ctx.Err()
++		case <-timer.C:
++		}
+ 	}
+-	return &RuntimeLock{session: session}, nil
+ }
+ 
+ func openAuthorityDirectory(directory string) (int, error) {
+diff --git a/portal/internal/teamruntime/observation.go b/portal/internal/teamruntime/observation.go
+index 4b5cb6f..351a321 100644
+--- a/portal/internal/teamruntime/observation.go
++++ b/portal/internal/teamruntime/observation.go
+@@ -64,6 +64,14 @@ func retainedObservationIdentities(roster *Roster) [][3]string {
+ // It proves the current roster, project, persistence and unknown-writer state;
+ // it neither adopts a discovered root nor supplies creation provenance.
+ func (service Service) ObserveRetained(ctx context.Context, slug, rootThreadID, identity string) (Observation, error) {
++	return service.observeRetained(ctx, slug, rootThreadID, identity, nil)
++}
++
++func (service Service) ObserveRetainedExceptPreparedRoot(ctx context.Context, slug, rootThreadID, identity string, prepared workspacecodex.PreparedSend) (Observation, error) {
++	return service.observeRetained(ctx, slug, rootThreadID, identity, &prepared)
++}
++
++func (service Service) observeRetained(ctx context.Context, slug, rootThreadID, identity string, prepared *workspacecodex.PreparedSend) (Observation, error) {
+ 	if service.Store == nil || service.Client == nil {
+ 		return Observation{}, errors.New("retained observation runtime is unavailable")
+ 	}
+@@ -107,7 +115,19 @@ func (service Service) ObserveRetained(ctx context.Context, slug, rootThreadID,
+ 			default:
+ 				return errors.New("retained archival state is unknown")
+ 			}
+-			observation, err := observer.ObserveThreadIdentity(ctx, thread, cwd, project, state)
++			var observation workspacecodex.ThreadObservation
++			var err error
++			if address == "lead" && prepared != nil {
++				exact, ok := service.Client.(interface {
++					ObserveThreadIdentityExceptPreparedSend(context.Context, string, string, string, workspacecodex.ArchiveState, workspacecodex.PreparedSend) (workspacecodex.ThreadObservation, error)
++				})
++				if !ok {
++					return errors.New("semantic conversation observer is unavailable")
++				}
++				observation, err = exact.ObserveThreadIdentityExceptPreparedSend(ctx, thread, cwd, project, state, *prepared)
++			} else {
++				observation, err = observer.ObserveThreadIdentity(ctx, thread, cwd, project, state)
++			}
+ 			if err != nil {
+ 				return err
+ 			}
+diff --git a/portal/internal/web/server.go b/portal/internal/web/server.go
+index 81ab26a..c5232d4 100644
+--- a/portal/internal/web/server.go
++++ b/portal/internal/web/server.go
+@@ -2027,12 +2027,31 @@ func (s *Server) sessionAPIForSummary(
+ 		return
+ 	}
+ 	if r.Method == http.MethodPost || r.Method == http.MethodDelete {
+-		lock, err := session.LockRuntimeShared(s.config.AuthorityDir, summary.Slug)
++		ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
++		defer cancel()
++		r = r.WithContext(ctx)
++		var planBody *implementPlanRequest
++		if len(parts) == 2 && parts[1] == "implement-plan" {
++			body, ok := s.decodeImplementPlanRequest(w, r)
++			if !ok {
++				return
++			}
++			planBody = &body
++		}
++		lock, err := session.LockRuntimeSharedContext(ctx, s.config.AuthorityDir, summary.Slug)
+ 		if err != nil {
+ 			s.writeJSON(w, http.StatusConflict, map[string]string{"error": err.Error()})
+ 			return
+ 		}
+ 		defer lock.Close()
++		if err := s.requireCurrentHostProfile(); err != nil {
++			s.writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": err.Error()})
++			return
++		}
++		if receipt, ok := s.currentCreation(summary.Slug); ok && receipt.blocksSession() {
++			s.writeJSON(w, http.StatusConflict, map[string]string{"error": "session initialization has not finished"})
++			return
++		}
+ 		owner, journalErr := session.PendingLifecycle(s.config.Workspace, summary.Slug)
+ 		if journalErr != nil {
+ 			s.writeJSON(w, http.StatusConflict, map[string]string{"error": journalErr.Error()})
+@@ -2050,7 +2069,15 @@ func (s *Server) sessionAPIForSummary(
+ 			return
+ 		}
+ 		s.normalizeInteractivity(r.Context(), summary)
+-		if err := s.requireOrdinaryRetainedMutation(r.Context(), summary); err != nil {
++		var prepared *workspacecodex.PreparedSend
++		if planBody != nil {
++			var done bool
++			prepared, done = s.reconcilePlanDelivery(w, r, summary, *planBody)
++			if done {
++				return
++			}
++		}
++		if err := s.requireOrdinaryRetainedMutationExceptPrepared(ctx, summary, prepared); err != nil {
+ 			s.writeJSON(w, http.StatusConflict, map[string]string{"error": err.Error()})
+ 			return
+ 		}
+@@ -2058,6 +2085,10 @@ func (s *Server) sessionAPIForSummary(
+ 			s.writeJSON(w, http.StatusConflict, map[string]string{"error": "session is not ready for browser changes"})
+ 			return
+ 		}
++		if planBody != nil {
++			s.implementPlanRequest(w, r, summary, *planBody)
++			return
++		}
+ 	}
+ 	if len(parts) == 2 && r.Method == http.MethodPost && parts[1] == "implement-plan" {
+ 		s.implementPlan(w, r, summary)
+@@ -2456,39 +2487,53 @@ type implementPlanRequest struct {
+ 	BrowserNotificationsEnabled *bool   `json:"browserNotificationsEnabled,omitempty"`
+ }
+ 
+-func (s *Server) implementPlan(w http.ResponseWriter, r *http.Request, summary *session.Summary) {
++func (s *Server) decodeImplementPlanRequest(w http.ResponseWriter, r *http.Request) (implementPlanRequest, bool) {
+ 	r.Body = http.MaxBytesReader(w, r.Body, session.MaxFormRequestBodyBytes)
+ 	var payload json.RawMessage
+ 	if !s.decodeJSON(w, r, &payload) {
+-		return
++		return implementPlanRequest{}, false
+ 	}
+ 	if err := rejectDuplicateCreationJSONKeys(payload); err != nil {
+ 		s.writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON request"})
+-		return
++		return implementPlanRequest{}, false
+ 	}
+ 	var raw map[string]json.RawMessage
+ 	if err := json.Unmarshal(payload, &raw); err != nil || raw == nil {
+ 		s.writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON request"})
+-		return
++		return implementPlanRequest{}, false
+ 	}
+ 	if err := validateBrowserNotificationPreference(raw); err != nil {
+ 		s.writeError(w, r, http.StatusBadRequest, err.Error())
+-		return
++		return implementPlanRequest{}, false
+ 	}
+ 	var body implementPlanRequest
+ 	decoder := json.NewDecoder(bytes.NewReader(payload))
+ 	decoder.DisallowUnknownFields()
+ 	if err := decoder.Decode(&body); err != nil || decoder.Decode(&struct{}{}) != io.EOF {
+ 		s.writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON request"})
+-		return
++		return implementPlanRequest{}, false
+ 	}
+ 	if strings.TrimSpace(body.Action) == "new" {
+ 		for _, field := range []string{"model", "reasoningEffort", "team", "catalogDigest", "provider"} {
+ 			if value, ok := raw[field]; ok && bytes.Equal(bytes.TrimSpace(value), []byte("null")) {
+ 				s.writeJSON(w, http.StatusBadRequest, map[string]string{"error": "managed creation fields must be omitted instead of null"})
+-				return
++				return implementPlanRequest{}, false
+ 			}
+ 		}
++	}
++	return body, true
++}
++
++func (s *Server) implementPlan(w http.ResponseWriter, r *http.Request, summary *session.Summary) {
++	body, ok := s.decodeImplementPlanRequest(w, r)
++	if !ok {
++		return
++	}
++	s.implementPlanRequest(w, r, summary, body)
++}
++
++func (s *Server) implementPlanRequest(w http.ResponseWriter, r *http.Request, summary *session.Summary, body implementPlanRequest) {
++	if strings.TrimSpace(body.Action) == "new" {
+ 		destination, err := creationDestination(strings.TrimSpace(body.Name), strings.TrimSpace(body.CreationDate))
+ 		if err != nil {
+ 			s.writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+@@ -3512,6 +3557,10 @@ func (s *Server) normalizeInteractivity(parent context.Context, summary *session
+ // observation. Busy is governed by the requested operation; unknown submissions
+ // or another same-CWD identity never authorize a write.
+ func (s *Server) requireOrdinaryRetainedMutation(ctx context.Context, summary *session.Summary) error {
++	return s.requireOrdinaryRetainedMutationExceptPrepared(ctx, summary, nil)
++}
++
++func (s *Server) requireOrdinaryRetainedMutationExceptPrepared(ctx context.Context, summary *session.Summary, prepared *workspacecodex.PreparedSend) error {
+ 	if err := s.requireProviderAdmission(summary.Slug); err != nil {
+ 		return err
+ 	}
+@@ -3540,7 +3589,12 @@ func (s *Server) requireOrdinaryRetainedMutation(ctx context.Context, summary *s
+ 	if err != nil {
+ 		return err
+ 	}
+-	observation, err := service.ObserveRetained(ctx, summary.Slug, summary.Codex.ThreadID, identity)
++	var observation teamruntime.Observation
++	if prepared != nil {
++		observation, err = service.ObserveRetainedExceptPreparedRoot(ctx, summary.Slug, summary.Codex.ThreadID, identity, *prepared)
++	} else {
++		observation, err = service.ObserveRetained(ctx, summary.Slug, summary.Codex.ThreadID, identity)
++	}
+ 	if err != nil || !observation.ActivityKnown {
+ 		return errors.New("retained conversation or submission proof is unavailable")
+ 	}
+@@ -3612,11 +3666,23 @@ func (s *Server) resolveConversation(
+ 		return conversation.Target{}, errors.New("session has no verified Codex thread")
+ 	}
+ 	if request.Mutation {
+-		runtimeLock, err := session.LockRuntimeShared(s.config.AuthorityDir, summary.Slug)
++		var runtimeLock *session.RuntimeLock
++		var err error
++		if request.Operation == "automatic-retry" {
++			runtimeLock, err = session.LockRuntimeShared(s.config.AuthorityDir, summary.Slug)
++		} else {
++			runtimeLock, err = session.LockRuntimeSharedContext(ctx, s.config.AuthorityDir, summary.Slug)
++		}
+ 		if err != nil {
+ 			return conversation.Target{}, fmt.Errorf("lock session runtime: %w", err)
+ 		}
+ 		releases = append(releases, func() { _ = runtimeLock.Close() })
++		if err := s.requireCurrentHostProfile(); err != nil {
++			return conversation.Target{}, err
++		}
++		if receipt, ok := s.currentCreation(slug); ok && receipt.blocksSession() {
++			return conversation.Target{}, errors.New("session initialization has not finished")
++		}
+ 		owner, err := session.PendingLifecycle(s.config.Workspace, summary.Slug)
+ 		if err != nil {
+ 			return conversation.Target{}, err
+diff --git a/portal/internal/workspacecodex/observation.go b/portal/internal/workspacecodex/observation.go
+index fb1b112..61a5a2b 100644
+--- a/portal/internal/workspacecodex/observation.go
++++ b/portal/internal/workspacecodex/observation.go
+@@ -161,6 +161,23 @@ func (c *Client) ObserveThread(ctx context.Context, threadID, cwd string) (Threa
+ // ObserveThreadIdentity is bounded and read-only. A caller with a retained team
+ // must bracket this primitive with its owning project/materialization proof.
+ func (c *Client) ObserveThreadIdentity(ctx context.Context, threadID, cwd, projectID string, state ArchiveState) (ThreadObservation, error) {
++	return c.observeThreadIdentity(ctx, threadID, cwd, projectID, state, c.RequireSubmissionAttemptsKnown)
++}
++
++// PreparedSend is an exact request-local delivery identity, never a wildcard
++// observation exception or permission to submit native work.
++type PreparedSend struct {
++	Text, ID, Action string
++	Options          codex.TurnOptions
++}
++
++func (c *Client) ObserveThreadIdentityExceptPreparedSend(ctx context.Context, threadID, cwd, projectID string, state ArchiveState, prepared PreparedSend) (ThreadObservation, error) {
++	return c.observeThreadIdentity(ctx, threadID, cwd, projectID, state, func(ctx context.Context, thread string) error {
++		return c.Client.RequireSubmissionAttemptsKnownExceptPreparedSend(ctx, thread, prepared.Text, prepared.ID, prepared.Action, prepared.Options)
++	})
++}
++
++func (c *Client) observeThreadIdentity(ctx context.Context, threadID, cwd, projectID string, state ArchiveState, known func(context.Context, string) error) (ThreadObservation, error) {
+ 	if !observationID(threadID, true) || !filepath.IsAbs(cwd) || filepath.Clean(cwd) != cwd {
+ 		return ThreadObservation{}, observationFailure("identity_invalid", "Conversation observation requires an exact identity and directory.")
+ 	}
+@@ -246,7 +263,7 @@ func (c *Client) ObserveThreadIdentity(ctx context.Context, threadID, cwd, proje
+ 		}
+ 		// The public owner proves resolution but exposes no attempt snapshot.
+ 		// An error is unknown activity; no private ledger or error text is parsed.
+-		if err := c.RequireSubmissionAttemptsKnown(ctx, threadID); err != nil {
++		if err := known(ctx, threadID); err != nil {
+ 			return ThreadObservation{}, observationReadFailure(err, "submission_unverified", "Conversation submissions cannot be proved resolved.")
+ 		}
+ 	} else {
+diff --git a/portal/internal/workspacecodex/turn_retry.go b/portal/internal/workspacecodex/turn_retry.go
+index de52cc4..3af1a6e 100644
+--- a/portal/internal/workspacecodex/turn_retry.go
++++ b/portal/internal/workspacecodex/turn_retry.go
+@@ -274,6 +274,9 @@ func (c *Client) reconcileRetrySend(ctx context.Context, tx *turnretry.Transacti
+ 			return codex.SendReceipt{}, false, nil
+ 		}
+ 	}
++	if prepared, err := c.Client.IsPreparedSendWithOptions(thread, text, id, action, options); err != nil || prepared {
++		return codex.SendReceipt{}, false, err
++	}
+ 	return codex.SendReceipt{}, false, errors.New("earlier submission has no managed admission proof")
+ }
+ 
+diff --git a/portal/internal/workspacecodex/turn_retry_retention_test.go b/portal/internal/workspacecodex/turn_retry_retention_test.go
+index d1c911d..f81f1f1 100644
+--- a/portal/internal/workspacecodex/turn_retry_retention_test.go
++++ b/portal/internal/workspacecodex/turn_retry_retention_test.go
+@@ -49,6 +49,15 @@ func (r *retryRetentionWire) serve(w *retrySettingsWire, conn *websocket.Conn) e
+ 		var result, notify any
+ 		failure := ""
+ 		switch {
++		case method == "thread/resume" && w.bound && p["developerInstructions"] != nil:
++			config, _ := p["config"].(map[string]any)
++			servers, _ := config["mcp_servers"].(map[string]any)
++			server, _ := servers["team"].(map[string]any)
++			if p["developerInstructions"] != "common lifecycle\n\n"+w.policy.DeveloperInstructions || p["sandbox"] != w.policy.Sandbox || p["approvalPolicy"] != w.policy.ApprovalPolicy || server["command"] != w.policy.MCPServer.Command {
++				w.t.Error("explicit prepared send changed authorized instructions/MCP/access", p)
++			}
++			w.resumes++
++			result = map[string]any{"thread": map[string]any{"id": w.thread}}
+ 		case method == "thread/items/list" && (r.hideHistory || w.items == nil):
+ 			result = map[string]any{"data": []any{}, "nextCursor": nil}
+ 		case method == "thread/read" && r.stopBeforeID != "":
+@@ -242,17 +251,17 @@ func TestRetryRetentionProtectedQueueFIFOAndPreparedIdentity(t *testing.T) {
+ 			}
+ 		})
+ 	}
+-	t.Run("prepared without admission", func(t *testing.T) {
++	t.Run("prepared first execution without admission", func(t *testing.T) {
+ 		r := &retryRetentionWire{}
+ 		w := newRetrySettingsWireWithServer(t, false, "default", r.serve)
+ 		if err := w.client.PrepareSendWithOptions(w.thread, "prepared", "prepared", "action", true, codex.TurnOptions{}); err != nil {
+ 			t.Fatal(err)
+ 		}
+-		if _, err := w.client.Send(context.Background(), w.thread, "prepared", "prepared", "action"); err == nil {
+-			t.Fatal("prepared identity with missing admission was treated as fresh")
++		if _, err := w.client.Send(context.Background(), w.thread, "prepared", "prepared", "action"); err != nil {
++			t.Fatal("positive exact prepared intent could not acquire first execution admission", err)
+ 		}
+-		if r.count() != 0 {
+-			t.Fatal("prepared identity replayed")
++		if r.count() != 1 {
++			t.Fatal("prepared identity did not execute exactly once")
+ 		}
+ 	})
+ }

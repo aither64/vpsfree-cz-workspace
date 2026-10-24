@@ -1,0 +1,15 @@
+diff --git a/portal/internal/web/retry_backend_browser_test.cjs b/portal/internal/web/retry_backend_browser_test.cjs
+index ba3adc93..c8f1fc30 100644
+--- a/portal/internal/web/retry_backend_browser_test.cjs
++++ b/portal/internal/web/retry_backend_browser_test.cjs
+@@ -173,7 +173,9 @@ const complete = label => { cases.push(label); trace("case-pass", {label}); };
+     assert.deepEqual(acceleratedResponse.request().postDataJSON(), {token: issued.retryNowToken});
+     const accelerated = await diagnostics();
+     for (const key of ["pending", "chain", "attempt", "charges", "starts"]) assert.equal(accelerated[key], scheduled[key], key);
+-    assert(accelerated.deadline <= scheduled.deadline);
++    const acceleratedPayload = await acceleratedResponse.json();
++    assert(accelerated.deadline < scheduled.deadline, "Retry now must shorten the future deadline");
++    assert(accelerated.deadline <= acceleratedPayload.serverNowMs);
+     const nowReplay = await api(conversationPath + "/retry/now", {token: issued.retryNowToken});
+     assert.equal(nowReplay.status, 200);
+     assert.equal((await diagnostics()).ledgerHash, accelerated.ledgerHash);

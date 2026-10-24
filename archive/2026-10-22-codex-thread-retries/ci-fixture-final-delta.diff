@@ -1,0 +1,25 @@
+diff --git a/portal/cmd/workspace-portal/coordination_test.go b/portal/cmd/workspace-portal/coordination_test.go
+index 28c45da..7d957ae 100644
+--- a/portal/cmd/workspace-portal/coordination_test.go
++++ b/portal/cmd/workspace-portal/coordination_test.go
+@@ -41,6 +41,7 @@ func TestCoordinationNotificationRetainsSettingsAndDeduplicatesNativeDelivery(t
+ 					switch request["method"] {
+ 					case "thread/read":
+ 						metadata := threadCommandFreshMetadata(thread, cwd, rollout)
++						metadata["modelProvider"] = "notification-fixture"
+ 						metadata["model"], metadata["reasoningEffort"] = "retained-model", "xhigh"
+ 						result = map[string]any{"thread": metadata}
+ 					case "thread/resume":
+diff --git a/portal/internal/web/server_test.go b/portal/internal/web/server_test.go
+index 540bde6..b6cb204 100644
+--- a/portal/internal/web/server_test.go
++++ b/portal/internal/web/server_test.go
+@@ -4148,7 +4148,7 @@ func TestShippedBrowserClientMatchesSessionAPI(t *testing.T) {
+ 		t.Fatal(err)
+ 	}
+ 	modulePath := filepath.Join(t.TempDir(), "conversation.mjs")
+-	for _, name := range []string{"uploads.js", "sync.js", "refresh.js", "questions.js", "citations.js"} {
++	for _, name := range []string{"uploads.js", "sync.js", "refresh.js", "questions.js", "citations.js", "retry.js"} {
+ 		dependency, err := http.Get(httpServer.URL + "/codex/assets/" + name)
+ 		if err != nil {
+ 			t.Fatal(err)

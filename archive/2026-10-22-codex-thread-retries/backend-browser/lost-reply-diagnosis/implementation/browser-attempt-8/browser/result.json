@@ -1,0 +1,55 @@
+{
+  "stage": "browser",
+  "command": [
+    "nix",
+    "develop",
+    "--no-update-lock-file",
+    "--command",
+    "python3",
+    "-c",
+    "import shutil,subprocess,sys,json; names=['go','gcc','ruby','node','git']; paths={n:shutil.which(n) for n in names}; print(json.dumps({'nixTools':paths}),file=sys.stderr,flush=True); assert all(paths.values()),paths; sys.exit(subprocess.run(sys.argv[1:]).returncode)",
+    "go",
+    "-C",
+    "portal",
+    "test",
+    "-mod=readonly",
+    "./internal/web",
+    "-run",
+    "^TestRetryBackendBrowser$",
+    "-count=1",
+    "-json",
+    "-timeout=360s"
+  ],
+  "actualExit": 1,
+  "elapsed": 78.41649077273905,
+  "missing": [
+    "TestRetryBackendBrowser",
+    "TestRetryBackendBrowser/desktop-member",
+    "TestRetryBackendBrowser/desktop-root",
+    "TestRetryBackendBrowser/mobile-member",
+    "TestRetryBackendBrowser/mobile-root"
+  ],
+  "missingRun": [],
+  "failed": [
+    "TestRetryBackendBrowser/desktop-root",
+    "TestRetryBackendBrowser/desktop-member",
+    "TestRetryBackendBrowser/mobile-root",
+    "TestRetryBackendBrowser/mobile-member",
+    "TestRetryBackendBrowser",
+    "package"
+  ],
+  "skipped": [],
+  "invalidJSON": [],
+  "caseErrors": [
+    "desktop-root: [Errno 2] No such file or directory: '/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/backend-browser/lost-reply-diagnosis/implementation/browser-attempt-8/browser/artifacts/desktop-root/manifest.json'",
+    "desktop-member: [Errno 2] No such file or directory: '/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/backend-browser/lost-reply-diagnosis/implementation/browser-attempt-8/browser/artifacts/desktop-member/manifest.json'",
+    "mobile-root: [Errno 2] No such file or directory: '/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/backend-browser/lost-reply-diagnosis/implementation/browser-attempt-8/browser/artifacts/mobile-root/manifest.json'",
+    "mobile-member: [Errno 2] No such file or directory: '/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/backend-browser/lost-reply-diagnosis/implementation/browser-attempt-8/browser/artifacts/mobile-member/manifest.json'"
+  ],
+  "after": [
+    "a62166a87658e16baa0efdddfea3a448ebebcc28",
+    "49dee759cd203a94eb898c6af5f67fbe99474028"
+  ],
+  "clean": true,
+  "pass": false
+}

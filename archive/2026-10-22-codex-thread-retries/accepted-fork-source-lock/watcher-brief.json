@@ -1,0 +1,65 @@
+{
+  "cwd": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/dev-workspace/portal",
+  "argv": [
+    "nix",
+    "shell",
+    "--inputs-from",
+    "..",
+    "nixpkgs#go",
+    "nixpkgs#ruby",
+    "nixpkgs#git",
+    "-c",
+    "go",
+    "test",
+    "-mod=readonly",
+    "./internal/web",
+    "-run",
+    "^(TestAcceptedForkSourceSharedLockRefusalAndReceiptRecovery|TestCreationFastSourceLockDoesNotWaitForLifecycleMutation|TestCreationReceiptRubyInitializerContract)$",
+    "-count=1",
+    "-timeout=45s",
+    "-json"
+  ],
+  "first_integration_execution": "HELD; lead-selected watcher only",
+  "expected_runtime": "Under 10s fixture runtime excluding compilation; unmeasured. Per-rendezvous limit 5s; Go timeout45s. Nix/compile duration uncertain.",
+  "required_leaf_tests": [
+    "TestAcceptedForkSourceSharedLockRefusalAndReceiptRecovery/source_ex_1/replacement=false",
+    "TestAcceptedForkSourceSharedLockRefusalAndReceiptRecovery/source_ex_1/replacement=true",
+    "TestAcceptedForkSourceSharedLockRefusalAndReceiptRecovery/source_ex_2/replacement=false",
+    "TestAcceptedForkSourceSharedLockRefusalAndReceiptRecovery/source_ex_2/replacement=true",
+    "TestAcceptedForkSourceSharedLockRefusalAndReceiptRecovery/journal_bound_recovery_keeps_created_fork_without_source",
+    "TestCreationFastSourceLockDoesNotWaitForLifecycleMutation",
+    "TestCreationReceiptRubyInitializerContract/direct=false/new/provider=",
+    "TestCreationReceiptRubyInitializerContract/direct=false/new/provider=openai",
+    "TestCreationReceiptRubyInitializerContract/direct=false/new/provider=pool",
+    "TestCreationReceiptRubyInitializerContract/direct=false/plan/provider=",
+    "TestCreationReceiptRubyInitializerContract/direct=false/plan/provider=openai",
+    "TestCreationReceiptRubyInitializerContract/direct=false/plan/provider=pool",
+    "TestCreationReceiptRubyInitializerContract/direct=false/fork/provider=",
+    "TestCreationReceiptRubyInitializerContract/direct=false/fork/provider=openai",
+    "TestCreationReceiptRubyInitializerContract/direct=false/fork/provider=pool",
+    "TestCreationReceiptRubyInitializerContract/direct=true/new/provider=",
+    "TestCreationReceiptRubyInitializerContract/direct=true/new/provider=openai",
+    "TestCreationReceiptRubyInitializerContract/direct=true/new/provider=pool",
+    "TestCreationReceiptRubyInitializerContract/direct=true/plan/provider=",
+    "TestCreationReceiptRubyInitializerContract/direct=true/plan/provider=openai",
+    "TestCreationReceiptRubyInitializerContract/direct=true/plan/provider=pool"
+  ],
+  "expected_leaf_count": 21,
+  "skip_or_missing_policy": "Any missing leaf/zero matches/skip is not a pass. Preserve stderr/stdout/exit/elapsed/source identities, holder/stage diagnostics. Do not retry or change source. Escalate failure to lead. No actual CI holder inference.",
+  "scope": "Disposable Handler/Ruby integration only. No native daemon/model/VM/browser/live/CI/lifecycle invocation.",
+  "source_inventory": "source-inventory.json",
+  "owned_files": {
+    "portal/internal/web/creation_source_lock_test.go": {
+      "sha256": "797541023eedce366c22c7708a45fe305fafb6ccfaa743a77a575cb86f317b91",
+      "bytes": 24263,
+      "lines": 658,
+      "mode": "0o644"
+    },
+    "test/support/accepted_fork_runner.rb": {
+      "sha256": "593fc6a8ee2a34b2e7020b4079bfca1ed2308589ba0015c2761719b910f2ecde",
+      "bytes": 9048,
+      "lines": 206,
+      "mode": "0o644"
+    }
+  }
+}

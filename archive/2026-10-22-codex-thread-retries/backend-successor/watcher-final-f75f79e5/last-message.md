@@ -1,0 +1,3 @@
+**Result: failed; batch stopped after command 1.** It exited 1 after 50 seconds, so command 2 did not run. No process remains running.
+
+Raw logs and exit status are retained at `/tmp/2026-10-22-codex-thread-retries-final-verification-watcher/` (`command-1.stdout.log`, `command-1.stderr.log`, `command-1.exit`). The browser result path is `failed-creation-candidate-recovery/r1/incorporation/browser-attempt-7`.

@@ -1,0 +1,98 @@
+# Retry icon consistency: affected FINAL review
+
+Retained reviewer0 to lead, 2026-10-24. Report for lead to save as ui-successor/review-icon-consistency.md. Reviewer remained read-only.
+
+## Findings and disposition
+
+No Blocking, Important or Advisory findings in exact A5743f94c/B1f737473. All four affected lanes—general, architecture/repetition, scope/proportionality and risk/compatibility—are complete.
+
+The smaller muted glyph, explicit normal weight, scoped hover/focus theme and preserved hit target implement the accepted refinement. The new repository guidance covers all repeated portal controls. CSS cache identities and the sole A selection are consistent. No new source finding prevents the separately authorized same-page browser comparison.
+
+This is source review, not a final browser/style comparison pass or new user visual acceptance. Prior Aa58/B207 review and capture6 evidence remain scoped to those revisions. Unchanged sender/native/backend conclusions are retained without repeating their investigation.
+
+## Identity and exact sources
+
+dev-session current printed2026-10-22-codex-thread-retries. Both environment identity markers were absent; the trusted exact workspace/session binding matched. Fresh live roster verified reviewer0 ready/review-purpose, gpt-6.1-sol/xhigh/read_only, thread01a162d6-4bf1-7142-bb04-7b871eb2d1af. No overrides, fallback, authored changes or nested agents.
+
+Read the RELEASED packet, accepted design104+ and standing all-controls preference, both repo AGENTS, mandatory skill/all four references and applicable guidance. Reused unchanged procedures from the current review context. Inspected committed deltas, complete refreshed series/final diffs, owning styles/actual renderer, consumer cache chain, fixture, instruction text and recorded quick/history evidence.
+
+| Repository | Base | Final head | Tree |
+| --- | --- | --- | --- |
+| A codex-web | ea64ef57fdd2ff5fd60715b62f2d1696bc0133e5 | 5743f94c2fbd01b65438847d2e2bab0f01df32ae | 481e7fa06bd98f2006e6d76758bce6b7134b52bb |
+| B dev-workspace | bf6d4b0c49600c15e17fe71248807ef43424e932 | 1f737473e322c2b6f6e914b99f6315c98e986d02 | e46a9648f340e03f03469cdbd3cb0486c4a2da47 |
+
+Clean heads/trees and fresh SSH feature publication independently matched; remote defaults remain ea64/bf6d. B's tested87588627 tree equals the final tree. Both final bundles and B's preconsolidation bundle verify. Final Nix source contents independently match all115 A and566 B tracked blobs/modes.
+
+No edits, tests, browser/native execution, builds, CI waits, live state/history access, claims, deployment, integration, release or lifecycle action. Lead saves the report; reviewer wrote no files.
+
+## Styling, accessibility, consumer and fixture
+
+A5743 changes only conversation/assets/conversation.css relative to reviewed a58. At:185–203, retry dismissal uses a centered 1.1rem glyph, explicit400 weight, line-height1, zero padding/border, .2rem radius and existing muted/surface tokens with portable fallbacks. Its 2rem desktop/2.5rem narrow hit target, right heading cell and visible keyboard outline remain. Renderer JS, accessible name/title, terminal-only visibility, Enter/click behavior, exact conversation/chain dismissal persistence and all active actions are byte-unchanged.
+
+The actual receipt reference in B style.css:349–353 has the same glyph typography and muted/rest/hover palette. B's three new rules at:276–278 are confined to #automatic-turn-retry .codex-retry-activity-dismiss. They select the existing muted/panel-2/text theme and icon-button's 2px accent focus ring with2px offset. Their specificity overrides generic host button hover styling. Receipt/dialog/other controls are not restyled. The larger retry target is an explicit accessibility/layout difference; no new styling API, component framework or global control refactor is introduced.
+
+session.html advances conversation.css11→12 and B style23→24. Actual Handler tests require both CSS URLs to return200/text-css. Unchanged app59, parent conversation25, retry child2 and question child4 correctly retain their cache identities because no JS source changed. This preserves the previous mandatory-cache-chain remedy without unnecessary JS churn.
+
+The enhanced actual-template fixture hydrates an accepted ordinary receipt through its supported disposable browser record and uses the production receipt renderer. It compares both real controls on the same desktop/mobile page at rest, hover and keyboard focus: font family/size/weight/line-height, color, background and radius. It checks400 weight, :focus-visible, retry outline, existing target dimensions and right alignment, and emits screenshots/JSON. It dismisses the real receipt and terminal retry using their own controls. Existing reload/new-chain/zero-footprint and active/count/time assertions remain.
+
+This is meaningful consumer-level verification prepared for execution; it is not a mock duplicate style component. No native input is generated by seeding the fixture record. Computed-style equality and visual appearance are still unproved on the final pair until the held browser operation runs.
+
+## Lasting instructions and documentation
+
+B AGENTS.md:17–23 adds the requested Portal controls paragraph. It tells future authors to inspect existing occurrences and reuse established appearance/interaction, including size, typography, colors, spacing, hover, keyboard focus and disabled states, using existing styles/components where available. It applies to all repeated controls, not only dismissal. Placement in the owning repository is durable and discoverable; it introduces no approval flow, new mechanism or unrelated implementation task.
+
+The accepted design explains the intentional target-size difference and the shared-control reference. Product portal/recovery/reference prose remains accurate because it describes dismissal semantics without prescribing glyph size/color. No product-guide edit is needed for this CSS refinement. Temporary capture/source evidence remains in the session records. Documentation/instruction scope and adequacy are acceptable.
+
+## Whole histories, consolidation and compatibility
+
+A's complete seven commits:
+df00fa36c820fc7a62ee5b8dd6e1745940ff8e15;
+6c828759440705c632e1902fa8309ccac446b050;
+c1f415ad5602c23e6443cced73cb59267a796f05;
+ac62eeeb9d8b1fa7b8ed8fb95ba8160acb7efa1c;
+f86290673d752c77b56c70228c3d26aced75e177;
+55e0300b27b6927b1693b3792042762f31a385cc;
+5743f94c2fbd01b65438847d2e2bab0f01df32ae.
+
+The owning unmerged visual commit is amended after exact55e; prior reviewed a58 and its evidence remain preserved. The first six commits are unchanged. No extra style-fixup, superseded approach or repeated dependency stream remains in A.
+
+B's complete ten commits:
+7262c24e4fbe9dbf8604e73590f9b5ef3d5dce99;
+b3c7187c6e26e269994433716a0ee719d0a7edf7;
+aafaf4195d695c4641ce4f9342d56a1786f237c3;
+9ccb4b11ade52afddb0d9d2bad6e75df15b3d6db;
+100108b0ec790698ab558f9527536d5c98185d99;
+9311c15a563fa25961a28d32f932e5b0263d7738;
+c8c31ab596f1645ec9e93b6b235fbf7de0ac60fb;
+f1ada8e9e6d81c9d17d61bae185a4e5fb6a50ad7;
+ffa4a41f64a1e76e62b9a95c3f62cfcfdfc7bbab;
+1f737473e322c2b6f6e914b99f6315c98e986d02.
+
+Original first three IDs remain exact. The sole codex-web selection is9ccb4b11; earlier a58 pin6b87e360 and later preconsolidation pin8936283f are consolidated into it. Presentation/guidance/comparison and cache-test changes are folded into their owning commits; the preconsolidation presentation/cache fixups are absent from the final series, whose tree equals tested87588627. No obsolete implementation, redundant pin, abandoned compatibility path or transitional migration remains. Commit purposes and supporting instructions/tests remain coherent.
+
+Independent stable patch IDs preserve:
+- accepted-only retention/protected Pending/ed2:4850f62fbfc3bb6569f25a5a4f946bcebce73a7f;
+- Incident2 prepared-plan:cbc1224fe9709472c635142d9ac1f772583697a9;
+- bounded HTTP runtime wait:4bd691213eac0f4b2b9c561c41600cbe5490520c;
+- composer handoff:4d4e62f237baedf6e7997c168daca940b3f7a9f5.
+
+B app/composer/keyboard/private upload fixture and production server/native/admission code are byte-identical to207. Deployed7b8c→pre-presentation c8c31ab5 differs only in the five A metadata files. Receipt-first recovery, bounded SH wait/fresh authority, immutable unknown identities and accepted-only >64 provenance remain supported. No sender/native investigation was repeated.
+
+B Go/Nix/vendor consistently select A5743, version v0.0.0-20261024072634-5743f94c2fbd, sumh1:kl5V+eAacBcbN3S/ZoxUUnvVXW7le9mnhlBhxgQyJiQ=, NARsha256-HFvEQcsmYJ3MIrsgGyterS1/3jnJrxrqYrRRovrarto= and vendorHashsha256-bNeFZMHChen0znapzj7liBwO6YluoxWeZQUO35rVOHc=. Actual consumers remain portal Go/embedded assets, flake source/model catalog and portal vendor digest. Full lock comparison against deployed7b8c changes only codex-web; unrelated nodes and all edges/follows remain unchanged.
+
+Preserved deployed7b8c is a nonancestor after reconstruction, not literally merged. Supported lineage rests on identical retained product patches and preserved refs/bundles/receipts. This substantive presentation successor is not called deployed-equivalent. W/C selection/composition is outside this review.
+
+No migrations: no database, native/protocol, submission-schema3, retry-schema1, browser-attempt or dismissal-key change; no sidecar, conversion/reset or new persistence. Old/new CSS uses the same DOM/labels/storage contracts. Mixed stale styling cannot change delivery or dismissal identity.
+
+## Evidence and remaining limits
+
+Inspected owner evidence, not reviewer execution:
+- A exact tested tree;17 Node pass/0 fail/0 skip; GoRetry0.022s. Final packet SHA256b3dd4674598df0cc6475c87305079a2339976586a4fd192717c36aedaece2a3d.
+- B committed cache/actual-CSS Handler and root/member upload tests0.417s; fixture syntax/pin validation PASS. Final/tested tree equality independently confirmed. Inventory SHA256f53fa97d0426c51c07e34a00a7cee88ef0077ded32c8ef24f98f65ef721dbe9e; quick logd950d2ad06a55998c930c22bb8aa0116abd3cd3af3389bc112caff2896cd119d.
+- Final B source /nix/store/6a4l0njspnnhb461q83497riv3s5000r-source, NARsha256-M4XLY1tEYWqi6TdOfBJNyKaDUm5ilcDYA7hIAb2Owqw=, exact final revision; its566 blobs/modes and A's115 match Git.
+- Capture6 returned0 with source unchanged at Aa58/B207; its selected retry/composer cases passed. This remains prior scoped evidence, not a run of the added same-page comparisons or final CSS.
+- No final browser/style comparison or new visual acceptance has occurred. No new native/package/build/CI/composition/deployment result is certified.
+
+Disposition: no findings for exact A5743/B1f737. Lead may save this report and continue the separately authorized focused comparison. User visual confirmation, later backend work and applicable composition/verification/deployment gates remain separate. No integration, claim/release or lifecycle permission follows. Retain this reviewer for material related revisions.
+
+Session: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-22-codex-thread-retries/

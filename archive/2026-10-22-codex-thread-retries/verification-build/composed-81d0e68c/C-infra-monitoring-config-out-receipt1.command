@@ -1,0 +1,1 @@
+nix path-info --json --recursive /nix/store/16vfm6prrab1p3kmkhlnvqiza43zrf1j-infra-monitoring-config

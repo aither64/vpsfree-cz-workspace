@@ -1,0 +1,1 @@
+nix path-info --json --recursive /nix/store/bzhhvp3fws720zqpi7w0vhxnld8801yf-workspace-agent-team-policy-tests

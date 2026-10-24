@@ -1,0 +1,1 @@
+nix build --no-write-lock-file --print-build-logs --json --out-link /home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-codex-thread-retries/verification-build/composed-81d0e68c/workspace-package /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-codex-thread-retries/workspace#packages.x86_64-linux.default
