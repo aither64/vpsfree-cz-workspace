@@ -3,7 +3,8 @@
 ## Goal and scope
 
 Update every HaveAPI server/client dependency in vpsadmin to 0.30.1. Configure
-API documentation examples for the published Go and Rust vpsAdmin clients.
+API documentation examples for the Go SDK and the Git-published Rust vpsAdmin
+SDK (the Rust crate is not published on crates.io).
 Carry forward the vpsadmin-webui work from 2026-10-19-haveapi-async-client into
 this session's own branch, replacing the custom client with the published async
 TypeScript npm client. Update KB manuals:vps:api with Python, Rust and
@@ -63,6 +64,8 @@ publication approval. Temporary rollout and review evidence stays here.
 
 ## Decisions
 
-The user's takeover direction authorizes reading and copying the prior WebUI
-work into this session, without modifying the other session's ownership/state.
+The user's takeover direction authorizes carrying forward the prior WebUI work.
+The user additionally permits reusing existing vpsadmin-webui PRs; prefer
+matching PRs and record exact source/head ownership and history provenance.
+Do not alter unrelated old-session repositories or lifecycle/records.
 Do not archive or stop this session as part of completing the task.
