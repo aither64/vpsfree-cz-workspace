@@ -1,0 +1,15 @@
+commit fb5d72fb44176ebee217370f761762afd275ab54
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Sat Oct 24 14:13:51 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Sat Oct 24 15:37:05 2026 +0200
+
+    ci: preserve commit ancestry in automated flake updates
+    
+    Use the pinned confctl CI package for candidate validation and revision
+    metadata. Resolve the nested nixpkgs follows path through the shared tool
+    while preserving the lock-only checks and existing flake commit subjects.
+    
+    Check the final lock against the saved workflow baseline before pushing.
+    Reject non-forward revisions and unavailable evidence, and start from the
+    actual master target so stale updates cannot absorb a later manual pin.

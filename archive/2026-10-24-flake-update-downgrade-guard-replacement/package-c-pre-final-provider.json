@@ -1,0 +1,210 @@
+{
+  "provider": "bdaed19e901237e05bd0a779f368e76cb311143f",
+  "created_at_utc": "2026-10-24T13:33:01.909128+00:00",
+  "projects": [
+    {
+      "project": "haveapi",
+      "worktree": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-24-flake-update-downgrade-guard-replacement/haveapi",
+      "branch": "2026-10-24-flake-update-downgrade-guard-replacement",
+      "target": "master",
+      "base": "67fcd34ba506264a5c7ee2e8e18a88d221c6f469",
+      "head": "d4dc3c7c6b15d3bdad51ce18f6959136dc68b23e",
+      "published_head": "d4dc3c7c6b15d3bdad51ce18f6959136dc68b23e",
+      "commits": [
+        "d4dc3c7c6b15d3bdad51ce18f6959136dc68b23e\tci: preserve flake input ancestry during automated updates"
+      ],
+      "changed_paths": [
+        ".github/workflows/update-nixpkgs.yml",
+        "doc/agent-instructions/development.md",
+        "utils/update-nixpkgs.sh"
+      ],
+      "diffstat": ".github/workflows/update-nixpkgs.yml  | 20 +++++++++++++++++---\n doc/agent-instructions/development.md | 11 +++++++++--\n utils/update-nixpkgs.sh               | 11 ++++++++---\n 3 files changed, 34 insertions(+), 8 deletions(-)",
+      "migration_lineage": "No migrations; no input lock or runtime dependency changed.",
+      "pin_stream": "One final external CI tool adoption; provider7ba361d22a4aac044cb02abf8397800bcf5726bf, no superseded pin commits",
+      "history": "One focused feature commit; no obsolete approaches or transitional compatibility paths in final branch history.",
+      "clean": true,
+      "observed_at_utc": "2026-10-24T12:27:22.162233+00:00",
+      "provider": "7ba361d22a4aac044cb02abf8397800bcf5726bf",
+      "old_range": {
+        "base": "67fcd34ba506264a5c7ee2e8e18a88d221c6f469",
+        "head": "aba4d7286621a1b3472dccf048f19c98752e015b"
+      },
+      "new_range": {
+        "base": "67fcd34ba506264a5c7ee2e8e18a88d221c6f469",
+        "head": "d4dc3c7c6b15d3bdad51ce18f6959136dc68b23e"
+      },
+      "range_diff": "1:  aba4d728 ! 1:  d4dc3c7c ci: preserve flake input ancestry during automated updates\n    @@ .github/workflows/update-nixpkgs.yml: concurrency:\n        cancel-in-progress: false\n      \n     +env:\n    -+  CONFCTL_FLAKE: github:vpsfreecz/confctl/d58181a4d8b0de716fdb93c56f524175dd36cce4#confctl\n    ++  CONFCTL_FLAKE: github:vpsfreecz/confctl/7ba361d22a4aac044cb02abf8397800bcf5726bf#confctl\n     +  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}\n     +\n      jobs:\n    @@ .github/workflows/update-nixpkgs.yml: jobs:\n              shell: bash\n              run: |\n     -          git push origin HEAD:${{ github.ref_name }}\n    ++          final_lock=\"$RUNNER_TEMP/flake-update-final.lock\"\n    ++          git show HEAD:flake.lock > \"$final_lock\"\n     +          nix shell \"$CONFCTL_FLAKE\" -c confctl inputs check-update \\\n    -+            --old-lock \"$UPDATE_OLD_LOCK\" --new-lock flake.lock\n    ++            --old-lock \"$UPDATE_OLD_LOCK\" --new-lock \"$final_lock\"\n     +          git push origin \"HEAD:${GITHUB_REF_NAME}\"\n     \n      ## doc/agent-instructions/development.md ##\n    @@ doc/agent-instructions/development.md: repository root unless explicitly stated\n     +  non-force push. If the target branch advances, rerun from its new baseline;\n     +  do not rebase an old generated lock update. The commit subject must be\n        `flake: nixpkgs <oldrev11> -> <newrev11>`.\n    -+  See the [shared guard contract](https://github.com/vpsfreecz/confctl/blob/d58181a4d8b0de716fdb93c56f524175dd36cce4/docs/flake-inputs.md#guarded-automated-updates) for supported sources and failure behavior.\n    ++  See the [shared guard contract](https://github.com/vpsfreecz/confctl/blob/7ba361d22a4aac044cb02abf8397800bcf5726bf/docs/flake-inputs.md#guarded-automated-updates) for supported sources and failure behavior.\n      \n      ## Rust generator and runtime",
+      "refresh_equivalence": "Substantive publication fix: validates HEAD blob plus final docs-only provider refresh. No patch equivalence claim. No migrations or supported deployed boundary.",
+      "pre_final_head": "d4dc3c7c6b15d3bdad51ce18f6959136dc68b23e",
+      "remote_lease_head": "d4dc3c7c6b15d3bdad51ce18f6959136dc68b23e",
+      "backup_ref": "refs/backup/2026-10-24-flake-update-downgrade-guard-replacement/before-final-provider",
+      "pre_final_commits": [
+        "d4dc3c7c6b15d3bdad51ce18f6959136dc68b23e ci: preserve flake input ancestry during automated updates"
+      ]
+    },
+    {
+      "project": "terraform-provider-vpsadmin",
+      "worktree": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-24-flake-update-downgrade-guard-replacement/terraform-provider-vpsadmin",
+      "branch": "2026-10-24-flake-update-downgrade-guard-replacement",
+      "target": "master",
+      "base": "2a2c1055302f86f8e250f1d7e4c331d62012efe8",
+      "head": "171e32d8bf6706748651ba33df6abb05849244fa",
+      "published_head": "171e32d8bf6706748651ba33df6abb05849244fa",
+      "commits": [
+        "171e32d8bf6706748651ba33df6abb05849244fa\tci: require forward-only flake input updates"
+      ],
+      "changed_paths": [
+        ".github/workflows/update-vpsadmin-flake.yml",
+        "README.md",
+        "tools/update-vpsadmin-flake-input.sh"
+      ],
+      "diffstat": ".github/workflows/update-vpsadmin-flake.yml | 19 +++++++++++++++++--\n README.md                                   | 15 +++++++++++++++\n tools/update-vpsadmin-flake-input.sh        | 18 +++++++++++++-----\n 3 files changed, 45 insertions(+), 7 deletions(-)",
+      "migration_lineage": "No migrations; no input lock or runtime dependency changed.",
+      "pin_stream": "One final external CI tool adoption; provider7ba361d22a4aac044cb02abf8397800bcf5726bf, no superseded pin commits",
+      "history": "One focused feature commit; no obsolete approaches or transitional compatibility paths in final branch history.",
+      "clean": true,
+      "observed_at_utc": "2026-10-24T12:27:24.413763+00:00",
+      "provider": "7ba361d22a4aac044cb02abf8397800bcf5726bf",
+      "old_range": {
+        "base": "2a2c1055302f86f8e250f1d7e4c331d62012efe8",
+        "head": "836e554b628c4d267f8e667ad1b9ef48260c676c"
+      },
+      "new_range": {
+        "base": "2a2c1055302f86f8e250f1d7e4c331d62012efe8",
+        "head": "171e32d8bf6706748651ba33df6abb05849244fa"
+      },
+      "range_diff": "1:  836e554 ! 1:  171e32d ci: require forward-only flake input updates\n    @@ .github/workflows/update-vpsadmin-flake.yml: on:\n        contents: write\n      \n     +env:\n    -+  CONFCTL_FLAKE: github:vpsfreecz/confctl/d58181a4d8b0de716fdb93c56f524175dd36cce4#confctl\n    ++  CONFCTL_FLAKE: github:vpsfreecz/confctl/7ba361d22a4aac044cb02abf8397800bcf5726bf#confctl\n     +  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}\n     +\n      jobs:\n    @@ .github/workflows/update-vpsadmin-flake.yml: jobs:\n            - name: Push update\n     -        run: git push origin \"HEAD:${GITHUB_REF_NAME}\"\n     +        run: |\n    ++          final_lock=\"$RUNNER_TEMP/flake-update-final.lock\"\n    ++          git show HEAD:flake.lock > \"$final_lock\"\n     +          nix shell \"$CONFCTL_FLAKE\" -c confctl inputs check-update \\\n    -+            --old-lock \"$UPDATE_OLD_LOCK\" --new-lock flake.lock\n    ++            --old-lock \"$UPDATE_OLD_LOCK\" --new-lock \"$final_lock\"\n     +          git push origin \"HEAD:${GITHUB_REF_NAME}\"\n     \n      ## README.md ##\n    @@ README.md: $ make test\n     +`.github/workflows/update-vpsadmin-flake.yml` and export `GITHUB_TOKEN` for the\n     +GitHub API, then run `tools/update-vpsadmin-flake-input.sh` and review its\n     +generated commit.\n    -+See the [shared guard contract](https://github.com/vpsfreecz/confctl/blob/d58181a4d8b0de716fdb93c56f524175dd36cce4/docs/flake-inputs.md#guarded-automated-updates) for supported sources and failure behavior.\n    ++See the [shared guard contract](https://github.com/vpsfreecz/confctl/blob/7ba361d22a4aac044cb02abf8397800bcf5726bf/docs/flake-inputs.md#guarded-automated-updates) for supported sources and failure behavior.\n     \n      ## tools/update-vpsadmin-flake-input.sh ##\n     @@ tools/update-vpsadmin-flake-input.sh: Update a flake input, verify that only flake.lock changed, and commit the",
+      "refresh_equivalence": "Substantive publication fix: validates HEAD blob plus final docs-only provider refresh. No patch equivalence claim. No migrations or supported deployed boundary.",
+      "pre_final_head": "171e32d8bf6706748651ba33df6abb05849244fa",
+      "remote_lease_head": "171e32d8bf6706748651ba33df6abb05849244fa",
+      "backup_ref": "refs/backup/2026-10-24-flake-update-downgrade-guard-replacement/before-final-provider",
+      "pre_final_commits": [
+        "171e32d8bf6706748651ba33df6abb05849244fa ci: require forward-only flake input updates"
+      ]
+    },
+    {
+      "project": "vpsadminos",
+      "worktree": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-24-flake-update-downgrade-guard-replacement/vpsadminos",
+      "branch": "2026-10-24-flake-update-downgrade-guard-replacement",
+      "target": "staging",
+      "base": "e2b2b9186de6e0aec66f87a0e4d16e86bc2d7854",
+      "head": "0552cfeecf127671e21dcb72db78b7188d342107",
+      "published_head": "0552cfeecf127671e21dcb72db78b7188d342107",
+      "commits": [
+        "0552cfeecf127671e21dcb72db78b7188d342107\tci: guard automated flake updates with ancestry checks"
+      ],
+      "changed_paths": [
+        ".github/workflows/flake-update.yml",
+        "README.md"
+      ],
+      "diffstat": ".github/workflows/flake-update.yml | 40 ++++++++++++++++++++++++++------------\n README.md                          | 12 ++++++++++++\n 2 files changed, 40 insertions(+), 12 deletions(-)",
+      "migration_lineage": "No migrations; no input lock or runtime dependency changed.",
+      "pin_stream": "One final external CI tool adoption; provider7ba361d22a4aac044cb02abf8397800bcf5726bf, no superseded pin commits",
+      "history": "One focused feature commit; no obsolete approaches or transitional compatibility paths in final branch history.",
+      "clean": true,
+      "observed_at_utc": "2026-10-24T12:27:26.846302+00:00",
+      "provider": "7ba361d22a4aac044cb02abf8397800bcf5726bf",
+      "old_range": {
+        "base": "e2b2b9186de6e0aec66f87a0e4d16e86bc2d7854",
+        "head": "1ae4f7f1db0e81acc08377f66688b7315e8974b3"
+      },
+      "new_range": {
+        "base": "e2b2b9186de6e0aec66f87a0e4d16e86bc2d7854",
+        "head": "0552cfeecf127671e21dcb72db78b7188d342107"
+      },
+      "range_diff": "1:  1ae4f7f1d ! 1:  0552cfeec ci: guard automated flake updates with ancestry checks\n    @@ .github/workflows/flake-update.yml: on:\n        contents: write\n      \n     +env:\n    -+  CONFCTL_FLAKE: github:vpsfreecz/confctl/d58181a4d8b0de716fdb93c56f524175dd36cce4#confctl\n    ++  CONFCTL_FLAKE: github:vpsfreecz/confctl/7ba361d22a4aac044cb02abf8397800bcf5726bf#confctl\n     +  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}\n     +\n      jobs:\n    @@ .github/workflows/flake-update.yml: jobs:\n                fi\n     -          git push\n     +          git commit -F \"$commit_file\"\n    ++          final_lock=\"$RUNNER_TEMP/flake-update-final.lock\"\n    ++          git show HEAD:flake.lock > \"$final_lock\"\n     +          nix shell \"$CONFCTL_FLAKE\" -c confctl inputs check-update \\\n    -+            --old-lock \"$UPDATE_OLD_LOCK\" --new-lock flake.lock\n    ++            --old-lock \"$UPDATE_OLD_LOCK\" --new-lock \"$final_lock\"\n     +          git push origin \"HEAD:${GITHUB_REF_NAME}\"\n     \n      ## README.md ##\n    @@ README.md: the kernel.\n     +new baseline instead of rebasing the old lock update. The CI tool does not\n     +become a runtime flake input.\n     +\n    -+See the [shared guard contract](https://github.com/vpsfreecz/confctl/blob/d58181a4d8b0de716fdb93c56f524175dd36cce4/docs/flake-inputs.md#guarded-automated-updates) for supported sources and failure behavior.\n    ++See the [shared guard contract](https://github.com/vpsfreecz/confctl/blob/7ba361d22a4aac044cb02abf8397800bcf5726bf/docs/flake-inputs.md#guarded-automated-updates) for supported sources and failure behavior.",
+      "refresh_equivalence": "Substantive publication fix: validates HEAD blob plus final docs-only provider refresh. No patch equivalence claim. No migrations or supported deployed boundary.",
+      "pre_final_head": "0552cfeecf127671e21dcb72db78b7188d342107",
+      "remote_lease_head": "0552cfeecf127671e21dcb72db78b7188d342107",
+      "backup_ref": "refs/backup/2026-10-24-flake-update-downgrade-guard-replacement/before-final-provider",
+      "pre_final_commits": [
+        "0552cfeecf127671e21dcb72db78b7188d342107 ci: guard automated flake updates with ancestry checks"
+      ]
+    },
+    {
+      "project": "vpsf-status",
+      "worktree": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-24-flake-update-downgrade-guard-replacement/vpsf-status",
+      "branch": "2026-10-24-flake-update-downgrade-guard-replacement",
+      "target": "master",
+      "base": "587cd65bb02e6dddea7f6b6409e42a15f36ab4fb",
+      "head": "7641e48787281d29cdd0df95f7ee06555c73fac6",
+      "published_head": "7641e48787281d29cdd0df95f7ee06555c73fac6",
+      "commits": [
+        "7641e48787281d29cdd0df95f7ee06555c73fac6\tGuard automated flake updates with commit ancestry checks"
+      ],
+      "changed_paths": [
+        ".github/workflows/update-dependencies.yml",
+        "README.md"
+      ],
+      "diffstat": ".github/workflows/update-dependencies.yml | 26 +++++++++++++++++++++-----\n README.md                                 | 12 ++++++++++++\n 2 files changed, 33 insertions(+), 5 deletions(-)",
+      "migration_lineage": "No migrations; no input lock or runtime dependency changed.",
+      "pin_stream": "One final external CI tool adoption; provider7ba361d22a4aac044cb02abf8397800bcf5726bf, no superseded pin commits",
+      "history": "One focused feature commit; no obsolete approaches or transitional compatibility paths in final branch history.",
+      "clean": true,
+      "observed_at_utc": "2026-10-24T12:27:28.691924+00:00",
+      "provider": "7ba361d22a4aac044cb02abf8397800bcf5726bf",
+      "old_range": {
+        "base": "587cd65bb02e6dddea7f6b6409e42a15f36ab4fb",
+        "head": "26f789dee78ef9b2896a4e0e1c9a3fb1cb20ff4e"
+      },
+      "new_range": {
+        "base": "587cd65bb02e6dddea7f6b6409e42a15f36ab4fb",
+        "head": "7641e48787281d29cdd0df95f7ee06555c73fac6"
+      },
+      "range_diff": "1:  26f789d ! 1:  7641e48 Guard automated flake updates with commit ancestry checks\n    @@ .github/workflows/update-dependencies.yml: concurrency:\n        cancel-in-progress: false\n      \n     +env:\n    -+  CONFCTL_FLAKE: github:vpsfreecz/confctl/d58181a4d8b0de716fdb93c56f524175dd36cce4#confctl\n    ++  CONFCTL_FLAKE: github:vpsfreecz/confctl/7ba361d22a4aac044cb02abf8397800bcf5726bf#confctl\n     +  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}\n     +\n      jobs:\n    @@ .github/workflows/update-dependencies.yml: jobs:\n                  exit 0\n                fi\n      \n    ++          final_lock=\"$RUNNER_TEMP/flake-update-final.lock\"\n    ++          git show HEAD:flake.lock > \"$final_lock\"\n     +          nix shell \"$CONFCTL_FLAKE\" -c confctl inputs check-update \\\n    -+            --old-lock \"$UPDATE_OLD_LOCK\" --new-lock flake.lock\n    ++            --old-lock \"$UPDATE_OLD_LOCK\" --new-lock \"$final_lock\"\n                git push origin \"HEAD:${{ github.event.repository.default_branch }}\"\n     \n      ## README.md ##\n    @@ README.md: do not use Nix, install `lefthook` first.\n     +new baseline instead of rebasing the old lock update. The CI tool does not\n     +become a runtime flake input.\n     +\n    -+See the [shared guard contract](https://github.com/vpsfreecz/confctl/blob/d58181a4d8b0de716fdb93c56f524175dd36cce4/docs/flake-inputs.md#guarded-automated-updates) for supported sources and failure behavior.\n    ++See the [shared guard contract](https://github.com/vpsfreecz/confctl/blob/7ba361d22a4aac044cb02abf8397800bcf5726bf/docs/flake-inputs.md#guarded-automated-updates) for supported sources and failure behavior.",
+      "refresh_equivalence": "Substantive publication fix: validates HEAD blob plus final docs-only provider refresh. No patch equivalence claim. No migrations or supported deployed boundary.",
+      "pre_final_head": "521c5b627a845e2f2e7378b309b1ea8f86f3d13d",
+      "remote_lease_head": "7641e48787281d29cdd0df95f7ee06555c73fac6",
+      "backup_ref": "refs/backup/2026-10-24-flake-update-downgrade-guard-replacement/before-final-provider",
+      "pre_final_commits": [
+        "7641e48787281d29cdd0df95f7ee06555c73fac6 Guard automated flake updates with commit ancestry checks",
+        "521c5b627a845e2f2e7378b309b1ea8f86f3d13d Fix dependency updater vendor hash replacement"
+      ]
+    },
+    {
+      "project": "vpsfree-irc-bot",
+      "worktree": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-24-flake-update-downgrade-guard-replacement/vpsfree-irc-bot",
+      "branch": "2026-10-24-flake-update-downgrade-guard-replacement",
+      "target": "master",
+      "base": "94ac4eb5a7caf0456fff7df86a44cae198463276",
+      "head": "a2ab57b8169ad978f6f8542dd19cf5199517b0cb",
+      "published_head": "a2ab57b8169ad978f6f8542dd19cf5199517b0cb",
+      "commits": [
+        "a2ab57b8169ad978f6f8542dd19cf5199517b0cb\tci: preserve commit ancestry in automated flake updates"
+      ],
+      "changed_paths": [
+        ".github/workflows/nixpkgs-update.yml",
+        "README.md",
+        "tools/update_nixpkgs_flake.sh"
+      ],
+      "diffstat": ".github/workflows/nixpkgs-update.yml | 21 ++++++++++++++++++---\n README.md                            | 14 ++++++++++++++\n tools/update_nixpkgs_flake.sh        | 11 +++++++++--\n 3 files changed, 41 insertions(+), 5 deletions(-)",
+      "migration_lineage": "No migrations; no input lock or runtime dependency changed.",
+      "pin_stream": "One final external CI tool adoption; provider7ba361d22a4aac044cb02abf8397800bcf5726bf, no superseded pin commits",
+      "history": "One focused feature commit; no obsolete approaches or transitional compatibility paths in final branch history.",
+      "clean": true,
+      "observed_at_utc": "2026-10-24T12:27:30.698975+00:00",
+      "provider": "7ba361d22a4aac044cb02abf8397800bcf5726bf",
+      "old_range": {
+        "base": "94ac4eb5a7caf0456fff7df86a44cae198463276",
+        "head": "404d897d5268226ed49364cfc3f371fc1d7c9cfc"
+      },
+      "new_range": {
+        "base": "94ac4eb5a7caf0456fff7df86a44cae198463276",
+        "head": "a2ab57b8169ad978f6f8542dd19cf5199517b0cb"
+      },
+      "range_diff": "1:  404d897 ! 1:  a2ab57b ci: preserve commit ancestry in automated flake updates\n    @@ .github/workflows/nixpkgs-update.yml: on:\n        contents: write\n      \n     +env:\n    -+  CONFCTL_FLAKE: github:vpsfreecz/confctl/d58181a4d8b0de716fdb93c56f524175dd36cce4#confctl\n    ++  CONFCTL_FLAKE: github:vpsfreecz/confctl/7ba361d22a4aac044cb02abf8397800bcf5726bf#confctl\n     +  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}\n     +\n      jobs:\n    @@ .github/workflows/nixpkgs-update.yml: jobs:\n            - name: Push updates\n     -        run: git push origin HEAD:master\n     +        run: |\n    ++          final_lock=\"$RUNNER_TEMP/flake-update-final.lock\"\n    ++          git show HEAD:flake.lock > \"$final_lock\"\n     +          nix shell \"$CONFCTL_FLAKE\" -c confctl inputs check-update \\\n    -+            --old-lock \"$UPDATE_OLD_LOCK\" --new-lock flake.lock\n    ++            --old-lock \"$UPDATE_OLD_LOCK\" --new-lock \"$final_lock\"\n     +          git push origin HEAD:master\n     \n      ## README.md ##\n    @@ README.md: Until [bundix#68](https://github.com/nix-community/bundix/pull/68) is\n     +For a local update, set `CONFCTL_FLAKE` to the immutable package reference in\n     +`.github/workflows/nixpkgs-update.yml` and export `GITHUB_TOKEN` for the GitHub API,\n     +then run `tools/update_nixpkgs_flake.sh` and review its generated commit.\n    -+See the [shared guard contract](https://github.com/vpsfreecz/confctl/blob/d58181a4d8b0de716fdb93c56f524175dd36cce4/docs/flake-inputs.md#guarded-automated-updates) for supported sources and failure behavior.\n    ++See the [shared guard contract](https://github.com/vpsfreecz/confctl/blob/7ba361d22a4aac044cb02abf8397800bcf5726bf/docs/flake-inputs.md#guarded-automated-updates) for supported sources and failure behavior.\n     \n      ## tools/update_nixpkgs_flake.sh ##\n     @@ tools/update_nixpkgs_flake.sh: Update the nixpkgs flake input and commit the isolated flake.lock change as:",
+      "refresh_equivalence": "Substantive publication fix: validates HEAD blob plus final docs-only provider refresh. No patch equivalence claim. No migrations or supported deployed boundary.",
+      "pre_final_head": "a2ab57b8169ad978f6f8542dd19cf5199517b0cb",
+      "remote_lease_head": "a2ab57b8169ad978f6f8542dd19cf5199517b0cb",
+      "backup_ref": "refs/backup/2026-10-24-flake-update-downgrade-guard-replacement/before-final-provider",
+      "pre_final_commits": [
+        "a2ab57b8169ad978f6f8542dd19cf5199517b0cb ci: preserve commit ancestry in automated flake updates"
+      ]
+    }
+  ],
+  "frozen_hashes": {
+    "package-c-post-review.py": "158cfaed2c0bd75462efdf2ca9921bc3b4236017f8d4f86d61723ae6ce9c99cb",
+    "package-c-verification-manifest.json": "31d8445a688c8c3b6f44cddaa1eae9fb34a5a658afcf8f45c5f5bfcea02ded9d",
+    "review-report.md": "c0dd0bf4f9fc4c8bde301db1ed80f7d63633a2bf032c585221bc67e947892a3e"
+  }
+}

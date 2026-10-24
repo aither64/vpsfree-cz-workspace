@@ -1,0 +1,14 @@
+ci: preserve flake input ancestry during automated updates
+
+A scheduled nixpkgs update can replace a manually advanced revision with a
+channel tip that does not contain it. Use the pinned confctl CI guard to
+validate the full candidate lock graph before accepting the update.
+
+Keep the existing flake checks and commit subject, then validate the final
+lock against the original workflow baseline before an ordinary push. A
+rejected candidate or unavailable evidence stops publication; a moved
+remote requires generating a new update from its current baseline.
+
+Reuse confctl's Git mirrors between runs, including rejected updates. A
+restored cache never skips the ancestry checks.
+

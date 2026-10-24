@@ -1,0 +1,41 @@
+commit 550717765d58e9f28d960ea5bca3459ace86eb9e
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Sat Oct 24 14:03:14 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Sat Oct 24 19:24:07 2026 +0200
+
+    Guard automated input updates with cached Git ancestry
+    
+    Automated flake updates can replace manually pinned commits with revisions
+    that do not contain them, including dependencies behind nested follows.
+    
+    Add an explicit forward-only transaction that prepares a separate Nix lock,
+    checks the complete logical input graph and validates ancestry before
+    installing or committing. Preserve the checkout on rejection or missing
+    evidence, detect concurrent changes and keep existing manual update behavior.
+    
+    Use the existing full Git mirror cache for immutable GitHub commit proofs.
+    Install cold mirrors atomically, fetch missing SHAs and serialize evidence
+    and changelog reads with a shared URL lock. Reject insufficient or redirected
+    history and keep ordinary Git transport configuration with safe errors.
+    
+    Expose the same policy for final committed-lock validation and full resolved
+    JSON revisions for consumers. Document failure statuses, cache recovery and
+    the limits of ancestry preservation.
+
+commit 822c0e35dbe2549111912f539116b4225dfd3035
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Sat Oct 24 15:31:10 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Sat Oct 24 19:24:08 2026 +0200
+
+    Keep packaged Ruby startup independent of caller preloads
+    
+    A development shell can set RUBYOPT to load its Bundler environment.
+    Starting packaged confctl in that shell then activates the caller bundle
+    with confctl's Ruby and gems, preventing even input listing.
+    
+    Disable RUBYOPT parsing only for the package interpreter. Keep RubyGems and
+    the caller environment available to child commands so Git hooks can load
+    their own bundle. Cover startup and a real Ruby pre-commit hook with a
+    caller-bundle fixture, and document the startup boundary.

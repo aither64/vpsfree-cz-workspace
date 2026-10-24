@@ -1,0 +1,18 @@
+--- package-c-r-post-review.py
++++ package-c-r-terraform-smoke-2.py
+@@ -298,13 +298,13 @@
+         if selected != 'workflows':
+             raise ValueError('Expected exactly the singleton workflows test')
+         self.run(['./test-runner.sh', 'test', '-f', '--jobs', '1', '--stop-on-failure',
+-                  '--state-dir', str(runtime / 'terraform-workflows-state'), 'workflows'],
++                  '--state-dir', str(runtime / 't'), 'workflows'],
+                  cwd=repo, label='terraform-workflows-only')
+         config = self.json(['nix', 'build', '--no-link', '--json', installable], cwd=repo,
+                            label='selected-workflows-config')
+         paths = sorted({path for entry in config for path in entry['outputs'].values()})
+         self.json(['nix', 'path-info', '--json', '--recursive', *paths], label='selected-workflows-runtime-closure')
+-        self.receipt.update(integration=item['integration'], state_directory=str(runtime / 'terraform-workflows-state'))
++        self.receipt.update(integration=item['integration'], state_directory=str(runtime / 't'))
+ 
+ 
+ def main():

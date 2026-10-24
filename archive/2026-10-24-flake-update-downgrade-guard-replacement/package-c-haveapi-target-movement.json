@@ -1,0 +1,53 @@
+{
+  "observed_utc": "2026-10-24T15:49:14.049723+00:00",
+  "canonical_ssh": "git@github.com:vpsfreecz/haveapi.git",
+  "old_reviewed_range": {
+    "base": "67fcd34ba506264a5c7ee2e8e18a88d221c6f469",
+    "head": "baec8e58e11a4868a6c713e70d406709bb94c152"
+  },
+  "fresh_target": "7ac977a26080d45d44b6608aafad2cadd2ec7f81",
+  "target_delta_paths": [
+    "M\tAGENTS.md"
+  ],
+  "target_delta": "diff --git a/AGENTS.md b/AGENTS.md\nindex ed92f36e..7862c7e3 100644\n--- a/AGENTS.md\n+++ b/AGENTS.md\n@@ -31,6 +31,9 @@ top-level Nix development shell.\n - Client sources mirror their language: JS sources in `clients/js/src` build into `clients/js/dist`; Ruby/Go/PHP client libraries are under their respective folders with gem/composer metadata.\n - `templates/` holds starter projects; `dist/` is for build artifacts; `utils/` contains helper scripts (e.g., doc sync).\n \n+Do not track dependency lockfiles for library components in Git. Application\n+lockfiles may be tracked.\n+\n ## Coding Style & Naming Conventions\n - Ruby code follows the repo `.rubocop.yml` (2-space indent, relaxed metrics); run `bundle exec rubocop` in the relevant Ruby component before submitting.\n - Keep generated outputs (`dist/`, `pkg/`, `html_doc/`) build-only\u2014edit source files in `lib/`, `src/`, `doc/`, or templates instead.\n",
+  "target_history": "commit 7ac977a26080d45d44b6608aafad2cadd2ec7f81\nAuthor:     Jakub Skokan <jakub.skokan@havefun.cz>\nAuthorDate: Sat Oct 24 15:04:49 2026 +0000\nCommit:     Jakub Skokan <jakub.skokan@havefun.cz>\nCommitDate: Sat Oct 24 15:04:49 2026 +0000\n\n    AGENTS: document library lockfile policy\n    \n    Keep the repository instructions aligned with the library/application\n    policy: library dependency lockfiles are not tracked, while application\n    lockfiles may be tracked.\n",
+  "feature_contained_in_target": false,
+  "patch_equivalent_feature_in_target": false,
+  "git_cherry": "+ baec8e58e11a4868a6c713e70d406709bb94c152",
+  "target_changed_paths_disjoint_from_feature": true,
+  "source_input_workflow_comparisons": [
+    {
+      "path": "flake.nix",
+      "base_blob": "0563d53e2ae3bcbf1d6b9e3cfb181c1993b84fee",
+      "new_target_blob": "0563d53e2ae3bcbf1d6b9e3cfb181c1993b84fee",
+      "unchanged": true
+    },
+    {
+      "path": "flake.lock",
+      "base_blob": "886d2d96b89d2fbd3acb244149e4300ab1f3cb06",
+      "new_target_blob": "886d2d96b89d2fbd3acb244149e4300ab1f3cb06",
+      "unchanged": true
+    },
+    {
+      "path": ".github/workflows/update-nixpkgs.yml",
+      "base_blob": "fdf668621060bf41f5af9266c6c030627a162085",
+      "new_target_blob": "fdf668621060bf41f5af9266c6c030627a162085",
+      "unchanged": true
+    },
+    {
+      "path": "utils/update-nixpkgs.sh",
+      "base_blob": "bb28dfeb33c7b40bace679bd270049df4d26bc11",
+      "new_target_blob": "bb28dfeb33c7b40bace679bd270049df4d26bc11",
+      "unchanged": true
+    },
+    {
+      "path": "doc/agent-instructions/development.md",
+      "base_blob": "096b7121896d368f9c4b68306c3a91d0db001ba8",
+      "new_target_blob": "096b7121896d368f9c4b68306c3a91d0db001ba8",
+      "unchanged": true
+    }
+  ],
+  "proposed_refresh": "If directed: preserve old reviewed/published range; clean one-commit transplant/rebase to7ac977, verify range-diff exactpatch, no input/providerpinchange; HaveAPI quick9+hooks/staticcheck, narrow affected history/equivalence gate, newexactheadCI; no provider/all8refresh. Any conflict/materialdelta stops.",
+  "real_pattern_assessment": "Behavior scripts/flake dev environment/input lock bytes unchanged, but Git/source tree and NAR identity change via AGENTS. Prior fullrealHaveAPI pass remains historical exactoldsource evidence; simplest exact-final-head proof is one HaveAPI-only real nonpublishing pattern after narrowreview, fresh artifact/root. No otherpattern/race/TF/provider repeat justified by this disjoint guidance-only target advance.",
+  "no_feature_mutation_or_new_runtime": true
+}

@@ -1,0 +1,13 @@
+ci: require forward-only flake input updates
+
+Use a separately pinned confctl CI tool to prevent automated updates from
+replacing manually advanced commits with history that omits them. Validate
+the full candidate graph and preserve the existing vpsadmin selection,
+lock-only checks and flake commit message format.
+
+Read resolved revision metadata through the shared tool and check the final
+lock against the saved workflow baseline before the ordinary push. Reject
+both non-forward candidates and unavailable ancestry evidence.
+
+Reuse confctl's Git mirrors between runs, including rejected updates. A
+restored cache never skips the ancestry checks.

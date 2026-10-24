@@ -1,0 +1,77 @@
+--- package-c7-git-cache-post-review.py	2026-10-24 20:03:00.147522427 +0200
++++ package-c7-git-cache-org-post-review-2.py	2026-10-24 21:18:23.716160698 +0200
+@@ -15,7 +15,7 @@
+ WORKSPACE = HERE.parent.parent
+ SLUG = HERE.name
+ PROVIDER = '822c0e35dbe2549111912f539116b4225dfd3035'
+-MANIFEST = HERE / 'package-c7-git-cache-manifest.json'
++MANIFEST = HERE / 'package-c7-git-cache-org-manifest-2.json'
+ RUNNER = HERE / 'package-c-r-post-review.py'
+ RUNNER_SHA = '237b5b40646218726a33355ec0a35a706e96330390454621035558291b70f1bf'
+ 
+@@ -85,17 +85,25 @@
+             raise ValueError('Session/owned root identity mismatch')
+         provider_root = Path(manifest['provider_receipt_root'])
+         self.provider = read_provider(provider_root, Path(args.review_receipt))
++        expected_receipts = manifest['provider_receipt_hashes']
++        if any(sha(provider_root / name) != value for name, value in expected_receipts.items()):
++            raise ValueError('Accepted exported203 identity/status receipt changed')
+         super().__init__(args)
+         if self.root.stat().st_uid != os.getuid() or self.root.is_symlink():
+             raise ValueError('Owned root identity mismatch')
+-        self.cache = self.root / 'xdg-cache'
+-        if self.cache.is_symlink():
+-            raise ValueError('Shared owned cache cannot be a symlink')
+-        if not self.cache.exists():
+-            self.cache.mkdir(mode=0o700)
+-            (self.cache / 'owner.json').write_text(json.dumps({'slug': SLUG, 'manifest_sha256': sha(MANIFEST)}))
+-        if json.loads((self.cache / 'owner.json').read_text()) != {'slug': SLUG, 'manifest_sha256': sha(MANIFEST)}:
+-            raise ValueError('Shared cache belongs to another packet')
++        # Reuse only the previously observed cache; never copy, preseed or relabel it.
++        ownership = manifest['shared_cache_ownership']
++        shared_root = Path(ownership['original_root'])
++        if (shared_root.is_symlink() or not shared_root.is_dir()
++                or shared_root.stat().st_uid != os.getuid()
++                or json.loads((shared_root / 'owner.json').read_text()) != ownership['original_root_owner']):
++            raise ValueError('Original shared root ownership changed')
++        self.cache = shared_root / 'xdg-cache'
++        if (self.cache.is_symlink() or not self.cache.is_dir() or self.cache.stat().st_uid != os.getuid()
++                or json.loads((self.cache / 'owner.json').read_text()) != ownership['original_cache_owner']):
++            raise ValueError('Original shared cache ownership changed')
++        self.receipt['shared_cache_provenance'] = ownership
++        self.receipt['cold_cache_claim'] = False
+         self.env.update(XDG_CACHE_HOME=str(self.cache))
+         self.receipt.update(provider_identities_sha256=sha(provider_root / 'identities.json'),
+                             provider_status_sha256=sha(provider_root / 'status.json'), provider_identity=self.provider,
+@@ -104,6 +112,22 @@
+                             scope=self.manifest['scope'], omitted_scope=self.manifest['omitted_scope'])
+         self.save()
+ 
++    def source(self, item):
++        repo = super().source(item)
++        # The old tools shell writes this local Bundler file before any update.
++        # Ignore exactly that generated file before baseline; retain all other checks.
++        exclude = repo / '.git/info/exclude'
++        before = sha(exclude)
++        with exclude.open('a') as output:
++            output.write('\n/.bundle/config\n')
++        self.receipt['fixture_local_exclude'] = {
++            'rule': '/.bundle/config', 'path': str(exclude), 'before_sha256': before,
++            'after_sha256': sha(exclude), 'phase': 'before baseline and shell setup',
++            'source': self.manifest['fixture_correction']['source'],
++        }
++        self.save()
++        return repo
++
+     def state(self, repo, label):
+         head = self.run(['git', 'rev-parse', 'HEAD'], cwd=repo, label=label + '-head').read_text().strip()
+         index = self.run(['git', 'ls-files', '--stage', '-z'], cwd=repo, label=label + '-index')
+@@ -309,7 +333,7 @@
+     parser.add_argument('--review-receipt', required=True)
+     parser.add_argument('--manifest-sha256', required=True)
+     parser.add_argument('stage', choices=['project'])
+-    parser.add_argument('project')
++    parser.add_argument('project', choices=['vpsadminos-org-configuration'])
+     return execute(parser.parse_args())
+ 
+ 

@@ -1,0 +1,111 @@
+diff --git a/.github/workflows/flake-update.yml b/.github/workflows/flake-update.yml
+index c7699da60..a68667765 100644
+--- a/.github/workflows/flake-update.yml
++++ b/.github/workflows/flake-update.yml
+@@ -8,6 +8,10 @@ on:
+ permissions:
+   contents: write
+ 
++env:
++  CONFCTL_FLAKE: github:vpsfreecz/confctl/5436d3d7c36d3d5174eab3c44e3578830749d3db#confctl
++  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
++
+ jobs:
+   update:
+     name: Update flake.lock
+@@ -16,35 +20,45 @@ jobs:
+     timeout-minutes: 30
+ 
+     steps:
+-      - uses: actions/checkout@v6
++      - uses: actions/checkout@v7
+         with:
+           fetch-depth: 0
++          ref: ${{ github.ref_name }}
++
++      - uses: cachix/install-nix-action@31.11.3
+ 
+-      - uses: cachix/install-nix-action@v31
++      - name: Save lock baseline
++        run: |
++          cp flake.lock "$RUNNER_TEMP/flake-update-baseline.lock"
++          echo "UPDATE_OLD_LOCK=$RUNNER_TEMP/flake-update-baseline.lock" >> "$GITHUB_ENV"
+ 
+       - name: Update flake inputs
+         run: |
+-          cp -f flake.lock /tmp/flake.lock.old
+-          nix flake update
++          nix shell "$CONFCTL_FLAKE" -c confctl inputs update --forward-only --all
+ 
+       - name: Commit and push changes
+         run: |
++          set -euo pipefail
++
+           if git diff --quiet; then
+             echo "No flake.lock changes."
+             exit 0
+           fi
+ 
+-          changed_inputs=$(ruby .github/workflows/scripts/flake-update-commit-message.rb inputs /tmp/flake.lock.old flake.lock)
+-          changed_body=$(ruby .github/workflows/scripts/flake-update-commit-message.rb body /tmp/flake.lock.old flake.lock)
++          changed_inputs=$(ruby .github/workflows/scripts/flake-update-commit-message.rb inputs "$UPDATE_OLD_LOCK" flake.lock)
++          changed_body=$(ruby .github/workflows/scripts/flake-update-commit-message.rb body "$UPDATE_OLD_LOCK" flake.lock)
+ 
+           git add flake.lock
+           git config user.name "github-actions[bot]"
+           git config user.email "github-actions[bot]@users.noreply.github.com"
+ 
++          commit_file=$(mktemp)
++          trap 'rm -f "$commit_file"' EXIT
++
+           body_lines=$(printf '%s\n' "$changed_body" | sed '/^$/d' | wc -l | awk '{print $1}')
+           if [ "$body_lines" -eq 1 ]; then
+             single_line=$(printf '%s\n' "$changed_body" | head -n1 | sed 's/: / /')
+-            git commit -m "flake: $single_line"
++            printf 'flake: %s\n' "$single_line" > "$commit_file"
+           else
+             if [ -n "$changed_inputs" ]; then
+               commit_message="flake: update $changed_inputs"
+@@ -53,15 +67,17 @@ jobs:
+             fi
+ 
+             if [ -n "$changed_body" ]; then
+-              commit_file=$(mktemp)
+               {
+                 printf '%s\n\n' "$commit_message"
+                 printf '%s\n' "$changed_body"
+               } > "$commit_file"
+-              git commit -F "$commit_file"
+-              rm -f "$commit_file"
+             else
+-              git commit -m "$commit_message"
++              printf '%s\n' "$commit_message" > "$commit_file"
+             fi
+           fi
+-          git push
++          git commit -F "$commit_file"
++          final_lock="$RUNNER_TEMP/flake-update-final.lock"
++          git show HEAD:flake.lock > "$final_lock"
++          nix shell "$CONFCTL_FLAKE" -c confctl inputs check-update \
++            --old-lock "$UPDATE_OLD_LOCK" --new-lock "$final_lock"
++          git push origin "HEAD:${GITHUB_REF_NAME}"
+diff --git a/README.md b/README.md
+index cea0418e0..8f26cafb3 100644
+--- a/README.md
++++ b/README.md
+@@ -139,3 +139,15 @@ the kernel.
+ * [Manual pages](https://man.vpsadminos.org)
+ * [Reference documentation](https://ref.vpsadminos.org)
+ * https://linuxcontainers.org/
++
++## Automated flake updates
++
++The `flake-update.yml` workflow updates all root inputs using an independently
++pinned confctl CI tool. It requires ancestry preservation across the changed
++lock graph and stops publication on rejection or unavailable evidence. It
++checks the final lock against a saved baseline after hooks and checks, then
++uses an ordinary non-force push. If the target branch advances, rerun from its
++new baseline instead of rebasing the old lock update. The CI tool does not
++become a runtime flake input.
++
++See the [shared guard contract](https://github.com/vpsfreecz/confctl/blob/5436d3d7c36d3d5174eab3c44e3578830749d3db/docs/flake-inputs.md#guarded-automated-updates) for supported sources and failure behavior.

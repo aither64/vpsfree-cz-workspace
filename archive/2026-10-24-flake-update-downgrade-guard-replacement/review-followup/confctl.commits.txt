@@ -1,0 +1,39 @@
+commit 7ba361d22a4aac044cb02abf8397800bcf5726bf
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Sat Oct 24 14:03:14 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Sat Oct 24 14:20:58 2026 +0200
+
+    Guard automated input updates with ancestry validation
+    
+    Automated channel updates can replace a manually pinned commit with an older
+    or divergent upstream tip. Add an explicit forward-only mode that validates
+    every reachable lock dependency against its predecessor before installing a
+    separate Nix candidate lock. GitHub comparisons fail closed when evidence is
+    unavailable, and local snapshots reject concurrent checkout changes.
+    
+    Resolve full follows paths for update selection and lock readers, expose a
+    read-only final lock check, and provide full revisions in JSON listings for
+    workflow commit messages. Keep ordinary manual updates and explicit setters,
+    while preserving the cached-metadata guard and existing changelog options.
+    
+    Document source support, failure statuses and transaction limits alongside
+    focused graph, provider, transaction and CLI coverage. No runtime-state or
+    schema migration is required.
+
+commit bdaed19e901237e05bd0a779f368e76cb311143f
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Sat Oct 24 15:31:10 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Sat Oct 24 15:31:10 2026 +0200
+
+    Keep packaged Ruby startup independent of caller preloads
+    
+    A development shell can set RUBYOPT to load its Bundler environment.
+    Starting packaged confctl in that shell then activates the caller bundle
+    with confctl's Ruby and gems, preventing even input listing.
+    
+    Disable RUBYOPT parsing only for the package interpreter. Keep RubyGems and
+    the caller environment available to child commands so Git hooks can load
+    their own bundle. Cover startup and a real Ruby pre-commit hook with a
+    caller-bundle fixture, and document the startup boundary.

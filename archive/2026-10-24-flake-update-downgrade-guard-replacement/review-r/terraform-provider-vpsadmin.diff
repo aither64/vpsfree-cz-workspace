@@ -1,0 +1,112 @@
+diff --git a/.github/workflows/update-vpsadmin-flake.yml b/.github/workflows/update-vpsadmin-flake.yml
+index ace0e23..d4d2013 100644
+--- a/.github/workflows/update-vpsadmin-flake.yml
++++ b/.github/workflows/update-vpsadmin-flake.yml
+@@ -8,6 +8,10 @@ on:
+ permissions:
+   contents: write
+ 
++env:
++  CONFCTL_FLAKE: github:vpsfreecz/confctl/5436d3d7c36d3d5174eab3c44e3578830749d3db#confctl
++  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
++
+ jobs:
+   update:
+     runs-on: ubuntu-latest
+@@ -17,9 +21,15 @@ jobs:
+         uses: actions/checkout@v7
+         with:
+           fetch-depth: 0
++          ref: ${{ github.ref_name }}
+ 
+       - name: Install Nix
+-        uses: cachix/install-nix-action@v31
++        uses: cachix/install-nix-action@31.11.3
++
++      - name: Save lock baseline
++        run: |
++          cp flake.lock "$RUNNER_TEMP/flake-update-baseline.lock"
++          echo "UPDATE_OLD_LOCK=$RUNNER_TEMP/flake-update-baseline.lock" >> "$GITHUB_ENV"
+ 
+       - name: Setup git
+         run: |
+@@ -30,4 +40,9 @@ jobs:
+         run: tools/update-vpsadmin-flake-input.sh
+ 
+       - name: Push update
+-        run: git push origin "HEAD:${GITHUB_REF_NAME}"
++        run: |
++          final_lock="$RUNNER_TEMP/flake-update-final.lock"
++          git show HEAD:flake.lock > "$final_lock"
++          nix shell "$CONFCTL_FLAKE" -c confctl inputs check-update \
++            --old-lock "$UPDATE_OLD_LOCK" --new-lock "$final_lock"
++          git push origin "HEAD:${GITHUB_REF_NAME}"
+diff --git a/README.md b/README.md
+index 04c8f14..baabc0e 100644
+--- a/README.md
++++ b/README.md
+@@ -60,3 +60,18 @@ $ make test
+ $ make test-get-token
+ $ make test-integration
+ ```
++
++## Automated flake updates
++
++The `update-vpsadmin-flake.yml` workflow uses a separately pinned confctl CI
++package to require commit ancestry preservation across the full changed lock graph.
++Rejected candidates and unavailable evidence stop publication. The workflow
++checks the final lock against its saved baseline after hooks and checks, then
++uses an ordinary non-force push. If the target branch advances, rerun from its
++new baseline instead of rebasing the old lock update.
++
++For a local update, set `CONFCTL_FLAKE` to the immutable package reference in
++`.github/workflows/update-vpsadmin-flake.yml` and export `GITHUB_TOKEN` for the
++GitHub API, then run `tools/update-vpsadmin-flake-input.sh` and review its
++generated commit.
++See the [shared guard contract](https://github.com/vpsfreecz/confctl/blob/5436d3d7c36d3d5174eab3c44e3578830749d3db/docs/flake-inputs.md#guarded-automated-updates) for supported sources and failure behavior.
+diff --git a/tools/update-vpsadmin-flake-input.sh b/tools/update-vpsadmin-flake-input.sh
+index d64d3f0..854a160 100755
+--- a/tools/update-vpsadmin-flake-input.sh
++++ b/tools/update-vpsadmin-flake-input.sh
+@@ -11,6 +11,8 @@ Update a flake input, verify that only flake.lock changed, and commit the
+ result using the repository's flake update commit message format.
+ 
+ Defaults to updating the vpsadmin input.
++Set CONFCTL_FLAKE to the immutable CI package reference in the update workflow
++and export GITHUB_TOKEN for GitHub ancestry evidence.
+ EOF
+ }
+ 
+@@ -48,12 +50,16 @@ if ! git diff --quiet || ! git diff --cached --quiet; then
+   exit 1
+ fi
+ 
++: "${CONFCTL_FLAKE:?Set CONFCTL_FLAKE to the pinned confctl CI package}"
++
+ old_rev="$(
+-  nix flake metadata --json --no-write-lock-file . \
+-    | jq -er --arg input "$input" '.locks.nodes[$input].locked.rev'
++  nix shell "$CONFCTL_FLAKE" -c confctl inputs ls --json "$input" | jq -er --arg input "$input" '
++    map(select(.input == $input))
++    | if length == 1 then .[0].rev | select(type == "string" and length > 0) else empty end
++  '
+ )"
+ 
+-nix flake update "$input"
++nix shell "$CONFCTL_FLAKE" -c confctl inputs update --forward-only "$input"
+ 
+ if git diff --quiet -- flake.lock; then
+   echo "flake input ${input} is already up to date at ${old_rev:0:9}"
+@@ -68,8 +74,10 @@ if [ "$changed_files" != "flake.lock" ]; then
+ fi
+ 
+ new_rev="$(
+-  nix flake metadata --json --no-write-lock-file . \
+-    | jq -er --arg input "$input" '.locks.nodes[$input].locked.rev'
++  nix shell "$CONFCTL_FLAKE" -c confctl inputs ls --json "$input" | jq -er --arg input "$input" '
++    map(select(.input == $input))
++    | if length == 1 then .[0].rev | select(type == "string" and length > 0) else empty end
++  '
+ )"
+ 
+ git add flake.lock

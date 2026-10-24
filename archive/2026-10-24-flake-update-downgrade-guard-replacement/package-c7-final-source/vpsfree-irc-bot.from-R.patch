@@ -1,0 +1,72 @@
+diff --git a/.github/workflows/nixpkgs-update.yml b/.github/workflows/nixpkgs-update.yml
+index a83e9d6..4b58633 100644
+--- a/.github/workflows/nixpkgs-update.yml
++++ b/.github/workflows/nixpkgs-update.yml
+@@ -8,7 +8,7 @@ permissions:
+   contents: write
+ 
+ env:
+-  CONFCTL_FLAKE: github:vpsfreecz/confctl/5436d3d7c36d3d5174eab3c44e3578830749d3db#confctl
++  CONFCTL_FLAKE: github:vpsfreecz/confctl/822c0e35dbe2549111912f539116b4225dfd3035#confctl
+   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+ 
+ jobs:
+@@ -22,6 +22,14 @@ jobs:
+ 
+       - uses: cachix/install-nix-action@31.11.3
+ 
++      - name: Restore confctl cache
++        uses: actions/cache/restore@v6
++        with:
++          path: ~/.cache/confctl
++          key: confctl-cache-${{ runner.os }}-${{ github.run_id }}
++          restore-keys: |
++            confctl-cache-${{ runner.os }}
++
+       - name: Save lock baseline
+         run: |
+           cp flake.lock "$RUNNER_TEMP/flake-update-baseline.lock"
+@@ -44,3 +52,10 @@ jobs:
+           nix shell "$CONFCTL_FLAKE" -c confctl inputs check-update \
+             --old-lock "$UPDATE_OLD_LOCK" --new-lock "$final_lock"
+           git push origin HEAD:master
++
++      - name: Save confctl cache
++        if: ${{ !cancelled() }}
++        uses: actions/cache/save@v6
++        with:
++          path: ~/.cache/confctl
++          key: confctl-cache-${{ runner.os }}-${{ github.run_id }}
+diff --git a/README.md b/README.md
+index 800c13c..07ba1ee 100644
+--- a/README.md
++++ b/README.md
+@@ -105,6 +105,11 @@ uses an ordinary non-force push. If the target branch advances, rerun from its
+ new baseline instead of rebasing the old lock update.
+ 
+ For a local update, set `CONFCTL_FLAKE` to the immutable package reference in
+-`.github/workflows/nixpkgs-update.yml` and export `GITHUB_TOKEN` for the GitHub API,
+-then run `tools/update_nixpkgs_flake.sh` and review its generated commit.
+-See the [shared guard contract](https://github.com/vpsfreecz/confctl/blob/5436d3d7c36d3d5174eab3c44e3578830749d3db/docs/flake-inputs.md#guarded-automated-updates) for supported sources and failure behavior.
++`.github/workflows/nixpkgs-update.yml`, then run
++`tools/update_nixpkgs_flake.sh` and review its generated commit.
++
++The workflow saves confctl's Git mirrors in `~/.cache/confctl` even when an
++update is rejected. Every update checks ancestry, whether the cache was
++restored or freshly cloned.
++
++See the [shared guard contract](https://github.com/vpsfreecz/confctl/blob/822c0e35dbe2549111912f539116b4225dfd3035/docs/flake-inputs.md#guarded-automated-updates) for supported sources and failure behavior.
+diff --git a/tools/update_nixpkgs_flake.sh b/tools/update_nixpkgs_flake.sh
+index 583a02d..7edb914 100755
+--- a/tools/update_nixpkgs_flake.sh
++++ b/tools/update_nixpkgs_flake.sh
+@@ -12,8 +12,7 @@ Update the nixpkgs flake input and commit the isolated flake.lock change as:
+ 
+ The script refuses to start with tracked changes present and refuses to commit
+ if the update modifies anything other than flake.lock.
+-Set CONFCTL_FLAKE to the immutable CI package reference in the update workflow
+-and export GITHUB_TOKEN for GitHub ancestry evidence.
++Set CONFCTL_FLAKE to the immutable CI package reference in the update workflow.
+ EOF
+ }
+ 

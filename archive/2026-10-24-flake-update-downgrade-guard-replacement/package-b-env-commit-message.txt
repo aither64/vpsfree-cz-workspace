@@ -1,0 +1,10 @@
+Keep packaged Ruby startup independent of caller preloads
+
+A development shell can set RUBYOPT to load its Bundler environment.
+Starting packaged confctl in that shell then activates the caller bundle
+with confctl's Ruby and gems, preventing even input listing.
+
+Disable RUBYOPT parsing only for the package interpreter. Keep RubyGems and
+the caller environment available to child commands so Git hooks can load
+their own bundle. Cover startup and a real Ruby pre-commit hook with a
+caller-bundle fixture, and document the startup boundary.

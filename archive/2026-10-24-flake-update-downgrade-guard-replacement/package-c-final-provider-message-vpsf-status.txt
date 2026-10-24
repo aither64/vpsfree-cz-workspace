@@ -1,0 +1,11 @@
+Guard automated flake updates with commit ancestry checks
+
+Use the pinned confctl CI tool to preserve manually advanced revisions
+across the full changed lock graph. Read the resolved nixpkgs revision
+through the shared resolver so nested follows links do not depend on
+serialized node names, while retaining existing flake commit subjects.
+
+Keep the Go dependency update, tests and package build. Check the final
+lock against the original workflow baseline before the ordinary push;
+non-forward candidates and missing evidence stop publication.
+

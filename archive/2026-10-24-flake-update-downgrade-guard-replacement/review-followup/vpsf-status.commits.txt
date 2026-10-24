@@ -1,0 +1,31 @@
+commit 13830fc82bb2fe3ed7a212832d578e3a61c1d1cb
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Sat Oct 24 14:13:29 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Sat Oct 24 15:35:13 2026 +0200
+
+    Guard automated flake updates with commit ancestry checks
+    
+    Use the pinned confctl CI tool to preserve manually advanced revisions
+    across the full changed lock graph. Read the resolved nixpkgs revision
+    through the shared resolver so nested follows links do not depend on
+    serialized node names, while retaining existing flake commit subjects.
+    
+    Keep the Go dependency update, tests and package build. Check the final
+    lock against the original workflow baseline before the ordinary push;
+    non-forward candidates and missing evidence stop publication.
+
+commit c8869b8f274dd840539a94da30d19d355cd623c1
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Sat Oct 24 15:13:29 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Sat Oct 24 15:36:13 2026 +0200
+
+    Fix dependency updater vendor hash replacement
+    
+    Pass computed hashes as data so base64 slashes cannot break the Perl
+    replacement. Update the default hash in the current conditional package
+    expression while preserving its optional local-source override.
+    
+    Reject unsupported or ambiguous assignments before writing, and cover
+    hash characters and the current package layout with regression tests.

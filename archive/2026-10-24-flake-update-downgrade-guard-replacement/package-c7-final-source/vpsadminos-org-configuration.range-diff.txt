@@ -1,0 +1,27 @@
+1:  949220c ! 1:  ca96c95 ci: guard automated flake updates
+    @@ Commit message
+         for Ruby hooks, install the declared hooks and select the new guard tool
+         explicitly. Refresh imported actions to current hosted-runner releases.
+     
+    +    Reuse confctl's Git mirrors between runs, including rejected updates. A
+    +    restored cache never skips the ancestry checks.
+    +
+      ## .github/workflows/daily-update.yml ##
+     @@ .github/workflows/daily-update.yml: on:
+      permissions:
+        contents: write
+      
+     +env:
+    -+  CONFCTL_FLAKE: 'github:vpsfreecz/confctl/5436d3d7c36d3d5174eab3c44e3578830749d3db#confctl'
+    ++  CONFCTL_FLAKE: 'github:vpsfreecz/confctl/822c0e35dbe2549111912f539116b4225dfd3035#confctl'
+     +  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+     +
+      jobs:
+    @@ .github/workflows/daily-update.yml: jobs:
+      
+            - name: Save confctl cache
+     -        uses: actions/cache/save@v5
+    ++        if: ${{ !cancelled() }}
+     +        uses: actions/cache/save@v6
+              with:
+                path: ~/.cache/confctl

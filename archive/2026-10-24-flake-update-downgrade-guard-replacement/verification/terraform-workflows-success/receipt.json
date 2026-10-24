@@ -1,0 +1,610 @@
+{
+  "slug": "2026-10-24-flake-update-downgrade-guard-replacement",
+  "manifest_sha256": "bbeec793c0c6407023bd4f5eda8d942dbeaeded7cc7e435725d4352575023e8c",
+  "review_receipt_sha256": "2b9ecce9d66a5994e664b99ba0c1f1454631c14a923a53f58b25ece48ded99a9",
+  "stage": "terraform-smoke",
+  "driver_sha256": "685afed748231be3b8b9a708de4dc22045217282d6a7f54a6a67e6200da2d179",
+  "commands": [
+    {
+      "argv": [
+        "git",
+        "clone",
+        "--no-checkout",
+        "--filter=blob:none",
+        "--no-tags",
+        "git@github.com:vpsfreecz/terraform-provider-vpsadmin.git",
+        "/tmp/flake-update-guard-tf3/terraform-smoke/checkout"
+      ],
+      "cwd": null,
+      "pid": 770130,
+      "pgid": 770130,
+      "stdout": "/tmp/flake-update-guard-tf3/terraform-smoke/001-clone-exact-source.stdout",
+      "stderr": "/tmp/flake-update-guard-tf3/terraform-smoke/001-clone-exact-source.stderr",
+      "label": "clone-exact-source",
+      "exit_status": 0,
+      "elapsed_seconds": 1.57,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "5ab054b2c54c869f4df5f70a35a936e34f5cb86031140ca14148bad2d3e90db2",
+      "kernel_interrupt": false,
+      "kernel_build_reported": false
+    },
+    {
+      "argv": [
+        "git",
+        "checkout",
+        "--detach",
+        "f835d63b14931712129771792039f645cf6a3305"
+      ],
+      "cwd": "/tmp/flake-update-guard-tf3/terraform-smoke/checkout",
+      "pid": 770389,
+      "pgid": 770389,
+      "stdout": "/tmp/flake-update-guard-tf3/terraform-smoke/002-checkout-exact-head.stdout",
+      "stderr": "/tmp/flake-update-guard-tf3/terraform-smoke/002-checkout-exact-head.stderr",
+      "label": "checkout-exact-head",
+      "exit_status": 0,
+      "elapsed_seconds": 1.423,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "7455cb8aa7f694d3b4e03ed73553fe544302dcedde19d7d6100721f7f5399b86",
+      "kernel_interrupt": false,
+      "kernel_build_reported": false
+    },
+    {
+      "argv": [
+        "git",
+        "remote",
+        "set-url",
+        "--push",
+        "origin",
+        "disabled://nonpublishing-verification"
+      ],
+      "cwd": "/tmp/flake-update-guard-tf3/terraform-smoke/checkout",
+      "pid": 770511,
+      "pgid": 770511,
+      "stdout": "/tmp/flake-update-guard-tf3/terraform-smoke/003-disable-push.stdout",
+      "stderr": "/tmp/flake-update-guard-tf3/terraform-smoke/003-disable-push.stderr",
+      "label": "disable-push",
+      "exit_status": 0,
+      "elapsed_seconds": 0.012,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kernel_interrupt": false,
+      "kernel_build_reported": false
+    },
+    {
+      "argv": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "cwd": "/tmp/flake-update-guard-tf3/terraform-smoke/checkout",
+      "pid": 770514,
+      "pgid": 770514,
+      "stdout": "/tmp/flake-update-guard-tf3/terraform-smoke/004-source-head.stdout",
+      "stderr": "/tmp/flake-update-guard-tf3/terraform-smoke/004-source-head.stderr",
+      "label": "source-head",
+      "exit_status": 0,
+      "elapsed_seconds": 0.008,
+      "stdout_sha256": "67dc64a95b131f0acff91359f9ff8a0ee752595b7845bd6ad11e51670e3d2520",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kernel_interrupt": false,
+      "kernel_build_reported": false
+    },
+    {
+      "argv": [
+        "git",
+        "ls-tree",
+        "-r",
+        "--full-tree",
+        "HEAD"
+      ],
+      "cwd": "/tmp/flake-update-guard-tf3/terraform-smoke/checkout",
+      "pid": 770518,
+      "pgid": 770518,
+      "stdout": "/tmp/flake-update-guard-tf3/terraform-smoke/005-source-tree.stdout",
+      "stderr": "/tmp/flake-update-guard-tf3/terraform-smoke/005-source-tree.stderr",
+      "label": "source-tree",
+      "exit_status": 0,
+      "elapsed_seconds": 0.008,
+      "stdout_sha256": "f063ddbe52172131cc99e1bc70447d1b928095f2e38ad737b11ab6266012059e",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kernel_interrupt": false,
+      "kernel_build_reported": false
+    },
+    {
+      "argv": [
+        "nix",
+        "flake",
+        "metadata",
+        "--json",
+        "--no-write-lock-file",
+        "/tmp/flake-update-guard-tf3/terraform-smoke/checkout"
+      ],
+      "cwd": null,
+      "pid": 770521,
+      "pgid": 770521,
+      "stdout": "/tmp/flake-update-guard-tf3/terraform-smoke/006-terraform-baseline-metadata.stdout",
+      "stderr": "/tmp/flake-update-guard-tf3/terraform-smoke/006-terraform-baseline-metadata.stderr",
+      "label": "terraform-baseline-metadata",
+      "exit_status": 0,
+      "elapsed_seconds": 0.169,
+      "stdout_sha256": "eb3183ec935ea77fec53ac71b46cecf9cae02be55aacbe468419394cc1ece044",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kernel_interrupt": false,
+      "kernel_build_reported": false
+    },
+    {
+      "argv": [
+        "nix",
+        "flake",
+        "archive",
+        "--json",
+        "--no-write-lock-file",
+        "/tmp/flake-update-guard-tf3/terraform-smoke/checkout"
+      ],
+      "cwd": null,
+      "pid": 770546,
+      "pgid": 770546,
+      "stdout": "/tmp/flake-update-guard-tf3/terraform-smoke/007-terraform-baseline-source-archive.stdout",
+      "stderr": "/tmp/flake-update-guard-tf3/terraform-smoke/007-terraform-baseline-source-archive.stderr",
+      "label": "terraform-baseline-source-archive",
+      "exit_status": 0,
+      "elapsed_seconds": 0.169,
+      "stdout_sha256": "968d786eb84e61587c5a2cc98973d2f2d05ae14e2723c9873d98062e33d29757",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kernel_interrupt": false,
+      "kernel_build_reported": false
+    },
+    {
+      "argv": [
+        "nix",
+        "path-info",
+        "--json",
+        "--recursive",
+        "/nix/store/3ib4ns4q84wcjfqim5wc0jsjw7v18lpd-source",
+        "/nix/store/5b2ic4sxjc2lzgxk4hninyw22r5gv5qr-source",
+        "/nix/store/7ayldlmwj1pi7yh8d6665jsngj0rpdpb-source",
+        "/nix/store/935k42qc6hyjl91zlxqxz58mzjf0m320-source",
+        "/nix/store/d6mryll7gbj6hbczvyrvnflcyxxq11zn-source",
+        "/nix/store/jh718ag4jr33p20vj3pay0d6r6h108fj-source",
+        "/nix/store/kfcxqcxb9hcq6x33sg4cmwakbb1ifwg9-source",
+        "/nix/store/rx6nc2dk29njhn80h63xygn6l4fgb3pb-source",
+        "/nix/store/x4cardk9amcfpx2r02v8ic20aclgjxf4-source",
+        "/nix/store/zd7z6pw3pkk6099kjvjryqq5xxgblygw-source"
+      ],
+      "cwd": null,
+      "pid": 770568,
+      "pgid": 770568,
+      "stdout": "/tmp/flake-update-guard-tf3/terraform-smoke/008-terraform-baseline-source-closure.stdout",
+      "stderr": "/tmp/flake-update-guard-tf3/terraform-smoke/008-terraform-baseline-source-closure.stderr",
+      "label": "terraform-baseline-source-closure",
+      "exit_status": 0,
+      "elapsed_seconds": 0.119,
+      "stdout_sha256": "fbdcd98615d48b72a7df9379dffc5987f0ece938581e40cb9131311ba2dff4bb",
+      "stderr_sha256": "8c3df0940dc02f6a3d0dd88e5456309caed56b9648b9bf9e84085a7b1ee2956d",
+      "kernel_interrupt": false,
+      "kernel_build_reported": false
+    },
+    {
+      "argv": [
+        "nix",
+        "derivation",
+        "show",
+        "--recursive",
+        ".#tests.x86_64-linux.workflows"
+      ],
+      "cwd": "/tmp/flake-update-guard-tf3/terraform-smoke/checkout",
+      "pid": 770597,
+      "pgid": 770597,
+      "stdout": "/tmp/flake-update-guard-tf3/terraform-smoke/009-selected-workflows-derivations.stdout",
+      "stderr": "/tmp/flake-update-guard-tf3/terraform-smoke/009-selected-workflows-derivations.stderr",
+      "label": "selected-workflows-derivations",
+      "exit_status": 0,
+      "elapsed_seconds": 5.825,
+      "stdout_sha256": "1e84e31c0b8c4fa197d67ec1ec2569d76ff1c3bc3f9bef1269d1af116afbfd14",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kernel_interrupt": false,
+      "kernel_build_reported": false
+    },
+    {
+      "argv": [
+        "./test-runner.sh",
+        "ls",
+        "workflows"
+      ],
+      "cwd": "/tmp/flake-update-guard-tf3/terraform-smoke/checkout",
+      "pid": 771392,
+      "pgid": 771392,
+      "stdout": "/tmp/flake-update-guard-tf3/terraform-smoke/010-selected-workflows-metadata.stdout",
+      "stderr": "/tmp/flake-update-guard-tf3/terraform-smoke/010-selected-workflows-metadata.stderr",
+      "label": "selected-workflows-metadata",
+      "exit_status": 0,
+      "elapsed_seconds": 6.323,
+      "stdout_sha256": "563d8b51236fa88a35d1c96c6aeea835282a3b06cf7d097cacdf08319f5dc380",
+      "stderr_sha256": "ad6d831c64e455a2ba93193f99286781092591d0523acdfe37b6a41281f80bbf",
+      "kernel_interrupt": false,
+      "kernel_build_reported": false
+    },
+    {
+      "argv": [
+        "./test-runner.sh",
+        "test",
+        "-f",
+        "--jobs",
+        "1",
+        "--stop-on-failure",
+        "--state-dir",
+        "/tmp/flake-update-guard-tf3/terraform-smoke/runner-temp/t",
+        "workflows"
+      ],
+      "cwd": "/tmp/flake-update-guard-tf3/terraform-smoke/checkout",
+      "pid": 772320,
+      "pgid": 772320,
+      "stdout": "/tmp/flake-update-guard-tf3/terraform-smoke/011-terraform-workflows-only.stdout",
+      "stderr": "/tmp/flake-update-guard-tf3/terraform-smoke/011-terraform-workflows-only.stderr",
+      "label": "terraform-workflows-only",
+      "exit_status": 0,
+      "elapsed_seconds": 1990.397,
+      "stdout_sha256": "327199565b16621b2cf1d084c898f1dd7846ecf7c0681fc48f674fcf0ea56666",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kernel_interrupt": false,
+      "kernel_build_reported": false
+    },
+    {
+      "argv": [
+        "nix",
+        "build",
+        "--no-link",
+        "--json",
+        ".#tests.x86_64-linux.workflows"
+      ],
+      "cwd": "/tmp/flake-update-guard-tf3/terraform-smoke/checkout",
+      "pid": 1338099,
+      "pgid": 1338099,
+      "stdout": "/tmp/flake-update-guard-tf3/terraform-smoke/012-selected-workflows-config.stdout",
+      "stderr": "/tmp/flake-update-guard-tf3/terraform-smoke/012-selected-workflows-config.stderr",
+      "label": "selected-workflows-config",
+      "exit_status": 0,
+      "elapsed_seconds": 9.126,
+      "stdout_sha256": "b90054f04e88701b4b5dc1a2060118f66515658c51898991060894372d2b944f",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kernel_interrupt": false,
+      "kernel_build_reported": false
+    },
+    {
+      "argv": [
+        "nix",
+        "path-info",
+        "--json",
+        "--recursive",
+        "/nix/store/jqm7vxj5rlql9kxm6kji0jhcvnqp6ysv-os-test-workflows.json"
+      ],
+      "cwd": null,
+      "pid": 1338786,
+      "pgid": 1338786,
+      "stdout": "/tmp/flake-update-guard-tf3/terraform-smoke/013-selected-workflows-runtime-closure.stdout",
+      "stderr": "/tmp/flake-update-guard-tf3/terraform-smoke/013-selected-workflows-runtime-closure.stderr",
+      "label": "selected-workflows-runtime-closure",
+      "exit_status": 0,
+      "elapsed_seconds": 0.57,
+      "stdout_sha256": "f09f226d5b146a5b4c46c371eb86d73f56e39b9dfe4ac4877cec13cbe12be635",
+      "stderr_sha256": "8c3df0940dc02f6a3d0dd88e5456309caed56b9648b9bf9e84085a7b1ee2956d",
+      "kernel_interrupt": false,
+      "kernel_build_reported": false
+    }
+  ],
+  "started_utc": "2026-10-24T15:38:58Z",
+  "provider_head": "5436d3d7c36d3d5174eab3c44e3578830749d3db",
+  "complete": true,
+  "source": {
+    "project": "terraform-provider-vpsadmin",
+    "head": "f835d63b14931712129771792039f645cf6a3305",
+    "tree": "ac32517d2ff02743bd50c1e639affd0881a22386",
+    "ssh_remote": "git@github.com:vpsfreecz/terraform-provider-vpsadmin.git",
+    "workflow": ".github/workflows/update-vpsadmin-flake.yml",
+    "source_files": [
+      {
+        "path": ".github/workflows/update-vpsadmin-flake.yml",
+        "git_blob": "d4d20134cc9502fab3bb45fdfc76db6ddd9d2f37",
+        "sha256": "990bfabb49ae8a2aaa5626fcf6a6ff6837c9a609ad904d6b369b7115b8c72557"
+      },
+      {
+        "path": "Makefile",
+        "git_blob": "a7e38c08eb3afbf3837439edfa616c5afca353d8",
+        "sha256": "069fe9f8ebb407d7fe5a9ba9670f7970d7bad581460143d437b9b80799017497"
+      },
+      {
+        "path": "README.md",
+        "git_blob": "baabc0eebe35d58c8494fd18335de3e2f7ec0dde",
+        "sha256": "02d5a9e3a4fdb1a708202b0af119fb58da5e73739c49dbe29ea76573149dbb1b"
+      },
+      {
+        "path": "flake.lock",
+        "git_blob": "6cca89f6b1fbed029294d338680e5195c168f43e",
+        "sha256": "a1643702334dcbb1993ca064359182e7705b54024e31fb7445082acc105b7b8a"
+      },
+      {
+        "path": "flake.nix",
+        "git_blob": "1b2474f3b354196df14c183377a2738c9ff53bb8",
+        "sha256": "c84186e20f50180fabd46b89d47ea84cd0847eca452e5e7db86ae8bdc0f42ee8"
+      },
+      {
+        "path": "test-runner.sh",
+        "git_blob": "7411cc48732a55044c78dc33b69f933aa2216abe",
+        "sha256": "a08681451c0d70aadd736db6776430276efb4c2b5120c2f827e765c7820dd434"
+      },
+      {
+        "path": "tests/all-tests.nix",
+        "git_blob": "eb54676bc86cf58dd764b0588a5e9c5fca58b01d",
+        "sha256": "1f2a297040055dc800ab109e31c8b934faf245a4494bc2558665048595ca8117"
+      },
+      {
+        "path": "tests/make-test.nix",
+        "git_blob": "a5fe894d277ff400b29505f3efdd401ea7821091",
+        "sha256": "d9ccd4e32d8609543479af09b982883192749d250df946e14ed046d3974bee76"
+      },
+      {
+        "path": "tests/suite/workflows.nix",
+        "git_blob": "f6195ffe9264316f0c440d01a8941904c64e9557",
+        "sha256": "57be1c3a1ffff66a908f14d984e91ea5ef5636298cd55da87625fec7611ef6e1"
+      },
+      {
+        "path": "tools/update-vpsadmin-flake-input.sh",
+        "git_blob": "854a160f511921d00db5848bd1b9fcd2e7aeda28",
+        "sha256": "97682daedd2f7e410fd4dc0d55c0d63109f4ea9396357c71bc0fb50c2ce9950d"
+      }
+    ],
+    "lock_data": {
+      "nodes": {
+        "home-manager": {
+          "inputs": {
+            "nixpkgs": [
+              "vpsadmin",
+              "vpsadminos",
+              "impermanence",
+              "nixpkgs"
+            ]
+          },
+          "locked": {
+            "lastModified": 1768598210,
+            "narHash": "sha256-kkgA32s/f4jaa4UG+2f8C225Qvclxnqs76mf8zvTVPg=",
+            "owner": "nix-community",
+            "repo": "home-manager",
+            "rev": "c47b2cc64a629f8e075de52e4742de688f930dc6",
+            "type": "github"
+          },
+          "original": {
+            "owner": "nix-community",
+            "repo": "home-manager",
+            "type": "github"
+          }
+        },
+        "impermanence": {
+          "inputs": {
+            "home-manager": "home-manager",
+            "nixpkgs": "nixpkgs"
+          },
+          "locked": {
+            "lastModified": 1769548169,
+            "narHash": "sha256-03+JxvzmfwRu+5JafM0DLbxgHttOQZkUtDWBmeUkN8Y=",
+            "owner": "nix-community",
+            "repo": "impermanence",
+            "rev": "7b1d382faf603b6d264f58627330f9faa5cba149",
+            "type": "github"
+          },
+          "original": {
+            "owner": "nix-community",
+            "repo": "impermanence",
+            "type": "github"
+          }
+        },
+        "netlinkrb": {
+          "flake": false,
+          "locked": {
+            "lastModified": 1562850306,
+            "narHash": "sha256-0bXTWUdUDr2XP+bEIfIbxXap8Niva/IoPXTxFeXXImg=",
+            "owner": "vpsfreecz",
+            "repo": "netlinkrb",
+            "rev": "d9de53d843d2586ffa5b7b404887fa801c697ddf",
+            "type": "github"
+          },
+          "original": {
+            "owner": "vpsfreecz",
+            "repo": "netlinkrb",
+            "type": "github"
+          }
+        },
+        "nixpkgs": {
+          "locked": {
+            "lastModified": 1768564909,
+            "narHash": "sha256-Kell/SpJYVkHWMvnhqJz/8DqQg2b6PguxVWOuadbHCc=",
+            "owner": "nixos",
+            "repo": "nixpkgs",
+            "rev": "e4bae1bd10c9c57b2cf517953ab70060a828ee6f",
+            "type": "github"
+          },
+          "original": {
+            "owner": "nixos",
+            "ref": "nixos-unstable",
+            "repo": "nixpkgs",
+            "type": "github"
+          }
+        },
+        "nixpkgsUnstable": {
+          "locked": {
+            "lastModified": 1787360063,
+            "narHash": "sha256-dt4WdcvsA8/RCe+VZZwqU0X+XMM3wBbGCWA0/sFWzGo=",
+            "owner": "NixOS",
+            "repo": "nixpkgs",
+            "rev": "2c423e03bbafcff28bfadc6781a4a8257f205cb5",
+            "type": "github"
+          },
+          "original": {
+            "owner": "NixOS",
+            "ref": "nixos-unstable",
+            "repo": "nixpkgs",
+            "type": "github"
+          }
+        },
+        "nixpkgs_2": {
+          "locked": {
+            "lastModified": 1787414105,
+            "narHash": "sha256-WncT27+3BOkgTaJZLnCsf3LcYf9RXMuR9ONSN4rzQ7s=",
+            "owner": "NixOS",
+            "repo": "nixpkgs",
+            "rev": "a9e6d84f9c2f9012f5fe7d964a7851352300e61a",
+            "type": "github"
+          },
+          "original": {
+            "owner": "NixOS",
+            "ref": "nixos-26.05",
+            "repo": "nixpkgs",
+            "type": "github"
+          }
+        },
+        "root": {
+          "inputs": {
+            "nixpkgs": [
+              "vpsadminos",
+              "nixpkgs"
+            ],
+            "vpsadmin": "vpsadmin",
+            "vpsadminos": [
+              "vpsadmin",
+              "vpsadminos"
+            ]
+          }
+        },
+        "ruby-lxc": {
+          "flake": false,
+          "locked": {
+            "lastModified": 1780499941,
+            "narHash": "sha256-guAdOSP9MyCL3BQ1LGXAhcCoXgEU1fUE69d2ATMqUGE=",
+            "owner": "vpsfreecz",
+            "repo": "ruby-lxc",
+            "rev": "004bf35eb90d41ba60b347b5b1e73d868a4f95d9",
+            "type": "github"
+          },
+          "original": {
+            "owner": "vpsfreecz",
+            "ref": "2026-06-03-nixos-26-05-port",
+            "repo": "ruby-lxc",
+            "type": "github"
+          }
+        },
+        "vpsadmin": {
+          "inputs": {
+            "nixpkgs": [
+              "vpsadmin",
+              "vpsadminos",
+              "nixpkgs"
+            ],
+            "vpsadminos": "vpsadminos"
+          },
+          "locked": {
+            "lastModified": 1792415847,
+            "narHash": "sha256-6vSLourkI55nvF6OqA/+5FKBitD6ue2xPaaq8rZOASM=",
+            "owner": "vpsfreecz",
+            "repo": "vpsadmin",
+            "rev": "fb2f51222503a45f2e5a42af505f719e44279ed0",
+            "type": "github"
+          },
+          "original": {
+            "owner": "vpsfreecz",
+            "repo": "vpsadmin",
+            "type": "github"
+          }
+        },
+        "vpsadminos": {
+          "inputs": {
+            "impermanence": "impermanence",
+            "netlinkrb": "netlinkrb",
+            "nixpkgs": "nixpkgs_2",
+            "nixpkgsUnstable": "nixpkgsUnstable",
+            "ruby-lxc": "ruby-lxc"
+          },
+          "locked": {
+            "lastModified": 1787550715,
+            "narHash": "sha256-NqrGkUUD1RSvOpA4Dxr7XULqHBKwhHxeUygS723FWgQ=",
+            "owner": "vpsfreecz",
+            "repo": "vpsadminos",
+            "rev": "8e44a5124439b1f3048ffc56b1717614a5360358",
+            "type": "github"
+          },
+          "original": {
+            "owner": "vpsfreecz",
+            "ref": "staging",
+            "repo": "vpsadminos",
+            "type": "github"
+          }
+        }
+      },
+      "root": "root",
+      "version": 7
+    },
+    "steps": [
+      {
+        "name": "Save lock baseline",
+        "script": "cp flake.lock \"$RUNNER_TEMP/flake-update-baseline.lock\"\necho \"UPDATE_OLD_LOCK=$RUNNER_TEMP/flake-update-baseline.lock\" >> \"$GITHUB_ENV\"\n",
+        "original_script_sha256": "dee6398f5ca525d194316c424261ee872e3c36318a4665c97510cfd3f16523ea"
+      },
+      {
+        "name": "Setup git",
+        "script": "git config user.name \"github-actions[bot]\"\ngit config user.email \"github-actions[bot]@users.noreply.github.com\"\n",
+        "original_script_sha256": "703e35044516a2e8e5d7782bee8d55a9ef7f9dae8c20610b2de21579066d7cca"
+      },
+      {
+        "name": "Update vpsAdmin input",
+        "script": "tools/update-vpsadmin-flake-input.sh\n",
+        "original_script_sha256": "3813422f7502bd2ba09cec50b0f790f376305a73a53d5e76345b9b624cb57a51"
+      },
+      {
+        "name": "Push update",
+        "script": "final_lock=\"$RUNNER_TEMP/flake-update-final.lock\"\ngit show HEAD:flake.lock > \"$final_lock\"\nnix shell \"$CONFCTL_FLAKE\" -c confctl inputs check-update \\\n  --old-lock \"$UPDATE_OLD_LOCK\" --new-lock \"$final_lock\"\n",
+        "original_script_sha256": "3b89ed2aa1365961fc0c234e1fb3951371932881ba09fcf12f0b43528b2ad1fb"
+      }
+    ],
+    "removed_publication_lines": [
+      "git push origin \"HEAD:${GITHUB_REF_NAME}\""
+    ],
+    "selection": "vpsadmin",
+    "integration": {
+      "selector": "workflows",
+      "command": [
+        "./test-runner.sh",
+        "test",
+        "-f",
+        "--jobs",
+        "1",
+        "--stop-on-failure",
+        "--state-dir",
+        "${RUNNER_TEMP}/terraform-workflows-state",
+        "workflows"
+      ],
+      "expected_examples": 8,
+      "network": "Native test framework defaults; no --network switch exists in pinned CLI. No development cluster.",
+      "reason": "Only registered test; ordered examples share state and pinned CLI has no example selector.",
+      "baseline_runner_revision": "8e44a5124439b1f3048ffc56b1717614a5360358"
+    }
+  },
+  "integration": {
+    "selector": "workflows",
+    "command": [
+      "./test-runner.sh",
+      "test",
+      "-f",
+      "--jobs",
+      "1",
+      "--stop-on-failure",
+      "--state-dir",
+      "${RUNNER_TEMP}/terraform-workflows-state",
+      "workflows"
+    ],
+    "expected_examples": 8,
+    "network": "Native test framework defaults; no --network switch exists in pinned CLI. No development cluster.",
+    "reason": "Only registered test; ordered examples share state and pinned CLI has no example selector.",
+    "baseline_runner_revision": "8e44a5124439b1f3048ffc56b1717614a5360358"
+  },
+  "state_directory": "/tmp/flake-update-guard-tf3/terraform-smoke/runner-temp/t",
+  "exit_status": 0,
+  "finished_utc": "2026-10-24T16:12:34Z"
+}

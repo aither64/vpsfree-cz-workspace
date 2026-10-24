@@ -1,0 +1,319 @@
+diff --git a/.github/workflows/update-dependencies.yml b/.github/workflows/update-dependencies.yml
+index 6879c897d02dbdf23b8957db58b9211a611f036d..576f6a59654f61e458294b2369c7a632f9e9c53f 100644
+--- a/.github/workflows/update-dependencies.yml
++++ b/.github/workflows/update-dependencies.yml
+@@ -12,18 +12,30 @@ concurrency:
+   group: update-dependencies
+   cancel-in-progress: false
+ 
++env:
++  CONFCTL_FLAKE: github:vpsfreecz/confctl/822c0e35dbe2549111912f539116b4225dfd3035#confctl
++  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
++
+ jobs:
+   update:
+     runs-on: ubuntu-latest
+ 
+     steps:
+       - name: Checkout default branch
+-        uses: actions/checkout@v6
++        uses: actions/checkout@v7
+         with:
+           ref: ${{ github.event.repository.default_branch }}
+ 
+       - name: Install Nix
+-        uses: cachix/install-nix-action@v31
++        uses: cachix/install-nix-action@31.11.3
++
++      - name: Restore confctl cache
++        uses: actions/cache/restore@v6
++        with:
++          path: ~/.cache/confctl
++          key: confctl-cache-${{ runner.os }}-${{ github.run_id }}
++          restore-keys: |
++            confctl-cache-${{ runner.os }}
+ 
+       - name: Configure Git
+         run: |
+@@ -33,25 +45,33 @@ jobs:
+       - name: Record starting revision
+         run: |
+           echo "UPDATE_START_REF=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
++          cp flake.lock "$RUNNER_TEMP/flake-update-baseline.lock"
++          echo "UPDATE_OLD_LOCK=$RUNNER_TEMP/flake-update-baseline.lock" >> "$GITHUB_ENV"
+ 
+       - name: Update flake input
+         run: |
+           set -euo pipefail
+ 
+-          old_rev="$(jq -r '.nodes.nixpkgs.locked.rev // empty' flake.lock)"
++          old_rev="$(nix shell "$CONFCTL_FLAKE" -c confctl inputs ls --json nixpkgs | jq -er '
++            map(select(.input == "nixpkgs"))
++            | if length == 1 then .[0].rev | select(type == "string" and length > 0) else empty end
++          ')"
+           if [ -z "$old_rev" ]; then
+             echo "Unable to read nixpkgs revision from flake.lock." >&2
+             exit 1
+           fi
+ 
+-          nix flake update nixpkgs
++          nix shell "$CONFCTL_FLAKE" -c confctl inputs update --forward-only nixpkgs
+ 
+           if git diff --quiet -- flake.lock; then
+             echo "No flake input updates to commit."
+             exit 0
+           fi
+ 
+-          new_rev="$(jq -r '.nodes.nixpkgs.locked.rev // empty' flake.lock)"
++          new_rev="$(nix shell "$CONFCTL_FLAKE" -c confctl inputs ls --json nixpkgs | jq -er '
++            map(select(.input == "nixpkgs"))
++            | if length == 1 then .[0].rev | select(type == "string" and length > 0) else empty end
++          ')"
+           if [ -z "$new_rev" ]; then
+             echo "Unable to read updated nixpkgs revision from flake.lock." >&2
+             exit 1
+@@ -103,7 +123,7 @@ jobs:
+             | @tsv
+           ' "$old_go_mod" "$new_go_mod" > "$direct_changes"
+ 
+-          perl -0pi -e 's/vendorHash = (?:lib\.fakeHash|"[^"]+");/vendorHash = lib.fakeHash;/' nix/package.nix
++          perl tools/set-vendor-hash.pl --fake nix/package.nix
+ 
+           if nix build .#vpsf-status --no-link 2>"$build_log"; then
+             echo "Nix build unexpectedly succeeded with lib.fakeHash." >&2
+@@ -119,7 +139,7 @@ jobs:
+             exit 1
+           fi
+ 
+-          perl -0pi -e "s/vendorHash = lib\\.fakeHash;/vendorHash = \"$vendor_hash\";/" nix/package.nix
++          perl tools/set-vendor-hash.pl "$vendor_hash" nix/package.nix
+ 
+           direct_count="$(wc -l < "$direct_changes" | tr -d ' ')"
+           if [ "$direct_count" -eq 0 ]; then
+@@ -188,4 +208,15 @@ jobs:
+             exit 0
+           fi
+ 
++          final_lock="$RUNNER_TEMP/flake-update-final.lock"
++          git show HEAD:flake.lock > "$final_lock"
++          nix shell "$CONFCTL_FLAKE" -c confctl inputs check-update \
++            --old-lock "$UPDATE_OLD_LOCK" --new-lock "$final_lock"
+           git push origin "HEAD:${{ github.event.repository.default_branch }}"
++
++      - name: Save confctl cache
++        if: ${{ !cancelled() }}
++        uses: actions/cache/save@v6
++        with:
++          path: ~/.cache/confctl
++          key: confctl-cache-${{ runner.os }}-${{ github.run_id }}
+diff --git a/README.md b/README.md
+index 46e85c200346abd3cea978ee2305df8029730458..5b6e7925cd87cf16dfd45c2ac4ec44a27e78f987 100644
+--- a/README.md
++++ b/README.md
+@@ -22,3 +22,19 @@ do not use Nix, install `lefthook` first.
+ ```bash
+ ./vpsf-status config-sample.json
+ ```
++
++## Automated flake updates
++
++The `update-dependencies.yml` workflow updates the resolved nixpkgs input using
++a separately pinned confctl CI tool. It requires ancestry preservation across the changed
++lock graph and stops publication on rejection or unavailable evidence. It
++checks the final lock against a saved baseline after hooks and checks, then
++uses an ordinary non-force push. If the target branch advances, rerun from its
++new baseline instead of rebasing the old lock update. The CI tool does not
++become a runtime flake input.
++
++The workflow saves confctl's Git mirrors in `~/.cache/confctl` even when an
++update is rejected. Every update checks ancestry, whether the cache was
++restored or freshly cloned.
++
++See the [shared guard contract](https://github.com/vpsfreecz/confctl/blob/822c0e35dbe2549111912f539116b4225dfd3035/docs/flake-inputs.md#guarded-automated-updates) for supported sources and failure behavior.
+diff --git a/app_routes_test.go b/app_routes_test.go
+index aff85da591750bc1e031c2fdb222cab8682e50c7..f8f1e16a6ea0122c0d72040f48327745bce2eb38 100644
+--- a/app_routes_test.go
++++ b/app_routes_test.go
+@@ -8,6 +8,7 @@ import (
+ 	"io"
+ 	"net/http"
+ 	"net/http/httptest"
++	"slices"
+ 	"strings"
+ 	"testing"
+ 	"time"
+@@ -1134,8 +1135,17 @@ func TestRoutesDoNotCacheMetrics(t *testing.T) {
+ 	if got := rr.Header().Get("Cache-Control"); got != "" {
+ 		t.Fatalf("metrics Cache-Control = %q, want empty", got)
+ 	}
+-	if got := rr.Header().Values("Vary"); headerValuesContain(got, "Accept-Encoding") {
+-		t.Fatalf("metrics Vary = %v, should not be set by route cache", got)
++	direct := httptest.NewRecorder()
++	app.status.Exporter.httpHandler().ServeHTTP(direct, httptest.NewRequest(http.MethodGet, "/metrics", nil))
++	if got, want := rr.Header().Values("Vary"), direct.Header().Values("Vary"); !slices.Equal(got, want) {
++		t.Fatalf("metrics Vary = %v, want exporter headers %v without route-cache additions", got, want)
++	}
++
++	// Keep the fixed app clock to detect reuse within the route-cache TTL.
++	for _, up := range []float64{0, 1} {
++		st.Exporter.up.Set(up)
++		family := requireGaugeFamily(t, scrapeMetrics(t, app), "vpsfstatus_up", "1 = operational, 0 = initializing")
++		requireUnlabeledMetricValue(t, family, up)
+ 	}
+ }
+ 
+diff --git a/flake.nix b/flake.nix
+index 8bc4da1c4f346c2df52d855fd473e068273c9011..cd253340bce6a785029ba8b4409ecdf3372cb45f 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -115,6 +115,7 @@
+               gnumake
+               go
+               lefthook
++              perl
+               stdenv.cc
+             ];
+ 
+diff --git a/nix/package.nix b/nix/package.nix
+index 26cedadeae08a5815b76484eb7b38e1e924f6d9a..bc709195cf92f416176a4395936bf0dfbc020d53 100644
+--- a/nix/package.nix
++++ b/nix/package.nix
+@@ -1,6 +1,7 @@
+ {
+   buildGoModule,
+   lib,
++  perl,
+   src,
+   version,
+   vpsadminGoClientSource ? null,
+@@ -10,6 +11,8 @@ buildGoModule {
+   pname = "vpsf-status";
+   inherit src version;
+ 
++  nativeCheckInputs = [ perl ];
++
+   vendorHash =
+     if vpsadminGoClientSource != null then
+       "sha256-N6vS4SGVeWkBc23/z8zT1Hbz+MC7BvOsjqJkw+bXcgI="
+diff --git a/tools/set-vendor-hash.pl b/tools/set-vendor-hash.pl
+new file mode 100644
+index 0000000000000000000000000000000000000000..929209083212ab0b1d05da5d69e45adda85e9c27
+--- /dev/null
++++ b/tools/set-vendor-hash.pl
+@@ -0,0 +1,29 @@
++use strict;
++use warnings;
++
++my ($hash, $path) = @ARGV;
++die "Usage: perl tools/set-vendor-hash.pl <sha256-SRI|--fake> <file>\n"
++  unless @ARGV == 2;
++die "Expected a SHA-256 SRI hash or --fake.\n"
++  unless $hash eq '--fake' || $hash =~ /\Asha256-[A-Za-z0-9+\/]{43}=\z/;
++
++my $replacement = $hash eq '--fake' ? 'lib.fakeHash' : qq{"$hash"};
++open my $input, '<', $path or die "Cannot read $path: $!\n";
++my $source = do { local $/; <$input> };
++close $input or die "Cannot close $path: $!\n";
++
++# Refresh the default hash without changing the optional local-source override.
++# Keep the supplied hash as data so its base64 slashes cannot become Perl syntax.
++my $count = $source =~ s{
++  ( ^[\t ]*vendorHash\s*=\s*
++    (?: if\s+vpsadminGoClientSource\s*!=\s*null\s+then\s+
++        "[^"\n]+"\s+else\s+
++    )?
++  )
++  (?: lib\.fakeHash | "sha256-[A-Za-z0-9+/]{43}=" )\s*;
++}{$1 . $replacement . ';'}gmex;
++die "Expected one supported vendorHash assignment in $path.\n" unless $count == 1;
++
++open my $output, '>', $path or die "Cannot write $path: $!\n";
++print {$output} $source or die "Cannot write $path: $!\n";
++close $output or die "Cannot close $path: $!\n";
+diff --git a/tools/vendor_hash_test.go b/tools/vendor_hash_test.go
+new file mode 100644
+index 0000000000000000000000000000000000000000..9885d2e01723ff65ba8e89001f686cf42902d18a
+--- /dev/null
++++ b/tools/vendor_hash_test.go
+@@ -0,0 +1,81 @@
++package tools
++
++import (
++	"os"
++	"os/exec"
++	"path/filepath"
++	"strings"
++	"testing"
++)
++
++func TestSetVendorHash(t *testing.T) {
++	const oldHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
++	const newHash = "sha256-//////////++++++++++aaaaaaaaaaaaaaaaaaaaaaa="
++	const overrideHash = "sha256-N6vS4SGVeWkBc23/z8zT1Hbz+MC7BvOsjqJkw+bXcgI="
++	conditionalPrefix := "  vendorHash =\n    if vpsadminGoClientSource != null then\n      \"" + overrideHash + "\"\n    else\n      "
++	tests := []struct {
++		name, input, hash, want string
++		fail                    bool
++	}{
++		{"flat hash to fake", "vendorHash = \"" + oldHash + "\";\n", "--fake", "vendorHash = lib.fakeHash;\n", false},
++		{"flat fake to base64 hash", "vendorHash = lib.fakeHash;\n", newHash, "vendorHash = \"" + newHash + "\";\n", false},
++		{"conditional hash to fake", conditionalPrefix + "\"" + oldHash + "\";\n", "--fake", conditionalPrefix + "lib.fakeHash;\n", false},
++		{"conditional fake to base64 hash", conditionalPrefix + "lib.fakeHash;\n", newHash, conditionalPrefix + "\"" + newHash + "\";\n", false},
++		{"conditional hash to base64 hash", conditionalPrefix + "\"" + oldHash + "\";\n", newHash, conditionalPrefix + "\"" + newHash + "\";\n", false},
++		{"unknown expression", "vendorHash = anotherHash;\n", newHash, "", true},
++		{"multiple assignments", "vendorHash = lib.fakeHash;\nvendorHash = lib.fakeHash;\n", newHash, "", true},
++		{"malformed hash", "vendorHash = lib.fakeHash;\n", "sha256-short/+=", "", true},
++		{"hash contains code", "vendorHash = lib.fakeHash;\n", newHash + "\"; die 'injected';", "", true},
++	}
++	for _, tt := range tests {
++		t.Run(tt.name, func(t *testing.T) {
++			path := filepath.Join(t.TempDir(), "package.nix")
++			if err := os.WriteFile(path, []byte(tt.input), 0o600); err != nil {
++				t.Fatal(err)
++			}
++			output, err := exec.Command("perl", "set-vendor-hash.pl", tt.hash, path).CombinedOutput()
++			if (err != nil) != tt.fail {
++				t.Fatalf("error = %v, want failure %v; output: %s", err, tt.fail, output)
++			}
++			got, err := os.ReadFile(path)
++			if err != nil {
++				t.Fatal(err)
++			}
++			want := tt.want
++			if tt.fail {
++				want = tt.input
++			}
++			if string(got) != want {
++				t.Fatalf("file = %q, want %q", got, want)
++			}
++		})
++	}
++}
++
++func TestSetVendorHashCurrentPackage(t *testing.T) {
++	source, err := os.ReadFile("../nix/package.nix")
++	if err != nil {
++		t.Fatal(err)
++	}
++	path := filepath.Join(t.TempDir(), "package.nix")
++	if err := os.WriteFile(path, source, 0o600); err != nil {
++		t.Fatal(err)
++	}
++	const hash = "sha256-//////////++++++++++aaaaaaaaaaaaaaaaaaaaaaa="
++	for _, value := range []string{"--fake", hash} {
++		if output, err := exec.Command("perl", "set-vendor-hash.pl", value, path).CombinedOutput(); err != nil {
++			t.Fatalf("%s: %v: %s", value, err, output)
++		}
++	}
++	got, err := os.ReadFile(path)
++	if err != nil {
++		t.Fatal(err)
++	}
++	before, _, ok := strings.Cut(string(source), "    else\n")
++	if !ok || !strings.HasPrefix(string(got), before+"    else\n") {
++		t.Fatalf("local-source override changed: %s", got)
++	}
++	if strings.Count(string(got), "\""+hash+"\"") != 1 || strings.Contains(string(got), "lib.fakeHash") {
++		t.Fatalf("default vendor hash was not installed: %s", got)
++	}
++}

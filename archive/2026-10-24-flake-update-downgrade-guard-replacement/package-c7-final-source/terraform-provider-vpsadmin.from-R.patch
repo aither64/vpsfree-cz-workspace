@@ -1,0 +1,73 @@
+diff --git a/.github/workflows/update-vpsadmin-flake.yml b/.github/workflows/update-vpsadmin-flake.yml
+index d4d2013..39befd1 100644
+--- a/.github/workflows/update-vpsadmin-flake.yml
++++ b/.github/workflows/update-vpsadmin-flake.yml
+@@ -9,7 +9,7 @@ permissions:
+   contents: write
+ 
+ env:
+-  CONFCTL_FLAKE: github:vpsfreecz/confctl/5436d3d7c36d3d5174eab3c44e3578830749d3db#confctl
++  CONFCTL_FLAKE: github:vpsfreecz/confctl/822c0e35dbe2549111912f539116b4225dfd3035#confctl
+   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+ 
+ jobs:
+@@ -26,6 +26,14 @@ jobs:
+       - name: Install Nix
+         uses: cachix/install-nix-action@31.11.3
+ 
++      - name: Restore confctl cache
++        uses: actions/cache/restore@v6
++        with:
++          path: ~/.cache/confctl
++          key: confctl-cache-${{ runner.os }}-${{ github.run_id }}
++          restore-keys: |
++            confctl-cache-${{ runner.os }}
++
+       - name: Save lock baseline
+         run: |
+           cp flake.lock "$RUNNER_TEMP/flake-update-baseline.lock"
+@@ -46,3 +54,10 @@ jobs:
+           nix shell "$CONFCTL_FLAKE" -c confctl inputs check-update \
+             --old-lock "$UPDATE_OLD_LOCK" --new-lock "$final_lock"
+           git push origin "HEAD:${GITHUB_REF_NAME}"
++
++      - name: Save confctl cache
++        if: ${{ !cancelled() }}
++        uses: actions/cache/save@v6
++        with:
++          path: ~/.cache/confctl
++          key: confctl-cache-${{ runner.os }}-${{ github.run_id }}
+diff --git a/README.md b/README.md
+index baabc0e..b4d07ba 100644
+--- a/README.md
++++ b/README.md
+@@ -71,7 +71,11 @@ uses an ordinary non-force push. If the target branch advances, rerun from its
+ new baseline instead of rebasing the old lock update.
+ 
+ For a local update, set `CONFCTL_FLAKE` to the immutable package reference in
+-`.github/workflows/update-vpsadmin-flake.yml` and export `GITHUB_TOKEN` for the
+-GitHub API, then run `tools/update-vpsadmin-flake-input.sh` and review its
+-generated commit.
+-See the [shared guard contract](https://github.com/vpsfreecz/confctl/blob/5436d3d7c36d3d5174eab3c44e3578830749d3db/docs/flake-inputs.md#guarded-automated-updates) for supported sources and failure behavior.
++`.github/workflows/update-vpsadmin-flake.yml`, then run
++`tools/update-vpsadmin-flake-input.sh` and review its generated commit.
++
++The workflow saves confctl's Git mirrors in `~/.cache/confctl` even when an
++update is rejected. Every update checks ancestry, whether the cache was
++restored or freshly cloned.
++
++See the [shared guard contract](https://github.com/vpsfreecz/confctl/blob/822c0e35dbe2549111912f539116b4225dfd3035/docs/flake-inputs.md#guarded-automated-updates) for supported sources and failure behavior.
+diff --git a/tools/update-vpsadmin-flake-input.sh b/tools/update-vpsadmin-flake-input.sh
+index 854a160..12dbc7d 100755
+--- a/tools/update-vpsadmin-flake-input.sh
++++ b/tools/update-vpsadmin-flake-input.sh
+@@ -11,8 +11,7 @@ Update a flake input, verify that only flake.lock changed, and commit the
+ result using the repository's flake update commit message format.
+ 
+ Defaults to updating the vpsadmin input.
+-Set CONFCTL_FLAKE to the immutable CI package reference in the update workflow
+-and export GITHUB_TOKEN for GitHub ancestry evidence.
++Set CONFCTL_FLAKE to the immutable CI package reference in the update workflow.
+ EOF
+ }
+ 

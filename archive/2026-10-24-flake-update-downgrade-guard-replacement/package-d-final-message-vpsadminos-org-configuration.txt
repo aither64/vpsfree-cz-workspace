@@ -1,0 +1,11 @@
+ci: guard automated flake updates
+
+Use the exact shared confctl CI package to reject input updates that lose
+previously pinned ancestry. Keep the deployment-tool input unchanged and
+retain the existing channel selections and changelog policy.
+
+Save the original lock before updates and validate the committed final
+lock snapshot before an ordinary push. Preserve the configuration shell
+for Ruby hooks, install the declared hooks and select the new guard tool
+explicitly. Refresh imported actions to current hosted-runner releases.
+

@@ -1,0 +1,18 @@
+Guard automated input updates with cached Git ancestry
+
+Automated flake updates can replace manually pinned commits with revisions
+that do not contain them, including dependencies behind nested follows.
+
+Add an explicit forward-only transaction that prepares a separate Nix lock,
+checks the complete logical input graph and validates ancestry before
+installing or committing. Preserve the checkout on rejection or missing
+evidence, detect concurrent changes and keep existing manual update behavior.
+
+Use the existing full Git mirror cache for immutable GitHub commit proofs.
+Install cold mirrors atomically, fetch missing SHAs and serialize evidence
+and changelog reads with a shared URL lock. Reject insufficient or redirected
+history and keep ordinary Git transport configuration with safe errors.
+
+Expose the same policy for final committed-lock validation and full resolved
+JSON revisions for consumers. Document failure statuses, cache recovery and
+the limits of ancestry preservation.

@@ -1,0 +1,10 @@
+ci: guard automated flake updates with ancestry checks
+
+Updating every flake input can replace a manually advanced commit with an
+older channel tip or regress a transitive dependency. Use the exact pinned
+confctl CI tool to validate the full candidate graph before installation.
+
+Preserve the existing all-input selection and generated commit subjects.
+Save the baseline outside the checkout and revalidate after committing,
+before the ordinary push. The tool remains separate from runtime inputs.
+

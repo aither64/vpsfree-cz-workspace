@@ -1,0 +1,1960 @@
+diff --git a/docs/flake-inputs.md b/docs/flake-inputs.md
+index b406792..07f66f5 100644
+--- a/docs/flake-inputs.md
++++ b/docs/flake-inputs.md
+@@ -1,7 +1,8 @@
+ # Flake inputs
+ 
+-confctl requires a configuration flake whose outputs use
+-`confctl.lib.mkConfctlOutputs`:
++Root input commands work in any Git checkout with a `flake.nix`; they do not
++require cluster outputs. Channel and machine commands require a configuration
++flake whose outputs use `confctl.lib.mkConfctlOutputs`:
+ 
+ - inputs are normal flake inputs locked in `flake.lock`
+ - machines select “channels” via `inputs.channels`
+@@ -143,6 +144,117 @@ confctl inputs machine update --commit <machine> nixpkgs
+ - `--no-changelog` disables including `git log --oneline old..new` in the commit message.
+ - `--downgrade` is useful when you intentionally move to an older revision and still want the changelog direction to make sense.
+ 
++`confctl inputs ls --json [input-pattern]` prints an array of rows with fields
++`input`, `type`, `ref`, `rev` and `url`. JSON revisions are full locked revisions;
++sources without a revision have `rev: null`. Input aliases use the same complete
++`follows` resolution as other input commands. The default table still shows
++eight-character revisions. An unmatched pattern produces an empty array.
++
++## Guarded automated updates
++
++Use `--forward-only` in publishing workflows to retain manually pinned commits
++until the upstream branch contains them:
++
++```bash
++confctl inputs update --forward-only nixpkgs
++confctl inputs update --forward-only --all
++confctl inputs channel update --forward-only --commit --no-changelog \
++  '{production,staging}' nixpkgs
++confctl inputs machine update --forward-only --commit build.example.org nixpkgs
++```
++
++Options must come before positional arguments. The guard requires an existing
++version-7 `flake.lock` tracked in Git and a clean tracked checkout and index.
++Use a checkout with one writer. Cooperating guarded confctl updates use a
++process lock; other tools must not write to the checkout concurrently.
++
++Guarded updates require Nix 2.19 or newer, including
++`--reference-lock-file` and `--output-lock-file` support. The transaction and
++nested selection have been exercised with Nix 2.34.9. The packaged confctl uses
++its bundled Nix; installing another Nix in CI does not necessarily change that
++runtime. Unsupported flags or unmatched selectors fail without updating the
++real lock. There is no fallback to an update in place.
++
++confctl resolves requested `follows` aliases to their terminal input paths and
++deduplicates shared targets. For example, a root `nixpkgs` following
++`vpsadminos/nixpkgs`, where `vpsadminos` follows `vpsadmin/vpsadminos`, updates
++`vpsadmin/vpsadminos/nixpkgs`. It leaves both parent revisions unchanged.
++
++Nix writes a candidate lock beside the original flake, using a separate snapshot
++of the old lock as its reference. confctl validates the complete reachable
++graph before atomically installing the candidate. It compares logical dependency
++paths, including descendants and aliases, rather than generated node IDs. A
++forward root update that regresses a nested dependency is rejected as a whole.
++Local lock bytes, root `flake.nix`, Git HEAD, index entries and tracked checkout
++state are checked again before installation. No commit runs before acceptance.
++
++Each existing Git revision must equal or be an ancestor of its replacement in
++the same supported source. Currently the ancestry provider supports
++`github.com` sources with full immutable Git revisions, including
++`flake = false` sources. It uses GitHub's compare API with `GITHUB_TOKEN`, or
++`GH_TOKEN` when `GITHUB_TOKEN` is absent. Nix's `access-tokens` configuration is
++separate; workflows must pass a token to confctl's provider explicitly. The
++provider uses fixed HTTPS API endpoints without redirects, a 10-second connect
++timeout and a 30-second read timeout; it does not retry failed requests.
++
++Source, fetcher or extraction changes require manual review. A change to locked
++attributes at the same revision also rejects, including a changed `narHash`.
++Previously reachable paths cannot disappear. New paths must contain supported
++immutable Git sources. Unchanged unsupported sources may remain; changed path,
++tarball, indirect or other unsupported sources fail with an evidence error.
++The check does not prove that live path-source contents stayed unchanged.
++Changing the original branch/ref declaration alone is not a source-content
++change when the locked source is identical.
++
++A rejection or evidence error leaves the original lock, index and HEAD
++untouched by confctl. Nix failures, malformed candidates, cached GitHub metadata
++fallback warnings and unavailable ancestry evidence all stop the update.
++Concurrent checkout changes stop installation and are left for the writer to
++reconcile. A commit-hook failure after installation returns failure and leaves
++the validated candidate in place; hook side effects are not rolled back.
++Each invocation is a separate transaction: earlier local commits from a
++multi-command job are not undone when a later invocation fails.
++
++Exit status is `0` for an accepted update or no change, `3` for a known policy
++rejection, and `1` for missing or unsupported evidence and tool errors. Both
++nonzero statuses must stop publication. `--downgrade` only changes changelog
++direction and cannot bypass `--forward-only`. Unflagged manual updates and
++`inputs set` retain their existing behavior for deliberate revision changes.
++
++Ancestry preservation retains the pinned commit in history. It does not detect
++later reverts, prove patch equivalence after a cherry pick, or establish software
++compatibility. Keep the repository's existing tests. When a pin is ahead of or
++diverges from its upstream branch, retain it until the branch contains it, or
++make a reviewed manual transition. Do not fall back to an unguarded update when
++the check fails.
++
++### Check the final lock before publishing
++
++Save the workflow's original lock outside the checkout. After commit hooks and
++tests have run, export `HEAD:flake.lock` and compare that committed snapshot
++against the same baseline. This checks the lockfile that Git will publish:
++
++```bash
++set -euo pipefail
++baseline=$(mktemp)
++cp flake.lock "$baseline"
++confctl inputs update --forward-only --commit --no-changelog nixpkgs
++# Run the repository's required checks here.
++final_lock=$(mktemp)
++git show HEAD:flake.lock > "$final_lock"
++confctl inputs check-update --old-lock "$baseline" --new-lock "$final_lock"
++# Publish only after every preceding command succeeded.
++```
++
++`check-update` reads both lock files and applies the same complete-graph policy.
++It does not invoke Nix, install a lock or commit. Its exit statuses are the same
++as guarded update statuses. It can run without confctl cluster outputs.
++
++Use an ordinary non-force Git push after successful checks. If the target branch
++moved, retry in a new checkout from a fresh baseline so a
++concurrent manual pin is included in the next check. An ancestry check against a
++stale local baseline does not establish safety against a changed remote branch.
++
+ ## Nested inputs and `follows`
+ 
+ If input **A** depends on input **B** and you want the *top-level flake* to decide the revision of **B**, use `follows`.
+diff --git a/lib/confctl/cli/app.rb b/lib/confctl/cli/app.rb
+index 4e8861c..01dc86b 100644
+--- a/lib/confctl/cli/app.rb
++++ b/lib/confctl/cli/app.rb
+@@ -61,6 +61,8 @@ module ConfCtl::Cli
+         inputs.desc 'List root-level flake inputs and their locked revisions'
+         inputs.arg_name '[input-pattern]'
+         inputs.command :ls do |c|
++          c.desc 'Print input rows as JSON with full revisions'
++          c.switch :json, default_value: false
+           c.action(&Command.run(c, Inputs::Root, :list))
+         end
+ 
+@@ -82,9 +84,19 @@ module ConfCtl::Cli
+           c.desc 'Update all root inputs (dangerous; normally specify names)'
+           c.switch :all, default_value: false
+ 
++          c.desc 'Require every existing Git revision to remain an ancestor'
++          c.switch :'forward-only', default_value: false
++
+           c.action(&Command.run(c, Inputs::Root, :update))
+         end
+ 
++        inputs.desc 'Check lock graph ancestry without updating or committing'
++        inputs.command :'check-update' do |c|
++          c.flag 'old-lock', arg_name: 'file', required: true
++          c.flag 'new-lock', arg_name: 'file', required: true
++          c.action(&Command.run(c, Inputs::Root, :check_update))
++        end
++
+         inputs.desc 'Set a flake input to a specific revision'
+         inputs.arg_name '<input-name> <rev>'
+         inputs.command :set do |c|
+@@ -118,6 +130,9 @@ module ConfCtl::Cli
+             c.switch :changelog, default_value: true
+             c.switch :editor, default_value: true
+             c.switch %i[d downgrade], default_value: false
++            c.desc 'Require every existing Git revision to remain an ancestor'
++            c.switch :'forward-only', default_value: false
++
+             c.action(&Command.run(c, Inputs::Channels, :update))
+           end
+ 
+@@ -143,6 +158,9 @@ module ConfCtl::Cli
+             c.switch :changelog, default_value: true
+             c.switch :editor, default_value: true
+             c.switch %i[d downgrade], default_value: false
++            c.desc 'Require every existing Git revision to remain an ancestor'
++            c.switch :'forward-only', default_value: false
++
+             c.action(&Command.run(c, Inputs::Machines, :update))
+           end
+ 
+diff --git a/lib/confctl/cli/inputs/channels.rb b/lib/confctl/cli/inputs/channels.rb
+index 6f8dd64..38c2936 100644
+--- a/lib/confctl/cli/inputs/channels.rb
++++ b/lib/confctl/cli/inputs/channels.rb
+@@ -5,9 +5,12 @@ require 'confctl/nix'
+ require 'confctl/pattern'
+ require 'confctl/inputs/setter'
+ require 'confctl/inputs/updater'
++require 'confctl/cli/inputs/update_result'
+ 
+ module ConfCtl::Cli
+   class Inputs::Channels < Command
++    include Inputs::UpdateResult
++
+     def list
+       ensure_flake_config!
+ 
+@@ -62,14 +65,16 @@ module ConfCtl::Cli
+ 
+       raise ConfCtl::Error, 'no inputs selected (check role name?)' if inputs.empty?
+ 
+-      ConfCtl::Inputs::Updater.run!(
++      res = ConfCtl::Inputs::Updater.run!(
+         conf_dir: ConfCtl::ConfDir.path,
+         inputs: inputs,
+         commit: opts[:commit],
+         changelog: opts[:changelog],
+         downgrade: opts[:downgrade],
+-        editor: opts[:editor]
++        editor: opts[:editor],
++        forward_only: opts[:'forward-only'] || false
+       )
++      ensure_update_success!(res)
+ 
+       lock = ConfCtl::FlakeLock.load(File.join(ConfCtl::ConfDir.path, 'flake.lock'))
+       targets.each do |t|
+diff --git a/lib/confctl/cli/inputs/machines.rb b/lib/confctl/cli/inputs/machines.rb
+index 90e7d8b..ac2818f 100644
+--- a/lib/confctl/cli/inputs/machines.rb
++++ b/lib/confctl/cli/inputs/machines.rb
+@@ -3,9 +3,12 @@ require 'confctl/conf_dir'
+ require 'confctl/nix'
+ require 'confctl/inputs/setter'
+ require 'confctl/inputs/updater'
++require 'confctl/cli/inputs/update_result'
+ 
+ module ConfCtl::Cli
+   class Inputs::Machines < Command
++    include Inputs::UpdateResult
++
+     def update
+       ensure_flake_config!
+       require_args!('machine', 'role')
+@@ -23,14 +26,16 @@ module ConfCtl::Cli
+ 
+       raise ConfCtl::Error, "machine '#{machine_name}' has no role '#{role}'" unless input
+ 
+-      ConfCtl::Inputs::Updater.run!(
++      res = ConfCtl::Inputs::Updater.run!(
+         conf_dir: ConfCtl::ConfDir.path,
+         inputs: [input],
+         commit: opts[:commit],
+         changelog: opts[:changelog],
+         downgrade: opts[:downgrade],
+-        editor: opts[:editor]
++        editor: opts[:editor],
++        forward_only: opts[:'forward-only'] || false
+       )
++      ensure_update_success!(res)
+ 
+       lock = ConfCtl::FlakeLock.load(File.join(ConfCtl::ConfDir.path, 'flake.lock'))
+       info = lock.input_info(input)
+diff --git a/lib/confctl/cli/inputs/root.rb b/lib/confctl/cli/inputs/root.rb
+index 237e8b0..1ef1bc3 100644
+--- a/lib/confctl/cli/inputs/root.rb
++++ b/lib/confctl/cli/inputs/root.rb
+@@ -4,9 +4,12 @@ require 'confctl/flake_lock'
+ require 'confctl/pattern'
+ require 'confctl/inputs/setter'
+ require 'confctl/inputs/updater'
++require 'confctl/cli/inputs/update_result'
+ 
+ module ConfCtl::Cli
+   class Inputs::Root < Command
++    include Inputs::UpdateResult
++
+     def list
+       ensure_flake_config!
+ 
+@@ -17,7 +20,7 @@ module ConfCtl::Cli
+           input: input_name,
+           type: info[:type],
+           ref: info[:ref],
+-          rev: info[:short_rev],
++          rev: opts[:json] ? info[:rev] : info[:short_rev],
+           url: info[:url]
+         }
+       end
+@@ -26,6 +29,11 @@ module ConfCtl::Cli
+         rows.select! { |r| ConfCtl::Pattern.match?(args[0], r[:input]) }
+       end
+ 
++      if opts[:json]
++        puts JSON.pretty_generate(rows)
++        return
++      end
++
+       OutputFormatter.print(rows, %i[input type ref rev url], layout: :columns)
+     end
+ 
+@@ -52,12 +60,25 @@ module ConfCtl::Cli
+         commit: opts[:commit],
+         changelog: opts[:changelog],
+         downgrade: opts[:downgrade],
+-        editor: opts[:editor]
++        editor: opts[:editor],
++        forward_only: opts[:'forward-only'] || false
+       )
++      ensure_update_success!(res)
+ 
+       print_update_summary(res[:changes])
+     end
+ 
++    def check_update
++      require_args!
++      old_lock = ConfCtl::FlakeLock.load(opts['old-lock'])
++      new_lock = ConfCtl::FlakeLock.load(opts['new-lock'])
++      result = ConfCtl::Inputs::ForwardGuard.new.validate(old_lock, new_lock)
++      ensure_update_success!(status: result.status, issues: result.issues)
++      print_update_summary(ConfCtl::FlakeLockDiff.from_guard(result.changes, old_lock, new_lock))
++    rescue JSON::ParserError
++      raise ConfCtl::Error, 'Invalid lock JSON'
++    end
++
+     def set
+       ensure_flake_config!
+       require_args!('input-name', 'rev')
+diff --git a/lib/confctl/cli/inputs/update_result.rb b/lib/confctl/cli/inputs/update_result.rb
+new file mode 100644
+index 0000000..c315bff
+--- /dev/null
++++ b/lib/confctl/cli/inputs/update_result.rb
+@@ -0,0 +1,16 @@
++module ConfCtl::Cli
++  module Inputs::UpdateResult
++    protected
++
++    def ensure_update_success!(result)
++      return unless %i[rejected error].include?(result[:status])
++
++      message = result[:issues].join("\n")
++      if result[:status] == :rejected
++        raise GLI::CustomExit.new("Forward-only update rejected:\n#{message}", 3)
++      end
++
++      raise ConfCtl::Error, "Forward-only update could not be verified:\n#{message}"
++    end
++  end
++end
+diff --git a/lib/confctl/flake_lock.rb b/lib/confctl/flake_lock.rb
+index 9196707..55960e7 100644
+--- a/lib/confctl/flake_lock.rb
++++ b/lib/confctl/flake_lock.rb
+@@ -1,4 +1,5 @@
+ require 'json'
++require 'confctl/inputs/lock_graph'
+ 
+ module ConfCtl
+   class FlakeLock
+@@ -20,26 +21,22 @@ module ConfCtl
+     end
+ 
+     def root_inputs
+-      inputs_map = data.dig('nodes', 'root', 'inputs') || {}
++      inputs_map = data.dig('nodes', data.fetch('root', 'root'), 'inputs') || {}
+       inputs_map.keys.sort
+     end
+ 
+     def node_for_input(input_name)
+-      node_id = data.dig('nodes', 'root', 'inputs', input_name)
++      return nil unless root_inputs.include?(input_name.split('/').first)
+ 
+-      if node_id.is_a?(String)
+-        return data.dig('nodes', node_id)
+-      end
+-
+-      if node_id.is_a?(Array) && node_id[0].is_a?(String)
+-        return data.dig('nodes', node_id[0])
+-      end
+-
+-      nil
++      ConfCtl::Inputs::LockGraph.new(self).resolve_path(input_name).node
+     end
+ 
+     def input_info(input_name)
+-      node = node_for_input(input_name) || {}
++      node_info(node_for_input(input_name))
++    end
++
++    def node_info(node)
++      node ||= {}
+       locked = node['locked'] || {}
+       original = node['original'] || {}
+ 
+diff --git a/lib/confctl/flake_lock_diff.rb b/lib/confctl/flake_lock_diff.rb
+index d237596..0b50661 100644
+--- a/lib/confctl/flake_lock_diff.rb
++++ b/lib/confctl/flake_lock_diff.rb
+@@ -16,6 +16,16 @@ module ConfCtl
+       end
+     end
+ 
++    def self.from_guard(changes, old_lock, new_lock)
++      changes.map do |change|
++        Change.new(
++          name: change.path,
++          old_info: old_lock.node_info(change.old_node),
++          new_info: new_lock.node_info(change.new_node)
++        )
++      end
++    end
++
+     def self.diff(old_lock, new_lock, inputs: nil)
+       return [] if new_lock.nil?
+ 
+diff --git a/lib/confctl/inputs/forward_guard.rb b/lib/confctl/inputs/forward_guard.rb
+new file mode 100644
+index 0000000..81baedb
+--- /dev/null
++++ b/lib/confctl/inputs/forward_guard.rb
+@@ -0,0 +1,133 @@
++require 'confctl/inputs/lock_graph'
++require 'confctl/inputs/github_compare'
++
++module ConfCtl
++  module Inputs
++    class ForwardGuard
++      Result = Struct.new(:status, :changes, :issues) do
++        def success? = %i[unchanged updated].include?(status)
++        def rejected? = status == :rejected
++        def error? = status == :error
++      end
++
++      Change = Struct.new(:path, :old_node, :new_node) do
++        def old_rev = old_node&.dig('locked', 'rev')
++        def new_rev = new_node&.dig('locked', 'rev')
++      end
++
++      class UnsupportedSource < StandardError; end
++
++      def initialize(provider: GitHubCompare.new)
++        @provider = provider
++      end
++
++      def validate(old_lock, candidate_lock)
++        old_entries = LockGraph.new(old_lock).entries
++        new_entries = LockGraph.new(candidate_lock).entries
++        changes = []
++        rejected = []
++        errors = []
++        cache = {}
++
++        (old_entries.keys | new_entries.keys).sort.each do |path|
++          old_node = old_entries[path]&.node
++          new_node = new_entries[path]&.node
++          next if same_source?(old_node, new_node)
++
++          change = Change.new(path: path, old_node: old_node, new_node: new_node)
++          changes << change
++          check_change(change, rejected, cache)
++        rescue UnsupportedSource, GitHubCompare::Error => e
++          errors << "#{path}: #{e.message}"
++        end
++
++        status = if !errors.empty?
++                   :error
++                 elsif !rejected.empty?
++                   :rejected
++                 elsif changes.empty?
++                   :unchanged
++                 else
++                   :updated
++                 end
++        Result.new(status: status, changes: changes, issues: errors + rejected)
++      rescue LockGraph::Error => e
++        Result.new(status: :error, changes: [], issues: [e.message])
++      end
++
++      protected
++
++      def same_source?(old_node, new_node)
++        old_node && new_node && old_node['locked'] == new_node['locked'] &&
++          old_node.fetch('flake', true) == new_node.fetch('flake', true)
++      end
++
++      def check_change(change, rejected, cache)
++        if change.new_node.nil?
++          rejected << "#{change.path}: previously reachable dependency was removed"
++          return
++        end
++
++        new_source = source(change.new_node)
++        return if change.old_node.nil?
++
++        old_source = source(change.old_node)
++        if old_source != new_source || change.old_node.fetch('flake', true) != change.new_node.fetch('flake', true)
++          rejected << "#{change.path}: source or extraction attributes changed; manual review required"
++          return
++        end
++
++        if change.old_rev == change.new_rev
++          rejected << "#{change.path}: locked attributes changed at the same revision"
++          return
++        end
++
++        key = [old_source, change.old_rev, change.new_rev]
++        outcome = cache.fetch(key) do
++          cache[key] = begin
++            @provider.compare(
++              owner: new_source['owner'], repo: new_source['repo'], old_rev: change.old_rev, new_rev: change.new_rev
++            )
++          rescue GitHubCompare::Error => e
++            e
++          end
++        end
++        raise outcome if outcome.is_a?(GitHubCompare::Error)
++
++        return if outcome == :ahead
++
++        unless %i[behind diverged].include?(outcome)
++          raise GitHubCompare::Error, 'Unknown ancestry comparison outcome'
++        end
++
++        rejected << "#{change.path}: #{change.old_rev} -> #{change.new_rev} is #{outcome}"
++      end
++
++      def source(node)
++        locked = node['locked']
++        unless locked['type'] == 'github' && [nil, 'github.com'].include?(locked['host']) &&
++               %w[owner repo].all? do |key|
++                 value = locked[key]
++                 value.is_a?(String) && GitHubCompare::NAME.match?(value) && !%w[. ..].include?(value)
++               end
++          raise UnsupportedSource, 'Changed dependency is not a supported github.com source'
++        end
++        unless locked['rev'].is_a?(String) && GitHubCompare::SHA.match?(locked['rev'])
++          raise UnsupportedSource, 'Changed dependency lacks a full immutable Git revision'
++        end
++
++        allowed = %w[type owner repo host rev narHash lastModified dir]
++        unless (locked.keys - allowed).empty? &&
++               (!locked.has_key?('dir') || locked['dir'].is_a?(String)) &&
++               (!locked.has_key?('narHash') || locked['narHash'].is_a?(String)) &&
++               (!locked.has_key?('lastModified') || locked['lastModified'].is_a?(Integer))
++          raise UnsupportedSource, 'Unsupported GitHub source attributes'
++        end
++
++        locked.except('rev', 'narHash', 'lastModified').merge(
++          'owner' => locked['owner'].downcase, 'repo' => locked['repo'].downcase, 'host' => 'github.com'
++        )
++      end
++    end
++  end
++end
+diff --git a/lib/confctl/inputs/github_compare.rb b/lib/confctl/inputs/github_compare.rb
+new file mode 100644
+index 0000000..33034af
+--- /dev/null
++++ b/lib/confctl/inputs/github_compare.rb
+@@ -0,0 +1,76 @@
++require 'json'
++require 'net/http'
++require 'uri'
++
++module ConfCtl
++  module Inputs
++    class GitHubCompare
++      class Error < StandardError; end
++
++      SHA = /\A[0-9a-f]{40}\z/
++      NAME = /\A[A-Za-z0-9_.-]+\z/
++
++      def initialize(token: ENV['GITHUB_TOKEN'] || ENV.fetch('GH_TOKEN', nil), http: Net::HTTP)
++        @token = token
++        @http = http
++      end
++
++      # Returns :ahead, :behind or :diverged; unavailable/inconsistent evidence
++      # raises Error. The paginated commits list is deliberately not authority.
++      def compare(owner:, repo:, old_rev:, new_rev:)
++        unless [owner, repo].all? { |v| v.is_a?(String) && NAME.match?(v) && !%w[. ..].include?(v) } &&
++               [old_rev, new_rev].all? { |v| v.is_a?(String) && SHA.match?(v) }
++          raise Error, 'GitHub comparison requires a repository and full commit SHAs'
++        end
++        return :identical if old_rev == new_rev
++
++        uri = URI("https://api.github.com/repos/#{owner}/#{repo}/compare/#{old_rev}...#{new_rev}?per_page=1")
++        request = Net::HTTP::Get.new(uri)
++        request['Accept'] = 'application/vnd.github+json'
++        request['X-GitHub-Api-Version'] = '2022-11-28'
++        request['User-Agent'] = 'confctl-forward-guard'
++        request['Authorization'] = "Bearer #{@token}" if @token && !@token.empty?
++
++        # No redirects: a token must never follow a Location to another host.
++        response = @http.start(uri.host, uri.port, use_ssl: true, open_timeout: 10, read_timeout: 30) do |http|
++          http.max_retries = 0
++          http.request(request)
++        end
++        raise Error, "GitHub comparison failed (HTTP #{response.code})" unless response.code == '200'
++
++        summary(JSON.parse(response.body), old_rev, new_rev)
++      rescue JSON::ParserError
++        raise Error, 'Malformed GitHub comparison response'
++      rescue Timeout::Error, SocketError, SystemCallError, IOError, OpenSSL::SSL::SSLError, Net::HTTPBadResponse
++        # Network exceptions can contain request data; never forward their text.
++        raise Error, 'Unable to obtain GitHub ancestry evidence'
++      end
++
++      protected
++
++      def summary(data, old_rev, new_rev)
++        unless data.is_a?(Hash) && data['base_commit'].is_a?(Hash) &&
++               data['base_commit']['sha'] == old_rev && data['merge_base_commit'].is_a?(Hash) &&
++               SHA.match?(data['merge_base_commit']['sha'].to_s) &&
++               %w[ahead_by behind_by total_commits].all? { |key| data[key].is_a?(Integer) && data[key] >= 0 }
++          raise Error, 'Incomplete GitHub ancestry evidence'
++        end
++
++        ahead = data['ahead_by']
++        behind = data['behind_by']
++        base = data['merge_base_commit']['sha']
++        case data['status']
++        when 'ahead'
++          return :ahead if ahead > 0 && behind == 0 && base == old_rev && data['total_commits'] == ahead
++        when 'behind'
++          return :behind if ahead == 0 && behind > 0 && base == new_rev && data['total_commits'] == 0
++        when 'diverged'
++          return :diverged if ahead > 0 && behind > 0 && ![old_rev, new_rev].include?(base) &&
++                              data['total_commits'] == ahead
++        end
++
++        raise Error, 'Contradictory GitHub ancestry evidence'
++      end
++    end
++  end
++end
+diff --git a/lib/confctl/inputs/guarded_update.rb b/lib/confctl/inputs/guarded_update.rb
+new file mode 100644
+index 0000000..65cc476
+--- /dev/null
++++ b/lib/confctl/inputs/guarded_update.rb
+@@ -0,0 +1,115 @@
++require 'open3'
++require 'tmpdir'
++require 'tty-command'
++require 'confctl/exceptions'
++require 'confctl/flake_lock'
++require 'confctl/flake_lock_diff'
++require 'confctl/inputs/lock_graph'
++require 'confctl/inputs/forward_guard'
++
++module ConfCtl
++  module Inputs
++    # The checkout must have a single writer. The process lock serializes
++    # cooperating confctl updates; snapshots detect other writers before install.
++    class GuardedUpdate
++      def initialize(conf_dir:, inputs:, guard: ForwardGuard.new)
++        @conf_dir = File.expand_path(conf_dir)
++        @inputs = inputs
++        @guard = guard
++        @lock_path = File.join(@conf_dir, 'flake.lock')
++      end
++
++      def run!(after_install: nil)
++        process_lock = git!('rev-parse', '--git-path', 'confctl-input-update.lock').strip
++        File.open(File.expand_path(process_lock, @conf_dir), File::RDWR | File::CREAT, 0o600) do |lock|
++          unless lock.flock(File::LOCK_EX | File::LOCK_NB)
++            raise ConfCtl::Error, 'another guarded input update is running'
++          end
++
++          snapshot!
++          old_lock = FlakeLock.new(@lock_path, JSON.parse(@original_lock))
++          targets = LockGraph.new(old_lock).update_inputs(@inputs)
++
++          Dir.mktmpdir('.confctl-update-', @conf_dir) do |dir|
++            reference = File.join(dir, 'reference.lock')
++            output = File.join(dir, 'candidate.lock')
++            File.binwrite(reference, @original_lock)
++            yield reference, output, targets
++            raise ConfCtl::Error, 'Nix did not produce a candidate lock' unless File.file?(output)
++
++            candidate = FlakeLock.load(output)
++            result = @guard.validate(old_lock, candidate)
++            return outcome(result.status, issues: result.issues) unless result.success?
++
++            verify_snapshot!
++            return outcome(:unchanged) if result.status == :unchanged
++
++            changes = FlakeLockDiff.from_guard(result.changes, old_lock, candidate)
++            File.chmod(@original_mode, output)
++            File.rename(output, @lock_path)
++            @installed = true
++            after_install&.call(changes)
++            outcome(:updated, changes: changes)
++          end
++        end
++      rescue StandardError => e
++        # Commit hooks may have side effects. An installed, validated candidate
++        # stays available for diagnosis if the subsequent commit fails.
++        raise if @installed
++
++        message = case e
++                  when JSON::ParserError
++                    'Invalid lock JSON'
++                  when TTY::Command::ExitError
++                    'Nix failed while preparing the candidate lock'
++                  when ConfCtl::Error, LockGraph::Error
++                    e.message
++                  else
++                    "Guarded input update failed (#{e.class})"
++                  end
++        outcome(:error, issues: [message])
++      end
++
++      protected
++
++      def snapshot!
++        unless File.file?(@lock_path) && !File.symlink?(@lock_path)
++          raise ConfCtl::Error, 'forward-only updates require an existing regular flake.lock'
++        end
++
++        git!('ls-files', '--error-unmatch', '--', 'flake.lock')
++        unless git!('status', '--porcelain=v1', '--untracked-files=no').empty?
++          raise ConfCtl::Error, 'forward-only updates require a clean tracked checkout and index'
++        end
++
++        @original_lock = File.binread(@lock_path)
++        @original_mode = File.stat(@lock_path).mode & 0o777
++        @original_flake = File.binread(File.join(@conf_dir, 'flake.nix'))
++        @head = git!('rev-parse', 'HEAD')
++        @index = git!('ls-files', '--stage', '-z')
++      end
++
++      def verify_snapshot!
++        unchanged = File.binread(@lock_path) == @original_lock &&
++                    File.binread(File.join(@conf_dir, 'flake.nix')) == @original_flake &&
++                    git!('rev-parse', 'HEAD') == @head &&
++                    git!('ls-files', '--stage', '-z') == @index &&
++                    git!('status', '--porcelain=v1', '--untracked-files=no').empty?
++        return if unchanged
++
++        raise ConfCtl::Error, 'checkout changed while preparing the input update; retry from a fresh baseline'
++      end
++
++      def git!(*args)
++        out, _err, status = Open3.capture3({ 'GIT_OPTIONAL_LOCKS' => '0' }, 'git', *args, chdir: @conf_dir)
++        raise ConfCtl::Error, "guarded update Git preflight failed (#{args.first})" unless status.success?
++
++        out
++      end
++
++      def outcome(status, changes: [], issues: [])
++        { status: status, changed: status == :updated, changes: changes, issues: issues }
++      end
++    end
++  end
++end
+diff --git a/lib/confctl/inputs/lock_graph.rb b/lib/confctl/inputs/lock_graph.rb
+new file mode 100644
+index 0000000..094e3cb
+--- /dev/null
++++ b/lib/confctl/inputs/lock_graph.rb
+@@ -0,0 +1,94 @@
++module ConfCtl
++  module Inputs
++    # A semantic view of a version-7 lock, independent of generated node IDs.
++    class LockGraph
++      class Error < StandardError; end
++
++      Entry = Struct.new(:path, :node, :terminal_path)
++
++      attr_reader :entries
++
++      def initialize(lock)
++        @data = lock.respond_to?(:data) ? lock.data : lock
++        unless @data.is_a?(Hash) && @data['version'].eql?(7) && @data['nodes'].is_a?(Hash)
++          raise Error, 'Expected a version-7 flake lock graph'
++        end
++
++        @nodes = @data['nodes']
++        @root = @data['root']
++        node!(@root)
++        @entries = {}
++        walk([], @root, [@root])
++      end
++
++      def resolve_path(path)
++        components = path.is_a?(String) ? path.split('/', -1) : path
++        validate_path!(components)
++        id, terminal = resolve(components, [])
++        Entry.new(path: components.join('/'), node: node!(id), terminal_path: terminal.join('/'))
++      end
++
++      def update_inputs(names)
++        names.map { |name| resolve_path(name).terminal_path }.uniq
++      end
++
++      protected
++
++      def node!(id)
++        node = @nodes[id]
++        unless id.is_a?(String) && node.is_a?(Hash) &&
++               (!node.has_key?('inputs') || node['inputs'].is_a?(Hash)) &&
++               (id == @root || node['locked'].is_a?(Hash)) &&
++               (!node.has_key?('original') || node['original'].is_a?(Hash)) &&
++               (!node.has_key?('flake') || [true, false].include?(node['flake']))
++          raise Error, 'Malformed or dangling lock graph node'
++        end
++
++        validate_path!((node['inputs'] || {}).keys)
++        node
++      end
++
++      def validate_path!(path)
++        return if path.is_a?(Array) && path.all? { |name| name.is_a?(String) && !name.empty? && !name.include?('/') }
++
++        raise Error, 'Malformed lock input path'
++      end
++
++      def resolve(components, stack)
++        id = @root
++        terminal = []
++        components.each do |name|
++          key = [id, name]
++          raise Error, 'Cyclic follows reference in lock graph' if stack.include?(key)
++
++          edge = (node!(id)['inputs'] || {})[name]
++          case edge
++          when String
++            id = edge
++            node!(id)
++            terminal << name
++          when Array
++            validate_path!(edge)
++            id, terminal = resolve(edge, stack + [key])
++          else
++            raise Error, 'Malformed or dangling lock input reference'
++          end
++        end
++        [id, terminal]
++      end
++
++      def walk(prefix, id, ancestors)
++        (node!(id)['inputs'] || {}).keys.sort.each do |name|
++          validate_path!([name])
++          path = prefix + [name]
++          entry = resolve_path(path)
++          target, = resolve(path, [])
++          raise Error, 'Cyclic dependency in lock graph' if ancestors.include?(target)
++
++          @entries[entry.path] = entry
++          walk(path, target, ancestors + [target])
++        end
++      end
++    end
++  end
++end
+diff --git a/lib/confctl/inputs/updater.rb b/lib/confctl/inputs/updater.rb
+index 5b1f11a..d57c23a 100644
+--- a/lib/confctl/inputs/updater.rb
++++ b/lib/confctl/inputs/updater.rb
+@@ -3,14 +3,24 @@ require 'confctl/flake_lock_diff'
+ require 'confctl/inputs/commit_message'
+ require 'confctl/inputs/git_commit'
+ require 'confctl/inputs/nix_output_guard'
++require 'confctl/inputs/guarded_update'
+ require 'confctl/system_command'
+ 
+ module ConfCtl
+   module Inputs
+     class Updater
+-      def self.run!(conf_dir:, inputs:, commit:, changelog:, downgrade:, editor:)
++      def self.run!(conf_dir:, inputs:, commit:, changelog:, downgrade:, editor:, forward_only: false)
+         raise ArgumentError, 'inputs empty' if inputs.nil? || inputs.empty?
+ 
++        if forward_only
++          after_install = if commit
++                            proc { |changes| commit_changes!(conf_dir, changes, changelog, downgrade, editor) }
++                          end
++          return GuardedUpdate.new(conf_dir: conf_dir, inputs: inputs).run!(after_install: after_install) do |reference, output, targets|
++            run_nix_flake_update!(conf_dir, targets, reference: reference, output: output)
++          end
++        end
++
+         lock_path = File.join(conf_dir, 'flake.lock')
+         old_lock = ConfCtl::FlakeLock.load_optional(lock_path)
+ 
+@@ -22,23 +32,18 @@ module ConfCtl
+         return { changed: false, changes: [] } if changes.empty?
+ 
+         if commit
+-          msg = ConfCtl::Inputs::CommitMessage.build(
+-            changes: changes,
+-            changelog: changelog,
+-            downgrade: downgrade
+-          )
+-          ConfCtl::Inputs::GitCommit.commit!(
+-            conf_dir: conf_dir,
+-            message: msg,
+-            editor: editor,
+-            files: ['flake.lock']
+-          )
++          commit_changes!(conf_dir, changes, changelog, downgrade, editor)
+         end
+ 
+         { changed: true, changes: changes }
+       end
+ 
+-      def self.run_nix_flake_update!(conf_dir, inputs)
++      def self.commit_changes!(conf_dir, changes, changelog, downgrade, editor)
++        msg = ConfCtl::Inputs::CommitMessage.build(changes: changes, changelog: changelog, downgrade: downgrade)
++        ConfCtl::Inputs::GitCommit.commit!(conf_dir: conf_dir, message: msg, editor: editor, files: ['flake.lock'])
++      end
++
++      def self.run_nix_flake_update!(conf_dir, inputs, reference: nil, output: nil)
+         cmd = ConfCtl::SystemCommand.new
+         extra_experimental = false
+ 
+@@ -49,11 +54,16 @@ module ConfCtl
+             args << '--extra-experimental-features' << 'flakes'
+           end
+           args << 'flake' << 'update'
++          args.push('--reference-lock-file', reference, '--output-lock-file', output) if reference && output
+           args.concat(inputs) if inputs
+ 
+           begin
+             result = Dir.chdir(conf_dir) { cmd.run(*args) }
+             ConfCtl::Inputs::NixOutputGuard.check!(result)
++            if output && [result.stdout, result.stderr].compact.join("\n").match?(/does not match any input/i)
++              raise ConfCtl::Error, 'Nix did not match the requested update input; no lock was installed'
++            end
++
+             break
+           rescue TTY::Command::ExitError => e
+             if !extra_experimental && experimental_error?(e.message)
+@@ -70,7 +80,7 @@ module ConfCtl
+         message.match?(/experimental/i) && message.match?(/nix-command|flakes/i)
+       end
+ 
+-      private_class_method :run_nix_flake_update!, :experimental_error?
++      private_class_method :run_nix_flake_update!, :experimental_error?, :commit_changes!
+     end
+   end
+ end
+diff --git a/man/man8/confctl.8.md b/man/man8/confctl.8.md
+index af89fea..a66bd08 100644
+--- a/man/man8/confctl.8.md
++++ b/man/man8/confctl.8.md
+@@ -523,6 +523,12 @@ Use retained confctl v3 for old software-pin generations.
+   List root-level flake inputs and their locked revisions. Available only in
+   flake configs.
+ 
++    `--json`
++      Print an array of rows with fields `input`, `type`, `ref`, `rev` and `url`.
++      Revisions are full locked revisions, or null when absent. Resolves follows
++      aliases. An unmatched pattern produces an empty array. The default table
++      continues to show eight-character revisions.
++
+ `confctl inputs update` [*input-name ...*]
+   Update flake inputs in `flake.lock`. Available only in flake configs.
+ 
+@@ -543,6 +549,23 @@ Use retained confctl v3 for old software-pin generations.
+     `--all`
+       Update all root inputs.
+ 
++    `--forward-only`
++      Validate the complete lock graph before installation. Every existing Git
++      revision must remain an ancestor in the same supported source. Requires
++      Nix 2.19 or newer, an existing tracked version-7 lock and a clean tracked
++      checkout and index. Resolves follows aliases to terminal update paths.
++      Exit 3 means policy rejection; exit 1 means unknown evidence or tool error.
++      Both statuses stop publication. `--downgrade` does not bypass this guard.
++
++`confctl inputs check-update` `--old-lock` *file* `--new-lock` *file*
++  Read two locks and apply the same complete-graph ancestry policy as
++  `--forward-only`. Does not update, install or commit a lock, and does not
++  require cluster outputs. Returns 0 on acceptance, 3 on policy rejection and
++  1 on evidence or tool errors. After hooks and tests, export `HEAD:flake.lock`
++  and check that committed snapshot against the original workflow baseline
++  before publishing. See `docs/flake-inputs.md` for supported sources,
++  credentials, transaction guarantees and limitations.
++
+ `confctl inputs set` *input-name* *rev*
+   Set a flake input to a specific revision in `flake.lock` while keeping the
+   original upstream reference. Available only in flake configs.
+@@ -583,6 +606,14 @@ Use retained confctl v3 for old software-pin generations.
+       Use when the new version is older than the previously set version. Used for
+       generating the commit changelog direction.
+ 
++    `--forward-only`
++      Validate the complete lock graph before installation. Every existing Git
++      revision must remain an ancestor in the same supported source. Requires
++      Nix 2.19 or newer, an existing tracked version-7 lock and a clean tracked
++      checkout and index. Resolves follows aliases to terminal update paths.
++      Exit 3 means policy rejection; exit 1 means unknown evidence or tool error.
++      Both statuses stop publication. `--downgrade` does not bypass this guard.
++
+ `confctl inputs channel set` *channels* *role* *rev*
+   Set inputs referenced by selected channels for a specific role to *rev*.
+   Available only in flake configs.
+@@ -623,6 +654,14 @@ Use retained confctl v3 for old software-pin generations.
+       Use when the new version is older than the previously set version. Used for
+       generating the commit changelog direction.
+ 
++    `--forward-only`
++      Validate the complete lock graph before installation. Every existing Git
++      revision must remain an ancestor in the same supported source. Requires
++      Nix 2.19 or newer, an existing tracked version-7 lock and a clean tracked
++      checkout and index. Resolves follows aliases to terminal update paths.
++      Exit 3 means policy rejection; exit 1 means unknown evidence or tool error.
++      Both statuses stop publication. `--downgrade` does not bypass this guard.
++
+ `confctl inputs machine set` *machine* *role* *rev*
+   Set the input used by a specific machine for a specific role to *rev*.
+   Available only in flake configs.
+diff --git a/spec/confctl/cli/inputs_forward_only_spec.rb b/spec/confctl/cli/inputs_forward_only_spec.rb
+new file mode 100644
+index 0000000..c8a8f52
+--- /dev/null
++++ b/spec/confctl/cli/inputs_forward_only_spec.rb
+@@ -0,0 +1,192 @@
++# frozen_string_literal: true
++
++require 'spec_helper'
++require 'confctl'
++require 'confctl/cli'
++require 'tmpdir'
++
++RSpec.describe 'forward-only input CLI' do
++  include CliHelper
++
++  let(:options) { { commit: false, changelog: false, downgrade: true, editor: false, 'forward-only': true } }
++  let(:response) { { status: :unchanged, changed: false, changes: [], issues: [] } }
++  let(:lock) { instance_double(ConfCtl::FlakeLock, input_info: { short_rev: 'aaaaaaaa' }) }
++
++  before do
++    allow(ConfCtl::ConfDir).to receive(:path).and_return('/conf')
++    allow(ConfCtl::ConfDir).to receive(:require_flake!)
++    allow(ConfCtl::Inputs::Updater).to receive(:run!).and_return(response)
++    allow(ConfCtl::FlakeLock).to receive(:load).and_return(lock)
++  end
++
++  it 'passes the root guard option without making downgrade an override' do
++    command = ConfCtl::Cli::Inputs::Root.new({ color: 'never' }, options, ['source'])
++    expect { command.update }.to output("No changes.\n").to_stdout
++    expect(ConfCtl::Inputs::Updater).to have_received(:run!).with(hash_including(forward_only: true, downgrade: true))
++  end
++
++  it 'passes the channel guard option after selecting and deduplicating targets' do
++    command = ConfCtl::Cli::Inputs::Channels.new({ color: 'never' }, options, ['{a,b}', 'nixpkgs'])
++    allow(command).to receive(:eval_channels).and_return('a' => { 'nixpkgs' => 'source' }, 'b' => { 'nixpkgs' => 'source' })
++    expect { command.update }.to output(/Updating nixpkgs in a/).to_stdout
++    expect(ConfCtl::Inputs::Updater).to have_received(:run!).with(hash_including(forward_only: true, inputs: ['source']))
++  end
++
++  it 'passes the machine guard option' do
++    command = ConfCtl::Cli::Inputs::Machines.new({ color: 'never' }, options, %w[host nixpkgs])
++    nix = instance_double(ConfCtl::Nix)
++    allow(ConfCtl::Nix).to receive(:new).and_return(nix)
++    allow(nix).to receive(:eval_inputs_info).with('host').and_return('nixpkgs' => { 'input' => 'source' })
++    expect { command.update }.to output(/Updating nixpkgs in host/).to_stdout
++    expect(ConfCtl::Inputs::Updater).to have_received(:run!).with(hash_including(forward_only: true, inputs: ['source']))
++  end
++
++  it 'propagates a known rejection as exit 3 without printing success' do
++    response.merge!(status: :rejected, issues: ['source is behind'])
++    command = ConfCtl::Cli::Inputs::Root.new({ color: 'never' }, options, ['source'])
++    expect { command.update }.to raise_error(GLI::CustomExit) { |e| expect(e.exit_code).to eq(3) }
++  end
++
++  it 'propagates unknown evidence as an error without printing success' do
++    response.merge!(status: :error, issues: ['GitHub unavailable'])
++    command = ConfCtl::Cli::Inputs::Root.new({ color: 'never' }, options, ['source'])
++    expect { command.update }.to raise_error(ConfCtl::Error, /GitHub unavailable/)
++  end
++
++  [%w[inputs update], %w[inputs channel update], %w[inputs machine update]].each do |command|
++    it "advertises --forward-only for #{command.join(' ')}" do
++      Dir.mktmpdir('confctl-guard-cli-') do |dir|
++        res = run_confctl(*command, '--help', chdir: dir)
++        expect(res.success?).to be(true), res.err
++        expect(res.out).to include('--[no-]forward-only')
++      end
++    end
++  end
++end
++
++RSpec.describe 'check-update CLI statuses' do
++  include CliHelper
++
++  let(:old_lock) do
++    {
++      'version' => 7, 'root' => 'entry',
++      'nodes' => {
++        'entry' => { 'inputs' => { 'source' => 'source' } },
++        'source' => { 'locked' => { 'type' => 'path', 'path' => '/unchanged/source', 'narHash' => 'sha256-old' } }
++      }
++    }
++  end
++
++  def check_locks(candidate)
++    Dir.mktmpdir('confctl-check-update-') do |dir|
++      old_path = File.join(dir, 'old.lock')
++      new_path = File.join(dir, 'new.lock')
++      File.write(old_path, JSON.generate(old_lock))
++      File.write(new_path, JSON.generate(candidate))
++      old_bytes = File.binread(old_path)
++      new_bytes = File.binread(new_path)
++      res = run_confctl('inputs', 'check-update', '--old-lock', old_path, '--new-lock', new_path, chdir: dir)
++      expect(File.binread(old_path)).to eq(old_bytes)
++      expect(File.binread(new_path)).to eq(new_bytes)
++      yield res
++    end
++  end
++
++  it 'accepts an unchanged lock without requiring a confctl configuration' do
++    check_locks(old_lock) do |res|
++      expect(res.status.exitstatus).to eq(0), res.err
++      expect(res.out).to include('No changes.')
++    end
++  end
++
++  it 'returns 3 when a previously reachable dependency is removed' do
++    candidate = Marshal.load(Marshal.dump(old_lock))
++    candidate['nodes']['entry']['inputs'] = {}
++    check_locks(candidate) do |res|
++      expect(res.status.exitstatus).to eq(3), res.err
++      expect(res.err).to include('previously reachable dependency was removed')
++    end
++  end
++
++  it 'returns 1 for a changed unsupported source' do
++    candidate = Marshal.load(Marshal.dump(old_lock))
++    candidate['nodes']['source']['locked']['narHash'] = 'sha256-new'
++    check_locks(candidate) do |res|
++      expect(res.status.exitstatus).to eq(1), res.err
++      expect(res.err).to include('could not be verified')
++    end
++  end
++
++  it 'returns 1 for an invalid graph' do
++    check_locks({}) do |res|
++      expect(res.status.exitstatus).to eq(1), res.err
++      expect(res.err).to include('version-7')
++    end
++  end
++end
++
++RSpec.describe 'guarded channel update compatibility' do
++  include CliHelper
++
++  it 'works with old-style settings and channels without moduleOptions' do
++    Dir.mktmpdir('confctl-legacy-channels-') do |dir|
++      init_git_repo(dir)
++      FileUtils.mkdir_p(File.join(dir, 'source'))
++      File.write(File.join(dir, 'source', 'flake.nix'), '{ outputs = { ... }: {}; }')
++      File.write(File.join(dir, 'flake.nix'), <<~NIX)
++        {
++          inputs.source.url = "path:./source";
++          outputs = { ... }: {
++            confctl.settings.nix.maxJobs = "auto";
++            confctl.channels.legacy.nixpkgs = "source";
++          };
++        }
++      NIX
++      git_commit_all(dir, 'fixture: legacy channels')
++      initial = run_cmd('nix', '--extra-experimental-features', 'nix-command flakes', 'flake', 'lock', chdir: dir)
++      expect(initial.success?).to be(true), initial.err
++      git_commit_all(dir, 'fixture: initial lock')
++      original = File.binread(File.join(dir, 'flake.lock'))
++      res = run_confctl('inputs', 'channel', 'update', '--forward-only', 'legacy', 'nixpkgs', chdir: dir)
++      expect(res.success?).to be(true), "#{res.out}\n#{res.err}"
++      expect(res.out).to include('Updating nixpkgs in legacy')
++      expect(File.binread(File.join(dir, 'flake.lock'))).to eq(original)
++    end
++  end
++end
++
++RSpec.describe 'input listing JSON' do
++  include CliHelper
++
++  it 'exposes full follows-resolved revisions and preserves the default table' do
++    Dir.mktmpdir('confctl-input-json-') do |dir|
++      File.write(File.join(dir, 'flake.nix'), '{ outputs = { ... }: {}; }')
++      data = {
++        'version' => 7, 'root' => 'entry',
++        'nodes' => {
++          'entry' => { 'inputs' => { 'parent' => 'parent', 'nixpkgs' => %w[parent leaf], 'path' => 'path' } },
++          'parent' => { 'locked' => {}, 'inputs' => { 'leaf' => 'renumbered' } },
++          'renumbered' => { 'locked' => { 'type' => 'github', 'owner' => 'NixOS', 'repo' => 'nixpkgs', 'rev' => 'a' * 40 } },
++          'path' => { 'locked' => { 'type' => 'path', 'path' => '/example' } }
++        }
++      }
++      File.write(File.join(dir, 'flake.lock'), JSON.generate(data))
++      res = run_confctl('inputs', 'ls', '--json', 'nixpkgs', chdir: dir)
++      expect(res.success?).to be(true), res.err
++      expected = [
++        { 'input' => 'nixpkgs', 'type' => 'github', 'ref' => nil, 'rev' => 'a' * 40, 'url' => 'https://github.com/NixOS/nixpkgs' }
++      ]
++      expect(JSON.parse(res.out)).to eq(expected)
++      table = run_confctl('inputs', 'ls', 'nixpkgs', chdir: dir)
++      expect(table.success?).to be(true), table.err
++      expect(table.out).to include('aaaaaaaa')
++      expect(table.out).not_to include('a' * 40)
++      absent = run_confctl('inputs', 'ls', '--json', 'path', chdir: dir)
++      expect(absent.success?).to be(true), absent.err
++      expect(JSON.parse(absent.out).first).to include('input' => 'path', 'rev' => nil)
++      unmatched = run_confctl('inputs', 'ls', '--json', 'missing', chdir: dir)
++      expect(unmatched.success?).to be(true), unmatched.err
++      expect(JSON.parse(unmatched.out)).to eq([])
++    end
++  end
++end
+diff --git a/spec/flake_lock_spec.rb b/spec/flake_lock_spec.rb
+new file mode 100644
+index 0000000..5a47950
+--- /dev/null
++++ b/spec/flake_lock_spec.rb
+@@ -0,0 +1,21 @@
++# frozen_string_literal: true
++
++require 'spec_helper'
++require 'confctl/flake_lock'
++
++RSpec.describe ConfCtl::FlakeLock do
++  it 'reads root inputs and nested chained follows using the declared root node' do
++    lock = described_class.new('flake.lock', {
++      'version' => 7, 'root' => 'actual-root',
++      'nodes' => {
++        'actual-root' => { 'inputs' => { 'package' => 'arbitrary', 'os' => %w[package os], 'nixpkgs' => %w[os nixpkgs] } },
++        'arbitrary' => { 'locked' => {}, 'inputs' => { 'os' => 'arbitrary-2' } },
++        'arbitrary-2' => { 'locked' => {}, 'inputs' => { 'nixpkgs' => 'leaf-3' } },
++        'leaf-3' => { 'locked' => { 'type' => 'github', 'owner' => 'NixOS', 'repo' => 'nixpkgs', 'rev' => 'a' * 40 } }
++      }
++    })
++    expect(lock.root_inputs).to eq(%w[nixpkgs os package])
++    expect(lock.input_info('nixpkgs')).to include(rev: 'a' * 40, url: 'https://github.com/NixOS/nixpkgs')
++    expect(lock.input_info('package/os/nixpkgs')).to eq(lock.input_info('nixpkgs'))
++  end
++end
+diff --git a/spec/inputs/forward_guard_spec.rb b/spec/inputs/forward_guard_spec.rb
+new file mode 100644
+index 0000000..a79d0ce
+--- /dev/null
++++ b/spec/inputs/forward_guard_spec.rb
+@@ -0,0 +1,219 @@
++require 'spec_helper'
++require 'confctl/flake_lock'
++require 'confctl/inputs/forward_guard'
++
++RSpec.describe ConfCtl::Inputs::ForwardGuard do
++  let(:provider) { instance_double(ConfCtl::Inputs::GitHubCompare) }
++  let(:guard) { described_class.new(provider: provider) }
++
++  def source(rev = 'a' * 40, repo = 'source')
++    { 'locked' => { 'type' => 'github', 'owner' => 'example', 'repo' => repo, 'rev' => rev } }
++  end
++
++  def graph
++    {
++      'version' => 7,
++      'root' => 'entry',
++      'nodes' => {
++        'entry' => { 'inputs' => { 'parent' => 'p', 'alias' => %w[parent leaf] } },
++        'p' => source.merge('inputs' => { 'leaf' => 'l' }),
++        'l' => source('b' * 40, 'dependency')
++      }
++    }
++  end
++
++  def compare(repo: 'source', old_rev: 'a' * 40, new_rev: 'c' * 40, result: :ahead)
++    expect(provider).to receive(:compare).with(owner: 'example', repo: repo, old_rev: old_rev, new_rev: new_rev)
++                                         .once.and_return(result)
++  end
++
++  it 'accepts identical revisions locally, including an ordinary FlakeLock object' do
++    expect(provider).not_to receive(:compare)
++    result = guard.validate(ConfCtl::FlakeLock.new('old', graph), graph)
++    expect(result.status).to eq(:unchanged)
++    expect(result).to be_success
++    expect(result.changes).to be_empty
++  end
++
++  it 'ignores arbitrary generated node renumbering and input ordering' do
++    candidate = graph
++    candidate['nodes']['renumbered'] = candidate['nodes'].delete('l')
++    candidate['nodes']['p']['inputs']['leaf'] = 'renumbered'
++    expect(guard.validate(graph, candidate).status).to eq(:unchanged)
++  end
++
++  it 'accepts forward root revisions' do
++    candidate = graph
++    candidate['nodes']['p']['locked']['rev'] = 'c' * 40
++    compare
++    result = guard.validate(graph, candidate)
++    expect(result.status).to eq(:updated)
++    expect(result.changes.map(&:path)).to eq(['parent'])
++    expect(result.changes.first.old_rev).to eq('a' * 40)
++  end
++
++  it 'checks all nested changes when the root revision is equal and deduplicates alias evidence' do
++    candidate = graph
++    candidate['nodes']['l']['locked']['rev'] = 'c' * 40
++    compare(repo: 'dependency', old_rev: 'b' * 40)
++    result = guard.validate(graph, candidate)
++    expect(result.status).to eq(:updated)
++    expect(result.changes.map(&:path)).to eq(['alias', 'parent/leaf'])
++  end
++
++  it 'rejects a nested rollback even when its parent advances' do
++    candidate = graph
++    candidate['nodes']['p']['locked']['rev'] = 'c' * 40
++    candidate['nodes']['l']['locked']['rev'] = 'd' * 40
++    compare
++    compare(repo: 'dependency', old_rev: 'b' * 40, new_rev: 'd' * 40, result: :behind)
++    result = guard.validate(graph, candidate)
++    expect(result).to be_rejected
++    expect(result).not_to be_success
++    expect(result.issues.join).to include('parent/leaf', 'behind', 'b' * 40, 'd' * 40)
++  end
++
++  %i[behind diverged].each do |outcome|
++    it "rejects #{outcome} history despite newer candidate metadata" do
++      candidate = graph
++      candidate['nodes']['p']['locked'].merge!('rev' => 'c' * 40, 'lastModified' => 2_000_000_000)
++      compare(result: outcome)
++      expect(guard.validate(graph, candidate)).to be_rejected
++    end
++  end
++
++  it 'accepts merge and later-revert commits when they contain the original commit' do
++    candidate = graph
++    candidate['nodes']['p']['locked'].merge!('rev' => 'c' * 40, 'lastModified' => 1, 'narHash' => 'sha256-new')
++    compare
++    expect(guard.validate(graph, candidate)).to be_success
++  end
++
++  %w[repo owner host type dir].each do |attribute|
++    it "does not accept a changed #{attribute} as ordinary forward movement" do
++      candidate = graph
++      candidate['nodes']['p']['locked'].merge!(attribute => 'different', 'rev' => 'c' * 40)
++      expect(provider).not_to receive(:compare)
++      expect(guard.validate(graph, candidate)).not_to be_success
++    end
++  end
++
++  it 'normalizes github.com source names for ancestry queries' do
++    candidate = graph
++    candidate['nodes']['p']['locked'].merge!('rev' => 'c' * 40, 'owner' => 'EXAMPLE', 'repo' => 'SOURCE')
++    compare
++    expect(guard.validate(graph, candidate)).to be_success
++  end
++
++  %w[narHash lastModified dir].each do |attribute|
++    it "rejects changed #{attribute} at an equal revision" do
++      candidate = graph
++      candidate['nodes']['p']['locked'][attribute] = attribute == 'lastModified' ? 100 : 'changed'
++      expect(provider).not_to receive(:compare)
++      expect(guard.validate(graph, candidate)).to be_rejected
++    end
++  end
++
++  it 'rejects switching between a flake and raw source' do
++    candidate = graph
++    candidate['nodes']['p']['flake'] = false
++    expect(guard.validate(graph, candidate)).to be_rejected
++  end
++
++  it 'permits revision updates to raw GitHub sources' do
++    old = graph
++    old['nodes']['l']['flake'] = false
++    candidate = Marshal.load(Marshal.dump(old))
++    candidate['nodes']['l']['locked']['rev'] = 'c' * 40
++    compare(repo: 'dependency', old_rev: 'b' * 40)
++    expect(guard.validate(old, candidate)).to be_success
++  end
++
++  it 'rejects removed logical paths even when they were aliases' do
++    candidate = graph
++    candidate['nodes']['entry']['inputs'].delete('alias')
++    result = guard.validate(graph, candidate)
++    expect(result).to be_rejected
++    expect(result.issues.join).to include('alias', 'removed')
++  end
++
++  it 'accepts new supported immutable dependencies and reports them' do
++    candidate = graph
++    candidate['nodes']['entry']['inputs']['new'] = 'n'
++    candidate['nodes']['n'] = source
++    result = guard.validate(graph, candidate)
++    expect(result.status).to eq(:updated)
++    expect(result.changes.map(&:path)).to eq(['new'])
++    expect(result.changes.first.old_node).to be_nil
++  end
++
++  it 'retains unchanged unsupported path sources without giving changed sources a bypass' do
++    old = graph
++    old['nodes']['l']['locked'] = { 'type' => 'path', 'path' => '/source' }
++    expect(guard.validate(old, old).status).to eq(:unchanged)
++    candidate = Marshal.load(Marshal.dump(old))
++    candidate['nodes']['l']['locked']['path'] = '/changed'
++    expect(guard.validate(old, candidate)).to be_error
++  end
++
++  it 'fails closed for unsupported new dependencies' do
++    candidate = graph
++    candidate['nodes']['entry']['inputs']['new'] = 'n'
++    candidate['nodes']['n'] = { 'locked' => { 'type' => 'tarball', 'url' => 'https://example.com/archive' } }
++    expect(guard.validate(graph, candidate)).to be_error
++  end
++
++  [nil, 'short', 'main'].each do |rev|
++    it "fails closed for nonimmutable revision #{rev.inspect}" do
++      candidate = graph
++      candidate['nodes']['p']['locked']['rev'] = rev
++      expect(guard.validate(graph, candidate)).to be_error
++    end
++  end
++
++  it 'fails closed for unknown extraction attributes without exposing their values' do
++    candidate = graph
++    candidate['nodes']['p']['locked']['privateToken'] = 'secret-value'
++    result = guard.validate(graph, candidate)
++    expect(result).to be_error
++    expect(result.issues.join).not_to include('secret-value')
++  end
++
++  it 'reports unavailable provider evidence as an error even alongside a known rejection' do
++    candidate = graph
++    candidate['nodes']['p']['locked']['rev'] = 'c' * 40
++    candidate['nodes']['l']['locked']['rev'] = 'd' * 40
++    allow(provider).to receive(:compare).and_raise(ConfCtl::Inputs::GitHubCompare::Error, 'Unavailable evidence')
++    compare(result: :behind)
++    expect(guard.validate(graph, candidate)).to be_error
++  end
++
++  it 'fails closed for unexpected provider outcomes' do
++    candidate = graph
++    candidate['nodes']['p']['locked']['rev'] = 'c' * 40
++    compare(result: nil)
++    expect(guard.validate(graph, candidate)).to be_error
++  end
++
++  it 'deduplicates failed evidence requests shared by aliases' do
++    candidate = graph
++    candidate['nodes']['l']['locked']['rev'] = 'c' * 40
++    expect(provider).to receive(:compare).once.and_raise(ConfCtl::Inputs::GitHubCompare::Error, 'Unavailable evidence')
++    result = guard.validate(graph, candidate)
++    expect(result).to be_error
++    expect(result.issues.size).to eq(2)
++  end
++
++  it 'does not reuse comparison evidence for another revision pair or validation run' do
++    candidate = graph
++    candidate['nodes']['p']['locked']['rev'] = 'c' * 40
++    expect(provider).to receive(:compare).twice.and_return(:ahead)
++    2.times { expect(guard.validate(graph, candidate)).to be_success }
++  end
++
++  it 'returns typed graph errors rather than accepting unsupported lock versions' do
++    candidate = graph
++    candidate['version'] = 100
++    expect(guard.validate(graph, candidate)).to be_error
++  end
++end
+diff --git a/spec/inputs/github_compare_spec.rb b/spec/inputs/github_compare_spec.rb
+new file mode 100644
+index 0000000..5b78613
+--- /dev/null
++++ b/spec/inputs/github_compare_spec.rb
+@@ -0,0 +1,135 @@
++require 'spec_helper'
++require 'confctl/inputs/github_compare'
++
++RSpec.describe ConfCtl::Inputs::GitHubCompare do
++  let(:transport) { class_double(Net::HTTP) }
++  let(:http) { instance_double(Net::HTTP) }
++  let(:old_rev) { 'a' * 40 }
++  let(:new_rev) { 'b' * 40 }
++  let(:client) { described_class.new(token: 'private-token', http: transport) }
++
++  def compare
++    client.compare(owner: 'example', repo: 'source', old_rev: old_rev, new_rev: new_rev)
++  end
++
++  def summary(status = 'ahead')
++    {
++      'status' => status,
++      'base_commit' => { 'sha' => old_rev },
++      'merge_base_commit' => { 'sha' => old_rev },
++      'ahead_by' => 5,
++      'behind_by' => 0,
++      'total_commits' => 5,
++      'commits' => []
++    }
++  end
++
++  def response(body: summary.to_json, code: '200')
++    allow(transport).to receive(:start).with('api.github.com', 443,
++                                             use_ssl: true, open_timeout: 10, read_timeout: 30).and_yield(http)
++    allow(http).to receive(:max_retries=).with(0)
++    allow(http).to receive(:request).and_return(instance_double(Net::HTTPResponse, code: code, body: body))
++  end
++
++  it 'uses exact full SHAs, fixed HTTPS host, explicit token and bounded network settings' do
++    response
++    expect(http).to receive(:request) do |request|
++      expect(request.path).to eq("/repos/example/source/compare/#{old_rev}...#{new_rev}?per_page=1")
++      expect(request['Authorization']).to eq('Bearer private-token')
++      expect(request['Accept']).to eq('application/vnd.github+json')
++      expect(request['User-Agent']).to eq('confctl-forward-guard')
++      instance_double(Net::HTTPResponse, code: '200', body: summary.to_json)
++    end
++    expect(compare).to eq(:ahead)
++  end
++
++  it 'decides equality locally' do
++    expect(transport).not_to receive(:start)
++    expect(client.compare(owner: 'example', repo: 'source', old_rev: old_rev, new_rev: old_rev)).to eq(:identical)
++  end
++
++  it 'accepts a large comparison using complete summary metadata despite truncated commit lists' do
++    data = summary.merge('ahead_by' => 50_000, 'total_commits' => 50_000,
++                         'commits' => [{ 'sha' => new_rev }])
++    response(body: data.to_json)
++    expect(compare).to eq(:ahead)
++  end
++
++  it 'reports behind history' do
++    data = summary('behind').merge('ahead_by' => 0, 'behind_by' => 50_000, 'total_commits' => 0,
++                                   'merge_base_commit' => { 'sha' => new_rev })
++    response(body: data.to_json)
++    expect(compare).to eq(:behind)
++  end
++
++  it 'reports divergent history, including an equivalent cherry pick or rebase' do
++    data = summary('diverged').merge('behind_by' => 1, 'merge_base_commit' => { 'sha' => 'c' * 40 })
++    response(body: data.to_json)
++    expect(compare).to eq(:diverged)
++  end
++
++  {
++    'missing fields' => ->(data) { data.delete('behind_by') },
++    'wrong base' => ->(data) { data['base_commit']['sha'] = 'd' * 40 },
++    'wrong merge base' => ->(data) { data['merge_base_commit']['sha'] = new_rev },
++    'abbreviated merge base' => ->(data) { data['merge_base_commit']['sha'] = 'short' },
++    'ahead and behind' => ->(data) { data['behind_by'] = 1 },
++    'missing ahead count' => ->(data) { data['ahead_by'] = 0 },
++    'wrong total' => ->(data) { data['total_commits'] = 6 },
++    'negative counts' => ->(data) { data['ahead_by'] = -1 },
++    'string counts' => ->(data) { data['behind_by'] = '0' },
++    'unknown status' => ->(data) { data['status'] = 'maybe' },
++    'false equality' => ->(data) { data['status'] = 'identical' },
++    'inconsistent behind status' => ->(data) { data['status'] = 'behind' },
++    'inconsistent diverged status' => ->(data) { data['status'] = 'diverged' }
++  }.each do |name, mutate|
++    it "fails closed on #{name}" do
++      data = summary
++      instance_exec(data, &mutate)
++      response(body: data.to_json)
++      expect { compare }.to raise_error(described_class::Error, /ancestry evidence/)
++    end
++  end
++
++  ['null', '[]', '{bad-json', '{"message":"private-token"}'].each do |body|
++    it "rejects invalid response shape #{body[0, 10]} without leaking response data" do
++      response(body: body)
++      expect { compare }.to raise_error(described_class::Error) { |e| expect(e.message).not_to include('private-token') }
++    end
++  end
++
++  %w[301 302 401 403 404 409 422 429 500 503].each do |code|
++    it "fails closed for HTTP #{code} without redirecting or leaking credentials/body" do
++      response(code: code, body: 'private-token')
++      expect { compare }.to raise_error(described_class::Error, "GitHub comparison failed (HTTP #{code})")
++    end
++  end
++
++  [Net::OpenTimeout, Net::ReadTimeout, SocketError, Errno::ECONNRESET, OpenSSL::SSL::SSLError,
++   Net::HTTPBadResponse, EOFError].each do |error|
++    it "returns sanitized evidence failure for #{error}" do
++      allow(transport).to receive(:start).and_raise(error, 'private-token')
++      expect { compare }.to raise_error(described_class::Error, 'Unable to obtain GitHub ancestry evidence')
++    end
++  end
++
++  it 'supports unauthenticated public requests without sending an empty authorization header' do
++    response
++    client = described_class.new(token: nil, http: transport)
++    expect(http).to receive(:request) do |request|
++      expect(request['Authorization']).to be_nil
++      instance_double(Net::HTTPResponse, code: '200', body: summary.to_json)
++    end
++    expect(client.compare(owner: 'example', repo: 'source', old_rev: old_rev, new_rev: new_rev)).to eq(:ahead)
++  end
++
++  it 'rejects malformed repository coordinates or mutable refs before HTTP' do
++    expect(transport).not_to receive(:start)
++    expect do
++      client.compare(owner: 'example/other', repo: 'source', old_rev: old_rev, new_rev: new_rev)
++    end.to raise_error(described_class::Error)
++    expect do
++      client.compare(owner: 'example', repo: 'source', old_rev: 'main', new_rev: new_rev)
++    end.to raise_error(described_class::Error)
++  end
++end
+diff --git a/spec/inputs/guarded_update_spec.rb b/spec/inputs/guarded_update_spec.rb
+new file mode 100644
+index 0000000..5cd811d
+--- /dev/null
++++ b/spec/inputs/guarded_update_spec.rb
+@@ -0,0 +1,259 @@
++# frozen_string_literal: true
++
++require 'spec_helper'
++require 'confctl/exceptions'
++require 'confctl/inputs/updater'
++require 'tty-command'
++require 'tmpdir'
++
++RSpec.describe ConfCtl::Inputs::GuardedUpdate do
++  include CliHelper
++
++  let(:old_rev) { 'a' * 40 }
++  let(:new_rev) { 'b' * 40 }
++  let(:provider) { instance_double(ConfCtl::Inputs::GitHubCompare, compare: :ahead) }
++  let(:cmd) { instance_double(TTY::Command) }
++  let(:result) { TTY::Command::Result.new(0, '', '') }
++  let(:old_data) do
++    {
++      'version' => 7, 'root' => 'entry',
++      'nodes' => {
++        'entry' => { 'inputs' => { 'source' => 'source' } },
++        'source' => {
++          'locked' => { 'type' => 'github', 'owner' => 'example', 'repo' => 'source', 'rev' => old_rev }
++        }
++      }
++    }
++  end
++  let(:candidate) do
++    Marshal.load(Marshal.dump(old_data)).tap { |data| data['nodes']['source']['locked']['rev'] = new_rev }
++  end
++
++  around do |example|
++    Dir.mktmpdir('confctl-guarded-update-') do |dir|
++      @conf_dir = dir
++      init_git_repo(dir)
++      File.write(File.join(dir, 'flake.nix'), "{ outputs = { ... }: {}; }\n")
++      File.write(File.join(dir, 'flake.lock'), JSON.pretty_generate(old_data))
++      git_commit_all(dir, 'fixture: baseline')
++      @before_state = repository_state
++      example.run
++    end
++  end
++
++  before do
++    allow(ConfCtl::SystemCommand).to receive(:new).and_return(cmd)
++    allow(ConfCtl::Inputs::GitHubCompare).to receive(:new).and_return(provider)
++    allow(ConfCtl::Inputs::GitCommit).to receive(:commit!)
++    allow(cmd).to receive(:run) do |*argv|
++      expect(argv).to include('--reference-lock-file', '--output-lock-file')
++      reference = argv[argv.index('--reference-lock-file') + 1]
++      output = argv[argv.index('--output-lock-file') + 1]
++      expect(File.binread(reference)).to eq(@before_state[:lock])
++      expect(repository_state).to eq(@before_state)
++      File.write(output, JSON.generate(candidate))
++      result
++    end
++  end
++
++  def repository_state
++    index = run_cmd('git', 'rev-parse', '--git-path', 'index', chdir: @conf_dir).out.strip
++    {
++      lock: File.binread(File.join(@conf_dir, 'flake.lock')),
++      head: run_cmd('git', 'rev-parse', 'HEAD', chdir: @conf_dir).out,
++      index: File.binread(File.expand_path(index, @conf_dir))
++    }
++  end
++
++  def update(**options)
++    ConfCtl::Inputs::Updater.run!(
++      conf_dir: @conf_dir, inputs: ['source'], commit: false,
++      changelog: false, downgrade: false, editor: false,
++      forward_only: true, **options
++    )
++  end
++
++  def expect_preserved
++    expect(repository_state).to eq(@before_state)
++    expect(ConfCtl::Inputs::GitCommit).not_to have_received(:commit!)
++    expect(Dir.glob(File.join(@conf_dir, '.confctl-update-*'))).to be_empty
++  end
++
++  it 'validates the separate candidate before installing and committing' do
++    expect(provider).to receive(:compare) do |**|
++      expect(repository_state).to eq(@before_state)
++      :ahead
++    end
++    expect(ConfCtl::Inputs::GitCommit).to receive(:commit!) do |**|
++      expect(JSON.parse(File.read(File.join(@conf_dir, 'flake.lock')))).to eq(candidate)
++    end
++
++    response = update(commit: true)
++    expect(response).to include(status: :updated, changed: true)
++    expect(response[:changes].map(&:name)).to eq(['source'])
++    expect(response[:changes].first.new_rev).to eq(new_rev)
++  end
++
++  it 'rejects non-containing candidates even with --downgrade' do
++    allow(provider).to receive(:compare).and_return(:behind)
++    expect(update(commit: true, downgrade: true)).to include(status: :rejected, changed: false)
++    expect_preserved
++  end
++
++  it 'fails on unknown ancestry evidence' do
++    allow(provider).to receive(:compare).and_raise(ConfCtl::Inputs::GitHubCompare::Error, 'unavailable')
++    expect(update(commit: true)).to include(status: :error, changed: false)
++    expect_preserved
++  end
++
++  it 'preserves the checkout when Nix exits unsuccessfully' do
++    allow(cmd).to receive(:run) { TTY::Command.new(printer: :null).run('sh', '-c', 'exit 1') }
++    expect(update(commit: true)).to include(status: :error, changed: false)
++    expect_preserved
++  end
++
++  it 'rejects malformed output' do
++    allow(cmd).to receive(:run) do |*argv|
++      File.write(argv[argv.index('--output-lock-file') + 1], '{')
++      result
++    end
++    expect(update(commit: true)).to include(status: :error)
++    expect_preserved
++  end
++
++  it 'does not accept cached GitHub metadata after Nix succeeds' do
++    allow(cmd).to receive(:run) do |*argv|
++      File.write(argv[argv.index('--output-lock-file') + 1], JSON.generate(candidate))
++      TTY::Command::Result.new(0, '', "unable to download 'https://api.github.com/repos/x/y': using cached version")
++    end
++    expect(update(commit: true)).to include(status: :error)
++    expect_preserved
++  end
++
++  it 'fails if Nix warns that a selector did not match' do
++    allow(cmd).to receive(:run).and_return(TTY::Command::Result.new(0, '', "warning: input 'x' does not match any input"))
++    expect(update).to include(status: :error)
++    expect_preserved
++  end
++
++  it 'cleans owned preparation files on interruption before installation' do
++    allow(provider).to receive(:compare).and_raise(Interrupt)
++    expect { update(commit: true) }.to raise_error(Interrupt)
++    expect_preserved
++  end
++
++  it 'keeps exact bytes for a no-change result' do
++    allow(cmd).to receive(:run) do |*argv|
++      File.write(argv[argv.index('--output-lock-file') + 1], JSON.generate(old_data))
++      result
++    end
++    expect(update(commit: true)).to include(status: :unchanged, changed: false)
++    expect_preserved
++  end
++
++  %w[flake.lock flake.nix imported.txt].each do |path|
++    it "rejects a concurrent tracked change to #{path} without overwriting it" do
++      if path == 'imported.txt'
++        File.write(File.join(@conf_dir, path), 'original')
++        git_commit_all(@conf_dir, 'fixture: imported declaration data')
++        @before_state = repository_state
++      end
++      allow(provider).to receive(:compare) do |**|
++        File.write(File.join(@conf_dir, path), 'external writer')
++        :ahead
++      end
++      expect(update(commit: true)).to include(status: :error)
++      expect(File.read(File.join(@conf_dir, path))).to eq('external writer')
++      expect(repository_state.slice(:index, :head)).to eq(@before_state.slice(:index, :head))
++      expect(ConfCtl::Inputs::GitCommit).not_to have_received(:commit!)
++    end
++  end
++
++  it 'rejects a concurrent HEAD change' do
++    allow(provider).to receive(:compare) do |**|
++      run_cmd('git', 'commit', '--allow-empty', '-m', 'external writer', chdir: @conf_dir)
++      :ahead
++    end
++    expect(update(commit: true)).to include(status: :error)
++    expect(File.binread(File.join(@conf_dir, 'flake.lock'))).to eq(@before_state[:lock])
++    expect(ConfCtl::Inputs::GitCommit).not_to have_received(:commit!)
++  end
++
++  it 'rejects a concurrent index change without undoing the other writer' do
++    allow(provider).to receive(:compare) do |**|
++      File.write(File.join(@conf_dir, 'other'), 'external writer')
++      run_cmd('git', 'add', 'other', chdir: @conf_dir)
++      :ahead
++    end
++    expect(update(commit: true)).to include(status: :error)
++    expect(repository_state[:lock]).to eq(@before_state[:lock])
++    expect(repository_state[:head]).to eq(@before_state[:head])
++    expect(run_cmd('git', 'diff', '--cached', '--name-only', chdir: @conf_dir).out).to eq("other\n")
++    expect(ConfCtl::Inputs::GitCommit).not_to have_received(:commit!)
++  end
++
++  it 'rejects a dirty index before running Nix' do
++    File.write(File.join(@conf_dir, 'other'), 'unrelated staged data')
++    run_cmd('git', 'add', 'other', chdir: @conf_dir)
++    @before_state = repository_state
++    expect(update(commit: true)).to include(status: :error)
++    expect(cmd).not_to have_received(:run)
++    expect_preserved
++  end
++
++  it 'requires an existing tracked lock' do
++    File.unlink(File.join(@conf_dir, 'flake.lock'))
++    expect(update).to include(status: :error)
++    expect(cmd).not_to have_received(:run)
++    expect(File).not_to exist(File.join(@conf_dir, 'flake.lock'))
++  end
++
++  it 'refuses a simultaneous cooperating update without waiting' do
++    path = run_cmd('git', 'rev-parse', '--git-path', 'confctl-input-update.lock', chdir: @conf_dir).out.strip
++    File.open(File.expand_path(path, @conf_dir), 'w') do |lock|
++      lock.flock(File::LOCK_EX)
++      expect(update).to include(status: :error)
++      expect(cmd).not_to have_received(:run)
++    end
++    expect_preserved
++  end
++
++  it 'leaves a validated lock installed when the commit hook fails' do
++    allow(ConfCtl::Inputs::GitCommit).to receive(:commit!).and_raise('git commit failed')
++    expect { update(commit: true) }.to raise_error('git commit failed')
++    expect(JSON.parse(File.read(File.join(@conf_dir, 'flake.lock')))).to eq(candidate)
++    expect(repository_state.slice(:index, :head)).to eq(@before_state.slice(:index, :head))
++  end
++
++  it 'rejects the whole candidate when one of several inputs goes backwards' do
++    old_data['nodes']['entry']['inputs']['other'] = 'other'
++    old_data['nodes']['other'] = { 'locked' => old_data['nodes']['source']['locked'].merge('repo' => 'other') }
++    candidate['nodes']['other']['locked']['rev'] = 'c' * 40
++    File.write(File.join(@conf_dir, 'flake.lock'), JSON.generate(old_data))
++    git_commit_all(@conf_dir, 'fixture: second input')
++    @before_state = repository_state
++    allow(provider).to receive(:compare).with(hash_including(repo: 'other')).and_return(:behind)
++    expect(update(commit: true)).to include(status: :rejected)
++    expect_preserved
++  end
++
++  it 'updates the terminal follows target without widening to its parent' do
++    old_data['nodes']['entry']['inputs'] = { 'parent' => 'parent', 'alias' => %w[parent leaf] }
++    old_data['nodes']['parent'] = {
++      'locked' => old_data['nodes']['source']['locked'].merge('repo' => 'parent'),
++      'inputs' => { 'leaf' => 'source' }
++    }
++    File.write(File.join(@conf_dir, 'flake.lock'), JSON.generate(old_data))
++    git_commit_all(@conf_dir, 'fixture: follows')
++    @before_state = repository_state
++    allow(cmd).to receive(:run) do |*argv|
++      expect(argv.last).to eq('parent/leaf')
++      File.write(argv[argv.index('--output-lock-file') + 1], JSON.generate(candidate))
++      result
++    end
++    response = update(inputs: ['alias'])
++    expect(response).to include(status: :updated)
++    expect(response[:changes].map(&:name)).to eq(['alias', 'parent/leaf'])
++    expect(JSON.parse(File.read(File.join(@conf_dir, 'flake.lock'))).dig('nodes', 'parent', 'locked', 'rev')).to eq(old_rev)
++  end
++end
+diff --git a/spec/inputs/lock_graph_spec.rb b/spec/inputs/lock_graph_spec.rb
+new file mode 100644
+index 0000000..264ef5a
+--- /dev/null
++++ b/spec/inputs/lock_graph_spec.rb
+@@ -0,0 +1,87 @@
++require 'spec_helper'
++require 'confctl/inputs/lock_graph'
++
++RSpec.describe ConfCtl::Inputs::LockGraph do
++  def source(rev = 'a' * 40)
++    { 'locked' => { 'type' => 'github', 'owner' => 'example', 'repo' => 'source', 'rev' => rev } }
++  end
++
++  def graph
++    {
++      'version' => 7,
++      'root' => 'entry',
++      'nodes' => {
++        'entry' => { 'inputs' => { 'parent' => 'p', 'alias' => %w[parent middle leaf], 'chain' => ['alias'] } },
++        'p' => source.merge('inputs' => { 'middle' => 'm' }),
++        'm' => source.merge('inputs' => { 'leaf' => 'l' }),
++        'l' => source
++      }
++    }
++  end
++
++  it 'uses lock.root and resolves full nested and chained follows to terminal update paths' do
++    lock = described_class.new(graph)
++    expect(lock.resolve_path('chain').node).to eq(graph['nodes']['l'])
++    expect(lock.resolve_path('chain').terminal_path).to eq('parent/middle/leaf')
++    expect(lock.update_inputs(%w[alias chain parent/middle/leaf])).to eq(['parent/middle/leaf'])
++    expect(lock.entries.keys).to contain_exactly('parent', 'parent/middle', 'parent/middle/leaf', 'alias', 'chain')
++  end
++
++  it 'continues traversal below an alias and resolves nested follows from the root' do
++    data = graph
++    data['nodes']['entry']['inputs']['top'] = ['parent']
++    data['nodes']['p']['inputs']['shared'] = ['alias']
++    lock = described_class.new(data)
++    expect(lock.resolve_path('top/middle/leaf').terminal_path).to eq('parent/middle/leaf')
++    expect(lock.resolve_path('top/shared').terminal_path).to eq('parent/middle/leaf')
++    expect(lock.entries).to have_key('top/shared')
++  end
++
++  it 'preserves all logical paths through shared nodes' do
++    data = graph
++    data['nodes']['entry']['inputs']['another'] = 'p'
++    expect(described_class.new(data).entries).to have_key('another/middle/leaf')
++  end
++
++  it 'ignores unreachable nodes' do
++    data = graph
++    data['nodes']['unused'] = { 'inputs' => { 'bad' => 'missing' } }
++    expect { described_class.new(data) }.not_to raise_error
++  end
++
++  it 'accepts raw non-flake sources' do
++    data = graph
++    data['nodes']['l']['flake'] = false
++    expect(described_class.new(data).resolve_path('alias').node['flake']).to be(false)
++  end
++
++  {
++    'unknown schema' => ->(data) { data['version'] = 8 },
++    'noninteger schema' => ->(data) { data['version'] = 7.0 },
++    'absent root' => ->(data) { data.delete('root') },
++    'dangling node' => ->(data) { data['nodes'].delete('l') },
++    'missing locked source' => ->(data) { data['nodes']['l'].delete('locked') },
++    'malformed inputs' => ->(data) { data['nodes']['p']['inputs'] = [] },
++    'malformed input name' => ->(data) { data['nodes']['p']['inputs'][4] = 'l' },
++    'malformed edge' => ->(data) { data['nodes']['entry']['inputs']['alias'] = 1 },
++    'malformed follows' => ->(data) { data['nodes']['entry']['inputs']['alias'] = ['parent', 4] },
++    'dangling follows' => ->(data) { data['nodes']['entry']['inputs']['alias'] = %w[parent absent] },
++    'direct follows cycle' => ->(data) { data['nodes']['entry']['inputs']['alias'] = ['alias'] },
++    'chained follows cycle' => ->(data) { data['nodes']['entry']['inputs']['alias'] = ['chain'] },
++    'dependency cycle' => ->(data) { data['nodes']['l']['inputs'] = { 'loop' => 'p' } },
++    'root follows cycle' => ->(data) { data['nodes']['entry']['inputs']['alias'] = [] },
++    'malformed flake flag' => ->(data) { data['nodes']['l']['flake'] = 'false' }
++  }.each do |name, mutate|
++    it "rejects #{name}" do
++      data = graph
++      mutate.call(data)
++      expect { described_class.new(data) }.to raise_error(described_class::Error)
++    end
++  end
++
++  it 'rejects missing or malformed requested paths instead of silently skipping them' do
++    lock = described_class.new(graph)
++    expect { lock.resolve_path('parent/absent') }.to raise_error(described_class::Error)
++    expect { lock.resolve_path('parent//middle') }.to raise_error(described_class::Error)
++  end
++end

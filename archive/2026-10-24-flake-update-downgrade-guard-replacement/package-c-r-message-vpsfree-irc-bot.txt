@@ -1,0 +1,10 @@
+ci: preserve commit ancestry in automated flake updates
+
+Use the pinned confctl CI package for candidate validation and revision
+metadata. Resolve the nested nixpkgs follows path through the shared tool
+while preserving the lock-only checks and existing flake commit subjects.
+
+Check the final lock against the saved workflow baseline before pushing.
+Reject non-forward revisions and unavailable evidence, and start from the
+actual master target so stale updates cannot absorb a later manual pin.
+

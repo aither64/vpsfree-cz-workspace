@@ -1,0 +1,1209 @@
+diff --git a/docs/flake-inputs.md b/docs/flake-inputs.md
+index 3c4ca61..7ad81ac 100644
+--- a/docs/flake-inputs.md
++++ b/docs/flake-inputs.md
+@@ -196,11 +196,38 @@ state are checked again before installation. No commit runs before acceptance.
+ Each existing Git revision must equal or be an ancestor of its replacement in
+ the same supported source. Currently the ancestry provider supports
+ `github.com` sources with full immutable Git revisions, including
+-`flake = false` sources. It uses GitHub's compare API with `GITHUB_TOKEN`, or
+-`GH_TOKEN` when `GITHUB_TOKEN` is absent. Nix's `access-tokens` configuration is
+-separate; workflows must pass a token to confctl's provider explicitly. The
+-provider uses fixed HTTPS API endpoints without redirects, a 10-second connect
+-timeout and a 30-second read timeout; it does not retry failed requests.
++`flake = false` sources. It checks commit ancestry with Git using the same full
++repository mirrors as changelogs. It does not use GitHub's compare API or read
++API tokens. Git's ordinary URL and authentication configuration remains in
++effect; inaccessible sources are evidence errors. Nix resolves the candidate
++separately and may still use GitHub APIs through its own fetcher.
++
++Mirrors are stored in `${XDG_CACHE_HOME:-$HOME/.cache}/confctl/git-mirrors`.
++Each directory is named by the SHA256 digest of its exact source URL, preserving
++the existing cache layout and URL spelling. A cold comparison clones a full
++mirror; a warm comparison reuses both exact commit objects when present and
++fetches only missing full SHAs. A cold nixpkgs mirror can require substantial
++disk space and time. Persist this cache between CI runs; a cache miss never
++bypasses validation. `check-update` uses the same cache and may clone or fetch,
++while leaving both supplied lockfiles and the checkout untouched.
++
++A sibling lock file serializes initialization, fetching and reads for each URL,
++including changelog reads. New mirrors are installed atomically after successful
++cloning and validation. Existing shallow, partial, grafted, externally backed,
++wrong-origin or malformed mirrors fail with the cache key in the error. They
++are not automatically deleted, repaired or replaced; diagnose the reported
++entry and arrange recovery separately. Cached objects must be exact commits,
++not tags, trees or blobs. A negative ancestry result requires a successful walk
++of both tips' complete commit-parent history. Missing history and Git failures
++remain errors. Replacement objects and inherited repository redirection cannot
++alter the proof.
++
++The cache and ordinary Git configuration belong to the invoking user; this is
++not protection against a hostile writer with that user's access. Older confctl
++and manual Git writers do not honor the new lock. Reuse their full mirrors
++sequentially, without concurrent old/new writers. Mirror locks are released
++before commit hooks run. Changelog failures retain their existing soft error
++behavior; they cannot turn a failed ancestry check into an accepted update.
+ 
+ Source, fetcher or extraction changes require manual review. A change to locked
+ attributes at the same revision also rejects, including a changed `narHash`.
+diff --git a/lib/confctl/cli/cluster.rb b/lib/confctl/cli/cluster.rb
+index bb991d5..b9ec24f 100644
+--- a/lib/confctl/cli/cluster.rb
++++ b/lib/confctl/cli/cluster.rb
+@@ -1527,8 +1527,10 @@ module ConfCtl::Cli
+       log_opts << '--max-count=50' unless opts[:verbose] || opts[:patch]
+ 
+       mirror = ConfCtl::GitRepoMirror.new(url, quiet: true)
+-      mirror.setup
+-      mirror.log(old_rev, new_rev, opts: log_opts)
++      mirror.synchronize do
++        mirror.setup
++        mirror.log(old_rev, new_rev, opts: log_opts)
++      end
+     end
+ 
+     def format_inputs_state(state, deployed_info)
+diff --git a/lib/confctl/git_repo_mirror.rb b/lib/confctl/git_repo_mirror.rb
+index 9e71081..4680d0d 100644
+--- a/lib/confctl/git_repo_mirror.rb
++++ b/lib/confctl/git_repo_mirror.rb
+@@ -1,8 +1,23 @@
+ require 'digest'
+ require 'fileutils'
++require 'find'
++require 'monitor'
++require 'open3'
++require 'tmpdir'
+ 
+ module ConfCtl
+   class GitRepoMirror
++    class Error < StandardError
++      attr_reader :cache_key
++
++      def initialize(message, cache_key: nil)
++        @cache_key = cache_key
++        super(cache_key ? "#{message} (cache #{cache_key})" : message)
++      end
++    end
++
++    SHA = /\A[0-9a-f]{40}\z/
++
+     attr_reader :url, :name
+ 
+     # @param url [String]
+@@ -11,61 +26,186 @@ module ConfCtl
+       @url = url
+       @quiet = quiet
+       @name = Digest::SHA256.hexdigest(url)
+-      @cmd = SystemCommand.new
++      @monitor = Monitor.new
++    end
++
++    # Keep setup and subsequent reads in one critical section. The monitor also
++    # permits these public operations to take the same lock when called alone.
++    def synchronize
++      @monitor.synchronize do
++        return yield self if @locked
++
++        FileUtils.mkdir_p(mirror_dir)
++        File.open("#{mirror_path}.lock", File::RDWR | File::CREAT | File::NOFOLLOW, 0o600) do |lock|
++          lock.flock(File::LOCK_EX)
++          @locked = true
++          begin
++            yield self
++          ensure
++            @locked = false
++          end
++        end
++      end
++    rescue Error => e
++      raise if e.cache_key
++
++      raise Error.new(e.message, cache_key: name)
++    rescue SystemCallError, IOError
++      raise Error.new('Unable to access the Git mirror cache', cache_key: name)
+     end
+ 
+     def setup(ref: nil)
+-      File.stat(mirror_path)
+-    rescue Errno::ENOENT
+-      FileUtils.mkdir_p(mirror_path)
+-      git('clone', args: ['--mirror', url, mirror_path])
+-    else
+-      git_repo('fetch', opts: ['--no-show-forced-updates'], args: (ref ? ['origin', ref] : []))
++      synchronize do
++        unless ensure_repository!
++          git_repo!('fetch', '--no-auto-maintenance', '--no-show-forced-updates', *quiet_options, 'origin', *[ref].compact)
++          validate_repository!(mirror_path)
++        end
++        self
++      end
+     end
+ 
+     def revision_parse(str)
+-      git_repo('rev-parse', args: [str])
++      synchronize { git_repo!('rev-parse', str).strip }
++    end
++
++    def compare(old_rev, new_rev)
++      unless [old_rev, new_rev].all? { |rev| rev.is_a?(String) && SHA.match?(rev) }
++        raise Error, 'Git ancestry comparison requires full immutable commit SHAs'
++      end
++      return :identical if old_rev == new_rev
++
++      synchronize do
++        ensure_repository!
++        [old_rev, new_rev].each { |rev| ensure_commit!(rev) }
++        validate_repository!(mirror_path)
++        next :ahead if ancestor?(old_rev, new_rev)
++
++        # A negative merge-base result is authority only after every reachable
++        # commit parent was read successfully, without commit-graph shortcuts.
++        git_repo!('rev-list', '--quiet', '--parents', old_rev, new_rev, '--')
++        ancestor?(new_rev, old_rev) ? :behind : :diverged
++      end
+     end
+ 
+     # @param from_ref [String]
+     # @param to_ref [String]
+     def log(from_ref, to_ref, opts: [])
+-      ret = "git log for #{from_ref}..#{to_ref}\n"
+-      ret << git_repo(
+-        'log',
+-        opts: ['--no-decorate', '--left-right', '--cherry-mark'] + opts,
+-        args: ["#{from_ref}..#{to_ref}"]
+-      )
+-      ret
++      synchronize do
++        validate_repository!(mirror_path)
++        "git log for #{from_ref}..#{to_ref}\n" +
++          git_repo!('log', '--no-decorate', '--left-right', '--cherry-mark', *opts, "#{from_ref}..#{to_ref}").strip
++      end
+     end
+ 
+     # @param from_ref [String]
+     # @param to_ref [String]
+     def diff(from_ref, to_ref, opts: [])
+-      ret = "git diff for #{from_ref}..#{to_ref}\n"
+-      ret << git_repo(
+-        'diff',
+-        opts:,
+-        args: ["#{from_ref}..#{to_ref}"]
+-      )
+-      ret
++      synchronize do
++        validate_repository!(mirror_path)
++        "git diff for #{from_ref}..#{to_ref}\n" + git_repo!('diff', *opts, "#{from_ref}..#{to_ref}").strip
++      end
+     end
+ 
+     protected
+ 
+-    attr_reader :cmd, :quiet
++    attr_reader :quiet
++
++    def ensure_repository!
++      if File.exist?(mirror_path) || File.symlink?(mirror_path)
++        validate_repository!(mirror_path)
++        return false
++      end
++
++      Dir.mktmpdir(".#{name}-", mirror_dir) do |temporary|
++        candidate = File.join(temporary, 'mirror')
++        git!('clone', '--mirror', *quiet_options, '--', url, candidate)
++        validate_repository!(candidate)
++        raise Error, 'Git mirror cache changed during initialization' if File.exist?(mirror_path) || File.symlink?(mirror_path)
++
++        File.rename(candidate, mirror_path)
++      end
++      true
++    end
++
++    def validate_repository!(path)
++      unless File.directory?(path) && !File.symlink?(path) &&
++             File.directory?(File.join(path, 'objects')) && !File.symlink?(File.join(path, 'objects')) &&
++             File.file?(File.join(path, 'config')) && !File.symlink?(File.join(path, 'config'))
++        raise Error, 'Invalid Git mirror cache; a self-contained bare repository is required'
++      end
++      if %w[shallow info/grafts objects/info/alternates objects/info/http-alternates commondir].any? do |entry|
++           File.exist?(File.join(path, entry)) || File.symlink?(File.join(path, entry))
++         end
++        raise Error, 'Git mirror cache has shallow, grafted or external object history'
++      end
+ 
+-    def git_repo(git_cmd, *, **kwargs)
+-      kwargs[:gopts] ||= []
+-      kwargs[:gopts] << '-C' << mirror_path
+-      git(git_cmd, *, **kwargs)
++      Find.find(File.join(path, 'objects')) do |entry|
++        raise Error, 'Git mirror cache must use self-contained object storage' if File.symlink?(entry)
++      end
++
++      bare = git!('--git-dir', path, 'rev-parse', '--is-bare-repository').strip
++      origins = git!('--git-dir', path, 'config', '--local', '--no-includes', '--get-all', 'remote.origin.url').lines.map(&:chomp)
++      raise Error, 'Git mirror cache is not bare or has an unexpected origin' unless bare == 'true' && origins == [url]
++
++      unsupported = '^(extensions\.(partialclone|worktreeconfig)|remote\..*\.(promisor|partialclonefilter|vcs))$'
++      out, status = git('--git-dir', path, 'config', '--get-regexp', unsupported)
++      return if status == 1 && out.empty?
++
++      raise Error, 'Git mirror cache has unsupported partial or repository configuration'
++    end
++
++    def ensure_commit!(rev)
++      return if commit_type(rev) == :commit
++
++      git_repo!('fetch', '--no-auto-maintenance', '--no-show-forced-updates', '--no-tags', *quiet_options, 'origin', rev)
++      raise Error, 'Git mirror does not contain the requested commit after fetching' unless commit_type(rev) == :commit
+     end
+ 
+-    def git(git_cmd, args: [], opts: [], gopts: [])
+-      opts << '--quiet' if quiet && %w[clone fetch].include?(git_cmd)
++    def commit_type(rev)
++      out = git_repo!('cat-file', '--batch-check=%(objectname) %(objecttype)', input: "#{rev}\n").strip
++      return :missing if out == "#{rev} missing"
++      return :commit if out == "#{rev} commit"
++
++      raise Error, 'Git ancestry comparison requires exact commit objects'
++    end
++
++    def ancestor?(from, to)
++      _out, status = git('--git-dir', mirror_path, 'merge-base', '--is-ancestor', from, to)
++      return true if status == 0
++      return false if status == 1
++
++      raise Error, 'Git failed while checking commit ancestry'
++    end
++
++    def git_repo!(*, **)
++      git!('--git-dir', mirror_path, *, **)
++    end
++
++    def git!(*, **)
++      out, status = git(*, **)
++      raise Error, 'Git mirror operation failed' unless status == 0
++
++      out
++    end
++
++    def git(*, input: '')
++      # These settings apply only to this Git child, never to caller hooks or
++      # Ruby. Do not let an enclosing repository redirect the cache's history.
++      redirected = %w[GIT_DIR GIT_WORK_TREE GIT_COMMON_DIR GIT_INDEX_FILE GIT_OBJECT_DIRECTORY
++                      GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_GRAFT_FILE GIT_SHALLOW_FILE GIT_NAMESPACE
++                      GIT_REPLACE_REF_BASE GIT_CONFIG]
++      env = redirected.to_h { |key| [key, nil] }.merge('GIT_NO_REPLACE_OBJECTS' => '1', 'GIT_NO_LAZY_FETCH' => '1')
++      options = ['-c', 'core.commitGraph=false', '-c', 'gc.auto=0', '-c', 'maintenance.auto=false']
++      out, _err, status = Open3.capture3(
++        env, 'git', '--no-replace-objects', *options, *, stdin_data: input
++      )
++      [out, status.exitstatus]
++    rescue SystemCallError, IOError
++      raise Error, 'Unable to run Git for mirror evidence'
++    end
+ 
+-      out, = cmd.run('git', *gopts, git_cmd, *opts, *args)
+-      out.strip
++    def quiet_options
++      quiet ? ['--quiet'] : []
+     end
+ 
+     def mirror_path
+diff --git a/lib/confctl/inputs/commit_message.rb b/lib/confctl/inputs/commit_message.rb
+index 013330b..226a6ae 100644
+--- a/lib/confctl/inputs/commit_message.rb
++++ b/lib/confctl/inputs/commit_message.rb
+@@ -46,8 +46,10 @@ module ConfCtl
+ 
+         begin
+           mirror = ConfCtl::GitRepoMirror.new(reference.url, quiet: true)
+-          mirror.setup
+-          body << mirror.log(from, to, opts: ['--oneline'])
++          mirror.synchronize do
++            mirror.setup
++            body << mirror.log(from, to, opts: ['--oneline'])
++          end
+         rescue StandardError => e
+           body << "(changelog unavailable: #{e})"
+         end
+diff --git a/lib/confctl/inputs/forward_guard.rb b/lib/confctl/inputs/forward_guard.rb
+index 81baedb..4522fb6 100644
+--- a/lib/confctl/inputs/forward_guard.rb
++++ b/lib/confctl/inputs/forward_guard.rb
+@@ -1,5 +1,5 @@
+ require 'confctl/inputs/lock_graph'
+-require 'confctl/inputs/github_compare'
++require 'confctl/inputs/git_compare'
+ 
+ module ConfCtl
+   module Inputs
+@@ -17,7 +17,7 @@ module ConfCtl
+ 
+       class UnsupportedSource < StandardError; end
+ 
+-      def initialize(provider: GitHubCompare.new)
++      def initialize(provider: GitCompare.new)
+         @provider = provider
+       end
+ 
+@@ -37,7 +37,7 @@ module ConfCtl
+           change = Change.new(path: path, old_node: old_node, new_node: new_node)
+           changes << change
+           check_change(change, rejected, cache)
+-        rescue UnsupportedSource, GitHubCompare::Error => e
++        rescue UnsupportedSource, GitCompare::Error => e
+           errors << "#{path}: #{e.message}"
+         end
+ 
+@@ -86,18 +86,19 @@ module ConfCtl
+         outcome = cache.fetch(key) do
+           cache[key] = begin
+             @provider.compare(
+-              owner: new_source['owner'], repo: new_source['repo'], old_rev: change.old_rev, new_rev: change.new_rev
++              owner: change.new_node['locked']['owner'], repo: change.new_node['locked']['repo'],
++              old_rev: change.old_rev, new_rev: change.new_rev
+             )
+-          rescue GitHubCompare::Error => e
++          rescue GitCompare::Error => e
+             e
+           end
+         end
+-        raise outcome if outcome.is_a?(GitHubCompare::Error)
++        raise outcome if outcome.is_a?(GitCompare::Error)
+ 
+         return if outcome == :ahead
+ 
+         unless %i[behind diverged].include?(outcome)
+-          raise GitHubCompare::Error, 'Unknown ancestry comparison outcome'
++          raise GitCompare::Error, 'Unknown ancestry comparison outcome'
+         end
+ 
+         rejected << "#{change.path}: #{change.old_rev} -> #{change.new_rev} is #{outcome}"
+@@ -108,11 +109,11 @@ module ConfCtl
+         unless locked['type'] == 'github' && [nil, 'github.com'].include?(locked['host']) &&
+                %w[owner repo].all? do |key|
+                  value = locked[key]
+-                 value.is_a?(String) && GitHubCompare::NAME.match?(value) && !%w[. ..].include?(value)
++                 value.is_a?(String) && GitCompare::NAME.match?(value) && !%w[. ..].include?(value)
+                end
+           raise UnsupportedSource, 'Changed dependency is not a supported github.com source'
+         end
+-        unless locked['rev'].is_a?(String) && GitHubCompare::SHA.match?(locked['rev'])
++        unless locked['rev'].is_a?(String) && GitCompare::SHA.match?(locked['rev'])
+           raise UnsupportedSource, 'Changed dependency lacks a full immutable Git revision'
+         end
+ 
+diff --git a/lib/confctl/inputs/git_compare.rb b/lib/confctl/inputs/git_compare.rb
+new file mode 100644
+index 0000000..746d959
+--- /dev/null
++++ b/lib/confctl/inputs/git_compare.rb
+@@ -0,0 +1,26 @@
++require 'confctl/git_repo_mirror'
++
++module ConfCtl
++  module Inputs
++    class GitCompare
++      class Error < StandardError; end
++
++      SHA = GitRepoMirror::SHA
++      NAME = /\A[A-Za-z0-9_.-]+\z/
++
++      def compare(owner:, repo:, old_rev:, new_rev:)
++        unless [owner, repo].all? { |value| value.is_a?(String) && NAME.match?(value) && !%w[. ..].include?(value) } &&
++               [old_rev, new_rev].all? { |value| value.is_a?(String) && SHA.match?(value) }
++          raise Error, 'Git comparison requires a repository and full commit SHAs'
++        end
++        return :identical if old_rev == new_rev
++
++        # Preserve the locked spelling and exact URL used by FlakeLock and
++        # changelogs, so existing full mirrors share their objects and lock.
++        GitRepoMirror.new("https://github.com/#{owner}/#{repo}", quiet: true).compare(old_rev, new_rev)
++      rescue GitRepoMirror::Error => e
++        raise Error, e.message
++      end
++    end
++  end
++end
+diff --git a/lib/confctl/inputs/github_compare.rb b/lib/confctl/inputs/github_compare.rb
+deleted file mode 100644
+index 33034af..0000000
+--- a/lib/confctl/inputs/github_compare.rb
++++ /dev/null
+@@ -1,76 +0,0 @@
+-require 'json'
+-require 'net/http'
+-require 'uri'
+-
+-module ConfCtl
+-  module Inputs
+-    class GitHubCompare
+-      class Error < StandardError; end
+-
+-      SHA = /\A[0-9a-f]{40}\z/
+-      NAME = /\A[A-Za-z0-9_.-]+\z/
+-
+-      def initialize(token: ENV['GITHUB_TOKEN'] || ENV.fetch('GH_TOKEN', nil), http: Net::HTTP)
+-        @token = token
+-        @http = http
+-      end
+-
+-      # Returns :ahead, :behind or :diverged; unavailable/inconsistent evidence
+-      # raises Error. The paginated commits list is deliberately not authority.
+-      def compare(owner:, repo:, old_rev:, new_rev:)
+-        unless [owner, repo].all? { |v| v.is_a?(String) && NAME.match?(v) && !%w[. ..].include?(v) } &&
+-               [old_rev, new_rev].all? { |v| v.is_a?(String) && SHA.match?(v) }
+-          raise Error, 'GitHub comparison requires a repository and full commit SHAs'
+-        end
+-        return :identical if old_rev == new_rev
+-
+-        uri = URI("https://api.github.com/repos/#{owner}/#{repo}/compare/#{old_rev}...#{new_rev}?per_page=1")
+-        request = Net::HTTP::Get.new(uri)
+-        request['Accept'] = 'application/vnd.github+json'
+-        request['X-GitHub-Api-Version'] = '2022-11-28'
+-        request['User-Agent'] = 'confctl-forward-guard'
+-        request['Authorization'] = "Bearer #{@token}" if @token && !@token.empty?
+-
+-        # No redirects: a token must never follow a Location to another host.
+-        response = @http.start(uri.host, uri.port, use_ssl: true, open_timeout: 10, read_timeout: 30) do |http|
+-          http.max_retries = 0
+-          http.request(request)
+-        end
+-        raise Error, "GitHub comparison failed (HTTP #{response.code})" unless response.code == '200'
+-
+-        summary(JSON.parse(response.body), old_rev, new_rev)
+-      rescue JSON::ParserError
+-        raise Error, 'Malformed GitHub comparison response'
+-      rescue Timeout::Error, SocketError, SystemCallError, IOError, OpenSSL::SSL::SSLError, Net::HTTPBadResponse
+-        # Network exceptions can contain request data; never forward their text.
+-        raise Error, 'Unable to obtain GitHub ancestry evidence'
+-      end
+-
+-      protected
+-
+-      def summary(data, old_rev, new_rev)
+-        unless data.is_a?(Hash) && data['base_commit'].is_a?(Hash) &&
+-               data['base_commit']['sha'] == old_rev && data['merge_base_commit'].is_a?(Hash) &&
+-               SHA.match?(data['merge_base_commit']['sha'].to_s) &&
+-               %w[ahead_by behind_by total_commits].all? { |key| data[key].is_a?(Integer) && data[key] >= 0 }
+-          raise Error, 'Incomplete GitHub ancestry evidence'
+-        end
+-
+-        ahead = data['ahead_by']
+-        behind = data['behind_by']
+-        base = data['merge_base_commit']['sha']
+-        case data['status']
+-        when 'ahead'
+-          return :ahead if ahead > 0 && behind == 0 && base == old_rev && data['total_commits'] == ahead
+-        when 'behind'
+-          return :behind if ahead == 0 && behind > 0 && base == new_rev && data['total_commits'] == 0
+-        when 'diverged'
+-          return :diverged if ahead > 0 && behind > 0 && ![old_rev, new_rev].include?(base) &&
+-                              data['total_commits'] == ahead
+-        end
+-
+-        raise Error, 'Contradictory GitHub ancestry evidence'
+-      end
+-    end
+-  end
+-end
+diff --git a/man/man8/confctl.8.md b/man/man8/confctl.8.md
+index bcf4b5e..ba023f3 100644
+--- a/man/man8/confctl.8.md
++++ b/man/man8/confctl.8.md
+@@ -565,11 +565,22 @@ Use retained confctl v3 for old software-pin generations.
+ `confctl inputs check-update` `--old-lock` *file* `--new-lock` *file*
+   Read two locks and apply the same complete-graph ancestry policy as
+   `--forward-only`. Does not update, install or commit a lock, and does not
+-  require cluster outputs. Returns 0 on acceptance, 3 on policy rejection and
++  require cluster outputs. It may populate or fetch the shared Git mirror cache.
++  Returns 0 on acceptance, 3 on policy rejection and
+   1 on evidence or tool errors. After hooks and tests, export `HEAD:flake.lock`
+   and check that committed snapshot against the original workflow baseline
+   before publishing. See `docs/flake-inputs.md` for supported sources,
+-  credentials, transaction guarantees and limitations.
++  cache behavior, Git authentication, transaction guarantees and limitations.
++
++  Ancestry evidence uses full Git mirrors in
++  `${XDG_CACHE_HOME:-$HOME/.cache}/confctl/git-mirrors`, shared with changelogs.
++  A cold mirror can be large and slow; warm comparisons fetch only missing
++  commit SHAs. Per-URL locks coordinate new confctl callers. Invalid or
++  incomplete history is an error, with the cache key reported for diagnosis;
++  existing cache entries are not automatically repaired or replaced. Older
++  confctl or manual Git writers must not use the same mirror concurrently.
++  Ordinary Git URL/authentication configuration is preserved. The ancestry
++  provider does not use the GitHub compare API or read API tokens.
+ 
+ `confctl inputs set` *input-name* *rev*
+   Set a flake input to a specific revision in `flake.lock` while keeping the
+diff --git a/spec/confctl/cli/cluster_input_log_spec.rb b/spec/confctl/cli/cluster_input_log_spec.rb
+new file mode 100644
+index 0000000..cec72eb
+--- /dev/null
++++ b/spec/confctl/cli/cluster_input_log_spec.rb
+@@ -0,0 +1,16 @@
++require 'spec_helper'
++require 'confctl'
++require 'confctl/cli'
++
++RSpec.describe ConfCtl::Cli::Cluster, 'input changelog cache' do
++  it 'holds the shared mirror lock across setup and log with the existing URL and options' do
++    command = described_class.new({ color: 'never' }, { downgrade: false, verbose: false, patch: false }, [])
++    url = 'https://github.com/NixOS/nixpkgs'
++    mirror = instance_double(ConfCtl::GitRepoMirror)
++    expect(ConfCtl::GitRepoMirror).to receive(:new).with(url, quiet: true).and_return(mirror)
++    expect(mirror).to receive(:synchronize).ordered.and_yield
++    expect(mirror).to receive(:setup).ordered
++    expect(mirror).to receive(:log).with('a' * 40, 'b' * 40, opts: ['--oneline', '--max-count=50']).ordered.and_return('log')
++    expect(command.send(:inputs_git_log, { 'url' => url, 'rev' => 'b' * 40 }, { 'rev' => 'a' * 40 })).to eq('log')
++  end
++end
+diff --git a/spec/confctl/cli/inputs_forward_only_spec.rb b/spec/confctl/cli/inputs_forward_only_spec.rb
+index c8a8f52..5febcfc 100644
+--- a/spec/confctl/cli/inputs_forward_only_spec.rb
++++ b/spec/confctl/cli/inputs_forward_only_spec.rb
+@@ -48,9 +48,9 @@ RSpec.describe 'forward-only input CLI' do
+   end
+ 
+   it 'propagates unknown evidence as an error without printing success' do
+-    response.merge!(status: :error, issues: ['GitHub unavailable'])
++    response.merge!(status: :error, issues: ['Git ancestry unavailable'])
+     command = ConfCtl::Cli::Inputs::Root.new({ color: 'never' }, options, ['source'])
+-    expect { command.update }.to raise_error(ConfCtl::Error, /GitHub unavailable/)
++    expect { command.update }.to raise_error(ConfCtl::Error, /Git ancestry unavailable/)
+   end
+ 
+   [%w[inputs update], %w[inputs channel update], %w[inputs machine update]].each do |command|
+diff --git a/spec/git_repo_mirror_spec.rb b/spec/git_repo_mirror_spec.rb
+new file mode 100644
+index 0000000..72f4aa2
+--- /dev/null
++++ b/spec/git_repo_mirror_spec.rb
+@@ -0,0 +1,326 @@
++require 'spec_helper'
++require 'confctl/git_repo_mirror'
++require 'rbconfig'
++require 'io/wait'
++
++RSpec.describe ConfCtl::GitRepoMirror do
++  around do |example|
++    Dir.mktmpdir('confctl-git-mirror-') do |dir|
++      @dir = dir
++      @origin = File.join(dir, 'origin')
++      @cache = File.join(dir, 'cache')
++      @git_env = ENV.keys.grep(/\AGIT_/).to_h { |key| [key, nil] }.merge(
++        'GIT_CONFIG_GLOBAL' => File::NULL, 'GIT_CONFIG_NOSYSTEM' => '1', 'GIT_TERMINAL_PROMPT' => '0'
++      )
++      git('init', '--initial-branch=main', @origin)
++      git('-C', @origin, 'config', 'user.name', 'fixture')
++      git('-C', @origin, 'config', 'user.email', 'fixture@example.invalid')
++      @base = commit('base', 'file', 'base')
++      @forward = commit('forward', 'file', 'forward')
++      git('-C', @origin, 'checkout', '-b', 'side', @base)
++      @side = commit('side', 'side-file', 'side')
++      git('-C', @origin, 'checkout', 'main')
++      git('-C', @origin, 'merge', '--no-ff', 'side', '-m', 'merge')
++      @merge = git('-C', @origin, 'rev-parse', 'HEAD').strip
++      git('-C', @origin, 'revert', '--no-edit', @forward)
++      @revert = git('-C', @origin, 'rev-parse', 'HEAD').strip
++      @mirror = described_class.new(@origin, quiet: true)
++      @path = File.join(@cache, 'git-mirrors', @mirror.name)
++      example.run
++    end
++  end
++
++  before { allow(ConfCtl).to receive(:cache_dir).and_return(@cache) }
++
++  def git(*args)
++    out, err, status = Open3.capture3(@git_env, 'git', *args)
++    raise "fixture Git failed: #{err}" unless status.success?
++
++    out
++  end
++
++  def commit(message, file, contents)
++    File.write(File.join(@origin, file), contents)
++    git('-C', @origin, 'add', file)
++    git('-C', @origin, 'commit', '-m', message)
++    git('-C', @origin, 'rev-parse', 'HEAD').strip
++  end
++
++  def cached_git(*args)
++    git('--git-dir', @path, *args)
++  end
++
++  def under_fixture_environment
++    keys = @git_env.keys | %w[GIT_DIR GIT_OBJECT_DIRECTORY GIT_CONFIG]
++    previous = keys.to_h { |key| [key, ENV.fetch(key, nil)] }
++    @git_env.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
++    yield
++  ensure
++    previous&.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
++  end
++
++  def compare(old_rev, new_rev)
++    under_fixture_environment { @mirror.compare(old_rev, new_rev) }
++  end
++
++  def setup_mirror
++    under_fixture_environment { @mirror.setup }
++  end
++
++  it 'uses the existing exact-URL SHA256 cache layout and a sibling lock' do
++    expect(compare(@base, @forward)).to eq(:ahead)
++    expect(@mirror.name).to eq(Digest::SHA256.hexdigest(@origin))
++    expect(File).to be_directory(@path)
++    expect(File).to be_file("#{@path}.lock")
++    expect(cached_git('rev-parse', '--is-bare-repository').strip).to eq('true')
++    expect(cached_git('config', 'remote.origin.url').strip).to eq(@origin)
++  end
++
++  it 'accepts equality without a cache or any Git child' do
++    expect(@mirror).not_to receive(:git)
++    expect(compare(@base, @base)).to eq(:identical)
++    expect(File).not_to exist(@path)
++  end
++
++  it 'distinguishes ahead, behind and diverged history using real Git' do
++    expect(compare(@base, @forward)).to eq(:ahead)
++    expect(compare(@forward, @base)).to eq(:behind)
++    expect(compare(@forward, @side)).to eq(:diverged)
++  end
++
++  it 'accepts containing merges and subsequent reverts' do
++    expect(compare(@side, @merge)).to eq(:ahead)
++    expect(compare(@forward, @revert)).to eq(:ahead)
++  end
++
++  it 'rejects unrelated roots and equivalent cherry-picks as divergent history' do
++    git('-C', @origin, 'checkout', 'side')
++    git('-C', @origin, 'cherry-pick', @forward)
++    cherry_pick = git('-C', @origin, 'rev-parse', 'HEAD').strip
++    git('-C', @origin, 'checkout', '--orphan', 'unrelated')
++    git('-C', @origin, 'rm', '--cached', '-r', '.')
++    unrelated = commit('unrelated root', 'unrelated-file', 'unrelated')
++    expect(compare(@forward, cherry_pick)).to eq(:diverged)
++    expect(compare(@forward, unrelated)).to eq(:diverged)
++  end
++
++  it 'uses complete warm objects without contacting an unavailable origin' do
++    setup_mirror
++    File.rename(@origin, "#{@origin}-offline")
++    expect(compare(@base, @forward)).to eq(:ahead)
++    expect(compare(@forward, @side)).to eq(:diverged)
++  end
++
++  it 'fetches a missing full SHA without refreshing unrelated mirror heads' do
++    setup_mirror
++    previous_main = cached_git('rev-parse', 'refs/heads/main').strip
++    newer = commit('newer', 'new-file', 'new')
++    expect(compare(@revert, newer)).to eq(:ahead)
++    expect(cached_git('cat-file', '-t', newer).strip).to eq('commit')
++    expect(cached_git('rev-parse', 'refs/heads/main').strip).to eq(previous_main)
++  end
++
++  it 'leaves no authoritative partial cache after clone failure' do
++    mirror = described_class.new(File.join(@dir, 'unavailable'), quiet: true)
++    expect { under_fixture_environment { mirror.compare(@base, @forward) } }.to raise_error(described_class::Error)
++    path = File.join(@cache, 'git-mirrors', mirror.name)
++    expect(File).not_to exist(path)
++    expect(Dir.glob(File.join(@cache, 'git-mirrors', ".#{mirror.name}-*"))).to be_empty
++    git('clone', @origin, File.join(@dir, 'unavailable'))
++    expect(under_fixture_environment { mirror.compare(@base, @forward) }).to eq(:ahead)
++  end
++
++  it 'does not overwrite an invalid existing cache' do
++    FileUtils.mkdir_p(@path)
++    marker = File.join(@path, 'keep')
++    File.write(marker, 'original')
++    expect { compare(@base, @forward) }.to raise_error(described_class::Error, /Invalid Git mirror/)
++    expect(File.read(marker)).to eq('original')
++  end
++
++  it 'rejects an unexpected origin without fetching or replacing the cache' do
++    setup_mirror
++    cached_git('config', 'remote.origin.url', File.join(@dir, 'other'))
++    expect { compare(@base, @forward) }.to raise_error(described_class::Error, /unexpected origin/)
++  end
++
++  it 'rejects shallow mirrors' do
++    FileUtils.mkdir_p(File.dirname(@path))
++    git('clone', '--mirror', '--depth=1', "file://#{@origin}", @path)
++    expect { compare(@base, @revert) }.to raise_error(described_class::Error, /shallow/)
++  end
++
++  %w[info/grafts objects/info/alternates objects/info/http-alternates commondir].each do |entry|
++    it "rejects externally redirected history through #{entry}" do
++      setup_mirror
++      path = File.join(@path, entry)
++      FileUtils.mkdir_p(File.dirname(path))
++      File.write(path, "#{@origin}\n")
++      expect { compare(@base, @forward) }.to raise_error(described_class::Error, /external object history/)
++    end
++  end
++
++  %w[extensions.partialClone remote.origin.promisor remote.origin.partialclonefilter].each do |key|
++    it "rejects partial-clone configuration #{key}" do
++      setup_mirror
++      cached_git('config', key, key.end_with?('promisor') ? 'true' : 'origin')
++      expect { compare(@base, @forward) }.to raise_error(described_class::Error, /partial/)
++    end
++  end
++
++  it 'rejects a symlinked external object directory' do
++    setup_mirror
++    File.rename(File.join(@path, 'objects'), File.join(@dir, 'outside-objects'))
++    File.symlink(File.join(@dir, 'outside-objects'), File.join(@path, 'objects'))
++    expect { compare(@base, @forward) }.to raise_error(described_class::Error, /self-contained/)
++  end
++
++  it 'rejects a symlinked external pack store' do
++    setup_mirror
++    pack = File.join(@path, 'objects', 'pack')
++    File.rename(pack, File.join(@dir, 'outside-pack'))
++    File.symlink(File.join(@dir, 'outside-pack'), pack)
++    expect { compare(@base, @forward) }.to raise_error(described_class::Error, /self-contained/)
++  end
++
++  it 'does not peel annotated tags or accept tree/blob objects as commits' do
++    git('-C', @origin, 'tag', '-a', 'tagged', '-m', 'tag', @base)
++    tag = git('-C', @origin, 'rev-parse', 'tagged').strip
++    tree = git('-C', @origin, 'rev-parse', "#{@base}^{tree}").strip
++    blob = git('-C', @origin, 'rev-parse', "#{@base}:file").strip
++    [tag, tree, blob].each do |object|
++      expect { compare(object, @forward) }.to raise_error(described_class::Error, /exact commit objects/)
++    end
++  end
++
++  it 'returns an evidence error for an unavailable full SHA' do
++    expect { compare(@base, 'f' * 40) }.to raise_error(described_class::Error, /operation failed/)
++  end
++
++  it 'disables replacement refs rather than allowing a false containing merge' do
++    setup_mirror
++    cached_git('replace', @forward, @merge)
++    expect(compare(@side, @forward)).to eq(:diverged)
++  end
++
++  it 'fails before a negative conclusion when a reachable parent object is missing' do
++    setup_mirror
++    File.unlink(File.join(@path, 'objects', @base[0, 2], @base[2..]))
++    allow(@mirror).to receive(:ancestor?).and_return(false)
++    expect { compare(@forward, @side) }.to raise_error(described_class::Error, /operation failed/)
++  end
++
++  it 'does not require irrelevant tree or blob objects for commit-parent ancestry' do
++    setup_mirror
++    tree = cached_git('rev-parse', "#{@base}^{tree}").strip
++    blob = cached_git('rev-parse', "#{@base}:file").strip
++    [tree, blob].each { |object| File.unlink(File.join(@path, 'objects', object[0, 2], object[2..])) }
++    expect(compare(@base, @forward)).to eq(:ahead)
++    expect(compare(@forward, @side)).to eq(:diverged)
++  end
++
++  it 'treats unexpected merge-base status as an error, never a rejection' do
++    setup_mirror
++    allow(@mirror).to receive(:git).and_call_original
++    allow(@mirror).to receive(:git).with('--git-dir', @path, 'merge-base', '--is-ancestor', @base, @forward).and_return(['', 128])
++    expect { compare(@base, @forward) }.to raise_error(described_class::Error, /checking commit ancestry/)
++  end
++
++  it 'ignores enclosing repository/object redirection without changing the parent environment' do
++    setup_mirror
++    under_fixture_environment do
++      ENV['GIT_DIR'] = File.join(@dir, 'wrong')
++      ENV['GIT_OBJECT_DIRECTORY'] = File.join(@dir, 'wrong-objects')
++      ENV['GIT_CONFIG'] = File.join(@dir, 'wrong-config')
++      expect(@mirror.compare(@base, @forward)).to eq(:ahead)
++      expect(ENV.fetch('GIT_DIR', nil)).to eq(File.join(@dir, 'wrong'))
++    end
++  end
++
++  it 'releases the URL lock and owned clone attempt on interruption' do
++    allow(@mirror).to receive(:git!).and_wrap_original do |original, *args, **options|
++      if args.first == 'clone'
++        FileUtils.mkdir_p(args.last)
++        raise Interrupt
++      end
++      original.call(*args, **options)
++    end
++    expect { compare(@base, @forward) }.to raise_error(Interrupt)
++    expect(File).not_to exist(@path)
++    expect(Dir.glob(File.join(@cache, 'git-mirrors', ".#{@mirror.name}-*"))).to be_empty
++    expect(@mirror.synchronize { true }).to be(true)
++  end
++
++  it 'reports a safe cache key without copying Git transport diagnostics' do
++    allow(Open3).to receive(:capture3).and_raise(IOError, 'untrusted transport details')
++    expect { compare(@base, @forward) }.to raise_error(described_class::Error) do |error|
++      expect(error.message).to include(@mirror.name)
++      expect(error.message).not_to include('untrusted transport details')
++    end
++  end
++
++  it 'preserves ordinary Git URL configuration and its warm changelog cache' do
++    configured_url = 'https://fixture.invalid/repository'
++    config = File.join(@dir, 'fixture-git-config')
++    git('config', '--file', config, "url.#{@origin}.insteadOf", configured_url)
++    mirror = described_class.new(configured_url, quiet: true)
++    under_fixture_environment do
++      ENV['GIT_CONFIG_GLOBAL'] = config
++      expect(mirror.compare(@base, @forward)).to eq(:ahead)
++      mirror.synchronize do
++        mirror.setup
++        expect(mirror.log(@base, @forward, opts: ['--oneline'])).to include('forward')
++      end
++    end
++  end
++
++  it 'preserves fabricated SSH transport configuration without accessing a network or credentials' do
++    configured_url = 'fixture://repository'
++    marker = File.join(@dir, 'transport-used')
++    helper = File.join(@dir, 'ssh-fixture.rb')
++    File.write(helper, "File.write(#{marker.inspect}, 'called')\nexit 1\n")
++    config = File.join(@dir, 'fixture-git-config')
++    git('config', '--file', config, 'url.ssh://fixture.invalid/repository.insteadOf', configured_url)
++    git('config', '--file', config, 'core.sshCommand', "#{RbConfig.ruby} --disable=rubyopt #{helper}")
++    mirror = described_class.new(configured_url, quiet: true)
++    under_fixture_environment do
++      ENV['GIT_CONFIG_GLOBAL'] = config
++      expect { mirror.compare(@base, @forward) }.to raise_error(described_class::Error)
++      expect(File.read(marker)).to eq('called')
++    end
++  end
++
++  it 'serializes concurrent cold comparisons and reuses their mirror for changelogs without deadlocking' do
++    program = <<~RUBY
++      module ConfCtl
++        def self.cache_dir = ARGV[1]
++      end
++      $stdout.sync = true
++      puts 'ready'
++      puts ConfCtl::GitRepoMirror.new(ARGV[0]).compare(ARGV[2], ARGV[3])
++    RUBY
++    under_fixture_environment do
++      @mirror.synchronize do
++        @child = Open3.popen3(RbConfig.ruby, '-I', File.expand_path('../lib', __dir__),
++                              '-rconfctl/git_repo_mirror', '-e', program, @origin, @cache, @base, @forward)
++        expect(@child[1].gets).to eq("ready\n")
++        expect(@child[1].wait_readable(0.1)).to be_nil
++        expect(@mirror.compare(@base, @forward)).to eq(:ahead)
++        File.rename(@origin, "#{@origin}-offline")
++      end
++      expect(@child[1].gets).to eq("ahead\n")
++      expect(@child[3].value.success?).to be(true), @child[2].read
++      File.rename("#{@origin}-offline", @origin)
++      @mirror.synchronize do
++        @mirror.setup
++        expect(@mirror.log(@base, @forward, opts: ['--oneline'])).to include('forward')
++      end
++    ensure
++      if @child && @child[3].alive?
++        Process.kill('TERM', @child[3].pid)
++        @child[3].value
++      end
++      @child&.first(3)&.each { |io| io.close unless io.closed? }
++    end
++  end
++end
+diff --git a/spec/inputs/commit_message_spec.rb b/spec/inputs/commit_message_spec.rb
+index 4725f17..fabe388 100644
+--- a/spec/inputs/commit_message_spec.rb
++++ b/spec/inputs/commit_message_spec.rb
+@@ -16,6 +16,7 @@ RSpec.describe ConfCtl::Inputs::CommitMessage do
+     mirror = instance_double(ConfCtl::GitRepoMirror)
+ 
+     expect(ConfCtl::GitRepoMirror).to receive(:new).with(url, quiet: true).and_return(mirror)
++    expect(mirror).to receive(:synchronize).and_yield
+     expect(mirror).to receive(:setup)
+     expect(mirror).to receive(:log).with(from, to, opts: ['--oneline']).and_return(output)
+   end
+@@ -167,6 +168,14 @@ RSpec.describe ConfCtl::Inputs::CommitMessage do
+     MSG
+   end
+ 
++  it 'keeps changelog evidence failures soft after a guarded update was accepted' do
++    changes = [build_change(name: 'source', old_rev: 'a' * 40, new_rev: 'b' * 40, url: 'https://github.com/owner/repo')]
++    mirror = instance_double(ConfCtl::GitRepoMirror)
++    allow(ConfCtl::GitRepoMirror).to receive(:new).and_return(mirror)
++    allow(mirror).to receive(:synchronize).and_raise(ConfCtl::GitRepoMirror::Error, 'Git mirror operation failed')
++    expect(described_class.build(changes: changes, changelog: true)).to include('changelog unavailable: Git mirror operation failed')
++  end
++
+   it 'does not include the revision in title for changes from different sources' do
+     changes = [
+       build_change(
+diff --git a/spec/inputs/forward_guard_spec.rb b/spec/inputs/forward_guard_spec.rb
+index a79d0ce..ee5d1cf 100644
+--- a/spec/inputs/forward_guard_spec.rb
++++ b/spec/inputs/forward_guard_spec.rb
+@@ -3,7 +3,7 @@ require 'confctl/flake_lock'
+ require 'confctl/inputs/forward_guard'
+ 
+ RSpec.describe ConfCtl::Inputs::ForwardGuard do
+-  let(:provider) { instance_double(ConfCtl::Inputs::GitHubCompare) }
++  let(:provider) { instance_double(ConfCtl::Inputs::GitCompare) }
+   let(:guard) { described_class.new(provider: provider) }
+ 
+   def source(rev = 'a' * 40, repo = 'source')
+@@ -22,8 +22,8 @@ RSpec.describe ConfCtl::Inputs::ForwardGuard do
+     }
+   end
+ 
+-  def compare(repo: 'source', old_rev: 'a' * 40, new_rev: 'c' * 40, result: :ahead)
+-    expect(provider).to receive(:compare).with(owner: 'example', repo: repo, old_rev: old_rev, new_rev: new_rev)
++  def compare(owner: 'example', repo: 'source', old_rev: 'a' * 40, new_rev: 'c' * 40, result: :ahead)
++    expect(provider).to receive(:compare).with(owner: owner, repo: repo, old_rev: old_rev, new_rev: new_rev)
+                                          .once.and_return(result)
+   end
+ 
+@@ -101,7 +101,7 @@ RSpec.describe ConfCtl::Inputs::ForwardGuard do
+   it 'normalizes github.com source names for ancestry queries' do
+     candidate = graph
+     candidate['nodes']['p']['locked'].merge!('rev' => 'c' * 40, 'owner' => 'EXAMPLE', 'repo' => 'SOURCE')
+-    compare
++    compare(owner: 'EXAMPLE', repo: 'SOURCE')
+     expect(guard.validate(graph, candidate)).to be_success
+   end
+ 
+@@ -183,7 +183,7 @@ RSpec.describe ConfCtl::Inputs::ForwardGuard do
+     candidate = graph
+     candidate['nodes']['p']['locked']['rev'] = 'c' * 40
+     candidate['nodes']['l']['locked']['rev'] = 'd' * 40
+-    allow(provider).to receive(:compare).and_raise(ConfCtl::Inputs::GitHubCompare::Error, 'Unavailable evidence')
++    allow(provider).to receive(:compare).and_raise(ConfCtl::Inputs::GitCompare::Error, 'Unavailable evidence')
+     compare(result: :behind)
+     expect(guard.validate(graph, candidate)).to be_error
+   end
+@@ -198,7 +198,7 @@ RSpec.describe ConfCtl::Inputs::ForwardGuard do
+   it 'deduplicates failed evidence requests shared by aliases' do
+     candidate = graph
+     candidate['nodes']['l']['locked']['rev'] = 'c' * 40
+-    expect(provider).to receive(:compare).once.and_raise(ConfCtl::Inputs::GitHubCompare::Error, 'Unavailable evidence')
++    expect(provider).to receive(:compare).once.and_raise(ConfCtl::Inputs::GitCompare::Error, 'Unavailable evidence')
+     result = guard.validate(graph, candidate)
+     expect(result).to be_error
+     expect(result.issues.size).to eq(2)
+diff --git a/spec/inputs/git_compare_spec.rb b/spec/inputs/git_compare_spec.rb
+new file mode 100644
+index 0000000..d2f830b
+--- /dev/null
++++ b/spec/inputs/git_compare_spec.rb
+@@ -0,0 +1,45 @@
++require 'spec_helper'
++require 'confctl/inputs/git_compare'
++
++RSpec.describe ConfCtl::Inputs::GitCompare do
++  let(:old_rev) { 'a' * 40 }
++  let(:new_rev) { 'b' * 40 }
++
++  it 'uses the exact locked spelling and existing changelog URL without a suffix' do
++    mirror = instance_double(ConfCtl::GitRepoMirror)
++    expect(ConfCtl::GitRepoMirror).to receive(:new).with('https://github.com/NixOS/nixpkgs', quiet: true).and_return(mirror)
++    expect(mirror).to receive(:compare).with(old_rev, new_rev).and_return(:ahead)
++    expect(described_class.new.compare(owner: 'NixOS', repo: 'nixpkgs', old_rev: old_rev, new_rev: new_rev)).to eq(:ahead)
++  end
++
++  it 'accepts equality without constructing or accessing a mirror' do
++    expect(ConfCtl::GitRepoMirror).not_to receive(:new)
++    expect(described_class.new.compare(owner: 'owner', repo: 'repo', old_rev: old_rev, new_rev: old_rev)).to eq(:identical)
++  end
++
++  [nil, 'main', 'abc', '-bad', 'a' * 39].each do |rev|
++    it "rejects nonimmutable revision #{rev.inspect}" do
++      expect(ConfCtl::GitRepoMirror).not_to receive(:new)
++      expect do
++        described_class.new.compare(owner: 'owner', repo: 'repo', old_rev: old_rev, new_rev: rev)
++      end.to raise_error(described_class::Error)
++    end
++  end
++
++  ['.', '..', 'name/other', 'name?key=value', nil].each do |name|
++    it "rejects invalid repository component #{name.inspect}" do
++      expect do
++        described_class.new.compare(owner: name, repo: 'repo', old_rev: old_rev, new_rev: new_rev)
++      end.to raise_error(described_class::Error)
++    end
++  end
++
++  it 'converts cache evidence failures into the provider error contract' do
++    mirror = instance_double(ConfCtl::GitRepoMirror)
++    allow(ConfCtl::GitRepoMirror).to receive(:new).and_return(mirror)
++    allow(mirror).to receive(:compare).and_raise(ConfCtl::GitRepoMirror::Error, 'Git evidence unavailable')
++    expect do
++      described_class.new.compare(owner: 'owner', repo: 'repo', old_rev: old_rev, new_rev: new_rev)
++    end.to raise_error(described_class::Error, 'Git evidence unavailable')
++  end
++end
+diff --git a/spec/inputs/github_compare_spec.rb b/spec/inputs/github_compare_spec.rb
+deleted file mode 100644
+index 5b78613..0000000
+--- a/spec/inputs/github_compare_spec.rb
++++ /dev/null
+@@ -1,135 +0,0 @@
+-require 'spec_helper'
+-require 'confctl/inputs/github_compare'
+-
+-RSpec.describe ConfCtl::Inputs::GitHubCompare do
+-  let(:transport) { class_double(Net::HTTP) }
+-  let(:http) { instance_double(Net::HTTP) }
+-  let(:old_rev) { 'a' * 40 }
+-  let(:new_rev) { 'b' * 40 }
+-  let(:client) { described_class.new(token: 'private-token', http: transport) }
+-
+-  def compare
+-    client.compare(owner: 'example', repo: 'source', old_rev: old_rev, new_rev: new_rev)
+-  end
+-
+-  def summary(status = 'ahead')
+-    {
+-      'status' => status,
+-      'base_commit' => { 'sha' => old_rev },
+-      'merge_base_commit' => { 'sha' => old_rev },
+-      'ahead_by' => 5,
+-      'behind_by' => 0,
+-      'total_commits' => 5,
+-      'commits' => []
+-    }
+-  end
+-
+-  def response(body: summary.to_json, code: '200')
+-    allow(transport).to receive(:start).with('api.github.com', 443,
+-                                             use_ssl: true, open_timeout: 10, read_timeout: 30).and_yield(http)
+-    allow(http).to receive(:max_retries=).with(0)
+-    allow(http).to receive(:request).and_return(instance_double(Net::HTTPResponse, code: code, body: body))
+-  end
+-
+-  it 'uses exact full SHAs, fixed HTTPS host, explicit token and bounded network settings' do
+-    response
+-    expect(http).to receive(:request) do |request|
+-      expect(request.path).to eq("/repos/example/source/compare/#{old_rev}...#{new_rev}?per_page=1")
+-      expect(request['Authorization']).to eq('Bearer private-token')
+-      expect(request['Accept']).to eq('application/vnd.github+json')
+-      expect(request['User-Agent']).to eq('confctl-forward-guard')
+-      instance_double(Net::HTTPResponse, code: '200', body: summary.to_json)
+-    end
+-    expect(compare).to eq(:ahead)
+-  end
+-
+-  it 'decides equality locally' do
+-    expect(transport).not_to receive(:start)
+-    expect(client.compare(owner: 'example', repo: 'source', old_rev: old_rev, new_rev: old_rev)).to eq(:identical)
+-  end
+-
+-  it 'accepts a large comparison using complete summary metadata despite truncated commit lists' do
+-    data = summary.merge('ahead_by' => 50_000, 'total_commits' => 50_000,
+-                         'commits' => [{ 'sha' => new_rev }])
+-    response(body: data.to_json)
+-    expect(compare).to eq(:ahead)
+-  end
+-
+-  it 'reports behind history' do
+-    data = summary('behind').merge('ahead_by' => 0, 'behind_by' => 50_000, 'total_commits' => 0,
+-                                   'merge_base_commit' => { 'sha' => new_rev })
+-    response(body: data.to_json)
+-    expect(compare).to eq(:behind)
+-  end
+-
+-  it 'reports divergent history, including an equivalent cherry pick or rebase' do
+-    data = summary('diverged').merge('behind_by' => 1, 'merge_base_commit' => { 'sha' => 'c' * 40 })
+-    response(body: data.to_json)
+-    expect(compare).to eq(:diverged)
+-  end
+-
+-  {
+-    'missing fields' => ->(data) { data.delete('behind_by') },
+-    'wrong base' => ->(data) { data['base_commit']['sha'] = 'd' * 40 },
+-    'wrong merge base' => ->(data) { data['merge_base_commit']['sha'] = new_rev },
+-    'abbreviated merge base' => ->(data) { data['merge_base_commit']['sha'] = 'short' },
+-    'ahead and behind' => ->(data) { data['behind_by'] = 1 },
+-    'missing ahead count' => ->(data) { data['ahead_by'] = 0 },
+-    'wrong total' => ->(data) { data['total_commits'] = 6 },
+-    'negative counts' => ->(data) { data['ahead_by'] = -1 },
+-    'string counts' => ->(data) { data['behind_by'] = '0' },
+-    'unknown status' => ->(data) { data['status'] = 'maybe' },
+-    'false equality' => ->(data) { data['status'] = 'identical' },
+-    'inconsistent behind status' => ->(data) { data['status'] = 'behind' },
+-    'inconsistent diverged status' => ->(data) { data['status'] = 'diverged' }
+-  }.each do |name, mutate|
+-    it "fails closed on #{name}" do
+-      data = summary
+-      instance_exec(data, &mutate)
+-      response(body: data.to_json)
+-      expect { compare }.to raise_error(described_class::Error, /ancestry evidence/)
+-    end
+-  end
+-
+-  ['null', '[]', '{bad-json', '{"message":"private-token"}'].each do |body|
+-    it "rejects invalid response shape #{body[0, 10]} without leaking response data" do
+-      response(body: body)
+-      expect { compare }.to raise_error(described_class::Error) { |e| expect(e.message).not_to include('private-token') }
+-    end
+-  end
+-
+-  %w[301 302 401 403 404 409 422 429 500 503].each do |code|
+-    it "fails closed for HTTP #{code} without redirecting or leaking credentials/body" do
+-      response(code: code, body: 'private-token')
+-      expect { compare }.to raise_error(described_class::Error, "GitHub comparison failed (HTTP #{code})")
+-    end
+-  end
+-
+-  [Net::OpenTimeout, Net::ReadTimeout, SocketError, Errno::ECONNRESET, OpenSSL::SSL::SSLError,
+-   Net::HTTPBadResponse, EOFError].each do |error|
+-    it "returns sanitized evidence failure for #{error}" do
+-      allow(transport).to receive(:start).and_raise(error, 'private-token')
+-      expect { compare }.to raise_error(described_class::Error, 'Unable to obtain GitHub ancestry evidence')
+-    end
+-  end
+-
+-  it 'supports unauthenticated public requests without sending an empty authorization header' do
+-    response
+-    client = described_class.new(token: nil, http: transport)
+-    expect(http).to receive(:request) do |request|
+-      expect(request['Authorization']).to be_nil
+-      instance_double(Net::HTTPResponse, code: '200', body: summary.to_json)
+-    end
+-    expect(client.compare(owner: 'example', repo: 'source', old_rev: old_rev, new_rev: new_rev)).to eq(:ahead)
+-  end
+-
+-  it 'rejects malformed repository coordinates or mutable refs before HTTP' do
+-    expect(transport).not_to receive(:start)
+-    expect do
+-      client.compare(owner: 'example/other', repo: 'source', old_rev: old_rev, new_rev: new_rev)
+-    end.to raise_error(described_class::Error)
+-    expect do
+-      client.compare(owner: 'example', repo: 'source', old_rev: 'main', new_rev: new_rev)
+-    end.to raise_error(described_class::Error)
+-  end
+-end
+diff --git a/spec/inputs/guarded_update_spec.rb b/spec/inputs/guarded_update_spec.rb
+index 5cd811d..11eb253 100644
+--- a/spec/inputs/guarded_update_spec.rb
++++ b/spec/inputs/guarded_update_spec.rb
+@@ -11,7 +11,7 @@ RSpec.describe ConfCtl::Inputs::GuardedUpdate do
+ 
+   let(:old_rev) { 'a' * 40 }
+   let(:new_rev) { 'b' * 40 }
+-  let(:provider) { instance_double(ConfCtl::Inputs::GitHubCompare, compare: :ahead) }
++  let(:provider) { instance_double(ConfCtl::Inputs::GitCompare, compare: :ahead) }
+   let(:cmd) { instance_double(TTY::Command) }
+   let(:result) { TTY::Command::Result.new(0, '', '') }
+   let(:old_data) do
+@@ -43,7 +43,7 @@ RSpec.describe ConfCtl::Inputs::GuardedUpdate do
+ 
+   before do
+     allow(ConfCtl::SystemCommand).to receive(:new).and_return(cmd)
+-    allow(ConfCtl::Inputs::GitHubCompare).to receive(:new).and_return(provider)
++    allow(ConfCtl::Inputs::GitCompare).to receive(:new).and_return(provider)
+     allow(ConfCtl::Inputs::GitCommit).to receive(:commit!)
+     allow(cmd).to receive(:run) do |*argv|
+       expect(argv).to include('--reference-lock-file', '--output-lock-file')
+@@ -101,7 +101,7 @@ RSpec.describe ConfCtl::Inputs::GuardedUpdate do
+   end
+ 
+   it 'fails on unknown ancestry evidence' do
+-    allow(provider).to receive(:compare).and_raise(ConfCtl::Inputs::GitHubCompare::Error, 'unavailable')
++    allow(provider).to receive(:compare).and_raise(ConfCtl::Inputs::GitCompare::Error, 'unavailable')
+     expect(update(commit: true)).to include(status: :error, changed: false)
+     expect_preserved
+   end

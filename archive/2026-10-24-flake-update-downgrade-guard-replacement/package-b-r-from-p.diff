@@ -1,0 +1,19 @@
+diff --git a/spec/confctl/cli/package_environment_spec.rb b/spec/confctl/cli/package_environment_spec.rb
+index 72fe745..90d496d 100644
+--- a/spec/confctl/cli/package_environment_spec.rb
++++ b/spec/confctl/cli/package_environment_spec.rb
+@@ -86,8 +86,12 @@ RSpec.describe 'packaged CLI caller environment' do
+       )
+     RUBY
+     hook = File.join(@conf, '.git', 'hooks', 'pre-commit')
+-    File.write(hook, <<~'RUBY')
+-      #!/usr/bin/env ruby
++    # Generated hooks need a declared interpreter, not the host's /usr/bin/env.
++    env_bin = ENV.fetch('PATH').split(File::PATH_SEPARATOR)
++                 .map { |path| File.join(path, 'env') }.find { |path| File.executable?(path) }
++    expect(env_bin).not_to be_nil
++    # Preserve env's dispatch name when it is a symlink to a multicall executable.
++    File.write(hook, "#!#{File.expand_path(env_bin)} ruby\n" + <<~'RUBY')
+       require 'caller_fixture'
+       File.write(ENV.fetch('CALLER_HOOK_RESULT'), [
+         RbConfig.ruby, CALLER_FIXTURE, Gem.loaded_specs.fetch('confctl-caller-fixture').full_gem_path

@@ -1,0 +1,53 @@
+diff --git a/.github/workflows/update-dependencies.yml b/.github/workflows/update-dependencies.yml
+index 05b7ac4..576f6a5 100644
+--- a/.github/workflows/update-dependencies.yml
++++ b/.github/workflows/update-dependencies.yml
+@@ -13,7 +13,7 @@ concurrency:
+   cancel-in-progress: false
+ 
+ env:
+-  CONFCTL_FLAKE: github:vpsfreecz/confctl/5436d3d7c36d3d5174eab3c44e3578830749d3db#confctl
++  CONFCTL_FLAKE: github:vpsfreecz/confctl/822c0e35dbe2549111912f539116b4225dfd3035#confctl
+   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+ 
+ jobs:
+@@ -29,6 +29,14 @@ jobs:
+       - name: Install Nix
+         uses: cachix/install-nix-action@31.11.3
+ 
++      - name: Restore confctl cache
++        uses: actions/cache/restore@v6
++        with:
++          path: ~/.cache/confctl
++          key: confctl-cache-${{ runner.os }}-${{ github.run_id }}
++          restore-keys: |
++            confctl-cache-${{ runner.os }}
++
+       - name: Configure Git
+         run: |
+           git config user.name "github-actions[bot]"
+@@ -205,3 +213,10 @@ jobs:
+           nix shell "$CONFCTL_FLAKE" -c confctl inputs check-update \
+             --old-lock "$UPDATE_OLD_LOCK" --new-lock "$final_lock"
+           git push origin "HEAD:${{ github.event.repository.default_branch }}"
++
++      - name: Save confctl cache
++        if: ${{ !cancelled() }}
++        uses: actions/cache/save@v6
++        with:
++          path: ~/.cache/confctl
++          key: confctl-cache-${{ runner.os }}-${{ github.run_id }}
+diff --git a/README.md b/README.md
+index 2c7322f..5b6e792 100644
+--- a/README.md
++++ b/README.md
+@@ -33,4 +33,8 @@ uses an ordinary non-force push. If the target branch advances, rerun from its
+ new baseline instead of rebasing the old lock update. The CI tool does not
+ become a runtime flake input.
+ 
+-See the [shared guard contract](https://github.com/vpsfreecz/confctl/blob/5436d3d7c36d3d5174eab3c44e3578830749d3db/docs/flake-inputs.md#guarded-automated-updates) for supported sources and failure behavior.
++The workflow saves confctl's Git mirrors in `~/.cache/confctl` even when an
++update is rejected. Every update checks ancestry, whether the cache was
++restored or freshly cloned.
++
++See the [shared guard contract](https://github.com/vpsfreecz/confctl/blob/822c0e35dbe2549111912f539116b4225dfd3035/docs/flake-inputs.md#guarded-automated-updates) for supported sources and failure behavior.

@@ -1,0 +1,15 @@
+{
+  "recorded_at": "2026-10-24T18:17:23.111908+00:00",
+  "source_head": "c7bfc1aa5af956b6057be8e623f9035c00ccb268",
+  "helper": "utils/update-nixpkgs.sh",
+  "line": 42,
+  "fact": "The unchanged helper runs nix flake check after an actual revision change, before commit; equality exits before it. The frozen selected path calls the helper unchanged.",
+  "decision": "Retain and authorize this existing conditional in-helper gate as part of the selected HaveAPI updater path. Do not replace the helper or stop/restart the active batch just to omit it.",
+  "rationale": "Preserves the exact repository-specific update/commit behavior without a new test fixture transformation; no standalone unrelated check is added.",
+  "scope_correction": "General prepared wording that all application checks/builds are omitted was too broad for HaveAPI. Other omitted stages remain omitted. Record whether this conditional actually ran; do not claim an omitted build if it executes.",
+  "source_changes": false,
+  "manifest_changes": false,
+  "review_changes": false,
+  "kernel_policy": "Unchanged; unexpected local kernel build still interrupts exact owned group.",
+  "actual_branch": "pending receipt inspection"
+}

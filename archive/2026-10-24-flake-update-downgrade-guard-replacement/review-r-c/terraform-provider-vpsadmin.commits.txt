@@ -1,0 +1,16 @@
+commit f835d63b14931712129771792039f645cf6a3305
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Sat Oct 24 14:13:16 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Sat Oct 24 16:19:56 2026 +0200
+
+    ci: require forward-only flake input updates
+    
+    Use a separately pinned confctl CI tool to prevent automated updates from
+    replacing manually advanced commits with history that omits them. Validate
+    the full candidate graph and preserve the existing vpsadmin selection,
+    lock-only checks and flake commit message format.
+    
+    Read resolved revision metadata through the shared tool and check the final
+    lock against the saved workflow baseline before the ordinary push. Reject
+    both non-forward candidates and unavailable ancestry evidence.

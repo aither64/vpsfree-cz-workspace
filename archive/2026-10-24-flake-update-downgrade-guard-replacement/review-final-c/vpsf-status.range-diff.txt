@@ -1,0 +1,17 @@
+1:  7641e48 ! 1:  13830fc Guard automated flake updates with commit ancestry checks
+    @@ .github/workflows/update-dependencies.yml: concurrency:
+        cancel-in-progress: false
+      
+     +env:
+    -+  CONFCTL_FLAKE: github:vpsfreecz/confctl/7ba361d22a4aac044cb02abf8397800bcf5726bf#confctl
+    ++  CONFCTL_FLAKE: github:vpsfreecz/confctl/bdaed19e901237e05bd0a779f368e76cb311143f#confctl
+     +  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+     +
+      jobs:
+    @@ README.md: do not use Nix, install `lefthook` first.
+     +new baseline instead of rebasing the old lock update. The CI tool does not
+     +become a runtime flake input.
+     +
+    -+See the [shared guard contract](https://github.com/vpsfreecz/confctl/blob/7ba361d22a4aac044cb02abf8397800bcf5726bf/docs/flake-inputs.md#guarded-automated-updates) for supported sources and failure behavior.
+    ++See the [shared guard contract](https://github.com/vpsfreecz/confctl/blob/bdaed19e901237e05bd0a779f368e76cb311143f/docs/flake-inputs.md#guarded-automated-updates) for supported sources and failure behavior.
+2:  521c5b6 = 2:  c8869b8 Fix dependency updater vendor hash replacement

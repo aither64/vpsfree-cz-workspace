@@ -1,0 +1,50 @@
+--- package-c-r-git-race-2.py	2026-10-24 17:14:15.727477127 +0200
++++ package-c7-git-cache-race.py	2026-10-24 19:54:52.078859189 +0200
+@@ -10,13 +10,13 @@
+ import time
+ 
+ HERE = Path(__file__).resolve().parent
+-spec = importlib.util.spec_from_file_location('c_verification', HERE / 'package-c-r-post-review.py')
++spec = importlib.util.spec_from_file_location('c_verification', HERE / 'package-c7-git-cache-post-review.py')
+ driver = importlib.util.module_from_spec(spec)
+ spec.loader.exec_module(driver)
+ 
+ INITIAL = '9d63ab4f30929043b8695225c0128029b188a985'
+ STALE_TIP = 'cc40679d267165aecfa569128438bb55fe910268'
+-MANUAL_PIN = '5436d3d7c36d3d5174eab3c44e3578830749d3db'
++MANUAL_PIN = '822c0e35dbe2549111912f539116b4225dfd3035'
+ 
+ 
+ def lock(revision):
+@@ -29,8 +29,6 @@
+ 
+ 
+ def perform(op):
+-    if not os.environ.get('GITHUB_TOKEN'):
+-        raise ValueError('Supply GITHUB_TOKEN through private environment')
+     if op.manifest['provider_head'] != MANUAL_PIN:
+         raise ValueError('Provider fixture revision differs from reviewed manifest')
+     op.receipt.update(fixture_script_sha256=driver.sha(__file__),
+@@ -153,18 +151,21 @@
+     parser = argparse.ArgumentParser(description=__doc__)
+     parser.add_argument('--root', required=True)
+     parser.add_argument('--review-receipt', required=True)
++    parser.add_argument('--manifest-sha256', required=True)
+     args = parser.parse_args()
+     args.stage = 'git-race'
+     args.project = None
+     op = driver.Operation(args)
+     try:
++        op.mirror_snapshot('race-before')
+         perform(op)
++        op.mirror_snapshot('race-after')
+         return 0
+     except driver.Failed as error:
+         op.receipt.update(exit_status=error.status, failed_command=str(error), kernel_escalation=op.kernel)
+         return error.status
+     except Exception as error:
+-        op.receipt.update(exit_status=1, fixture_error=str(error), kernel_escalation=op.kernel)
++        op.receipt.update(exit_status=1, failure_class=type(error).__name__, kernel_escalation=op.kernel)
+         return 1
+     finally:
+         op.receipt['finished_utc'] = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())

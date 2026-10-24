@@ -1,0 +1,19 @@
+1:  58a3d08 ! 1:  f835d63 ci: require forward-only flake input updates
+    @@ .github/workflows/update-vpsadmin-flake.yml: on:
+        contents: write
+      
+     +env:
+    -+  CONFCTL_FLAKE: github:vpsfreecz/confctl/bdaed19e901237e05bd0a779f368e76cb311143f#confctl
+    ++  CONFCTL_FLAKE: github:vpsfreecz/confctl/5436d3d7c36d3d5174eab3c44e3578830749d3db#confctl
+     +  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+     +
+      jobs:
+    @@ README.md: $ make test
+     +`.github/workflows/update-vpsadmin-flake.yml` and export `GITHUB_TOKEN` for the
+     +GitHub API, then run `tools/update-vpsadmin-flake-input.sh` and review its
+     +generated commit.
+    -+See the [shared guard contract](https://github.com/vpsfreecz/confctl/blob/bdaed19e901237e05bd0a779f368e76cb311143f/docs/flake-inputs.md#guarded-automated-updates) for supported sources and failure behavior.
+    ++See the [shared guard contract](https://github.com/vpsfreecz/confctl/blob/5436d3d7c36d3d5174eab3c44e3578830749d3db/docs/flake-inputs.md#guarded-automated-updates) for supported sources and failure behavior.
+     
+      ## tools/update-vpsadmin-flake-input.sh ##
+     @@ tools/update-vpsadmin-flake-input.sh: Update a flake input, verify that only flake.lock changed, and commit the

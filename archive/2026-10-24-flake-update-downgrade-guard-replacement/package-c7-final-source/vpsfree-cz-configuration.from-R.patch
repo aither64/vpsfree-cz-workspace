@@ -1,0 +1,21 @@
+diff --git a/.github/workflows/daily-update.yml b/.github/workflows/daily-update.yml
+index a1d62e9e..638226dc 100644
+--- a/.github/workflows/daily-update.yml
++++ b/.github/workflows/daily-update.yml
+@@ -8,7 +8,7 @@ permissions:
+   contents: write
+ 
+ env:
+-  CONFCTL_FLAKE: 'github:vpsfreecz/confctl/5436d3d7c36d3d5174eab3c44e3578830749d3db#confctl'
++  CONFCTL_FLAKE: 'github:vpsfreecz/confctl/822c0e35dbe2549111912f539116b4225dfd3035#confctl'
+   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+ 
+ jobs:
+@@ -188,6 +188,7 @@ jobs:
+           EOF
+ 
+       - name: Save confctl cache
++        if: ${{ !cancelled() }}
+         uses: actions/cache/save@v6
+         with:
+           path: ~/.cache/confctl

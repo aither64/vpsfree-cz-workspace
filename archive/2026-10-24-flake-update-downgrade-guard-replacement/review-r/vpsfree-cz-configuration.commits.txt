@@ -1,0 +1,15 @@
+commit 28ce92517be0151c0bd52f7ae6e64632474888e9
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Sat Oct 24 14:27:22 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Sat Oct 24 16:18:53 2026 +0200
+
+    ci: guard automated flake updates
+    
+    Use the exact shared confctl CI package to reject input updates that lose
+    previously pinned ancestry. Keep the deployment-tool input unchanged and
+    retain the existing channel, changelog and Codex version-selection rules.
+    
+    Save the original lock before updates and validate the committed final
+    lock snapshot before an ordinary push. Retain the configuration shell for
+    Ruby commit hooks while selecting the new tool explicitly for each guard.

@@ -1,0 +1,44 @@
+diff --git a/.github/workflows/update-dependencies.yml b/.github/workflows/update-dependencies.yml
+index 719e8d6..05b7ac4 100644
+--- a/.github/workflows/update-dependencies.yml
++++ b/.github/workflows/update-dependencies.yml
+@@ -13,7 +13,7 @@ concurrency:
+   cancel-in-progress: false
+ 
+ env:
+-  CONFCTL_FLAKE: github:vpsfreecz/confctl/bdaed19e901237e05bd0a779f368e76cb311143f#confctl
++  CONFCTL_FLAKE: github:vpsfreecz/confctl/5436d3d7c36d3d5174eab3c44e3578830749d3db#confctl
+   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+ 
+ jobs:
+diff --git a/README.md b/README.md
+index 2ffaa35..2c7322f 100644
+--- a/README.md
++++ b/README.md
+@@ -33,4 +33,4 @@ uses an ordinary non-force push. If the target branch advances, rerun from its
+ new baseline instead of rebasing the old lock update. The CI tool does not
+ become a runtime flake input.
+ 
+-See the [shared guard contract](https://github.com/vpsfreecz/confctl/blob/bdaed19e901237e05bd0a779f368e76cb311143f/docs/flake-inputs.md#guarded-automated-updates) for supported sources and failure behavior.
++See the [shared guard contract](https://github.com/vpsfreecz/confctl/blob/5436d3d7c36d3d5174eab3c44e3578830749d3db/docs/flake-inputs.md#guarded-automated-updates) for supported sources and failure behavior.
+diff --git a/nix/package.nix b/nix/package.nix
+index 26cedad..bc70919 100644
+--- a/nix/package.nix
++++ b/nix/package.nix
+@@ -1,6 +1,7 @@
+ {
+   buildGoModule,
+   lib,
++  perl,
+   src,
+   version,
+   vpsadminGoClientSource ? null,
+@@ -10,6 +11,8 @@ buildGoModule {
+   pname = "vpsf-status";
+   inherit src version;
+ 
++  nativeCheckInputs = [ perl ];
++
+   vendorHash =
+     if vpsadminGoClientSource != null then
+       "sha256-N6vS4SGVeWkBc23/z8zT1Hbz+MC7BvOsjqJkw+bXcgI="

@@ -1,0 +1,17 @@
+--- package-c-r-git-race.py
++++ package-c-r-git-race-2.py
+@@ -79,6 +79,14 @@
+         op.run(['git', 'clone', str(remote), str(repo)], label='clone-local-' + name)
+         git(repo, 'config', 'user.name', 'Guard race fixture', label='fixture-author-name')
+         git(repo, 'config', 'user.email', 'guard-race@example.invalid', label='fixture-author-email')
++        # Rejected checks write logs; ignore only that owned runtime directory.
++        exclude = repo / '.git' / 'info' / 'exclude'
++        with exclude.open('a') as output:
++            output.write('\n/.confctl/logs/\n')
++        op.receipt.setdefault('fixture_log_excludes', []).append({
++            'repo': str(repo), 'path': str(exclude), 'rule': '/.confctl/logs/',
++            'sha256': driver.sha(exclude)})
++        op.save()
+         actual_remote = git(repo, 'remote', 'get-url', '--push', 'origin',
+                             label='fixture-local-push-target').read_text().strip()
+         if actual_remote != str(remote):

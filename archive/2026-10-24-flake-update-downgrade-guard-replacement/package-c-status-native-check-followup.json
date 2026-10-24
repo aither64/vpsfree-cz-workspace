@@ -1,0 +1,79 @@
+{
+  "project": "vpsf-status",
+  "old_published_head": "c8869b8f274dd840539a94da30d19d355cd623c1",
+  "local_head": "589f233a48d6da6315a6a0bbacabbc1e482c7002",
+  "base": "587cd65bb02e6dddea7f6b6409e42a15f36ab4fb",
+  "provider_pin_unchanged": "bdaed19e901237e05bd0a779f368e76cb311143f",
+  "commits": [
+    "13830fc82bb2fe3ed7a212832d578e3a61c1d1cb Guard automated flake updates with commit ancestry checks",
+    "589f233a48d6da6315a6a0bbacabbc1e482c7002 Fix dependency updater vendor hash replacement"
+  ],
+  "delta_paths": [
+    "nix/package.nix"
+  ],
+  "delta": "diff --git a/nix/package.nix b/nix/package.nix\nindex 26cedad..bc70919 100644\n--- a/nix/package.nix\n+++ b/nix/package.nix\n@@ -1,6 +1,7 @@\n {\n   buildGoModule,\n   lib,\n+  perl,\n   src,\n   version,\n   vpsadminGoClientSource ? null,\n@@ -10,6 +11,8 @@ buildGoModule {\n   pname = \"vpsf-status\";\n   inherit src version;\n \n+  nativeCheckInputs = [ perl ];\n+\n   vendorHash =\n     if vpsadminGoClientSource != null then\n       \"sha256-N6vS4SGVeWkBc23/z8zT1Hbz+MC7BvOsjqJkw+bXcgI=\"",
+  "range_diff": "1:  13830fc = 1:  13830fc Guard automated flake updates with commit ancestry checks\n2:  c8869b8 ! 2:  589f233 Fix dependency updater vendor hash replacement\n    @@ Commit message\n         Reject unsupported or ambiguous assignments before writing, and cover\n         hash characters and the current package layout with regression tests.\n     \n    +    Declare Perl for development and sandbox package checks so the helper\n    +    regressions run in both environments.\n    +\n      ## .github/workflows/update-dependencies.yml ##\n     @@ .github/workflows/update-dependencies.yml: jobs:\n                  | @tsv\n    @@ flake.nix\n                  ];\n      \n     \n    + ## nix/package.nix ##\n    +@@\n    + {\n    +   buildGoModule,\n    +   lib,\n    ++  perl,\n    +   src,\n    +   version,\n    +   vpsadminGoClientSource ? null,\n    +@@ nix/package.nix: buildGoModule {\n    +   pname = \"vpsf-status\";\n    +   inherit src version;\n    + \n    ++  nativeCheckInputs = [ perl ];\n    ++\n    +   vendorHash =\n    +     if vpsadminGoClientSource != null then\n    +       \"sha256-N6vS4SGVeWkBc23/z8zT1Hbz+MC7BvOsjqJkw+bXcgI=\"\n    +\n      ## tools/set-vendor-hash.pl (new) ##\n     @@\n     +use strict;",
+  "backup_ref": "refs/backup/2026-10-24-flake-update-downgrade-guard-replacement/status-before-package-check-dependency",
+  "published": false,
+  "clean": true,
+  "nixpkgs_revision": "ee48b147c18c7de1e6ec97dc74792be42724bed1",
+  "before_eval": {
+    "doCheck": true,
+    "nativeBuildInputs": [
+      "go-1.26.5"
+    ],
+    "excludedPackages": null,
+    "subPackages": null
+  },
+  "after_eval": {
+    "enabled": {
+      "doCheck": true,
+      "inputs": [
+        "go-1.26.5",
+        "perl-5.42.0"
+      ]
+    },
+    "disabled_readonly_counterfactual": {
+      "doCheck": false,
+      "inputs": [
+        "go-1.26.5"
+      ]
+    }
+  },
+  "checks": {
+    "tools_fresh_seconds": 0.198,
+    "nix_eval_exit": 0,
+    "ordinary_hooks": "Lefthook i18n0; gofmt no stagedGo",
+    "diff_check": 0
+  },
+  "build_launched": false,
+  "build_command": [
+    "nix",
+    "build",
+    "--no-write-lock-file",
+    "--out-link",
+    "/tmp/flake-update-guard-2026-10-24-status-package-589f233a48d6",
+    ".#vpsf-status"
+  ],
+  "build_cwd": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-24-flake-update-downgrade-guard-replacement/vpsf-status",
+  "provenance": "Caused test prerequisite omission folded into owning independent vendor-hash fix; adoption unchanged, no third repair commit, provider pin unchanged.",
+  "created_at_utc": "2026-10-24T14:00:19.424996+00:00",
+  "source_evidence": [
+    {
+      "path": "/nix/store/c3wx104i8sbhrgz5fkgg6myrx3mkkr64-source/pkgs/build-support/go/module.nix",
+      "sha256": "8f3c0fb1aebd296467431fcecaee03db562614b7d8f62f8f9c29184c4c699a8f"
+    },
+    {
+      "path": "/nix/store/c3wx104i8sbhrgz5fkgg6myrx3mkkr64-source/pkgs/stdenv/generic/common-path.nix",
+      "sha256": "ca9ef452cf531a02061732b0515da3bd7b6488ca9ffb30d8d16206eba129afd2"
+    },
+    {
+      "path": "/nix/store/c3wx104i8sbhrgz5fkgg6myrx3mkkr64-source/pkgs/stdenv/generic/setup.sh",
+      "sha256": "4b43ef3aad9e0e55e4c2a6393afcaecd1c67326899207758af9455012d47bd4a"
+    },
+    {
+      "path": "/nix/store/c3wx104i8sbhrgz5fkgg6myrx3mkkr64-source/pkgs/stdenv/generic/make-derivation.nix",
+      "sha256": "738a99165205c4632759649a08ccac4cb361d90331aa8594586b15086e92300d"
+    }
+  ]
+}

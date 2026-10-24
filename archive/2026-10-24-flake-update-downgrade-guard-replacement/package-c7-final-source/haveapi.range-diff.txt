@@ -1,0 +1,72 @@
+1:  74f1cef6 ! 1:  c7bfc1aa ci: preserve flake input ancestry during automated updates
+    @@ Commit message
+         rejected candidate or unavailable evidence stops publication; a moved
+         remote requires generating a new update from its current baseline.
+     
+    +    Reuse confctl's Git mirrors between runs, including rejected updates. A
+    +    restored cache never skips the ancestry checks.
+    +
+      ## .github/workflows/update-nixpkgs.yml ##
+     @@ .github/workflows/update-nixpkgs.yml: concurrency:
+        group: update-nixpkgs-${{ github.ref }}
+        cancel-in-progress: false
+      
+     +env:
+    -+  CONFCTL_FLAKE: github:vpsfreecz/confctl/5436d3d7c36d3d5174eab3c44e3578830749d3db#confctl
+    ++  CONFCTL_FLAKE: github:vpsfreecz/confctl/822c0e35dbe2549111912f539116b4225dfd3035#confctl
+     +  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+     +
+      jobs:
+    @@ .github/workflows/update-nixpkgs.yml: jobs:
+                  sudo apt-get install --yes jq
+                fi
+      
+    ++      - name: Restore confctl cache
+    ++        uses: actions/cache/restore@v6
+    ++        with:
+    ++          path: ~/.cache/confctl
+    ++          key: confctl-cache-${{ runner.os }}-${{ github.run_id }}
+    ++          restore-keys: |
+    ++            confctl-cache-${{ runner.os }}
+    ++
+     +      - name: Save lock baseline
+     +        run: |
+     +          cp flake.lock "$RUNNER_TEMP/flake-update-baseline.lock"
+    @@ .github/workflows/update-nixpkgs.yml: jobs:
+     +          nix shell "$CONFCTL_FLAKE" -c confctl inputs check-update \
+     +            --old-lock "$UPDATE_OLD_LOCK" --new-lock "$final_lock"
+     +          git push origin "HEAD:${GITHUB_REF_NAME}"
+    ++
+    ++      - name: Save confctl cache
+    ++        if: ${{ !cancelled() }}
+    ++        uses: actions/cache/save@v6
+    ++        with:
+    ++          path: ~/.cache/confctl
+    ++          key: confctl-cache-${{ runner.os }}-${{ github.run_id }}
+     
+      ## doc/agent-instructions/development.md ##
+     @@ doc/agent-instructions/development.md: repository root unless explicitly stated otherwise.
+    @@ doc/agent-instructions/development.md: repository root unless explicitly stated
+        For an on-demand update, prefer triggering that workflow manually. For a
+     -  local update, run `./utils/update-nixpkgs.sh`, review the generated commit,
+     -  and push it. The commit subject must be
+    -+  local update, set `CONFCTL_FLAKE` to the immutable CI tool reference in
+    -+  `.github/workflows/update-nixpkgs.yml`, export `GITHUB_TOKEN` for GitHub API
+    -+  access, then run `./utils/update-nixpkgs.sh` and review the generated commit.
+    ++  local update, set `CONFCTL_FLAKE` to the immutable package reference in
+    ++  `.github/workflows/update-nixpkgs.yml`, then run `./utils/update-nixpkgs.sh`
+    ++  and review its generated commit.
+     +  The helper uses confctl's forward-only guard; a rejection or unavailable
+     +  ancestry evidence stops the update. The workflow saves the original lock
+     +  outside the checkout and checks the final lock again before its ordinary
+     +  non-force push. If the target branch advances, rerun from its new baseline;
+     +  do not rebase an old generated lock update. The commit subject must be
+        `flake: nixpkgs <oldrev11> -> <newrev11>`.
+    -+  See the [shared guard contract](https://github.com/vpsfreecz/confctl/blob/5436d3d7c36d3d5174eab3c44e3578830749d3db/docs/flake-inputs.md#guarded-automated-updates) for supported sources and failure behavior.
+    ++  The workflow saves confctl's Git mirrors in `~/.cache/confctl` even when an
+    ++  update is rejected. Every update checks ancestry, whether the cache was
+    ++  restored or freshly cloned.
+    ++  See the [shared guard contract](https://github.com/vpsfreecz/confctl/blob/822c0e35dbe2549111912f539116b4225dfd3035/docs/flake-inputs.md#guarded-automated-updates) for supported sources and failure behavior.
+      
+      ## Rust generator and runtime
+      

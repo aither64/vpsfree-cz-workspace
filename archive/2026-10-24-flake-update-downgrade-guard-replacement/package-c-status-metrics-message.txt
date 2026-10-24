@@ -1,0 +1,8 @@
+Check metrics cache exclusion against exporter headers
+
+Prometheus negotiation can add Vary headers directly, so their presence
+alone cannot identify the status route cache. Compare routed headers with
+the exporter handler while retaining the empty cache policy assertion.
+
+Check successive gauge changes at the same application clock to ensure
+scrapes remain fresh within the response cache's TTL.

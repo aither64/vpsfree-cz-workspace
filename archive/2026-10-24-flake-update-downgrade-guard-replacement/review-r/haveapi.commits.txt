@@ -1,0 +1,16 @@
+commit baec8e58e11a4868a6c713e70d406709bb94c152
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Sat Oct 24 14:13:11 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Sat Oct 24 16:19:51 2026 +0200
+
+    ci: preserve flake input ancestry during automated updates
+    
+    A scheduled nixpkgs update can replace a manually advanced revision with a
+    channel tip that does not contain it. Use the pinned confctl CI guard to
+    validate the full candidate lock graph before accepting the update.
+    
+    Keep the existing flake checks and commit subject, then validate the final
+    lock against the original workflow baseline before an ordinary push. A
+    rejected candidate or unavailable evidence stops publication; a moved
+    remote requires generating a new update from its current baseline.

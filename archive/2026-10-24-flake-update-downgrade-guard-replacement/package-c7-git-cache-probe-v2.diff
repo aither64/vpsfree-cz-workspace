@@ -1,0 +1,29 @@
+--- package-c7-git-cache-prelaunch-v1/package-c7-git-cache-runtime-probe.sh	2026-10-24 19:52:41.455048965 +0200
++++ package-c7-git-cache-runtime-probe.sh	2026-10-24 20:03:00.144522409 +0200
+@@ -1,5 +1,5 @@
+ #!/usr/bin/env bash
+-# Actual caller shell/Bundler boundary. No credential lookup or environment dump.
++# Actual workflow development-shell boundary. No credential lookup or environment dump.
+ set -euo pipefail
+ : "${RUNTIME_RECEIPT:?set the owned caller receipt directory}"
+ : "${PROBE_INPUT:?set the selected root input}"
+@@ -11,8 +11,8 @@
+ printf 'RUBYOPT present: %s\nBUNDLE_GEMFILE present: %s\n' "${RUBYOPT+yes}" "${BUNDLE_GEMFILE+yes}" > "$RUNTIME_RECEIPT/caller-state"
+ nix shell "$CONFCTL_FLAKE" -c bash -c 'command -v confctl' > "$RUNTIME_RECEIPT/provider-binary"
+ test "$(realpath "$(cat "$RUNTIME_RECEIPT/provider-binary")")" = "$(realpath "$EXPECTED_PROVIDER_BINARY")"
+-# Do not unset caller RUBYOPT/BUNDLE state: the package must cross this boundary.
+-bundle exec ruby -e 'exec(*ARGV)' -- nix shell "$CONFCTL_FLAKE" -c confctl inputs ls --json "$PROBE_INPUT" > "$RUNTIME_RECEIPT/resolved-input.json"
++# Preserve the real development shell's RUBYOPT/BUNDLE state.
++nix shell "$CONFCTL_FLAKE" -c confctl inputs ls --json "$PROBE_INPUT" > "$RUNTIME_RECEIPT/resolved-input.json"
+ python3 - "$RUNTIME_RECEIPT/resolved-input.json" "$PROBE_INPUT" <<'PY'
+ import json,re,sys
+ rows=json.load(open(sys.argv[1]))
+@@ -20,7 +20,7 @@
+ assert isinstance(rows[0]['rev'],str) and re.fullmatch(r'[0-9a-fA-F]{40}',rows[0]['rev'])
+ PY
+ if [[ "${PROBE_CHANNELS:-0}" == 1 ]]; then
+-  bundle exec ruby -e 'exec(*ARGV)' -- nix shell "$CONFCTL_FLAKE" -c confctl inputs channel ls > "$RUNTIME_RECEIPT/channels"
++  nix shell "$CONFCTL_FLAKE" -c confctl inputs channel ls > "$RUNTIME_RECEIPT/channels"
+ fi
+ git status --porcelain=v1 > "$RUNTIME_RECEIPT/status-after"
+ cmp "$RUNTIME_RECEIPT/status-before" "$RUNTIME_RECEIPT/status-after"

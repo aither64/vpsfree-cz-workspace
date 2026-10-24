@@ -1,0 +1,19 @@
+1:  fb5d72f ! 1:  5b68640 ci: preserve commit ancestry in automated flake updates
+    @@ .github/workflows/nixpkgs-update.yml: on:
+        contents: write
+      
+     +env:
+    -+  CONFCTL_FLAKE: github:vpsfreecz/confctl/bdaed19e901237e05bd0a779f368e76cb311143f#confctl
+    ++  CONFCTL_FLAKE: github:vpsfreecz/confctl/5436d3d7c36d3d5174eab3c44e3578830749d3db#confctl
+     +  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+     +
+      jobs:
+    @@ README.md: Until [bundix#68](https://github.com/nix-community/bundix/pull/68) is
+     +For a local update, set `CONFCTL_FLAKE` to the immutable package reference in
+     +`.github/workflows/nixpkgs-update.yml` and export `GITHUB_TOKEN` for the GitHub API,
+     +then run `tools/update_nixpkgs_flake.sh` and review its generated commit.
+    -+See the [shared guard contract](https://github.com/vpsfreecz/confctl/blob/bdaed19e901237e05bd0a779f368e76cb311143f/docs/flake-inputs.md#guarded-automated-updates) for supported sources and failure behavior.
+    ++See the [shared guard contract](https://github.com/vpsfreecz/confctl/blob/5436d3d7c36d3d5174eab3c44e3578830749d3db/docs/flake-inputs.md#guarded-automated-updates) for supported sources and failure behavior.
+     
+      ## tools/update_nixpkgs_flake.sh ##
+     @@ tools/update_nixpkgs_flake.sh: Update the nixpkgs flake input and commit the isolated flake.lock change as:

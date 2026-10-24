@@ -1,0 +1,130 @@
+diff --git a/.github/workflows/update-nixpkgs.yml b/.github/workflows/update-nixpkgs.yml
+index fdf66862..f6331e91 100644
+--- a/.github/workflows/update-nixpkgs.yml
++++ b/.github/workflows/update-nixpkgs.yml
+@@ -9,6 +9,10 @@ concurrency:
+   group: update-nixpkgs-${{ github.ref }}
+   cancel-in-progress: false
+ 
++env:
++  CONFCTL_FLAKE: github:vpsfreecz/confctl/822c0e35dbe2549111912f539116b4225dfd3035#confctl
++  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
++
+ jobs:
+   update:
+     name: Update nixpkgs
+@@ -18,12 +22,13 @@ jobs:
+ 
+     steps:
+       - name: Check out source
+-        uses: actions/checkout@v6
++        uses: actions/checkout@v7
+         with:
+           fetch-depth: 0
++          ref: ${{ github.ref_name }}
+ 
+       - name: Install Nix
+-        uses: cachix/install-nix-action@v31
++        uses: cachix/install-nix-action@31.11.3
+ 
+       - name: Install jq
+         shell: bash
+@@ -33,6 +38,19 @@ jobs:
+             sudo apt-get install --yes jq
+           fi
+ 
++      - name: Restore confctl cache
++        uses: actions/cache/restore@v6
++        with:
++          path: ~/.cache/confctl
++          key: confctl-cache-${{ runner.os }}-${{ github.run_id }}
++          restore-keys: |
++            confctl-cache-${{ runner.os }}
++
++      - name: Save lock baseline
++        run: |
++          cp flake.lock "$RUNNER_TEMP/flake-update-baseline.lock"
++          echo "UPDATE_OLD_LOCK=$RUNNER_TEMP/flake-update-baseline.lock" >> "$GITHUB_ENV"
++
+       - name: Configure git author
+         shell: bash
+         run: |
+@@ -57,4 +75,15 @@ jobs:
+         if: steps.update.outputs.committed == 'true'
+         shell: bash
+         run: |
+-          git push origin HEAD:${{ github.ref_name }}
++          final_lock="$RUNNER_TEMP/flake-update-final.lock"
++          git show HEAD:flake.lock > "$final_lock"
++          nix shell "$CONFCTL_FLAKE" -c confctl inputs check-update \
++            --old-lock "$UPDATE_OLD_LOCK" --new-lock "$final_lock"
++          git push origin "HEAD:${GITHUB_REF_NAME}"
++
++      - name: Save confctl cache
++        if: ${{ !cancelled() }}
++        uses: actions/cache/save@v6
++        with:
++          path: ~/.cache/confctl
++          key: confctl-cache-${{ runner.os }}-${{ github.run_id }}
+diff --git a/doc/agent-instructions/development.md b/doc/agent-instructions/development.md
+index 096b7121..003b1a99 100644
+--- a/doc/agent-instructions/development.md
++++ b/doc/agent-instructions/development.md
+@@ -35,9 +35,19 @@ repository root unless explicitly stated otherwise.
+   [Python contributor guidance](../../clients/python/CONTRIBUTING.md).
+ - `nixpkgs` is updated weekly by the `update nixpkgs` GitHub workflow.
+   For an on-demand update, prefer triggering that workflow manually. For a
+-  local update, run `./utils/update-nixpkgs.sh`, review the generated commit,
+-  and push it. The commit subject must be
++  local update, set `CONFCTL_FLAKE` to the immutable package reference in
++  `.github/workflows/update-nixpkgs.yml`, then run `./utils/update-nixpkgs.sh`
++  and review its generated commit.
++  The helper uses confctl's forward-only guard; a rejection or unavailable
++  ancestry evidence stops the update. The workflow saves the original lock
++  outside the checkout and checks the final lock again before its ordinary
++  non-force push. If the target branch advances, rerun from its new baseline;
++  do not rebase an old generated lock update. The commit subject must be
+   `flake: nixpkgs <oldrev11> -> <newrev11>`.
++  The workflow saves confctl's Git mirrors in `~/.cache/confctl` even when an
++  update is rejected. Every update checks ancestry, whether the cache was
++  restored or freshly cloned.
++  See the [shared guard contract](https://github.com/vpsfreecz/confctl/blob/822c0e35dbe2549111912f539116b4225dfd3035/docs/flake-inputs.md#guarded-automated-updates) for supported sources and failure behavior.
+ 
+ ## Rust generator and runtime
+ 
+diff --git a/utils/update-nixpkgs.sh b/utils/update-nixpkgs.sh
+index bb28dfeb..2526e528 100755
+--- a/utils/update-nixpkgs.sh
++++ b/utils/update-nixpkgs.sh
+@@ -8,7 +8,10 @@ need_cmd() {
+ }
+ 
+ short_rev() {
+-  jq -r '.nodes.nixpkgs.locked.rev' flake.lock | cut -c1-11
++  nix shell "$CONFCTL_FLAKE" -c confctl inputs ls --json nixpkgs | jq -er '
++    map(select(.input == "nixpkgs"))
++    | if length == 1 then .[0].rev | select(type == "string" and length > 0) else empty end
++  '
+ }
+ 
+ need_cmd git
+@@ -23,9 +26,11 @@ if ! git diff --quiet -- flake.lock || ! git diff --cached --quiet -- flake.lock
+   exit 1
+ fi
+ 
++: "${CONFCTL_FLAKE:?Set CONFCTL_FLAKE to the pinned confctl CI package}"
++
+ old_rev=$(short_rev)
+ 
+-nix flake update nixpkgs
++nix shell "$CONFCTL_FLAKE" -c confctl inputs update --forward-only nixpkgs
+ 
+ new_rev=$(short_rev)
+ 
+@@ -46,5 +51,5 @@ fi
+ msg_file=$(mktemp)
+ trap 'rm -f "$msg_file"' EXIT
+ 
+-printf 'flake: nixpkgs %s -> %s\n' "$old_rev" "$new_rev" > "$msg_file"
++printf 'flake: nixpkgs %.11s -> %.11s\n' "$old_rev" "$new_rev" > "$msg_file"
+ git commit -F "$msg_file"

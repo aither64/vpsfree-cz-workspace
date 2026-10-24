@@ -1,0 +1,97 @@
+{
+  "source_head": "d4c816bbf7ad22b9b2dcb424c1f316b1d0b6c6aa",
+  "parent": "6b5e8a6089926112bfbb63a45413b886ee56e549",
+  "base": "587cd65bb02e6dddea7f6b6409e42a15f36ab4fb",
+  "worktree": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-24-flake-update-downgrade-guard-replacement/vpsf-status",
+  "branch": "2026-10-24-flake-update-downgrade-guard-replacement",
+  "provider": "5436d3d7c36d3d5174eab3c44e3578830749d3db",
+  "current_published_lease": "6b5e8a6089926112bfbb63a45413b886ee56e549",
+  "local_only": true,
+  "clean": true,
+  "new_paths": [
+    "app_routes_test.go"
+  ],
+  "full_series": [
+    "ebb7e6a2252f5a7f61d06a5935bb4c88a6c1964e Guard automated flake updates with commit ancestry checks",
+    "6b5e8a6089926112bfbb63a45413b886ee56e549 Fix dependency updater vendor hash replacement",
+    "d4c816bbf7ad22b9b2dcb424c1f316b1d0b6c6aa Check metrics cache exclusion against exporter headers"
+  ],
+  "final_paths": [
+    ".github/workflows/update-dependencies.yml",
+    "README.md",
+    "app_routes_test.go",
+    "flake.nix",
+    "nix/package.nix",
+    "tools/set-vendor-hash.pl",
+    "tools/vendor_hash_test.go"
+  ],
+  "new_diffstat": "app_routes_test.go | 14 ++++++++++++--\n 1 file changed, 12 insertions(+), 2 deletions(-)",
+  "test_file_sha256": "726108eafffaad02df4683b3bc923afb243160aafe700607980945032ebfa49f",
+  "focused_command": "nix develop --no-write-lock-file -c go test -count=1 -v -run ^TestRoutes(CacheDynamicJSONResponsesForOneSecond|RefreshNoticeCacheAfterTTL|ServeGzipForDynamicResponses|ServeGzipForPreRenderedIndex|DoNotCacheMetrics|ServePrometheus.*)$ .",
+  "focused_checks": [
+    {
+      "graph": "pinned client_golang1.23.2",
+      "tests": 8,
+      "status": 0,
+      "go_elapsed_seconds": 0.471,
+      "log": "package-c-status-metrics-pinned-focused.log"
+    },
+    {
+      "graph": "immutable failed8411635 exact client_golang1.25.0",
+      "tests": 8,
+      "status": 0,
+      "go_elapsed_seconds": 0.436,
+      "log": "package-c-status-metrics-candidate-focused.log"
+    }
+  ],
+  "candidate_diagnostic_fixture": {
+    "source_candidate_head": "8411635e196e0db3dde15c5a29e8ec50a7caa9b9",
+    "candidate_repo": "/tmp/flake-update-guard-status-metrics-compat-2026-10-24-1/candidate-checkout",
+    "original_failed_root_preserved": "/tmp/flake-update-guard-2026-10-24-provider-r-1/project-vpsf-status",
+    "test_patch_sha256": "726108eafffaad02df4683b3bc923afb243160aafe700607980945032ebfa49f",
+    "original_test_sha256": "ffc53ad6e662104866da3ba7c0f73b49000169978171e9f17fa15340d0448481",
+    "package_inputs": [
+      {
+        "path": "flake.lock",
+        "sha256": "7a1f06abe63ca543f0acad7ef97d33c251b07da5a1d5b9c07902ff3206987888"
+      },
+      {
+        "path": "go.mod",
+        "sha256": "3cf33596fb63c7b1c3d345a4dc26d18581ad4af1df2eaad18c0dd2b298719046"
+      },
+      {
+        "path": "go.sum",
+        "sha256": "f2a8ea796be79938332eb3333136deec105487dfe0ddc3f88f95bea340b6fdc4"
+      },
+      {
+        "path": "nix/package.nix",
+        "sha256": "dde49c6bdddd7e1b1ec6035a145dc9568e7d7534fc3d8ca5d47ce671ccad807e"
+      }
+    ],
+    "push_disabled": true
+  },
+  "ordinary_hooks": {
+    "status": 0,
+    "gofmt": true,
+    "i18n": true,
+    "log": "package-c-status-metrics-commit.log"
+  },
+  "original_failed_attempt_unchanged": true,
+  "lock_unchanged_from_base": true,
+  "migration_conclusion": "No migrations, runtime behavior/API/input/pin/dependency selection changes. New independent baseline test compatibility correction follows the adoption and independent vendor-hash fix; no obsolete update/repair history introduced.",
+  "recorded_utc": "2026-10-24T14:55:36.327098+00:00",
+  "evidence_hashes": [
+    {
+      "path": "package-c-status-metrics-pinned-focused.log",
+      "sha256": "931520b9867174478d1000211809ee42f300f0ea8d4641bde03a514136449bc9"
+    },
+    {
+      "path": "package-c-status-metrics-candidate-focused.log",
+      "sha256": "752b4587570109b58e04906207e79dba5f1067cc47f10480570ec2740b4cd63d"
+    },
+    {
+      "path": "package-c-status-metrics-commit.log",
+      "sha256": "34149478695aff364c2244bb13ec4a3451ce817208be4ccd089620b7ee230eab"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "original_script": "package-c-r-git-race.py",
+  "original_sha256": "5c5ff67aba1e412888f5d0db1a005e4bd3535356705fb5502a8d1eee2e585ff1",
+  "successor_script": "package-c-r-git-race-2.py",
+  "successor_sha256": "a438361c71aff87c771dfc1f2c1d85066a40d1899789a797617da70018af4823",
+  "successor_root": "/tmp/flake-update-guard-git-race-r-2",
+  "driver_sha256": "237b5b40646218726a33355ec0a35a706e96330390454621035558291b70f1bf",
+  "manifest_sha256": "bbeec793c0c6407023bd4f5eda8d942dbeaeded7cc7e435725d4352575023e8c",
+  "review_report": "review-r-report.md",
+  "review_sha256": "2b9ecce9d66a5994e664b99ba0c1f1454631c14a923a53f58b25ece48ded99a9",
+  "change": "Before snapshots/checks, each owned clone appends only /.confctl/logs/ to its own .git/info/exclude and records exact path/rule/hash. Full final HEAD/localremote/lock/index/strict porcelain assertion unchanged.",
+  "root_handling": "Original and successor both require --root and pass args directly to Operation; Operation uses Path(args.root).absolute(). No ignored/default/rewritten root in source. Original actual launch argv is not retained in local log, so source evidence cannot establish why caller supplied an unexpected root. Successor brief explicitly supplies a new exact root.",
+  "preflight": "AST valid; replacement is exact sole source delta; final preservation assertion bytes unchanged; original hashes intact; no fixture execution",
+  "executed": false
+}
