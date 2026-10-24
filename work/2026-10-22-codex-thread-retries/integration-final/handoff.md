@@ -1,0 +1,11 @@
+# Accepted rollout and approved integration
+
+The user accepted the final aitherdev UI/behavior and requested integration in the current conversation. The deployed system and workspace application passed source review, packaged/composition checks, the real native producer regression and all44 postdeployment continuity assertions. Original failed-creation operation198ff completed; one separate portal reconciliation retired its failed receipt. The replacement and coordinator identities remain intact.
+
+A codex-web master now contains exact11ec57d2203fc735696fe75a837d47da55a5c6af; B dev-workspace master contains exactb3a6eb2fc0b41cf0cb965bf4c39991815d9df734. Both SSH pushes and independent direct remote proofs passed; both repository claims were released. Wb462ca77 is the independently reconstructed equivalent successor of deployedb1f0 over ten coordination-only commits. W master contains b462ca77c42205b7200bc552be24c29ce8e35c17 and configuration master contains bec5556f6c60414e482550dd735321ebe3c3703b; direct SSH remote proofs pass and both repository claims are released. W preserved unrelated shared index and all dirty tracked bytes; configuration retained its unrelated local master.
+
+References: [approval](approval.json), [A/B integration](ab-integration.json), [W equivalence](lead-workspace-equivalence.json), [W/C preparation](wc-preparation.json), [final remote proofs](final-summary.json), [rollout acceptance](../backend-successor/rollout-b3a6eb2f/lead-deployment-acceptance.json), [continuity](../backend-successor/rollout-b3a6eb2f/implementer3-postdeployment-continuity.json).
+
+The source-only delete-guard/recovery-review scratch worktrees, index bytes and historical refs are retained unchanged. Their delivered functionality is incorporated in finalB, but their exact old registered heads are nonancestors; lifecycle remains active. No obsolete code was merged and no registration was removed to bypass completion. Machine claim201af6c8 remains held pending explicit release direction required by the thread-bound developer instruction. No coordinator archive/delete/stop is authorized.
+
+Session: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-22-codex-thread-retries/
