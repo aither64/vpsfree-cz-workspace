@@ -1,0 +1,158 @@
+--- activation/activation-driver.py.before
++++ activation/activation-driver.py
+@@ -92,10 +92,10 @@
+     require(evidence['schema'] == 1 and evidence['state'] == 'passed')
+     require(evidence['sources'] == CFG['sources'])
+     require(evidence['candidate'] == CFG['candidate'] and evidence['derivation'] == CFG['derivation'])
+-    require(evidence['reviewDisposition'] == 'accepted_with_F1_and_pending_step9')
+-    require(evidence['coverage'] == {'firefoxReadBudget': True, 'componentCountEvidence': True, 'notificationDisabledEpoch': True, 'filesInline': True, 'filesArchiveRevive': True})
++    require(evidence['reviewDisposition'] == 'accepted_no_findings')
++    require(evidence['coverage'] == {'automaticReleasePolicy': True, 'leadMemberBindings': True})
+     require(evidence['withdrawnCoverage'] == {'native50': 'withdrawn_unverified', 'nativeDiscardRestore': 'withdrawn_unverified', 'extendedForegroundSoak': 'withdrawn_unverified'})
+-    require(set(evidence['artifacts']) == {'review', 'f1', 'pendingReview', 'step9', 'creationArchive', 'hostContract', 'packages', 'chromium', 'notifications', 'firefoxReadBudget', 'components', 'readBudgetReview', 'reusedEvidence', 'filesReview', 'filesBrowser', 'filesArchiveRevive'})
++    require(set(evidence['artifacts']) == {'review', 'reviewRefresh', 'packages', 'featureCI', 'priorDeployment', 'unchangedPayloads'})
+     tracking = Path(CFG['tracking']).resolve()
+     for key, artifact in evidence['artifacts'].items():
+         path = Path(artifact['path']).resolve(strict=True)
+@@ -103,8 +103,10 @@
+         with path.open('rb') as source:
+             checksum = hashlib.file_digest(source, 'sha256').hexdigest()
+         require(checksum == artifact['sha256'])
+-        if key in ['creationArchive', 'packages', 'chromium', 'notifications', 'firefoxReadBudget', 'filesBrowser', 'filesArchiveRevive']:
++        if key in ['packages', 'featureCI']:
+             require(artifact['exitCode'] == 0)
++        else:
++            require(artifact['exitCode'] is None)
+     roots = Path(CFG['roots'])
+     require(str((roots / 'workspace').resolve(strict=True)) == CFG['candidate'])
+     require(str((roots / 'workspace.drv').resolve(strict=True)) == CFG['derivation'])
+--- activation/verification-gates.json.before
++++ activation/verification-gates.json
+@@ -9,28 +9,20 @@
+   },
+   "candidate": "/nix/store/4cn1hh88xdpql5jp9pyrnf5fvnqsc829-dev-workspace-0.2.0",
+   "derivation": "/nix/store/715a6j8ncmaa9a2qylrd2ds8nj9w56ax-dev-workspace-0.2.0.drv",
+-  "reviewDisposition": "accepted_with_F1_and_pending_step9",
++  "reviewDisposition": "accepted_no_findings",
+   "coverage": {
+-    "firefoxReadBudget": true,
+-    "componentCountEvidence": true,
+-    "notificationDisabledEpoch": true,
+-    "filesInline": true,
+-    "filesArchiveRevive": true
++    "automaticReleasePolicy": true,
++    "leadMemberBindings": true
+   },
+   "artifacts": {
+     "review": {
++      "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/automatic-release-policy/final-review.json",
++      "sha256": "ea9bb90225ee11e3183ff7b3a306d2403074393c43e6d2ef3d9cecb85b70b0ea",
++      "exitCode": null
++    },
++    "reviewRefresh": {
+       "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/automatic-release-policy/review-refresh-certificate.json",
+       "sha256": "08b69b4e2f2d2ea5cdd593885487078a259d13ab816cbdb37daf71f7b44c9c7b",
+-      "exitCode": null
+-    },
+-    "f1": {
+-      "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/followup-remediation.md",
+-      "sha256": "b57783e2a9dfde39e886c24c28861db69985e8604b06b5c0793c3d4c5fb6f4cd",
+-      "exitCode": null
+-    },
+-    "hostContract": {
+-      "path": "PENDING",
+-      "sha256": "PENDING",
+       "exitCode": null
+     },
+     "packages": {
+@@ -38,82 +30,25 @@
+       "sha256": "PENDING",
+       "exitCode": null
+     },
+-    "chromium": {
+-      "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/targeted-read-budget-successor/lead-acceptance/chromium-reuse.json",
+-      "sha256": "8ddb131ce350ca01b5c4e07c4c75527769007d1b573ebc9a004234ef1f7151e4",
++    "featureCI": {
++      "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/automatic-release-policy/B-feature-ci.json",
++      "sha256": "977492f8345fdb7bc333eacc563b2a41ab857cf1d51491063551c8103671e6dc",
+       "exitCode": 0
+     },
+-    "notifications": {
+-      "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/targeted-read-budget-successor/lead-acceptance/notifications-reuse.json",
+-      "sha256": "5570c112f3c7f9cd7c554c06933704c6c5903bbec856f5b21445c32dfe9ecd92",
+-      "exitCode": 0
+-    },
+-    "pendingReview": {
+-      "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/followup-pending-final-review.md",
+-      "sha256": "ad33762a2ad24f77ede8deedf57fe9c31300aeffec8c12b1b0d2b14143ee5808",
++    "priorDeployment": {
++      "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/files-deployment-receipt.json",
++      "sha256": "e2170b76b956ba29680b053c14d18a326a249ae90bfc1ebe543d66870b0338f0",
+       "exitCode": null
+     },
+-    "step9": {
+-      "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/pending-final-review-8675c87/step9-proof.json",
+-      "sha256": "bc9efc001a014cf850b6c7081e97561835268d856d08dc14c06cd75f9971e8d5",
+-      "exitCode": null
+-    },
+-    "creationArchive": {
+-      "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/files-parent-inventory/B-final-ci.json",
+-      "sha256": "11f3e27f55025b3e2ca73c63423bd5d81e5a92a544ef03e351cea77d8512fef9",
+-      "exitCode": 0
+-    },
+-    "firefoxReadBudget": {
+-      "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/two-tab-parent/read-budget-result.json",
+-      "sha256": "d13168db3c419727de2e047f0a86cfffac586cfe287d7f9b5e418d5e116b2e01",
+-      "exitCode": 0
+-    },
+-    "components": {
+-      "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/targeted-read-budget-successor/component-evidence.json",
+-      "sha256": "4e4ba7336c7fc3e452b162fa42f71c5ed4c673317f4dfe52f315110443258129",
+-      "exitCode": null
+-    },
+-    "readBudgetReview": {
+-      "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/two-tab-parent/review.md",
+-      "sha256": "2a5e9ef3d016ee8735bfba11ec9605a07d5a83c3b5cd8b5105b49639f1b07c31",
+-      "exitCode": null
+-    },
+-    "reusedEvidence": {
++    "unchangedPayloads": {
+       "path": "PENDING",
+       "sha256": "PENDING",
+       "exitCode": null
+-    },
+-    "filesReview": {
+-      "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/files-final-review.md",
+-      "sha256": "ef78f124e2f3547723f6eab5f9de274393d874281521ae1c5ba7f0b707b547c9",
+-      "exitCode": null
+-    },
+-    "filesBrowser": {
+-      "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/files-runtime/browser.log",
+-      "sha256": "a58cb125d422223e5a1b8f8b83c8cda7072e16ed20b90b0a8b3393a338060687",
+-      "exitCode": 0
+-    },
+-    "filesArchiveRevive": {
+-      "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/files-runtime/lifecycle.log",
+-      "sha256": "6ed638a66b320b25fdbee5c927671be8567c3738ac85a25714bd78e1553c4538",
+-      "exitCode": 0
+     }
+   },
+   "withdrawnCoverage": {
+     "native50": "withdrawn_unverified",
+     "nativeDiscardRestore": "withdrawn_unverified",
+     "extendedForegroundSoak": "withdrawn_unverified"
+-  },
+-  "historicalPackageReceipt": {
+-    "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/targeted-read-budget-successor/lead-acceptance/packages-result.json",
+-    "sha256": "9ec6024d86324bcf4549c38450d370627462d379837bd00bf7ad176460c1008a",
+-    "exitCode": 0
+-  },
+-  "historicalCreationArchiveReceipt": {
+-    "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/targeted-read-budget-successor/ci-final/B-required-jobs.json",
+-    "sha256": "bd6df059345e270c6c4a41e4c461ec7cea329203eb0d61b464fa99d2531b9e2f",
+-    "exitCode": 0
+-  },
+-  "historicalReuseNote": "Original notification/native2tab/olderchromium/component receipts retain original tested heads. Reused only with exact bounded exercised-source/dependency proof in reusedEvidence; no final-head rerun or whole-app equivalence. Current Files18component+actualbrowser/lifecycle and exactCI/package are separately accepted.",
+-  "notificationRecovery": "prestatus503 proves initialized sticky failed fence after strongly correlated transientENOSPC; file not parser-prevalidated. Ordinary forwardactivation loader then exact readonly poststatus200/availabletrue required. No create/initialprompt replay/repair/preference bypass."
++  }
+ }

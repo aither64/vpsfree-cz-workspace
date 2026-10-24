@@ -1,0 +1,146 @@
+diff --git a/docs/coordination-operations.md b/docs/coordination-operations.md
+index c697409..7ed4c06 100644
+--- a/docs/coordination-operations.md
++++ b/docs/coordination-operations.md
+@@ -2,13 +2,14 @@
+ 
+ For resource ownership, use the [claim guide](coordination.md) to acquire,
+ inspect, release or cancel a request. Claims survive disconnection and remain
+-held until explicitly released. After interruption, reconcile remaining local
+-and remote effects. Release a repository claim after its safe merge critical
+-section; retain every deployed physical machine under the
+-[machine retention rule](coordination.md#machine-retention) until integration,
+-user acceptance and explicit machine release direction are all established.
+-Existing snapshot-based operations keep the
+-procedures below and the [retained workflow guide](coordination-legacy.md).
++held until released through the normal command. After interruption, reconcile
++remaining local and remote effects. Release a repository claim after its safe merge critical
++section. Promptly release each deployed physical machine once deployment and its
++effects are verified and its complete deployed feature lineage is integrated,
++as described in the [machine retention rule](coordination.md#machine-retention).
++Do not wait for separate UI acceptance or release direction.
++Existing snapshot-based operations keep the procedures below and the
++[retained workflow guide](coordination-legacy.md).
+ 
+ The remaining sections describe legacy executor recovery. They do not start new
+ automatic workflows under a runtime with resource claims.
+@@ -89,8 +90,9 @@ cleanup. Coordination receipts bind each ordinary lifecycle journal to exact
+ owner incarnations. Legacy archive completion releases that owner's machine
+ reservations in the same ledger transaction that records lifecycle completion.
+ This implementation behavior grants no permission to archive or bypass the
+-machine retention rule. Retain deployed ownership until its integration lineage,
+-user acceptance and explicit machine-specific release direction are established.
++machine retention rule. Verify deployment and its effects and the complete
++integrated deployed lineage before releasing its exact session-owned claim.
++Release does not authorize archiving, deleting, stopping or cleaning a session.
+ The reservation stays held during failed or interrupted cleanup. Retrying a
+ completed archive receipt can release a hold retained by a predecessor executor;
+ the exact owner binding must still match. Deployment history and recovery
+diff --git a/docs/coordination.md b/docs/coordination.md
+index c166bcb..4756d4e 100644
+--- a/docs/coordination.md
++++ b/docs/coordination.md
+@@ -88,8 +88,9 @@ Required hooks and signature checks remain enabled.
+ 
+ Machine reservations are separate: build and copy artifacts before ownership when
+ supported, then acquire only the physical machine near activation. Keep its
+-reservation through deployment, live review and feedback. Do not bundle repository
+-claims into a deployment reservation.
++reservation until deployment verification and integration are complete under the
++release rule below. Do not bundle repository claims into a deployment
++reservation.
+ 
+ This is cooperative locking. Tools do not intercept arbitrary commands. The claim
+ certifies exclusive integration or deployment ownership, not command success.
+@@ -108,9 +109,9 @@ dev-session coordination cancel-claim SESSION --as-is --id CLAIM_UUID --json
+ 
+ Release settles a held claim. Cancellation settles a waiting request. Both are
+ owner-only and idempotent; cancellation cannot release held resources. Machine
+-ownership follows the retention rule below through human review, feedback and
+-repeated deployment. Release grants no merge approval. Session completion still
+-follows its normal exact-head integration requirements.
++ownership follows the deployment and integration rule below. Release grants no
++merge approval. Session completion still follows its normal exact-head
++integration requirements.
+ 
+ For workspace profile activation, hold a claim covering the configured profile
+ machine and run ordinary `workspace-host switch --source PATH` with
+@@ -121,18 +122,19 @@ remain workspace-host responsibilities.
+ 
+ ## Machine retention
+ 
+-Retain every deployed physical machine until all three conditions are met:
++Promptly release each deployed physical machine once both conditions are met:
+ 
+-1. Its deployed feature lineage is integrated into the approved remote default
+-   branches, including deployed dependencies.
+-2. The user accepts the resulting UI or behavior on that machine.
+-3. The user explicitly directs release of that machine.
++1. Deployment and its effects have been verified, with no unfinished or uncertain
++   command effects.
++2. Its complete deployed feature lineage is integrated into the approved remote
++   default branches, including deployed dependencies.
+ 
+-Idle time, review, feedback, redeployment, disconnects and turn completion do not
+-permit release. Review, CI and source completion do not establish user acceptance;
+-record the accepted environment and result. Default-branch integration needs its
+-own explicit approval. Deployment approval supplies neither merge approval nor
+-release direction. Missing evidence keeps the machine held.
++The owning agent runs the normal release command without waiting for separate
++UI acceptance or release direction. No background worker or timer is involved.
++Failed or uncertain deployment and missing integration evidence keep the machine
++held. Idle time and turn completion do not establish either condition.
++Default-branch integration still needs separate explicit approval. A later
++deployment requires fresh machine ownership.
+ 
+ Use existing rollout and review receipts for exact system/profile store paths,
+ complete source/input graphs, canonical repository/target mapping and machine
+@@ -141,15 +143,17 @@ ancestry evidence. Retain reviewed old/new base/head ranges, range-diff or
+ patch-equivalence evidence and migration lineage when history changes. Do not
+ describe a nonancestor deployed commit as literally merged. An independently
+ proven equivalent successor can establish integrated feature lineage; a
+-substantive successor requires redeployment and renewed user acceptance. Ordinary
+-session completion still requires every registered exact final feature head.
++substantive successor requires a new verified deployment. Ordinary session
++completion still requires every registered exact final feature head.
+ 
+ Before release, inspect authoritative status for the exact claim owned by this
+-session, reconcile known command effects, verify all three conditions, release
+-that claim and verify its resulting state. The cooperative owner-only, idempotent
+-release API does not enforce this human workflow. Do not introduce release
+-receipts, edit claim records or infer acceptance to bypass a missing condition.
+-Keep short repository merge claims separate from machine ownership.
++session, reconcile unfinished or uncertain command effects, verify deployment
++and integrated lineage, release that claim and verify its resulting state. The
++cooperative owner-only, idempotent release API does not enforce these
++prerequisites. Do not introduce release receipts or edit claim records to bypass
++a missing condition. Keep short repository merge claims separate from machine
++ownership. Release does not archive, delete, stop or clean a session; each
++lifecycle action retains its separate authorization boundary.
+ 
+ ## Interruption and lifecycle
+ 
+diff --git a/portal/internal/workspacecodex/lead_policy.go b/portal/internal/workspacecodex/lead_policy.go
+index c42ca8e..6e966b0 100644
+--- a/portal/internal/workspacecodex/lead_policy.go
++++ b/portal/internal/workspacecodex/lead_policy.go
+@@ -36,13 +36,13 @@ const CoordinationInstructions = "Before merging or deploying, read the selected
+ 	"Keep its critical section to the fresh target check, merge with required hooks, push and remote verification; explicitly release ownership before CI, records or cleanup. " +
+ 	"Shared workspace master integration also takes dev-session-tracking.lock after the claim; if that lock is busy, release the claim instead of waiting. " +
+ 	"If preparation is stale or needs intervention, stop commands, inspect effects and release before repairing outside the claim. Reconcile uncertain mutations before release. " +
+-	"Never hold a repository claim while waiting for approval, review or tests. Use separate machine reservations for deployment and live review, with builds and copies prepared beforehand. " +
+-	"Retain every deployed physical machine until its deployed feature lineage is integrated into approved remote defaults, the user accepts the resulting UI/behavior on that machine, and the user explicitly directs its release. " +
+-	"Idle time, review, feedback, redeployment, disconnects and turn completion never authorize release; missing evidence keeps the machine held. Integration needs separate explicit approval. " +
++	"Never hold a repository claim while waiting for approval, review or tests. Use separate machine reservations for deployment and verification, with builds and copies prepared beforehand. " +
++	"Promptly release every deployed physical machine once deployment and its effects are verified and its complete deployed feature lineage is integrated into approved remote defaults. " +
++	"Do not wait for separate UI acceptance or release direction. Failed or uncertain deployment, unfinished command effects or missing integration evidence keep the machine held. Integration needs separate explicit approval. " +
+ 	"Keep exact system/profile store paths, complete source/input graphs, repository/target and machine aliases, deployed/final heads and fresh remote ancestry evidence in existing rollout/review receipts. " +
+-	"For refreshed history, retain reviewed old/new base/head ranges, equivalence and migration evidence; do not call a nonancestor deployed commit literally merged. An independently proven equivalent successor can establish integrated lineage; a substantive successor needs redeployment and renewed user acceptance. " +
+-	"Record the accepted environment/result; review or CI is not user acceptance. Before release, inspect authoritative status for the exact claim owned by this session, reconcile known command effects, verify all three conditions, release that claim and verify its resulting state. " +
+-	"Legacy automatic lifecycle release is implementation behavior, not permission to archive, delete or release a machine. Preserve original recovery contracts and ordinary exact-final-head completion rules. " +
++	"For refreshed history, retain reviewed old/new base/head ranges, equivalence and migration evidence; do not call a nonancestor deployed commit literally merged. An independently proven equivalent successor can establish integrated lineage; a substantive successor needs a new verified deployment. " +
++	"Before release, inspect authoritative status for the exact claim owned by this session, reconcile unfinished or uncertain command effects, verify deployment and integrated lineage, release that claim and verify its resulting state. A later deployment requires fresh machine ownership. " +
++	"Releasing a machine does not authorize archiving, deleting, stopping or cleaning a session. Legacy automatic lifecycle release is implementation behavior, not lifecycle permission. Preserve original recovery contracts and ordinary exact-final-head completion rules. " +
+ 	"Keep resource waits interruptible; queued claims notify the session when granted."
+ 
+ // LeadThreadPolicy applies only to the normal root conversation. A catalog

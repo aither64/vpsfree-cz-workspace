@@ -1,0 +1,26 @@
+--- a/portal/internal/web/optional_questions_browser_test.cjs
++++ b/portal/internal/web/optional_questions_browser_test.cjs
+@@ -176,7 +176,7 @@
+     await page.locator("#message-form").evaluate(form => form.requestSubmit());
+     const receipt = page.locator(".message-receipt").filter({hasText: "Ordinary follow-up"});
+     await expect(receipt).toContainText("Sent to Codex");
+-    await expect(receipt.getByRole("button", {name: "Dismiss message notification"})).toHaveText("×");
++    await expect(receipt.getByRole("button", {name: "Dismiss message", exact: true})).toHaveText("×");
+     thread.entries.push(ordinaryReply); await refresh();
+     await expect(receipt).toHaveCount(0);
+     await expect(page.locator("#codex-status")).toHaveText("active");
+--- a/portal/internal/web/recovery_display_browser_test.cjs
++++ b/portal/internal/web/recovery_display_browser_test.cjs
+@@ -132,10 +132,10 @@
+         window.restoreStorage = Storage.prototype.setItem;
+         Storage.prototype.setItem = () => { throw new Error("Storage unavailable"); };
+       });
+-      await receipt("Attachment retry").getByRole("button", {name: "Dismiss message notification", exact: true}).click();
++      await receipt("Attachment retry").getByRole("button", {name: "Dismiss message", exact: true}).click();
+       await expect(receipt("Attachment retry")).toBeVisible();
+       await page.evaluate(() => { Storage.prototype.setItem = window.restoreStorage; });
+-      await receipt("Attachment retry").getByRole("button", {name: "Dismiss message notification", exact: true}).click();
++      await receipt("Attachment retry").getByRole("button", {name: "Dismiss message", exact: true}).click();
+       await expect(receipt("Attachment retry")).toHaveCount(0);
+       assert.equal(await page.evaluate(savedID => JSON.parse(sessionStorage.getItem(
+         `workspace-portal.send-attempt.example.thread-1.${savedID}`,

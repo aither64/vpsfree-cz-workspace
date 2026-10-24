@@ -1,0 +1,55 @@
+diff --git a/portal/internal/web/optional_questions_browser_test.cjs b/portal/internal/web/optional_questions_browser_test.cjs
+index fc7b0b7..b46978c 100644
+--- a/portal/internal/web/optional_questions_browser_test.cjs
++++ b/portal/internal/web/optional_questions_browser_test.cjs
+@@ -176,7 +176,7 @@ const digest = text => createHash("sha256").update(text).digest("hex");
+     await page.locator("#message-form").evaluate(form => form.requestSubmit());
+     const receipt = page.locator(".message-receipt").filter({hasText: "Ordinary follow-up"});
+     await expect(receipt).toContainText("Sent to Codex");
+-    await expect(receipt.getByRole("button", {name: "Dismiss message notification"})).toHaveText("×");
++    await expect(receipt.getByRole("button", {name: "Dismiss message", exact: true})).toHaveText("×");
+     thread.entries.push(ordinaryReply); await refresh();
+     await expect(receipt).toHaveCount(0);
+     await expect(page.locator("#codex-status")).toHaveText("active");
+diff --git a/portal/internal/web/recovery_display_browser_test.cjs b/portal/internal/web/recovery_display_browser_test.cjs
+index 714ab12..ea45d14 100644
+--- a/portal/internal/web/recovery_display_browser_test.cjs
++++ b/portal/internal/web/recovery_display_browser_test.cjs
+@@ -132,10 +132,10 @@ const baseURL = process.argv[2];
+         window.restoreStorage = Storage.prototype.setItem;
+         Storage.prototype.setItem = () => { throw new Error("Storage unavailable"); };
+       });
+-      await receipt("Attachment retry").getByRole("button", {name: "Dismiss message notification", exact: true}).click();
++      await receipt("Attachment retry").getByRole("button", {name: "Dismiss message", exact: true}).click();
+       await expect(receipt("Attachment retry")).toBeVisible();
+       await page.evaluate(() => { Storage.prototype.setItem = window.restoreStorage; });
+-      await receipt("Attachment retry").getByRole("button", {name: "Dismiss message notification", exact: true}).click();
++      await receipt("Attachment retry").getByRole("button", {name: "Dismiss message", exact: true}).click();
+       await expect(receipt("Attachment retry")).toHaveCount(0);
+       assert.equal(await page.evaluate(savedID => JSON.parse(sessionStorage.getItem(
+         `workspace-portal.send-attempt.example.thread-1.${savedID}`,
+diff --git a/portal/internal/web/usability_browser_test.cjs b/portal/internal/web/usability_browser_test.cjs
+index 0d421ef..0c5614c 100644
+--- a/portal/internal/web/usability_browser_test.cjs
++++ b/portal/internal/web/usability_browser_test.cjs
+@@ -22,7 +22,11 @@ const baseURL = process.argv[2];
+         {id: "reset-3", title: "Unknown fixture reset", resetType: "unknown", status: "available", expiresAt: null},
+       ]}});
+     // Every account read and mutation is intercepted. This fixture never uses a live reset.
+-    await context.route("**/api/codex-limits", route => route.fulfill({json: snapshot()}));
++    let mockedSessionLimits = false;
++    await context.route(url => url.pathname === "/api/codex-limits", async route => {
++      await route.fulfill({json: snapshot()});
++      if (new URL(route.request().url()).searchParams.get("session") === "example") mockedSessionLimits = true;
++    });
+     await context.route("**/api/codex-limits/reset", route => {
+       attempts.push(route.request().postDataJSON());
+       if (!consumed) {
+@@ -32,6 +36,7 @@ const baseURL = process.argv[2];
+       return route.fulfill({json: {outcome: "alreadyRedeemed"}});
+     });
+     await page.goto(baseURL + "/example/");
++    await expect.poll(() => mockedSessionLimits).toBe(true);
+     await expect(page.locator(".limits-account-summary")).toContainText("13 credits");
+     await expect(page.locator(".limits-account-summary")).toContainText("3 banked resets");
+     const summaryLayout = await page.locator("[data-limits-content]").evaluate(content => {

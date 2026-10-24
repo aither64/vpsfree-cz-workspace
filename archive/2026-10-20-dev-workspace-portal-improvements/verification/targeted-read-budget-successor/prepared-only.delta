@@ -1,0 +1,220 @@
+--- checkpoint/guards.py
++++ prepared-successor/guards.py
+@@ -6,6 +6,7 @@
+ a,b=os.getenv('DEV_SESSION_SLUG'),os.getenv('DEV_SESSION_WORKSPACE')
+ assert (a is None and b is None) or (a=='2026-10-20-dev-workspace-portal-improvements' and b=='/home/aither/workspace/ai/vpsfree.cz')
+ for name,head in json.loads((p/'final-heads.json').read_text()).items():
++ assert isinstance(head,str) and len(head)==40 and all(c in '0123456789abcdef' for c in head), 'final handoff identities pending'
+  assert subprocess.check_output(['git','-C',str(root/name),'rev-parse','HEAD'],text=True).strip()==head,name
+  assert not subprocess.check_output(['git','-C',str(root/name),'status','--porcelain']),name
+ assert Path('/home/aither/bin/workspace-host').resolve()==Path('/nix/store/hzf9qda2ckjsv72b689bclc6p3v8ap9l-dev-workspace-0.2.0/bin/workspace-host')
+--- checkpoint/post-review-composed.sh
++++ prepared-successor/post-review-composed.sh
+@@ -1,14 +1,14 @@
+ #!/usr/bin/env bash
+ set -euo pipefail
+-python3 /home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/final-coordinated-ea64ef57/guards.py
++python3 /home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/targeted-read-budget-successor/guards.py
+ umask 077
+ # PREPARED ONLY. Lead launches a fresh Luna/low utility after final review.
+ root=/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-20-dev-workspace-portal-improvements
+-packet=/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/final-coordinated-ea64ef57
++packet=/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/targeted-read-budget-successor
+ operation="$packet/packages-final"
+ selected=/nix/store/hzf9qda2ckjsv72b689bclc6p3v8ap9l-dev-workspace-0.2.0
+-expected_drv=/nix/store/mh2abs1b1rzdpcrdi1fi3m4w5fgpx8v2-dev-workspace-0.2.0.drv
+-expected_output=/nix/store/zqxa7qcn9q7d8877f5zjn6c7fwnbvxvc-dev-workspace-0.2.0
++expected_drv=__FINAL_DERIVATION_PENDING__
++expected_output=__FINAL_OUTPUT_PENDING__
+ cd "$root/workspace"
+ python3 - <<'GUARDS'
+ import os,subprocess
+@@ -17,7 +17,7 @@
+ slug=os.environ.get('DEV_SESSION_SLUG');workspace=os.environ.get('DEV_SESSION_WORKSPACE')
+ assert (slug is None and workspace is None) or (slug=='2026-10-20-dev-workspace-portal-improvements' and workspace=='/home/aither/workspace/ai/vpsfree.cz')
+ root=Path('/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-20-dev-workspace-portal-improvements')
+-for name,head in {'workspace': 'c61d98f5d86e64057ba28aeca92bcc023a6f6644', 'dev-workspace': '0c0dd2d22ce4e03c22a7bd0c471267deb6ee3a2a', 'codex-web': 'ea64ef57fdd2ff5fd60715b62f2d1696bc0133e5', 'vpsfree-cz-configuration': '13e17a37cdda58e858c0b51d28605946ed6f9079'}.items():
++for name,head in {'workspace': '__FINAL_C_PENDING__', 'dev-workspace': '__FINAL_B_PENDING__', 'codex-web': 'ea64ef57fdd2ff5fd60715b62f2d1696bc0133e5', 'vpsfree-cz-configuration': '__FINAL_CONFIG_PENDING__'}.items():
+     assert subprocess.check_output(['git','-C',str(root/name),'rev-parse','HEAD'],text=True).strip()==head,name
+     assert not subprocess.check_output(['git','-C',str(root/name),'status','--porcelain']),name
+ assert Path('/home/aither/bin/workspace-host').resolve()==Path('/nix/store/hzf9qda2ckjsv72b689bclc6p3v8ap9l-dev-workspace-0.2.0/bin/workspace-host')
+@@ -40,7 +40,7 @@
+   python3 "$packet/normalize-derivation.py" "$operation/$label-derivation-raw.json" > "$operation/$label-derivation.json"
+   nix path-info --json "$package" > "$operation/$label-path-info.json"
+ }
+-stage workspace workspace c61d98f5d86e64057ba28aeca92bcc023a6f6644 packages.x86_64-linux.default
++stage workspace workspace __FINAL_C_PENDING__ packages.x86_64-linux.default
+ candidate=$(readlink -f "$operation/roots/workspace")
+ test "$candidate" = "$expected_output"
+ python3 "$packet/metadata.py" "$candidate" > "$operation/metadata.log" 2>&1
+@@ -58,11 +58,11 @@
+     "$operation/disposable-registration/state" "$operation/disposable-registration/workspace" \
+     > "$operation/$label-registration-assertions.log" 2>&1
+ done
+-stage deployment-contract workspace c61d98f5d86e64057ba28aeca92bcc023a6f6644 checks.x86_64-linux.deployment-contract
+-stage agent-instructions workspace c61d98f5d86e64057ba28aeca92bcc023a6f6644 checks.x86_64-linux.agent-instructions
+-stage cluster-provider-composition workspace c61d98f5d86e64057ba28aeca92bcc023a6f6644 checks.x86_64-linux.cluster-provider-composition
+-stage agent-team-policy workspace c61d98f5d86e64057ba28aeca92bcc023a6f6644 checks.x86_64-linux.agent-team-policy
+-stage runtime-generic-source dev-workspace 0c0dd2d22ce4e03c22a7bd0c471267deb6ee3a2a checks.x86_64-linux.generic-source
++stage deployment-contract workspace __FINAL_C_PENDING__ checks.x86_64-linux.deployment-contract
++stage agent-instructions workspace __FINAL_C_PENDING__ checks.x86_64-linux.agent-instructions
++stage cluster-provider-composition workspace __FINAL_C_PENDING__ checks.x86_64-linux.cluster-provider-composition
++stage agent-team-policy workspace __FINAL_C_PENDING__ checks.x86_64-linux.agent-team-policy
++stage runtime-generic-source dev-workspace __FINAL_B_PENDING__ checks.x86_64-linux.generic-source
+ stage shared-default codex-web ea64ef57fdd2ff5fd60715b62f2d1696bc0133e5 checks.x86_64-linux.default
+ stage shared-generic-source codex-web ea64ef57fdd2ff5fd60715b62f2d1696bc0133e5 checks.x86_64-linux.generic-source
+ printf '%s\n' 'PASS: exact sources, rooted outputs and derivations, capacity8, native Codex and reporting-only registration; no profile selection. Keep roots through activation.'
+--- checkpoint/activation/activation-driver.py
++++ prepared-successor/activation/activation-driver.py
+@@ -57,6 +57,8 @@
+ 
+ 
+ def identity_guards():
++    require(all(isinstance(head, str) and len(head) == 40 for head in CFG['sources'].values()))
++    require(isinstance(CFG['candidate'], str) and isinstance(CFG['derivation'], str))
+     require(command(['dev-session', 'current']) == CFG['slug'])
+     slug, workspace = os.getenv('DEV_SESSION_SLUG'), os.getenv('DEV_SESSION_WORKSPACE')
+     require((slug is None and workspace is None) or
+@@ -91,9 +93,9 @@
+     require(evidence['sources'] == CFG['sources'])
+     require(evidence['candidate'] == CFG['candidate'] and evidence['derivation'] == CFG['derivation'])
+     require(evidence['reviewDisposition'] == 'accepted_with_F1_and_pending_step9')
+-    require(evidence['coverage'] == {'firefox50NativeVisibility': True, 'nativeDiscardRestore': True,
+-                                   'continuousForeground': True, 'notificationDisabledEpoch': True})
+-    require(set(evidence['artifacts']) == {'review', 'f1', 'pendingReview', 'step9', 'creationArchive', 'hostContract', 'packages', 'chromium', 'notifications', 'firefox50'})
++    require(evidence['coverage'] == {'firefoxReadBudget': True, 'componentCountEvidence': True, 'notificationDisabledEpoch': True})
++    require(evidence['withdrawnCoverage'] == {'native50': 'withdrawn_unverified', 'nativeDiscardRestore': 'withdrawn_unverified', 'extendedForegroundSoak': 'withdrawn_unverified'})
++    require(set(evidence['artifacts']) == {'review', 'f1', 'pendingReview', 'step9', 'creationArchive', 'hostContract', 'packages', 'chromium', 'notifications', 'firefoxReadBudget', 'components', 'readBudgetReview', 'reusedEvidence'})
+     tracking = Path(CFG['tracking']).resolve()
+     for key, artifact in evidence['artifacts'].items():
+         path = Path(artifact['path']).resolve(strict=True)
+@@ -101,7 +103,7 @@
+         with path.open('rb') as source:
+             checksum = hashlib.file_digest(source, 'sha256').hexdigest()
+         require(checksum == artifact['sha256'])
+-        if key in ['creationArchive', 'packages', 'chromium', 'notifications', 'firefox50']:
++        if key in ['creationArchive', 'packages', 'chromium', 'notifications', 'firefoxReadBudget']:
+             require(artifact['exitCode'] == 0)
+     roots = Path(CFG['roots'])
+     require(str((roots / 'workspace').resolve(strict=True)) == CFG['candidate'])
+--- checkpoint/activation/verification-gates.example.json
++++ prepared-successor/activation/verification-gates.example.json
+@@ -3,17 +3,16 @@
+   "state": "pending",
+   "sources": {
+     "codex-web": "ea64ef57fdd2ff5fd60715b62f2d1696bc0133e5",
+-    "dev-workspace": "0c0dd2d22ce4e03c22a7bd0c471267deb6ee3a2a",
+-    "workspace": "c61d98f5d86e64057ba28aeca92bcc023a6f6644",
+-    "vpsfree-cz-configuration": "13e17a37cdda58e858c0b51d28605946ed6f9079"
++    "dev-workspace": null,
++    "workspace": null,
++    "vpsfree-cz-configuration": null
+   },
+-  "candidate": "/nix/store/zqxa7qcn9q7d8877f5zjn6c7fwnbvxvc-dev-workspace-0.2.0",
+-  "derivation": "/nix/store/mh2abs1b1rzdpcrdi1fi3m4w5fgpx8v2-dev-workspace-0.2.0.drv",
++  "candidate": null,
++  "derivation": null,
+   "reviewDisposition": "pending",
+   "coverage": {
+-    "firefox50NativeVisibility": false,
+-    "nativeDiscardRestore": false,
+-    "continuousForeground": false,
++    "firefoxReadBudget": false,
++    "componentCountEvidence": false,
+     "notificationDisabledEpoch": false
+   },
+   "artifacts": {
+@@ -47,11 +46,6 @@
+       "sha256": null,
+       "exitCode": null
+     },
+-    "firefox50": {
+-      "path": null,
+-      "sha256": null,
+-      "exitCode": null
+-    },
+     "pendingReview": {
+       "path": null,
+       "sha256": null,
+@@ -66,6 +60,31 @@
+       "path": null,
+       "sha256": null,
+       "exitCode": null
++    },
++    "firefoxReadBudget": {
++      "path": null,
++      "sha256": null,
++      "exitCode": null
++    },
++    "components": {
++      "path": null,
++      "sha256": null,
++      "exitCode": null
++    },
++    "readBudgetReview": {
++      "path": null,
++      "sha256": null,
++      "exitCode": null
++    },
++    "reusedEvidence": {
++      "path": null,
++      "sha256": null,
++      "exitCode": null
+     }
++  },
++  "withdrawnCoverage": {
++    "native50": "withdrawn_unverified",
++    "nativeDiscardRestore": "withdrawn_unverified",
++    "extendedForegroundSoak": "withdrawn_unverified"
+   }
+ }
+--- checkpoint/activation/candidate.json
++++ prepared-successor/activation/candidate.json
+@@ -7,14 +7,14 @@
+   "claim": "755910ab-a78b-4d30-a057-03b555b336db",
+   "sources": {
+     "codex-web": "ea64ef57fdd2ff5fd60715b62f2d1696bc0133e5",
+-    "dev-workspace": "0c0dd2d22ce4e03c22a7bd0c471267deb6ee3a2a",
+-    "workspace": "c61d98f5d86e64057ba28aeca92bcc023a6f6644",
+-    "vpsfree-cz-configuration": "13e17a37cdda58e858c0b51d28605946ed6f9079"
++    "dev-workspace": null,
++    "workspace": null,
++    "vpsfree-cz-configuration": null
+   },
+   "selected": "/nix/store/hzf9qda2ckjsv72b689bclc6p3v8ap9l-dev-workspace-0.2.0",
+-  "candidate": "/nix/store/zqxa7qcn9q7d8877f5zjn6c7fwnbvxvc-dev-workspace-0.2.0",
+-  "derivation": "/nix/store/mh2abs1b1rzdpcrdi1fi3m4w5fgpx8v2-dev-workspace-0.2.0.drv",
+-  "roots": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/final-coordinated-ea64ef57/packages-final/roots",
++  "candidate": null,
++  "derivation": null,
++  "roots": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/targeted-read-budget-successor/packages-final/roots",
+   "system": "/nix/store/jwnd3m223qh1lanig1ndxprk04qbim06-nixos-system-aitherdev-26.05.20261020.cd4ea8d",
+   "systemConfiguration": "450e1ff538c1e94c1ec74f57b50fbe2efb31502b",
+   "systemRuntime": "f8f2938b4e2cfd6e5b82657d08f014357817808f",
+--- checkpoint/withdrawn-native50-launcher
++++ prepared-successor/read-budget-launcher
+@@ -1,14 +1,15 @@
+ #!/usr/bin/env bash
+ set -euo pipefail
+-python3 /home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/final-coordinated-ea64ef57/guards.py
++python3 /home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/targeted-read-budget-successor/guards.py
+ cd /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-20-dev-workspace-portal-improvements/dev-workspace
+-test "$(git rev-parse HEAD)" = 0c0dd2d22ce4e03c22a7bd0c471267deb6ee3a2a
++test "$(git rev-parse HEAD)" = __FINAL_B_PENDING__
+ test -z "$(git status --porcelain)"
+ test ! -e /tmp/portal-followup-absent-providers.json
+ export DEV_SESSION_SLUG=2026-10-20-dev-workspace-portal-improvements
+ export DEV_SESSION_WORKSPACE=/home/aither/workspace/ai/vpsfree.cz
+ export DEV_WORKSPACES_CODEX_PROVIDERS=/tmp/portal-followup-absent-providers.json
+-export PORTAL_FIREFOX_TABS_TEST=1
++unset PORTAL_FIREFOX_TABS_TEST
++export PORTAL_FIREFOX_READ_BUDGET_TEST=1
+ export FIREFOX_BINARY=/nix/store/nhqwiw8s88b3zy3pka98gizjgw6i2h8d-firefox-155.0/bin/firefox
+ export GECKODRIVER_BINARY=/nix/store/b5g0k5g2bsvar0y38mn4zdfailhk0b77-geckodriver-0.36.0/bin/geckodriver
+ xvfb_run=/nix/store/iyzy0zy23i1njxar2sd1hr4hmk56dalh-xvfb-run-1+g87f6705/bin/xvfb-run
+@@ -17,4 +18,4 @@
+ test -x "$xvfb_run"
+ exec nix develop --no-update-lock-file -c "$xvfb_run" --auto-servernum \
+  --server-args='-screen 0 1920x1080x24 -nolisten tcp' \
+- go -C portal test -mod=readonly ./internal/web -run '^TestFirefoxTabs$' -count=1 -v
++ go -C portal test -mod=readonly ./internal/web -run '^TestFirefoxReadBudget$' -count=1 -v

@@ -1,0 +1,1440 @@
+diff --git a/cmd/codex-web-example/main.go b/cmd/codex-web-example/main.go
+index f00d79b..73aa71c 100644
+--- a/cmd/codex-web-example/main.go
++++ b/cmd/codex-web-example/main.go
+@@ -30,7 +30,7 @@ var page = template.Must(template.New("page").Parse(`<!doctype html>
+ <body>
+   <main id="conversation"></main>
+   <script type="module">
+-    import {mountConversation} from "/codex/assets/conversation.js";
++    import {mountConversation} from "/codex/assets/conversation.js?v=21";
+     mountConversation(document.querySelector("#conversation"), {
+ 	  id: "current",
+     });
+diff --git a/codex/client.go b/codex/client.go
+index e696b09..c22076c 100644
+--- a/codex/client.go
++++ b/codex/client.go
+@@ -795,10 +795,14 @@ type Client struct {
+ 	writeMu      sync.Mutex
+ 	nextID       atomic.Uint64
+ 
+-	pendingMu sync.Mutex
+-	pending   map[uint64]pendingCall
+-	requests  map[string]PendingRequest
+-	notices   map[string][]Prompt
++	pendingMu         sync.Mutex
++	pending           map[uint64]pendingCall
++	requests          map[string]PendingRequest
++	notices           map[string][]Prompt
++	pendingRevisionMu sync.Mutex
++	pendingSequence   uint64
++	pendingReset      uint64
++	pendingRevisions  map[string]uint64
+ 
+ 	subscribersMu sync.Mutex
+ 	subscribers   map[chan struct{}]string
+@@ -1186,6 +1190,7 @@ func (c *Client) writeOffer(ctx context.Context, connection *websocket.Conn, gen
+ 	if offer != nil {
+ 		if err == nil {
+ 			delete(c.requests, offer.ID)
++			c.bumpPendingLocked(requestThreadID(*offer))
+ 		}
+ 		c.pendingMu.Unlock()
+ 	}
+@@ -1323,6 +1328,7 @@ func (c *Client) admitPrompt(request *PendingRequest) bool {
+ 	}
+ 	request.token = rand.Text()
+ 	c.requests[request.ID] = *request
++	c.bumpPendingLocked(requestThreadID(*request))
+ 	return true
+ }
+ 
+@@ -1357,6 +1363,8 @@ func (c *Client) claimAutoResolvableUserInput(id, threadID, token string) (Pendi
+ 	}
+ 	request.claimed = true
+ 	c.requests[id] = request
++	c.bumpPendingLocked(threadID)
++	c.broadcast(threadID)
+ 	return request, true
+ }
+ 
+@@ -1384,8 +1392,13 @@ func (c *Client) snoozeUserInput(id, threadID, token string) error {
+ 	if prompt.ThreadID != threadID || prompt.Kind != "userInput" {
+ 		return errors.New("this request does not support auto-resolution control")
+ 	}
++	if request.snoozed {
++		return nil
++	}
+ 	request.snoozed = true
+ 	c.requests[id] = request
++	c.bumpPendingLocked(threadID)
++	c.broadcast(threadID)
+ 	return nil
+ }
+ 
+@@ -1436,9 +1449,11 @@ func (c *Client) handleResolved(params json.RawMessage, generation uint64) {
+ 	threadID := threadIDFromParams(request.Params)
+ 	if request.generation == generation {
+ 		delete(c.requests, string(resolved.RequestID))
++		c.bumpPendingLocked(threadID)
+ 	}
+ 	c.pendingMu.Unlock()
+ 	c.broadcast(threadID)
++	c.prunePendingRevision(threadID)
+ }
+ 
+ func (c *Client) rejectUnsupported(request PendingRequest, cause error) {
+@@ -1458,6 +1473,7 @@ func (c *Client) rejectUnsupported(request PendingRequest, cause error) {
+ 			notices = notices[len(notices)-20:]
+ 		}
+ 		c.notices[threadID] = notices
++		c.bumpPendingLocked(threadID)
+ 		c.pendingMu.Unlock()
+ 	}
+ 	var rawID any
+@@ -1511,6 +1527,11 @@ func (c *Client) markDisconnected(connection *websocket.Conn, generation uint64,
+ 		}
+ 		delete(c.pending, id)
+ 	}
++	c.pendingRevisionMu.Lock()
++	c.pendingSequence++
++	c.pendingReset = c.pendingSequence
++	c.pendingRevisions = nil
++	c.pendingRevisionMu.Unlock()
+ 	for id, request := range c.requests {
+ 		if request.generation == generation {
+ 			delete(c.requests, id)
+@@ -1581,6 +1602,7 @@ func (c *Client) removeWatch(threadID string) {
+ 	}
+ 	c.watchedMu.Unlock()
+ 	if removed {
++		c.prunePendingRevision(threadID)
+ 		c.connectionMu.Lock()
+ 		generation := c.generation
+ 		c.connectionMu.Unlock()
+@@ -1752,6 +1774,7 @@ func (c *Client) recordWatchError(threadID string, err error) {
+ 		notices = append(notices, message)
+ 	}
+ 	c.notices[threadID] = notices
++	c.bumpPendingLocked(threadID)
+ 	c.pendingMu.Unlock()
+ 	c.broadcast(threadID)
+ }
+@@ -1762,11 +1785,59 @@ func (c *Client) clearWatchError(threadID string) {
+ 	for index := range notices {
+ 		if notices[index].ID == "watch:"+threadID {
+ 			notices = append(notices[:index], notices[index+1:]...)
++			c.bumpPendingLocked(threadID)
++			defer c.broadcast(threadID)
+ 			break
+ 		}
+ 	}
+ 	c.notices[threadID] = notices
+ 	c.pendingMu.Unlock()
++	c.prunePendingRevision(threadID)
++}
++
++// PendingRevision reads an in-memory invalidation token, without native RPCs or
++// durable ledger access. The value is meaningful only within this client.
++func (c *Client) PendingRevision(threadID string) uint64 {
++	c.pendingRevisionMu.Lock()
++	defer c.pendingRevisionMu.Unlock()
++	return max(c.pendingReset, c.pendingRevisions[threadID])
++}
++
++// Caller holds pendingMu. Advance before publishing the corresponding hint.
++func (c *Client) bumpPendingLocked(threadID string) {
++	c.pendingRevisionMu.Lock()
++	defer c.pendingRevisionMu.Unlock()
++	if threadID == "" {
++		return
++	}
++	c.pendingSequence++
++	if c.pendingRevisions == nil {
++		c.pendingRevisions = make(map[string]uint64)
++	}
++	c.pendingRevisions[threadID] = c.pendingSequence
++}
++
++// Tokens need live watchers or a retained pending/notice projection, just as
++// their underlying thread state does. Call without pendingMu held.
++func (c *Client) prunePendingRevision(threadID string) {
++	c.watchedMu.Lock()
++	defer c.watchedMu.Unlock()
++	if c.watched[threadID] != 0 {
++		return
++	}
++	c.pendingMu.Lock()
++	defer c.pendingMu.Unlock()
++	if len(c.notices[threadID]) != 0 {
++		return
++	}
++	for _, request := range c.requests {
++		if requestThreadID(request) == threadID {
++			return
++		}
++	}
++	c.pendingRevisionMu.Lock()
++	delete(c.pendingRevisions, threadID)
++	c.pendingRevisionMu.Unlock()
+ }
+ 
+ func (c *Client) broadcast(threadID string) {
+@@ -1954,6 +2025,8 @@ func (c *Client) claim(id, threadID, token string) (PendingRequest, Prompt, erro
+ 	}
+ 	request.claimed = true
+ 	c.requests[id] = request
++	c.bumpPendingLocked(threadID)
++	c.broadcast(threadID)
+ 	return request, prompt, nil
+ }
+ 
+@@ -1963,8 +2036,10 @@ func (c *Client) releaseClaim(request PendingRequest) {
+ 	if ok && current.generation == request.generation && current.token == request.token {
+ 		current.claimed = false
+ 		c.requests[request.ID] = current
++		c.bumpPendingLocked(requestThreadID(request))
+ 	}
+ 	c.pendingMu.Unlock()
++	c.broadcast(requestThreadID(request))
+ }
+ 
+ func (c *Client) finishResponse(ctx context.Context, request PendingRequest, result any) error {
+@@ -1990,6 +2065,7 @@ func (c *Client) finishResponse(ctx context.Context, request PendingRequest, res
+ 		return &PromptResponseError{Code: "prompt_transport", NotSent: errors.Is(err, errConnectionChanged), Err: err}
+ 	}
+ 	c.broadcast(requestThreadID(request))
++	c.prunePendingRevision(requestThreadID(request))
+ 	return nil
+ }
+ 
+diff --git a/codex/client_test.go b/codex/client_test.go
+index 5588989..c0c3476 100644
+--- a/codex/client_test.go
++++ b/codex/client_test.go
+@@ -3967,7 +3967,16 @@ func TestStaleDisconnectDoesNotClearReplacementConnection(t *testing.T) {
+ 	first := client.connection
+ 	firstGeneration := client.generation
+ 	client.connectionMu.Unlock()
++	request := questionRequest(first, firstGeneration)
++	if !client.admitPrompt(&request) {
++		t.Fatal("current request not admitted")
++	}
++	priorRevision := client.PendingRevision("thread-1")
+ 	client.markDisconnected(first, firstGeneration, errors.New("test replacement"))
++	resetRevision := client.PendingRevision("thread-1")
++	if resetRevision <= priorRevision || len(client.Prompts("thread-1")) != 0 {
++		t.Fatal("disconnect did not invalidate the pending projection")
++	}
+ 	if err := client.Ensure(ctx); err != nil {
+ 		t.Fatal(err)
+ 	}
+@@ -3975,6 +3984,9 @@ func TestStaleDisconnectDoesNotClearReplacementConnection(t *testing.T) {
+ 	replacement := client.connection
+ 	client.connectionMu.Unlock()
+ 	client.markDisconnected(first, firstGeneration, errors.New("stale reader"))
++	if client.PendingRevision("thread-1") != resetRevision {
++		t.Fatal("retired disconnect invalidated the replacement projection")
++	}
+ 	client.connectionMu.Lock()
+ 	actual := client.connection
+ 	client.connectionMu.Unlock()
+diff --git a/codex/prompt_response_test.go b/codex/prompt_response_test.go
+index 3f985bd..8b69722 100644
+--- a/codex/prompt_response_test.go
++++ b/codex/prompt_response_test.go
+@@ -248,3 +248,69 @@ func TestReissuedOfferWhileAnswerWaitsForWrite(t *testing.T) {
+ 		t.Fatal("replacement answer was not delivered")
+ 	}
+ }
++
++func TestPendingRevisionTracksVisibleProjectionWithoutRPC(t *testing.T) {
++	client := newTestClient("")
++	connection := &websocket.Conn{}
++	client.connection, client.generation = connection, 1
++	client.watched["thread-1"] = 1
++	first := questionRequest(connection, 1)
++	if client.PendingRevision("thread-1") != 0 {
++		t.Fatal("nonempty initial revision")
++	}
++	if !client.admitPrompt(&first) {
++		t.Fatal("admission failed")
++	}
++	// Pending projection mutation can hold pendingMu during a transport write.
++	// The SSE getter must stay independent of that transport wait.
++	client.pendingMu.Lock()
++	read := make(chan uint64, 1)
++	go func() { read <- client.PendingRevision("thread-1") }()
++	select {
++	case <-read:
++	case <-time.After(time.Second):
++		client.pendingMu.Unlock()
++		t.Fatal("pending revision blocked behind transport ownership")
++	}
++	client.pendingMu.Unlock()
++	admitted := client.PendingRevision("thread-1")
++	if admitted == 0 || client.PendingRevision("other") != 0 {
++		t.Fatal("revision not thread scoped")
++	}
++	duplicate := questionRequest(connection, 1)
++	if client.admitPrompt(&duplicate) || client.PendingRevision("thread-1") != admitted {
++		t.Fatal("duplicate invalidated projection")
++	}
++	if err := client.snoozeUserInput(first.ID, "thread-1", first.token); err != nil {
++		t.Fatal(err)
++	}
++	snoozed := client.PendingRevision("thread-1")
++	if snoozed <= admitted {
++		t.Fatal("snooze not invalidated")
++	}
++	request, _, err := client.claim(first.ID, "thread-1", first.token)
++	if err != nil {
++		t.Fatal(err)
++	}
++	claimed := client.PendingRevision("thread-1")
++	if claimed <= snoozed || len(client.Prompts("thread-1")) != 0 {
++		t.Fatal("claim did not invalidate hidden offer")
++	}
++	client.releaseClaim(request)
++	if client.PendingRevision("thread-1") <= claimed || len(client.Prompts("thread-1")) != 1 {
++		t.Fatal("released claim not invalidated")
++	}
++	client.handleResolved(json.RawMessage(`{"requestId":"question"}`), 1)
++	if len(client.Prompts("thread-1")) != 0 || client.PendingRevision("thread-1") <= claimed {
++		t.Fatal("resolution not invalidated")
++	}
++	delete(client.watched, "thread-1")
++	client.prunePendingRevision("thread-1")
++	if len(client.pendingRevisions) != 0 {
++		t.Fatal("retired pending projection retained its token")
++	}
++	// A getter and projection changes require neither a socket nor a ledger.
++	if len(client.pending) != 0 || client.queueLedgerPath != "" && client.queueLedgerLock != nil {
++		t.Fatal("revision performed transport/ledger work")
++	}
++}
+diff --git a/conversation/assets/conversation.js b/conversation/assets/conversation.js
+index e9fefff..47c91ab 100644
+--- a/conversation/assets/conversation.js
++++ b/conversation/assets/conversation.js
+@@ -1,9 +1,9 @@
+-import {attachmentIDs, sameAttachments, mountUploads, renderAttachments} from "./uploads.js?v=6";
++import {attachmentIDs, sameAttachments, mountUploads, renderAttachments} from "./uploads.js?v=7";
+ import {citationCopyText, createCitationMessage} from "./citations.js?v=1";
+ export {citationCopyText, createCitationMessage} from "./citations.js?v=1";
+-export {attachmentIDs, sameAttachments, mountUploads, renderAttachments, createUploadClient} from "./uploads.js?v=6";
+-import {createConversationSync, renderConnectionStatus} from "./sync.js?v=2";
+-export {createConversationSync, renderConnectionStatus, connectionMessage} from "./sync.js?v=2";
++export {attachmentIDs, sameAttachments, mountUploads, renderAttachments, createUploadClient} from "./uploads.js?v=7";
++import {createConversationSync, renderConnectionStatus} from "./sync.js?v=3";
++export {createConversationSync, renderConnectionStatus, connectionMessage} from "./sync.js?v=3";
+ import {refreshPolicy, createRefreshNotice} from "./refresh.js?v=1";
+ import {createAsyncQuestions} from "./questions.js?v=3";
+ export {createAsyncQuestions, asyncQuestionReply} from "./questions.js?v=3";
+@@ -1180,7 +1180,8 @@ export function mountConversation(root, options) {
+   let metadataRetryTimer = null, metadataRetryDelay = policy.retryInitialMs;
+   let pendingRead = null, queueRead = null, pendingScope = null, queueScope = null;
+   let pendingRetryTimer = null, queueRetryTimer = null;
+-  let pendingRetryDelay = policy.retryInitialMs, queueRetryDelay = policy.retryInitialMs, pendingLastRead = 0;
++  let pendingRetryDelay = policy.retryInitialMs, queueRetryDelay = policy.retryInitialMs, pendingLastRead = -Infinity;
++  let pendingGeneration = 0, queueGeneration = 0, pendingRerun = false, queueRerun = false, pendingDueTimer = null, queueDueTimer = null;
+   let lastSyncStatus = "", lastThreadStatus = "", destroyed = false, paused = false;
+   let generation = 0, sync = null;
+   let entryNodes = new Map();
+@@ -1210,7 +1211,18 @@ export function mountConversation(root, options) {
+   const laneRead = (timeout) => {
+     const controller = new AbortController();
+     const timer = setTimeout(() => controller.abort(new Error("Conversation request timed out")), timeout);
+-    return {signal: AbortSignal.any([abort.signal, controller.signal]), finish: () => clearTimeout(timer),
++    const signal = AbortSignal.any([abort.signal, controller.signal]);
++    let abortListener;
++    return {signal,
++      run(operation) {
++        const canceled = new Promise((_, reject) => {
++          abortListener = () => reject(signal.reason);
++          if (signal.aborted) abortListener();
++          else signal.addEventListener("abort", abortListener, {once:true});
++        });
++        return Promise.race([Promise.resolve().then(() => {signal.throwIfAborted(); return operation();}), canceled]);
++      },
++      finish() { clearTimeout(timer); if (abortListener) signal.removeEventListener("abort", abortListener); },
+       cancel: () => controller.abort()};
+   };
+   const entryElement = (entry) => {
+@@ -1341,7 +1353,7 @@ export function mountConversation(root, options) {
+         metadataRetryTimer = setTimeout(() => { metadataRetryTimer = null; sync?.scheduleRefresh(0); }, metadataRetryDelay);
+         metadataRetryDelay = Math.min(policy.retryMaxMs, metadataRetryDelay * 2);
+       } else metadataRetryDelay = policy.retryInitialMs;
+-      if (Date.now() - pendingLastRead >= policy.pendingMs) void refreshPending();
++      if (!sync?.pendingInvalidationSupported || Date.now() - pendingLastRead >= policy.pendingMs) void refreshPending();
+     }
+     if (submissionFailure && history.entries.some(entry => entry.kind === "userMessage" &&
+         entry.clientUserMessageId === submissionFailure.attemptId &&
+@@ -1352,54 +1364,85 @@ export function mountConversation(root, options) {
+     renderHistoryControls();
+     scheduleHistoryRepair();
+   };
++  const schedulePending = () => {
++    clearTimeout(pendingDueTimer); pendingDueTimer = null;
++    if (destroyed || paused || globalThis.document?.hidden || !capabilities.pending) return;
++    pendingDueTimer = setTimeout(() => { pendingDueTimer = null; void refreshPending(); },
++      Math.max(0, policy.pendingMs - (Date.now() - pendingLastRead)));
++  };
+   const refreshPending = (force = false, manual = false) => {
+-    if (!capabilities.pending || destroyed || paused || globalThis.document?.hidden || pendingRead) return pendingRead || Promise.resolve();
++    if (!capabilities.pending || destroyed || paused || globalThis.document?.hidden) return Promise.resolve();
++    if (force) ++pendingGeneration;
++    if (pendingRead) { if (force) pendingRerun = true; return pendingRead; }
+     if (pendingRetryTimer !== null && !force) return Promise.resolve();
+-    if (pendingRetryTimer !== null) clearTimeout(pendingRetryTimer);
+-    pendingRetryTimer = null;
+-    const read = laneRead(policy.pendingDeadlineMs), threadId = currentThread?.threadId;
++    if (!force && sync?.pendingInvalidationSupported && Date.now() - pendingLastRead < policy.pendingMs) {
++      schedulePending(); return Promise.resolve();
++    }
++    clearTimeout(pendingRetryTimer); pendingRetryTimer = null;
++    clearTimeout(pendingDueTimer); pendingDueTimer = null;
++    const read = laneRead(policy.pendingDeadlineMs), threadId = currentThread?.threadId, generation = pendingGeneration;
+     pendingScope = read;
++    const current = () => !destroyed && !paused && pendingScope === read && generation === pendingGeneration &&
++      (!threadId || currentThread?.threadId === threadId);
+     pendingNotice.begin({manual});
+-    pendingRead = client.pending({signal: read.signal}).then(entries => {
+-      if (destroyed || (threadId && currentThread?.threadId !== threadId)) return;
++    pendingRead = read.run(() => client.pending({signal: read.signal})).then(entries => {
++      if (!current() || read.signal.aborted) return;
+       if (!Array.isArray(entries)) throw new Error("Invalid pending requests");
+-      renderPrompts(entries);
+-      pendingNotice.success();
+-      pendingLastRead = Date.now();
+-      pendingRetryDelay = policy.retryInitialMs;
++      renderPrompts(entries); pendingNotice.success();
++      pendingLastRead = Date.now(); pendingRetryDelay = policy.retryInitialMs;
++      schedulePending();
+     }).catch(error => {
+-      if (destroyed || paused || globalThis.document?.hidden) return;
++      if (!current() || globalThis.document?.hidden) return;
+       pendingStatusLabel.textContent = "Requests could not be refreshed. The last result may be out of date.";
+       pendingNotice.failure(error);
+       pendingRetryTimer = setTimeout(() => { pendingRetryTimer = null; void refreshPending(); }, pendingRetryDelay);
+       pendingRetryDelay = Math.min(policy.retryMaxMs, pendingRetryDelay * 2);
+-    }).finally(() => { read.finish(); pendingScope = null; pendingRead = null; });
++    }).finally(() => {
++      read.finish();
++      if (pendingScope !== read) return;
++      pendingScope = null; pendingRead = null;
++      if (pendingRerun) { pendingRerun = false; void refreshPending(true); }
++    });
+     return pendingRead;
+   };
++  const scheduleQueue = () => {
++    clearTimeout(queueDueTimer); queueDueTimer = null;
++    if (destroyed || paused || globalThis.document?.hidden || !capabilities.queueRead) return;
++    queueDueTimer = setTimeout(() => { queueDueTimer = null; void refreshQueue(); }, policy.queueMs);
++  };
+   const refreshQueue = (force = false, manual = false) => {
+-    if (!capabilities.queueRead || destroyed || paused || globalThis.document?.hidden || queueRead) return queueRead || Promise.resolve();
++    if (!capabilities.queueRead || destroyed || paused || globalThis.document?.hidden) return Promise.resolve();
++    if (force) ++queueGeneration;
++    if (queueRead) { if (force) queueRerun = true; return queueRead; }
+     if (queueRetryTimer !== null && !force) return Promise.resolve();
+-    if (queueRetryTimer !== null) clearTimeout(queueRetryTimer);
+-    queueRetryTimer = null;
+-    const read = laneRead(policy.queueDeadlineMs), threadId = currentThread?.threadId;
++    clearTimeout(queueRetryTimer); queueRetryTimer = null;
++    clearTimeout(queueDueTimer); queueDueTimer = null;
++    const read = laneRead(policy.queueDeadlineMs), threadId = currentThread?.threadId, generation = queueGeneration;
+     queueScope = read;
++    const current = () => !destroyed && !paused && queueScope === read && generation === queueGeneration &&
++      (!threadId || currentThread?.threadId === threadId);
+     queueNotice.begin({manual});
+-    queueRead = Promise.resolve().then(async () => {
++    queueRead = read.run(async () => {
+       if (capabilities.queue && typeof client.reconcileQueue === "function") await client.reconcileQueue({signal: read.signal});
++      if (read.signal.aborted) read.signal.throwIfAborted();
+       return client.queue({signal: read.signal});
+     }).then(entries => {
+-      if (destroyed || (threadId && currentThread?.threadId !== threadId)) return;
++      if (!current() || read.signal.aborted) return;
+       if (!Array.isArray(entries)) throw new Error("Invalid queue");
+-      renderQueue(entries);
+-      queueNotice.success();
+-      queueRetryDelay = policy.retryInitialMs;
++      renderQueue(entries); queueNotice.success(); queueRetryDelay = policy.retryInitialMs;
++      scheduleQueue();
+     }).catch(error => {
+-      if (destroyed || paused || globalThis.document?.hidden) return;
++      if (!current() || globalThis.document?.hidden) return;
+       queueStatusLabel.textContent = "Queued messages could not be refreshed. The last result may be out of date.";
+       queueNotice.failure(error);
+       queueRetryTimer = setTimeout(() => { queueRetryTimer = null; void refreshQueue(); }, queueRetryDelay);
+       queueRetryDelay = Math.min(policy.retryMaxMs, queueRetryDelay * 2);
+-    }).finally(() => { read.finish(); queueScope = null; queueRead = null; });
++    }).finally(() => {
++      read.finish();
++      if (queueScope !== read) return;
++      queueScope = null; queueRead = null;
++      if (queueRerun) { queueRerun = false; void refreshQueue(true); }
++    });
+     return queueRead;
+   };
+   const runHistoryRead = async (kind, manual = kind === "older") => {
+@@ -1409,20 +1452,21 @@ export function mountConversation(root, options) {
+     const threadId = history.threadId, readGeneration = generation;
+     const readVersion = history.repairVersion;
+     const read = laneRead(policy.transcriptDeadlineMs);
+-    historyRead = {...read, kind, newerKeys: new Set()}; historyError = ""; historyFailureKind = null; historyNotice.begin({manual}); renderHistoryControls();
++    const cycle = {...read, kind, newerKeys: new Set()};
++    historyRead = cycle; historyError = ""; historyFailureKind = null; historyNotice.begin({manual}); renderHistoryControls();
+     try {
+-      const page = await readTranscriptPage(client, {cursor, signal: read.signal, expectedThreadId: threadId});
+-      if (destroyed || paused || readGeneration !== generation || history.threadId !== threadId ||
++      const page = await read.run(() => readTranscriptPage(client, {cursor, signal: read.signal, expectedThreadId: threadId}));
++      if (destroyed || paused || historyRead !== cycle || read.signal.aborted || readGeneration !== generation || history.threadId !== threadId ||
+           readVersion !== history.repairVersion) return;
+       const current = new Map(history.rows.map(row => [row.key, row.entry]));
+       const entries = page.entries.map((entry, index) => {
+         const key = transcriptEntryKey(entry, index, page.entries);
+-        return historyRead.newerKeys.has(key) ? current.get(key) || entry : entry;
++        return cycle.newerKeys.has(key) ? current.get(key) || entry : entry;
+       });
+       renderThread({...page, entries}, () => true, kind);
+       historyRetryDelay = policy.retryInitialMs; historyNotice.success();
+     } catch (error) {
+-      if (destroyed || paused || readGeneration !== generation || history.threadId !== threadId ||
++      if (destroyed || paused || historyRead !== cycle || readGeneration !== generation || history.threadId !== threadId ||
+           readVersion !== history.repairVersion) return;
+       if (error.code === "transcript_cursor_expired" || error.code === "transcript_reset_required") {
+         history.invalidateCursor();
+@@ -1442,7 +1486,9 @@ export function mountConversation(root, options) {
+         }
+       }
+     } finally {
+-      read.finish(); historyRead = null; historyNotice.cancel(); renderHistoryControls();
++      read.finish();
++      if (historyRead !== cycle) return;
++      historyRead = null; historyNotice.cancel(); renderHistoryControls();
+       if (!historyError) scheduleHistoryRepair();
+     }
+   };
+@@ -1464,13 +1510,20 @@ export function mountConversation(root, options) {
+   retryQueue.addEventListener("click", () => { void refreshQueue(true, true); });
+   const suspendLanes = () => {
+     paused = true;
+-    historyRead?.cancel(); pendingScope?.cancel(); queueScope?.cancel();
++    ++pendingGeneration; ++queueGeneration;
++    historyRead?.cancel(); historyRead = null; historyNotice.cancel();
++    pendingScope?.cancel(); queueScope?.cancel();
++    pendingScope = queueScope = null; pendingRead = queueRead = null;
++    pendingRerun = queueRerun = false;
++    clearTimeout(pendingDueTimer); pendingDueTimer = null;
++    clearTimeout(queueDueTimer); queueDueTimer = null;
++    pendingNotice.cancel(); queueNotice.cancel();
+     for (const timer of [historyRetryTimer, metadataRetryTimer, pendingRetryTimer, queueRetryTimer]) clearTimeout(timer);
+     historyRetryTimer = metadataRetryTimer = pendingRetryTimer = queueRetryTimer = null;
+   };
+   const onVisibility = () => {
+     if (globalThis.document?.hidden) suspendLanes();
+-    else { paused = false; void refreshPending(true); void refreshQueue(true); scheduleHistoryRepair(historyFailureKind ? historyRetryDelay : policy.historyPageMs); }
++    else { paused = false; renderHistoryControls(); void refreshPending(true); void refreshQueue(true); scheduleHistoryRepair(historyFailureKind ? historyRetryDelay : policy.historyPageMs); }
+   };
+   const onPageshow = () => { paused = false; onVisibility(); };
+   globalThis.document?.addEventListener?.("visibilitychange", onVisibility);
+@@ -1486,6 +1539,7 @@ export function mountConversation(root, options) {
+       return {...await readTranscriptPage(client, {signal, legacy}), settingsGeneration: readGeneration};
+     },
+     apply: (page, {isCurrent}) => renderThread(page, isCurrent),
++    onPendingInvalidation: () => { void refreshPending(true); },
+     onStateChange: state => {
+       renderConnectionStatus(connectionStatus, state, () => sync.retry());
+       if (state.status === "connected" && lastSyncStatus !== "connected") {
+@@ -1591,12 +1645,9 @@ export function mountConversation(root, options) {
+   void refresh();
+   void refreshPending();
+   void refreshQueue();
+-  const pendingInterval = setInterval(() => { void refreshPending(); }, policy.pendingMs);
+-  const queueInterval = setInterval(() => { void refreshQueue(); }, policy.queueMs);
+ 
+   return () => {
+     destroyed = true;
+-    clearInterval(pendingInterval); clearInterval(queueInterval);
+     suspendLanes();
+     globalThis.document?.removeEventListener?.("visibilitychange", onVisibility);
+     globalThis.removeEventListener?.("pagehide", suspendLanes);
+diff --git a/conversation/assets/sync.js b/conversation/assets/sync.js
+index 1b9b722..a72d7ac 100644
+--- a/conversation/assets/sync.js
++++ b/conversation/assets/sync.js
+@@ -24,6 +24,7 @@ export function createConversationSync(options) {
+   let streamOpen = !streaming, streamFailed = false, needsSync = true, readError = null;
+   let lastState = "";
+   let warningTimer = null, recoverySince = null;
++  let pendingInvalidationSupported = false;
+ 
+   const publish = () => {
+     const status = readError || streamFailed ?
+@@ -54,6 +55,7 @@ export function createConversationSync(options) {
+     old?.close();
+     streamOpen = !streaming;
+     heartbeatDeadline = null;
++    pendingInvalidationSupported = false;
+   };
+   const cancelRead = () => {
+     const old = active;
+@@ -161,12 +163,18 @@ export function createConversationSync(options) {
+     events.addEventListener("ready", event => {
+       if (!current()) return;
+       try {
+-        const interval = JSON.parse(event.data).heartbeatIntervalMs;
++        const ready = JSON.parse(event.data), interval = ready.heartbeatIntervalMs;
++        pendingInvalidationSupported = ready.pendingInvalidation === true;
+         if (Number.isSafeInteger(interval) && interval > 0) heartbeatDeadline = interval * 2 + policy.heartbeatGraceMs;
+       } catch (_) {}
+       lastTraffic = now();
+     });
+     events.addEventListener("heartbeat", () => { if (current()) lastTraffic = now(); });
++    events.addEventListener("pending", () => {
++      if (!current() || !pendingInvalidationSupported) return;
++      lastTraffic = now();
++      options.onPendingInvalidation?.();
++    });
+     events.onmessage = () => {
+       if (!current()) return;
+       lastTraffic = now();
+@@ -217,7 +225,7 @@ export function createConversationSync(options) {
+     lastWatch = at;
+     watchTimer = later(watch, policy.watchMs);
+   };
+-  const visibility = () => { if (!hidden()) recover(false); else publish(); };
++  const visibility = () => { if (hidden()) pagehide(); else if (suspended) pageshow(); else recover(false); };
+   const focus = () => recover(false);
+   const online = () => recover(true);
+   const offline = () => {
+@@ -227,13 +235,15 @@ export function createConversationSync(options) {
+   };
+   const pagehide = () => {
+     suspended = true;
++    dirty = true; needsSync = true;
+     clear(warningTimer); warningTimer = null; recoverySince = null;
+     cancelRead(); closeStream(); clearRefresh();
+     clear(retryTimer); retryTimer = null;
+     clear(watchTimer); watchTimer = null;
+   };
+   const pageshow = () => {
+-    if (destroyed) return;
++    if (destroyed || hidden()) return;
++    if (!suspended) { recover(false); return; }
+     suspended = false;
+     lastRecovery = -Infinity;
+     recover();
+@@ -243,10 +253,15 @@ export function createConversationSync(options) {
+     [browser, "online", online], [browser, "offline", offline],
+     [browser, "pagehide", pagehide], [browser, "pageshow", pageshow]];
+   for (const [target, name, callback] of listeners) target?.addEventListener?.(name, callback);
+-  publish(); connect(); scheduleRefresh(0);
+-  if (live) watchTimer = later(watch, policy.watchMs);
++  suspended = hidden();
++  publish();
++  if (!suspended) {
++    connect(); scheduleRefresh(0);
++    if (live) watchTimer = later(watch, policy.watchMs);
++  }
+   return {
+     refresh, scheduleRefresh, retry: recover,
++    get pendingInvalidationSupported() { return pendingInvalidationSupported; },
+     destroy() {
+       destroyed = true;
+       pagehide();
+diff --git a/conversation/assets/uploads.js b/conversation/assets/uploads.js
+index 9eb5933..e562681 100644
+--- a/conversation/assets/uploads.js
++++ b/conversation/assets/uploads.js
+@@ -57,8 +57,16 @@ function localURL(value) {
+   return parsed.pathname + parsed.search;
+ }
+ 
+-async function payload(response) {
+-  const data = await response.json().catch(() => ({}));
++async function payload(response, signal, read) {
++  let data;
++  try { data = response.status === 204 ? {} : await response.json(); }
++  catch (error) {
++    signal?.throwIfAborted();
++    if (response.ok && read) throw new Error("Invalid file status response");
++    if (read && error?.name !== "SyntaxError") throw error;
++    data = {};
++  }
++  signal?.throwIfAborted();
+   if (!response.ok) {
+     const error = new Error(data.error || `File operation failed (${response.status})`);
+     error.status = response.status;
+@@ -71,12 +79,21 @@ export function createUploadClient(basePath, options = {}) {
+   const base = localURL(basePath);
+   if (base.includes("?") || base.endsWith("/")) throw new TypeError("Invalid upload endpoint");
+   const fetchRequest = options.fetch || globalThis.fetch.bind(globalThis);
+-  const request = (suffix, init = {}) => fetchRequest(base + suffix, {
+-    credentials: "same-origin", signal: options.signal, ...init,
+-  }).then(payload);
++  const request = async (suffix, init = {}) => {
++    const read = !init.method || init.method === "GET";
++    const deadline = read ? new AbortController() : null;
++    const timer = deadline ? setTimeout(() => deadline.abort(new Error("File status request timed out")), options.readDeadlineMs || 10_000) : null;
++    const signals = [options.signal, init.signal, deadline?.signal].filter(Boolean);
++    const signal = signals.length ? AbortSignal.any(signals) : undefined;
++    try {
++      return await payload(await fetchRequest(base + suffix, {
++        credentials: "same-origin", ...init, signal,
++      }), signal, read);
++    } finally { clearTimeout(timer); }
++  };
+   const path = (id) => { if (!idPattern.test(id)) throw new TypeError("Invalid upload ID"); return `/${id}`; };
+   return {
+-    list: () => request(""),
++    list: (read = {}) => request("", {signal: read.signal}),
+     create: (file, clientId) => request("", {method: "POST", headers: {"Content-Type": "application/json"},
+       body: JSON.stringify({name: file.name, size: file.size, clientId})}),
+     status: (id) => request(path(id)),
+@@ -208,6 +225,8 @@ export function mountUploads(root, options) {
+   let active = 0;
+   let resumeEntry = null;
+   let persistenceError = "";
++  let draftRevision = 0, metadataRead = null, metadataRetry = null, metadataDelay = 2000;
++  let metadataPaused = Boolean(globalThis.document?.hidden), metadataFatal = false, metadataFailed = false;
+   const controllers = new Map();
+   const controlsRoot = options.controlsRoot || root;
+   const initiallyHidden = root.hidden;
+@@ -275,9 +294,14 @@ export function mountUploads(root, options) {
+   controls.append(button, picker, menu); controlsRoot.append(controls);
+   notice.hidden = true; summary.hidden = true; list.hidden = true;
+   if (controlsRoot !== root) root.hidden = true;
+-  root.append(notice, summary, list);
++  const retryMetadata = document.createElement("button");
++  retryMetadata.type = "button"; retryMetadata.className = "quiet"; retryMetadata.textContent = "Retry file status";
++  retryMetadata.hidden = true;
++  retryMetadata.addEventListener("click", () => { void refreshMetadata(); });
++  root.append(notice, retryMetadata, summary, list);
+   const ready = () => Boolean(limits) && !persistenceError && entries.every((entry) => entry.state === "ready" && !entry.error && !entry.removing);
+   const save = (next = entries) => {
++    ++draftRevision;
+     try {
+       if (numbersChanged) {
+         const value = JSON.stringify([...clipboardNumbers]);
+@@ -318,6 +342,7 @@ export function mountUploads(root, options) {
+     button.disabled = locked || !limits; attach.disabled = button.disabled;
+     if (button.disabled) closeMenu();
+     if (persistenceError) notice.textContent = persistenceError;
++    retryMetadata.hidden = !metadataFailed || metadataFatal; retryMetadata.disabled = Boolean(metadataRead);
+     notice.hidden = !notice.textContent; list.hidden = entries.length === 0;
+     summary.hidden = entries.length === 0;
+     const total = entries.reduce((sum, entry) => sum + entry.size, 0);
+@@ -463,39 +488,98 @@ export function mountUploads(root, options) {
+     add(files, true);
+   };
+   pasteTarget?.addEventListener("paste", paste);
++  const refreshMetadata = () => {
++    if (stopped || metadataPaused || globalThis.document?.hidden || metadataFatal) return Promise.resolve();
++    if (metadataRead) return metadataRead.promise;
++    clearTimeout(metadataRetry); metadataRetry = null;
++    const cycle = {controller: new AbortController(), promise: null}, revision = draftRevision;
++    metadataRead = cycle;
++    const current = () => metadataRead === cycle && !stopped && !metadataPaused;
++    const signal = cycle.controller.signal;
++    let rejectAbort;
++    const aborted = new Promise((_, reject) => { rejectAbort = reject; });
++    const onAbort = () => rejectAbort(signal.reason);
++    signal.addEventListener("abort", onAbort, {once: true});
++    const deadline = setTimeout(() => cycle.controller.abort(new Error("File status request timed out")), options.readDeadlineMs || 10_000);
++    cycle.promise = (async () => {
++      try {
++        const snapshot = await Promise.race([Promise.resolve().then(() => client.list({signal})), aborted]);
++        if (!current() || signal.aborted) return;
++        if (!snapshot || !Array.isArray(snapshot.files) || !snapshot.limits ||
++            !["chunkBytes", "fileBytes", "promptBytes", "files"].every(field => Number.isSafeInteger(snapshot.limits[field]) && snapshot.limits[field] > 0)) {
++          throw new Error("Invalid file status response");
++        }
++        limits = snapshot.limits;
++        for (const file of [...entries, ...snapshot.files]) reservedNames.add(file.name);
++        const available = new Map(snapshot.files.map(file => [file.id, file]));
++        // An older listing cannot undo a selection, removal or transfer receipt.
++        if (revision === draftRevision) {
++          for (const entry of entries) {
++            if (entry.running || entry.removing) continue;
++            if (entry.id && available.has(entry.id)) {
++              Object.assign(entry, available.get(entry.id)); entry.creation = "created";
++              if (entry.state === "ready") entry.error = null;
++            }
++            if (entry.id && (!available.has(entry.id) || entry.state === "deleted")) {
++              entry.state = "missing"; entry.error = "File expired or was removed. Remove it and upload again.";
++            }
++          }
++        }
++        save(); metadataFailed = false; metadataDelay = 2000; notice.textContent = "";
++      } catch (error) {
++        if (!current()) return;
++        metadataFailed = true; notice.textContent = error.message;
++        if (!persistenceError && error.status !== 401 && error.status !== 403) {
++          metadataRetry = setTimeout(() => { metadataRetry = null; void refreshMetadata(); }, metadataDelay);
++          metadataDelay = Math.min(30_000, metadataDelay * 2);
++        }
++      } finally {
++        clearTimeout(deadline); signal.removeEventListener("abort", onAbort);
++        if (metadataRead === cycle) { metadataRead = null; render(); }
++      }
++    })();
++    render(); return cycle.promise;
++  };
++  const pauseMetadata = () => {
++    metadataPaused = true; clearTimeout(metadataRetry); metadataRetry = null;
++    const old = metadataRead; metadataRead = null; old?.controller.abort();
++  };
++  const resumeMetadata = () => {
++    if (stopped || globalThis.document?.hidden) return;
++    const wasPaused = metadataPaused;
++    metadataPaused = false;
++    if (wasPaused || metadataFailed || !limits) void refreshMetadata();
++  };
++  const metadataVisibility = () => globalThis.document?.hidden ? pauseMetadata() : resumeMetadata();
++  globalThis.document?.addEventListener?.("visibilitychange", metadataVisibility);
++  globalThis.addEventListener?.("pagehide", pauseMetadata);
++  globalThis.addEventListener?.("pageshow", resumeMetadata);
+   const initialized = (async () => {
+     try {
+       const saved = JSON.parse(storage.getItem(key) || "[]");
+-      if (!Array.isArray(saved) || saved.length > 100 || saved.some((entry) => !idPattern.test(entry.clientId))) throw new Error("Stored attachment draft is invalid");
++      if (!Array.isArray(saved) || saved.length > 100 || saved.some(entry => !idPattern.test(entry.clientId))) throw new Error("Stored attachment draft is invalid");
+       entries = saved;
+       const numbers = JSON.parse(storage.getItem(numberKey) || "[]");
+       if (!Array.isArray(numbers) || numbers.some(pair => !Array.isArray(pair) || pair.length !== 2 ||
+           typeof pair[0] !== "string" || !Number.isSafeInteger(pair[1]) || pair[1] < 1)) throw new Error("Stored clipboard numbering is invalid");
+       clipboardNumbers = new Map(numbers);
+-      const snapshot = await client.list(); limits = snapshot.limits;
+-      for (const file of [...entries, ...snapshot.files]) reservedNames.add(file.name);
+-      const available = new Map(snapshot.files.map((file) => [file.id, file]));
+-      for (const entry of entries) {
+-        if (entry.id && available.has(entry.id)) {
+-          Object.assign(entry, available.get(entry.id));
+-          entry.creation = "created";
+-          if (entry.state === "ready") entry.error = null;
+-        }
+-        if (entry.id && (!available.has(entry.id) || entry.state === "deleted")) { entry.state = "missing"; entry.error = "File expired or was removed. Remove it and upload again."; }
+-      }
+-      save();
+-    } catch (error) { notice.textContent = error.message; }
+-    render();
++    } catch (error) { metadataFatal = true; persistenceError = error.message; render(); return; }
++    await refreshMetadata();
+   })();
+   return {
+     initialized,
++    refresh: refreshMetadata,
+     ready,
+     count: () => entries.length,
+     ids: () => { if (!ready()) throw new Error("Wait for uploads to finish, or remove the unfinished files"); return attachmentIDs(entries.map((entry) => entry.id)); },
+     clear: () => { save([]); entries = []; render(); },
+     lock: (value) => { locked = value; render(); if (!value) pump(); },
+     destroy: () => {
+-      closeMenu(); stopped = true; controllers.forEach((controller) => controller.abort());
++      closeMenu(); pauseMetadata(); stopped = true;
++      globalThis.document?.removeEventListener?.("visibilitychange", metadataVisibility);
++      globalThis.removeEventListener?.("pagehide", pauseMetadata);
++      globalThis.removeEventListener?.("pageshow", resumeMetadata);
++      controllers.forEach((controller) => controller.abort());
+       globalThis.removeEventListener("resize", positionMenu); globalThis.removeEventListener("scroll", positionMenu, true);
+       dropTarget.removeEventListener("dragover", drag); dropTarget.removeEventListener("dragleave", leave); dropTarget.removeEventListener("drop", drop);
+       pasteTarget?.removeEventListener("paste", paste);
+diff --git a/conversation/events_test.go b/conversation/events_test.go
+index bf29d5f..9972f67 100644
+--- a/conversation/events_test.go
++++ b/conversation/events_test.go
+@@ -3,7 +3,10 @@ package conversation
+ import (
+ 	"context"
+ 	"errors"
++	"fmt"
+ 	"net/http/httptest"
++	"strings"
++	"sync/atomic"
+ 	"testing"
+ 	"time"
+ )
+@@ -77,3 +80,83 @@ func TestEventStreamStopsOnWriteFailure(t *testing.T) {
+ 		t.Fatal("failed stream remained open")
+ 	}
+ }
++
++func TestPendingRevisionSurvivesCoalescingWithoutChangingGenericUpdates(t *testing.T) {
++	ctx, cancel := context.WithCancel(context.Background())
++	defer cancel()
++	r := &streamRecorder{ResponseRecorder: httptest.NewRecorder(), flushed: make(chan string, 8)}
++	events := make(chan struct{}, 1)
++	var revision atomic.Uint64
++	done := make(chan struct{})
++	go func() {
++		(&Handler{}).streamEvents(r, httptest.NewRequest("GET", "/events", nil).WithContext(ctx), r, events, nil, revision.Load)
++		close(done)
++	}()
++	next := func() string {
++		t.Helper()
++		select {
++		case value := <-r.flushed:
++			return value
++		case <-time.After(time.Second):
++			t.Fatal("stream did not flush")
++			return ""
++		}
++	}
++	if got := next(); got != "event: ready\ndata: {\"heartbeatIntervalMs\":20000,\"pendingInvalidation\":true}\n\n" {
++		t.Fatal(got)
++	}
++	revision.Add(3)
++	events <- struct{}{}
++	if got := next(); got != "event: pending\ndata: update\n\ndata: update\n\n" {
++		t.Fatal(got)
++	}
++	events <- struct{}{}
++	if got := next(); got != "data: update\n\n" {
++		t.Fatal(got)
++	}
++	revision.Add(1)
++	events <- struct{}{}
++	if got := next(); got != "event: pending\ndata: update\n\ndata: update\n\n" {
++		t.Fatal(got)
++	}
++	cancel()
++	<-done
++}
++
++type revisionClient struct {
++	*fakeClient
++	reads atomic.Uint64
++}
++
++func (c *revisionClient) PendingRevision(string) uint64 { return c.reads.Add(1) }
++
++func TestPendingRevisionAdvertisementRequiresPendingAuthority(t *testing.T) {
++	for _, allowed := range []bool{false, true} {
++		t.Run(fmt.Sprint(allowed), func(t *testing.T) {
++			ctx, cancel := context.WithCancel(context.Background())
++			defer cancel()
++			r := &streamRecorder{ResponseRecorder: httptest.NewRecorder(), flushed: make(chan string, 2)}
++			client := &revisionClient{fakeClient: &fakeClient{}}
++			done := make(chan struct{})
++			go func() {
++				(&Handler{}).events(r, httptest.NewRequest("GET", "/events", nil).WithContext(ctx), Target{
++					Client: client, ThreadID: "trusted-thread", Capabilities: Capabilities{EventStream: true, Pending: allowed},
++				})
++				close(done)
++			}()
++			select {
++			case ready := <-r.flushed:
++				if strings.Contains(ready, `"pendingInvalidation":true`) != allowed {
++					t.Fatal(ready)
++				}
++			case <-time.After(time.Second):
++				t.Fatal("no ready event")
++			}
++			cancel()
++			<-done
++			if (client.reads.Load() != 0) != allowed {
++				t.Fatal("getter called without pending authority")
++			}
++		})
++	}
++}
+diff --git a/conversation/handler.go b/conversation/handler.go
+index 44e19d4..a60a635 100644
+--- a/conversation/handler.go
++++ b/conversation/handler.go
+@@ -86,6 +86,12 @@ type TranscriptPageReader interface {
+ 	ReadThreadPage(context.Context, string, string) (codex.TranscriptPage, error)
+ }
+ 
++// PendingRevisionProvider supplies an in-memory pending-control invalidation
++// token. Reading it must not perform RPCs or access durable submission state.
++type PendingRevisionProvider interface {
++	PendingRevision(threadID string) uint64
++}
++
+ // PromptResponder adds request-bound responses without changing the legacy
+ // Client interface used by existing embedding applications.
+ type PromptResponder interface {
+@@ -945,13 +951,28 @@ func (handler *Handler) events(response http.ResponseWriter, request *http.Reque
+ 	defer unsubscribe()
+ 	keepalive := time.NewTicker(heartbeatInterval)
+ 	defer keepalive.Stop()
+-	handler.streamEvents(response, request, flusher, events, keepalive.C)
++	var revision func() uint64
++	if provider, ok := target.Client.(PendingRevisionProvider); ok && target.Capabilities.Pending {
++		revision = func() uint64 { return provider.PendingRevision(target.ThreadID) }
++	}
++	handler.streamEvents(response, request, flusher, events, keepalive.C, revision)
+ }
+ 
+-func (handler *Handler) streamEvents(response http.ResponseWriter, request *http.Request, flusher http.Flusher, events <-chan struct{}, keepalive <-chan time.Time) {
++func (handler *Handler) streamEvents(response http.ResponseWriter, request *http.Request, flusher http.Flusher, events <-chan struct{}, keepalive <-chan time.Time, revisions ...func() uint64) {
++	var revision func() uint64
++	if len(revisions) != 0 {
++		revision = revisions[0]
++	}
++	var previous uint64
++	ready := map[string]any{"heartbeatIntervalMs": heartbeatInterval.Milliseconds()}
++	if revision != nil {
++		previous = revision()
++		ready["pendingInvalidation"] = true
++	}
++	data, _ := json.Marshal(ready)
+ 	response.Header().Set("Content-Type", "text/event-stream")
+ 	response.Header().Set("X-Accel-Buffering", "no")
+-	if _, err := fmt.Fprintf(response, "event: ready\ndata: {\"heartbeatIntervalMs\":%d}\n\n", heartbeatInterval.Milliseconds()); err != nil {
++	if _, err := fmt.Fprintf(response, "event: ready\ndata: %s\n\n", data); err != nil {
+ 		return
+ 	}
+ 	flusher.Flush()
+@@ -970,6 +991,15 @@ func (handler *Handler) streamEvents(response http.ResponseWriter, request *http
+ 			if !open {
+ 				return
+ 			}
++			if revision != nil {
++				current := revision()
++				if current != previous {
++					if _, err := io.WriteString(response, "event: pending\ndata: update\n\n"); err != nil {
++						return
++					}
++					previous = current
++				}
++			}
+ 			if _, err := io.WriteString(response, "data: update\n\n"); err != nil {
+ 				return
+ 			}
+diff --git a/docs/reference.md b/docs/reference.md
+index 174c50d..134e87c 100644
+--- a/docs/reference.md
++++ b/docs/reference.md
+@@ -501,6 +501,20 @@ browser client exposes `activity()` for applications that enable it. A client
+ without a recorder still aggregates historical boundaries and explicitly
+ unclassified turn time, without subscribing or resuming the thread.
+ 
++Clients can implement optional `PendingRevisionProvider.PendingRevision(threadID)`
++to identify changes to the visible pending-request projection. The getter reads
++only memory; it performs no native RPC or durable ledger access. The native
++client advances the revision before broadcasting request, response, snooze,
++notice and connection changes. Revision bookkeeping retires with its watched or pending thread state;
++persisted formats remain unchanged.
++
++For an authorized Pending target with this provider, the SSE `ready` event adds
++`pendingInvalidation: true`. A changed revision emits the named `pending` event
++with `data: update`, alongside the unchanged generic update. Comparing the latest
++revision preserves invalidation when generic updates coalesce. Initial reads
++and reads after reconnect remain authoritative. Clients without the optional
++interface retain the existing stream contract.
++
+ The handler also serves `assets/conversation.js`. Import
+ `createConversationClient()` for the HTTP API, `createDurableSender()` for
+ response-loss-safe message delivery, or `mountConversation()` for the complete
+@@ -582,6 +596,25 @@ and named `heartbeat` events every 20 seconds. The browser allows two advertised
+ intervals plus five seconds before treating a stream as stale. Existing message notifications
+ keep their format. Servers without this advertisement use snapshot polling.
+ 
++Hidden documents close their stream, cancel current snapshot reads and stop
++retry and watch timers. Returning to a visible document or restoring a page
++starts one current recovery cycle. Late responses and callbacks from retired
++cycles cannot replace data or change a newer cycle's status. These browser
++changes leave the server observer, session execution and unsent drafts intact.
++
++`createConversationSync()` also accepts `onPendingInvalidation()` and exposes
++read-only `pendingInvalidationSupported`. The getter resets when the stream
++closes and becomes true only after the current `ready` event advertises support.
++The callback runs only for a named pending hint from that current stream.
++With this capability, ordinary output respects the mounted UI's 15-second
++pending-read freshness budget. Actual pending hints, local responses, manual
++retry and reconnection force a fresh read. Invalidations during a current read
++coalesce into one successor, and the older result cannot restore stale controls.
++Without the capability, generic updates retain pending refresh behavior.
++A due timer also refreshes controls when output stops. Pending and queue panels
++retain their last rows while hidden and start fresh reads when restored. Current
++deadline failures still show the normal retry notice.
++
+ GET client methods accept an optional `{signal}` and have a 35-second request
+ deadline. `reconcileQueue({signal})` also accepts cancellation; other mutation
+ methods retain their existing behavior. Cancellation of a request does not
+@@ -647,6 +680,20 @@ selection. Hosts may use 404 for a temporarily unavailable scope. Browser storag
+ must confirm the updated draft before the card disappears; an already deleted
+ file cannot become ready again while its card awaits local removal.
+ 
++`createUploadClient().list({signal})` accepts cancellation. Metadata GETs have a
++ten-second deadline and preserve body-read cancellation; malformed successful
++JSON is an error. File writes retain their existing outcome and retry rules.
++
++`mountUploads()` loads metadata with one current read and capped retry backoff.
++**Retry file status** retries a failed read. Hiding the document cancels only
++metadata reads and their retry timer; returning to a visible document or
++restoring the page starts a fresh read. The last selection and transfer receipts
++remain intact, and an older listing cannot undo a newer selection, removal or
++transfer result. A successful retry updates composer readiness without reloading,
++including when no files are selected. Draft-storage and configuration failures
++remain visible and do not trigger write retries. Metadata recovery never repeats
++upload creation, chunks, completion, deletion or message submission.
++
+ Upload names are untrusted display metadata. Render them as text, serialize
+ prompt references as JSON, and derive storage paths from application-generated
+ identities. Download responses use MIME filename encoding and attachment
+diff --git a/test/conversation_browser_contract_test.cjs b/test/conversation_browser_contract_test.cjs
+index 4d38ffc..4a94d18 100644
+--- a/test/conversation_browser_contract_test.cjs
++++ b/test/conversation_browser_contract_test.cjs
+@@ -942,7 +942,7 @@ class MemoryStorage {
+       ];
+       recoveryStorage.setItem("codex-web:uploads:/recovery-uploads", JSON.stringify(files));
+       globalThis.fetch = async (_path, options = {}) => ({ok: true, json: async () => options.method === "DELETE" ? {} : {
+-        limits: {fileBytes: 100, promptBytes: 100, files: 10}, files,
++        limits: {chunkBytes: 4, fileBytes: 100, promptBytes: 100, files: 10}, files,
+       }});
+       let recoveryEvents, recoveryThread = "original-thread", observedID = "", recoveryReads = 0;
+       const recoveryCalls = [];
+@@ -1128,6 +1128,97 @@ class MemoryStorage {
+   await new Promise(resolve => setImmediate(resolve));
+   unmountPaged();
+ 
++  // Retired control reads may settle after resume and after its replacement.
++  const originalLaneDocument = globalThis.document;
++  for (const outcome of ["resolve", "reject"]) {
++    globalThis.document = Object.assign(new EventTarget(), originalLaneDocument, {hidden:false});
++    const laneRoot = new FakeElement("main"), pendingCalls = [], queueCalls = [];
++    const deferred = calls => ({signal} = {}) => new Promise((resolve, reject) => calls.push({resolve, reject, signal}));
++    const disposeLane = mountConversation(laneRoot, {id:"lanes", client:{
++      thread: async () => ({threadId:"lanes-thread",status:"idle",entries:[]}),
++      pending:deferred(pendingCalls), queue:deferred(queueCalls),
++    }, capabilities:{send:false,queue:false,interrupt:false,settings:false,respond:false,eventStream:false},
++    refreshPolicy:{warningMs:0, eventDebounceMs:0}});
++    await new Promise(resolve => setImmediate(resolve));
++    globalThis.document.hidden = true; globalThis.document.dispatchEvent(new Event("visibilitychange"));
++    assert(pendingCalls[0].signal.aborted && queueCalls[0].signal.aborted);
++    globalThis.document.hidden = false; globalThis.document.dispatchEvent(new Event("visibilitychange"));
++    await new Promise(resolve => setImmediate(resolve));
++    assert.equal(pendingCalls.length,2); assert.equal(queueCalls.length,2);
++    const freshPending = {id:"fresh",params:{message:"fresh request"}};
++    pendingCalls[1].resolve([freshPending]); queueCalls[1].resolve([{id:"fresh",text:"fresh queue"}]);
++    await new Promise(resolve => setImmediate(resolve));
++    // Reconnection may invalidate a read begun before its current snapshot.
++    // Complete that one coalesced successor, never the retired pre-hide read.
++    for (let index=2; index<pendingCalls.length; index++) pendingCalls[index].resolve([freshPending]);
++    for (let index=2; index<queueCalls.length; index++) queueCalls[index].resolve([{id:"fresh",text:"fresh queue"}]);
++    await new Promise(resolve => setImmediate(resolve));
++    if (outcome === "resolve") {
++      pendingCalls[0].resolve([{id:"old",params:{message:"old request"}}]); queueCalls[0].resolve([{id:"old",text:"old queue"}]);
++    } else {
++      pendingCalls[0].reject(Error("retired failure")); queueCalls[0].reject(Error("retired failure"));
++    }
++    await new Promise(resolve => setImmediate(resolve));
++    const texts = laneRoot.descendants().map(element => element.textContent).join(" ");
++    assert.match(texts,/fresh request/); assert.match(texts,/fresh queue/);
++    assert.doesNotMatch(texts,/old request|old queue|could not be refreshed|retired failure/);
++    disposeLane();
++  }
++  globalThis.document = originalLaneDocument;
++
++  // Typed invalidations bypass the success floor; output alone does not.
++  let controlEvents, controlPending = 0, controlSnapshots = 0, holdControl = false;
++  const controlReads = [];
++  class ControlEvents {
++    listeners = new Map();
++    constructor() {controlEvents = this;}
++    addEventListener(name, callback) {this.listeners.set(name,callback);}
++    close() {}
++  }
++  const controlRoot = new FakeElement("main");
++  const disposeControl = mountConversation(controlRoot,{id:"control-hints",client:{
++    eventsPath:()=>"/control-events",
++    thread:async()=>{controlSnapshots++;return {threadId:"control-thread",status:"idle",entries:[]};},
++    pending:async()=>{controlPending++;return holdControl ? new Promise(resolve=>controlReads.push(resolve)) : [];},
++  },EventSource:ControlEvents,capabilities:{send:false,queueRead:false,queue:false,interrupt:false,settings:false,respond:false},
++  refreshPolicy:{eventDebounceMs:0}});
++  controlEvents.onopen(); controlEvents.listeners.get("ready")({data:'{"heartbeatIntervalMs":20000,"pendingInvalidation":true}'});
++  await new Promise(resolve=>setTimeout(resolve,5));
++  const beforeOutput = controlPending, wallNow = Date.now;
++  try {
++    for(let index=0;index<200;index++) {
++      Date.now = () => wallNow() + index * 500;
++      controlEvents.onmessage(); await new Promise(resolve=>setTimeout(resolve,1));
++    }
++  } finally { Date.now = wallNow; }
++  assert(controlSnapshots>1);
++  assert.equal(controlPending,beforeOutput+6,"two hundred output hints over 100 seconds respect the 15-second success floor");
++  controlEvents.listeners.get("pending")(); await new Promise(resolve=>setImmediate(resolve));
++  assert.equal(controlPending,beforeOutput+7,"real control invalidation must bypass the floor");
++  holdControl = true;
++  controlEvents.listeners.get("pending")(); await new Promise(resolve=>setImmediate(resolve));
++  for(let index=0;index<3;index++) controlEvents.listeners.get("pending")();
++  assert.equal(controlReads.length,1,"invalidation cannot overlap a current control read");
++  controlReads[0]([{id:"obsolete",params:{text:"obsolete control"}}]);
++  await new Promise(resolve=>setImmediate(resolve));
++  assert.equal(controlReads.length,2,"invalidations coalesce into one successor");
++  controlReads[1]([{id:"current",params:{text:"current control"}}]);
++  await new Promise(resolve=>setImmediate(resolve));
++  const controlText = controlRoot.descendants().map(element=>element.textContent).join(" ");
++  assert.match(controlText,/current control/); assert.doesNotMatch(controlText,/obsolete control/);
++  disposeControl();
++
++  const timeoutRoot = new FakeElement("main");
++  const disposeTimeout = mountConversation(timeoutRoot,{id:"timeouts",client:{
++    thread:async()=>({threadId:"timeout-thread",status:"idle",entries:[]}),
++    pending:()=>new Promise(()=>{}),queue:()=>new Promise(()=>{}),
++  },capabilities:{send:false,queue:false,interrupt:false,settings:false,respond:false,eventStream:false},
++  refreshPolicy:{pendingDeadlineMs:5,queueDeadlineMs:5,warningMs:0,retryInitialMs:1000,eventDebounceMs:0}});
++  await new Promise(resolve=>setTimeout(resolve,40));
++  const timeoutText = timeoutRoot.descendants().map(element=>element.textContent).join(" ");
++  assert.match(timeoutText,/Requests could not be refreshed/); assert.match(timeoutText,/Queued messages could not be refreshed/);
++  disposeTimeout();
++
+   // A failed automatic repair must restart after hiding during its backoff.
+   const plainDocument = globalThis.document;
+   globalThis.document = Object.assign(new EventTarget(), plainDocument, {hidden:false});
+@@ -1168,6 +1259,53 @@ class MemoryStorage {
+   assert.equal(repairRoot.descendants().filter(el => el.attributes.class?.startsWith("codex-entry ")).length,3);
+   disposeRepair(); globalThis.document = plainDocument;
+ 
++  // A retired history transport may settle after a resumed repair has started.
++  // Neither settlement may replace rows, invalidate cursors or clear that repair.
++  for (const oldFailure of [false, true]) {
++    globalThis.document = Object.assign(new EventTarget(), plainDocument, {hidden:false});
++    let historyEvents, newestHistoryReads = 0;
++    const heldHistory = [];
++    class HistoryEvents {
++      constructor() {historyEvents = this;}
++      addEventListener() {}
++      close() {}
++    }
++    const historyRoot = new FakeElement("main");
++    const disposeHistory = mountConversation(historyRoot, {id:`late-history-${oldFailure}`, EventSource:HistoryEvents,
++      client:{eventsPath:()=>"/history-events", threadPage:({cursor, signal} = {}) => {
++        if (cursor) return new Promise((resolve,reject) => heldHistory.push({cursor,signal,resolve,reject}));
++        newestHistoryReads++;
++        return Promise.resolve({threadId:"repair-thread",status:"idle",entries:[repairEntry(newestHistoryReads === 1 ? 1 : 3)],
++          hasOlder:true,olderCursor:"repair-cursor"});
++      }},refreshPolicy:{eventDebounceMs:0,historyPageMs:1,retryInitialMs:40,warningMs:0},
++      storage:new MemoryStorage(),conversationPath:`/history/${oldFailure}`,
++      capabilities:{pending:false,queueRead:false,settings:false,send:true,queue:false,interrupt:false,respond:false,eventStream:true}});
++    await until(()=>newestHistoryReads === 1);
++    const historyDraft = historyRoot.descendants().find(el=>el.name === "textarea");
++    historyDraft.value = "Retained draft";
++    historyEvents.onmessage(); await until(()=>heldHistory.length === 1);
++    const historyList = historyRoot.descendants().find(el=>el.name === "ol");
++    const retainedRows = [...historyList.children];
++    globalThis.document.hidden = true; globalThis.document.dispatchEvent(new Event("visibilitychange"));
++    assert.equal(heldHistory[0].signal.aborted,true);
++    globalThis.document.hidden = false; globalThis.document.dispatchEvent(new Event("visibilitychange"));
++    await until(()=>heldHistory.length === 2);
++    if (oldFailure) heldHistory[0].reject(Object.assign(Error("Old cursor expired"),{code:"transcript_cursor_expired"}));
++    else heldHistory[0].resolve({threadId:"repair-thread",status:"idle",entries:[repairEntry(99)],hasOlder:false});
++    await new Promise(resolve=>setImmediate(resolve));
++    assert.deepEqual(historyList.children,retainedRows,"retired history cannot replace retained row nodes");
++    assert.equal(historyDraft.value,"Retained draft");
++    assert.equal(historyRoot.descendants().find(el=>el.attributes.class === "codex-history-controls").children[1].textContent,"");
++    assert.equal(heldHistory.length,2,"old completion cannot schedule another repair or clear its successor");
++    assert.equal(heldHistory[1].signal.aborted,false);
++    assert.equal(heldHistory[1].cursor,"repair-cursor","resume preserves paging authority");
++    heldHistory[1].resolve({threadId:"repair-thread",status:"idle",entries:[repairEntry(1),repairEntry(2)],hasOlder:false});
++    await until(()=>historyList.children.length === 3);
++    assert.doesNotMatch(historyList.descendants().map(el=>el.textContent).join(" "),/Entry 99/);
++    assert.equal(historyDraft.value,"Retained draft");
++    disposeHistory(); globalThis.document = plainDocument;
++  }
++
+   const promptRoot = new FakeElement("main");
+   const promptActions = [];
+   const promptClient = {
+diff --git a/test/sync_browser_contract_test.cjs b/test/sync_browser_contract_test.cjs
+index eb73b1f..6609b06 100644
+--- a/test/sync_browser_contract_test.cjs
++++ b/test/sync_browser_contract_test.cjs
+@@ -255,12 +255,13 @@ test("the advertised heartbeat interval determines the stream deadline", async t
+ });
+ 
+ 
+-test("brief focus refresh keeps the healthy stream and stays quiet", async t => {
++test("brief hiding closes the stream and resumes one quiet replacement", async t => {
+   const f = await fixture(t); f.open(); await f.clock.advance(0);
+   f.browser.hidden = true; f.emit("visibilitychange"); await f.clock.advance(1000);
+   f.browser.hidden = false; f.emit("visibilitychange"); f.emit("focus");
+-  assert.equal(f.sources.length, 1);
+-  assert.equal(f.reads.length, 1);
++  assert.equal(f.sources.length, 2);
++  assert.equal(f.sources[0].closed, true);
++  f.open();
+   assert.equal(f.state().showWarning, false);
+   await f.clock.advance(0);
+   assert.equal(f.state().status, "connected");
+@@ -284,3 +285,48 @@ test("access errors bypass the recovery grace", async t => {
+   const {connectionMessage} = await moduleReady;
+   assert.match(connectionMessage(f.state()), /access denied/i);
+ });
++
++test("fifty loaded documents release hidden streams, reads and all timers", async t => {
++  const documents = [];
++  for (let i = 0; i < 50; i++) {
++    const f = await fixture(t); f.open(); await f.clock.advance(0); documents.push(f);
++    f.browser.hidden = true; f.emit("visibilitychange");
++    assert.equal(f.sources[0].closed, true);
++    assert.equal(f.clock.timers.size, 0);
++    f.sources[0].event("message"); f.sources[0].event("error");
++    await f.clock.advance(120_000);
++    assert.equal(f.reads.length, 1);
++    assert.equal(f.sources.length, 1);
++  }
++  const foreground = documents[0];
++  foreground.browser.hidden = false;
++  for (const event of ["visibilitychange", "pageshow", "focus", "online"]) foreground.emit(event);
++  assert.equal(foreground.sources.length, 2);
++  foreground.open(); await foreground.clock.advance(0);
++  assert.equal(foreground.reads.length, 2);
++  assert.equal(foreground.state().status, "connected");
++});
++
++test("initially hidden and restored documents create only current resources", async t => {
++  const page = new Browser(); page.hidden = true;
++  const f = await fixture(t, {controller: {document: page}});
++  assert.equal(f.sources.length, 0); assert.equal(f.clock.timers.size, 0);
++  page.hidden = false; page.dispatchEvent(new Event("visibilitychange"));
++  f.open(); await f.clock.advance(0);
++  assert.equal(f.sources.length, 1); assert.equal(f.reads.length, 1);
++});
++
++test("pending invalidations require current advertised stream capability", async t => {
++  let hints = 0;
++  const f = await fixture(t, {controller: {onPendingInvalidation: () => hints++}});
++  f.open();
++  f.sources[0].event("pending"); assert.equal(hints, 0);
++  f.sources[0].event("ready", '{"heartbeatIntervalMs":20000,"pendingInvalidation":true}');
++  assert.equal(f.sync.pendingInvalidationSupported, true);
++  f.sources[0].event("pending"); assert.equal(hints, 1);
++  f.browser.hidden = true; f.emit("visibilitychange");
++  assert.equal(f.sync.pendingInvalidationSupported, false);
++  f.sources[0].event("pending"); assert.equal(hints, 1);
++  f.browser.hidden = false; f.emit("visibilitychange");
++  f.open(); assert.equal(f.sync.pendingInvalidationSupported, false);
++});
+diff --git a/test/uploads_browser_contract_test.cjs b/test/uploads_browser_contract_test.cjs
+index 28a1bf2..e42b929 100644
+--- a/test/uploads_browser_contract_test.cjs
++++ b/test/uploads_browser_contract_test.cjs
+@@ -139,7 +139,7 @@ async function uploadComposer(t, options = {}) {
+   const events = new EventTarget();
+   for (const [key, value] of Object.entries({
+     addEventListener: events.addEventListener.bind(events), removeEventListener: events.removeEventListener.bind(events),
+-    document: {createElement: () => new Element(), createElementNS: () => new Element()},
++    document: Object.assign(new EventTarget(), {hidden:false, createElement: () => new Element(), createElementNS: () => new Element()}),
+   })) {
+     const descriptor = Object.getOwnPropertyDescriptor(globalThis, key);
+     Object.defineProperty(globalThis, key, {value, configurable: true});
+@@ -197,6 +197,8 @@ async function uploadComposer(t, options = {}) {
+   };
+   return {
+     client, calls, files, changes, card, click, cards, storage,
++    refresh: () => upload.refresh(),
++    page: globalThis.document, events,
+     summary: () => root.children.find((child) => child.className === 'codex-upload-summary'),
+     notice: () => root.children.find((child) => child.className === 'codex-upload-notice'),
+     lock: (value) => upload.lock(value), clear: () => upload.clear(),
+@@ -659,3 +661,101 @@ test('numbering storage failures prevent upload creation and submission', async
+   await eventually(() => composer.ready());
+   assert.deepEqual(composer.saved().map(file => file.name), ['image-1.png', 'image-2.png']);
+ });
++
++test('failed metadata read recovers empty composer without replaying writes', async t => {
++  let reads = 0;
++  const composer = await uploadComposer(t, {client:{list:async()=>{
++    if (++reads === 1) throw Error('Temporary metadata failure');
++    return {limits,files:[]};
++  }}});
++  assert.equal(composer.ready(),false); assert.match(composer.notice().textContent,/Temporary/);
++  await composer.refresh();
++  assert.equal(composer.ready(),true); assert.equal(composer.changes.at(-1).ready,true);
++  assert.equal(composer.notice().textContent,'');
++  assert.deepEqual(composer.calls,{create:[],remove:[],append:[]});
++});
++
++test('metadata cancellation retires old ownership before real visible resume', async t => {
++  const reads=[];
++  const composer = await uploadComposer(t);
++  composer.client.list=({signal})=>new Promise((resolve,reject)=>reads.push({signal,resolve,reject}));
++  const old = composer.refresh(); await new Promise(resolve=>setImmediate(resolve));
++  composer.page.hidden=true; composer.page.dispatchEvent(new Event('visibilitychange'));
++  assert.equal(reads[0].signal.aborted,true);
++  composer.page.hidden=false; composer.page.dispatchEvent(new Event('visibilitychange'));
++  await new Promise(resolve=>setImmediate(resolve));
++  assert.equal(reads.length,2);
++  const same = composer.refresh();
++  reads[0].resolve({limits,files:[{id,name:'obsolete.txt',state:'ready'}]});
++  await old;
++  assert.equal(composer.refresh(),same,'old finally cannot release the replacement');
++  reads[1].resolve({limits,files:[]}); await same;
++  assert.equal(composer.ready(),true); assert.equal(composer.count(),0);
++  assert.deepEqual(composer.calls,{create:[],remove:[],append:[]});
++});
++
++test('metadata response cannot restore a removed selection or stale transfer status', async t => {
++  const selected={id,clientId:id,name:'selected.txt',size:1,state:'ready'};
++  const composer=await uploadComposer(t,{saved:[selected],files:[selected]});
++  let release;
++  composer.client.list=()=>new Promise(resolve=>{release=resolve;});
++  const read=composer.refresh(); await new Promise(resolve=>setImmediate(resolve));
++  composer.clear();
++  release({limits,files:[{...selected,state:'uploading'}]}); await read;
++  assert.equal(composer.count(),0); assert.equal(composer.ready(),true);
++  assert.deepEqual(composer.saved(),[]);
++});
++
++test('metadata GET preserves body abort and rejects malformed successful JSON', async t => {
++  const {createUploadClient}=await modules;
++  const abort=new AbortController();
++  const client=createUploadClient('/files',{fetch:async(_url,{signal})=>({ok:true,status:200,
++    json:()=>new Promise((resolve,reject)=>signal.addEventListener('abort',()=>reject(signal.reason),{once:true}))})});
++  const read=client.list({signal:abort.signal}); await new Promise(resolve=>setImmediate(resolve));
++  abort.abort(new Error('retired metadata')); await assert.rejects(read,/retired metadata/);
++  const malformed=createUploadClient('/files',{fetch:async()=>({ok:true,status:200,json:async()=>{throw new SyntaxError('bad');}})});
++  await assert.rejects(malformed.list(),/Invalid file status response/);
++});
++
++test('automatic metadata backoff retries only reads and restores readiness', async t => {
++  t.mock.timers.enable({apis:['setTimeout']});
++  let reads=0;
++  const composer=await uploadComposer(t,{client:{list:async()=>{
++    if(++reads===1) throw Error('transient read');
++    return {limits,files:[]};
++  }}});
++  assert.equal(reads,1); assert.equal(composer.ready(),false);
++  t.mock.timers.tick(1999); await new Promise(resolve=>setImmediate(resolve)); assert.equal(reads,1);
++  t.mock.timers.tick(1); await new Promise(resolve=>setImmediate(resolve));
++  assert.equal(reads,2); assert.equal(composer.ready(),true);
++  assert.deepEqual(composer.calls,{create:[],remove:[],append:[]});
++});
++
++test('hung metadata reaches its deadline and releases the read for recovery', async t => {
++  t.mock.timers.enable({apis:['setTimeout']});
++  const composer=await uploadComposer(t);
++  let release, signal;
++  composer.client.list=options=>new Promise(resolve=>{release=resolve;signal=options.signal;});
++  const read=composer.refresh(); await new Promise(resolve=>setImmediate(resolve));
++  t.mock.timers.tick(10_000); await read;
++  assert.equal(signal.aborted,true); assert.match(composer.notice().textContent,/File status request timed out/);
++  composer.client.list=async()=>({limits,files:[]});
++  await composer.refresh();
++  release({limits:null,files:[]}); await new Promise(resolve=>setImmediate(resolve));
++  assert.equal(composer.ready(),true); assert.equal(composer.notice().textContent,'');
++  assert.deepEqual(composer.calls,{create:[],remove:[],append:[]});
++});
++
++test('metadata storage failure stays visible without automatic retries', async t => {
++  t.mock.timers.enable({apis:['setTimeout']});
++  const composer=await uploadComposer(t);
++  let reads=0;
++  composer.client.list=async()=>{reads++;return {limits,files:[]};};
++  composer.failWrites(true); await composer.refresh();
++  assert.equal(composer.ready(),false); assert.match(composer.notice().textContent,/Storage write failed/);
++  t.mock.timers.tick(30_000); await new Promise(resolve=>setImmediate(resolve));
++  assert.equal(reads,1,'storage failure cannot loop as transient metadata failure');
++  composer.failWrites(false); await composer.refresh();
++  assert.equal(reads,2); assert.equal(composer.ready(),true);
++  assert.deepEqual(composer.calls,{create:[],remove:[],append:[]});
++});

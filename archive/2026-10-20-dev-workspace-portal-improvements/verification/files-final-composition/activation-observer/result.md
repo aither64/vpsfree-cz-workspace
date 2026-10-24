@@ -1,0 +1,1 @@
+Observation is incomplete. `latest-attempt.json` exists, but it does not contain an attempt identifier in the expected fields (`attemptId`, `attempt`, or `id`). I stopped without reading other files or invoking any commands. No driver status or result is inferred.

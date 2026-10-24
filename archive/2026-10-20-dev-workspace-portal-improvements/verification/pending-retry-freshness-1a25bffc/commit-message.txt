@@ -1,0 +1,9 @@
+fixup! portal: retire paused read cycles and recover on tab resume
+
+Expire pending-read freshness only after a current read fails so its retry
+uses the existing backoff instead of waiting for an earlier success window.
+Retain shown questions, notice history and all current-cycle guards.
+
+Cover recent-success failure recovery, capped backoff, restored freshness,
+retired failures and access status using the shipped read function. Refresh
+the app asset revision so new pages load the correction.

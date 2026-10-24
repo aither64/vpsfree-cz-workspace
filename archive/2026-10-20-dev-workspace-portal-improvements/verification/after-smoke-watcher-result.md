@@ -1,0 +1,5 @@
+Result: **passed** (exit 0). The assigned post-deployment smoke completed in 11.877 seconds for application package `hzf9qda2ckjsv72b689bclc6p3v8ap9l`.
+
+The captured checks report continuity, assets, catalog defaults and counts, and naming process/catalog readiness all passed. Naming readiness did not verify a naming turn. The unauthenticated HTTPS check returned 401 as expected.
+
+Artifacts are in `verification/deployment-smoke/`: [after-batch-result.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/deployment-smoke/after-batch-result.json), [after.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/deployment-smoke/after.log), and [naming-after.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/deployment-smoke/naming-after.log). No operation remains running.

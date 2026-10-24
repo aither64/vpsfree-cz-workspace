@@ -1,0 +1,408 @@
+diff --git a/README.md b/README.md
+index 23b3a70..f8edc7e 100644
+--- a/README.md
++++ b/README.md
+@@ -28,7 +28,7 @@ compatibility removal procedures.
+ The [Codex provider guide](docs/codex-providers.md) covers limits previews,
+ session selection, automatic pause/resume, workspace defaults, catalog
+ configuration and interrupted-switch recovery.
+-The [coordination guide](docs/coordination.md) covers resource claims, waiting-session
++The [coordination guide](docs/coordination.md) covers short merge locks, machine reservations, waiting-session
+ notifications and [operations/recovery](docs/coordination-operations.md).
+ The [integration guide](docs/integration.md) covers retained resumable operation batches,
+ mechanical refresh certificates and cached verification.
+diff --git a/docs/coordination.md b/docs/coordination.md
+index ab95851..ad31e69 100644
+--- a/docs/coordination.md
++++ b/docs/coordination.md
+@@ -1,9 +1,10 @@
+ # Resource claims and session notifications
+ 
+-The coordinator gives sessions exclusive ownership of repository and machine
+-resources. Sessions run their own commands, manage environments and hook trust,
+-verify results and release ownership. The coordinator records owners and waiters
+-and notifies a waiting session when its claim is granted.
++The coordinator serializes integration into shared branches and reserves machines
++for deployment. Sessions develop independently in their own worktrees. Repository
++claims are short merge locks; machine claims are deployment reservations. Sessions
++run commands, verify effects and explicitly release ownership. Queued requests
++notify their waiting session when granted.
+ 
+ ## Acquire resources
+ 
+@@ -13,7 +14,7 @@ Use a schema-1 request with a fresh lowercase UUID `requestId`:
+ {
+   "schema": 1,
+   "requestId": "11111111-1111-4111-8111-111111111111",
+-  "label": "Publish reviewed feature",
++  "label": "Merge approved feature into master",
+   "repositories": ["project"],
+   "machines": []
+ }
+@@ -45,23 +46,49 @@ owner. Request the complete set initially or use separate disjoint claims.
+ 
+ ## Execute and release
+ 
+-After acquiring resources, use ordinary project tools in the session's worktrees.
+-Enter its development environment and run required hooks normally. The coordinator
+-creates no checkout, installs no dependencies and never signs configuration.
+-Repository ownership covers the canonical remote and common Git directory, so
+-participating linked worktrees serialize changes to shared Git and hook trust.
+-Machine aliases share one physical resource.
+-
+-This is cooperative locking. Git and deployment tools do not intercept arbitrary
+-commands to enforce a claim. Every participating session must acquire resources
+-before their shared mutations, including changes to hook trust. Keep required
+-project checks and user approval gates in the session workflow. Build and copy
+-large artifacts before taking machine ownership when the tool supports that
+-separation. Shared tracking commits also retain their ordinary
+-`dev-session-tracking.lock` exclusion.
+-
+-Verify effects using the tool's own logs and state. For example, Git can exit zero
+-after a failing post-merge hook. A claim certifies exclusive ownership only.
++Independent feature work needs no repository claim. This includes edits, commits,
++rebases, dependency updates, feature-branch pushes, hook preparation, builds,
++tests, review and waiting for approval. A merge waiter can continue such work in
++its own worktree. Git retains its ordinary file and ref locks.
++
++Prepare the reviewed feature, clean target checkout, environment and hook trust
++before requesting a merge lock. Obtain integration approval first. Acquire only
++the repository being integrated, immediately before these steps:
++
++1. Recheck the exact feature head, clean target checkout and current remote target.
++2. Perform the approved fast-forward merge and required hooks.
++3. Push normally and prove the resulting remote ref.
++4. Release immediately, before CI monitoring, records, artifact registration or
++   disposable checkout cleanup.
++
++If the target moved, release and reconcile outside the claim. If a hook fails or
++needs intervention, stop commands and inspect effects before release, then repair
++and verify outside ownership. Git can exit zero after a failing post-merge hook;
++inspect hook results before pushing. A rejected push or interrupted command needs
++an actual ref check. Retain ownership for an uncertain shared mutation only while
++actively reconciling its effects. Do not wait for operator input with a known-safe
++repository held. Never hold merge locks during development, tests or review, and
++do not reserve several repositories for a sequential integration batch.
++
++Linked worktrees share Git configuration. Repository tools own configuration and
++plugin trust; the coordinator never signs, changes trust or runs commands. A trust
++mismatch returns to preparation and does not justify a development-wide claim.
++Required hooks and signature checks remain enabled.
++
++Machine reservations are separate: build and copy artifacts before ownership when
++supported, then acquire only the physical machine near activation. Keep its
++reservation through deployment, live review and feedback. Do not bundle repository
++claims into a deployment reservation.
++
++This is cooperative locking. Tools do not intercept arbitrary commands. The claim
++certifies exclusive integration or deployment ownership, not command success.
++Shared tracking writes use their short `dev-session-tracking.lock`; they do not
++need a durable repository claim for independent session bookkeeping. Integration
++from that same shared checkout takes the repository claim first, then tries the
++tracking lock without waiting. If it is busy, release the claim and retry after
++the writer finishes. Hold both only across the final target check, merge/hooks,
++push and remote proof. Preserve unrelated dirty paths and index entries in the
++shared checkout; disposable targets must be clean.
+ 
+ ```sh
+ dev-session coordination release SESSION --as-is --id CLAIM_UUID --json
+diff --git a/portal/internal/teamruntime/runtime.go b/portal/internal/teamruntime/runtime.go
+index 743fc92..df1bda4 100644
+--- a/portal/internal/teamruntime/runtime.go
++++ b/portal/internal/teamruntime/runtime.go
+@@ -248,7 +248,7 @@ func memberPolicy(workspace, slug string, member Member) (codex.ThreadPolicy, er
+ 	if !session.ValidSlug(slug) || workspace == "" || member.Address == "" {
+ 		return codex.ThreadPolicy{}, errors.New("member policy has incomplete session identity")
+ 	}
+-	identity := fmt.Sprintf("This Codex conversation is bound to development session %q in workspace %q as team member %q. Before working on session files, run dev-session current and confirm it prints this session slug. DEV_SESSION_SLUG and DEV_SESSION_WORKSPACE must either both be absent or both match this binding. Stop and report any mismatch. Before merging or deploying, read the selected package instructions with workspace-host coordination guide. Acquire repository or machine claims for catalog-covered mutations, execute and verify your own commands, then explicitly release ownership. Keep resource waits interruptible; queued claims notify the session when granted.\n\n", slug, workspace, member.Address)
++	identity := fmt.Sprintf("This Codex conversation is bound to development session %q in workspace %q as team member %q. Before working on session files, run dev-session current and confirm it prints this session slug. DEV_SESSION_SLUG and DEV_SESSION_WORKSPACE must either both be absent or both match this binding. Stop and report any mismatch. %s\n\n", slug, workspace, member.Address, workspacecodex.CoordinationInstructions)
+ 	return codex.ThreadPolicy{DeveloperInstructions: session.SensitiveInstructions(workspace, slug) + identity + instructions, Sandbox: sandbox}, nil
+ }
+ 
+diff --git a/portal/internal/teamruntime/runtime_test.go b/portal/internal/teamruntime/runtime_test.go
+index 383176d..739fbc6 100644
+--- a/portal/internal/teamruntime/runtime_test.go
++++ b/portal/internal/teamruntime/runtime_test.go
+@@ -2353,7 +2353,8 @@ func TestMemberPolicyBindsSessionAndRetainsInstructions(t *testing.T) {
+ 	if policy.Sandbox != "read-only" || !strings.Contains(policy.DeveloperInstructions, "2026-09-24-example") ||
+ 		!strings.Contains(policy.DeveloperInstructions, "/srv/workspace") ||
+ 		!strings.Contains(policy.DeveloperInstructions, "analyst0") ||
+-		!strings.Contains(policy.DeveloperInstructions, "workspace-host coordination guide") ||
++		!strings.Contains(policy.DeveloperInstructions, workspacecodex.CoordinationInstructions) ||
++		strings.Contains(policy.DeveloperInstructions, "claims for catalog-covered mutations") ||
+ 		!strings.HasSuffix(policy.DeveloperInstructions, member.Instructions) {
+ 		t.Fatalf("member policy = %#v", policy)
+ 	}
+diff --git a/portal/internal/workspacecodex/lead_policy.go b/portal/internal/workspacecodex/lead_policy.go
+index 658f584..391d059 100644
+--- a/portal/internal/workspacecodex/lead_policy.go
++++ b/portal/internal/workspacecodex/lead_policy.go
+@@ -28,6 +28,17 @@ const leadDeveloperInstructions = "You are the lead and user contact of this dev
+ 	"Respect user directions and the current collaboration mode. Do not replace retained members with fresh " +
+ 	"agents for their roles, invent members or address another session's team."
+ 
++// CoordinationInstructions is refreshed for lead and member technical bindings;
++// retained role instructions remain separate.
++const CoordinationInstructions = "Before merging or deploying, read the selected package's instructions with workspace-host coordination guide. " +
++	"Independent feature work needs no repository claim: edit, commit, rebase, push feature branches, prepare hooks, test and review in your own worktree. " +
++	"Acquire one repository merge claim only after integration approval and preparation are complete. " +
++	"Keep its critical section to the fresh target check, merge with required hooks, push and remote verification; explicitly release ownership before CI, records or cleanup. " +
++	"Shared workspace master integration also takes dev-session-tracking.lock after the claim; if that lock is busy, release the claim instead of waiting. " +
++	"If preparation is stale or needs intervention, stop commands, inspect effects and release before repairing outside the claim. Reconcile uncertain mutations before release. " +
++	"Never hold a repository claim while waiting for approval, review or tests. Use separate machine reservations for deployment and live review, with builds and copies prepared beforehand. " +
++	"Keep resource waits interruptible; queued claims notify the session when granted."
++
+ // LeadThreadPolicy applies only to the normal root conversation. A catalog
+ // instruction is frozen when the session is created; legacy sessions retain
+ // the exact original lead instruction. The technical binding is always fresh
+@@ -43,10 +54,7 @@ func LeadThreadPolicy(slug, workspace, roleInstructions string) codex.ThreadPoli
+ 			"and require its result to match this exact session slug. DEV_SESSION_SLUG and "+
+ 			"DEV_SESSION_WORKSPACE must either both be absent or both match this binding; a mismatch "+
+ 			"means stop rather than claiming another session. A missing shell environment "+
+-			"marker alone does not negate this thread-bound identity. Before merging or deploying, "+
+-			"read the selected package's instructions with workspace-host coordination guide. "+
+-			"Acquire repository or machine claims for catalog-covered mutations, execute and verify your own commands, then explicitly release ownership. "+
+-			"Keep resource waits interruptible; queued claims notify the session when granted.\n\n%s",
++			"marker alone does not negate this thread-bound identity. "+CoordinationInstructions+"\n\n%s",
+ 			slug, workspace, instructions)
+ 	}
+ 	return codex.ThreadPolicy{DeveloperInstructions: session.SensitiveInstructions(workspace, slug) + instructions}
+diff --git a/portal/internal/workspacecodex/lead_policy_test.go b/portal/internal/workspacecodex/lead_policy_test.go
+index 6235b58..2d4a5fd 100644
+--- a/portal/internal/workspacecodex/lead_policy_test.go
++++ b/portal/internal/workspacecodex/lead_policy_test.go
+@@ -11,11 +11,16 @@ func TestLeadPolicyBindsSessionWithoutReplacingFrozenRoleInstructions(t *testing
+ 	const roleInstructions = "Coordinate the assigned work."
+ 	policy := LeadThreadPolicy(slug, workspace, roleInstructions)
+ 	for _, expected := range []string{slug, workspace, "dev-session current", roleInstructions,
+-		"DEV_SESSION_SLUG", "DEV_SESSION_WORKSPACE", "workspace-host coordination guide", "explicitly release ownership", "queued claims notify the session"} {
++		"DEV_SESSION_SLUG", "DEV_SESSION_WORKSPACE", "workspace-host coordination guide", "explicitly release ownership", "queued claims notify the session",
++		"Independent feature work needs no repository claim", "push feature branches", "only after integration approval and preparation are complete",
++		"before CI, records or cleanup", "Never hold a repository claim while waiting", "separate machine reservations"} {
+ 		if !strings.Contains(policy.DeveloperInstructions, expected) {
+ 			t.Errorf("lead policy missing %q", expected)
+ 		}
+ 	}
++	if strings.Contains(policy.DeveloperInstructions, "claims for catalog-covered mutations") {
++		t.Fatal("technical binding still requires claims for independent development")
++	}
+ 	_, retained, found := strings.Cut(policy.DeveloperInstructions, "\n\n")
+ 	if !found || retained != roleInstructions {
+ 		t.Fatalf("binding rewrote frozen instructions: %q", retained)
+diff --git a/test/coordination_claims_overcommit_test.rb b/test/coordination_claims_overcommit_test.rb
+index 68db542..9b7209e 100644
+--- a/test/coordination_claims_overcommit_test.rb
++++ b/test/coordination_claims_overcommit_test.rb
+@@ -5,7 +5,7 @@
+ require_relative 'coordination_claims_test'
+ 
+ class CoordinationClaimsTest
+-  def test_overcommit_session_owns_trust_checkouts_merge_and_push_while_claim_is_held
++  def test_overcommit_preparation_and_repairs_stay_outside_merge_claims
+     overcommit = ENV['COORDINATION_OVERCOMMIT']
+     skip 'explicit disposable Overcommit installation required' unless overcommit
+     version, error, status = Open3.capture3(overcommit, '--version')
+@@ -64,8 +64,7 @@ class CoordinationClaimsTest
+     git('-C', feature, 'commit', '-am', 'fixture feature hooks')
+     head = git('-C', feature, 'rev-parse', 'HEAD').strip
+     original_base = git('-C', @bare, 'rev-parse', 'master').strip
+-    claim = acquire(person)
+-    assert_equal 'held', claim['state']
++    assert_empty @engine.store.held_claim_resources
+     outputs = {}
+     # These are ordinary session tools, never coordinator-executed commands.
+     run = lambda do |cwd, argv|
+@@ -89,20 +88,41 @@ class CoordinationClaimsTest
+     hook_types.each { |type| assert_equal 'succeeded', run.call(feature, [overcommit, '--sign', type.tr('_', '-')])['state'] }
+     assert_equal 'succeeded', run.call(feature, ['git', 'checkout', person['slug']])['state']
+     assert_equal original_base, git('-C', @bare, 'rev-parse', 'master').strip
++    assert_empty @engine.store.held_claim_resources
++    merge_blocker = File.join(@bare, 'fail_post_merge')
++    File.write(merge_blocker, 'deliberate fixture hook failure')
++    claim = acquire(person)
++    assert_equal 'held', claim['state']
++    assert_equal original_base, git('--git-dir', @remote, 'rev-parse', 'master').strip
++    # Git returns zero even when its post-merge hook fails. The session must
++    # inspect hook diagnostics before deciding whether publication is safe.
++    assert_equal 'succeeded', run.call(target, ['git', 'merge', '--ff-only', head])['state']
++    assert_includes outputs['last'], 'fixture deliberate failure'
++    assert_equal head, git('-C', target, 'rev-parse', 'HEAD').strip
++    assert_equal original_base, git('--git-dir', @remote, 'rev-parse', 'master').strip
++    @engine.change_claim(person, claim['id'], 'release')
++    File.unlink(merge_blocker)
++    assert_equal 'succeeded', run.call(target, ['git', 'hook', 'run', 'post-merge', '--', '0'])['state']
++    assert_empty @engine.store.held_claim_resources
+     blocker = File.join(@bare, 'fail_pre_push')
+     File.write(blocker, 'deliberate fixture hook failure')
+-    result = run.call(target, ['sh', '-c', 'git merge --ff-only "$1" && git push origin "$1:refs/heads/master"', 'fixture', head])
++    claim = acquire(person)
++    result = run.call(target, ['git', 'push', 'origin', "#{head}:refs/heads/master"])
+     assert_equal 'failed', result['state']
+     assert_includes outputs['last'], 'fixture deliberate failure'
+     assert_equal original_base, git('--git-dir', @remote, 'rev-parse', 'master').strip
+     assert_equal head, git('-C', target, 'rev-parse', 'HEAD').strip
++    @engine.change_claim(person, claim['id'], 'release')
+     File.unlink(blocker)
++    assert_empty @engine.store.held_claim_resources
++    claim = acquire(person)
++    assert_equal original_base, git('--git-dir', @remote, 'rev-parse', 'master').strip
+     assert_equal 'succeeded', run.call(target, ['git', 'push', 'origin', "#{head}:refs/heads/master"])['state']
+     assert_equal head, git('--git-dir', @remote, 'rev-parse', 'master').strip
+-    calls = File.readlines(File.join(@bare, 'probe.log'), chomp: true)
+-    assert_equal %w[post_checkout post_checkout post_checkout post_merge pre_push pre_push], calls
+-    assert_equal 'held', @engine.store.claims['claims'][claim['id']]['state']
+     @engine.change_claim(person, claim['id'], 'release')
++    calls = File.readlines(File.join(@bare, 'probe.log'), chomp: true)
++    assert_equal %w[post_checkout post_checkout post_checkout post_merge post_merge pre_push pre_push], calls
++    assert_empty @engine.store.held_claim_resources
+     refute File.exist?(File.join(@engine.store.root, 'sources'))
+   end
+ end
+diff --git a/test/coordination_claims_test.rb b/test/coordination_claims_test.rb
+index 3672d13..c93b86f 100644
+--- a/test/coordination_claims_test.rb
++++ b/test/coordination_claims_test.rb
+@@ -45,6 +45,143 @@ class CoordinationClaimsTest < Minitest::Test
+     assert_raises(WorkspaceCoordination::Error) { acquire(person, argv: ['true']) }
+   end
+ 
++  def test_feature_commits_rebases_and_publication_continue_during_merge_ownership
++    first, second = owner('merge-ready'), owner('independent-feature')
++    first_tree, second_tree = feature(first), feature(second)
++    target = File.join(@tmp, 'merge-target')
++    git('-C', @bare, 'worktree', 'add', '--detach', target, @base)
++    assert_empty @engine.store.held_claim_resources
++
++    held, waiting = acquire(first), acquire(second)
++    assert_equal %w[held waiting], [held, waiting].map { |item| item['state'] }
++    File.write(File.join(second_tree, 'dependency'), 'independent update')
++    git('-C', second_tree, 'add', 'dependency')
++    git('-C', second_tree, 'commit', '-m', 'fixture dependency update')
++    git('-C', second_tree, 'push', 'origin', second['slug'])
++    published = git('-C', second_tree, 'rev-parse', 'HEAD').strip
++
++    first_head = git('-C', first_tree, 'rev-parse', 'HEAD').strip
++    git('-C', target, 'merge', '--ff-only', first_head)
++    git('-C', target, 'push', 'origin', 'HEAD:refs/heads/master')
++    assert_equal first_head, git('-C', @remote, 'rev-parse', 'master').strip
++
++    # Feature publication and reconciliation need no grant, even while another
++    # session still verifies its merge under ownership of this common Git dir.
++    git('-C', second_tree, 'fetch', 'origin', 'master')
++    git('-C', second_tree, 'rebase', 'FETCH_HEAD')
++    git('-C', second_tree, 'push', "--force-with-lease=refs/heads/#{second['slug']}:#{published}", 'origin', second['slug'])
++    second_head = git('-C', second_tree, 'rev-parse', 'HEAD').strip
++    assert_equal second_head, git('-C', @remote, 'rev-parse', second['slug']).strip
++    assert_equal 'waiting', @engine.store.claims['claims'][waiting['id']]['state']
++    @engine.change_claim(first, held['id'], 'release')
++    @engine.tick_claims(second)
++    assert_equal 'held', @engine.store.claims['claims'][waiting['id']]['state']
++    @engine.change_claim(second, waiting['id'], 'release')
++  end
++
++  def test_slow_preparation_and_post_push_checks_do_not_hold_merge_ownership
++    first, second = owner('checking-feature'), owner('ready-feature')
++    first_tree, second_tree = feature(first), feature(second)
++    target = File.join(@tmp, 'ready-target')
++    stale_target = File.join(@tmp, 'stale-target')
++    git('-C', @bare, 'worktree', 'add', '--detach', target, @base)
++    git('-C', @bare, 'worktree', 'add', '--detach', stale_target, @base)
++    entered, proceed = Queue.new, Queue.new
++    checker = Thread.new do
++      entered << :preparation
++      proceed.pop
++      git('-C', first_tree, 'fetch', 'origin', 'master')
++      git('-C', first_tree, 'rebase', 'FETCH_HEAD')
++      git('-C', first_tree, 'push', 'origin', first['slug'])
++      entered << :published
++    end
++    begin
++      Timeout.timeout(5) do
++        assert_equal :preparation, entered.pop
++        assert_empty @engine.store.held_claim_resources
++        held = acquire(second)
++        head = git('-C', second_tree, 'rev-parse', 'HEAD').strip
++        git('-C', target, 'merge', '--ff-only', head)
++        git('-C', target, 'push', 'origin', 'HEAD:refs/heads/master')
++        assert_equal head, git('-C', @remote, 'rev-parse', 'master').strip
++        @engine.change_claim(second, held['id'], 'release')
++        # The first session is still paused in slow preparation. Post-push
++        # checks and checkout cleanup run after the second session released.
++        assert checker.alive?
++        assert_empty @engine.store.held_claim_resources
++        git('-C', @bare, 'worktree', 'remove', target)
++        # Preparation became stale while another integration finished. A short
++        # preflight detects that and releases before the blocked rebase resumes.
++        stale_claim = acquire(first)
++        remote_head = git('-C', @remote, 'rev-parse', 'master').strip
++        refute_equal @base, remote_head
++        assert_equal @base, git('-C', stale_target, 'rev-parse', 'HEAD').strip
++        @engine.change_claim(first, stale_claim['id'], 'release')
++        assert_empty @engine.store.held_claim_resources
++        git('-C', @bare, 'worktree', 'remove', stale_target)
++        proceed << :continue
++        assert_equal :published, entered.pop
++        checker.value
++        assert_empty @engine.store.held_claim_resources
++      end
++    ensure
++      checker.kill if checker.alive?
++      checker.join
++    end
++  end
++
++  def test_shared_checkout_tracking_writer_is_excluded_only_during_merge
++    first, second = owner('shared-merge'), owner('parallel-feature')
++    first_tree, second_tree = feature(first), feature(second)
++    shared = File.join(@tmp, 'shared-master')
++    git('clone', @remote, shared)
++    git('-C', shared, 'fetch', @bare, first['slug'])
++    git('-C', shared, 'config', 'user.name', 'Fixture')
++    git('-C', shared, 'config', 'user.email', 'fixture@example.test')
++    path = File.join(shared, '.git', 'dev-session-tracking.lock')
++    writer = nil
++    attempted = Queue.new
++    held = acquire(first)
++    begin
++      File.open(path, 'w') do |merge_lock|
++        assert merge_lock.flock(File::LOCK_EX | File::LOCK_NB)
++        writer = Thread.new do
++          File.open(path, 'r+') do |tracking_lock|
++            busy = !tracking_lock.flock(File::LOCK_EX | File::LOCK_NB)
++            attempted << busy
++            tracking_lock.flock(File::LOCK_EX)
++            File.write(File.join(shared, 'tracking'), 'independent session records')
++            git('-C', shared, 'add', 'tracking')
++            git('-C', shared, 'commit', '-m', 'fixture tracking checkpoint')
++          end
++        end
++        assert Timeout.timeout(5) { attempted.pop }
++        git('-C', second_tree, 'push', 'origin', second['slug'])
++        assert_equal @base, git('-C', shared, 'rev-parse', 'HEAD').strip
++        head = git('-C', first_tree, 'rev-parse', 'HEAD').strip
++        git('-C', shared, 'merge', '--ff-only', head)
++        git('-C', shared, 'push', 'origin', 'HEAD:refs/heads/master')
++        assert_equal head, git('-C', @remote, 'rev-parse', 'master').strip
++      end
++      @engine.change_claim(first, held['id'], 'release')
++      Timeout.timeout(5) { writer.value }
++      assert File.file?(File.join(shared, 'tracking'))
++      # A busy tracking writer must not cause waiting inside merge ownership.
++      File.open(path, 'r+') do |tracking_lock|
++        tracking_lock.flock(File::LOCK_EX)
++        retry_claim = acquire(first)
++        File.open(path, 'r+') do |merge_lock|
++          refute merge_lock.flock(File::LOCK_EX | File::LOCK_NB)
++        end
++        @engine.change_claim(first, retry_claim['id'], 'release')
++        assert_empty @engine.store.held_claim_resources
++      end
++    ensure
++      writer.kill if writer&.alive?
++      writer&.join
++    end
++  end
++
+   def test_new_claim_cannot_enter_during_payload_collection
+     person = owner('collection-admission')
+     item = nil

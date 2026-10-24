@@ -1,0 +1,7 @@
+- **Result:** passed, exit code `0`; no process remains.
+- **Command:** `["timeout","3600","bash","/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/files-final-composition/package-continuation/continue.sh"]`
+- **Working directory:** `/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements`
+- **Elapsed:** 52.54 seconds.
+- **Evidence:** [operation.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/files-final-composition/package-continuation-watcher/operation.log), [operation.stderr](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/files-final-composition/package-continuation-watcher/operation.stderr), [operation-result.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/files-final-composition/package-continuation-watcher/operation-result.json).
+- **Excerpt:** “Completed workspace realization reused: exact output/derivation/inputs/NAR receipts; original evidence unchanged” and “PASS: exact sources, rooted outputs and derivations, capacity8, native Codex and reporting-only registration; no profile selection. Keep roots through activation.”
+- Stderr contains Nix `--json` deprecation warnings.

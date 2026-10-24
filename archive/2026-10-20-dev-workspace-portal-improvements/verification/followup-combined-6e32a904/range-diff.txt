@@ -1,0 +1,118 @@
+ 1:  398874a !  1:  4a2fadd deps: update shared conversation presentation helpers
+    @@ Metadata
+      ## Commit message ##
+         deps: update shared conversation presentation helpers
+     
+    -    Select codex-web 852e8c5 for host presentation after attachment decoration,
+    +    Select codex-web 6e32a904 for presentation after attachment decoration,
+         team communication filters and attempt-bound inline delivery recovery.
+    -    Preserve the integrated citation baseline and keep the Go handler and
+    -    packaged browser assets on the same final source revision.
+    +    It also supplies hidden-tab read retirement, typed pending invalidation
+    +    and upload metadata recovery for the mounted and custom portal clients.
+     
+    -    The update is additive and preserves Codex, submission receipts and all
+    -    persisted session formats.
+    +    Preserve the integrated citation baseline and keep the Go handler,
+    +    embedded browser assets and Nix source on this exact shared revision.
+    +    The additive update retains the Codex version, submission receipts and
+    +    all persisted session formats.
+     
+      ## flake.lock ##
+     @@
+    @@ flake.lock
+            "locked": {
+     -        "lastModified": 1792527062,
+     -        "narHash": "sha256-PIvAf2Qd80Cw1Kws1l5XpUDqm2OgjS32OZH6sJt5e5I=",
+    -+        "lastModified": 1792533707,
+    -+        "narHash": "sha256-6dAMMwgGkCJVxUGyckpzyir6ETxpVHvI0w4b00ZQbIc=",
+    ++        "lastModified": 1792599953,
+    ++        "narHash": "sha256-m4qoKIWexEcOOxoGCF+cqDGm0SBrSRs5eC/f/l3iOyc=",
+              "owner": "aither64",
+              "repo": "codex-web",
+     -        "rev": "57972192e30fe52ab33b867c8fe4d171f59a7fd5",
+    -+        "rev": "852e8c51091512bc79ca6c921ef1f5ccc46a9535",
+    ++        "rev": "6e32a9043ee6367d92bfaf8d3ebdf48036e275f9",
+              "type": "github"
+            },
+            "original": {
+              "owner": "aither64",
+              "repo": "codex-web",
+     -        "rev": "57972192e30fe52ab33b867c8fe4d171f59a7fd5",
+    -+        "rev": "852e8c51091512bc79ca6c921ef1f5ccc46a9535",
+    ++        "rev": "6e32a9043ee6367d92bfaf8d3ebdf48036e275f9",
+              "type": "github"
+            }
+          },
+    @@ flake.nix
+          llm-agents.url = "github:numtide/llm-agents.nix";
+          codex-web = {
+     -      url = "github:aither64/codex-web/57972192e30fe52ab33b867c8fe4d171f59a7fd5";
+    -+      url = "github:aither64/codex-web/852e8c51091512bc79ca6c921ef1f5ccc46a9535";
+    ++      url = "github:aither64/codex-web/6e32a9043ee6367d92bfaf8d3ebdf48036e275f9";
+            flake = false;
+          };
+        };
+    @@ nix/workspace-portal.nix: buildGoModule {
+        inherit src;
+        modRoot = "portal";
+     -  vendorHash = "sha256-srs2cfUmXVcpuQ8CxlzAeogcmFFUnuOt7+slwQBnTpA=";
+    -+  vendorHash = "sha256-gzhyAOHVhMn0+WtYClT0NsG19F8PtvkI5ZcsGiLzK5w=";
+    ++  vendorHash = "sha256-H+MJMRgjG3PViA7REM822Z0s+Lri+gwD52wpwdpng68=";
+      
+        postPatch = ''
+          expected=${lib.escapeShellArg codexWebVersion}
+    @@ portal/go.mod: go 1.24.0
+      require (
+      	github.com/SherClockHolmes/webpush-go v1.4.0
+     -	github.com/aither64/codex-web v0.0.0-20261020201102-57972192e30f
+    -+	github.com/aither64/codex-web v0.0.0-20261020220147-852e8c510915
+    ++	github.com/aither64/codex-web v0.0.0-20261021162553-6e32a9043ee6
+      	github.com/coder/websocket v1.8.14
+      	github.com/microcosm-cc/bluemonday v1.0.27
+      	github.com/yuin/goldmark v1.7.17
+     
+      ## portal/go.sum ##
+    -@@ portal/go.sum: github.com/SherClockHolmes/webpush-go v1.4.0 h1:ocnzNKWN23T9nvHi6IfyrQjkIc0oJWv1
+    +@@
+    + github.com/SherClockHolmes/webpush-go v1.4.0 h1:ocnzNKWN23T9nvHi6IfyrQjkIc0oJWv1B1pULsf9i3s=
+      github.com/SherClockHolmes/webpush-go v1.4.0/go.mod h1:XSq8pKX11vNV8MJEMwjrlTkxhAj1zKfxmyhdV7Pd6UA=
+    - github.com/aither64/codex-web v0.0.0-20261020201102-57972192e30f h1:f1xgYVQ5IEihfJv4lN7RZz1Y4+R29WCBV5JRw9PFkaA=
+    - github.com/aither64/codex-web v0.0.0-20261020201102-57972192e30f/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
+    -+github.com/aither64/codex-web v0.0.0-20261020220147-852e8c510915 h1:euLk1unartysRm0+Y3wjB4OMD3ZuKsvzB8kvmW8ACPk=
+    -+github.com/aither64/codex-web v0.0.0-20261020220147-852e8c510915/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
+    +-github.com/aither64/codex-web v0.0.0-20261020201102-57972192e30f h1:f1xgYVQ5IEihfJv4lN7RZz1Y4+R29WCBV5JRw9PFkaA=
+    +-github.com/aither64/codex-web v0.0.0-20261020201102-57972192e30f/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
+    ++github.com/aither64/codex-web v0.0.0-20261021162553-6e32a9043ee6 h1:/KdVPxItRhQTq50xCSkkxOnv8tUvEOvkl5yGZyLXUlA=
+    ++github.com/aither64/codex-web v0.0.0-20261021162553-6e32a9043ee6/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
+      github.com/aymerick/douceur v0.2.0 h1:Mv+mAeH1Q+n9Fr+oyamOlAkUNPWPlA8PPGR0QAaYuPk=
+      github.com/aymerick/douceur v0.2.0/go.mod h1:wlT5vV2O3h55X9m7iVYN0TBM0NH/MmbLnd30/FjWUq4=
+      github.com/coder/websocket v1.8.14 h1:9L0p0iKiNOibykf283eHkKUHHrpG7f65OE3BhhO7v9g=
+ 2:  864a75a =  2:  db1e91e team: project full-team names from actual implementer counts
+ 3:  b07d1b2 =  3:  b006196 portal: add authorized file downloads and source copy actions
+ 4:  a82fac9 =  4:  5416942 portal: keep large artifact catalogs compact and stable
+ 5:  8bb317b =  5:  7d9392e portal: publish session membership before optional enrichment
+ 6:  5a63a4e =  6:  5a764b2 portal: retain member settings through sequential additions
+ 7:  a15c170 =  7:  0ce92e8 portal: present team messages and decorated Markdown
+ 8:  f8f2938 =  8:  cee4cca portal: show delivery recovery beside the composer
+ 9:  ce010c6 =  9:  1f162c3 portal: browse eligible session files in a lazy tree
+10:  76ff900 ! 10:  f6b72ad portal: retire paused read cycles and recover on tab resume
+    @@ portal/internal/web/static/app.js
+          };
+          return reader;
+        };
+    +@@
+    +     return;
+    +   }
+    + 
+    +-  const conversationAssets = await import("/codex/assets/conversation.js?v=20");
+    ++  const conversationAssets = await import("/codex/assets/conversation.js?v=21");
+    +   sharedTranscriptPresentation = conversationAssets.transcriptEntryPresentation;
+    +   sharedTranscriptVisible = conversationAssets.transcriptEntryVisible;
+    +   refreshPolicy = conversationAssets.refreshPolicy;
+     @@
+            const read = reads.begin(refreshPolicy.archivalDeadlineMs);
+            try {
+11:  3abc58f = 11:  efec474 coordination: derive claims from registered repository identities
+12:  9b5db67 = 12:  c48b537 portal: measure read stages without logging session content
+13:  eeb8420 = 13:  0ba320a test: prepare ordinary Firefox acceptance across fifty native tabs

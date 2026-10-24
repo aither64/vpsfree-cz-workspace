@@ -1,0 +1,152 @@
+ 1:  4a2fadd !  1:  cdfeaa7 deps: update shared conversation presentation helpers
+    @@ Metadata
+      ## Commit message ##
+         deps: update shared conversation presentation helpers
+     
+    -    Select codex-web 6e32a904 for presentation after attachment decoration,
+    +    Select codex-web ea64ef57 for presentation after attachment decoration,
+         team communication filters and attempt-bound inline delivery recovery.
+         It also supplies hidden-tab read retirement, typed pending invalidation
+         and upload metadata recovery for the mounted and custom portal clients.
+    @@ flake.lock
+            "locked": {
+     -        "lastModified": 1792527062,
+     -        "narHash": "sha256-PIvAf2Qd80Cw1Kws1l5XpUDqm2OgjS32OZH6sJt5e5I=",
+    -+        "lastModified": 1792599953,
+    -+        "narHash": "sha256-m4qoKIWexEcOOxoGCF+cqDGm0SBrSRs5eC/f/l3iOyc=",
+    ++        "lastModified": 1792612976,
+    ++        "narHash": "sha256-VKTZcWXrTjE7DKFjye4hig3Kg3vWcg6T/vEw+2D8PLA=",
+              "owner": "aither64",
+              "repo": "codex-web",
+     -        "rev": "57972192e30fe52ab33b867c8fe4d171f59a7fd5",
+    -+        "rev": "6e32a9043ee6367d92bfaf8d3ebdf48036e275f9",
+    ++        "rev": "ea64ef57fdd2ff5fd60715b62f2d1696bc0133e5",
+              "type": "github"
+            },
+            "original": {
+              "owner": "aither64",
+              "repo": "codex-web",
+     -        "rev": "57972192e30fe52ab33b867c8fe4d171f59a7fd5",
+    -+        "rev": "6e32a9043ee6367d92bfaf8d3ebdf48036e275f9",
+    ++        "rev": "ea64ef57fdd2ff5fd60715b62f2d1696bc0133e5",
+              "type": "github"
+            }
+          },
+    @@ flake.nix
+          llm-agents.url = "github:numtide/llm-agents.nix";
+          codex-web = {
+     -      url = "github:aither64/codex-web/57972192e30fe52ab33b867c8fe4d171f59a7fd5";
+    -+      url = "github:aither64/codex-web/6e32a9043ee6367d92bfaf8d3ebdf48036e275f9";
+    ++      url = "github:aither64/codex-web/ea64ef57fdd2ff5fd60715b62f2d1696bc0133e5";
+            flake = false;
+          };
+        };
+    @@ nix/workspace-portal.nix: buildGoModule {
+        inherit src;
+        modRoot = "portal";
+     -  vendorHash = "sha256-srs2cfUmXVcpuQ8CxlzAeogcmFFUnuOt7+slwQBnTpA=";
+    -+  vendorHash = "sha256-H+MJMRgjG3PViA7REM822Z0s+Lri+gwD52wpwdpng68=";
+    ++  vendorHash = "sha256-ABmwKlrjiXjFrrtplRaw2fmMDlv/gxWfufEMA0vjXNQ=";
+      
+        postPatch = ''
+          expected=${lib.escapeShellArg codexWebVersion}
+    @@ portal/go.mod: go 1.24.0
+      require (
+      	github.com/SherClockHolmes/webpush-go v1.4.0
+     -	github.com/aither64/codex-web v0.0.0-20261020201102-57972192e30f
+    -+	github.com/aither64/codex-web v0.0.0-20261021162553-6e32a9043ee6
+    ++	github.com/aither64/codex-web v0.0.0-20261021200256-ea64ef57fdd2
+      	github.com/coder/websocket v1.8.14
+      	github.com/microcosm-cc/bluemonday v1.0.27
+      	github.com/yuin/goldmark v1.7.17
+    @@ portal/go.sum
+      github.com/SherClockHolmes/webpush-go v1.4.0/go.mod h1:XSq8pKX11vNV8MJEMwjrlTkxhAj1zKfxmyhdV7Pd6UA=
+     -github.com/aither64/codex-web v0.0.0-20261020201102-57972192e30f h1:f1xgYVQ5IEihfJv4lN7RZz1Y4+R29WCBV5JRw9PFkaA=
+     -github.com/aither64/codex-web v0.0.0-20261020201102-57972192e30f/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
+    -+github.com/aither64/codex-web v0.0.0-20261021162553-6e32a9043ee6 h1:/KdVPxItRhQTq50xCSkkxOnv8tUvEOvkl5yGZyLXUlA=
+    -+github.com/aither64/codex-web v0.0.0-20261021162553-6e32a9043ee6/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
+    ++github.com/aither64/codex-web v0.0.0-20261021200256-ea64ef57fdd2 h1:8Lsxt7NqJnmuZEfApQCqLRKDXQ98RhbANH1mL1kHHkc=
+    ++github.com/aither64/codex-web v0.0.0-20261021200256-ea64ef57fdd2/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
+      github.com/aymerick/douceur v0.2.0 h1:Mv+mAeH1Q+n9Fr+oyamOlAkUNPWPlA8PPGR0QAaYuPk=
+      github.com/aymerick/douceur v0.2.0/go.mod h1:wlT5vV2O3h55X9m7iVYN0TBM0NH/MmbLnd30/FjWUq4=
+      github.com/coder/websocket v1.8.14 h1:9L0p0iKiNOibykf283eHkKUHHrpG7f65OE3BhhO7v9g=
+ 2:  db1e91e =  2:  cb0bed0 team: project full-team names from actual implementer counts
+ 3:  b006196 =  3:  e9523ab portal: add authorized file downloads and source copy actions
+ 4:  5416942 =  4:  63d0e68 portal: keep large artifact catalogs compact and stable
+ 5:  31ab0c6 =  5:  b3974e9 portal: publish session membership before optional enrichment
+ 6:  58f6093 =  6:  3d5196b portal: retain member settings through sequential additions
+ 7:  e1c08d3 =  7:  0c9eb32 portal: present team messages and decorated Markdown
+ 8:  90dccba =  8:  2d8a521 portal: show delivery recovery beside the composer
+ 9:  02ee0ae =  9:  de990bb portal: browse eligible session files in a lazy tree
+10:  6947699 ! 10:  dad03aa portal: retire paused read cycles and recover on tab resume
+    @@ portal/internal/web/auto_archive_test.go: func TestAutomaticArchivalPageIsSepara
+      		t.Fatalf("dedicated route reached slug lookup: %d: %s", page.Code, page.Body.String())
+      	}
+     -	for _, required := range []string{"data-automatic-archival", "workspace-auto-archive-status", "workspace-auto-archive-rows", `href="/"`, `/static/app.js?v=39`} {
+    -+	for _, required := range []string{"data-automatic-archival", "workspace-auto-archive-status", "workspace-auto-archive-rows", `href="/"`, `/static/app.js?v=54`} {
+    ++	for _, required := range []string{"data-automatic-archival", "workspace-auto-archive-status", "workspace-auto-archive-rows", `href="/"`, `/static/app.js?v=55`} {
+      		if !strings.Contains(page.Body.String(), required) {
+      			t.Fatalf("overview lacks %q: %s", required, page.Body.String())
+      		}
+    @@ portal/internal/web/static/app.js
+        }
+      
+     -  const conversationAssets = await import("/codex/assets/conversation.js?v=20");
+    -+  const conversationAssets = await import("/codex/assets/conversation.js?v=21");
+    ++  const conversationAssets = await import("/codex/assets/conversation.js?v=22");
+        sharedTranscriptPresentation = conversationAssets.transcriptEntryPresentation;
+        sharedTranscriptVisible = conversationAssets.transcriptEntryVisible;
+        refreshPolicy = conversationAssets.refreshPolicy;
+    @@ portal/internal/web/templates/automatic-archival.html
+          </section>
+        </main>
+     -  <script src="/static/app.js?v=39" defer></script>
+    -+  <script src="/static/app.js?v=54" defer></script>
+    ++  <script src="/static/app.js?v=55" defer></script>
+      </body>
+      </html>
+      {{end}}
+    @@ portal/internal/web/templates/index.html
+        <script src="/static/browser-notifications.js?v=5" defer></script>
+        <script src="/static/preparation.js?v=5" defer></script>
+     -  <script src="/static/app.js?v=50" defer></script>
+    -+  <script src="/static/app.js?v=54" defer></script>
+    ++  <script src="/static/app.js?v=55" defer></script>
+        <script src="/static/coordination.js?v=6" defer></script>
+      </body>
+      </html>
+    @@ portal/internal/web/templates/session.html
+          </form>
+        </dialog>
+     -  <script src="/static/app.js?v=51" defer></script>
+    -+  <script src="/static/app.js?v=54" defer></script>
+    ++  <script src="/static/app.js?v=55" defer></script>
+        <script src="/static/session-attention-store.js?v=3" defer></script>
+        <script src="/static/browser-notifications.js?v=5" defer></script>
+     -  <script src="/static/session-attention.js" defer></script>
+11:  e75b097 = 11:  a515f1d coordination: derive claims from registered repository identities
+12:  5094022 = 12:  909accc portal: measure read stages without logging session content
+13:  2cc9a2a = 13:  aec9a8b test: prepare ordinary Firefox acceptance across fifty native tabs
+14:  0dddb3e ! 14:  6837701 notifications: drop deliveries from disabled browser epochs
+    @@ portal/internal/web/templates/index.html
+     +  <script src="/static/session-attention-store.js?v=4" defer></script>
+     +  <script src="/static/browser-notifications.js?v=6" defer></script>
+        <script src="/static/preparation.js?v=5" defer></script>
+    -   <script src="/static/app.js?v=54" defer></script>
+    +   <script src="/static/app.js?v=55" defer></script>
+        <script src="/static/coordination.js?v=6" defer></script>
+     
+      ## portal/internal/web/templates/notifications.html ##
+    @@ portal/internal/web/templates/session.html
+     @@
+          </form>
+        </dialog>
+    -   <script src="/static/app.js?v=54" defer></script>
+    +   <script src="/static/app.js?v=55" defer></script>
+     -  <script src="/static/session-attention-store.js?v=3" defer></script>
+     -  <script src="/static/browser-notifications.js?v=5" defer></script>
+     +  <script src="/static/session-attention-store.js?v=4" defer></script>
+15:  12c8284 = 15:  125b860 coordination: retain deployed machines through explicit user release
+16:  4d59c98 = 16:  017f3d8 test: match session-scoped model catalogs in settings fixture
+17:  a8a3fdb = 17:  764a7b0 test: intercept session-scoped limits in usability fixture
+18:  702bcc2 = 18:  0c0dd2d test: await applied recovery state responses

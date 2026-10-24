@@ -1,0 +1,6 @@
+**Result:** Failed, exit status 1, after 46.04 seconds. The one authorized command has finished; nothing is still running.
+
+- Command: `python3 /home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/automatic-release-policy/package.py .`
+- Tested sources: `Aea64ef57fdd2ff5fd60715b62f2d1696bc0133e5 / Bbf6d4b0c49600c15e17fe71248807ef43424e932 / C6bc355ba27032f927e29fe50ed19afbbf2f7ba73 / config 1d71ce148d43e156d4f3be9193a2b8caad56e94a`.
+- Bounded error: `RuntimeError: expected one derivation output` at `package.py:159`.
+- Artifacts: [stdout log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/automatic-release-policy/package-watcher/operation.log), [stderr log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/automatic-release-policy/package-watcher/operation.stderr), [result JSON](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/automatic-release-policy/package-watcher/operation-result.json).

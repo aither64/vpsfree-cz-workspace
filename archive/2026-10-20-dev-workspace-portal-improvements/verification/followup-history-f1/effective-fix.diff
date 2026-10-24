@@ -1,0 +1,285 @@
+diff --git a/portal/internal/web/auto_archive_test.go b/portal/internal/web/auto_archive_test.go
+index 6177e89..29f6cfd 100644
+--- a/portal/internal/web/auto_archive_test.go
++++ b/portal/internal/web/auto_archive_test.go
+@@ -40,7 +40,7 @@ func TestAutomaticArchivalPageIsSeparateFromIndex(t *testing.T) {
+ 	if page.Code != http.StatusOK {
+ 		t.Fatalf("dedicated route reached slug lookup: %d: %s", page.Code, page.Body.String())
+ 	}
+-	for _, required := range []string{"data-automatic-archival", "workspace-auto-archive-status", "workspace-auto-archive-rows", `href="/"`, `/static/app.js?v=52`} {
++	for _, required := range []string{"data-automatic-archival", "workspace-auto-archive-status", "workspace-auto-archive-rows", `href="/"`, `/static/app.js?v=53`} {
+ 		if !strings.Contains(page.Body.String(), required) {
+ 			t.Fatalf("overview lacks %q: %s", required, page.Body.String())
+ 		}
+diff --git a/portal/internal/web/read_cycle_browser_test.cjs b/portal/internal/web/read_cycle_browser_test.cjs
+index 900cd41..b456f14 100644
+--- a/portal/internal/web/read_cycle_browser_test.cjs
++++ b/portal/internal/web/read_cycle_browser_test.cjs
+@@ -108,3 +108,157 @@ test("team HTTP200 preserves genuine stale observation until fresh evidence",asy
+   assert.equal(teamWorkPresentation(h.api.payload().members,"lead",now).stale,false);
+   h.context.pageReads.pause();
+ });
++
++function historyLane({gap = true, citationsPending = false} = {}) {
++  const reads = [], applied = [], effects = [], timers = new Map(), handlers = new Map();
++  let timerID = 0;
++  const elements = new Map(["history-controls", "repair-history", "history-status"].map(id => [id, {
++    hidden: true, disabled: false, textContent: "", addEventListener: (event, fn) => handlers.set(id + ":" + event, fn),
++  }]));
++  const retained = {rows: [{node: {}}], olderCursor: "older-1", repairCursor: "repair-1", repairVersion: 1,
++    hasOlder: true, gap, citationsPending};
++  const draft = {message: "Unsent draft", attachments: ["upload-1"]};
++  const context = {AbortController, DOMException, document: {hidden: false, getElementById: id => elements.get(id)},
++    setTimeout: (fn, delay) => {timers.set(++timerID, {fn, delay}); return timerID;}, clearTimeout: id => timers.delete(id),
++    refreshPolicy: {transcriptDeadlineMs: 35000, historyPageMs: 40, retryInitialMs: 2000, retryMaxMs: 30000},
++    transcriptHistory: retained, pagingUnavailable: false, currentThreadId: "thread-1", draft,
++    resetHistoryNavigation: () => effects.push("controls"),
++    renderThread: (page, isCurrent, kind) => {assert(isCurrent()); applied.push({page, kind}); retained.gap = false; retained.citationsPending = false;},
++    client: {threadPage(options) {const read = deferred(); reads.push({...read, ...options}); return read.promise;}},
++    conversationAssets: {
++      readTranscriptPage: (client, options) => client.threadPage(options),
++      createRefreshNotice: ({render}) => {
++        let state = {loading: false, warning: false};
++        const publish = kind => {effects.push(kind); render(state);};
++        return {
++          begin() {state = {...state, loading: true}; publish("begin");},
++          success() {state = {loading: false, warning: false}; publish("success");},
++          failure(error) {state = {loading: false, warning: true, error}; publish("failure");},
++          cancel() {state = {...state, loading: false}; publish("cancel");},
++        };
++      },
++    },
++    scheduleRefresh: () => effects.push("refresh"),
++    filesReads: {pause() {}, resume() {}}, filesLoaded: true,
++    pageLeaving: false, detailsTimer: null, teamStatsReceivedAt: 0, repositoryReview: null,
++    pauseTiming() {}, resumeTiming() {}, refreshSessionDetails() {}, refreshTeamStats() {},
++    pendingRetryTimer: null, pendingDueTimer: null, queueRetryTimer: null, pendingRerun: false, queueRerun: false,
++    pendingNotice: {cancel() {}}, queueNotice: {cancel() {}}, detailsNotice: {cancel() {}},
++    refreshPending() {}, refreshQueue() {},
++  };
++  const slice = (start, end) => {
++    const first = source.indexOf(start), last = source.indexOf(end, first);
++    assert(first > 0 && last > first, start);
++    return source.slice(first, last);
++  };
++  const api = vm.runInNewContext(
++    slice("  const createReadScope =", "  const createTimingClock =") +
++    "\nconst pageReads = createReadScope(); let historyRead = null, historyRetryTimer = null, historyError = '', historyFailure = null;\n" +
++    "let startOlderHistoryRead, resumeHistory, pauseConversationReads, resumeConversationReads;\n" +
++    slice("  const historyControls =", "  const observePageReceipts =") +
++    slice("  const runHistoryRead =", "  const showPromptStatus =") +
++    slice("  pauseConversationReads =", "  function scheduleRefresh(") +
++    slice("  const suspendPageReads =", "  // Firefox can reject") +
++    `\n({read: runHistoryRead, suspend: suspendPageReads, resume: resumePageReads, schedule: scheduleHistoryRepair,
++      state: () => ({read: historyRead, timer: historyRetryTimer, error: historyError, failure: historyFailure,
++        notice: historyNoticeState, retryDelay: historyRetryDelay})})`, context);
++  return {api, reads, applied, effects, timers, retained, draft, elements, handlers,
++    fire(id) {const timer = timers.get(id); assert(timer, "expected owned timer"); timers.delete(id); timer.fn();}};
++}
++
++test("history retires loading and starts one resumed repair before old success or failure settles", async () => {
++  for (const kind of ["older", "repair"]) for (const fails of [false, true]) {
++    const h = historyLane(), row = h.retained.rows[0], draft = h.draft.attachments;
++    const old = h.api.read(kind); await tick();
++    h.api.suspend();
++    assert(h.reads[0].signal.aborted);
++    assert.equal(h.api.state().read, null);
++    assert.equal(h.api.state().notice.loading, false);
++    assert.equal(h.api.state().timer, null);
++    h.api.resume(); h.api.resume();
++    const repairTimer = h.api.state().timer;
++    assert.equal(h.timers.get(repairTimer).delay, 40);
++    h.fire(repairTimer); await tick();
++    assert.equal(h.reads.length, 2);
++    assert.equal(h.reads[1].cursor, "repair-1");
++    assert.equal(h.reads[1].expectedThreadId, "thread-1");
++    const successor = h.api.state().read, effects = h.effects.slice(), timers = [...h.timers];
++    assert(successor);
++    assert.equal(h.elements.get("repair-history").disabled, true);
++    h.api.schedule(); await h.api.read("older");
++    assert.deepEqual([...h.timers], timers, "in-flight repair creates no 100ms busy loop");
++    if (fails) h.reads[0].reject(Error("retired failure")); else h.reads[0].resolve({entries: ["retired"]});
++    await old;
++    assert.equal(h.api.state().read, successor, "old finally cannot clear the successor");
++    assert.equal(h.api.state().notice.loading, true);
++    assert.equal(h.elements.get("repair-history").disabled, true);
++    assert.deepEqual(h.effects, effects, "old settlement cannot render, cancel notices or schedule work");
++    assert.deepEqual([...h.timers], timers);
++    assert.equal(h.applied.length, 0);
++    assert.equal(h.retained.rows[0], row);
++    assert.equal(h.retained.olderCursor, "older-1");
++    assert.equal(h.draft.message, "Unsent draft"); assert.equal(h.draft.attachments, draft);
++    h.reads[1].resolve({entries: ["current"]}); await tick();
++    assert.equal(h.applied.length, 1);
++    assert.equal(h.applied[0].kind, "repair");
++    assert.equal(h.api.state().read, null);
++    assert.equal(h.api.state().notice.loading, false);
++    assert.equal(h.api.state().timer, null);
++    h.api.suspend();
++  }
++});
++
++test("canceled manual history stays retryable and retains a prior failure without replay", async () => {
++  const h = historyLane({gap: false});
++  const first = h.api.read("older"); h.reads[0].reject(Error("current failure")); await first;
++  const failure = h.api.state().failure, error = h.api.state().error;
++  assert.equal(failure.kind, "older"); assert(error);
++  const retry = h.api.read("older"); await tick(); h.api.suspend(); h.api.resume();
++  assert.equal(h.api.state().failure, failure); assert.equal(h.api.state().error, error);
++  assert.equal(h.elements.get("repair-history").disabled, false);
++  assert.equal(h.api.state().timer, null, "manual older reads are not automatically replayed");
++  h.handlers.get("repair-history:click")(); await tick();
++  assert.equal(h.reads.length, 3); assert.equal(h.reads[2].cursor, "older-1");
++  const effects = h.effects.slice(); h.reads[1].reject(Error("late retry failure")); await retry;
++  assert.deepEqual(h.effects, effects);
++  h.reads[2].resolve({entries: []}); await tick();
++  assert.equal(h.api.state().failure, null); assert.equal(h.api.state().error, "");
++  h.api.suspend();
++});
++
++test("history resume repairs pending citations and retires backoff without losing current errors", async () => {
++  const h = historyLane({gap: false, citationsPending: true});
++  const first = h.api.read("repair"); h.reads[0].reject(Error("current failure")); await first;
++  const failure = h.api.state().failure, timer = h.api.state().timer;
++  assert.equal(h.timers.get(timer).delay, 2000);
++  h.api.suspend(); assert(!h.timers.has(timer)); assert.equal(h.api.state().timer, null);
++  h.api.resume(); h.api.resume(); const resumed = h.api.state().timer;
++  assert(resumed); h.fire(resumed); await tick();
++  assert.equal(h.reads.length, 2); assert.equal(h.api.state().failure, failure);
++  h.reads[1].resolve({entries: []}); await tick();
++  assert.equal(h.api.state().failure, null); assert.equal(h.api.state().timer, null);
++  h.api.suspend();
++});
++
++test("history current deadline and access failures remain visible", async () => {
++  for (const status of [401, 403, "deadline"]) {
++    const h = historyLane(), reading = h.api.read("repair");
++    let expected;
++    if (status === "deadline") {
++      const deadline = [...h.timers].find(([, timer]) => timer.delay === 35000)[0];
++      h.fire(deadline); expected = h.reads[0].signal.reason;
++      h.reads[0].resolve({entries: ["past deadline"]});
++    } else {
++      expected = Object.assign(Error("Access denied"), {status}); h.reads[0].reject(expected);
++    }
++    await reading;
++    assert.equal(h.applied.length, 0);
++    assert.equal(h.api.state().notice.warning, true);
++    assert.equal(h.api.state().notice.error, expected);
++    assert.equal(h.elements.get("repair-history").disabled, false);
++    assert.equal(h.api.state().failure.kind, "repair");
++    if (status === "deadline") {assert.equal(expected.name, "TimeoutError"); assert(h.api.state().timer);}
++    else assert.equal(h.api.state().timer, null, "access errors do not auto retry");
++    h.api.suspend();
++  }
++});
+diff --git a/portal/internal/web/static/app.js b/portal/internal/web/static/app.js
+index a2a8d91..bb0b750 100644
+--- a/portal/internal/web/static/app.js
++++ b/portal/internal/web/static/app.js
+@@ -4632,22 +4632,24 @@
+     const threadID = currentThreadId;
+     const readVersion = transcriptHistory.repairVersion;
+     const read = pageReads.begin(refreshPolicy.transcriptDeadlineMs);
+-    historyRead = true;
++    historyRead = read;
++    clearTimeout(historyRetryTimer); historyRetryTimer = null;
+     historyNotice.begin({manual});
+-    historyError = "";
+-    historyFailure = null;
+     renderHistoryControls();
+     try {
+       const page = await conversationAssets.readTranscriptPage(client, {
+         cursor, signal: read.signal, expectedThreadId: threadID,
+       });
+-      if (!read.isCurrent() || threadID !== currentThreadId ||
++      if (historyRead !== read || !read.isCurrent() || threadID !== currentThreadId ||
+           readVersion !== transcriptHistory.repairVersion) return;
+-      renderThread(page, () => read.isCurrent() && threadID === currentThreadId, kind);
++      read.signal.throwIfAborted();
++      historyError = ""; historyFailure = null;
++      renderThread(page, () => historyRead === read && read.isCurrent() && threadID === currentThreadId, kind);
+       historyRetryDelay = refreshPolicy.retryInitialMs; historyNotice.success();
+     } catch (error) {
+-      if (!read.isCurrent() || threadID !== currentThreadId ||
++      if (historyRead !== read || !read.isCurrent() || threadID !== currentThreadId ||
+           readVersion !== transcriptHistory.repairVersion) return;
++      error = read.error(error);
+       if (error.code === "transcript_cursor_expired" || error.code === "transcript_reset_required") {
+         transcriptHistory.invalidateCursor();
+         historyError = "History changed. Reconnecting…";
+@@ -4669,6 +4671,7 @@
+       }
+     } finally {
+       read.finish();
++      if (historyRead !== read || !read.isCurrent()) return;
+       historyRead = null;
+       historyNotice.cancel();
+       renderHistoryControls();
+@@ -4680,12 +4683,10 @@
+     (!historyFailure || historyFailure.kind === "repair") && (!historyError || historyFailure?.kind === "repair") &&
+     !pageReads.paused && !document.hidden && !pagingUnavailable;
+   const scheduleHistoryRepair = (delay = transcriptHistory?.gap ? refreshPolicy.historyPageMs : refreshPolicy.retryInitialMs) => {
+-    if (!canRepairHistory() || historyRetryTimer !== null) return;
++    if (!canRepairHistory() || historyRead || historyRetryTimer !== null) return;
+     historyRetryTimer = setTimeout(() => {
+       historyRetryTimer = null;
+-      if (!canRepairHistory()) return;
+-      if (historyRead) scheduleHistoryRepair(100);
+-      else void runHistoryRead("repair");
++      if (canRepairHistory() && !historyRead) void runHistoryRead("repair");
+     }, delay);
+   };
+   resumeHistory = () => scheduleHistoryRepair(historyFailure ? historyRetryDelay : refreshPolicy.historyPageMs);
+@@ -5221,8 +5222,11 @@
+     clearTimeout(pendingRetryTimer); pendingRetryTimer = null;
+     clearTimeout(pendingDueTimer); pendingDueTimer = null;
+     clearTimeout(queueRetryTimer); queueRetryTimer = null;
++    clearTimeout(historyRetryTimer); historyRetryTimer = null;
++    historyRead?.finish();
++    historyRead = null;
+     pendingRerun = false; queueRerun = false;
+-    pendingNotice.cancel(); queueNotice.cancel(); detailsNotice.cancel();
++    pendingNotice.cancel(); queueNotice.cancel(); detailsNotice.cancel(); historyNotice.cancel();
+   };
+   resumeConversationReads = () => { void refreshPending(true); void refreshQueue(true); };
+   if (pageReads.paused) pauseConversationReads();
+diff --git a/portal/internal/web/templates/automatic-archival.html b/portal/internal/web/templates/automatic-archival.html
+index 545ed7a..bf378c8 100644
+--- a/portal/internal/web/templates/automatic-archival.html
++++ b/portal/internal/web/templates/automatic-archival.html
+@@ -18,7 +18,7 @@
+       <div id="workspace-auto-archive-rows"></div>
+     </section>
+   </main>
+-  <script src="/static/app.js?v=52" defer></script>
++  <script src="/static/app.js?v=53" defer></script>
+ </body>
+ </html>
+ {{end}}
+diff --git a/portal/internal/web/templates/index.html b/portal/internal/web/templates/index.html
+index b0e3504..05e2d32 100644
+--- a/portal/internal/web/templates/index.html
++++ b/portal/internal/web/templates/index.html
+@@ -98,7 +98,7 @@
+   <script src="/static/session-attention-store.js?v=4" defer></script>
+   <script src="/static/browser-notifications.js?v=6" defer></script>
+   <script src="/static/preparation.js?v=5" defer></script>
+-  <script src="/static/app.js?v=52" defer></script>
++  <script src="/static/app.js?v=53" defer></script>
+   <script src="/static/coordination.js?v=6" defer></script>
+ </body>
+ </html>
+diff --git a/portal/internal/web/templates/session.html b/portal/internal/web/templates/session.html
+index 609ef20..8ddf717 100644
+--- a/portal/internal/web/templates/session.html
++++ b/portal/internal/web/templates/session.html
+@@ -256,7 +256,7 @@
+       <div class="dialog-actions"><button type="button" class="quiet" data-dialog-close>Cancel</button><button type="submit" class="danger">Delete session</button></div>
+     </form>
+   </dialog>
+-  <script src="/static/app.js?v=52" defer></script>
++  <script src="/static/app.js?v=53" defer></script>
+   <script src="/static/session-attention-store.js?v=4" defer></script>
+   <script src="/static/browser-notifications.js?v=6" defer></script>
+   <script src="/static/session-attention.js?v=2" defer></script>

@@ -1,0 +1,209 @@
+1:  f977598 ! 1:  bf47be9 conversation: present transcripts after attachment decoration
+    @@ codex/client.go: type TranscriptPage struct {
+      }
+      
+      type TranscriptEntry struct {
+    +-	Citations               []CitationSpan       `json:"citations,omitempty"`
+    +-	CitationsPending        bool                 `json:"citationsPending,omitempty"`
+     -	Delivery                string               `json:"delivery,omitempty"`
+     -	Questions               []AsyncQuestion      `json:"questions,omitempty"`
+     -	QuestionReplies         []AsyncQuestionReply `json:"questionReplies,omitempty"`
+    @@ codex/client.go: type TranscriptPage struct {
+     -	TimestampApproximate    bool                 `json:"timestampApproximate,omitempty"`
+     -	Activity                *TranscriptActivity  `json:"activity,omitempty"`
+     +	Communication           *TranscriptCommunication `json:"communication,omitempty"`
+    ++	Citations               []CitationSpan           `json:"citations,omitempty"`
+    ++	CitationsPending        bool                     `json:"citationsPending,omitempty"`
+     +	Delivery                string                   `json:"delivery,omitempty"`
+     +	Questions               []AsyncQuestion          `json:"questions,omitempty"`
+     +	QuestionReplies         []AsyncQuestionReply     `json:"questionReplies,omitempty"`
+2:  441ebee ! 2:  2ea01d5 conversation: distinguish team traffic and quiet history fallback
+    @@ conversation/assets/conversation.js: export function mountConversation(root, opt
+     -    header.append(createElement("strong", {}, heading || "Activity"));
+     +    header.append(createElement("strong", {}, presentation.label));
+          item.append(header);
+    --    item.append(createTranscriptActivity(entry) || createElement("pre", {}, entry.displayText ?? entry.text ?? entry.summary ?? entry.details ?? ""));
+    +-    item.append(createTranscriptActivity(entry) || (entry.citations?.length ? createCitationMessage(entry) :
+    +-      createElement("pre", {}, entry.displayText ?? entry.text ?? entry.summary ?? entry.details ?? "")));
+     +    let body = createTranscriptActivity(entry);
+     +    if (!body && ["user", "agent", "team"].includes(presentation.kind) && typeof entry.html === "string") {
+     +      body = createElement("div", {class: "codex-entry-markdown"});
+     +      // HTML is generated and sanitized by the trusted host presentation hook.
+     +      body.innerHTML = entry.html;
+     +    }
+    ++    if (!body && entry.citations?.length) body = createCitationMessage(entry);
+     +    item.append(body || createElement("pre", {}, entry.displayText ?? entry.text ?? entry.summary ?? entry.details ?? ""));
+          const questionControls = questions.inline(entry);
+          if (questionControls) item.append(questionControls);
+    @@ conversation/assets/conversation.js: export function mountConversation(root, opt
+        });
+        if (capabilities.interrupt) interrupt.addEventListener("click", () => void client.interrupt().then(refresh).catch((error) => {
+     
+    + ## conversation/presentation_test.go ##
+    +@@ conversation/presentation_test.go: func TestTranscriptPresentationOrder(t *testing.T) {
+    + 		}
+    + 	}
+    + }
+    ++
+    ++func TestTranscriptPresentationPreservesCitationIdentity(t *testing.T) {
+    ++	for _, route := range []string{"thread", "thread/page"} {
+    ++		t.Run(route, func(t *testing.T) {
+    ++			prefix, token := "Příliš 🐈 ", "\ue200cite\ue202fixture\ue201"
+    ++			entry := codex.TranscriptEntry{
+    ++				Kind: "agentMessage", Text: prefix + token + " done", TurnStatus: "completed",
+    ++				ClientUserMessageID: "original-id", ClientUserMessageDigest: strings.Repeat("b", 64),
+    ++				Citations: []codex.CitationSpan{{Start: len(prefix), End: len(prefix + token), Sources: []codex.CitationSource{{URL: "https://example.com/source", Title: "Source", Number: 1}}}},
+    ++			}
+    ++			client := &presentationClient{&fakePageClient{fakeClient: &fakeClient{}, page: codex.TranscriptPage{Transcript: codex.Transcript{Entries: []codex.TranscriptEntry{entry}}}}}
+    ++			handler, err := NewHandler(Options{AllowedOrigins: []string{"https://portal.test"}, Resolver: ResolverFunc(func(context.Context, ResolveRequest) (Target, error) {
+    ++				return Target{Client: client, ThreadID: "trusted", Directory: "/workspace", Capabilities: Capabilities{Read: true},
+    ++					Attachments: presentationAttachments{observe: func(transcript *codex.Transcript) error {
+    ++						value := "decorated display is not a citation offset source"
+    ++						transcript.Entries[0].DisplayText = &value
+    ++						return nil
+    ++					}},
+    ++					PresentTranscript: func(transcript *codex.Transcript) {
+    ++						transcript.Entries[0].HTML = codex.CitationMarkdown(transcript.Entries[0])
+    ++						transcript.Entries[0].Communication = &codex.TranscriptCommunication{Kind: "team"}
+    ++					}}, nil
+    ++			})})
+    ++			if err != nil {
+    ++				t.Fatal(err)
+    ++			}
+    ++			response := httptest.NewRecorder()
+    ++			handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/codex/conversations/opaque/"+route, nil))
+    ++			var transcript codex.Transcript
+    ++			if response.Code != http.StatusOK || json.Unmarshal(response.Body.Bytes(), &transcript) != nil {
+    ++				t.Fatalf("response = %d %s", response.Code, response.Body.String())
+    ++			}
+    ++			actual := transcript.Entries[0]
+    ++			if actual.Text != entry.Text || !reflect.DeepEqual(actual.Citations, entry.Citations) || actual.ClientUserMessageID != entry.ClientUserMessageID || actual.ClientUserMessageDigest != entry.ClientUserMessageDigest {
+    ++				t.Fatalf("citation or delivery identity changed: %#v", actual)
+    ++			}
+    ++			if !strings.HasPrefix(actual.HTML, prefix+"[\\[1\\]](<https://example.com/source>") {
+    ++				t.Fatalf("citation did not use original UTF-8 offsets: %q", actual.HTML)
+    ++			}
+    ++		})
+    ++	}
+    ++}
+    +
+      ## docs/reference.md ##
+     @@ docs/reference.md: record time. When an item has no available time, a known turn
+      time is marked approximate; otherwise the timestamp is omitted. This display
+    @@ docs/reference.md: record time. When an item has no available time, a known turn
+     +render Markdown from `displayText` when present, including an empty string,
+     +or `text` otherwise. Preserve canonical text, attachment identity, message IDs
+     +and digests. Hosts own Markdown generation, sanitization and URL rewriting.
+    -+The mounted UI renders host-sanitized message `html`, with a text fallback;
+    -+never provide unsanitized browser input in that field. Older readers ignore the
+    -+additive metadata, and nil hooks retain existing behavior. No stored format or
+    -+Codex protocol change is required.
+    ++The mounted UI renders typed activity first. For messages, it prefers
+    ++host-sanitized `html`, then text with citation links, then plain text. Never put
+    ++unsanitized browser input in `html`. Older readers ignore the additive metadata,
+    ++and nil hooks preserve existing behavior. No stored format or Codex protocol
+    ++change is required.
+     +
+      Search, agent tool calls and agent lifecycle entries also include typed
+      `activity` data. Their existing `summary` and `details` fields remain available
+    @@ test/conversation_browser_contract_test.cjs: class MemoryStorage {
+        const timestampOptions = {locales: "en-GB", timeZone: "Europe/Amsterdam"};
+        const evening = formatTranscriptTimestamp({timestamp: "2026-09-11T21:59:00Z"}, timestampOptions);
+        assert.equal(evening.text, "23:59");
+    +@@ test/conversation_browser_contract_test.cjs: class MemoryStorage {
+    +   globalThis.Element = FakeElement;
+    +   globalThis.document = {
+    +     createElement: (name) => new FakeElement(name),
+    ++    createTextNode: text => Object.assign(new FakeElement("#text"), {textContent: text}),
+    +     createElementNS: (_namespace, name) => new FakeElement(name),
+    +   };
+    +   const typedSearch = createTranscriptActivity({
+     @@ test/conversation_browser_contract_test.cjs: class MemoryStorage {
+        assert.equal(root.descendants().filter((element) => element.attributes.class === "codex-conversation-date").length, 2);
+        unmount();
+    @@ test/conversation_browser_contract_test.cjs: class MemoryStorage {
+     +    "successful legacy fallback is silent");
+     +  disposeTeam();
+     +
+    ++  const citationToken = "\ue200cite\ue202fixture\ue201", citationPrefix = "Příliš 🐈 ";
+    ++  const citationStart = Buffer.byteLength(citationPrefix);
+    ++  const citationEntry = {kind: "agentMessage", turnStatus: "completed", text: citationPrefix + citationToken + " done",
+    ++    citations: [{start: citationStart, end: citationStart + Buffer.byteLength(citationToken),
+    ++      sources: [{url: "https://example.com/source", title: 'Source "title"', number: 1}]}]};
+    ++  const citationOriginal = JSON.stringify(citationEntry);
+    ++  const citationRoot = new FakeElement("main");
+    ++  const disposeCitations = mountConversation(citationRoot, {id: "citations", client: {
+    ++    async thread() { return {threadId: "citation-thread", status: "idle", entries: [
+    ++      citationEntry,
+    ++      {...citationEntry, html: '<p>Host <a href="https://example.com/source">[1]</a></p>'},
+    ++      {...citationEntry, kind: "userMessage", displayText: "decorated user", html: "<p>decorated user</p>"},
+    ++      {...citationEntry, kind: "mcpToolCall", summary: "Typed activity", activity: {status: "completed"}, html: "<p>unused</p>"},
+    ++    ]}; },
+    ++  }, capabilities: {pending: false, queueRead: false, send: false, queue: false,
+    ++    interrupt: false, settings: false, respond: false, eventStream: false}});
+    ++  await new Promise(resolve => setImmediate(resolve));
+    ++  const citationRows = citationRoot.descendants().find(el => el.name === "ol").children;
+    ++  const fallback = citationRows[0].children[1];
+    ++  assert.equal(fallback.name, "pre");
+    ++  assert.equal(fallback.children.find(el => el.name === "a").attributes.href, "https://example.com/source");
+    ++  assert.equal(fallback.children.find(el => el.name === "a").attributes.title, 'Source "title"');
+    ++  assert.equal(citationRows[1].children[1].innerHTML, '<p>Host <a href="https://example.com/source">[1]</a></p>');
+    ++  assert.equal(citationRows[2].children[1].innerHTML, "<p>decorated user</p>");
+    ++  assert.equal(citationRows[3].children[1].attributes.class, "codex-typed-activity");
+    ++  for (const kind of ["agentMessage", "reasoning", "plan"]) {
+    ++    assert.equal(transcriptEntryCopyText({...citationEntry, kind}),
+    ++      'Příliš 🐈 [\\[1\\]](<https://example.com/source> "Source \\"title\\"") done');
+    ++  }
+    ++  assert.equal(transcriptEntryCopyText({...citationEntry, kind: "userMessage"}), citationEntry.text);
+    ++  assert.equal(JSON.stringify(citationEntry), citationOriginal, "render and copy preserve raw text and UTF-8 spans");
+    ++  disposeCitations();
+    ++
+    ++  // Completed citation rows still resolve after leaving the newest page, even
+    ++  // while a filter excludes them. Filtering cannot gate history observations.
+    ++  let citationEvents, citationNewestReads = 0, citationRepairs = 0;
+    ++  class CitationEvents {
+    ++    constructor() { citationEvents = this; }
+    ++    addEventListener() {}
+    ++    close() {}
+    ++  }
+    ++  const pendingCitation = {...citationEntry, turnId: "citation-turn", itemId: "pending", citationsPending: true,
+    ++    citations: [{...citationEntry.citations[0], sources: [], unavailable: true}]};
+    ++  const overlap = {kind: "agentMessage", turnId: "overlap", itemId: "overlap", turnStatus: "completed", text: "overlap"};
+    ++  const repairRootCitations = new FakeElement("main");
+    ++  const disposeRepairCitations = mountConversation(repairRootCitations, {id: "pending-citations", EventSource: CitationEvents,
+    ++    refreshPolicy: {eventDebounceMs: 0, retryInitialMs: 30, historyRepairMs: 0, historyPageMs: 1},
+    ++    client: {
+    ++      eventsPath: () => "/citation-events",
+    ++      async threadPage({cursor} = {}) {
+    ++        if (cursor) {
+    ++          citationRepairs++;
+    ++          return {threadId: "pending-citations", status: "idle", hasOlder: false, olderCursor: null,
+    ++            entries: [{...citationEntry, turnId: "citation-turn", itemId: "pending", citationsPending: false}]};
+    ++        }
+    ++        citationNewestReads++;
+    ++        return {threadId: "pending-citations", status: "idle", hasOlder: true, olderCursor: "find-citation",
+    ++          entries: citationNewestReads === 1 ? [pendingCitation, overlap] : [overlap,
+    ++            {kind: "agentMessage", turnId: "latest", itemId: "latest", text: "newest"}]};
+    ++      },
+    ++    }, capabilities: {pending: false, queueRead: false, send: false, queue: false,
+    ++      interrupt: false, settings: false, respond: false, eventStream: true}});
+    ++  await new Promise(resolve => setImmediate(resolve));
+    ++  const citationFilter = repairRootCitations.descendants().find(el => el.attributes["aria-label"] === "Transcript filter");
+    ++  citationFilter.value = "team"; citationFilter.listeners.get("change")();
+    ++  const citationList = repairRootCitations.descendants().find(el => el.name === "ol");
+    ++  assert.equal(citationList.children.length, 0);
+    ++  citationEvents.onmessage();
+    ++  for (let index = 0; index < 100 && !citationRepairs; index++) await new Promise(resolve => setTimeout(resolve, 5));
+    ++  assert.equal(citationRepairs, 1);
+    ++  assert.equal(citationList.children.length, 0, "repair does not change active filter");
+    ++  assert.equal(repairRootCitations.descendants().find(el => el.attributes.class === "codex-history-controls").children[1].textContent, "",
+    ++    "background citation repair stays quiet");
+    ++  citationFilter.value = "all"; citationFilter.listeners.get("change")();
+    ++  const repairedLink = citationList.descendants().find(el => el.name === "a");
+    ++  assert.equal(repairedLink.attributes.href, "https://example.com/source");
+    ++  assert.equal(citationList.children.length, 3);
+    ++  disposeRepairCitations();
+    ++
+     +  // A failed HTTP response must retain the exact durable attempt, but must not
+     +  // downgrade a message already observed and acknowledged through the transcript.
+     +  for (const observedBeforeFailure of [false, true]) {

@@ -1,0 +1,12 @@
+--- before/activation-driver.py
++++ after/activation-driver.py
+@@ -114,7 +114,8 @@
+         output, drv = (roots / label).resolve(strict=True), (roots / (label + '.drv')).resolve(strict=True)
+         require(output.exists() and drv.is_file())
+         command(['nix-store', '--check-validity', str(output), str(drv)])
+-        receipt = read_json(roots.parent / (label + '-derivation.json'))
++        receipt_directory = roots.parent if label == 'workspace' else HERE.parent / 'package-continuation' / 'run'
++        receipt = read_json(receipt_directory / (label + '-derivation.json'))
+         require(str(drv) in receipt and receipt[str(drv)]['outputs']['out']['path'] == str(output))
+ 
+ 

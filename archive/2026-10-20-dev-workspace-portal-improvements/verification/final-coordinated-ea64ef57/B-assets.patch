@@ -1,0 +1,65 @@
+diff --git a/portal/internal/web/auto_archive_test.go b/portal/internal/web/auto_archive_test.go
+index cb7e90e..8ff7cd6 100644
+--- a/portal/internal/web/auto_archive_test.go
++++ b/portal/internal/web/auto_archive_test.go
+@@ -40,7 +40,7 @@ func TestAutomaticArchivalPageIsSeparateFromIndex(t *testing.T) {
+ 	if page.Code != http.StatusOK {
+ 		t.Fatalf("dedicated route reached slug lookup: %d: %s", page.Code, page.Body.String())
+ 	}
+-	for _, required := range []string{"data-automatic-archival", "workspace-auto-archive-status", "workspace-auto-archive-rows", `href="/"`, `/static/app.js?v=54`} {
++	for _, required := range []string{"data-automatic-archival", "workspace-auto-archive-status", "workspace-auto-archive-rows", `href="/"`, `/static/app.js?v=55`} {
+ 		if !strings.Contains(page.Body.String(), required) {
+ 			t.Fatalf("overview lacks %q: %s", required, page.Body.String())
+ 		}
+diff --git a/portal/internal/web/static/app.js b/portal/internal/web/static/app.js
+index 8a99f7e..5e6544c 100644
+--- a/portal/internal/web/static/app.js
++++ b/portal/internal/web/static/app.js
+@@ -1207,7 +1207,7 @@
+     return;
+   }
+ 
+-  const conversationAssets = await import("/codex/assets/conversation.js?v=21");
++  const conversationAssets = await import("/codex/assets/conversation.js?v=22");
+   sharedTranscriptPresentation = conversationAssets.transcriptEntryPresentation;
+   sharedTranscriptVisible = conversationAssets.transcriptEntryVisible;
+   refreshPolicy = conversationAssets.refreshPolicy;
+diff --git a/portal/internal/web/templates/automatic-archival.html b/portal/internal/web/templates/automatic-archival.html
+index fa37ca8..f8b5517 100644
+--- a/portal/internal/web/templates/automatic-archival.html
++++ b/portal/internal/web/templates/automatic-archival.html
+@@ -18,7 +18,7 @@
+       <div id="workspace-auto-archive-rows"></div>
+     </section>
+   </main>
+-  <script src="/static/app.js?v=54" defer></script>
++  <script src="/static/app.js?v=55" defer></script>
+ </body>
+ </html>
+ {{end}}
+diff --git a/portal/internal/web/templates/index.html b/portal/internal/web/templates/index.html
+index 07b3dd3..31c469d 100644
+--- a/portal/internal/web/templates/index.html
++++ b/portal/internal/web/templates/index.html
+@@ -98,7 +98,7 @@
+   <script src="/static/session-attention-store.js?v=4" defer></script>
+   <script src="/static/browser-notifications.js?v=6" defer></script>
+   <script src="/static/preparation.js?v=5" defer></script>
+-  <script src="/static/app.js?v=54" defer></script>
++  <script src="/static/app.js?v=55" defer></script>
+   <script src="/static/coordination.js?v=6" defer></script>
+ </body>
+ </html>
+diff --git a/portal/internal/web/templates/session.html b/portal/internal/web/templates/session.html
+index ffe7596..961f954 100644
+--- a/portal/internal/web/templates/session.html
++++ b/portal/internal/web/templates/session.html
+@@ -256,7 +256,7 @@
+       <div class="dialog-actions"><button type="button" class="quiet" data-dialog-close>Cancel</button><button type="submit" class="danger">Delete session</button></div>
+     </form>
+   </dialog>
+-  <script src="/static/app.js?v=54" defer></script>
++  <script src="/static/app.js?v=55" defer></script>
+   <script src="/static/session-attention-store.js?v=4" defer></script>
+   <script src="/static/browser-notifications.js?v=6" defer></script>
+   <script src="/static/session-attention.js?v=2" defer></script>

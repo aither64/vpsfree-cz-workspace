@@ -1,0 +1,166 @@
+{{define "index"}}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Workspace</title>
+  <link rel="stylesheet" href="/static/style.css?v=20">
+  <link rel="stylesheet" href="/codex/assets/uploads.css?v=3">
+</head>
+<body data-index data-index-generated-at="{{.IndexGeneratedAt}}">
+  <div class="workspace-shell index-shell">
+  <aside class="workspace-sidebar index-sidebar">
+    <header class="sidebar-heading sidebar-toolbar"><p class="eyebrow">{{.DisplayLabel}}</p>{{template "sidebar-menu"}}</header>
+    <div class="sidebar-content">
+    <section>
+      <div class="section-heading"><h2>Work</h2><span id="active-count">{{len .Active}}</span></div>
+      <div class="session-grid" data-session-list="active">
+        {{range .Active}}
+          {{template "session-card" .}}
+        {{else}}<p class="empty">No portal-enabled work sessions.</p>{{end}}
+      </div>
+    </section>
+
+    <details class="archive-list">
+      <summary>Archive <span id="archive-count">{{len .Archived}}</span></summary>
+      <div class="session-grid" data-session-list="archived">
+        {{range .Archived}}
+          {{template "session-card" .}}
+        {{else}}<p class="empty">No portal-enabled archived sessions.</p>{{end}}
+      </div>
+    </details>
+    </div>
+    {{template "codex-limits"}}
+  </aside>
+  <main class="page index-page">
+    {{if .Error}}<p class="notice error">{{.Error}}</p>{{end}}
+    <p id="index-status-warning" class="notice warning" hidden></p>
+    <p data-coordination-warning class="notice warning" role="status" hidden></p>
+    <section class="panel new-session">
+      <div><p class="eyebrow">Start work</p><h2>New session</h2><p class="muted">Codex will decide which repositories the request affects. From {{.HostLabel}}, use <code>dev-session start &lt;short-name&gt;</code>.</p></div>
+      <form id="new-session-form" method="post" action="/sessions" class="stack">
+        <input type="hidden" name="creation_date" value="{{.CreationDate}}">
+        <label>Initial request<textarea name="goal" required maxlength="{{.MaxMessageBytes}}" rows="5" placeholder="Describe the outcome you want…"></textarea></label>
+        {{if .AgentTeams.Managed}}
+        <input type="hidden" name="catalogDigest" value="{{.AgentTeams.CatalogDigest}}">
+        <label>Starting team<select name="team" data-team-select required>{{range .AgentTeams.Teams}}<option value="{{.Name}}"{{if eq .Name $.AgentTeams.DefaultTeam}} selected{{end}} title="{{.Description}}" data-description="{{.Description}}" data-roles="{{.RoleSummary}}" data-lead-model="{{.LeadModel}}" data-lead-effort="{{.LeadEffort}}">{{.Label}} ({{.MemberCount}}): {{.RoleSummary}}</option>{{end}}</select></label>
+        <p class="muted" data-team-description></p>
+        <p class="notice warning" data-team-catalog-changed role="status" aria-live="polite" hidden>Available teams changed since you saved this draft. Check the team and lead settings before creating the session.</p>
+        <label data-team-catalog-acknowledgement hidden><input type="checkbox" data-team-catalog-acknowledge> I checked the current team and lead settings.</label>
+        {{end}}
+        <label data-creation-provider-label>Provider<select name="provider" data-creation-provider disabled><option value="">Loading providers…</option></select></label>
+        <p class="muted" data-creation-provider-help></p>
+        <label class="checkbox"><input type="checkbox" name="sensitive" value="true"> Sensitive session (records stay local)</label>
+        <label class="checkbox"><input name="browserNotificationsEnabled" type="checkbox" checked> Browser notifications for this session</label>
+        <details><summary>Options</summary>
+        <div class="stack">
+        <label>Custom short name (optional)<input name="name" maxlength="48" pattern="[A-Za-z0-9][A-Za-z0-9_-]*" placeholder="api-token-rotation"></label>
+        <p class="muted">Leave the name blank to generate a dated session name from your request.</p>
+        {{if .AgentTeams.Managed}}
+        <div class="field-grid"><label>Lead model<select name="model" data-model-select required>{{range .AgentTeams.Teams}}{{if eq .Name $.AgentTeams.DefaultTeam}}<option value="{{.LeadModel}}" selected>{{.LeadModel}}</option>{{end}}{{end}}</select></label><label>Lead reasoning effort<select name="effort" data-effort-select required>{{range .AgentTeams.Teams}}{{if eq .Name $.AgentTeams.DefaultTeam}}<option value="{{.LeadEffort}}" selected>{{.LeadEffort}}</option>{{end}}{{end}}</select></label></div>
+        {{else}}
+        <div class="field-grid">
+          <label>Model<select name="model" data-model-select required><option value="">Loading models…</option></select></label>
+          <label>Reasoning effort<select name="effort" data-effort-select required><option value="">Loading efforts…</option></select></label>
+        </div>
+        {{end}}
+        <div class="cli-preview"><label>From {{.HostLabel}}, in this workspace<div class="copy-row"><input data-cli-command readonly aria-label="CLI command"><button type="button" data-copy disabled>Copy</button></div></label><p class="muted">The CLI asks for the initial request on stdin. Portal uploads are not included in this command.</p></div>
+        </div>
+        </details>
+        <p id="creation-draft-notice" class="notice warning" hidden>Files from an older draft need to be attached again to this request.</p>
+        <input type="hidden" name="uploadScope">
+        <div id="creation-uploads"></div>
+        <p id="new-session-progress" class="operation-progress" role="status" aria-live="polite" hidden></p>
+        <div id="new-session-recovery" class="notice warning" hidden>
+          <p data-request-identity></p>
+          <p>The saved request and files stay locked until its outcome is confirmed.</p>
+          <button type="button" id="new-session-recover">Recover saved request</button>
+          <div id="new-session-separate" hidden>
+            <p>The original request may still finish. To start a separate request with current settings, copy your text and attach files again.</p>
+            <div class="copy-row saved-request-copy"><textarea data-saved-request-text readonly aria-label="Saved request text"></textarea>{{template "copy-button" "saved text"}}</div>
+            <a href="/" target="_blank" rel="noopener noreferrer">Start a separate request</a>
+          </div>
+        </div>
+        <div class="creation-actions"><span id="creation-upload-controls"></span><button type="submit" disabled>Create session</button></div>
+      </form>
+    </section>
+
+    <section id="operations" class="panel operations-panel" hidden>
+      <div class="section-heading"><h2>Operations</h2><span id="operation-count">0</span></div>
+      <div id="operation-list" class="operation-list" aria-live="polite"></div>
+    </section>
+
+
+  </main>
+  </div>
+  <template id="session-card-template">{{template "session-card"}}</template>
+  <script src="/static/session-attention-store.js?v=3" defer></script>
+  <script src="/static/browser-notifications.js?v=5" defer></script>
+  <script src="/static/preparation.js?v=5" defer></script>
+  <script src="/static/app.js?v=55" defer></script>
+  <script src="/static/coordination.js?v=6" defer></script>
+</body>
+</html>
+{{end}}
+
+{{define "sidebar-menu"}}
+<button class="sidebar-menu-toggle quiet" type="button" popovertarget="sidebar-menu" title="Workspace menu" aria-label="Workspace menu"><span aria-hidden="true">⋮</span></button>
+<nav id="sidebar-menu" class="sidebar-menu" popover="auto" aria-label="Workspace navigation">
+  <a href="/operations" autofocus>Operations</a>
+  <a href="/automatic-archival">Automatic archival</a>
+  <section class="menu-notifications" aria-label="Browser notifications">
+    <label class="checkbox"><input type="checkbox" data-notification-delivery aria-describedby="menu-notification-error" disabled> Notifications</label>
+    <label class="checkbox"><input type="checkbox" data-notification-sound aria-describedby="menu-notification-error" disabled> Sound</label>
+    <p id="menu-notification-error" data-notification-menu-error class="muted" role="status" hidden></p>
+    <a href="/browser-notifications">Notification settings</a>
+  </section>
+</nav>
+{{end}}
+
+{{define "codex-limits"}}
+<section class="codex-limits" aria-label="Codex limits">
+  <button class="codex-limits-toggle quiet" type="button" popovertarget="codex-limits-panel" aria-controls="codex-limits-panel" aria-expanded="false" title="Codex limits" aria-label="Codex limits">
+    <span data-limits-compact-label>Limits</span><strong data-limits-compact-value>…</strong>
+  </button>
+  <div id="codex-limits-panel" class="codex-limits-panel">
+    <div class="limits-heading"><h2>Codex limits</h2><button type="button" class="quiet icon-button" data-limits-details title="Account details" aria-label="Account details" aria-haspopup="dialog" aria-controls="codex-limits-dialog"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7v1"/></svg></button></div>
+    <p data-limits-provider class="muted"></p><div data-limits-content></div>
+  </div>
+</section>
+<dialog id="codex-limits-dialog" aria-labelledby="codex-limits-title">
+  <div class="section-heading"><h2 id="codex-limits-title">Codex limits</h2><button type="button" class="quiet" data-limits-close>Close</button></div>
+  <div data-provider-controls hidden>
+    <label for="codex-provider-scope">Apply provider to</label>
+    <select id="codex-provider-scope" data-provider-scope>
+      <option value="session">This session</option>
+      <option value="workspace">Workspace default</option>
+    </select>
+    <label for="codex-provider-preview">Preview provider limits</label>
+    <select id="codex-provider-preview" data-provider-select></select>
+    <p data-provider-active class="muted"></p>
+    <p>The switch pauses affected threads and resumes their work automatically. Temporary subagents may stop and need their tasks assigned again. Sessions with their own provider keep it when the workspace default changes.</p>
+    <button type="button" data-provider-switch>Switch to this provider</button>
+    <button type="button" data-provider-inherit hidden>Use workspace default</button>
+    <button type="button" data-provider-cancel hidden>Cancel switch</button>
+    <button type="button" data-provider-recover hidden>Retry provider switch</button>
+    <button type="button" data-provider-dismiss hidden>Dismiss</button>
+    <p data-provider-action-error class="notice error" role="alert" hidden></p>
+    <div data-provider-status class="provider-operation" role="status" aria-live="polite" hidden></div>
+  </div>
+  <div data-account-limits></div><p data-reset-status role="status"></p>
+</dialog>
+{{end}}
+
+{{define "session-card"}}
+<a class="session-card{{with .}}{{if .Archived}} archived{{end}}{{end}}" href="{{with .}}/{{.Slug}}/{{end}}" data-session-slug="{{with .}}{{.Slug}}{{end}}" data-session-observation="{{with .}}{{.ObservationIdentity}}{{end}}">
+  <span class="status-dot{{with .}}{{if not .Archived}} active{{end}}{{end}}"></span>
+  <strong>{{with .}}{{.Slug}}{{end}}</strong>
+  <span class="muted" data-session-updated data-updated-at="{{with .}}{{.UpdatedAt.Format "2006-01-02T15:04:05.999999999Z07:00"}}{{end}}">{{with .}}{{if .Archived}}Finalized{{else}}Updated{{end}} {{timeAgo .UpdatedAt}}{{end}}</span>
+  <span data-session-repositories>{{with .}}{{len .Repositories}} repositories{{end}}</span>
+  <span class="cluster-summary" data-session-clusters hidden></span>
+  <span class="badge sensitive" data-session-sensitive {{if not .Sensitive}}hidden{{end}}>Sensitive</span>
+  <span class="badge warning" data-session-lifecycle hidden></span>
+  <span class="badge reserved" data-session-reservation hidden></span>
+</a>
+{{end}}

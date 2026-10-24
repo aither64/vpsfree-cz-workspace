@@ -1,0 +1,52 @@
+--- original/activate.sh
++++ successor/activate.sh
+@@ -2,4 +2,4 @@
+ set -euo pipefail
+ # PREPARED ONLY. PARENT launches; a utility may observe status, never this driver.
+ cd /home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements
+-exec python3 /home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/targeted-read-budget-successor/activation/activation-driver.py
++exec python3 /home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/targeted-read-budget-successor/activation-manifest-parser/activation-driver.py
+--- original/smoke.sh
++++ successor/smoke.sh
+@@ -5,4 +5,4 @@
+ unset DEBUG PWDEBUG NODE_DEBUG
+ export NODE_PATH=/nix/store/fg778x0631ld4xd8fim2kbvxll5715xp-playwright-test-1.59.1/lib/node_modules
+ export PLAYWRIGHT_BROWSERS_PATH=/nix/store/f0rap655j6wmqbfvqdw445kwcxkxwf7n-playwright-browsers
+-exec timeout 180 /nix/store/l07gdbxylzfl8pbx9pxy6fyg95w4hjwy-nodejs-24.19.0/bin/node /home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/targeted-read-budget-successor/activation/continuity.cjs "$@"
++exec timeout 180 /nix/store/l07gdbxylzfl8pbx9pxy6fyg95w4hjwy-nodejs-24.19.0/bin/node /home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/targeted-read-budget-successor/activation-manifest-parser/continuity-diagnostic.cjs "$@"
+--- original/activation-driver.py
++++ successor/activation-driver.py
+@@ -154,7 +154,7 @@
+     for name in ['DEBUG', 'PWDEBUG', 'NODE_DEBUG']:
+         environment.pop(name, None)
+     with (operation / (which + '-smoke.log')).open('xb') as output:
+-        result = subprocess.run([CFG['node'], str(HERE / 'continuity.cjs'), which, str(operation)],
++        result = subprocess.run([CFG['node'], str(HERE / 'continuity-diagnostic.cjs'), which, str(operation)],
+                                 env=environment, stdin=subprocess.DEVNULL, stdout=output, stderr=output, timeout=180)
+     require(result.returncode == 0)
+     require(read_json(operation / ('continuity-' + which + '.json'))['state'] == 'passed')
+--- retained-diagnostic/continuity-diagnostic.cjs
++++ successor/continuity-diagnostic.cjs
+@@ -94,10 +94,18 @@
+   diagnosticStage = "unauthenticated_tls_health";
+   requireThat(run("curl", ["--silent", "--show-error", "--max-time", "10", "--cacert", "/var/lib/dev-workspaces/public/ca.pem", "--output", "/dev/null", "--write-out", "%{http_code}", baseURL + "/healthz"]) === "401");
+   diagnosticStage = "own_manifest_socket";
+-  const manifest = fs.readFileSync(path.join(cfg.tracking, "portal.yml"), "utf8");
+-  const rootThread = /^  thread_id: ([^\s]+)$/m.exec(manifest)?.[1];
+-  const socket = /^  socket_path: ([^\s]+)$/m.exec(manifest)?.[1];
+-  requireThat(rootThread && socket && path.isAbsolute(socket));
++  // Decode and validate the own manifest with this phase's installed parser.
++  const manifest = JSON.parse(run("/nix/store/5shv7ihqxa98r1psfz995q3j2cwk22sa-ruby-3.4.9/bin/ruby", ["-e", `
++    load ARGV.fetch(0)
++    runner = DevSession::Runner.new(workspace: ARGV.fetch(1), require_runtime: false)
++    manifest = runner.send(:load_portal_manifest, ARGV.fetch(2), required: true, expected_slug: ARGV.fetch(3))
++    codex = manifest.fetch('codex')
++    print JSON.generate({slug: manifest.fetch('slug'), rootThread: codex.fetch('thread_id'), socket: codex.fetch('socket_path')})
++  `, path.join(expectedPackage, "libexec/workspace-portal/.dev-session-wrapped"), cfg.workspace,
++    path.join(cfg.tracking, "portal.yml"), cfg.slug]));
++  const {rootThread, socket} = manifest;
++  requireThat(manifest.slug === cfg.slug && typeof rootThread === "string" && rootThread.length > 0 &&
++    typeof socket === "string" && path.isAbsolute(socket));
+   const socketStat = fs.statSync(socket); requireThat(socketStat.isSocket());
+   diagnosticStage = "credential_in_memory";
+   let password;

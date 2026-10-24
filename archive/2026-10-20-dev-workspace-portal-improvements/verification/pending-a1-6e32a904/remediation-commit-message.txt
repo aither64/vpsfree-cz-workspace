@@ -1,0 +1,9 @@
+fixup! conversation: retire hidden reads and recover current controls
+
+Retire successful pending freshness when the current mounted read fails, so
+its two-second retry cannot be deferred by the previous success floor. Keep
+retained questions, failure notices, backoff and retired-cycle isolation.
+
+Load the corrected mounted asset in the standalone example. Regress the
+real retry timer and late retired failures without changing public APIs or
+persisted state.

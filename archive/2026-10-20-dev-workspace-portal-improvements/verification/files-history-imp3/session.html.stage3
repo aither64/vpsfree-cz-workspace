@@ -1,0 +1,301 @@
+{{define "session"}}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="style-nonce" content="{{.StyleNonce}}">
+  <title>{{.Session.Slug}} · Workspace</title>
+  <link rel="stylesheet" href="/codex/assets/conversation.css?v=8">
+  <link rel="stylesheet" href="/static/style.css?v=21">
+  <link rel="stylesheet" href="/codex/assets/uploads.css?v=3">
+</head>
+<body class="session-body" data-session="{{.Session.Slug}}" data-session-observation="{{.Session.ObservationIdentity}}" data-thread-id="{{if .SelectedThreadID}}{{.SelectedThreadID}}{{else}}{{.Session.Codex.ThreadID}}{{end}}" data-root-thread-id="{{.Session.Codex.ThreadID}}" data-conversation-id="{{.ConversationID}}" data-selected-member="{{.SelectedMember}}" data-lifecycle-target-id="{{.LifecycleTargetID}}" data-target-identity-version="2" data-archived="{{.Session.Archived}}" data-interactive="{{.Session.Interactive}}" data-execution-held="{{.Session.ExecutionHeld}}" data-lifecycle="{{.Session.Lifecycle}}" data-pending-lifecycle="{{.PendingLifecycle}}">
+  <div class="workspace-shell">
+  <aside class="workspace-sidebar">
+  <div class="sidebar-content">
+  <header class="sidebar-heading">
+    <div class="sidebar-toolbar"><a href="/" class="sidebar-home" title="Workspace" aria-label="Workspace"><span aria-hidden="true" class="rail-icon">⌂</span><span class="rail-label">Workspace</span></a>{{template "sidebar-menu"}}</div>
+    <h1>{{.Session.Slug}}</h1>
+  </header>
+    {{if not .LifecycleOnly}}
+      <nav class="tabs" role="tablist" aria-label="Session sections" aria-orientation="vertical">
+        {{if .Session.Codex.ThreadID}}<a id="session-tab-codex" class="tab active" href="#codex" role="tab" aria-selected="true" aria-controls="codex" data-session-tab="codex" title="Codex" aria-label="Codex"><span class="rail-icon" aria-hidden="true">◇<span id="codex-waiting-indicator" class="codex-waiting-indicator" hidden></span></span><span class="rail-label">Codex</span></a>{{end}}
+        <a id="session-tab-handoff" class="tab {{if not .Session.Codex.ThreadID}}active{{end}}" href="#handoff" role="tab" aria-selected="{{if .Session.Codex.ThreadID}}false{{else}}true{{end}}" aria-controls="handoff" data-session-tab="handoff" title="Handoff" aria-label="Handoff"><span class="rail-icon" aria-hidden="true">↗</span><span class="rail-label">Handoff</span></a>
+        {{if .Session.Codex.ThreadID}}<a id="session-tab-team" class="tab" href="#team" role="tab" aria-selected="false" aria-controls="team" data-session-tab="team" title="Team" aria-label="Team"><span class="rail-icon" aria-hidden="true">♙</span><span class="rail-label">Team</span></a>{{end}}
+        <a id="session-tab-repositories" class="tab" href="#repositories" role="tab" aria-selected="false" aria-controls="repositories" data-session-tab="repositories" title="Repositories" aria-label="Repositories"><span class="rail-icon" aria-hidden="true">⌘</span><span class="rail-label">Repositories</span></a>
+        <a id="session-tab-clusters" class="tab" href="#clusters" role="tab" aria-selected="false" aria-controls="clusters" data-session-tab="clusters" title="Clusters" aria-label="Clusters"><span class="rail-icon" aria-hidden="true">▦</span><span class="rail-label">Clusters{{if .Clusters}} ({{len .Clusters}}){{end}}</span></a>
+        <a id="session-tab-reservations" class="tab" href="#reservations" role="tab" aria-selected="false" aria-controls="reservations" data-session-tab="reservations" title="Reservations" aria-label="Reservations"><span class="rail-icon" aria-hidden="true">▣</span><span class="rail-label">Reservations</span></a>
+        <a id="session-tab-files" class="tab" href="#files" role="tab" aria-selected="false" aria-controls="files" data-session-tab="files" title="Files" aria-label="Files"><span class="rail-icon" aria-hidden="true">▤</span><span class="rail-label">Files</span></a>
+        <a id="session-tab-settings" class="tab" href="#settings" role="tab" aria-selected="false" aria-controls="settings" data-session-tab="settings" title="Settings" aria-label="Settings"><span class="rail-icon" aria-hidden="true">⚙</span><span class="rail-label">Settings</span></a>
+      </nav>
+    {{end}}
+    </div>
+    {{template "codex-limits"}}
+    <div class="sidebar-actions">
+      {{if .Session.Interactive}}<button id="fork-open" type="button" class="quiet" title="Fork session" aria-label="Fork session"><span class="rail-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="7" cy="5" r="2.5"/><circle cx="17" cy="5" r="2.5"/><circle cx="7" cy="19" r="2.5"/><path d="M7 7.5v9M17 7.5v1A4.5 4.5 0 0 1 12.5 13H7"/></svg></span><span class="rail-label">Fork session</span></button>{{end}}
+      <button id="archive-session-open" type="button" title="Archive session" aria-label="Archive session"{{if not (or (eq .PendingLifecycle "archive") (and (not .PendingLifecycle) (not .Session.Archived)))}} hidden{{end}}><span class="rail-icon" aria-hidden="true">▣</span><span class="rail-label">{{if eq .PendingLifecycle "archive"}}Retry archive{{else}}Archive session{{end}}</span></button>
+      <button id="revive-session-open" type="button" title="Revive session" aria-label="Revive session"{{if or .PendingLifecycle (not .Session.Archived)}} hidden{{end}}><span class="rail-icon" aria-hidden="true">↻</span><span class="rail-label">Revive session</span></button>
+      {{if eq .PendingLifecycle "revive"}}<button id="revive-session-retry" type="button" title="Retry revive" aria-label="Retry revive"><span class="rail-icon" aria-hidden="true">↻</span><span class="rail-label">Retry revive</span></button>{{end}}
+      <button id="delete-session-open" type="button" class="danger" title="Delete session" aria-label="Delete session"><span class="rail-icon" aria-hidden="true">×</span><span class="rail-label">{{if eq .PendingLifecycle "delete"}}Retry delete…{{else}}Delete session…{{end}}</span></button>
+      {{if .Session.Sensitive}}<span class="badge">Sensitive</span>{{end}}
+      <span class="badge {{if .PendingLifecycle}}warning{{else if .Session.Archived}}archived{{else if .Session.Interactive}}active{{else}}warning{{end}}">{{if .PendingLifecycle}}{{.PendingLifecycle}} pending{{else if .Session.Archived}}Archived{{else if eq .Session.Lifecycle "complete"}}Complete · open{{else if eq .Session.Lifecycle "abandoned"}}Abandoned · open{{else if .Session.Interactive}}Active{{else if .Session.PersistedThread}}Read-only{{else}}Creating{{end}}</span>
+    </div>
+  </aside>
+  <main class="page session-page">
+    {{if and .Session.RecoveryReady (not .PendingLifecycle)}}
+    <section id="session-recovery" class="notice full recovery-notice" role="status" aria-live="polite"{{if or (eq .Recovery.State "active") (and (eq .Recovery.State "waiting") .Recovery.NoticeDismissed)}} hidden{{end}}>
+      <span id="session-recovery-message">Checking session recovery…</span>
+      <button id="session-resume" type="button" class="quiet" hidden>Resume session</button>
+      <button id="session-continue" type="button" hidden>Continue task</button>
+      <button id="session-recovery-dismiss" type="button" class="quiet icon-button" title="Dismiss restored-session notice" aria-label="Dismiss restored-session notice" hidden><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+    </section>
+    {{end}}
+    <p id="session-details-warning" class="notice warning full" role="status" hidden></p>
+    {{if .MemberNotice}}<p class="notice warning full">{{.MemberNotice}}</p>{{end}}
+    {{if .Error}}<p class="notice error full">{{.Error}}</p>{{end}}
+    <section id="lifecycle-operation-status" class="operation-status notice full" role="status" aria-live="polite" hidden>
+      <div><strong id="lifecycle-operation-title"></strong><span id="lifecycle-operation-detail"></span></div>
+      <button id="lifecycle-operation-retry" type="button" class="quiet" hidden>Retry</button>
+    </section>
+    <p id="archive-last-failure" class="notice warning full" role="status" hidden><span></span> <a href="#settings">Technical details</a></p>
+    {{if eq .PendingLifecycle "archive"}}<p class="notice full">Archiving is unfinished. This conversation is read-only until it finishes.</p>{{end}}
+    {{if .LifecycleOnly}}
+    <section class="panel"><h2>Deletion recovery</h2><p>This session's tracking has already moved to private recovery storage. The deletion status above remains available so you can retry or force the unfinished operation.</p></section>
+    {{else}}
+    <section class="session-tabs">
+      <section id="reservations" class="tab-panel" role="tabpanel" aria-labelledby="session-tab-reservations">
+        <div class="section-heading"><h2>Reservations</h2><a href="/operations">Workspace operations</a></div>
+        <p>Machines held by this session stay reserved during review and feedback.</p>
+        <p data-coordination-warning class="notice warning" role="status" hidden></p>
+        <p class="muted" data-coordination-refreshed role="status"></p>
+        <div data-coordination data-coordination-session="{{.Session.Slug}}" data-coordination-observation="{{.Session.ObservationIdentity}}" class="coordination-layout">Loading reservations…</div>
+      </section>
+      <section id="settings" class="tab-panel" role="tabpanel" aria-labelledby="session-tab-settings">
+        <div class="section-heading"><h2>Settings</h2></div>
+        <section class="panel">
+          <h3>Session</h3>
+          <dl><dt>Sensitive</dt><dd data-session-sensitivity>{{if .Session.Sensitive}}Yes{{else}}No{{end}}</dd></dl>
+          <p class="muted">Sensitivity is set when the session is created.</p>
+        </section>
+        <section class="panel">
+          <h3>Session attention</h3>
+          <p><code>?</code> means an unseen answer or approval request. <code>✓</code> means the lead finished a response and the team is idle. Visiting this session clears attention. <code>R</code> means one machine is reserved; <code>R2</code> means two. Reservations remain until released.</p>
+          <label class="checkbox"><input id="session-notifications-enabled" type="checkbox" checked disabled> Browser notifications for this session</label>
+          <p class="muted">This setting applies to every subscribed browser. Title markers stay enabled.</p>
+        </section>
+        {{template "browser-notifications"}}
+        <section id="auto-archive-panel" class="panel">
+          <h3>Automatic archival</h3>
+          <p id="auto-archive-status" role="status">Loading archival settings…</p>
+          <div id="auto-archive-values" hidden></div>
+          <details id="auto-archive-details" hidden><summary>Technical details</summary><pre></pre></details>
+          <label id="auto-archive-hold-label" class="checkbox"{{if .Session.Archived}} hidden{{end}}><input id="auto-archive-hold" type="checkbox" disabled> Keep open</label>
+          <p class="muted">Keep open prevents automatic archival. You can still archive this session manually.</p>
+        </section>
+      </section>
+
+
+      {{if .Session.Codex.ThreadID}}
+      <section id="codex" class="tab-panel chat-panel active" role="tabpanel" aria-labelledby="session-tab-codex">
+        <div class="chat-heading"><h2>Codex</h2><div id="transcript-filters" class="transcript-filters" role="tablist" aria-label="Conversation view">
+          <button type="button" class="quiet" role="tab" aria-selected="false" data-transcript-filter="all">All</button>
+          <button type="button" class="quiet active" role="tab" aria-selected="true" data-transcript-filter="messages">Messages</button>
+          <button type="button" class="quiet" role="tab" aria-selected="false" data-transcript-filter="team">Team</button>
+          <button type="button" class="quiet" role="tab" aria-selected="false" data-transcript-filter="activity">Activity</button>
+        </div><label class="member-selector"><span>Member</span><select id="codex-member"><option value="lead">lead</option>{{range .ReadyMembers}}<option value="{{.Address}}"{{if eq .Address $.SelectedMember}} selected{{end}}>{{.Address}}</option>{{end}}</select></label><span id="codex-status" class="badge">Connecting</span></div>
+        <div id="conversation-connection" class="notice warning conversation-connection" role="status" hidden></div>
+        <div id="codex-duration" class="activity-summary" role="status">Loading timing…</div>
+        <div class="transcript-history">
+          <div id="history-controls" class="history-controls" hidden><span id="history-status" role="status"></span><button id="repair-history" type="button" class="quiet" hidden>Retry history</button></div>
+          <div id="transcript" class="transcript" role="log" aria-label="Codex conversation"><p class="empty">Loading conversation…</p></div>
+        </div>
+        {{if and .Session.RecoveryReady (not .PendingLifecycle)}}<p id="pending-status" class="lane-status" role="status" hidden><span>Loading requests…</span> <button id="pending-retry" type="button" class="quiet" hidden>Retry</button></p><div id="pending" class="pending"></div>{{end}}
+        <section id="optional-questions" class="codex-question-panel" aria-label="Optional questions" hidden></section>
+        <div class="composer-context">
+        {{if and .Session.RecoveryReady (not .PendingLifecycle)}}
+        <div id="message-receipts" class="message-receipts" hidden></div>
+        <section id="queue-panel" class="queue-panel" hidden>
+          <div class="queue-heading"><h3>Queued messages</h3><button id="queue-start" type="button" class="quiet">Start next</button></div>
+          <ol id="queue-list"></ol>
+        </section>
+        {{if .Session.Interactive}}<p id="queue-status" class="lane-status" role="status" hidden><span>Checking queued messages…</span> <button id="queue-retry" type="button" class="quiet" hidden>Retry</button></p>{{end}}
+        {{end}}
+        <div id="codex-work" class="codex-work" aria-live="polite" hidden><span id="codex-work-label">Working</span><span id="codex-work-counts"></span><time id="codex-work-elapsed"></time></div>
+        <button id="new-output" type="button" class="new-output" hidden>New output ↓</button>
+        {{if .Session.Interactive}}
+        <section id="plan-actions" class="plan-actions" hidden>
+          <div><strong>Ready to implement this plan?</strong><p>Continue here or start a clean session with the exact plan.</p></div>
+          <div class="approval-actions"><button id="plan-implement-same" type="button">Implement here</button><button id="plan-implement-new" type="button" class="quiet">New session…</button><button id="plan-keep-planning" type="button" class="quiet">Keep planning</button></div>
+        </section>
+        {{end}}
+        </div>
+        {{if and .Session.RecoveryReady (not .PendingLifecycle)}}
+        <p id="message-submission-status" class="notice warning" role="status" hidden></p>
+          <form id="message-form" class="chat-form">
+          <textarea name="message" required rows="3" maxlength="{{.MaxMessageBytes}}" placeholder="Send a message or steer the current turn…"></textarea>
+          <div id="message-uploads"></div>
+          <div class="chat-actions"><div class="composer-actions"><span id="message-upload-controls"></span><button id="message-send" type="submit"{{if not .Session.Interactive}} disabled{{end}}>Send</button><button id="message-queue" type="button" class="quiet" hidden>Queue next</button><div id="codex-mode" class="mode-toggle" aria-label="Codex mode" hidden></div><span id="codex-mode-status" class="lane-status" role="status" hidden></span></div><div class="composer-controls"><div class="composer-settings"><span id="codex-settings-summary" class="settings-summary">Settings unavailable</span><button id="codex-settings-open" type="button" class="quiet icon-button" title="Edit Codex settings" aria-label="Edit Codex settings" aria-haspopup="dialog" aria-controls="codex-settings-dialog" disabled><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m15 5 4 4M4 20l4-1L20 7a2.8 2.8 0 0 0-4-4L4 15z"/></svg></button></div><button id="interrupt" type="button" class="danger"{{if or (not .Session.Interactive) .Session.ExecutionHeld}} disabled{{end}}>Interrupt</button></div></div>
+        </form>
+        <dialog id="codex-settings-dialog" aria-labelledby="codex-settings-title">
+          <div class="section-heading"><h2 id="codex-settings-title">Codex settings</h2><button id="codex-settings-close" type="button" class="quiet" aria-label="Close settings">Close</button></div>
+          <label>Model<select id="codex-model" data-model-select data-existing-settings="true" required><option value="">Loading models…</option></select></label>
+          <label>Reasoning<select id="codex-effort" data-effort-select data-existing-settings="true"><option value="">Loading efforts…</option></select></label>
+          <p class="muted">Changes apply to the next turn. Stopped sessions keep the choice until activation.</p>
+          <p id="codex-settings-status" class="lane-status" role="status"></p>
+          <button id="codex-settings-save" type="button" disabled>Save</button>
+        </dialog>
+        {{end}}
+      </section>
+      {{end}}
+
+      <section id="handoff" class="tab-panel {{if not .Session.Codex.ThreadID}}active{{end}}" role="tabpanel" aria-labelledby="session-tab-handoff">
+        <p><a href="/operations">View operations</a></p>
+        <div class="section-heading"><h2>Handoff</h2></div>
+        {{if not .Session.Codex.ThreadID}}<p class="notice warning">This session has no shared Codex conversation. Start new sessions with <code>dev-session start &lt;short-name&gt;</code>.</p>{{end}}
+        {{if .Session.ForkedFrom}}<p>Forked from <a href="/{{.Session.ForkedFrom}}/">{{.Session.ForkedFrom}}</a>.</p>{{end}}
+        <label>Portal URL<div class="copy-row"><input readonly value="{{.BaseURL}}/{{.Session.Slug}}/"><button type="button" data-copy>Copy</button></div></label>
+        {{if and .Session.Interactive .Session.Tmux.SocketPath}}
+        <label>Attach from {{.HostLabel}}<div class="copy-row"><input readonly value="dev-session attach {{.Session.Slug}}"><button type="button" data-copy>Copy</button></div></label>
+        {{if .SSHHost}}<label>Attach over SSH<div class="copy-row"><input readonly value="ssh -t {{.SSHHost}} &quot;dev-session attach {{.Session.Slug}}&quot;"><button type="button" data-copy>Copy</button></div></label>{{end}}
+        {{end}}
+      </section>
+
+      {{if .Session.Codex.ThreadID}}
+      <section id="team" class="tab-panel" role="tabpanel" aria-labelledby="session-tab-team">
+        <div id="team-member-status">{{template "member-status" .}}</div>
+        {{if not .Session.Archived}}<dialog id="team-settings-dialog" aria-labelledby="team-settings-title">
+          <div class="section-heading"><h2 id="team-settings-title">Member settings</h2><button id="team-settings-close" type="button" class="quiet">Close</button></div>
+          <label>Model<select id="team-model" data-model-select required><option value="">Loading models…</option></select></label>
+          <label>Reasoning<select id="team-effort" data-effort-select required><option value="">Loading efforts…</option></select></label>
+          <p class="muted">Changes apply to the next turn. Stopped sessions keep the choice until activation.</p>
+          <p id="team-settings-status" class="lane-status" role="status" aria-live="polite"></p>
+          <button id="team-settings-save" type="button" disabled>Save</button>
+        </dialog>{{end}}
+      </section>
+      {{end}}
+
+      <section id="repositories" class="tab-panel" role="tabpanel" aria-labelledby="session-tab-repositories">
+        {{template "repositories" .}}
+      </section>
+
+      <section id="clusters" class="tab-panel" role="tabpanel" aria-labelledby="session-tab-clusters">
+        {{template "clusters" .}}
+      </section>
+
+      <section id="files" class="tab-panel files-panel" role="tabpanel" aria-labelledby="session-tab-files">
+        <div class="section-heading"><h2>Files</h2><button id="files-refresh" type="button" class="quiet">Refresh</button></div>
+        <p id="files-status" class="notice" role="status" hidden></p>
+        <nav id="session-files" class="artifact-list" aria-label="Session files"></nav>
+      </section>
+    </section>
+    {{end}}
+  </main>
+  </div>
+  {{if .Session.Interactive}}
+  <dialog id="fork-dialog">
+    <form id="fork-form" class="stack">
+      <div><p class="eyebrow">New session</p><h2>Fork conversation</h2><p class="muted">The conversation and Codex settings are copied. Choose a provider for the new session. Worktrees, files, and development clusters stay with this session.</p></div>
+      <input type="hidden" name="creationDate" value="{{.CreationDate}}">
+      <label data-creation-provider-label>Provider<select name="provider" data-creation-provider disabled><option value="">Loading providers…</option></select></label>
+      <p class="muted" data-creation-provider-help></p>
+      <label class="checkbox"><input type="checkbox" name="sensitive" value="true"{{if .Session.Sensitive}} checked disabled{{end}}> Sensitive session (records stay local)</label>
+      <label class="checkbox"><input name="browserNotificationsEnabled" type="checkbox" checked> Browser notifications for this session</label>
+      <label>Short name<input name="name" required maxlength="48" pattern="[A-Za-z0-9][A-Za-z0-9_-]*" placeholder="alternate-approach"></label>
+      <div class="field-grid">
+        <label>Model<select name="model" data-model-select required><option value="">Loading models…</option></select></label>
+        <label>Reasoning effort<select name="effort" data-effort-select><option value="">Loading efforts…</option></select></label>
+      </div>
+      <p id="fork-progress" class="operation-progress" role="status" aria-live="polite" hidden></p>
+      <div class="dialog-actions"><button type="button" class="quiet" data-dialog-close>Cancel</button><button type="submit">Create fork</button></div>
+    </form>
+  </dialog>
+  {{end}}
+  {{if .Session.Interactive}}
+  <dialog id="plan-session-dialog">
+    <form id="plan-session-form" class="stack">
+      <div><p class="eyebrow">Approved plan</p><h2>Implement in a new session</h2><p class="muted">The new conversation starts with the exact plan.</p></div>
+      <input type="hidden" name="creationDate" value="{{.CreationDate}}">
+      <label data-creation-provider-label>Provider<select name="provider" data-creation-provider disabled><option value="">Loading providers…</option></select></label>
+      <p class="muted" data-creation-provider-help></p>
+      <label class="checkbox"><input type="checkbox" name="sensitive" value="true"{{if .Session.Sensitive}} checked disabled{{end}}> Sensitive session (records stay local)</label>
+      <label class="checkbox"><input name="browserNotificationsEnabled" type="checkbox" checked> Browser notifications for this session</label>
+      <label>Short name<input name="name" required maxlength="48" pattern="[A-Za-z0-9][A-Za-z0-9_-]*" placeholder="implement-feature"></label>
+      {{if .AgentTeams.Managed}}
+      <input type="hidden" name="catalogDigest" value="{{.AgentTeams.CatalogDigest}}">
+      <label>Starting team<select name="team" data-team-select required>{{range .AgentTeams.Teams}}<option value="{{.Name}}"{{if eq .Name $.AgentTeams.DefaultTeam}} selected{{end}} title="{{.Description}}" data-description="{{.Description}}" data-roles="{{.RoleSummary}}" data-lead-model="{{.LeadModel}}" data-lead-effort="{{.LeadEffort}}">{{.Label}} ({{.MemberCount}}): {{.RoleSummary}}</option>{{end}}</select></label>
+      <p class="muted" data-team-description></p>
+      <p class="notice warning" data-team-catalog-changed role="status" aria-live="polite" hidden>Available teams changed since you saved this draft. Check the team and lead settings before creating the session.</p>
+      <label data-team-catalog-acknowledgement hidden><input type="checkbox" data-team-catalog-acknowledge> I checked the current team and lead settings.</label>
+      <div class="field-grid"><label>Lead model<select name="model" data-model-select required><option value="">Loading models…</option></select></label><label>Lead reasoning effort<select name="effort" data-effort-select required><option value="">Loading efforts…</option></select></label></div>
+      {{else}}
+      <div class="field-grid"><label>Lead model<select name="model" data-model-select required><option value="">Loading models…</option></select></label><label>Lead reasoning<select name="effort" data-effort-select required><option value="">Loading efforts…</option></select></label></div>
+      {{end}}
+      <p id="plan-session-progress" class="operation-progress" role="status" aria-live="polite" hidden></p>
+      <div class="dialog-actions"><button type="button" class="quiet" data-dialog-close>Cancel</button><button type="submit">Create session</button></div>
+    </form>
+  </dialog>
+  {{end}}
+  <dialog id="archive-session-dialog">
+    <form id="archive-session-form" class="stack">
+      <div><p class="eyebrow">Close session</p><h2>Archive session</h2><p>Archive stops active agents, saves local changes for revival, removes worktrees, and releases development clusters. Conversations and queued prompt records are kept.</p></div>
+      <div class="dialog-actions"><button type="button" class="quiet" data-dialog-close>Cancel</button><button type="submit" name="mode" value="archived">Archive</button></div>
+    </form>
+  </dialog>
+  <dialog id="revive-session-dialog">
+    <form id="revive-session-form" class="stack">
+      <div><p class="eyebrow">Continue work</p><h2>Revive session</h2><p>This restores active tracking and the retained conversation. Worktrees saved by explicit Archive are restored with their local changes. Queued prompts stay held.</p></div>
+      <p id="revive-abandoned-warning" class="notice warning"{{if ne .Session.Lifecycle "abandoned"}} hidden{{end}}>This session was explicitly abandoned. Reviving it reopens discarded work as an active initiative.</p>
+      <div class="dialog-actions"><button type="button" class="quiet" data-dialog-close>Cancel</button><button type="submit">Revive session</button></div>
+    </form>
+  </dialog>
+  <dialog id="delete-session-dialog">
+    <form id="delete-session-form" class="stack">
+      <div><p class="eyebrow danger-text">Destructive action</p><h2>Delete session</h2><p>This removes the session, worktrees, cluster state, and browser and terminal runtime. Git branches are retained. Tracking is moved to private recovery storage.</p></div>
+      <label class="checkbox"><input name="force" type="checkbox"> Force deletion of dirty worktrees or an active Codex turn</label>
+      <div class="dialog-actions"><button type="button" class="quiet" data-dialog-close>Cancel</button><button type="submit" class="danger">Delete session</button></div>
+    </form>
+  </dialog>
+  <script src="/static/app.js?v=51" defer></script>
+  <script src="/static/session-attention-store.js?v=3" defer></script>
+  <script src="/static/browser-notifications.js?v=5" defer></script>
+  <script src="/static/session-attention.js" defer></script>
+  <script src="/static/coordination.js?v=6" defer></script>
+</body>
+</html>
+{{end}}
+
+{{define "member-status"}}
+  <div class="section-heading"><h2>Team</h2><span>Independent threads</span></div>
+  <p class="muted">The lead is this session's normal conversation. Each member has a persistent Codex thread. Member settings apply to its next turn.</p>
+  {{if and .Session.Interactive (not .DirectTeam)}}
+  <form class="stack managed-team-form" data-direct-team-form data-action="preset">
+    <label>Start from a preset<select name="preset">{{range .TeamPresets}}<option value="{{.ID}}">{{.Name}} ({{.MemberCount}}): {{.RoleSummary}}</option>{{end}}</select></label>
+    <button type="submit">Create team</button><p class="operation-progress" role="status" aria-live="polite" hidden></p>
+  </form>
+  {{end}}
+  {{if .Session.Interactive}}
+  <div id="team-role-defaults" hidden>{{range .TeamRoleDefaults}}<span data-role="{{.Role}}" data-model="{{.Model}}" data-effort="{{.Effort}}" data-source="{{.Source}}"></span>{{end}}</div>
+  <form class="stack managed-team-form" data-direct-team-form data-action="add">
+    <h3>Add member</h3><div class="field-grid team-add-fields"><label>Role<select name="role" required>{{range .TeamRoles}}<option value="{{.ID}}"{{if eq .ID "implementer"}} selected{{end}}>{{.Label}}</option>{{end}}</select></label><label>Model<select name="model" data-model-select required><option value="">Loading models…</option></select></label><label>Reasoning<select name="effort" data-effort-select required><option value="">Loading efforts…</option></select></label></div>
+    <button type="submit">Add member</button><p class="operation-progress" role="status" aria-live="polite" hidden></p>
+  </form>
+  {{end}}
+  <h3>Members</h3>
+  {{if eq .TeamExecutionAccess "full_access"}}<p>Full access for every member. Saved role access below does not restrict command execution.</p>{{end}}
+  <p class="muted">Messages count incoming prompts and outgoing replies. Working, waiting and idle are separate lifetime totals. Partial statistics mark unobserved time or incomplete history.</p>
+  <div class="team-table-scroll"><table class="team-table">{{template "team-table-header"}}<tbody>
+  <tr data-team-stats="lead"><td><code>lead</code><small class="team-member-detail muted">root</small>{{template "team-thread-id" .Session.Codex.ThreadID}}</td>{{template "team-statistic-cells"}}<td><div class="team-settings"><span data-team-settings-summary="lead">Loading settings…</span>{{if not .Session.Archived}}<button type="button" class="quiet icon-button" data-team-settings="lead" aria-label="Edit lead settings" title="Edit lead settings" aria-haspopup="dialog" aria-controls="team-settings-dialog">{{template "settings-edit-icon"}}</button>{{end}}</div></td><td></td></tr>
+  {{if .DirectTeam}}{{range .DirectTeam.Members}}{{if ne .State "removed"}}{{template "team-member-row" .}}{{end}}{{end}}{{else}}<tr><td colspan="10" class="muted">No team roster yet.</td></tr>{{end}}
+  </tbody></table></div>
+  {{if .RemovedMembers}}<details class="removed-members"><summary>Removed members ({{len .RemovedMembers}})</summary><div class="team-table-scroll"><table class="team-table">{{template "team-table-header"}}<tbody>{{range .RemovedMembers}}{{template "team-member-row" .}}{{end}}</tbody></table></div></details>{{end}}
+  <p id="team-action-status" class="operation-progress" role="status" aria-live="polite" hidden></p>
+{{end}}
+
+{{define "team-table-header"}}<thead><tr><th scope="col">Member</th><th scope="col">Activity</th><th scope="col" class="team-number">Sent</th><th scope="col" class="team-number">Received</th><th scope="col" class="team-number">Tools</th><th scope="col" class="team-number">Working</th><th scope="col" class="team-number">Waiting</th><th scope="col" class="team-number">Idle</th><th scope="col">Model/reasoning</th><th scope="col">Actions</th></tr></thead>{{end}}
+{{define "team-statistic-cells"}}<td><span data-team-metric="activity">Loading…</span><small class="team-coverage muted" tabindex="0" hidden>Partial</small></td><td class="team-number" data-team-metric="sent">-</td><td class="team-number" data-team-metric="received">-</td><td class="team-number" data-team-metric="tools">-</td><td class="team-number" data-team-metric="working">-</td><td class="team-number" data-team-metric="waiting">-</td><td class="team-number" data-team-metric="idle">-</td>{{end}}
+{{define "settings-edit-icon"}}<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m15 5 4 4M4 20l4-1L20 7a2.8 2.8 0 0 0-4-4L4 15z"/></svg>{{end}}
+{{define "team-thread-id"}}{{if .}}<div class="team-thread"><code title="{{.}}">{{shortThread .}}</code><button type="button" class="quiet icon-button" data-copy data-copy-value="{{.}}" title="Copy thread ID" aria-label="Copy thread ID"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V4H4v12h4"/></svg></button><span class="copy-feedback visually-hidden" role="status"></span></div>{{end}}{{end}}
+{{define "team-member-row"}}
+<tr data-team-stats="{{.Address}}"><td><code>{{.Address}}</code><small class="team-member-detail muted">{{.State}} · Saved: {{if eq .Access "workspace_write"}}Workspace write{{else if eq .Access "read_only"}}Read only{{else}}Access unrecorded{{end}}</small>{{template "team-thread-id" .Thread}}</td>{{template "team-statistic-cells"}}<td><div class="team-settings"><span data-team-settings-summary="{{.Address}}">{{.Model}} · {{.Effort}}</span>{{if eq .State "ready"}}<button type="button" class="quiet icon-button" data-team-settings="{{.Address}}" data-model="{{.Model}}" data-effort="{{.Effort}}" aria-label="Edit {{.Address}} settings" title="Edit {{.Address}} settings" aria-haspopup="dialog" aria-controls="team-settings-dialog">{{template "settings-edit-icon"}}</button>{{end}}</div></td><td>{{if eq .State "ready"}}<button type="button" class="quiet team-action" data-team-remove="{{.Address}}">Remove</button>{{end}}{{if eq .State "creating"}}<button type="button" class="quiet team-action" data-team-retry="{{.Address}}">Retry</button>{{end}}</td></tr>
+{{end}}

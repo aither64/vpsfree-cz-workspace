@@ -1,0 +1,522 @@
+Selected package: /nix/store/m8bqmkdzgk85vng42hcsavqmaz56rwgc-dev-workspace-0.2.0
+Coordination catalog: sha256:5faccc69e524536209abb23102fe46c638dec97e6773da2c27cfe4e1aaab777a (/nix/store/m8bqmkdzgk85vng42hcsavqmaz56rwgc-dev-workspace-0.2.0/share/dev-workspace/coordination.json)
+# Resource claims and session notifications
+
+The coordinator serializes integration into shared branches and reserves machines
+for deployment. Sessions develop independently in their own worktrees. Repository
+claims are short merge locks; machine claims are deployment reservations. Sessions
+run commands, verify effects and explicitly release ownership. Queued requests
+notify their waiting session when granted.
+
+## Acquire resources
+
+Use a schema-1 request with a fresh lowercase UUID `requestId`:
+
+```json
+{
+  "schema": 1,
+  "requestId": "11111111-1111-4111-8111-111111111111",
+  "label": "Merge approved feature into master",
+  "repositories": ["project"],
+  "machines": []
+}
+```
+
+Repositories must be registered to the session. Their canonical clones live in
+`repos/<project>.git`; the reserved `workspace` registration uses the workspace
+Git root. The coordinator validates the real common Git directory and canonical
+SSH origin. A registration's optional `github` identity and any configured catalog
+remote must agree with that origin. Repository names must be unambiguous.
+Registering a repository does not require a catalog update or package rebuild.
+Machines still require configured names, IDs or aliases. Supply at least one
+resource. The complete request fits 16 KiB; labels fit 512 bytes. Keep credentials
+out of labels and requests.
+
+```sh
+dev-session coordination acquire SESSION --as-is --request claim.json --json
+dev-session coordination claim-status SESSION --as-is --id CLAIM_UUID --json
+```
+
+The command returns immediately with `held` or `waiting`. Run the shared mutation
+only while the exact claim is `held`. Requests acquire all resources together;
+a waiting request owns none of them. Earlier eligible conflicting requests have priority,
+while disjoint resources can be used concurrently. A request blocked by held
+resources cannot prevent their holder from acquiring other free resources. A queued grant sends a native
+notification to the session's retained conversation. Read authoritative status
+before acting on a notice. A notice supplies no merge or deployment approval.
+Threadless sessions can use the local CLI but have no notification destination.
+
+Aliases sharing a common Git directory and separate clones sharing a canonical
+remote contend for the same repository. An explicit registered `default_branch`,
+including `main`, remains authoritative; catalog defaults do not replace it.
+Claims select resources, carry no target branch and grant no merge approval.
+Queued requests retain their original resource keys and refuse changed mappings.
+
+An exact request-ID retry returns its existing claim, including after release
+or removal of the clone. Changed input or another owner refuses. Use a fresh ID for intentional new
+ownership. A second claim does not implicitly reuse resources held by the same
+owner. Request the complete set initially or use separate disjoint claims.
+
+## Execute and release
+
+Independent feature work needs no repository claim. This includes edits, commits,
+rebases, dependency updates, feature-branch pushes, hook preparation, builds,
+tests, review and waiting for approval. A merge waiter can continue such work in
+its own worktree. Git retains its ordinary file and ref locks.
+
+Prepare the reviewed feature, clean target checkout, environment and hook trust
+before requesting a merge lock. Obtain integration approval first. Acquire only
+the repository being integrated, immediately before these steps:
+
+1. Recheck the exact feature head, clean target checkout and current remote target.
+2. Perform the approved fast-forward merge and required hooks.
+3. Push normally and prove the resulting remote ref.
+4. Release immediately, before CI monitoring, record updates, handoff or
+   disposable checkout cleanup.
+
+If the target moved, release and reconcile outside the claim. If a hook fails or
+needs intervention, stop commands and inspect effects before release, then repair
+and verify outside ownership. Git can exit zero after a failing post-merge hook;
+inspect hook results before pushing. A rejected push or interrupted command needs
+an actual ref check. Retain ownership for an uncertain shared mutation only while
+actively reconciling its effects. Do not wait for operator input with a known-safe
+repository held. Never hold merge locks during development, tests or review, and
+do not reserve several repositories for a sequential integration batch.
+
+Linked worktrees share Git configuration. Repository tools own configuration and
+plugin trust; the coordinator never signs, changes trust or runs commands. A trust
+mismatch returns to preparation and does not justify a development-wide claim.
+Required hooks and signature checks remain enabled.
+
+Machine reservations are separate: build and copy artifacts before ownership when
+supported, then acquire only the physical machine near activation. Keep its
+reservation through deployment, live review and feedback. Do not bundle repository
+claims into a deployment reservation.
+
+This is cooperative locking. Tools do not intercept arbitrary commands. The claim
+certifies exclusive integration or deployment ownership, not command success.
+Shared tracking writes use their short `dev-session-tracking.lock`; they do not
+need a durable repository claim for independent session bookkeeping. Integration
+from that same shared checkout takes the repository claim first, then tries the
+tracking lock without waiting. If it is busy, release the claim and retry after
+the writer finishes. Hold both only across the final target check, merge/hooks,
+push and remote proof. Preserve unrelated dirty paths and index entries in the
+shared checkout; disposable targets must be clean.
+
+```sh
+dev-session coordination release SESSION --as-is --id CLAIM_UUID --json
+dev-session coordination cancel-claim SESSION --as-is --id CLAIM_UUID --json
+```
+
+Release settles a held claim. Cancellation settles a waiting request. Both are
+owner-only and idempotent; cancellation cannot release held resources. Machine
+ownership follows the retention rule below through human review, feedback and
+repeated deployment. Release grants no merge approval. Session completion still
+follows its normal exact-head integration requirements.
+
+For workspace profile activation, hold a claim covering the configured profile
+machine and run ordinary `workspace-host switch --source PATH` with
+`DEV_WORKSPACE_CLAIM_ID=CLAIM_UUID` and the exact `DEV_SESSION_SLUG` and
+`DEV_SESSION_WORKSPACE` identity. Workspace-host checks ownership under its
+transition locks. Package compatibility, activation journals and forward recovery
+remain workspace-host responsibilities.
+
+## Machine retention
+
+Retain every deployed physical machine until all three conditions are met:
+
+1. Its deployed feature lineage is integrated into the approved remote default
+   branches, including deployed dependencies.
+2. The user accepts the resulting UI or behavior on that machine.
+3. The user explicitly directs release of that machine.
+
+Idle time, review, feedback, redeployment, disconnects and turn completion do not
+permit release. Review, CI and source completion do not establish user acceptance;
+record the accepted environment and result. Default-branch integration needs its
+own explicit approval. Deployment approval supplies neither merge approval nor
+release direction. Missing evidence keeps the machine held.
+
+Use existing rollout and review receipts for exact system/profile store paths,
+complete source/input graphs, canonical repository/target mapping and machine
+aliases, exact deployed and final intended feature heads, and fresh remote
+ancestry evidence. Retain reviewed old/new base/head ranges, range-diff or
+patch-equivalence evidence and migration lineage when history changes. Do not
+describe a nonancestor deployed commit as literally merged. An independently
+proven equivalent successor can establish integrated feature lineage; a
+substantive successor requires redeployment and renewed user acceptance. Ordinary
+session completion still requires every registered exact final feature head.
+
+Before release, inspect authoritative status for the exact claim owned by this
+session, reconcile known command effects, verify all three conditions, release
+that claim and verify its resulting state. The cooperative owner-only, idempotent
+release API does not enforce this human workflow. Do not introduce release
+receipts, edit claim records or infer acceptance to bypass a missing condition.
+Keep short repository merge claims separate from machine ownership.
+
+## Interruption and lifecycle
+
+Claims survive idle agents, disconnections and service restart. They have no
+automatic expiry. The coordinator does not observe command execution or infer
+completion. After interruption, inspect the original local and remote work,
+stop anything still mutating the resources and reconcile effects. Release a
+repository merge claim once its critical section is safe. A deployed machine
+remains held until all machine-retention conditions are met. SSH or a client
+process exiting does not permit release.
+
+Held claims block lifecycle cleanup until their owner releases them. Lifecycle
+fencing cancels waiting requests. Suspension retains ownership and waiting
+requests, with no new grants while suspended. Status reads do not grant resources
+or run recovery. The Operations page shows up to 128 claims, with up to eight repository and machine
+names per claim; the CLI retains complete records. Machine
+claims also appear in the session's Reservations tab.
+
+## Storage and compatibility
+
+Bounded private schema-1 `claims.json` records coexist with the original ledger.
+The existing admission mutex protects both old and new resource ownership.
+Admission reserves a queued claim's future notification capacity in the ledger.
+Notifications use the existing durable outbox; failed delivery retries without
+changing or releasing claims. A released claim stays released even if an older
+notification arrives later.
+
+Packages advertise `share/dev-workspace/claim-contract.json`. Once claim records
+exist, selecting a package without that capability refuses. Compatible selection
+preserves live repository/machine mappings. The separate
+`share/dev-workspace/repository-claim-contract.json` advertises support for
+registered repositories outside the catalog. Every held or waiting repository
+claim must retain its registered identity and common Git directory. A candidate
+without that capability needs an explicit matching catalog entry for each active
+repository; otherwise selection refuses. Released and canceled history does not
+require the new capability. Machine mappings keep their existing catalog checks.
+Recovery selects a compatible forward package; never delete records to bypass
+this check.
+
+New work uses `acquire`. Existing snapshots, jobs, integration journals,
+reservations and uncertain effects retain their formats, recovery payloads and
+original release requirements. Legacy jobs and reservations exclude conflicting
+claims, including the same owner's legacy reservation. Retained preparation,
+mechanical refresh and tracking publication acquire repository ownership around
+their mutations. Collection preserves payloads in a claimed common Git directory. New claims cannot release
+legacy reservations. A retained job may refresh its prepared snapshot by supplying
+its exact `legacyJobId`; this does not permit submitting an independent new job.
+Use the [retained workflow guide](coordination-legacy.md),
+[integration guide](integration.md) and [operations guide](coordination-operations.md)
+for those records.
+
+Legacy automatic reservation release during lifecycle completion is implementation
+behavior, not permission to archive, delete or release a deployed machine before
+the retention conditions above. Existing journals and recovery contracts remain;
+finishing work or preparing a handoff grants no lifecycle authorization.
+# Coordination operations and recovery
+
+For resource ownership, use the [claim guide](coordination.md) to acquire,
+inspect, release or cancel a request. Claims survive disconnection and remain
+held until explicitly released. After interruption, reconcile remaining local
+and remote effects. Release a repository claim after its safe merge critical
+section; retain every deployed physical machine under the
+[machine retention rule](coordination.md#machine-retention) until integration,
+user acceptance and explicit machine release direction are all established.
+Existing snapshot-based operations keep the
+procedures below and the [retained workflow guide](coordination-legacy.md).
+
+The remaining sections describe legacy executor recovery. They do not start new
+automatic workflows under a runtime with resource claims.
+
+Read [the coordination contract](coordination.md) before operating its ledger.
+The selected package installs both guides. Run `workspace-host coordination guide`
+to read them from any checkout, including an unmerged deploy-first rollout.
+Status reads do not reconcile, schedule or mutate anything. Use session commands
+for exact owned operations; keep all recovery evidence and roots.
+
+## Repository identity refusals
+
+If acquisition refuses a repository identity, check the current session's
+registration, `repos/<project>.git` and its single canonical SSH origin. Duplicate
+names, unsafe projects and disagreement between `github`, origin or a configured
+catalog remote require correction before a new request. Preserve an explicit
+`main` default branch. Do not add a catalog entry merely to enable a normally
+registered repository.
+
+A queued mapping-change refusal leaves its original request waiting. Cancel it
+and acquire a fresh request after reconciling the registration and clone. An
+exact retry of a released request returns that receipt even if the clone was
+removed. Package-compatibility refusals retain ownership: select a compatible
+forward package instead of deleting claim records.
+
+## Agent waiting
+
+Prepare and verify work independently. Request a machine only near the first
+prepared deployment. Submit approved work, then continue other useful work.
+Use the integration driver's `--background` mode when combining approved merges
+and deployments. Background handoff verifies the caller's managed Codex identity and runs a cheap
+Git preflight. Record the returned run ID and distinguish preparation from
+submitted merge jobs. End the turn when no independent
+work remains and the recipient is verified. The worker continues and sends a native message for action or
+review. Read status when that message arrives and acknowledge its exact handoff event
+and generation before handling the action. Renew the five-minute acknowledgement
+while work continues. A delivered native message alone does not establish pickup.
+For an external conversation, use `integration-resume --foreground` under an
+attached observer, or explicitly select `--background --to-session-lead` to hand
+responsibility to the retained managed lead. Individual submitted jobs also
+run independently and retain their existing state notifications.
+
+Do not keep a turn open to poll reservations or ask the user to restart it when
+another session owns a resource. Pause/resume and generation recovery are described
+in [background continuation](integration.md#background-continuation). A busy
+resource never authorizes a deployment around its reservation.
+
+On `needs_refresh`, refresh the branch or input baseline, resolve conflicts,
+repeat the required verification and review, record any preserved approval proof,
+and prepare a new snapshot. The coordinator does not decide conflict semantics.
+Use a new request ID and current revision to refresh the unclaimed job.
+
+## Interrupted execution
+
+Read `dev-session coordination status` and identify the exact attempt. The
+private attempt directory retains `request.json`, `phase.json`, `result.json` and
+`worker.lock`; logs are diagnostic only. The systemd unit is
+`workspace-operation-ATTEMPT.service`. A running worker refuses manual
+reconciliation. A retained exited unit is distinct from a running process.
+
+Run `reconcile` on the original job. Git recovery proves exact remote ancestry.
+The coordinator launches safe reconciliation in independent
+`workspace-reconcile-ATTEMPT.service` units after a worker exits. Network probes
+and forward recovery never run in the scheduler. A stalled probe retains its
+original claim; other resources and notification delivery can continue. Failed
+probes wait at least 30 seconds before another attempt. State
+changes wake it immediately; a five-second tick covers missed wake signals.
+Unprovable effects stay blocked and require operator evidence.
+A local fast-forward with a failed push stays in place and holds its claim until
+the remote effect is resolved. Profile recovery can complete only the original
+selected candidate and saved preparation. Machine recovery requires the adapter's
+verified receipt and both live-system/profile identities. Ambiguous rollback or
+partial publication keeps the reservation and claim. Do not replay activation or
+use a fresh job to hide the original uncertainty.
+
+Archive and deletion hold notifications and cancel queued operations before
+cleanup. Coordination receipts bind each ordinary lifecycle journal to exact
+owner incarnations. Legacy archive completion releases that owner's machine
+reservations in the same ledger transaction that records lifecycle completion.
+This implementation behavior grants no permission to archive or bypass the
+machine retention rule. Retain deployed ownership until its integration lineage,
+user acceptance and explicit machine-specific release direction are established.
+The reservation stays held during failed or interrupted cleanup. Retrying a
+completed archive receipt can release a hold retained by a predecessor executor;
+the exact owner binding must still match. Deployment history and recovery
+artifacts remain available after release.
+
+Revival freezes its archive association before tracking changes. It reconnects
+the same owner without reacquiring reservations or resuming canceled jobs. A
+recreated slug has no claim to the previous owner's resources. Running or
+uncertain deployments require their original recovery before archival. Deletion
+retains its existing deployed-ownership hold. Exceptional transfers remain
+separate recovery operations; there is no force-release command.
+
+## First reporting-startup upgrade
+
+A predecessor whose host accepts only `agents.*` launch overrides cannot decode
+the reporting startup plan. The reviewed candidate's narrowly scoped
+`coordination candidate-prepare` and `candidate-reconcile` entries keep the
+selected generation's ledger authority, actual managed owner, held machine
+reservation and original attempt. They do not create bootstrap owners or grant
+approval. Follow [team reporting upgrade and recovery](team-reporting-upgrade.md)
+for exact source/profile-token proofs, ordinary submission and exited-attempt
+recovery. Normal selected-generation reconciliation applies after selection.
+
+## Reviewed rebase lineage
+
+For each deployed nonancestor head, `finish.replacements` contains:
+
+```json
+{
+  "repository": "example", "target": "refs/heads/master",
+  "from": "DEPLOYED_SHA", "fromBase": "OLD_BASE_SHA",
+  "to": "FINAL_SHA", "toBase": "NEW_BASE_SHA",
+  "relation": "patch_equivalent", "approvalId": "UUID",
+  "evidence": {"kind": "review", "path": "work/SESSION/lineage.json", "sha256": "HEX"}
+}
+```
+
+The session review receipt binds `schema: 1`, `ownerId`, `reservationId`, this exact
+tuple in `mapping`, `decision: "accepted"`, the independent `reviewer` identity and checksummed
+`artifacts` for `range_diff`, `verification` and `migration_review`. Each artifact
+has `kind`, `path` and `sha256`. The lead records the independently reviewed result
+under the normal mandatory-review procedure; the receipt is not a reviewer
+authentication service.
+
+`patch_equivalent` requires matching ordered stable patch IDs for ordinary
+nonmerge commits, retained range-diff evidence and reviewed migration behavior.
+`reviewed_change` requires a new integration approval for the final prepared
+snapshot, explicit deployed-state compatibility review and a later successful
+deployment of the replacement. Both ranges must belong to the same owned
+repository and configured target. The replacement must be its current exact
+final head and already integrated. Unused, conflicting and intermediate mappings
+refuse. Retain the original deployed source and artifact history.
+
+## First installation and threadless maintenance
+
+A pre-contract installed package cannot create managed coordination state.
+Use the reviewed candidate's private `coordination-bootstrap` with explicit
+source, registered workspace/session, exact predecessor profile token and request.
+`--prepare` returns the retained source and a complete request containing the
+machine snapshot and profile artifact. Preparation builds and copies outside
+claims. Execute the returned request from the exact candidate, retaining the
+returned source. It admits a threadless bootstrap owner and machine reservation,
+then runs machine activation followed by profile activation in independent
+services. An exact execution retry recovers the original jobs.
+
+The bootstrap owner has no notification destination and cannot submit new
+unattended work. Later `status`, `reconcile`, `cancel` and `finish` can select its
+already retained UUID with `--bootstrap-owner OWNER`. The active tracking
+incarnation must still match. The selector cannot create an owner, approve or
+submit jobs, or waive integration and completion proofs. Archived owners must be
+explicitly revived first.
+
+Profile changes remain forward-only after selection. Preserve the supported
+coordination contract when preparing a recovery package. System recovery follows
+the configuration owner's deployment procedure. Neither recovery nor bootstrap
+authorizes a reboot or default-branch integration.
+
+## Suspension and resumption
+
+`workspace-host suspend` refuses active mutation workers and holds queued work
+and reservations. `workspace-host resume` restores services from the exact
+selected generation before enabling claims and delivery. It preserves all queued
+state and does not select a package or release a machine. If suspension fails
+after holding the ledger, it restores services and the prior suspension flag;
+failed compensation keeps suspension visible and requires `resume`.
+
+## Capacity and retained evidence
+
+Protocol stdout remains complete within its bound, normally 256 KiB. Prepared
+Nix environment parsing has a separate 16 MiB bound; large Git diffs are hashed
+as streams. Preparation and worker diagnostics retain at most 4 MiB per operation with an initial section
+and a tail, and continue draining after the cap. Private logs use mode 0600 and
+never prove an outcome. Ledger/portal errors are bounded UTF-8 text.
+
+The ledger has a 16 MiB limit, with at least 2 MiB reserved for recovery and a
+conservative budget for outstanding results and cancellation/completion writes.
+Admission checks the prospective ledger, including the new records and receipt,
+plus the remaining growth of every pending job, undelivered notification and
+unreleased reservation. Notification allowances survive job completion. Worker
+results, reasons and request receipts have 16 KiB encoded JSON bounds; deployment
+history allows one unknown-to-applied disposition per attempt. Completion accounts
+for actual coverage and contracts, integration proofs and both frontier projections.
+Native notification options and receipts use the existing checksummed artifact
+store. The ledger retains their identifiers and a bounded event envelope.
+Persisted file limits include the trailing newline. A result, artifact or native
+request must fit its complete file bound before publication.
+Worker requests seal the current operation; refresh history and prior results
+stay in the ledger. Admission checks the complete worker envelope before taking
+a resource claim. An oversized snapshot returns `needs_refresh` without an
+attempt, so its owner can reduce it and refresh the job.
+Those recovery requests may use the reserve after normal admission fills, and
+have a 16 KiB request bound. Existing request IDs remain idempotent at capacity. New preparation/admission requires
+at least 1 GiB of free space. Capacity refusal preserves existing authority.
+Compact artifacts, snapshots, request receipts and history remain available.
+Disposable source/merge-target worktrees and their dedicated Nix roots are
+collected once their final required reference ends. Never delete unresolved
+reservations or receipts to make room. See [payload collection](#payload-collection).
+
+A claim without `request.json` predates any worker launch but still requires
+operator recovery; this release does not automatically redispatch it. Likewise,
+`finish` retains full integration proofs even when deployment was canceled before
+activation. Early release without integration is deferred; lifecycle abandonment
+or separately reviewed exceptional recovery remains required.
+
+
+## Payload collection
+
+Inspect the global per-user coordination store with:
+
+```sh
+workspace-host coordination gc --dry-run --json
+workspace-host coordination gc --apply --json
+```
+
+The default is a preview. `actions` identifies collectible worktrees and root
+links, `removed` records successful removals, and `preserved` explains holds or
+live references. `retry` means the ledger changed; rerun the same scan. Output
+contains paths and reasons, not environment dumps or credentials.
+
+The coordinator requests collection after ledger changes and every five minutes
+through `workspace-coordination-gc.service`. It keeps deletion out of scheduling.
+Collection preserves pending jobs, live worker locks/services, all unreleased
+reservation recovery, unfinished integration journals, pending notification
+artifacts and shared references. An operation succeeding does not retire a
+reservation still held for deployment review. The selected workspace profile,
+its predecessor and generations required by live work keep their package roots.
+
+A preparation not submitted within seven days expires. A new preparation renews
+its lease; status and collection previews do not. Older unused preparations and
+unsealed interrupted payloads receive a seven-day grace period at first applied
+collection. Submitted snapshots stop independently pinning payloads after their
+jobs/recovery obligations end. Fresh submission of an expired/consumed snapshot
+without a live job reference requires preparation; an exact completed request
+retry returns its saved receipt.
+
+A `.keep` file, a native Git worktree lock, local changes, process references,
+busy Git resources or unknown layouts preserve a payload. Collection uses Git
+to remove registered worktrees; it does not delete user branches. Source
+payload deletion is final, but original repository refs and compact evidence
+remain available for a fresh preparation. Nix store paths are reclaimed only
+by ordinary Nix GC.
+
+`retention.json` is separate schema-1 bookkeeping for leases and interrupted
+worktree removal. Existing ledger, snapshot and artifact formats are unchanged.
+Collection shares generation admission with session creation. A separate payload
+guard excludes new preparations, and package switches retain exclusive generation
+admission. Routine collection does not prevent creating sessions;
+legacy in-flight preparation commands also postpone collection. Deletion runs
+outside ledger transactions. A changed ledger stops the current sweep, and
+interrupted worktree removal resumes from its recorded exact path/common Git
+directory. Do not hand-edit the bookkeeping to bypass a preservation reason.
+
+Collection also takes each integration driver's existing lock without waiting.
+An active driver postpones the sweep; unfinished journals retain hook dependencies
+for their source heads between invocations. Once an integration is complete,
+its registered, detached scratch worktrees below `integrations/<UUID>/` become
+eligible. Collection verifies the recorded repository, workspace ownership,
+cleanliness, process references and explicit holds. It preserves the compact
+integration journal, feature branches and published history. Unknown files or
+layouts survive for operator inspection.
+
+Before removing integration scratch, the collector records its exact path,
+common Git directory and HEAD in the journal's optional `payloadGcPending`
+field. This is an admitted removal intent: retries continue deleting that exact
+scratch checkout even if tracked files or `.git` have already disappeared.
+The retained Git registration must still identify its original detached HEAD
+and repository; a changed or missing registration preserves a surviving path.
+If `.git` is already gone, Git cannot remove the surviving directory. The
+collector finishes that admitted directory deletion, then asks Git to remove
+its exact retained registration.
+Do not reuse a checkout while its removal is pending. Process references and
+`.keep` still postpone a retry, but remaining files are already admitted for
+deletion rather than checked again for local changes. The field is removed
+after completion.
+Existing source retention bookkeeping is unchanged; older journal readers
+preserve this additive field. An older collector leaves integration scratch and
+this pending work untouched; resume collection with the newer runtime to finish.
+
+Worker package roots also have a bounded lifetime. Notification roots are
+released after their worker lock and service are idle. Pending messages and
+their payload dependencies remain retained; the next dispatch roots its selected
+package again. Background integration worker roots survive unfinished journals
+and running services. Unknown root ownership or a mismatched package digest
+prevents removal.
+
+The collector prunes recognized workspace Nix profile generations through
+`nix-env` under the existing profile-transition exclusion. It retains the
+selected generation, one predecessor, all newer generations after a legacy
+rollback, and package generations referenced by live operations, preparations or
+recovery. It rechecks the selected profile identity before each removal and
+does not change profile selection. Separate Codex generation roots remain.
+Other users' or system Nix profiles are outside this policy. Workspace package
+switches are forward-only; retaining the predecessor supports diagnosis and
+recovery evidence, not automatic workspace rollback.
+
+These policies release disposable references; they do not impose a byte limit
+on active work. A live operation, held checkout, retained feature worktree or
+running process can still keep an old closure. Nix GC decides when store paths
+are reclaimable. Bulk archives included in a workspace Git input still multiply
+its size until their copies and package roots become unreferenced.

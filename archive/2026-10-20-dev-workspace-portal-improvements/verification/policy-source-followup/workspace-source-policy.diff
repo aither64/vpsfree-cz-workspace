@@ -1,0 +1,201 @@
+commit c1d9f68e233af1f1630cd1362a2cc86370d94d60
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Wed Oct 21 18:39:48 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Wed Oct 21 18:39:48 2026 +0200
+
+    docs: require three gates before deployed machine release
+    
+    Retain every deployed physical machine until its deployed feature lineage is
+    integrated into approved defaults, the user accepts the resulting behavior,
+    and the user explicitly directs that machine's release. Keep repository
+    merge ownership short and feature preparation independent.
+    
+    Route evidence and release checks through the coordination guide, preserving
+    source and migration lineage, actual system/profile identities and original
+    recovery contracts. Distinguish legacy automatic lifecycle release behavior
+    from permission to perform it. This changes guidance, not lifecycle or claim
+    state machines, receipt formats or retained session settings.
+
+diff --git a/AGENTS.md b/AGENTS.md
+index af6c29d4..61487844 100644
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -165,16 +165,16 @@ and forward compatibility of old and new affected components, including:
+ - deployment ordering, rolling upgrades, and mixed-version operation;
+ - whether a rollback can load state created by the new version.
+ 
+-Repository claims protect only approved integration into shared branches. Develop,
+-commit, rebase, push feature branches, prepare hooks, test and review independently
+-without a claim. Finish preparation and obtain approval before acquiring one
+-repository for the fresh target check, merge/hooks, push and remote verification.
+-Release immediately before CI, records or cleanup. Stale preparation or an
+-intervention returns to unlocked work after commands stop and effects are known;
+-uncertain shared mutations require reconciliation before release. Machine-only
+-reservations cover deployment and live review, with builds/copies prepared outside
+-ownership. Read the selected package's coordination guide. Existing operations keep
+-their original recovery contracts.
++Repository claims cover approved shared merges only; feature work, hook setup, tests
++and review need none. Prepare, then claim one repository for fresh target checks,
++merge/hooks, SSH push and remote proof; release before CI, records or cleanup.
++On stale preparation/intervention, stop commands and verify effects; repair
++unlocked; reconcile uncertain shared mutations before release. Build/copy
++before machine claims when supported. Hold every deployed physical machine
++until deployed feature lineage is integrated into approved remote defaults, the
++user accepts its UI/behavior and explicitly directs its release. Idle time, review,
++feedback, redeployment and turn completion never permit release. Read the selected
++coordination guide; keep existing recovery contracts.
+ 
+ Prefer clean designs that can be deployed incrementally. Incompatible changes
+ are allowed only when they are intentional and recorded in the plan with the
+diff --git a/docs/agent-instructions/deployment.md b/docs/agent-instructions/deployment.md
+index fd9fd737..4c655780 100644
+--- a/docs/agent-instructions/deployment.md
++++ b/docs/agent-instructions/deployment.md
+@@ -12,12 +12,22 @@ Before deployment activation or a workspace profile switch, read
+ ownership when supported. Under a claims runtime, acquire the physical machine,
+ request only the machine, run authorized activation commands and verify actual
+ results. Repository ownership is never held through builds or live review. Retain
+-machine ownership through review, feedback and redeployment, then explicitly release. Pass the held
+-claim and exact session identity to ordinary workspace-host profile activation.
++every deployed physical machine through review, feedback and redeployment until
++its deployed feature lineage is integrated into approved remote defaults, the
++user accepts the resulting UI/behavior and explicitly directs that machine's
++release. Follow [machine retention](../coordination.md#machine-retention) for
++source, system/profile and acceptance evidence and the final ownership check.
++Idle time or turn completion does not permit release. Pass the held claim and
++exact session identity to ordinary workspace-host profile activation.
+ Release supplies no merge approval. Legacy jobs/reservations keep their original
+ approval, integration-proof and recovery requirements. Held new claims require
+ explicit release before lifecycle cleanup.
+ 
++Legacy automatic reservation release during lifecycle completion is an
++implementation behavior, not permission to bypass machine retention or perform
++a lifecycle action. Preserve the original recovery contract without initiating
++archive, deletion or release merely to finish a deployment.
++
+ In every confctl-managed configuration repository, inspect its defined
+ channels and the channel-to-input mapping before updating a flake input. For a
+ normal update to a published upstream revision, run
+diff --git a/docs/agent-instructions/git.md b/docs/agent-instructions/git.md
+index 011d7564..229eded3 100644
+--- a/docs/agent-instructions/git.md
++++ b/docs/agent-instructions/git.md
+@@ -61,6 +61,16 @@ This gate does not apply to tracking-only coordination commits on the shared
+ workspace `master`; stage only owned tracking paths and never include feature
+ content in that exception.
+ 
++Integration proof for a deployed machine must account for its complete deployed
++feature lineage, including dependency pins and canonical repository/target
++aliases. Preserve old/new base/head ranges and reviewed equivalence or substantive
++replacement evidence when history changes; a nonancestor deployed commit is not
++literally merged. See [machine retention](../coordination.md#machine-retention).
++An approved merge does not authorize releasing a deployed machine: retain it
++until integration evidence, user acceptance of the resulting UI/behavior and
++explicit direction to release that machine are all present. Repository merge
++claims remain short and separate; release them before CI or records.
++
+ ## Git And Worktrees
+ 
+ The top-level workspace repository has two distinct workflows:
+diff --git a/docs/agent-instructions/lifecycle.md b/docs/agent-instructions/lifecycle.md
+index e76691db..98d98ba3 100644
+--- a/docs/agent-instructions/lifecycle.md
++++ b/docs/agent-instructions/lifecycle.md
+@@ -6,8 +6,14 @@ to the coordination workspace unless the text specifies another repository.
+ 
+ Read [coordination](../coordination.md) before a lifecycle/package mutation that
+ affects queued work or a machine reservation. Running/uncertain operations fence
+-lifecycle changes. Successful archive completion releases machine reservations;
+-failed or interrupted archival keeps deployed holds until recovery completes.
++lifecycle changes. Legacy archive completion automatically releases machine
++reservations; that is implementation behavior, not permission to archive or
++release a machine. Before any lifecycle action that could release deployed
++ownership, satisfy [machine retention](../coordination.md#machine-retention):
++integrated deployed feature lineage, user acceptance of the resulting UI/behavior
++and explicit direction to release that physical machine. Idle time, feedback,
++review, redeployment and turn completion do not supply that direction. Failed or
++interrupted archival keeps deployed holds until recovery completes.
+ Revival does not reacquire released machines or resume canceled work. Deletion
+ retains its recovery holds. Package candidates must preserve the coordination
+ contract and retained artifacts; inactivity alone never frees a review reservation.
+diff --git a/docs/coordination.md b/docs/coordination.md
+index e0b1a632..34d08b81 100644
+--- a/docs/coordination.md
++++ b/docs/coordination.md
+@@ -30,23 +30,58 @@ Run the shared merge or deployment only while its claim is held. Independent
+ feature commands remain available during a merge wait. Keep machine ownership
+ through UI review, feedback and repeated deployment. Aitherdev system activation
+ and workspace profile selection share the physical resource `vpsfree:aitherdev`.
+-Use `release SESSION --as-is --id UUID` when finished or `cancel-claim` for an
+-unneeded waiting request. Retrying the exact acquire request returns the same
+-claim even after release; a new attempt needs a new UUID. Request all resources
++Use `release SESSION --as-is --id UUID` after the applicable release requirements
++are met, or `cancel-claim` for an unneeded waiting request. Retrying the exact
++acquire request returns the same claim even after release; a new attempt needs
++a new UUID. Request all resources
+ together or keep separate claims disjoint to avoid waiting on your own ownership.
+ 
+ Claims do not expire when an agent becomes idle or disconnected. After an
+-interruption, inspect effects and stop remaining local/remote work before release.
+-Held claims block lifecycle cleanup until explicitly released. A machine release
+-needs no integration proof; session completion still requires exact final heads
+-integrated and all work finished. Existing legacy reservations keep their original
+-completion requirements. Never release another session's resources or edit records.
++interruption, inspect effects and stop remaining local/remote mutations before
++considering release. Repository locks follow the short merge procedure below;
++deployed machines follow the retention rule below. Held claims block lifecycle
++cleanup until explicitly released. Session completion still requires exact final
++heads integrated and all work finished. Existing legacy reservations keep their
++original completion requirements. Never release another session's resources or
++edit records.
+ 
+ The Operations page shows owners and waiters; machine claims also appear in the
+ session Reservations tab. This is cooperative locking. Ordinary project tools do
+ not intercept arbitrary commands. Participating sessions must acquire the required
+ resources before mutation and keep ownership until the work is safe to release.
+ 
++## Machine retention
++
++Retain ownership of every deployed physical machine until all three conditions
++are met:
++
++1. Its deployed feature lineage is integrated into the approved remote default
++   branches, including deployed dependencies.
++2. The user accepts the resulting UI or behavior on that machine.
++3. The user explicitly directs release of that machine.
++
++Review, CI and source completion do not establish user acceptance. Record the
++accepted environment and result. Idle time, feedback, redeployment, disconnects
++and turn completion do not permit release. Default-branch integration needs its
++own explicit approval; deployment approval supplies neither merge approval nor
++release direction. Missing evidence keeps the machine held.
++
++Retain the rollout and review receipts: physical machine and aliases, resolved
++system and user-profile store paths, complete source/input graph, canonical
++repository/target mapping, exact deployed and intended final feature heads, and
++fresh remote ancestry proofs. For refreshed history, retain reviewed old/new
++base/head ranges, range-diff or patch-equivalence evidence and migration lineage.
++Do not call a nonancestor deployed commit literally merged. An independently
++proven equivalent successor can establish integrated feature lineage; a
++substantive successor requires redeployment and renewed user acceptance. Ordinary
++session completion still requires every registered exact final feature head.
++
++Before release, inspect authoritative status for the exact claim owned by this
++session, reconcile known command effects and verify all three conditions.
++Release that claim and verify its resulting state. The owner-only,
++idempotent release API does not enforce this human workflow. Do not edit claim
++records or add release receipts to substitute for the evidence.
++
+ ## Git and deployment
+ 
+ Acquire one repository only for the final target/feature/cleanliness checks,
+@@ -85,3 +120,8 @@ supplies its exact `legacyJobId`; integrations resume by their original ID.
+ Never submit a replacement job to hide an uncertain effect. Legacy bootstrap
+ operations retain their dated recovery procedures. The generic package installs
+ the retained integration guide alongside current coordination/recovery guides.
++
++Legacy lifecycle completion can automatically release reservations as part of
++its existing implementation. That behavior grants no permission to archive,
++delete or release a deployed machine before the retention conditions above.
++No lifecycle action is implied by finishing work or preparing a handoff.

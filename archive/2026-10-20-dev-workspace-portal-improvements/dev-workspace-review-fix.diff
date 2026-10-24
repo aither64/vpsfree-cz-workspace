@@ -1,0 +1,381 @@
+diff --git a/docs/workspace-portal.md b/docs/workspace-portal.md
+index 7214f9b..8ccbaff 100644
+--- a/docs/workspace-portal.md
++++ b/docs/workspace-portal.md
+@@ -389,7 +389,8 @@ reloads while keeping its retry identity; delivery can still complete. Transcrip
+ confirmation retires the receipt normally. Delivery failures appear beside the
+ composer without a browser alert. A lost response preserves the input, attachments
+ and original retry identity. Once the transcript or an accepted receipt confirms
+-delivery, a later HTTP failure does not change that confirmed state. Sending
++delivery, a later HTTP failure does not change that confirmed state. The warning
++clears when the original submission is accepted or confirmed in the transcript. Sending
+ revised wording creates a separate attempt and does not resolve the earlier one. Browser storage must save a dismissal before
+ the portal hides it.
+ 
+diff --git a/flake.lock b/flake.lock
+index 6f10719..ea17485 100644
+--- a/flake.lock
++++ b/flake.lock
+@@ -37,17 +37,17 @@
+     "codex-web": {
+       "flake": false,
+       "locked": {
+-        "lastModified": 1792531890,
+-        "narHash": "sha256-dY2k371NsZ2tSmigSWmvnp/ECD7Uyr8IZ5otFZrsdiU=",
++        "lastModified": 1792533707,
++        "narHash": "sha256-6dAMMwgGkCJVxUGyckpzyir6ETxpVHvI0w4b00ZQbIc=",
+         "owner": "aither64",
+         "repo": "codex-web",
+-        "rev": "2ea01d5fc5672da25cca8d5b45ce6aa7f7c52b70",
++        "rev": "852e8c51091512bc79ca6c921ef1f5ccc46a9535",
+         "type": "github"
+       },
+       "original": {
+         "owner": "aither64",
+         "repo": "codex-web",
+-        "rev": "2ea01d5fc5672da25cca8d5b45ce6aa7f7c52b70",
++        "rev": "852e8c51091512bc79ca6c921ef1f5ccc46a9535",
+         "type": "github"
+       }
+     },
+diff --git a/flake.nix b/flake.nix
+index 381be8c..24e203a 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -5,7 +5,7 @@
+     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+     llm-agents.url = "github:numtide/llm-agents.nix";
+     codex-web = {
+-      url = "github:aither64/codex-web/2ea01d5fc5672da25cca8d5b45ce6aa7f7c52b70";
++      url = "github:aither64/codex-web/852e8c51091512bc79ca6c921ef1f5ccc46a9535";
+       flake = false;
+     };
+   };
+diff --git a/nix/workspace-portal.nix b/nix/workspace-portal.nix
+index 8989a92..848912a 100644
+--- a/nix/workspace-portal.nix
++++ b/nix/workspace-portal.nix
+@@ -273,7 +273,7 @@ buildGoModule {
+ 
+   inherit src;
+   modRoot = "portal";
+-  vendorHash = "sha256-1oRbDte3irMumDoTriyAKFB6w6qXNwZOcC/9jcADtSA=";
++  vendorHash = "sha256-gzhyAOHVhMn0+WtYClT0NsG19F8PtvkI5ZcsGiLzK5w=";
+ 
+   postPatch = ''
+     expected=${lib.escapeShellArg codexWebVersion}
+diff --git a/portal/go.mod b/portal/go.mod
+index 4fa1997..391b0a5 100644
+--- a/portal/go.mod
++++ b/portal/go.mod
+@@ -4,7 +4,7 @@ go 1.24.0
+ 
+ require (
+ 	github.com/SherClockHolmes/webpush-go v1.4.0
+-	github.com/aither64/codex-web v0.0.0-20261020213130-2ea01d5fc567
++	github.com/aither64/codex-web v0.0.0-20261020220147-852e8c510915
+ 	github.com/coder/websocket v1.8.14
+ 	github.com/microcosm-cc/bluemonday v1.0.27
+ 	github.com/yuin/goldmark v1.7.17
+diff --git a/portal/go.sum b/portal/go.sum
+index 775dc59..c1c642d 100644
+--- a/portal/go.sum
++++ b/portal/go.sum
+@@ -2,8 +2,8 @@ github.com/SherClockHolmes/webpush-go v1.4.0 h1:ocnzNKWN23T9nvHi6IfyrQjkIc0oJWv1
+ github.com/SherClockHolmes/webpush-go v1.4.0/go.mod h1:XSq8pKX11vNV8MJEMwjrlTkxhAj1zKfxmyhdV7Pd6UA=
+ github.com/aither64/codex-web v0.0.0-20261020201102-57972192e30f h1:f1xgYVQ5IEihfJv4lN7RZz1Y4+R29WCBV5JRw9PFkaA=
+ github.com/aither64/codex-web v0.0.0-20261020201102-57972192e30f/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
+-github.com/aither64/codex-web v0.0.0-20261020213130-2ea01d5fc567 h1:OA80Hl5MM+lJIQWwSvu/9r74O52vnT/0GY6QLCmvmlc=
+-github.com/aither64/codex-web v0.0.0-20261020213130-2ea01d5fc567/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
++github.com/aither64/codex-web v0.0.0-20261020220147-852e8c510915 h1:euLk1unartysRm0+Y3wjB4OMD3ZuKsvzB8kvmW8ACPk=
++github.com/aither64/codex-web v0.0.0-20261020220147-852e8c510915/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
+ github.com/aymerick/douceur v0.2.0 h1:Mv+mAeH1Q+n9Fr+oyamOlAkUNPWPlA8PPGR0QAaYuPk=
+ github.com/aymerick/douceur v0.2.0/go.mod h1:wlT5vV2O3h55X9m7iVYN0TBM0NH/MmbLnd30/FjWUq4=
+ github.com/coder/websocket v1.8.14 h1:9L0p0iKiNOibykf283eHkKUHHrpG7f65OE3BhhO7v9g=
+diff --git a/portal/internal/web/portal_improvements_browser_test.cjs b/portal/internal/web/portal_improvements_browser_test.cjs
+index e1b8d21..5677032 100644
+--- a/portal/internal/web/portal_improvements_browser_test.cjs
++++ b/portal/internal/web/portal_improvements_browser_test.cjs
+@@ -89,6 +89,7 @@ const fs = require("node:fs/promises");
+     await page.getByRole("button", {name:"Retry original", exact:true}).click();
+     await expect.poll(() => sends.length).toBe(2);
+     assert.equal(sends[0].clientUserMessageId, sends[1].clientUserMessageId); assert.equal(turns, 1);
++    await expect(page.locator("#message-submission-status")).toBeHidden();
+     await expect(page.getByRole("button", {name:"Dismiss message", exact:true})).toHaveText("×");
+     await expect(page.getByRole("button", {name:"Dismiss message", exact:true})).toHaveAttribute("title", "Dismiss message");
+     await page.getByRole("button", {name:"Dismiss message", exact:true}).click();
+diff --git a/portal/internal/web/static/app.js b/portal/internal/web/static/app.js
+index 7c3f861..5920a4d 100644
+--- a/portal/internal/web/static/app.js
++++ b/portal/internal/web/static/app.js
+@@ -1188,7 +1188,7 @@
+     return;
+   }
+ 
+-  const conversationAssets = await import("/codex/assets/conversation.js?v=19");
++  const conversationAssets = await import("/codex/assets/conversation.js?v=20");
+   sharedTranscriptPresentation = conversationAssets.transcriptEntryPresentation;
+   sharedTranscriptVisible = conversationAssets.transcriptEntryVisible;
+   refreshPolicy = conversationAssets.refreshPolicy;
+@@ -4518,6 +4518,7 @@
+         if (!current || current.message !== receipt.message || current.state === "observed") continue;
+         pendingMessages.set(receipt.id, receipt);
+         storeSendAttempt(sendAttemptStorage, slug, threadID, receipt);
++        clearSubmissionFailure(submissionIdentity(threadID, receipt.id));
+       }
+       if (observed.length) renderMessageReceipts();
+       acknowledgeTranscriptMessages();
+@@ -5205,6 +5206,7 @@
+     // The original retry identity remains durable even when this metadata
+     // update fails. Keep the known acceptance visible for this page lifetime.
+     storeSendAttempt(sendAttemptStorage, slug, threadID, accepted);
++    clearSubmissionFailure(submissionIdentity(threadID, attempt.id));
+     renderMessageReceipts();
+   };
+ 
+@@ -5225,7 +5227,10 @@
+         composerUploads.clear();
+       }
+     } catch (error) {
+-      if (threadID === currentThreadId) { markMessageOutcomeUnknown(id); if (!["accepted", "observed"].includes(pendingMessages.get(id)?.state)) showSubmissionFailure(error); }
++      if (threadID === currentThreadId) {
++        markMessageOutcomeUnknown(id);
++        if (!["accepted", "observed"].includes(pendingMessages.get(id)?.state)) showSubmissionFailure(error, submissionIdentity(threadID, id));
++      }
+     } finally {
+       inFlightMessageIDs.delete(id);
+       renderMessageReceipts();
+@@ -5259,8 +5264,18 @@
+   };
+ 
+   const submissionStatus = document.getElementById("message-submission-status");
+-  const showSubmissionFailure = error => {
+-    if (!submissionStatus) return;
++  const submissionIdentity = (threadID, id, action = "send") => ({conversationID, threadID, id, action});
++  let submissionFailure = null;
++  const clearSubmissionFailure = identity => {
++    if (!submissionFailure || !identity.id ||
++        ["conversationID", "threadID", "id", "action"].some(key => submissionFailure[key] !== identity[key])) return;
++    submissionFailure = null;
++    submissionStatus.hidden = true;
++    submissionStatus.textContent = "";
++  };
++  const showSubmissionFailure = (error, identity) => {
++    if (!submissionStatus || identity.conversationID !== conversationID || identity.threadID !== currentThreadId) return;
++    submissionFailure = {...identity};
+     submissionStatus.textContent = conversationAssets.submissionFailurePresentation?.(error).message || error.message || "Delivery could not be confirmed. Retry the original message to check its status.";
+     submissionStatus.hidden = false;
+   };
+@@ -5279,12 +5294,12 @@
+     try { queueAttemptStorage = globalThis.localStorage; } catch (_error) {}
+     const submitMessage = async (queue) => {
+       if (!interactive || liveSettingsSaving || form.dataset.submitting) return;
+-      if (submissionStatus) submissionStatus.hidden = true;
+       const threadID = currentThreadId;
++      const action = queue ? "queue" : "send";
+       const message = textarea.value.trim();
+       if (!message && !composerUploads.count()) return;
+       let attachments, submittingAttemptID = null;
+-      try { attachments = composerUploads.ids(); } catch (error) { showSubmissionFailure(error); return; }
++      try { attachments = composerUploads.ids(); } catch (error) { showSubmissionFailure(error, submissionIdentity(threadID, null, action)); return; }
+       form.dataset.submitting = "true";
+       composerUploads.lock(true);
+       const controls = Array.from(form.querySelectorAll("button, input, select, textarea"));
+@@ -5299,11 +5314,13 @@
+               throw new Error("Browser storage is unavailable; queued messages cannot be submitted safely.");
+             }
+           }
++          submittingAttemptID = attempt.id;
+           await client.queueMessage(message, attempt.id, attachments);
+           optionalQuestions?.ordinaryAccepted();
+           if (!deleteQueueAttempt(queueAttemptStorage, slug, currentThreadId, attempt.id)) {
+             throw new Error("The queued message was accepted, but its retry record could not be cleared.");
+           }
++          clearSubmissionFailure(submissionIdentity(threadID, attempt.id, action));
+         } else {
+           const queueAttempts = requireQueueAttempts(queueAttemptStorage, slug, currentThreadId);
+           if (queueAttempts.some((candidate) => candidate.message === message && sameAttemptAttachments(candidate.attachmentIds, attachments))) {
+@@ -5346,9 +5363,9 @@
+         }
+         scheduleRefresh(0);
+       } catch (error) {
+-        if (threadID === currentThreadId && submittingAttemptID) markMessageOutcomeUnknown(submittingAttemptID);
+-        const knownReceipt = threadID === currentThreadId && ["accepted", "observed"].includes(pendingMessages.get(submittingAttemptID)?.state);
+-        if (!knownReceipt) showSubmissionFailure(error);
++        if (!queue && threadID === currentThreadId && submittingAttemptID) markMessageOutcomeUnknown(submittingAttemptID);
++        const knownReceipt = !queue && threadID === currentThreadId && ["accepted", "observed"].includes(pendingMessages.get(submittingAttemptID)?.state);
++        if (!knownReceipt) showSubmissionFailure(error, submissionIdentity(threadID, submittingAttemptID, action));
+       }
+       finally {
+         delete form.dataset.submitting;
+@@ -5383,13 +5400,15 @@
+     if (liveSettingsSaving) return;
+     const queuedSubmissionId = queueStart.dataset.queuedSubmissionId;
+     if (!queuedSubmissionId) return;
++    const identity = submissionIdentity(currentThreadId, queuedSubmissionId, "startQueue");
+     queueStartInFlight = true;
+     queueStart.disabled = true;
+     try {
+       await client.startQueue(queuedSubmissionId);
++      clearSubmissionFailure(identity);
+       followTranscript();
+     } catch (error) {
+-      showSubmissionFailure(error);
++      showSubmissionFailure(error, identity);
+     } finally {
+       queueStartInFlight = false;
+       await refreshQueue(true);
+diff --git a/portal/internal/web/submission_notice_contract_test.cjs b/portal/internal/web/submission_notice_contract_test.cjs
+new file mode 100644
+index 0000000..cab2bd9
+--- /dev/null
++++ b/portal/internal/web/submission_notice_contract_test.cjs
+@@ -0,0 +1,100 @@
++"use strict";
++const fs = require("node:fs"), vm = require("node:vm"), assert = require("node:assert/strict");
++const {createHash} = require("node:crypto");
++const helpers = require("./static/app.js");
++const source = fs.readFileSync("static/app.js", "utf8");
++const section = (start, end) => {
++  const a = source.indexOf(start), b = source.indexOf(end, a);
++  assert(a > 0 && b > a);
++  return source.slice(a, b);
++};
++const tick = () => new Promise(resolve => setImmediate(resolve));
++function fixture() {
++  let observation;
++  const status = {hidden:true, textContent:""}, records = new Map(), pendingMessages = new Map();
++  const form = {elements:{message:{value:"New draft"}}};
++  const uploads = {values:["new-upload"], ids() {return this.values;}, ready:()=>true, clear() {this.values=[];}};
++  const context = vm.createContext({
++    conversationID:"conversation", currentThreadId:"thread", slug:"session", interactive:true,
++    executionHeld:false, liveSettingsSaving:false, form, composerUploads:uploads, pendingMessages,
++    inFlightMessageIDs:new Set(), sendAttemptStorage:{}, pageReads:{paused:false}, transcriptEntries:[],
++    document:{getElementById:id=>id==="message-submission-status" ? status : form},
++    conversationAssets:{sameAttachments:(a=[],b=[])=>JSON.stringify(a)===JSON.stringify(b)},
++    optionalQuestions:{ordinaryAccepted(){}}, renderMessageReceipts(){}, scheduleRefresh(){},
++    storeSendAttempt:(_storage,_slug,thread,attempt)=>{if (thread==="thread") records.set(attempt.id,{...attempt}); return true;},
++    loadSendAttempts:()=>[...records.values()], deleteSendAttempt:(_storage,_slug,_thread,id)=>records.delete(id),
++    markTranscriptMessagesObserved:(...args)=>(observation=helpers.markTranscriptMessagesObserved(...args)),
++    sendAcknowledgementCandidates:helpers.sendAcknowledgementCandidates,
++    createTranscriptAcknowledgementScheduler:helpers.createTranscriptAcknowledgementScheduler,
++    client:{message:async()=>({steered:false}), acknowledgeMessages:async batch=>({acknowledgedClientUserMessageIds:batch.map(x=>x.clientUserMessageId)})},
++  });
++  vm.runInContext([
++    section('  const submissionStatus =', '  const form = document.getElementById("message-form");'),
++    section('  const markMessageOutcomeUnknown =', '  const recoverPlanAttempts ='),
++    section('  const acknowledgeTranscriptMessages =', '  const renderPlanActions ='),
++    section('  const observePageReceipts =', '  const renderThread ='),
++    'globalThis.test = {showSubmissionFailure, clearSubmissionFailure, submissionIdentity, acceptMessageReceipt, retryMessageReceipt, observePageReceipts};',
++  ].join("\n"), context);
++  const attempt = {id:"original", message:"Original message", state:"unknown", attachmentIds:["original-upload"]};
++  pendingMessages.set(attempt.id, {...attempt}); records.set(attempt.id, {...attempt});
++  const identity = context.test.submissionIdentity("thread", attempt.id);
++  const fail = () => context.test.showSubmissionFailure(new Error("Delivery could not be confirmed."), identity);
++  const entry = {kind:"userMessage",clientUserMessageId:attempt.id,text:"Canonical envelope",displayText:attempt.message,attachments:[{id:"original-upload"}],clientUserMessageDigest:createHash("sha256").update("Canonical envelope").digest("hex")};
++  const observe = async () => {
++    context.transcriptEntries=[entry]; context.test.observePageReceipts([entry],"thread");
++    await observation; await tick(); await tick();
++  };
++  return {context,status,records,pendingMessages,form,uploads,attempt,identity,fail,observe};
++}
++(async () => {
++  // A failed same-ID retry keeps both warning and durable recovery record.
++  let f=fixture(); f.fail();
++  f.context.client.message=async()=>{throw new Error("Still unresolved");};
++  await f.context.test.retryMessageReceipt(f.attempt.id);
++  assert(!f.status.hidden); assert.equal(f.pendingMessages.get(f.attempt.id).state,"unknown");
++  assert(f.records.has(f.attempt.id));
++  // Later success clears exactly that warning, preserving a different draft/upload.
++  const calls=[]; f.context.client.message=async(...args)=>{calls.push(args); return {};};
++  await f.context.test.retryMessageReceipt(f.attempt.id);
++  assert(f.status.hidden); assert.equal(f.status.textContent,"");
++  assert.equal(f.records.get(f.attempt.id).state,"accepted");
++  assert.equal(JSON.stringify(calls),JSON.stringify([[f.attempt.message,f.attempt.id,true,f.attempt.attachmentIds]]));
++  assert.equal(f.form.elements.message.value,"New draft"); assert.deepEqual(f.uploads.values,["new-upload"]);
++
++  // Unrelated conversation/thread/attempt/action confirmations cannot hide it.
++  f=fixture(); f.fail();
++  f.context.test.acceptMessageReceipt({...f.attempt,id:"other"},{},"thread");
++  f.context.test.acceptMessageReceipt(f.attempt,{},"other-thread");
++  f.context.test.clearSubmissionFailure({...f.identity,conversationID:"other-conversation"});
++  f.context.test.clearSubmissionFailure({...f.identity,action:"queue"});
++  assert(!f.status.hidden); assert(f.records.has(f.attempt.id));
++  assert.equal(f.records.get(f.attempt.id).state,"unknown");
++  f.context.test.showSubmissionFailure(new Error("Queue warning"),{...f.identity,action:"queue"});
++  f.context.test.acceptMessageReceipt(f.attempt,{});
++  assert.equal(f.status.textContent,"Queue warning"); assert(!f.status.hidden);
++
++  // Validated transcript proof clears the warning before acknowledgement;
++  // eventual acknowledgement retains a newer draft and different uploads.
++  f=fixture(); f.fail(); await f.observe();
++  assert(f.status.hidden); assert(!f.records.has(f.attempt.id));
++  assert.equal(f.form.elements.message.value,"New draft"); assert.deepEqual(f.uploads.values,["new-upload"]);
++
++  // Observation or acceptance before a lost retry response keeps precedence.
++  for (const proof of ["observed","accepted"]) {
++    f=fixture(); let reject;
++    f.context.client.message=()=>new Promise((_resolve,no)=>{reject=no;});
++    const pending=f.context.test.retryMessageReceipt(f.attempt.id);
++    if (proof==="observed") await f.observe();
++    else f.context.test.acceptMessageReceipt(f.attempt,{});
++    assert.equal(f.pendingMessages.get(f.attempt.id).state,proof);
++    reject(new Error("Late response loss")); await pending;
++    assert(f.status.hidden);
++    assert.equal(f.form.elements.message.value,"New draft"); assert.deepEqual(f.uploads.values,["new-upload"]);
++  }
++  // Equal text with changed uploads is still a different composer draft.
++  f=fixture(); f.form.elements.message.value=f.attempt.message; f.fail();
++  await f.context.test.retryMessageReceipt(f.attempt.id);
++  assert(f.status.hidden); assert.equal(f.form.elements.message.value,f.attempt.message);
++  assert.deepEqual(f.uploads.values,["new-upload"]);
++  console.log("Submission notices follow exact attempt proof and retain unrelated drafts/records.");
++})().catch(error=>{console.error(error);process.exitCode=1;});
+diff --git a/portal/internal/web/submission_notice_contract_test.go b/portal/internal/web/submission_notice_contract_test.go
+new file mode 100644
+index 0000000..444c883
+--- /dev/null
++++ b/portal/internal/web/submission_notice_contract_test.go
+@@ -0,0 +1,16 @@
++package web
++
++import (
++	"os/exec"
++	"testing"
++)
++
++func TestSubmissionNoticeFollowsOriginalAttempt(t *testing.T) {
++	node, err := exec.LookPath("node")
++	if err != nil {
++		t.Skip("node is required")
++	}
++	if output, err := exec.Command(node, "submission_notice_contract_test.cjs").CombinedOutput(); err != nil {
++		t.Fatalf("submission notice: %v\n%s", err, output)
++	}
++}
+diff --git a/portal/internal/web/templates/index.html b/portal/internal/web/templates/index.html
+index e992668..86b6126 100644
+--- a/portal/internal/web/templates/index.html
++++ b/portal/internal/web/templates/index.html
+@@ -98,7 +98,7 @@
+   <script src="/static/session-attention-store.js?v=3" defer></script>
+   <script src="/static/browser-notifications.js?v=5" defer></script>
+   <script src="/static/preparation.js?v=5" defer></script>
+-  <script src="/static/app.js?v=49" defer></script>
++  <script src="/static/app.js?v=50" defer></script>
+   <script src="/static/coordination.js?v=6" defer></script>
+ </body>
+ </html>
+diff --git a/portal/internal/web/templates/session.html b/portal/internal/web/templates/session.html
+index 576be2f..6500816 100644
+--- a/portal/internal/web/templates/session.html
++++ b/portal/internal/web/templates/session.html
+@@ -260,7 +260,7 @@
+       <div class="dialog-actions"><button type="button" class="quiet" data-dialog-close>Cancel</button><button type="submit" class="danger">Delete session</button></div>
+     </form>
+   </dialog>
+-  <script src="/static/app.js?v=49" defer></script>
++  <script src="/static/app.js?v=50" defer></script>
+   <script src="/static/session-attention-store.js?v=3" defer></script>
+   <script src="/static/browser-notifications.js?v=5" defer></script>
+   <script src="/static/session-attention.js" defer></script>

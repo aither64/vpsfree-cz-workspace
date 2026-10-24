@@ -1,0 +1,39 @@
+--- accepted-manifest-parser/activate.sh
++++ roster-settings-successor/activate.sh
+@@ -2,4 +2,4 @@
+ set -euo pipefail
+ # PREPARED ONLY. PARENT launches; a utility may observe status, never this driver.
+ cd /home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements
+-exec python3 /home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/targeted-read-budget-successor/activation-manifest-parser/activation-driver.py
++exec python3 /home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/targeted-read-budget-successor/activation-roster-settings/activation-driver.py
+--- accepted-manifest-parser/smoke.sh
++++ roster-settings-successor/smoke.sh
+@@ -5,4 +5,4 @@
+ unset DEBUG PWDEBUG NODE_DEBUG
+ export NODE_PATH=/nix/store/fg778x0631ld4xd8fim2kbvxll5715xp-playwright-test-1.59.1/lib/node_modules
+ export PLAYWRIGHT_BROWSERS_PATH=/nix/store/f0rap655j6wmqbfvqdw445kwcxkxwf7n-playwright-browsers
+-exec timeout 180 /nix/store/l07gdbxylzfl8pbx9pxy6fyg95w4hjwy-nodejs-24.19.0/bin/node /home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/targeted-read-budget-successor/activation-manifest-parser/continuity-diagnostic.cjs "$@"
++exec timeout 180 /nix/store/l07gdbxylzfl8pbx9pxy6fyg95w4hjwy-nodejs-24.19.0/bin/node /home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/targeted-read-budget-successor/activation-roster-settings/continuity-diagnostic.cjs "$@"
+--- accepted-manifest-parser/continuity-diagnostic.cjs
++++ roster-settings-successor/continuity-diagnostic.cjs
+@@ -148,7 +148,10 @@
+   for (const member of ["implementer2","implementer3"]) requireThat(roster.members.some(row => row.address === member && row.state === "ready"));
+   diagnosticStage = "own_transcript";
+   const transcript = await (await get(own+"/thread/page")).json();
+-  requireThat(transcript.threadId === rootThread && !transcript.metadataPending && transcript.model && transcript.reasoningEffort);
++  requireThat(transcript.threadId === rootThread && Array.isArray(transcript.entries));
++  // Saved lead settings belong to the validated roster; page enrichment is optional.
++  requireThat(typeof roster.leadModel === "string" && roster.leadModel.length > 0 &&
++    typeof roster.leadEffort === "string" && roster.leadEffort.length > 0);
+   diagnosticStage = "own_queue";
+   const queue = await (await get(own+"/queue")).json(); requireThat(Array.isArray(queue));
+   // Only exposed same-thread attempt identities, never global ledger or text.
+@@ -158,7 +161,7 @@
+     system,systemProfile,systemConfiguration:cfg.systemConfiguration,systemRuntime:cfg.systemRuntime,
+     hostContract:"equivalent; mixed source revisions",native,tmux,socket:hashJSON([socket,socketStat.dev,socketStat.ino]),
+     identity:{root:digest(rootThread),conversation:digest(conversation),roster:hashJSON(roster),
+-      model:transcript.model,effort:transcript.reasoningEffort},memberCount:roster.members.length,attempts};
++      model:roster.leadModel,effort:roster.leadEffort},memberCount:roster.members.length,attempts};
+   diagnosticStage = "source_assets";
+   const source = path.join(cfg.sourceRoot,"dev-workspace"), shared = path.join(cfg.sourceRoot,"codex-web");
+   const sourceBytes = (repo,revision,relative) => execFileSync("git",["-C",repo,"show",revision+":"+relative],

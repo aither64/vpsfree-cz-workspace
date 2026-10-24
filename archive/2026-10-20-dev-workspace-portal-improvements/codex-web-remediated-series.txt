@@ -1,0 +1,48 @@
+commit 529524829526f41c628bd54d729241c52395c6b2
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Tue Oct 20 22:25:14 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Tue Oct 20 23:57:18 2026 +0200
+
+    conversation: present transcripts after attachment decoration
+    
+    Add an optional presentation hook after attachment observation while
+    retaining the existing transform order. Hosts can render decorated prompts
+    without exposing attachment envelopes or changing message delivery identity.
+    
+    Add optional host-owned communication metadata for team presentation. These
+    additions preserve nil-hook behavior and existing transcript consumers; no
+    persisted state or App Server protocol changes are required.
+
+commit 7fb4ab212ba233b94370eeea131762b729ac2505
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Tue Oct 20 23:57:18 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Tue Oct 20 23:57:18 2026 +0200
+
+    conversation: distinguish team traffic and quiet history fallback
+    
+    Share transcript classification and filtering across mounted and host UIs,
+    with text-only team labels and a separate coordination view. Render trusted
+    host-sanitized message HTML while retaining citation-aware rendering and copy.
+    
+    Keep successful legacy history fallback silent without suppressing pending
+    citation repair. Preserve authorization, canonical message identity and
+    post-attachment presentation semantics.
+
+commit 852e8c51091512bc79ca6c921ef1f5ccc46a9535
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Tue Oct 20 23:57:18 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Wed Oct 21 00:01:47 2026 +0200
+
+    conversation: reconcile inline submission failure notices
+    
+    Present delivery errors inline while retaining the original durable attempt.
+    Bind each notice to its conversation, thread, action and attempt, and clear
+    it only after matching acceptance or observation. Unrelated confirmations
+    cannot remove an unresolved warning.
+    
+    Preserve same-ID retries, receipt retention and changed draft or attachment
+    selections. Notice reconciliation has no durable side effects and requires
+    no server-ledger, authorization, protocol or persisted state changes.

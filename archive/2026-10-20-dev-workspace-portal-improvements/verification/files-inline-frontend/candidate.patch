@@ -1,0 +1,975 @@
+diff --git a/portal/internal/web/auto_archive_test.go b/portal/internal/web/auto_archive_test.go
+index 8ff7cd6..2b56969 100644
+--- a/portal/internal/web/auto_archive_test.go
++++ b/portal/internal/web/auto_archive_test.go
+@@ -40,7 +40,7 @@ func TestAutomaticArchivalPageIsSeparateFromIndex(t *testing.T) {
+ 	if page.Code != http.StatusOK {
+ 		t.Fatalf("dedicated route reached slug lookup: %d: %s", page.Code, page.Body.String())
+ 	}
+-	for _, required := range []string{"data-automatic-archival", "workspace-auto-archive-status", "workspace-auto-archive-rows", `href="/"`, `/static/app.js?v=55`} {
++	for _, required := range []string{"data-automatic-archival", "workspace-auto-archive-status", "workspace-auto-archive-rows", `href="/"`, `/static/app.js?v=56`} {
+ 		if !strings.Contains(page.Body.String(), required) {
+ 			t.Fatalf("overview lacks %q: %s", required, page.Body.String())
+ 		}
+diff --git a/portal/internal/web/browser_contract_test.cjs b/portal/internal/web/browser_contract_test.cjs
+index f8e9d9b..4bac841 100644
+--- a/portal/internal/web/browser_contract_test.cjs
++++ b/portal/internal/web/browser_contract_test.cjs
+@@ -1021,6 +1021,14 @@ const automaticClient = createSessionClient(
+   "example", createRequest(automaticFetch), compatibilityConversation(automaticFetch),
+ );
+ 
++// File selection uses the original path and caller-owned cancellation scope.
++const fileSignal = new AbortController().signal;
++let selectedFileRequest;
++const fileClient = createSessionClient("example", async (path, options) => { selectedFileRequest = {path, options}; return {}; });
++await fileClient.file("ignored/report #%.md", {signal: fileSignal});
++assert.equal(selectedFileRequest.path, "/api/sessions/example/file?artifact=ignored%2Freport%20%23%25.md");
++assert.equal(selectedFileRequest.options.signal, fileSignal);
++
+ if (!unitOnly) {
+   let rejectOldSnooze, snoozeCalls = 0;
+   const oldSnooze = createPromptSnooze("offer-A", () => new Promise((_resolve, reject) => { rejectOldSnooze = reject; }));
+diff --git a/portal/internal/web/portal_improvements_browser_test.cjs b/portal/internal/web/portal_improvements_browser_test.cjs
+index a0bb678..1ecf216 100644
+--- a/portal/internal/web/portal_improvements_browser_test.cjs
++++ b/portal/internal/web/portal_improvements_browser_test.cjs
+@@ -11,7 +11,7 @@ const fs = require("node:fs/promises");
+     const page = await context.newPage(), errors = [], dialogs = [], sends = [], additions = [];
+     page.on("pageerror", error => errors.push(error.message));
+     page.on("dialog", dialog => { dialogs.push(dialog.message()); void dialog.dismiss(); });
+-    let filesReads = 0, failFiles = false, releaseAdd, turns = 0;
++    let filesReads = 0, fileReads = 0, failFiles = false, omittedFile = "", holdFile = false, releaseFile, oldFileDelivered = false, releaseAdd, turns = 0;
+     let loseResponse = true, showReceipt = false, observedEntry = null, releaseObserved = null;
+     const transcript = await (await context.request.get(baseURL + "/fixture/presentation")).json();
+     const teamHTML = (await (await context.request.get(baseURL + "/fixture/team")).text()).replace('<div id="team-role-defaults" hidden>', '<div id="team-role-defaults" hidden><span data-role="implementer" data-model="model-1" data-effort="high"></span>');
+@@ -24,6 +24,21 @@ const fs = require("node:fs/promises");
+       if (operation === "files") {
+         filesReads++;
+         if (failFiles) return route.fulfill({status:503, json:{error:"Session files could not be listed. Refresh to try again."}});
++        if (omittedFile) {
++          const response=await route.fetch(), payload=await response.json();
++          return route.fulfill({json:{files:payload.files.filter(file=>file.path!==omittedFile)}});
++        }
++        return route.continue();
++      }
++      if (operation === "file") {
++        fileReads++;
++        if (holdFile && url.searchParams.get("artifact") === "reports/deep/001.md") {
++          holdFile=false;
++          const response=await route.fetch();
++          await new Promise(resolve=>{releaseFile=resolve;});
++          await route.fulfill({response}).catch(()=>{}); oldFileDelivered=true;
++          return;
++        }
+         return route.continue();
+       }
+       if (operation === "team" && route.request().method() === "POST") {
+@@ -112,48 +127,95 @@ const fs = require("node:fs/promises");
+     await input.fill("Draft retained while browsing files");
+     await page.evaluate(() => {location.hash = "artifacts";});
+     await expect(page.locator("#files")).toBeVisible();
+-    await expect(page.locator(".session-file")).toHaveCount(503);
+-    assert.equal(filesReads, 1);
+-    const bottom = page.locator('.session-file a[href$="reports%2Fdeep%2F499.md"]');
++    const listed=await (await context.request.get(baseURL+"/api/sessions/example/files")).json();
++    await expect(page.locator(".session-file")).toHaveCount(listed.files.length);
++    assert.equal(filesReads,1);assert.equal(fileReads,0,"Listing must not read content before selection");
++    const bottom=page.locator('.session-file a[href$="reports%2Fdeep%2F499.md"]');
+     await expect(bottom).toHaveText("499.md");
+-    await expect(bottom).toHaveAttribute("target", "_blank");
+-    await expect(bottom).toHaveAttribute("rel", /noopener/);
+-    await expect(bottom.locator("..")).toContainText("Report 499");
+-    await expect(bottom.locator("..")).toContainText("Registered");
+-    const [fileViewer] = await Promise.all([context.waitForEvent("page"), bottom.click()]);
++    assert.equal(await bottom.getAttribute("target"),null);
++    await expect(bottom.locator("..")).not.toContainText("Registered");
++    await expect(bottom.locator("..")).not.toContainText("Report 499");
++    const pagesBefore=context.pages().length;
++    await bottom.click();
++    await expect(page.locator("#files-title")).toHaveText("reports/deep/499.md");
++    await expect(page.locator("#files-content h1")).toHaveText("Original artifact bytes");
++    assert.equal(context.pages().length,pagesBefore,"A plain file click must select inline");
++    await expect(page.locator("#files-mode")).toHaveAttribute("aria-label","Show raw");
++    const fetchedBeforeToggle=fileReads;
++    await page.locator("#files-mode").click();
++    await expect(page.locator("#files-content .cm-editor")).toBeVisible();
++    await expect(page.locator("#files-mode")).toHaveAttribute("aria-label","Show preview");
++    await page.locator("#files-copy").click();
++    assert.equal(await page.evaluate(()=>navigator.clipboard.readText()),"# Original artifact bytes\r\n");
++    assert.equal(fileReads,fetchedBeforeToggle,"Raw/Preview must reuse fetched bytes");
++    const [artifactDownload]=await Promise.all([page.waitForEvent("download"),page.locator("#files-download").click()]);
++    assert.equal(artifactDownload.url(),baseURL+"/api/sessions/example/file/download?artifact=reports%2Fdeep%2F499.md");
++    assert.equal(artifactDownload.suggestedFilename(),"499.md");
++    assert.equal(await fs.readFile(await artifactDownload.path(),"utf8"),"# Original artifact bytes\r\n");
++    const [fileViewer]=await Promise.all([context.waitForEvent("page"),bottom.click({button:"middle"})]);
+     await fileViewer.waitForLoadState();
+     await expect(fileViewer.locator("#source-file-copy-content")).toBeEnabled();
+-    await fileViewer.locator("#source-file-copy-content").click();
+-    assert.equal(await fileViewer.evaluate(() => navigator.clipboard.readText()), "# Original artifact bytes\r\n");
+-    const [artifactDownload] = await Promise.all([fileViewer.waitForEvent("download"), fileViewer.locator("#source-file-download").click()]);
+-    assert.equal(artifactDownload.url(), baseURL + "/api/sessions/example/file/download?artifact=reports%2Fdeep%2F499.md");
+-    assert.equal(artifactDownload.suggestedFilename(), "499.md");
+-    assert.equal(await artifactDownload.failure(), null, `Artifact download failed: ${artifactDownload.url()}`);
+-    assert.equal(await fs.readFile(await artifactDownload.path(), "utf8"), "# Original artifact bytes\r\n");
+-    await fileViewer.close(); await page.bringToFront();
++    await fileViewer.close();await page.bringToFront();
+     await expect(input).toHaveValue("Draft retained while browsing files");
+-    const directory = page.locator('[data-file-directory="reports/deep"]');
+-    await directory.evaluate(node => {node.open = false;});
+-    await directory.evaluate(node => {node.open = true;});
++
++    await page.locator('.session-file a[href$="preview.png"]').click();
++    await expect(page.locator("#files-content img")).toBeVisible();
++    await expect.poll(()=>page.locator("#files-content img").evaluate(image=>image.complete&&image.naturalWidth===1)).toBe(true);
++    await expect(page.locator("#files-copy")).toBeDisabled();
++    await page.locator('.session-file a[href$="passive.svg"]').click();
++    await expect(page.locator("#files-content .cm-editor")).toBeVisible();
++    await expect(page.locator("#files-mode")).toBeHidden();
++    await expect(page.locator("#files-content svg")).toHaveCount(0);
++    assert.equal(await page.evaluate(()=>window.passiveFileExecuted),undefined);
++
++    holdFile=true;
++    await page.locator('.session-file a[href$="reports%2Fdeep%2F001.md"]').click();
++    await expect.poll(()=>Boolean(releaseFile)).toBe(true);
++    await bottom.click();await expect(page.locator("#files-title")).toHaveText("reports/deep/499.md");
++    await expect(page.locator("#files-content h1")).toHaveText("Original artifact bytes");
++    releaseFile();await expect.poll(()=>oldFileDelivered).toBe(true);
++    await expect(page.locator('#session-files a[aria-current]')).toHaveText("499.md");
++    await expect(page.locator("#files-download")).toHaveAttribute("href",/499.md$/);
++
++    await page.locator('.session-file a[href$="long.md"]').click();
++    await expect(page.locator("#files-content h2")).toHaveCount(100);
++    const directory=page.locator('[data-file-directory="reports/deep"]');
++    await directory.evaluate(node=>{node.open=false;});await directory.evaluate(node=>{node.open=true;});
+     await bottom.scrollIntoViewIfNeeded();
+-    const scrollBefore = await page.locator("#files").evaluate(node => node.scrollTop);
+-    assert(scrollBefore > 0, "500-file tree must overflow the Files panel");
+-    const directoriesBefore = await page.locator("[data-file-directory]").evaluateAll(nodes => nodes.map(node => [node.dataset.fileDirectory, node.open]));
+-    await page.locator("#files-refresh").evaluate(node => node.click());
+-    await expect.poll(() => filesReads).toBe(2);
+-    await expect(page.locator("#files-status")).toBeHidden();
+-    assert.equal(await page.locator("#files").evaluate(node => node.scrollTop), scrollBefore);
+-    assert.deepEqual(await page.locator("[data-file-directory]").evaluateAll(nodes => nodes.map(node => [node.dataset.fileDirectory, node.open])), directoriesBefore);
+-    failFiles = true;
+-    await page.locator("#files-refresh").evaluate(node => node.click());
++    await page.locator(".files-view").evaluate(node=>{node.scrollTop=200;});
++    const scrollBefore=await page.locator("#session-files").evaluate(node=>node.scrollTop);
++    const contentScrollBefore=await page.locator(".files-view").evaluate(node=>node.scrollTop);
++    assert(scrollBefore>0&&contentScrollBefore>0,"Both panes must scroll independently");
++    const directoriesBefore=await page.locator("[data-file-directory]").evaluateAll(nodes=>nodes.map(node=>[node.dataset.fileDirectory,node.open]));
++    const selectionBefore=await page.locator("#files-content h2").first().evaluate(node=>{
++      window.retainedFileBody=node.closest(".source-file-body");
++      const range=document.createRange();range.selectNodeContents(node);
++      const selection=getSelection();selection.removeAllRanges();selection.addRange(range);return selection.toString();
++    });
++    await page.locator("#files-refresh").evaluate(node=>node.click());
++    await expect.poll(()=>filesReads).toBe(2);await expect(page.locator("#files-status")).toBeHidden();
++    assert.equal(await page.locator("#session-files").evaluate(node=>node.scrollTop),scrollBefore);
++    assert.equal(await page.locator(".files-view").evaluate(node=>node.scrollTop),contentScrollBefore);
++    assert.equal(await page.evaluate(()=>getSelection().toString()),selectionBefore);
++    assert(await page.evaluate(()=>document.querySelector("#files-content .source-file-body")===window.retainedFileBody));
++    await expect(page.locator('#session-files a[aria-current]')).toHaveText("long.md");
++    assert.deepEqual(await page.locator("[data-file-directory]").evaluateAll(nodes=>nodes.map(node=>[node.dataset.fileDirectory,node.open])),directoriesBefore);
++    failFiles=true;await page.locator("#files-refresh").evaluate(node=>node.click());
+     await expect(page.locator("#files-status")).toContainText("Session files could not be listed");
+-    await expect(page.locator(".session-file")).toHaveCount(503);
+-    failFiles = false;
+-    await page.locator("#files-refresh").evaluate(node => node.click());
++    await expect(page.locator(".session-file")).toHaveCount(listed.files.length);
++    await expect(page.locator("#files-title")).toHaveText("long.md");
++    failFiles=false;await page.locator("#files-refresh").evaluate(node=>node.click());
+     await expect(page.locator("#files-status")).toBeHidden();
+-    await page.setViewportSize({width:390, height:844});
+-    assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+-    await page.setViewportSize({width:1440, height:850});
++    await page.setViewportSize({width:390,height:844});
++    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
++    const treeBox=await page.locator("#session-files").boundingBox(),viewBox=await page.locator(".files-view").boundingBox();
++    assert(viewBox.y>=treeBox.y+treeBox.height,"Narrow Files panes must stack");
++    await page.setViewportSize({width:1440,height:850});
++    omittedFile="long.md";await page.locator("#files-refresh").evaluate(node=>node.click());
++    await expect(page.locator("#files-title")).toHaveText("Select a file");
++    await expect(page.locator("#files-copy")).toBeDisabled();await expect(page.locator("#files-download")).toBeHidden();
++    await expect(page.locator("#files-content")).toBeEmpty();
++    await expect(input).toHaveValue("Draft retained while browsing files");
+ 
+     await page.locator('[data-session-tab="team"]').click();
+     const form = page.locator('[data-direct-team-form][data-action="add"]');
+diff --git a/portal/internal/web/question_browser_test.go b/portal/internal/web/question_browser_test.go
+index 4a7f2ca..d0000d9 100644
+--- a/portal/internal/web/question_browser_test.go
++++ b/portal/internal/web/question_browser_test.go
+@@ -1,12 +1,14 @@
+ package web
+ 
+ import (
++	"encoding/base64"
+ 	"fmt"
+ 	"net/http"
+ 	"net/http/httptest"
+ 	"os"
+ 	"os/exec"
+ 	"path/filepath"
++	"strings"
+ 	"testing"
+ 
+ 	"github.com/aither64/codex-web/codex"
+@@ -47,6 +49,19 @@ func TestQuestionBrowser(t *testing.T) {
+ 			t.Fatal(err)
+ 		}
+ 	}
++	image, imageErr := base64.StdEncoding.DecodeString("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=")
++	if imageErr != nil {
++		t.Fatal(imageErr)
++	}
++	for name, data := range map[string][]byte{
++		"preview.png": image,
++		"passive.svg": []byte(`<svg xmlns="http://www.w3.org/2000/svg" onload="window.passiveFileExecuted=true"></svg>`),
++		"long.md":     []byte(strings.Repeat("## Scrollable preview\n\nOriginal long file bytes.\n\n", 100)),
++	} {
++		if err := os.WriteFile(filepath.Join(directory, name), data, 0644); err != nil {
++			t.Fatal(err)
++		}
++	}
+ 	writeWebRuntimeAuthority(t, server, "example")
+ 	events := make(chan struct{}, 1)
+ 	server.config.Codex = &browserContractCodex{emptyPrompts: true, events: events, transcript: codex.Transcript{
+diff --git a/portal/internal/web/read_cycle_browser_test.cjs b/portal/internal/web/read_cycle_browser_test.cjs
+index 0577b00..286e977 100644
+--- a/portal/internal/web/read_cycle_browser_test.cjs
++++ b/portal/internal/web/read_cycle_browser_test.cjs
+@@ -207,6 +207,7 @@ function historyLane({gap = true, citationsPending = false} = {}) {
+     },
+     scheduleRefresh: () => effects.push("refresh"),
+     filesReads: {pause() {}, resume() {}}, filesLoaded: true,
++    pauseFiles() {}, resumeFiles() {},
+     pageLeaving: false, detailsTimer: null, teamStatsReceivedAt: 0, repositoryReview: null,
+     pauseTiming() {}, resumeTiming() {}, refreshSessionDetails() {}, refreshTeamStats() {},
+     pendingRetryTimer: null, pendingDueTimer: null, queueRetryTimer: null, pendingRerun: false, queueRerun: false,
+diff --git a/portal/internal/web/source_files_browser_test.cjs b/portal/internal/web/source_files_browser_test.cjs
+index 984e042..3830dc4 100644
+--- a/portal/internal/web/source_files_browser_test.cjs
++++ b/portal/internal/web/source_files_browser_test.cjs
+@@ -21,59 +21,152 @@ const fs = require("node:fs");
+   assert.match(sourceFileVersion({source: "workspace"}), /Current workspace.*uncommitted/);
+   assert.throws(() => sourceFileVersion({source: "unknown"}), /source is unknown/);
+ 
+-  // Keep the mounted UI and event handlers intact; replace only the browser's
+-  // absolute editor import with a controllable asynchronous editor boundary.
++  // Replace only the existing deferred editor module, retaining the shipped
++  // renderer, mounted controls and generation checks.
+   const editorImport = 'await import("/static/review-editor.js")';
+   assert(source.includes(editorImport));
+-  const mountedSource = source.replace(editorImport, '({createReviewEditor: () => globalThis.sourceTestEditor})');
+-  const {mountSourceFile} = await import("data:text/javascript;base64," + Buffer.from(mountedSource).toString("base64"));
+-  const elements = Object.fromEntries(["notice", "content", "title", "version", "copy", "copy-content", "download"].map(name =>
+-    [`source-file-${name}`, {textContent: "", hidden: false, handlers: {}, addEventListener(name, fn) { this.handlers[name] = fn; }}]));
+-  let copied;
++  const mountedSource = source.replace(editorImport, 'await globalThis.sourceEditorImport()');
++  const {renderSourceFileContent, mountSourceFile} = await import("data:text/javascript;base64," + Buffer.from(mountedSource).toString("base64"));
++  class Node {
++    constructor() { this.children=[]; this.handlers={}; this.textContent=""; this.hidden=false; this.dataset={};
++      this.classes=new Set(); this.classList={add:(...names)=>names.forEach(name=>this.classes.add(name)),
++        remove:(...names)=>names.forEach(name=>this.classes.delete(name)), contains:name=>this.classes.has(name), toggle:(name,on)=>on?this.classes.add(name):this.classes.delete(name)}; }
++    append(...nodes) { for (const node of nodes) {node.parent=this; this.children.push(node);} }
++    replaceChildren(...nodes) { this.children=[]; this.append(...nodes); }
++    remove() { if(this.parent) this.parent.children=this.parent.children.filter(node=>node!==this); }
++    addEventListener(name, fn) { this.handlers[name]=fn; }
++    setAttribute(name,value) { (this.attributes??={})[name]=value; }
++    removeAttribute(name) { delete this.attributes?.[name]; }
++    querySelectorAll(selector) {
++      const all=this.children.flatMap(node=>[node,...node.querySelectorAll(selector)]);
++      return all.filter(node=>selector==="[data-file-path]"?node.dataset.filePath!==undefined:
++        selector==="[data-file-directory]"?node.dataset.fileDirectory!==undefined:false);
++    }
++  }
++  const elements = Object.fromEntries(["notice", "content", "title", "version", "copy", "copy-content", "download", "mode"].map(name =>
++    [`source-file-${name}`, new Node()]));
++  let copied, editorOptions=[], destroyed=0;
+   Object.defineProperty(globalThis, "navigator", {value: {clipboard: {writeText: async text => {copied = text;}}}});
+-  const events = {};
+-  globalThis.document = {getElementById: id => elements[id], querySelector: () => ({content: "nonce"})};
+-  globalThis.location = new URL(original + "#L10");
++  const events = {}, documentEvents={};
++  globalThis.document = {hidden:false, createElement: () => new Node(), getElementById: id => elements[id],
++    querySelector: () => ({content: "nonce"}), addEventListener: (name,fn) => {documentEvents[name]=fn;}};
++  globalThis.location = new URL(original);
+   globalThis.addEventListener = (name, callback) => { events[name] = callback; };
+-  let fetchedURL;
+-  globalThis.fetch = async url => {
+-    fetchedURL = url;
+-    return {ok: true, json: async () => ({path: "example.nix", source: "worktree", content: {text: "line\n"}})};
+-  };
++  globalThis.history = {replaceState(_state,_title,href) { globalThis.location=new URL(href); }};
++  globalThis.sourceEditorImport = async () => ({createReviewEditor: options => {
++    editorOptions.push(options);
++    return {clearLine() {}, revealLine: async () => true, destroy() {destroyed++;}};
++  }});
++  const parent=new Node(), raw={path:"report.md",source:"artifact",content:{text:"# Original bytes\r\n"},preview:{kind:"markdown",html:"<h1>Original bytes</h1>"}};
++  let current=true;
++  const preview=await renderSourceFileContent({parent,file:raw,mode:"preview",isCurrent:()=>current});
++  assert.equal(parent.children[0].innerHTML,raw.preview.html);assert.equal(editorOptions.length,0);
++  preview.destroy();assert.equal(parent.children.length,0);
++  const passive=await renderSourceFileContent({parent,file:{...raw,preview:undefined,content:{text:'<svg onload="bad()"></svg>'}},mode:"raw",isCurrent:()=>current});
++  assert.equal(editorOptions.at(-1).after,'<svg onload="bad()"></svg>');assert.equal(parent.children[0].innerHTML,undefined);
++  passive.destroy();assert.equal(destroyed,1);
++  for(const content of [{binary:true},{limited:true,bytes:999999}]) {
++    const view=await renderSourceFileContent({parent,file:{path:"large.bin",content},mode:"raw",isCurrent:()=>current});
++    assert.match(parent.children[0].children[0].textContent,/Download|Preview omitted/);view.destroy();
++  }
++  await assert.rejects(renderSourceFileContent({parent,file:{...raw,preview:{kind:"image",url:"https://other.test/image.png"}},mode:"preview",isCurrent:()=>current}),/unavailable/);
++  const image=await renderSourceFileContent({parent,file:{...raw,preview:{kind:"image",url:"/artifact-previews/example/image.png"}},mode:"preview",isCurrent:()=>current});
++  const imageNode=parent.children[0].children[0];assert.match(imageNode.src,/\/artifact-previews\/example\/image.png$/);
++  current=false;imageNode.handlers.error();assert.equal(parent.children[0].children[0],imageNode);image.destroy();current=true;
++
++  let releaseImport;
++  const originalImporter=globalThis.sourceEditorImport;
++  globalThis.sourceEditorImport=()=>new Promise(resolve=>{releaseImport=resolve;});
++  const stale=renderSourceFileContent({parent,file:raw,mode:"raw",isCurrent:()=>current});
++  current=false;releaseImport(await originalImporter());await stale;
++  assert.equal(parent.children.length,0,"A retired editor import must not attach DOM");
++  globalThis.sourceEditorImport=originalImporter;current=true;
++
++  let fetchedURL, fetches=0;
++  globalThis.fetch=async url=>{fetchedURL=url;fetches++;return {ok:true,json:async()=>raw};};
++  globalThis.location=new URL(original);
++  await mountSourceFile({dataset:{slug:"example"}});
++  assert.equal(fetchedURL,`/api/sessions/example/file${location.search}`);
++  assert.equal(elements["source-file-content"].children[0].innerHTML,raw.preview.html);
++  await elements["source-file-copy-content"].handlers.click();assert.equal(copied,raw.content.text);
++  assert.equal(elements["source-file-download"].href,`/api/sessions/example/file/download${location.search}`);
++  elements["source-file-mode"].handlers.click();
++  await new Promise(setImmediate);
++  assert.equal(editorOptions.at(-1).after,raw.content.text);assert.equal(fetches,1,"Raw toggle must reuse fetched bytes");
++  assert.equal(elements["source-file-mode"].ariaLabel,"Show preview");
++  globalThis.location=new URL(original+"#L10");
+   let finishOldReveal;
+-  globalThis.sourceTestEditor = {clearLine() {}, revealLine: (_side, line) => line === 10
+-    ? new Promise(resolve => { finishOldReveal = resolve; }) : Promise.resolve(false)};
+-  const mounting = mountSourceFile({dataset: {slug: "example"}});
+-  for (let tries = 0; !finishOldReveal && tries < 50; tries++) await new Promise(setImmediate);
+-  assert.equal(typeof finishOldReveal, "function");
+-  assert.equal(fetchedURL, `/api/sessions/example/file${location.search}`);
+-  globalThis.location = new URL(original + "#L999");
+-  await events.hashchange();
+-  assert.match(elements["source-file-notice"].textContent, /Line 999 is not present/);
+-  finishOldReveal(true);
+-  await mounting;
+-  assert.match(elements["source-file-notice"].textContent, /Line 999 is not present/);
+-  assert.equal(elements["source-file-notice"].hidden, false);
++  globalThis.sourceEditorImport=async()=>({createReviewEditor:()=>({clearLine() {},destroy() {},revealLine:(_side,line)=>line===10
++    ?new Promise(resolve=>{finishOldReveal=resolve;}):Promise.resolve(false)})});
++  events.hashchange();
++  for(let tries=0;!finishOldReveal&&tries<50;tries++) await new Promise(setImmediate);
++  assert.equal(typeof finishOldReveal,"function");
++  globalThis.location=new URL(original+"#L999");events.hashchange();await new Promise(setImmediate);
++  assert.match(elements["source-file-content"].children[0].children[0].textContent,/Line 999 is not present/);
++  finishOldReveal(true);await new Promise(setImmediate);
++  assert.match(elements["source-file-content"].children[0].children[0].textContent,/Line 999 is not present/);
+ 
+-  // During a rollback the fetched editor may be the previously deployed bundle.
+-  globalThis.sourceTestEditor = {revealLine: async () => true};
+-  globalThis.location = new URL(original + "#L1");
+-  await mountSourceFile({dataset: {slug: "example"}});
+-  assert.equal(elements["source-file-notice"].textContent, "");
+-  globalThis.location = new URL("https://workspace.example.test/workspace-files?path=docs%2Fguide.md#L93");
++  // Old servers omit preview; workspace/repository line links still select raw.
++  globalThis.sourceEditorImport=originalImporter;
++  globalThis.location=new URL("https://workspace.example.test/workspace-files?path=docs%2Fguide.md#L93");
+   let revealedLine;
+-  globalThis.sourceTestEditor = {clearLine() {}, revealLine: async (_side, line) => { revealedLine = line; return true; }};
+-  globalThis.fetch = async url => {
+-    fetchedURL = url;
+-    return {ok: true, json: async () => ({path: "docs/guide.md", source: "workspace", content: {text: "line\n"}})};
+-  };
+-  await mountSourceFile({dataset: {fileApi: "/api/workspace/file"}});
+-  assert.equal(fetchedURL, "/api/workspace/file?path=docs%2Fguide.md");
+-  assert.equal(revealedLine, 93);
+-  assert.equal(elements["source-file-title"].textContent, "docs/guide.md");
+-  assert.match(elements["source-file-version"].textContent, /Current workspace/);
+-  await elements["source-file-copy-content"].handlers.click();
+-  assert.equal(copied, "line\n");
+-  assert.equal(elements["source-file-download"].href, "/api/workspace/file/download?path=docs%2Fguide.md");
++  globalThis.sourceEditorImport=async()=>({createReviewEditor:options=>({revealLine:async(_side,line)=>{revealedLine=line;return true;},destroy() {}})});
++  globalThis.fetch=async url=>{fetchedURL=url;return {ok:true,json:async()=>({path:"docs/guide.md",source:"workspace",content:{text:""}})};};
++  await mountSourceFile({dataset:{fileApi:"/api/workspace/file"}});
++  assert.equal(fetchedURL,"/api/workspace/file?path=docs%2Fguide.md");assert.equal(revealedLine,93);
++  assert.match(elements["source-file-version"].textContent,/Current workspace/);
++  assert.equal(elements["source-file-copy-content"].disabled,false);
++  await elements["source-file-copy-content"].handlers.click();assert.equal(copied,"");
++  assert.equal(elements["source-file-mode"].hidden,true);
++  for(const content of [{binary:true},{limited:true,bytes:999999}]) {
++    globalThis.fetch=async()=>({ok:true,json:async()=>({path:"large.bin",source:"artifact",content})});
++    await mountSourceFile({dataset:{slug:"example"}});
++    assert.equal(elements["source-file-copy-content"].disabled,true);
++  }
++  // Execute the shipped inline Files block with controlled request completion.
++  // This retains its real read scopes, selection guards, toolbar and event logic.
++  const appSource=fs.readFileSync("static/app.js","utf8");
++  const filesBlock=appSource.slice(appSource.indexOf('  const artifactList = document.getElementById("session-files");'),appSource.indexOf('  const pageReads = createReadScope();'));
++  const inlineElements=Object.fromEntries(["session-files","files-status","files-refresh","files-content","files-title","files-content-status","files-mode","files-copy","files-download","files"].map(id=>[id,new Node()]));
++  inlineElements.files.classList.add("active");
++  globalThis.document={hidden:false,createElement:()=>new Node(),createDocumentFragment:()=>new Node(),
++    getElementById:id=>inlineElements[id],querySelector:()=>null,addEventListener:(name,fn)=>{documentEvents[name]=fn;}};
++  let rows=[{path:"a.md"},{path:"b.txt"}], releases={}, inlineRequests=[];
++  const client={files:async()=>({files:rows}),file:(path,options)=>{inlineRequests.push({path,options});return new Promise(resolve=>{releases[path]=resolve;});}};
++  const inlineModule={renderSourceFileContent};
++  const {createReadScope}=require("./static/app.js");
++  const mountInline=new Function("document","client","slug","createReadScope","refreshPolicy","inlineModule","apiPath",
++    filesBlock.replace('await import("/static/source-file.js?v=3")','inlineModule')+'return {selectFile,pauseFiles,resumeFiles,refreshFiles};');
++  globalThis.sourceEditorImport=originalImporter;
++  const inline=mountInline(document,client,"example",createReadScope,{detailsDeadlineMs:10000},inlineModule,(slug,operation)=>`/api/sessions/${encodeURIComponent(slug)}/${operation}`);
++  await new Promise(setImmediate);
++  const links=inlineElements["session-files"].querySelectorAll("[data-file-path]");
++  let prevented=false;
++  links[0].handlers.click({button:0,ctrlKey:true,preventDefault(){prevented=true;}});
++  assert.equal(prevented,false);assert.equal(inlineRequests.length,0,"Modified anchors must keep native behavior");
++  links[0].handlers.click({button:0,preventDefault(){prevented=true;}});
++  assert.equal(prevented,true);assert.equal(inlineRequests[0].path,"a.md");
++  inline.selectFile("b.txt");assert.equal(inlineRequests[0].options.signal.aborted,true);
++  releases["b.txt"]({path:"b.txt",source:"artifact",content:{text:"canonical B\r\n"}});
++  await new Promise(setImmediate);
++  releases["a.md"]({...raw,path:"a.md"});await new Promise(setImmediate);
++  assert.equal(inlineElements["files-title"].textContent,"b.txt");
++  assert.equal(inlineElements["files-download"].href,"/api/sessions/example/file/download?artifact=b.txt");
++  assert.equal(editorOptions.at(-1).after,"canonical B\r\n");
++  assert.equal(editorOptions.at(-1).lineURL("new",93),"/files/example?artifact=b.txt#L93");
++  await inlineElements["files-copy"].handlers.click();assert.equal(copied,"canonical B\r\n");
++  const retainedBody=inlineElements["files-content"].children[0];inlineElements["session-files"].scrollTop=80;
++  await inline.refreshFiles();
++  assert.equal(inlineElements["files-content"].children[0],retainedBody);assert.equal(inlineElements["session-files"].scrollTop,80);
++  rows=[{path:"a.md"}];await inline.refreshFiles();
++  assert.equal(inlineElements["files-title"].textContent,"Select a file");assert.equal(inlineElements["files-copy"].disabled,true);
++  assert.equal(inlineElements["files-download"].hidden,true);assert.equal(inlineElements["files-content"].children.length,0);
++  inline.selectFile("a.md");inline.pauseFiles();
++  releases["a.md"]({...raw,path:"a.md"});await new Promise(setImmediate);
++  assert.equal(inlineElements["files-content"].children.length,0,"A hidden read must not attach content");
++  inline.resumeFiles();assert.equal(inlineRequests.length,4,"Resume retries only the still-needed selection");
++  releases["a.md"]({...raw,path:"a.md"});await new Promise(setImmediate);
++  assert.equal(inlineElements["files-content"].children[0].innerHTML,raw.preview.html);
++  inline.pauseFiles();
+   console.log("Source file URL and source identity contracts passed.");
+ })().catch(error => { console.error(error); process.exitCode = 1; });
+diff --git a/portal/internal/web/static/app.js b/portal/internal/web/static/app.js
+index 5e6544c..f8bff56 100644
+--- a/portal/internal/web/static/app.js
++++ b/portal/internal/web/static/app.js
+@@ -46,6 +46,7 @@
+       method: "POST", body: JSON.stringify({hold, targetId}),
+     }),
+     files: (options) => request(apiPath(slug, "files"), options),
++    file: (path, options) => request(`${apiPath(slug, "file")}?artifact=${encodeURIComponent(path)}`, options),
+     artifactPreview: (path, options) => request(`${apiPath(slug, "artifact-preview")}?path=${encodeURIComponent(path)}`, options),
+     archive: (mode, targetId, receiptId) => request(apiPath(slug, "archive"), {
+       method: "POST", body: JSON.stringify({mode, targetId, ...(receiptId ? {receiptId} : {})}),
+@@ -3251,20 +3252,91 @@
+   const artifactList = document.getElementById("session-files");
+   const filesStatus = document.getElementById("files-status");
+   const filesRefresh = document.getElementById("files-refresh");
+-  const filesReads = createReadScope();
+-  let filesLoaded = false, filesRead = null;
++  const fileContent = document.getElementById("files-content");
++  const fileTitle = document.getElementById("files-title");
++  const fileNotice = document.getElementById("files-content-status");
++  const fileToggle = document.getElementById("files-mode");
++  const fileCopy = document.getElementById("files-copy");
++  const fileDownload = document.getElementById("files-download");
++  const filesReads = createReadScope(), fileReads = createReadScope();
++  let filesLoaded = false, filesRead = null, fileRead = null;
++  let selectedPath = "", selectedFile = null, fileMode = "raw", fileRenderer = null, fileRenderEpoch = 0, fileNeedsRender = false;
++  const filesActive = () => !document.hidden && document.getElementById("files")?.classList.contains("active");
++  const fileMessage = (message, error = false) => {
++    fileNotice.textContent = message; fileNotice.hidden = !message; fileNotice.classList.toggle("error", error);
++  };
++  const fileText = () => selectedFile && !selectedFile.content.binary && !selectedFile.content.limited && typeof selectedFile.content.text === "string" ? selectedFile.content.text : null;
++  const updateFileControls = () => {
++    fileCopy.disabled = fileText() === null;
++    fileToggle.hidden = !["markdown", "image"].includes(selectedFile?.preview?.kind);
++    fileToggle.title = fileToggle.ariaLabel = fileMode === "preview" ? "Show raw" : "Show preview";
++    fileToggle.textContent = fileMode === "preview" ? "‹›" : "◉";
++    fileDownload.hidden = !selectedFile;
++    if (selectedFile) fileDownload.href = `${apiPath(slug, "file")}/download?artifact=${encodeURIComponent(selectedPath)}`;
++    else fileDownload.removeAttribute("href");
++  };
++  const renderSelectedFile = async () => {
++    if (!selectedFile || !filesActive()) { fileNeedsRender = true; return; }
++    const epoch = ++fileRenderEpoch, file = selectedFile;
++    const current = () => epoch === fileRenderEpoch && file === selectedFile && !fileReads.paused && filesActive();
++    fileRenderer?.destroy(); fileRenderer = null; fileContent.replaceChildren(); fileNeedsRender = true;
++    updateFileControls();
++    try {
++      const {renderSourceFileContent} = await import("/static/source-file.js?v=3");
++      if (!current()) return;
++      const renderer = await renderSourceFileContent({parent: fileContent, file, mode: fileMode,
++        nonce: document.querySelector('meta[name="style-nonce"]')?.content || "", isCurrent: current,
++        lineURL: (_side, line) => `/files/${encodeURIComponent(slug)}?artifact=${encodeURIComponent(file.path)}#L${line}`});
++      if (!current()) { renderer.destroy(); return; }
++      fileRenderer = renderer; fileNeedsRender = false;
++    } catch (error) { if (current()) { fileNeedsRender = false; fileMessage(error.message || "Unable to display this file.", true); } }
++  };
++  const loadSelectedFile = async () => {
++    if (!selectedPath || selectedFile || !filesActive() || fileReads.paused || fileRead?.isCurrent()) return;
++    const read = fileReads.begin(refreshPolicy.detailsDeadlineMs), path = selectedPath;
++    fileRead = read; fileMessage("Loading file…");
++    try {
++      const file = await client.file(path, {signal: read.signal});
++      if (!read.isCurrent() || read.signal.aborted || path !== selectedPath || !filesActive()) return;
++      if (file.path !== path || !file.content) throw new Error("The file response is invalid.");
++      selectedFile = file; fileMode = ["markdown", "image"].includes(file.preview?.kind) ? "preview" : "raw";
++      fileMessage(""); read.finish(); await renderSelectedFile();
++    } catch (error) {
++      if (read.isCurrent() && path === selectedPath && filesActive()) fileMessage(read.error(error).message, true);
++    } finally { read.finish(); if (fileRead === read) fileRead = null; }
++  };
++  const selectFile = path => {
++    if (selectedPath === path && selectedFile) return;
++    fileReads.pause(); if (filesActive()) fileReads.resume(); fileRead = null;
++    ++fileRenderEpoch; fileRenderer?.destroy(); fileRenderer = null;
++    selectedPath = path; selectedFile = null; fileNeedsRender = false;
++    fileTitle.textContent = path || "Select a file"; fileContent.replaceChildren();
++    fileMessage(""); updateFileControls();
++    for (const link of artifactList.querySelectorAll("[data-file-path]")) {
++      if (link.dataset.filePath === path) link.setAttribute("aria-current", "true"); else link.removeAttribute("aria-current");
++    }
++    if (path) void loadSelectedFile();
++  };
++  fileToggle?.addEventListener("click", () => {
++    fileMode = fileMode === "preview" ? "raw" : "preview"; fileMessage(""); void renderSelectedFile();
++  });
++  fileCopy?.addEventListener("click", async () => {
++    const text = fileText(), file = selectedFile, epoch = fileRenderEpoch;
++    if (text === null) return;
++    try { await navigator.clipboard.writeText(text); if (file === selectedFile && epoch === fileRenderEpoch && filesActive()) fileMessage("Content copied."); }
++    catch (_) { if (file === selectedFile && epoch === fileRenderEpoch && filesActive()) fileMessage("Unable to copy the content. Download the file instead.", true); }
++  });
+   const refreshFiles = async () => {
+-    if (!artifactList || filesReads.paused || document.hidden || filesRead?.isCurrent()) return;
++    if (!artifactList || filesReads.paused || !filesActive() || filesRead?.isCurrent()) return;
+     const read = filesReads.begin(refreshPolicy.detailsDeadlineMs);
+     filesRead = read;
+-    filesStatus.hidden = false; filesStatus.classList.remove("error");
+-    filesStatus.textContent = "Loading files…";
++    filesStatus.hidden = false; filesStatus.classList.remove("error"); filesStatus.textContent = "Loading files…";
+     try {
+       const payload = await client.files({signal: read.signal});
+       if (!read.isCurrent() || read.signal.aborted) return;
+       if (!Array.isArray(payload.files)) throw new Error("The file list response is invalid.");
+       const open = new Map(Array.from(artifactList.querySelectorAll("[data-file-directory]"), node => [node.dataset.fileDirectory, node.open]));
+-      const panel = document.getElementById("files"), top = panel.scrollTop;
++      const top = artifactList.scrollTop, left = artifactList.scrollLeft;
+       const tree = document.createDocumentFragment(), directories = new Map([["", tree]]);
+       for (const file of payload.files) {
+         const parts = file.path.split("/"); let parent = tree, directory = "";
+@@ -3280,38 +3352,37 @@
+           parent = directories.get(directory);
+         }
+         const row = document.createElement("div"); row.className = "session-file";
+-        const link = document.createElement("a"); link.textContent = parts.at(-1);
+-        link.href = `/files/${encodeURIComponent(slug)}?artifact=${encodeURIComponent(file.path)}`;
+-        link.target = "_blank"; link.rel = "noopener noreferrer";
+-        link.title = [file.label, file.path].filter(Boolean).join(" · "); row.append(link);
+-        if (file.label && file.registered) {
+-          const label = document.createElement("span"); label.className = "muted";
+-          label.textContent = file.label; row.append(label);
+-        }
+-        if (file.registered) {
+-          const marker = document.createElement("span"); marker.className = "badge";
+-          marker.textContent = "Registered"; row.append(marker);
+-        }
+-        parent.append(row);
++        const link = document.createElement("a"); link.textContent = parts.at(-1); link.dataset.filePath = file.path;
++        link.href = `/files/${encodeURIComponent(slug)}?artifact=${encodeURIComponent(file.path)}`; link.title = file.path;
++        if (file.path === selectedPath) link.setAttribute("aria-current", "true");
++        link.addEventListener("click", event => {
++          if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.defaultPrevented) return;
++          event.preventDefault(); selectFile(file.path);
++        });
++        row.append(link); parent.append(row);
+       }
+-      artifactList.replaceChildren(tree); panel.scrollTop = top;
++      artifactList.replaceChildren(tree); artifactList.scrollTop = top; artifactList.scrollLeft = left;
++      if (selectedPath && !payload.files.some(file => file.path === selectedPath)) selectFile("");
+       filesLoaded = true; filesStatus.hidden = payload.files.length > 0;
+       filesStatus.textContent = payload.files.length ? "" : "No files are available.";
+       const tab = document.querySelector('[data-session-tab="files"]');
+       if (tab) tab.querySelector(".rail-label").textContent = `Files (${payload.files.length})`;
+     } catch (error) {
+       if (!read.isCurrent()) return;
+-      filesStatus.hidden = false; filesStatus.classList.add("error");
+-      filesStatus.textContent = read.error(error).message;
+-    } finally {
+-      read.finish(); if (filesRead === read) filesRead = null;
+-    }
++      filesStatus.hidden = false; filesStatus.classList.add("error"); filesStatus.textContent = read.error(error).message;
++    } finally { read.finish(); if (filesRead === read) filesRead = null; }
++  };
++  const pauseFiles = () => { filesReads.pause(); fileReads.pause(); if (fileNeedsRender) ++fileRenderEpoch; };
++  const resumeFiles = () => {
++    if (!filesActive()) return;
++    filesReads.resume(); fileReads.resume();
++    if (!filesLoaded) void refreshFiles();
++    if (selectedPath && !selectedFile) void loadSelectedFile();
++    else if (selectedFile && fileNeedsRender) void renderSelectedFile();
+   };
+   filesRefresh?.addEventListener("click", () => { void refreshFiles(); });
+-  document.addEventListener("session-section-change", event => {
+-    if (event.detail === "files" && !filesLoaded) void refreshFiles();
+-  });
+-  if (document.getElementById("files")?.classList.contains("active")) void refreshFiles();
++  document.addEventListener("session-section-change", event => { if (event.detail === "files") resumeFiles(); else pauseFiles(); });
++  if (artifactList) { updateFileControls(); resumeFiles(); }
+ 
+   const pageReads = createReadScope();
+   let pageLeaving = false, pauseTiming = () => {}, resumeTiming = () => {}, resumeHistory = () => {};
+@@ -3464,7 +3535,7 @@
+   };
+   const suspendPageReads = (leaving = false) => {
+     pageLeaving ||= leaving;
+-    pageReads.pause(); filesReads.pause(); clearTimeout(detailsTimer); detailsTimer = null;
++    pageReads.pause(); pauseFiles(); clearTimeout(detailsTimer); detailsTimer = null;
+     pauseConversationReads();
+     teamStatsReceivedAt = 0;
+     repositoryReview?.suspend(); pauseTiming();
+@@ -3472,8 +3543,7 @@
+   const resumePageReads = () => {
+     if (document.hidden || pageLeaving) return;
+     const wasPaused = pageReads.paused;
+-    pageReads.resume(); filesReads.resume();
+-    if (!filesLoaded && document.getElementById("files")?.classList.contains("active")) void refreshFiles();
++    pageReads.resume(); resumeFiles();
+     if (wasPaused) resumeConversationReads();
+     if (wasPaused) { resumeTiming(); repositoryReview?.resume(); }
+     resumeHistory();
+diff --git a/portal/internal/web/static/source-file.js b/portal/internal/web/static/source-file.js
+index 0de0124..8db4029 100644
+--- a/portal/internal/web/static/source-file.js
++++ b/portal/internal/web/static/source-file.js
+@@ -21,6 +21,50 @@ export function sourceFileVersion(file) {
+   }
+ }
+ 
++// Both file surfaces consume the same optional, server-sanitized preview.
++export async function renderSourceFileContent({parent,file,mode,nonce,isCurrent,lineURL,onLineSelect}) {
++  let editor = null, destroyed = false;
++  const current = () => !destroyed && isCurrent();
++  const body = document.createElement("div"); body.className = "source-file-body";
++  const notice = text => {
++    const message = document.createElement("p"); message.className = "notice";
++    message.textContent = text; body.append(message);
++  };
++  const destroy = () => { destroyed = true; editor?.destroy?.(); body.remove(); };
++  if (!current()) return {destroy};
++  if (mode === "preview" && file.preview?.kind === "markdown" && typeof file.preview.html === "string") {
++    body.classList.add("source-file-markdown");
++    body.innerHTML = file.preview.html;
++  } else if (mode === "preview" && file.preview?.kind === "image") {
++    const url = new URL(file.preview.url, location.href);
++    if (!file.preview.url.startsWith("/artifact-previews/") || url.origin !== location.origin || !url.pathname.startsWith("/artifact-previews/")) throw new Error("This image preview is unavailable.");
++    const image = document.createElement("img"); image.alt = file.path;
++    image.addEventListener("error", () => { if (current()) { image.remove(); notice("This image preview is unavailable. Download the file instead."); } });
++    image.src = url.href; body.classList.add("source-file-image"); body.append(image);
++  } else if (file.content.limited) {
++    notice(`Preview omitted: the file exceeds 512 KiB or 12,000 lines (${file.content.bytes.toLocaleString()} bytes).`);
++  } else if (file.content.binary || typeof file.content.text !== "string") {
++    notice("This file cannot be displayed as UTF-8 text. Download the file instead.");
++  } else {
++    const {createReviewEditor} = await import("/static/review-editor.js");
++    if (!current()) return {destroy};
++    editor = createReviewEditor({parent: body, after: file.content.text, newPath: file.path,
++      mode: "file", fileLabel: "Read-only file", nonce, lineURL, onLineSelect});
++    if (lineURL && onLineSelect) {
++      const href = location.href, line = sourceFileLine(href);
++      editor.clearLine?.();
++      if (line !== null) {
++        const found = await editor.revealLine("new", line);
++        if (!current() || location.href !== href) { destroy(); return {destroy}; }
++        if (!found) notice(`Line ${line} is not present in this version of the file.`);
++      } else if (location.hash) notice("This line reference is invalid.");
++    }
++    if (file.content.text === "") notice("This file is empty.");
++  }
++  if (current()) parent.append(body); else destroy();
++  return {destroy};
++}
++
+ export async function mountSourceFile(root) {
+   const notice = document.getElementById("source-file-notice");
+   const content = document.getElementById("source-file-content");
+@@ -29,66 +73,81 @@ export async function mountSourceFile(root) {
+   const copy = document.getElementById("source-file-copy");
+   const copyContent = document.getElementById("source-file-copy-content");
+   const download = document.getElementById("source-file-download");
+-  let completeText = null;
++  const toggle = document.getElementById("source-file-mode");
++  const api = root.dataset.fileApi || `/api/sessions/${encodeURIComponent(root.dataset.slug)}/file`;
++  let file = null, mode = "raw", renderer = null, generation = 0, read = null, leaving = false, needsRender = false;
++  const active = () => !document.hidden && !leaving;
++  const announce = text => { notice.textContent = text; notice.hidden = !text; };
++  const completeText = () => file && !file.content.binary && !file.content.limited && typeof file.content.text === "string" ? file.content.text : null;
++  const previewable = () => ["markdown", "image"].includes(file?.preview?.kind);
++  const controls = () => {
++    copyContent.disabled = completeText() === null;
++    if (toggle) {
++      toggle.hidden = !previewable(); toggle.disabled = !file;
++      toggle.title = toggle.ariaLabel = mode === "preview" ? "Show raw" : "Show preview";
++      toggle.textContent = mode === "preview" ? "‹›" : "◉";
++    }
++  };
++  const render = async () => {
++    if (!file || !active()) { needsRender = true; return; }
++    const ticket = ++generation; renderer?.destroy(); renderer = null; content.replaceChildren();
++    needsRender = true; controls();
++    try {
++      const next = await renderSourceFileContent({parent: content, file, mode,
++        nonce: document.querySelector('meta[name="style-nonce"]')?.content || "",
++        isCurrent: () => ticket === generation && active(),
++        lineURL: (_side, line) => sourceFileURL(location.href, line),
++        onLineSelect: (_side, line) => { location.hash = `L${line}`; }});
++      if (ticket !== generation || !active()) { next.destroy(); return; }
++      renderer = next; needsRender = false;
++    } catch (error) { if (ticket === generation && active()) { needsRender = false; announce(error.message || "Unable to display this file."); } }
++  };
+   copyContent?.addEventListener("click", async () => {
+-    if (completeText === null) return;
+-    try { await navigator.clipboard.writeText(completeText); announce("Content copied."); }
+-    catch (_) { announce("Unable to copy the content. Download the file instead."); }
++    const text = completeText(), ticket = generation;
++    if (text === null) return;
++    try { await navigator.clipboard.writeText(text); if (ticket === generation && active()) announce("Content copied."); }
++    catch (_) { if (ticket === generation && active()) announce("Unable to copy the content. Download the file instead."); }
+   });
+-  const announce = text => { notice.textContent = text; notice.hidden = !text; };
+-  copy.addEventListener("click", async () => {
++  copy?.addEventListener("click", async () => {
++    const ticket = generation;
++    try { await navigator.clipboard.writeText(location.href); if (ticket === generation && active()) announce("Link copied."); }
++    catch (_) { if (ticket === generation && active()) announce("Unable to copy the link. Copy the address from your browser."); }
++  });
++  toggle?.addEventListener("click", () => {
++    mode = mode === "preview" ? "raw" : "preview";
++    if (mode === "preview" && location.hash) history.replaceState(null, "", sourceFileURL(location.href, null));
++    announce(""); void render().catch(error => announce(error.message));
++  });
++  const load = async () => {
++    if (!active() || read || file) return;
++    const abort = new AbortController(), ticket = ++generation;
++    read = abort; const timeout = setTimeout(() => abort.abort(), 10000);
++    announce("Loading file…"); controls();
+     try {
+-      await navigator.clipboard.writeText(location.href);
+-      copy.textContent = "Copied";
+-    } catch (_) {
+-      announce("Unable to copy the link. Copy the address from your browser.");
+-    }
++      const response = await fetch(`${api}${location.search}`, {credentials: "same-origin", signal: abort.signal});
++      const payload = await response.json().catch(() => ({}));
++      if (ticket !== generation || !active()) return;
++      if (abort.signal.aborted) throw new Error("The request timed out. Try again.");
++      if (!response.ok) throw new Error(payload.error || "This file is unavailable. Check that the session and file still exist.");
++      if (!payload.content || typeof payload.path !== "string") throw new Error("The file response is invalid.");
++      file = payload;
++      title.textContent = file.repository ? `${file.repository}/${file.path}` : file.path;
++      document.title = `${title.textContent} · File`; version.textContent = sourceFileVersion(file);
++      download.href = `${api}/download${location.search}`; download.hidden = false;
++      mode = previewable() && !location.hash ? "preview" : "raw";
++      announce(""); await render();
++    } catch (error) {
++      if (ticket === generation && active()) announce(error.message || "Unable to display this file.");
++    } finally { clearTimeout(timeout); if (read === abort) read = null; }
++  };
++  addEventListener("hashchange", () => { mode = "raw"; announce(""); void render().catch(error => announce(error.message)); });
++  const pause = () => { ++generation; read?.abort(); read = null; };
++  document.addEventListener("visibilitychange", () => {
++    if (!active()) pause(); else if (!file) void load(); else if (needsRender) void render();
+   });
+-  try {
+-    const api = root.dataset.fileApi || `/api/sessions/${encodeURIComponent(root.dataset.slug)}/file`;
+-    const response = await fetch(`${api}${location.search}`, {credentials: "same-origin"});
+-    const file = await response.json().catch(() => ({}));
+-    if (!response.ok) throw new Error(file.error || "This file is unavailable. Check that the session and file still exist.");
+-    title.textContent = file.repository ? `${file.repository}/${file.path}` : file.path;
+-    document.title = `${title.textContent} · File`;
+-    version.textContent = sourceFileVersion(file);
+-    if (download) { download.href = `${api}/download${location.search}`; download.hidden = false; }
+-    if (file.content.limited) {
+-      announce(`Preview omitted: the file exceeds 512 KiB or 12,000 lines (${file.content.bytes.toLocaleString()} bytes).`);
+-      return;
+-    }
+-    if (file.content.binary) {
+-      announce("This file cannot be displayed as UTF-8 text.");
+-      return;
+-    }
+-    completeText = file.content.text;
+-    if (copyContent) copyContent.disabled = typeof completeText !== "string";
+-    const {createReviewEditor} = await import("/static/review-editor.js");
+-    const editor = createReviewEditor({
+-      parent: content, after: file.content.text, newPath: file.path, mode: "file", fileLabel: "Read-only file",
+-      nonce: document.querySelector('meta[name="style-nonce"]').content,
+-      lineURL: (_side, line) => sourceFileURL(location.href, line),
+-      onLineSelect: (_side, line) => { location.hash = `L${line}`; },
+-    });
+-    const reveal = async () => {
+-      const href = location.href;
+-      const line = sourceFileLine(href);
+-      // A retained page can load the previous editor bundle during rollback.
+-      editor.clearLine?.();
+-      if (line !== null) {
+-        const found = await editor.revealLine("new", line);
+-        if (location.href !== href) return;
+-        announce(found ? "" : `Line ${line} is not present in this version of the file.`);
+-      } else {
+-        announce(location.hash ? "This line reference is invalid." : file.content.text === "" ? "This file is empty." : "");
+-      }
+-      copy.textContent = "Copy link";
+-    };
+-    addEventListener("hashchange", reveal);
+-    await reveal();
+-  } catch (error) {
+-    announce(error.message || "Unable to display this file.");
+-  }
++  addEventListener("pagehide", () => { leaving = true; pause(); });
++  addEventListener("pageshow", () => { leaving = false; if (!file) void load(); else if (needsRender) void render(); });
++  await load();
+ }
+ 
+ if (typeof document !== "undefined") {
+diff --git a/portal/internal/web/static/style.css b/portal/internal/web/static/style.css
+index 194b78b..2c4a882 100644
+--- a/portal/internal/web/static/style.css
++++ b/portal/internal/web/static/style.css
+@@ -561,8 +561,26 @@ button.icon-button:focus-visible { outline: 2px solid var(--accent); outline-off
+ .message.team { background: #22223c; border-color: #8f83ce; color: var(--text); }
+ .message-team-label { color: #c4b7ff; font-size: .75rem; font-weight: 600; margin-bottom: .4rem; }
+ 
+-.files-panel .artifact-list { max-height: none; width: 100%; overflow: auto; }
++.files-panel.active { display: flex; flex-direction: column; overflow: hidden; }
++.files-layout { display: grid; grid-template-columns: minmax(12rem, 28%) minmax(0, 1fr); gap: 1rem; flex: 1; min-height: 0; }
++.files-panel .artifact-list { max-height: none; overflow: auto; min-height: 0; }
++.files-view { min-width: 0; min-height: 0; overflow: auto; }
++.files-heading { display: flex; gap: .75rem; justify-content: space-between; align-items: flex-start; }
++.files-heading h3 { min-width: 0; overflow-wrap: anywhere; font: 600 .95rem ui-monospace, SFMono-Regular, Consolas, monospace; }
++.session-file a[aria-current] { color: var(--accent-2); background: #142b23; border-radius: .2rem; }
++.file-content { min-width: 0; }
++.file-content .cm-scroller { overflow: auto; }
++.file-content .cm-editor { min-height: 8rem; }
++.source-file-body { min-width: 0; }
++.source-file-markdown { padding: .75rem; overflow-wrap: anywhere; }
++.source-file-markdown pre { overflow: auto; }
++.source-file-markdown img, .source-file-image img { display: block; max-width: 100%; height: auto; }
++.source-file-image { padding: .75rem; }
++@media (max-width: 650px) {
++ .files-panel.active { overflow: auto; }
++ .files-layout { grid-template-columns: minmax(0, 1fr); flex: none; }
++ .files-panel .artifact-list { max-height: 30dvh; }
++ .files-view { max-height: 60dvh; }
++}
+ .session-file { display: flex; align-items: baseline; gap: .65rem; padding: .35rem .45rem; min-width: 0; }
+ .session-file > a { overflow-wrap: anywhere; }
+-.session-file > .muted { font-size: .8rem; }
+-.session-file > .badge { flex-shrink: 0; }
+diff --git a/portal/internal/web/templates/automatic-archival.html b/portal/internal/web/templates/automatic-archival.html
+index f8b5517..3c0f284 100644
+--- a/portal/internal/web/templates/automatic-archival.html
++++ b/portal/internal/web/templates/automatic-archival.html
+@@ -18,7 +18,7 @@
+       <div id="workspace-auto-archive-rows"></div>
+     </section>
+   </main>
+-  <script src="/static/app.js?v=55" defer></script>
++  <script src="/static/app.js?v=56" defer></script>
+ </body>
+ </html>
+ {{end}}
+diff --git a/portal/internal/web/templates/index.html b/portal/internal/web/templates/index.html
+index 31c469d..9a37a1e 100644
+--- a/portal/internal/web/templates/index.html
++++ b/portal/internal/web/templates/index.html
+@@ -98,7 +98,7 @@
+   <script src="/static/session-attention-store.js?v=4" defer></script>
+   <script src="/static/browser-notifications.js?v=6" defer></script>
+   <script src="/static/preparation.js?v=5" defer></script>
+-  <script src="/static/app.js?v=55" defer></script>
++  <script src="/static/app.js?v=56" defer></script>
+   <script src="/static/coordination.js?v=6" defer></script>
+ </body>
+ </html>
+diff --git a/portal/internal/web/templates/session.html b/portal/internal/web/templates/session.html
+index 961f954..abaa4dd 100644
+--- a/portal/internal/web/templates/session.html
++++ b/portal/internal/web/templates/session.html
+@@ -7,7 +7,7 @@
+   <meta name="style-nonce" content="{{.StyleNonce}}">
+   <title>{{.Session.Slug}} · Workspace</title>
+   <link rel="stylesheet" href="/codex/assets/conversation.css?v=8">
+-  <link rel="stylesheet" href="/static/style.css?v=21">
++  <link rel="stylesheet" href="/static/style.css?v=22">
+   <link rel="stylesheet" href="/codex/assets/uploads.css?v=3">
+ </head>
+ <body class="session-body" data-session="{{.Session.Slug}}" data-session-observation="{{.Session.ObservationIdentity}}" data-thread-id="{{if .SelectedThreadID}}{{.SelectedThreadID}}{{else}}{{.Session.Codex.ThreadID}}{{end}}" data-root-thread-id="{{.Session.Codex.ThreadID}}" data-conversation-id="{{.ConversationID}}" data-selected-member="{{.SelectedMember}}" data-lifecycle-target-id="{{.LifecycleTargetID}}" data-target-identity-version="2" data-archived="{{.Session.Archived}}" data-interactive="{{.Session.Interactive}}" data-execution-held="{{.Session.ExecutionHeld}}" data-lifecycle="{{.Session.Lifecycle}}" data-pending-lifecycle="{{.PendingLifecycle}}">
+@@ -186,7 +186,21 @@
+       <section id="files" class="tab-panel files-panel" role="tabpanel" aria-labelledby="session-tab-files">
+         <div class="section-heading"><h2>Files</h2><button id="files-refresh" type="button" class="quiet">Refresh</button></div>
+         <p id="files-status" class="notice" role="status" hidden></p>
+-        <nav id="session-files" class="artifact-list" aria-label="Session files"></nav>
++        <div class="files-layout">
++          <nav id="session-files" class="artifact-list" aria-label="Session files"></nav>
++          <section class="files-view" aria-labelledby="files-title">
++            <header class="files-heading">
++              <h3 id="files-title">Select a file</h3>
++              <div class="source-file-actions">
++                <button id="files-mode" type="button" class="quiet icon-button" title="Show preview" aria-label="Show preview" hidden>◉</button>
++                <button id="files-copy" type="button" class="quiet icon-button" title="Copy content" aria-label="Copy content" disabled>⧉</button>
++                <a id="files-download" class="button-link icon-button" title="Download file" aria-label="Download file" download hidden>↓</a>
++              </div>
++            </header>
++            <p id="files-content-status" class="notice" role="status" hidden></p>
++            <div id="files-content" class="file-content"></div>
++          </section>
++        </div>
+       </section>
+     </section>
+     {{end}}
+@@ -256,7 +270,7 @@
+       <div class="dialog-actions"><button type="button" class="quiet" data-dialog-close>Cancel</button><button type="submit" class="danger">Delete session</button></div>
+     </form>
+   </dialog>
+-  <script src="/static/app.js?v=55" defer></script>
++  <script src="/static/app.js?v=56" defer></script>
+   <script src="/static/session-attention-store.js?v=4" defer></script>
+   <script src="/static/browser-notifications.js?v=6" defer></script>
+   <script src="/static/session-attention.js?v=2" defer></script>
+diff --git a/portal/internal/web/templates/source-file.html b/portal/internal/web/templates/source-file.html
+index d9f1abc..d8fa55d 100644
+--- a/portal/internal/web/templates/source-file.html
++++ b/portal/internal/web/templates/source-file.html
+@@ -6,10 +6,10 @@
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+   <meta name="style-nonce" content="{{.StyleNonce}}">
+   <title>File · {{.DisplayLabel}}</title>
+-  <link rel="stylesheet" href="/static/style.css?v=20">
++  <link rel="stylesheet" href="/static/style.css?v=22">
+   <link rel="stylesheet" href="/static/repository-review.css?v=3">
+   <link rel="stylesheet" href="/static/source-file.css?v=2">
+-  <script type="module" src="/static/source-file.js?v=2"></script>
++  <script type="module" src="/static/source-file.js?v=3"></script>
+ </head>
+ <body>
+   <main class="source-file-page">
+@@ -19,13 +19,14 @@
+       <header class="source-file-heading">
+         <div><h1 id="source-file-title">File</h1><p id="source-file-version" class="muted"></p></div>
+         <div class="source-file-actions">
+-          <button id="source-file-copy" type="button" class="quiet">Copy link</button>
++          <button id="source-file-mode" type="button" class="quiet icon-button" title="Show preview" aria-label="Show preview" hidden>◉</button>
++          <button id="source-file-copy" type="button" class="quiet icon-button" title="Copy link" aria-label="Copy link">↗</button>
+           <button id="source-file-copy-content" type="button" class="quiet icon-button" title="Copy content" aria-label="Copy content" disabled>⧉</button>
+           <a id="source-file-download" class="button-link icon-button" title="Download file" aria-label="Download file" href="#" download hidden>↓</a>
+         </div>
+       </header>
+       <p id="source-file-notice" class="notice" role="status">Loading file…</p>
+-      <div id="source-file-content"></div>
++      <div id="source-file-content" class="file-content"></div>
+     </section>
+     {{end}}
+   </main>

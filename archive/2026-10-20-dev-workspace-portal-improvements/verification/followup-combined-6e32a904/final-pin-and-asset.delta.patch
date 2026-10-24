@@ -1,0 +1,94 @@
+diff --git a/flake.lock b/flake.lock
+index ea17485..187c94f 100644
+--- a/flake.lock
++++ b/flake.lock
+@@ -37,17 +37,17 @@
+     "codex-web": {
+       "flake": false,
+       "locked": {
+-        "lastModified": 1792533707,
+-        "narHash": "sha256-6dAMMwgGkCJVxUGyckpzyir6ETxpVHvI0w4b00ZQbIc=",
++        "lastModified": 1792599953,
++        "narHash": "sha256-m4qoKIWexEcOOxoGCF+cqDGm0SBrSRs5eC/f/l3iOyc=",
+         "owner": "aither64",
+         "repo": "codex-web",
+-        "rev": "852e8c51091512bc79ca6c921ef1f5ccc46a9535",
++        "rev": "6e32a9043ee6367d92bfaf8d3ebdf48036e275f9",
+         "type": "github"
+       },
+       "original": {
+         "owner": "aither64",
+         "repo": "codex-web",
+-        "rev": "852e8c51091512bc79ca6c921ef1f5ccc46a9535",
++        "rev": "6e32a9043ee6367d92bfaf8d3ebdf48036e275f9",
+         "type": "github"
+       }
+     },
+diff --git a/flake.nix b/flake.nix
+index 24e203a..6daf25d 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -5,7 +5,7 @@
+     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+     llm-agents.url = "github:numtide/llm-agents.nix";
+     codex-web = {
+-      url = "github:aither64/codex-web/852e8c51091512bc79ca6c921ef1f5ccc46a9535";
++      url = "github:aither64/codex-web/6e32a9043ee6367d92bfaf8d3ebdf48036e275f9";
+       flake = false;
+     };
+   };
+diff --git a/nix/workspace-portal.nix b/nix/workspace-portal.nix
+index b843c47..942e0e3 100644
+--- a/nix/workspace-portal.nix
++++ b/nix/workspace-portal.nix
+@@ -273,7 +273,7 @@ buildGoModule {
+ 
+   inherit src;
+   modRoot = "portal";
+-  vendorHash = "sha256-gzhyAOHVhMn0+WtYClT0NsG19F8PtvkI5ZcsGiLzK5w=";
++  vendorHash = "sha256-H+MJMRgjG3PViA7REM822Z0s+Lri+gwD52wpwdpng68=";
+ 
+   postPatch = ''
+     expected=${lib.escapeShellArg codexWebVersion}
+diff --git a/portal/go.mod b/portal/go.mod
+index 391b0a5..e6da09c 100644
+--- a/portal/go.mod
++++ b/portal/go.mod
+@@ -4,7 +4,7 @@ go 1.24.0
+ 
+ require (
+ 	github.com/SherClockHolmes/webpush-go v1.4.0
+-	github.com/aither64/codex-web v0.0.0-20261020220147-852e8c510915
++	github.com/aither64/codex-web v0.0.0-20261021162553-6e32a9043ee6
+ 	github.com/coder/websocket v1.8.14
+ 	github.com/microcosm-cc/bluemonday v1.0.27
+ 	github.com/yuin/goldmark v1.7.17
+diff --git a/portal/go.sum b/portal/go.sum
+index c1c642d..895d969 100644
+--- a/portal/go.sum
++++ b/portal/go.sum
+@@ -1,9 +1,7 @@
+ github.com/SherClockHolmes/webpush-go v1.4.0 h1:ocnzNKWN23T9nvHi6IfyrQjkIc0oJWv1B1pULsf9i3s=
+ github.com/SherClockHolmes/webpush-go v1.4.0/go.mod h1:XSq8pKX11vNV8MJEMwjrlTkxhAj1zKfxmyhdV7Pd6UA=
+-github.com/aither64/codex-web v0.0.0-20261020201102-57972192e30f h1:f1xgYVQ5IEihfJv4lN7RZz1Y4+R29WCBV5JRw9PFkaA=
+-github.com/aither64/codex-web v0.0.0-20261020201102-57972192e30f/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
+-github.com/aither64/codex-web v0.0.0-20261020220147-852e8c510915 h1:euLk1unartysRm0+Y3wjB4OMD3ZuKsvzB8kvmW8ACPk=
+-github.com/aither64/codex-web v0.0.0-20261020220147-852e8c510915/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
++github.com/aither64/codex-web v0.0.0-20261021162553-6e32a9043ee6 h1:/KdVPxItRhQTq50xCSkkxOnv8tUvEOvkl5yGZyLXUlA=
++github.com/aither64/codex-web v0.0.0-20261021162553-6e32a9043ee6/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
+ github.com/aymerick/douceur v0.2.0 h1:Mv+mAeH1Q+n9Fr+oyamOlAkUNPWPlA8PPGR0QAaYuPk=
+ github.com/aymerick/douceur v0.2.0/go.mod h1:wlT5vV2O3h55X9m7iVYN0TBM0NH/MmbLnd30/FjWUq4=
+ github.com/coder/websocket v1.8.14 h1:9L0p0iKiNOibykf283eHkKUHHrpG7f65OE3BhhO7v9g=
+diff --git a/portal/internal/web/static/app.js b/portal/internal/web/static/app.js
+index e26003a..a2a8d91 100644
+--- a/portal/internal/web/static/app.js
++++ b/portal/internal/web/static/app.js
+@@ -1207,7 +1207,7 @@
+     return;
+   }
+ 
+-  const conversationAssets = await import("/codex/assets/conversation.js?v=20");
++  const conversationAssets = await import("/codex/assets/conversation.js?v=21");
+   sharedTranscriptPresentation = conversationAssets.transcriptEntryPresentation;
+   sharedTranscriptVisible = conversationAssets.transcriptEntryVisible;
+   refreshPolicy = conversationAssets.refreshPolicy;

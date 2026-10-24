@@ -1,0 +1,2491 @@
+diff --git a/docs/workspace-portal.md b/docs/workspace-portal.md
+index fdfe140..8ccbaff 100644
+--- a/docs/workspace-portal.md
++++ b/docs/workspace-portal.md
+@@ -102,8 +102,11 @@ files cannot choose executable paths or labels.
+ ## File links
+ 
+ Absolute file links in conversations and Markdown artifacts open a read-only
+-source viewer. The viewer shows line numbers and syntax highlighting. A link
+-ending in `:10`, `:10:5` or `#L10` selects line 10. Clicking a line number updates
++source viewer in a new tab. The viewer shows line numbers and syntax highlighting.
++**Copy content** copies the complete UTF-8 preview without line numbers.
++**Download** saves the original bytes, including binary files and files whose
++preview is omitted, up to 10 MiB. Larger files cannot be downloaded through this
++endpoint. A link ending in `:10`, `:10:5` or `#L10` selects line 10. Clicking a line number updates
+ the address; **Copy link** copies that address. Links without a line reference
+ open the beginning of the file.
+ 
+@@ -177,6 +180,20 @@ their current shared files rather than a historical version.
+ Existing URLs whose website path contains the absolute workspace file path
+ redirect to the viewer. The original conversation text remains unchanged.
+ 
++Artifacts appear as compact file rows grouped by directory. Each row shows the
++filename; hover over it to see its label and relative path. On desktop, navigation
++and preview scroll independently. The selected file, open directories and
++navigation position survive status refreshes. **Copy content** copies raw text or
++Markdown. Image previews cannot be copied as text. Invalid UTF-8 uses replacement
++characters, matching the text preview.
++
++Downloads use `GET /api/sessions/<slug>/file/download` and
++`GET /api/workspace/file/download` with the same query parameters and eligibility
++checks as their preview endpoints. They return an attachment with an
++`application/octet-stream` content type and a 10 MiB limit, independent of the
++preview limit. Oversized downloads return HTTP 413. Archived repository downloads
++read the recorded final Git object. No new file access is granted by downloading.
++
+ ## Development cluster controls
+ 
+ Each cluster card shows its state and readiness above the services. Its toolbar
+@@ -330,9 +347,13 @@ confirmed pair.
+ 
+ Browser refresh timings come from codex-web's `conversation/assets/refresh.js`.
+ That policy contains resource intervals, deadlines, retry backoff and notice
+-delays. Background refreshes keep the last values visible. Initial loading
+-appears after 750 ms and manual older-history loading after 250 ms. Refresh
+-failures appear after 30 continuous visible seconds; returning to a hidden tab
++delays. Background refreshes keep the last values visible. Initial transcript
++loading appears after 750 ms and manual older-history loading after 250 ms. Routine index
++status loading is silent, and membership is published before optional repository,
++activity and cluster enrichment. The additive `runningClustersKnown` display flag
++distinguishes unknown counts from measured zero; older assets keep the integer `runningClusters` fallback.
++An absent flag retains legacy numeric behavior. Unknown counts do not grant
++controls or generate notifications. Refresh failures appear after 30 continuous visible seconds; returning to a hidden tab
+ or restoring a page starts a fresh grace period. Access errors and failures of
+ user actions appear immediately.
+ 
+@@ -340,6 +361,16 @@ Index snapshot warnings use the same grace period as failed HTTP refreshes,
+ including when the server successfully returns its last known state. Repeated
+ warnings do not restart the grace period. A healthy snapshot clears the warning.
+ 
++User messages use the same sanitized Markdown renderer as assistant messages.
++Attachment decoration runs before presentation, so generated file-reference
++envelopes do not appear in the rendered message. Canonical message text and
++receipt digests stay unchanged. Team assignments and reports have a distinct color
++and identify the sender and recipient when available. **Messages** hides team
++traffic; **Team** shows it;
++**All** includes it; **Activity** shows other activity. Errors remain visible in
++every view. Communication labels are presentation hints; they do not authenticate
++identities or grant access.
++
+ Message times come from recorded item timing when available. While metadata
+ loads, the portal keeps an exact time already observed for that entry. For a
+ new entry without an exact time, it leaves the time blank until enrichment
+@@ -355,10 +386,16 @@ receipt. **Retry original** retries the receipt's saved text and attachments
+ with its original attempt ID, independently of the composer draft. A changed
+ draft remains intact. The small **×** at the upper right hides the receipt across
+ reloads while keeping its retry identity; delivery can still complete. Transcript
+-confirmation retires the receipt normally. Sending revised wording creates a separate attempt and
+-does not resolve the earlier one. Browser storage must save a dismissal before
++confirmation retires the receipt normally. Delivery failures appear beside the
++composer without a browser alert. A lost response preserves the input, attachments
++and original retry identity. Once the transcript or an accepted receipt confirms
++delivery, a later HTTP failure does not change that confirmed state. The warning
++clears when the original submission is accepted or confirmed in the transcript. Sending
++revised wording creates a separate attempt and does not resolve the earlier one. Browser storage must save a dismissal before
+ the portal hides it.
+ 
++Successful legacy history fallback is silent. History notices and manual retry
++controls occupy normal layout space above the transcript.
+ Automatic history repair retries with capped backoff without loading banners.
+ A manual older-page failure offers Retry for that page. Expired cursors trigger
+ reconnection and a check of retained history. Servers without paging keep the
+@@ -845,8 +882,8 @@ The portal's Team assignment API sends as `lead` only. A member can report to
+ thread identity; browser input cannot claim to be a member.
+ 
+ The installed workspace policy supplies starting teams such as Solo (`solo`),
+-Full team (`delegated`), Lead-designed team (`lead_designed`), and Lead and
+-reviewer (`lead_reviewed`). Their role
++Full team (`delegated`, two implementers), Lead-designed team (`lead_designed`),
++and Lead and reviewer (`lead_reviewed`). Their role
+ lists and exact lead model and reasoning effort appear on the new-session
+ screen. Solo has only the lead, which investigates, designs and edits
+ application code without automatic specialists. Full team has `lead`,
+@@ -857,6 +894,12 @@ application implementation. Catalog prompts own these mode-specific policies.
+ Lead and reviewer has `lead` and `reviewer0`; the lead owns investigation,
+ design and application implementation, while the retained reviewer performs
+ independent final review.
++The Full-team family uses `delegated` and `delegated_3` through `delegated_6`.
++Their names show the actual implementer count, for example **Full team (6
++implementers)**. They contain five through nine members including the lead.
++Names are a presentation of the installed catalog; retained creation snapshots
++and existing rosters keep their saved names, settings and instructions.
++
+ The selected team and its member settings are saved with the creation receipt.
+ Member threads are created before the lead receives the initial request. A
+ failed creation can be retried with that saved selection.
+@@ -870,7 +913,10 @@ and does not replace final review. A preset reviewer receives no automatic
+ assignment. See the [session guide](dev-sessions.md#team-members) for orchestration.
+ 
+ After creation, the Team tab can add, remove, and configure members, and
+-show their activity and statistics. Adding, replacing or reconfiguring members requires
++show their activity and statistics. After **Add member** succeeds, the form keeps
++the selected role, model and reasoning effort for the next addition. It prevents
++another submission while an addition is pending. Each request uses the settings
++shown when you select **Add member**. Adding, replacing or reconfiguring members requires
+ explicit user direction; agents do not automatically grow a Solo roster or add
+ a designer to a Lead-designed team. The mandatory-review workflow uses a
+ temporary independent final reviewer when no eligible retained reviewer exists,
+diff --git a/flake.lock b/flake.lock
+index c6225e5..ea17485 100644
+--- a/flake.lock
++++ b/flake.lock
+@@ -37,17 +37,17 @@
+     "codex-web": {
+       "flake": false,
+       "locked": {
+-        "lastModified": 1792527062,
+-        "narHash": "sha256-PIvAf2Qd80Cw1Kws1l5XpUDqm2OgjS32OZH6sJt5e5I=",
++        "lastModified": 1792533707,
++        "narHash": "sha256-6dAMMwgGkCJVxUGyckpzyir6ETxpVHvI0w4b00ZQbIc=",
+         "owner": "aither64",
+         "repo": "codex-web",
+-        "rev": "57972192e30fe52ab33b867c8fe4d171f59a7fd5",
++        "rev": "852e8c51091512bc79ca6c921ef1f5ccc46a9535",
+         "type": "github"
+       },
+       "original": {
+         "owner": "aither64",
+         "repo": "codex-web",
+-        "rev": "57972192e30fe52ab33b867c8fe4d171f59a7fd5",
++        "rev": "852e8c51091512bc79ca6c921ef1f5ccc46a9535",
+         "type": "github"
+       }
+     },
+diff --git a/flake.nix b/flake.nix
+index 5bc0cc0..24e203a 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -5,7 +5,7 @@
+     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+     llm-agents.url = "github:numtide/llm-agents.nix";
+     codex-web = {
+-      url = "github:aither64/codex-web/57972192e30fe52ab33b867c8fe4d171f59a7fd5";
++      url = "github:aither64/codex-web/852e8c51091512bc79ca6c921ef1f5ccc46a9535";
+       flake = false;
+     };
+   };
+diff --git a/nix/workspace-portal.nix b/nix/workspace-portal.nix
+index 93cad12..848912a 100644
+--- a/nix/workspace-portal.nix
++++ b/nix/workspace-portal.nix
+@@ -273,7 +273,7 @@ buildGoModule {
+ 
+   inherit src;
+   modRoot = "portal";
+-  vendorHash = "sha256-srs2cfUmXVcpuQ8CxlzAeogcmFFUnuOt7+slwQBnTpA=";
++  vendorHash = "sha256-gzhyAOHVhMn0+WtYClT0NsG19F8PtvkI5ZcsGiLzK5w=";
+ 
+   postPatch = ''
+     expected=${lib.escapeShellArg codexWebVersion}
+diff --git a/portal/go.mod b/portal/go.mod
+index 92e1465..391b0a5 100644
+--- a/portal/go.mod
++++ b/portal/go.mod
+@@ -4,7 +4,7 @@ go 1.24.0
+ 
+ require (
+ 	github.com/SherClockHolmes/webpush-go v1.4.0
+-	github.com/aither64/codex-web v0.0.0-20261020201102-57972192e30f
++	github.com/aither64/codex-web v0.0.0-20261020220147-852e8c510915
+ 	github.com/coder/websocket v1.8.14
+ 	github.com/microcosm-cc/bluemonday v1.0.27
+ 	github.com/yuin/goldmark v1.7.17
+diff --git a/portal/go.sum b/portal/go.sum
+index 99b2db7..c1c642d 100644
+--- a/portal/go.sum
++++ b/portal/go.sum
+@@ -2,6 +2,8 @@ github.com/SherClockHolmes/webpush-go v1.4.0 h1:ocnzNKWN23T9nvHi6IfyrQjkIc0oJWv1
+ github.com/SherClockHolmes/webpush-go v1.4.0/go.mod h1:XSq8pKX11vNV8MJEMwjrlTkxhAj1zKfxmyhdV7Pd6UA=
+ github.com/aither64/codex-web v0.0.0-20261020201102-57972192e30f h1:f1xgYVQ5IEihfJv4lN7RZz1Y4+R29WCBV5JRw9PFkaA=
+ github.com/aither64/codex-web v0.0.0-20261020201102-57972192e30f/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
++github.com/aither64/codex-web v0.0.0-20261020220147-852e8c510915 h1:euLk1unartysRm0+Y3wjB4OMD3ZuKsvzB8kvmW8ACPk=
++github.com/aither64/codex-web v0.0.0-20261020220147-852e8c510915/go.mod h1:SfoFFfEnXQusGm701eWJpCbrkwia5g1biF5KD9RIqr0=
+ github.com/aymerick/douceur v0.2.0 h1:Mv+mAeH1Q+n9Fr+oyamOlAkUNPWPlA8PPGR0QAaYuPk=
+ github.com/aymerick/douceur v0.2.0/go.mod h1:wlT5vV2O3h55X9m7iVYN0TBM0NH/MmbLnd30/FjWUq4=
+ github.com/coder/websocket v1.8.14 h1:9L0p0iKiNOibykf283eHkKUHHrpG7f65OE3BhhO7v9g=
+diff --git a/portal/internal/repository/source.go b/portal/internal/repository/source.go
+index 549f329..6e10373 100644
+--- a/portal/internal/repository/source.go
++++ b/portal/internal/repository/source.go
+@@ -1,12 +1,14 @@
+ package repository
+ 
+ import (
++	"bytes"
+ 	"context"
+ 	"errors"
+ 	"io"
+ 	"math"
+ 	"os/exec"
+ 	"path/filepath"
++	"strconv"
+ 	"strings"
+ 	"unicode"
+ 
+@@ -60,7 +62,17 @@ func ValidWorkspaceSourcePath(path string) bool {
+ 	return true
+ }
+ 
++const MaxSourceDownloadBytes = 10 * 1024 * 1024
++
++var ErrSourceDownloadLimit = errors.New("file exceeds the 10 MiB download limit")
++
+ func (r ReviewReader) WorkspaceSource(ctx context.Context, path string) (SourceFile, error) {
++	return r.WorkspaceSourceContent(ctx, path, false)
++}
++
++// Download mode uses exactly the same eligibility and resolution as previews.
++// Its Text contains the original bytes and must only be served as an attachment.
++func (r ReviewReader) WorkspaceSourceContent(ctx context.Context, path string, download bool) (SourceFile, error) {
+ 	result := SourceFile{Path: path, Source: SourceWorkspace}
+ 	if !ValidWorkspaceSourcePath(path) {
+ 		return result, errors.New("invalid shared workspace path")
+@@ -69,7 +81,7 @@ func (r ReviewReader) WorkspaceSource(ctx context.Context, path string) (SourceF
+ 		return result, err
+ 	}
+ 	var err error
+-	result.Content, err = r.workingSource(ctx, "", path)
++	result.Content, err = r.workingSourceContent(ctx, "", path, download)
+ 	return result, err
+ }
+ 
+@@ -88,6 +100,10 @@ func (r ReviewReader) workspaceSourceRoot(ctx context.Context) error {
+ // workspace files beneath the session's actual tracking root. The artifact
+ // source values are retained for existing viewer clients.
+ func (r ReviewReader) TrackingSource(ctx context.Context, summary *session.Summary, path string) (SourceFile, error) {
++	return r.TrackingSourceContent(ctx, summary, path, false)
++}
++
++func (r ReviewReader) TrackingSourceContent(ctx context.Context, summary *session.Summary, path string, download bool) (SourceFile, error) {
+ 	result := SourceFile{Path: path, Source: SourceArtifact}
+ 	if summary.Archived {
+ 		result.Source = SourceArchivedArtifact
+@@ -95,7 +111,7 @@ func (r ReviewReader) TrackingSource(ctx context.Context, summary *session.Summa
+ 	file, info, err := session.OpenArtifact(summary, path, math.MaxInt64)
+ 	if err == nil {
+ 		defer file.Close()
+-		result.Content, err = ReadSourcePreview(file, info.Size())
++		result.Content, err = readSourceContent(file, info.Size(), download)
+ 		return result, err
+ 	}
+ 	if summary.Workspace != r.Workspace || !session.ValidSlug(summary.Slug) ||
+@@ -105,13 +121,17 @@ func (r ReviewReader) TrackingSource(ctx context.Context, summary *session.Summa
+ 	if err := r.workspaceSourceRoot(ctx); err != nil {
+ 		return result, err
+ 	}
+-	result.Content, err = r.workingSource(ctx, "", filepath.Join(summary.Root, summary.Slug, path))
++	result.Content, err = r.workingSourceContent(ctx, "", filepath.Join(summary.Root, summary.Slug, path), download)
+ 	return result, err
+ }
+ 
+ // Source revalidates repository ownership on each request. Browser input selects
+ // only a literal path; the session registration supplies the repository and ref.
+ func (r ReviewReader) Source(ctx context.Context, slug string, item session.Repository, archived bool, path string) (SourceFile, error) {
++	return r.SourceContent(ctx, slug, item, archived, path, false)
++}
++
++func (r ReviewReader) SourceContent(ctx context.Context, slug string, item session.Repository, archived bool, path string, download bool) (SourceFile, error) {
+ 	result := SourceFile{Path: path, Repository: item.Name, Source: SourceWorktree}
+ 	if !ValidSourcePath(path) {
+ 		return result, errors.New("invalid source path")
+@@ -133,15 +153,34 @@ func (r ReviewReader) Source(ctx context.Context, slug string, item session.Repo
+ 			!regularGitMode(fields[0]) || !gitObjectPattern.MatchString(fields[2]) {
+ 			return result, errors.New("file is absent from the recorded final commit")
+ 		}
+-		result.Content, err = r.blob(ctx, repo.Directory, fields[2], fields[0])
++		if download {
++			sizeBytes, sizeErr := r.git(ctx, repo.Directory, 1024, "cat-file", "-s", fields[2])
++			if sizeErr != nil {
++				return result, sizeErr
++			}
++			size, sizeErr := strconv.ParseInt(strings.TrimSpace(string(sizeBytes)), 10, 64)
++			if sizeErr != nil || size < 0 {
++				return result, errors.New("invalid Git blob size")
++			}
++			if size > MaxSourceDownloadBytes {
++				return result, ErrSourceDownloadLimit
++			}
++			data, readErr := r.git(ctx, repo.Directory, MaxSourceDownloadBytes+1, "cat-file", "blob", fields[2])
++			if readErr != nil {
++				return result, readErr
++			}
++			result.Content, err = readSourceContent(bytes.NewReader(data), int64(len(data)), true)
++		} else {
++			result.Content, err = r.blob(ctx, repo.Directory, fields[2], fields[0])
++		}
+ 		return result, err
+ 	}
+ 
+-	result.Content, err = r.workingSource(ctx, filepath.Join("worktrees", slug, item.Name), path)
++	result.Content, err = r.workingSourceContent(ctx, filepath.Join("worktrees", slug, item.Name), path, download)
+ 	return result, err
+ }
+ 
+-func (r ReviewReader) workingSource(ctx context.Context, directory, path string) (ReviewBlob, error) {
++func (r ReviewReader) workingSourceContent(ctx context.Context, directory, path string, download bool) (ReviewBlob, error) {
+ 	out, err := r.git(ctx, filepath.Join(r.Workspace, directory), 64*1024, "--literal-pathspecs", "ls-files", "--stage", "-z", "--", path)
+ 	if err != nil {
+ 		return ReviewBlob{}, err
+@@ -186,7 +225,7 @@ func (r ReviewReader) workingSource(ctx context.Context, directory, path string)
+ 		return ReviewBlob{}, err
+ 	}
+ 	defer file.Close()
+-	return ReadSourcePreview(file, info.Size())
++	return readSourceContent(file, info.Size(), download)
+ }
+ 
+ func regularGitMode(mode string) bool { return mode == "100644" || mode == "100755" }
+@@ -210,3 +249,20 @@ func ReadSourcePreview(reader io.Reader, size int64) (ReviewBlob, error) {
+ 	}
+ 	return previewText(data, blob), nil
+ }
++
++func readSourceContent(reader io.Reader, size int64, download bool) (ReviewBlob, error) {
++	if !download {
++		return ReadSourcePreview(reader, size)
++	}
++	if size > MaxSourceDownloadBytes {
++		return ReviewBlob{}, ErrSourceDownloadLimit
++	}
++	data, err := io.ReadAll(io.LimitReader(reader, MaxSourceDownloadBytes+1))
++	if err != nil {
++		return ReviewBlob{}, err
++	}
++	if len(data) > MaxSourceDownloadBytes {
++		return ReviewBlob{}, ErrSourceDownloadLimit
++	}
++	return ReviewBlob{Kind: "file", Bytes: int64(len(data)), Text: string(data)}, nil
++}
+diff --git a/portal/internal/teamruntime/runtime.go b/portal/internal/teamruntime/runtime.go
+index df1bda4..265b6e7 100644
+--- a/portal/internal/teamruntime/runtime.go
++++ b/portal/internal/teamruntime/runtime.go
+@@ -33,6 +33,8 @@ const (
+ 	maxRosterBytes = 256 * 1024
+ )
+ 
++var fullTeamIDPattern = regexp.MustCompile(`^delegated(?:_[0-9]+)?$`)
++
+ var rolePattern = regexp.MustCompile(`^[a-z][a-z0-9]{0,31}$`)
+ var digestPattern = regexp.MustCompile(`^[0-9a-f]{64}$`)
+ var projectUUIDPattern = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
+@@ -409,6 +411,17 @@ func PresetsFromCatalog(catalog agentteams.Catalog) ([]Preset, error) {
+ 			return nil, err
+ 		}
+ 		name := map[string]string{"solo": "Solo", "delegated": "Full team", "lead_designed": "Lead-designed team", "lead_reviewed": "Lead and reviewer"}[id]
++		if fullTeamIDPattern.MatchString(id) {
++			count := team.InitialMemberCount("implementer")
++			if _, exists := team.Roles["implementer"]; !exists {
++				count = 0
++			}
++			noun := "implementers"
++			if count == 1 {
++				noun = "implementer"
++			}
++			name = fmt.Sprintf("Full team (%d %s)", count, noun)
++		}
+ 		if name == "" {
+ 			name = strings.ReplaceAll(id, "_", " ")
+ 			name = strings.ToUpper(name[:1]) + name[1:]
+diff --git a/portal/internal/teamruntime/runtime_test.go b/portal/internal/teamruntime/runtime_test.go
+index 739fbc6..e023c3f 100644
+--- a/portal/internal/teamruntime/runtime_test.go
++++ b/portal/internal/teamruntime/runtime_test.go
+@@ -2251,7 +2251,7 @@ func TestCatalogPresetUsesExplicitSiteSettingsAndArchitectAddress(t *testing.T)
+ 	if err != nil {
+ 		t.Fatal(err)
+ 	}
+-	if preset.Name != "Full team" || preset.LeadModel != "gpt-6-sol" || preset.LeadEffort != "high" ||
++	if preset.Name != "Full team (1 implementer)" || preset.LeadModel != "gpt-6-sol" || preset.LeadEffort != "high" ||
+ 		preset.LeadInstructions != "Coordinate this team." ||
+ 		len(preset.Members) != 3 || preset.Members[0].Address != "architect0" ||
+ 		preset.Members[0].Model != "gpt-6-sol" || preset.Members[0].Effort != "xhigh" ||
+@@ -3237,3 +3237,66 @@ func TestFullExecutionAccessOverridesRetainedRoleSandboxes(t *testing.T) {
+ 		t.Fatalf("legacy policy changed: %#v, %v", policy, err)
+ 	}
+ }
++
++func TestFullTeamFamilyNamesCountsAddressesAndCreationJournal(t *testing.T) {
++	for count := 2; count <= 6; count++ {
++		id := "delegated"
++		if count > 2 {
++			id = fmt.Sprintf("delegated_%d", count)
++		}
++		roles := map[string]agentteams.Role{
++			"team_lead":   {Model: "gpt-6.1-sol", Effort: "xhigh", Purpose: "lead", Instructions: strings.Repeat("l", 4096)},
++			"designer":    {Model: "gpt-6-astra", Effort: "xhigh", Behavior: "designer", Purpose: "design", Access: "workspace_write", Instructions: "Design."},
++			"implementer": {Model: "gpt-6.1-sol", Effort: "xhigh", Behavior: "implementer", Purpose: "implementation", Access: "workspace_write", Instructions: strings.Repeat("i", 4096)},
++			"reviewer":    {Model: "gpt-6.1-sol", Effort: "xhigh", Behavior: "reviewer", Purpose: "review", Access: "read_only", Instructions: "Review."},
++		}
++		team := agentteams.Team{Description: "Full team", TeamDigest: strings.Repeat("b", 64), Roles: roles, InitialMemberCounts: map[string]int{"implementer": count}}
++		catalog := agentteams.Catalog{CatalogDigest: strings.Repeat("a", 64), Teams: map[string]agentteams.Team{id: team}}
++		preset, err := FindCatalogPreset(catalog, id)
++		if err != nil {
++			t.Fatal(err)
++		}
++		if preset.Name != fmt.Sprintf("Full team (%d implementers)", count) || preset.MemberCount() != count+3 {
++			t.Fatalf("projection: %#v", preset)
++		}
++		want := []string{"architect0"}
++		for i := 0; i < count; i++ {
++			want = append(want, fmt.Sprintf("implementer%d", i))
++		}
++		want = append(want, "reviewer0")
++		for i, address := range want {
++			if preset.Members[i].Address != address || preset.Members[i].Effort != "xhigh" {
++				t.Fatalf("member: %#v", preset.Members[i])
++			}
++		}
++		if err := preset.ValidateCreationSize(); err != nil {
++			t.Fatal(err)
++		}
++		journal := map[string]any{"schema": 3, "slug": "example", "goal_sha256": strings.Repeat("c", 64), "run_codex": true, "state": "creating", "tmux_identity": strings.Repeat("d", 64), "model": preset.LeadModel, "effort": preset.LeadEffort, "direct_team": preset}
++		data, err := json.Marshal(journal)
++		if err != nil {
++			t.Fatal(err)
++		}
++		if len(data)+1 > agentteams.MaxCreationJournalBytes {
++			t.Fatal("largest family exceeds creation journal bound")
++		}
++		if _, err := agentteams.DecodeCreationJournal(append(data, '\n'), "example"); err != nil {
++			t.Fatal(err)
++		}
++		// Suffixes are presentation-family hints, never the source of member counts.
++		catalog.Teams = map[string]agentteams.Team{"delegated_99": team, "unrelated": team}
++		projected, err := PresetsFromCatalog(catalog)
++		if err != nil {
++			t.Fatal(err)
++		}
++		if projected[0].Name != preset.Name || projected[1].Name != "Unrelated" {
++			t.Fatalf("family/fallback names: %#v", projected)
++		}
++		team.InitialMemberCounts = nil
++		catalog.Teams = map[string]agentteams.Team{"delegated": team}
++		older, err := FindCatalogPreset(catalog, "delegated")
++		if err != nil || older.Name != "Full team (1 implementer)" || older.MemberCount() != 4 {
++			t.Fatalf("older count: %#v %v", older, err)
++		}
++	}
++}
+diff --git a/portal/internal/web/artifact_tree.go b/portal/internal/web/artifact_tree.go
+new file mode 100644
+index 0000000..bfd0b31
+--- /dev/null
++++ b/portal/internal/web/artifact_tree.go
+@@ -0,0 +1,40 @@
++package web
++
++import (
++	"github.com/aither64/dev-workspace/portal/internal/session"
++	"strings"
++)
++
++type artifactNode struct {
++	Name      string
++	Directory string
++	Artifact  *session.Artifact
++	Children  []*artifactNode
++}
++
++// The manifest reader owns normalization/deduplication. Keep its order and labels
++// while grouping files by their relative directory for native disclosures.
++func artifactTree(artifacts []session.Artifact) []*artifactNode {
++	root := &artifactNode{}
++	directories := map[string]*artifactNode{"": root}
++	for _, item := range artifacts {
++		parent, directory := root, ""
++		parts := strings.Split(item.Path, "/")
++		for _, part := range parts[:len(parts)-1] {
++			if directory != "" {
++				directory += "/"
++			}
++			directory += part
++			child := directories[directory]
++			if child == nil {
++				child = &artifactNode{Name: part, Directory: directory}
++				directories[directory] = child
++				parent.Children = append(parent.Children, child)
++			}
++			parent = child
++		}
++		artifact := item
++		parent.Children = append(parent.Children, &artifactNode{Name: parts[len(parts)-1], Artifact: &artifact})
++	}
++	return root.Children
++}
+diff --git a/portal/internal/web/artifact_tree_test.go b/portal/internal/web/artifact_tree_test.go
+new file mode 100644
+index 0000000..963a4a6
+--- /dev/null
++++ b/portal/internal/web/artifact_tree_test.go
+@@ -0,0 +1,22 @@
++package web
++
++import (
++	"fmt"
++	"github.com/aither64/dev-workspace/portal/internal/session"
++	"testing"
++)
++
++func TestArtifactTreeGroupsLargeCatalogWithoutLosingLabels(t *testing.T) {
++	artifacts := make([]session.Artifact, 500)
++	for i := range artifacts {
++		artifacts[i] = session.Artifact{Path: fmt.Sprintf("reports/deep/%03d.md", i), Label: fmt.Sprintf("Report %d", i)}
++	}
++	tree := artifactTree(artifacts)
++	if len(tree) != 1 || tree[0].Directory != "reports" || len(tree[0].Children) != 1 {
++		t.Fatalf("directories: %#v", tree)
++	}
++	rows := tree[0].Children[0].Children
++	if len(rows) != 500 || rows[499].Name != "499.md" || rows[499].Artifact.Label != "Report 499" {
++		t.Fatal("catalog rows or labels lost")
++	}
++}
+diff --git a/portal/internal/web/browser_contract_test.cjs b/portal/internal/web/browser_contract_test.cjs
+index 7a2dd4f..9fb5507 100644
+--- a/portal/internal/web/browser_contract_test.cjs
++++ b/portal/internal/web/browser_contract_test.cjs
+@@ -183,6 +183,7 @@ if (!conversationModulePath) throw new Error("browser contract test requires the
+ await require("./preparation_browser_contract_test.cjs")();
+ const conversationAssets = await import(pathToFileURL(conversationModulePath).href);
+ require("./refresh_presentation_contract_test.cjs")(conversationAssets);
++require("./citation_presentation_contract_test.cjs")(conversationAssets);
+ assert.equal(hasTranscriptPagingHelpers(conversationAssets), true);
+ assert.equal(hasTranscriptPagingHelpers({
+   ...conversationAssets, createTranscriptHistory: undefined,
+diff --git a/portal/internal/web/citation_presentation_contract_test.cjs b/portal/internal/web/citation_presentation_contract_test.cjs
+new file mode 100644
+index 0000000..a2d5326
+--- /dev/null
++++ b/portal/internal/web/citation_presentation_contract_test.cjs
+@@ -0,0 +1,26 @@
++"use strict";
++const assert = require("node:assert/strict");
++module.exports = assets => {
++  const token = "\ue200cite\ue202ref\ue201", prefix = "Příliš 🐈 **answer** ";
++  const text = `${prefix}${token}\n\n\`${token}\``;
++  const citation = {start:Buffer.byteLength(prefix),end:Buffer.byteLength(prefix+token),sources:[]};
++  const agent = {turnId:"turn",itemId:"agent",kind:"agentMessage",turnStatus:"completed",text,citations:[citation],citationsPending:true};
++  const user = {turnId:"turn",itemId:"user",kind:"userMessage",text:"canonical attachment envelope",displayText:`# User\n${token}`,citations:[citation]};
++  const team = {turnId:"turn",itemId:"team",kind:"userMessage",text:"unchanged team",communication:{kind:"team",from:"lead",to:"implementer0"}};
++  const history = assets.createTranscriptHistory({policy:{historyRepairMs:0}});
++  history.applyNewest({threadId:"thread",entries:[agent,user,team],hasOlder:true,olderCursor:"older"});
++  const next = {turnId:"turn",itemId:"next",kind:"agentMessage",turnStatus:"completed",text:"Next"};
++  history.applyNewest({threadId:"thread",entries:[user,team,next],hasOlder:true,olderCursor:"pending-page"});
++  assert.equal(history.repairCursor,"pending-page");
++  assert.equal(assets.transcriptEntryVisible(team,"messages"),false);
++  assert.equal(assets.transcriptEntryVisible(team,"team"),true);
++  assert.equal(assets.transcriptEntryPresentation(team).label,"lead → implementer0");
++  const resolved = {...agent,citationsPending:false,citations:[{...citation,sources:[{url:"https://example.test/source",title:'Český "title"',number:1}]}]};
++  history.applyRepair({threadId:"thread",requestCursor:"pending-page",entries:[resolved,user],hasOlder:false});
++  const retained = history.entries.find(entry=>entry.itemId==="agent");
++  assert.equal(retained.text,text); assert.equal(retained.citationsPending,false);
++  const copied = assets.citationCopyText(retained);
++  assert(copied.includes("https://example.test/source")); assert(copied.includes(`\`${token}\``));
++  assert.equal(assets.citationCopyText(user),user.text);
++  assert.deepEqual(history.entries.filter(entry=>assets.transcriptEntryVisible(entry,"messages")).map(entry=>entry.itemId),["agent","user","next"]);
++};
+diff --git a/portal/internal/web/citations_test.go b/portal/internal/web/citations_test.go
+index 2cfe335..516906f 100644
+--- a/portal/internal/web/citations_test.go
++++ b/portal/internal/web/citations_test.go
+@@ -30,3 +30,38 @@ func TestCitationMarkdownPresentation(t *testing.T) {
+ 		t.Fatal("unsafe source URL rendered")
+ 	}
+ }
++
++func TestCitationsComposeWithDecoratedUserMarkdownAndTeamPresentation(t *testing.T) {
++	s := newTestServer(t)
++	token := "\ue200cite\ue202ref\ue201"
++	prefix := "Příliš 🐈 **answer** "
++	canonical := prefix + token + "\n\n`" + token + "`"
++	display := "# User heading\n\n" + token
++	empty := ""
++	agent := codex.TranscriptEntry{Kind: "agentMessage", TurnStatus: "completed", Text: canonical, ClientUserMessageDigest: "unchanged-digest", CitationsPending: true,
++		Citations: []codex.CitationSpan{{Start: len(prefix), End: len(prefix) + len(token)}}}
++	user := codex.TranscriptEntry{Kind: "userMessage", Text: "attachment envelope", DisplayText: &display, Citations: agent.Citations, Attachments: []codex.Attachment{{ID: "file", Name: "file.txt"}}}
++	transcript := codex.Transcript{Entries: []codex.TranscriptEntry{agent, user, {Kind: "userMessage", Text: "Team assignment from lead to implementer0:\n\nWork."}, {Kind: "userMessage", Text: "hidden envelope", DisplayText: &empty}}}
++	s.presentTranscript(&transcript)
++	if !strings.Contains(transcript.Entries[0].HTML, "[source pending]") {
++		t.Fatal("pending citation disappeared")
++	}
++	if !strings.Contains(transcript.Entries[1].HTML, "<h1>User heading</h1>") || !strings.Contains(transcript.Entries[1].HTML, token) || strings.Contains(transcript.Entries[1].HTML, "attachment envelope") {
++		t.Fatalf("user citation/display handling: %s", transcript.Entries[1].HTML)
++	}
++	if transcript.Entries[2].Communication == nil || transcript.Entries[2].Communication.To != "implementer0" || transcript.Entries[3].HTML != "" {
++		t.Fatal("team/empty user display changed")
++	}
++	// A late source update must render from original UTF-8 offsets even after the
++	// message is retained outside the newest page. Neither canonical text changes.
++	transcript.Entries[0].CitationsPending = false
++	transcript.Entries[0].Citations[0].Sources = []codex.CitationSource{{URL: "https://example.test/source", Title: `Český "title" <script>`, Number: 1}}
++	s.presentTranscript(&transcript)
++	got := transcript.Entries[0]
++	if got.Text != canonical || got.ClientUserMessageDigest != "unchanged-digest" || !strings.Contains(got.HTML, `href="https://example.test/source"`) || !strings.Contains(got.HTML, `title="Český &#34;title&#34; &lt;script&gt;"`) || strings.Contains(got.HTML, "<script>") || strings.Count(got.HTML, token) != 1 {
++		t.Fatalf("citation composition: %#v", got)
++	}
++	if transcript.Entries[1].Text != "attachment envelope" || *transcript.Entries[1].DisplayText != display || len(transcript.Entries[1].Attachments) != 1 {
++		t.Fatal("user canonical/attachments changed")
++	}
++}
+diff --git a/portal/internal/web/index_cluster_contract_test.cjs b/portal/internal/web/index_cluster_contract_test.cjs
+new file mode 100644
+index 0000000..6a78170
+--- /dev/null
++++ b/portal/internal/web/index_cluster_contract_test.cjs
+@@ -0,0 +1,15 @@
++"use strict";
++const assert = require("node:assert/strict");
++const {indexClusterPresentation} = require("./static/app.js");
++  for (const count of [0, 2]) {
++    const legacy = indexClusterPresentation({runningClusters: count});
++    const measured = indexClusterPresentation({runningClusters: count, runningClustersKnown: true});
++    assert.deepEqual(legacy, measured);
++    assert.equal(measured.hidden, count === 0);
++    assert.equal(measured.text, `${count} running clusters`);
++  }
++  const unknown = {runningClusters:0, runningClustersKnown:false};
++  // Baseline assets hide the integer fallback; new assets clear any stale text.
++  assert.equal(unknown.runningClusters === 0, true);
++  assert.deepEqual(indexClusterPresentation(unknown), {text:"", title:"", hidden:true});
++  assert.equal(indexClusterPresentation({...unknown, clusterNotice:"Genuine failure"}).hidden, false);
+diff --git a/portal/internal/web/index_loading_test.go b/portal/internal/web/index_loading_test.go
+index b3c96b8..d3b9781 100644
+--- a/portal/internal/web/index_loading_test.go
++++ b/portal/internal/web/index_loading_test.go
+@@ -1,9 +1,11 @@
+ package web
+ 
+ import (
++	"context"
+ 	"encoding/json"
+ 	"net/http"
+ 	"net/http/httptest"
++	"os/exec"
+ 	"testing"
+ 	"time"
+ )
+@@ -39,3 +41,41 @@ func TestIndexStatusDistinguishesColdLoadingFromRefreshFailure(t *testing.T) {
+ 		})
+ 	}
+ }
++
++func TestIndexMembershipRetainsOnlySameIdentityMeasuredClusterCounts(t *testing.T) {
++	server := newTestServer(t)
++	defer server.Close()
++	prepareInteractiveConversation(t, server, "example")
++	summaries, err := server.listSessions()
++	if err != nil || len(summaries) != 1 {
++		t.Fatalf("sessions: %v %v", summaries, err)
++	}
++	for _, count := range []int{0, 2} {
++		for _, same := range []bool{false, true} {
++			identity := summaries[0].ObservationIdentity
++			if !same {
++				identity = "previous-incarnation"
++			}
++			server.indexStatusCache = cachedIndexStatus{statuses: []indexSessionStatus{{Slug: "example", ObservationIdentity: identity, RunningClusters: count, RunningClustersKnown: true}}}
++			var minimal cachedIndexStatus
++			server.computeIndexStatusPublishing(context.Background(), nil, nil, func(snapshot cachedIndexStatus) { minimal = snapshot })
++			if len(minimal.statuses) != 1 {
++				t.Fatalf("membership missing: %#v", minimal)
++			}
++			got := minimal.statuses[0]
++			if got.RunningClustersKnown != same || got.RunningClusters != map[bool]int{true: count, false: 0}[same] {
++				t.Fatalf("same=%v measured=%d got=%#v", same, count, got)
++			}
++		}
++	}
++}
++
++func TestIndexClusterPresentationMixedAssets(t *testing.T) {
++	node, err := exec.LookPath("node")
++	if err != nil {
++		t.Skip("node is required")
++	}
++	if output, err := exec.Command(node, "index_cluster_contract_test.cjs").CombinedOutput(); err != nil {
++		t.Fatalf("cluster presentation: %v\n%s", err, output)
++	}
++}
+diff --git a/portal/internal/web/operation_state.go b/portal/internal/web/operation_state.go
+index d1be148..e9ca328 100644
+--- a/portal/internal/web/operation_state.go
++++ b/portal/internal/web/operation_state.go
+@@ -191,7 +191,11 @@ func (s *Server) refreshDisplaySnapshots(ctx context.Context, full bool) (result
+ 		}
+ 	}
+ 	if full {
+-		result := s.computeIndexStatusWithPending(ctx, pending, nil)
++		result := s.computeIndexStatusPublishing(ctx, pending, nil, func(membership cachedIndexStatus) {
++			s.indexStatusMu.Lock()
++			s.indexStatusCache = membership
++			s.indexStatusMu.Unlock()
++		})
+ 		if err := ctx.Err(); err != nil {
+ 			return err
+ 		}
+diff --git a/portal/internal/web/portal_improvements_browser_test.cjs b/portal/internal/web/portal_improvements_browser_test.cjs
+new file mode 100644
+index 0000000..b6cddae
+--- /dev/null
++++ b/portal/internal/web/portal_improvements_browser_test.cjs
+@@ -0,0 +1,178 @@
++"use strict";
++const assert = require("node:assert/strict");
++const {chromium, expect} = require("@playwright/test");
++const baseURL = process.argv[2];
++const fs = require("node:fs/promises");
++(async () => {
++  // Chromium's download manager also needs to trust the disposable TLS server.
++  const browser = await chromium.launch({headless: true, channel: "chromium", args: ["--ignore-certificate-errors"]});
++  try {
++    const context = await browser.newContext({ignoreHTTPSErrors: true, permissions: ["clipboard-read", "clipboard-write"], viewport: {width: 1440, height: 850}});
++    const page = await context.newPage(), errors = [], dialogs = [], sends = [], additions = [];
++    page.on("pageerror", error => errors.push(error.message));
++    page.on("dialog", dialog => { dialogs.push(dialog.message()); void dialog.dismiss(); });
++    let removed = false, detailsReads = 0, previewVersion = 0, releasePreview, releaseAdd, turns = 0;
++    let loseResponse = true, showReceipt = false, observedEntry = null, releaseObserved = null;
++    const transcript = await (await context.request.get(baseURL + "/fixture/presentation")).json();
++    const fullTree = await (await context.request.get(baseURL + "/fixture/artifact-tree")).text();
++    const smallerTree = await (await context.request.get(baseURL + "/fixture/artifact-tree?remove=1")).text();
++    const teamHTML = (await (await context.request.get(baseURL + "/fixture/team")).text()).replace('<div id="team-role-defaults" hidden>', '<div id="team-role-defaults" hidden><span data-role="implementer" data-model="model-1" data-effort="high"></span>');
++    await page.route("**/api/models**", route => route.fulfill({json: [{model: "model-1", displayName: "Fixture model", isDefault: true, defaultReasoningEffort: "low", supportedReasoningEfforts: [{reasoningEffort: "low"}, {reasoningEffort: "high"}]}]}));
++    await page.route("**/api/collaboration-modes", route => route.fulfill({json: [{mode:"default", name:"Default"}]}));
++    await page.route("**/api/sessions/example/**", async route => {
++      const url = new URL(route.request().url()), operation = url.pathname.split("/").at(-1);
++      if (["thread", "page"].includes(operation)) return route.fulfill({json: {...transcript, ...(showReceipt ? {entries: [...transcript.entries, observedEntry]} : {})}});
++      if (operation === "details") { detailsReads++; return route.fulfill({json: {artifactsHTML: (removed ? smallerTree : fullTree)+`<!--refresh ${detailsReads}-->`, artifactCount: removed ? 499 : 500, repositoriesHTML:"", teamHTML}}); }
++      if (operation === "artifact-preview") {
++        const version = ++previewVersion;
++        if (url.searchParams.get("path").endsWith("499.md") && version === 2) await new Promise(resolve => {releasePreview = resolve;});
++        return route.fulfill({json: {kind:"markdown", text: `# Raw ${version}\n`, html:`<h1>Rendered ${version}</h1>`}});
++      }
++      if (operation === "team" && route.request().method() === "POST") {
++        additions.push(route.request().postDataJSON());
++        if (additions.length === 1) await new Promise(resolve => {releaseAdd = resolve;});
++        return route.fulfill({json:{ok:true}});
++      }
++      if (operation === "message") {
++        const body = route.request().postDataJSON(); sends.push(body);
++        if (body.message === "Fail before dispatch" && !body.retry) return route.fulfill({status:502, body:"fixture before dispatch"});
++        if (body.message === "Observed before failure") {
++          const digest = await require("node:crypto").webcrypto.subtle.digest("SHA-256", new TextEncoder().encode(body.message));
++          observedEntry = {kind:"userMessage", itemId:"observed-before-failure", text:body.message, clientUserMessageId:body.clientUserMessageId, clientUserMessageDigest:Buffer.from(digest).toString("hex")};
++          showReceipt = true;
++          await new Promise(resolve => {releaseObserved = resolve;});
++          return route.fulfill({status:502, body:"fixture response lost after transcript confirmation"});
++        }
++        if (!sends.slice(0, -1).some(previous => previous.clientUserMessageId === body.clientUserMessageId)) turns++;
++        if (loseResponse) { loseResponse = false; return route.fulfill({status:502, body:"upstream unavailable"}); }
++        return route.fulfill({json:{turnId:"turn-once", clientUserMessageId:body.clientUserMessageId}});
++      }
++      if (["queue", "pending"].includes(operation)) return route.fulfill({json:[]});
++      if (operation === "team-stats") return route.fulfill({json:{members:[]}});
++      return route.continue();
++    });
++    await page.goto(baseURL + "/example/");
++    await expect(page.locator("#transcript h1")).toHaveText("User heading");
++    await expect(page.locator("#transcript")).toContainText("fixture.txt");
++    await expect(page.locator("#transcript")).not.toContainText("Generated attachment envelope");
++    await expect(page.locator("#transcript")).not.toContainText("Internal work.");
++    const citation = page.locator('#transcript a[href="https://example.test/source"]');
++    await expect(citation).toHaveText("[1]");
++    await expect(citation).toHaveAttribute("title", 'Český "title"');
++    await expect(page.locator("#transcript code")).toContainText("\ue200cite\ue202ref\ue201");
++    await citation.locator('xpath=ancestor::*[contains(concat(" ", normalize-space(@class), " "), " message ")][1]').getByRole("button", {name: "Copy message", exact: true}).click();
++    assert((await page.evaluate(() => navigator.clipboard.readText())).includes("https://example.test/source"));
++    await page.locator('[data-transcript-filter="team"]').click();
++    await expect(page.locator("#transcript .message.team")).toContainText("lead → implementer0");
++    await expect(page.locator("#transcript")).toContainText("Internal work.");
++    await page.locator('[data-transcript-filter="messages"]').click();
++    const link = page.locator('#transcript a').filter({hasText:"Plan"});
++    await expect(link).toHaveAttribute("target", "_blank");
++    await expect(link).toHaveAttribute("rel", /noopener/);
++    const [popup] = await Promise.all([context.waitForEvent("page"), link.click({button:"middle"})]);
++    await popup.waitForLoadState();
++    await expect(popup.locator("#source-file-copy-content")).toBeEnabled();
++    await popup.locator("#source-file-copy-content").click();
++    const source = await (await context.request.get(baseURL + "/api/sessions/example/file?artifact=plan.md")).json();
++    assert.equal(await popup.evaluate(() => navigator.clipboard.readText()), source.content.text);
++    const [download] = await Promise.all([popup.waitForEvent("download"), popup.locator("#source-file-download").click()]);
++    assert.equal(download.suggestedFilename(), "plan.md");
++    assert.equal(await fs.readFile(await download.path(), "utf8"), source.content.text);
++    await popup.close(); await page.bringToFront();
++
++    const input = page.locator('#message-form textarea');
++    await input.fill("Keep this exact input"); await page.locator("#message-send").click();
++    await expect(page.locator("#message-submission-status")).toBeVisible();
++    await expect(input).toHaveValue("Keep this exact input");
++    await expect(page.locator("#message-receipts")).toContainText("Outcome unknown");
++    await page.reload();
++    await page.getByRole("button", {name:"Retry original", exact:true}).click();
++    await expect.poll(() => sends.length).toBe(2);
++    assert.equal(sends[0].clientUserMessageId, sends[1].clientUserMessageId); assert.equal(turns, 1);
++    await expect(page.locator("#message-submission-status")).toBeHidden();
++    await expect(page.getByRole("button", {name:"Dismiss message", exact:true})).toHaveText("×");
++    await expect(page.getByRole("button", {name:"Dismiss message", exact:true})).toHaveAttribute("title", "Dismiss message");
++    await page.getByRole("button", {name:"Dismiss message", exact:true}).click();
++    const acceptedKey = await page.evaluate(() => Object.keys(sessionStorage).find(key => key.startsWith("workspace-portal.send-attempts")));
++    // Dismissal changes presentation while retry identity remains in storage.
++    if (acceptedKey) assert(await page.evaluate(key => sessionStorage.getItem(key), acceptedKey));
++    await input.fill("Fail before dispatch"); await page.locator("#message-send").click();
++    await expect(input).toHaveValue("Fail before dispatch");
++    await page.getByRole("button", {name:"Retry original", exact:true}).click();
++    await expect.poll(() => sends.length).toBe(4);
++    assert.equal(sends[2].clientUserMessageId,sends[3].clientUserMessageId);
++    await page.getByRole("button", {name:"Dismiss message", exact:true}).click();
++    await input.fill("Observed before failure"); await page.locator("#message-send").click();
++    await expect.poll(() => Boolean(releaseObserved)).toBe(true);
++    await page.request.post(baseURL + "/fixture/refresh");
++    await expect(page.locator("#transcript")).toContainText("Observed before failure");
++    releaseObserved(); await expect(page.locator("#message-send")).toBeEnabled();
++    await expect(page.locator("#message-receipts")).not.toContainText("Outcome unknown");
++    await expect(page.locator("#message-submission-status")).toBeHidden();
++
++    await page.getByRole("tab", {name:/Artifacts/}).click();
++    await expect(page.locator('[data-artifact-path]')).toHaveCount(500);
++    const bottom = page.locator('[data-artifact-path="reports/deep/499.md"]');
++    await bottom.click(); await expect.poll(() => Boolean(releasePreview)).toBe(true);
++    await page.locator('[data-artifact-path="reports/deep/000.md"]').click();
++    await bottom.click();
++    await expect(page.locator("#artifact-preview h1")).toHaveText("Rendered 4");
++    releasePreview(); await expect(page.locator("#artifact-preview h1")).toHaveText("Rendered 4");
++    await page.locator("#artifact-copy").click();
++    assert.equal(await page.evaluate(() => navigator.clipboard.readText()), "# Raw 4\n");
++    const [artifactDownload] = await Promise.all([page.waitForEvent("download"), page.locator("#artifact-download").click()]);
++    assert.equal(artifactDownload.url(), baseURL + "/artifacts/example/reports/deep/499.md");
++    assert.equal(artifactDownload.suggestedFilename(), "499.md");
++    assert.equal(await artifactDownload.failure(), null, `Artifact download failed: ${artifactDownload.url()}`);
++    assert.equal(await fs.readFile(await artifactDownload.path(), "utf8"), "# Original artifact bytes\r\n");
++    await page.locator('[data-artifact-directory="reports/deep"]').evaluate(node => {node.open = false;});
++    await page.locator('[data-artifact-directory="reports/deep"]').evaluate(node => {node.open = true;});
++    // Collapsing the only file directory can clamp navigation to zero. Set up
++    // the position whose retention across status refresh is under test.
++    await bottom.scrollIntoViewIfNeeded();
++    const panePositions = () => page.evaluate(() => {
++      const nav = document.querySelector(".artifact-list"), preview = document.querySelector(".artifact-view");
++      return {nav:nav.scrollTop, navHeight:nav.clientHeight, navContent:nav.scrollHeight,
++        preview:preview.scrollTop, panel:document.getElementById("artifacts").scrollTop, page:scrollY};
++    });
++    const beforeScroll = await panePositions();
++    assert(beforeScroll.navContent > beforeScroll.navHeight, JSON.stringify(beforeScroll));
++    await page.locator(".artifact-list").evaluate(node => {node.scrollTop -= 64;});
++    const afterScroll = await panePositions(), scrollBefore = afterScroll.nav;
++    assert(scrollBefore > 0 && scrollBefore < beforeScroll.nav, JSON.stringify({beforeScroll, afterScroll}));
++    for (const key of ["preview", "panel", "page"]) assert.equal(afterScroll[key], beforeScroll[key], JSON.stringify({beforeScroll, afterScroll}));
++    const directoriesBefore = await page.locator("[data-artifact-directory]").evaluateAll(nodes => nodes.map(node => [node.dataset.artifactDirectory, node.open]));
++    const reads = detailsReads; await page.evaluate(() => dispatchEvent(new Event("focus")));
++    await expect.poll(() => detailsReads).toBeGreaterThan(reads);
++    await expect.poll(() => page.locator(".artifact-list").evaluate(node => Number(/<!--refresh (\d+)-->/.exec(node.innerHTML)?.[1] || 0))).toBeGreaterThan(reads);
++    const afterRefresh = await panePositions();
++    assert.equal(afterRefresh.nav, scrollBefore, JSON.stringify({afterScroll, afterRefresh}));
++    for (const key of ["preview", "panel", "page"]) assert.equal(afterRefresh[key], afterScroll[key], JSON.stringify({afterScroll, afterRefresh}));
++    assert.deepEqual(await page.locator("[data-artifact-directory]").evaluateAll(nodes => nodes.map(node => [node.dataset.artifactDirectory, node.open])), directoriesBefore);
++    await expect(bottom).toHaveClass(/active/);
++    const geometry = await page.evaluate(() => ({nav:getComputedStyle(document.querySelector('.artifact-list')).overflowY, preview:getComputedStyle(document.querySelector('.artifact-view')).overflowY}));
++    assert.equal(geometry.nav, "auto"); assert.equal(geometry.preview, "auto");
++    removed = true; await page.evaluate(() => dispatchEvent(new Event("focus")));
++    await expect(page.locator('[data-artifact-path]')).toHaveCount(499);
++    await expect(page.locator("#artifact-download")).toBeHidden(); await expect(page.locator("#artifact-copy")).toBeDisabled();
++    await page.setViewportSize({width:390, height:844});
++    assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
++    await page.setViewportSize({width:1440, height:850});
++
++    await page.locator('[data-session-tab="team"]').click();
++    const form = page.locator('[data-direct-team-form][data-action="add"]');
++    await form.locator('[name="role"]').selectOption("implementer");
++    await expect(form.locator('[name="effort"]')).toHaveValue("high");
++    await form.evaluate(form => {form.requestSubmit(); form.requestSubmit();});
++    await expect.poll(() => additions.length).toBe(1);
++    await expect(form.getByRole("button", {name:"Add member"})).toBeDisabled();
++    assert.deepEqual(additions[0], {action:"add", role:"implementer", model:"model-1", reasoningEffort:"high"});
++    releaseAdd();
++    await expect(form.getByRole("button", {name:"Add member"})).toBeEnabled();
++    await expect(form.locator('[name="effort"]')).toHaveValue("high");
++    await form.getByRole("button", {name:"Add member"}).click();
++    await expect.poll(() => additions.length).toBe(2); assert.deepEqual(additions[1], additions[0]);
++    await expect(form.locator('[name="effort"]')).toHaveValue("high");
++    assert.deepEqual(dialogs, []); assert.deepEqual(errors, []);
++  } finally { await browser.close(); }
++})().catch(error => {console.error(error); process.exitCode = 1;});
+diff --git a/portal/internal/web/question_browser_test.go b/portal/internal/web/question_browser_test.go
+index de7afe9..5b4fec8 100644
+--- a/portal/internal/web/question_browser_test.go
++++ b/portal/internal/web/question_browser_test.go
+@@ -1,6 +1,7 @@
+ package web
+ 
+ import (
++	"fmt"
+ 	"net/http"
+ 	"net/http/httptest"
+ 	"os"
+@@ -30,11 +31,19 @@ func TestQuestionBrowser(t *testing.T) {
+ 	}
+ 	manifest := "schema: 1\nslug: example\ncodex:\n" +
+ 		"  thread_id: thread-1\n  socket_path: /run/dev-workspace-codex/app-server.sock\n" +
+-		"  client_version: 0.152.1\ncreation:\n  state: ready\n  initial_goal_sent: true\n"
++		"  client_version: 0.152.1\ncreation:\n  state: ready\n  initial_goal_sent: true\n" +
++		"artifacts:\n  - path: reports/deep/499.md\n    label: Report 499\n"
+ 	if err := os.WriteFile(filepath.Join(directory, "portal.yml"), []byte(manifest), 0o644); err != nil {
+ 		t.Fatal(err)
+ 	}
+ 	writeWebTrackingFiles(t, directory, "active")
++	artifactPath := filepath.Join(directory, "reports", "deep", "499.md")
++	if err := os.MkdirAll(filepath.Dir(artifactPath), 0o755); err != nil {
++		t.Fatal(err)
++	}
++	if err := os.WriteFile(artifactPath, []byte("# Original artifact bytes\r\n"), 0o644); err != nil {
++		t.Fatal(err)
++	}
+ 	writeWebRuntimeAuthority(t, server, "example")
+ 	events := make(chan struct{}, 1)
+ 	server.config.Codex = &browserContractCodex{emptyPrompts: true, events: events, transcript: codex.Transcript{
+@@ -100,6 +109,38 @@ func TestQuestionBrowser(t *testing.T) {
+ 			}
+ 			return
+ 		}
++
++		if r.URL.Path == "/fixture/artifact-tree" {
++			artifacts := make([]session.Artifact, 500)
++			for i := range artifacts {
++				artifacts[i] = session.Artifact{Path: fmt.Sprintf("reports/deep/%03d.md", i), Label: fmt.Sprintf("Report %d", i)}
++			}
++			if r.URL.Query().Get("remove") == "1" {
++				artifacts = artifacts[:499]
++			}
++			if err := server.templates.ExecuteTemplate(w, "artifact-list", pageData{Artifacts: artifacts}); err != nil {
++				t.Error(err)
++			}
++			return
++		}
++		if r.URL.Path == "/fixture/presentation" {
++			transcript := codex.Transcript{ThreadID: "thread-1", Status: "idle", CollaborationMode: "default", Entries: []codex.TranscriptEntry{
++				{Kind: "userMessage", ItemID: "user", Text: "# User heading\n\n- item\n\n[Plan](" + filepath.Join(server.config.Workspace, "work", "example", "plan.md") + ":1)"},
++				{Kind: "userMessage", ItemID: "team", Text: "Team assignment from lead to implementer0:\n\nInternal work."},
++				{Kind: "agentMessage", ItemID: "agent", Text: "A reply."},
++			}}
++			token, prefix := "\ue200cite\ue202ref\ue201", "Příliš 🐈 **answer** "
++			transcript.Entries[2].Text = prefix + token + "\n\n`" + token + "`"
++			transcript.Entries[2].Citations = []codex.CitationSpan{{Start: len(prefix), End: len(prefix) + len(token), Sources: []codex.CitationSource{{URL: "https://example.test/source", Title: `Český "title"`, Number: 1}}}}
++			display := transcript.Entries[0].Text
++			transcript.Entries[0].Text += "\n\nGenerated attachment envelope"
++			transcript.Entries[0].DisplayText = &display
++			transcript.Entries[0].Attachments = []codex.Attachment{{ID: "fixture-attachment", Name: "fixture.txt", Size: 17, State: "ready", DownloadURL: "/fixture/download"}}
++			server.presentTranscript(&transcript)
++			s := codex.TranscriptPage{Transcript: transcript}
++			server.writeJSON(w, http.StatusOK, s)
++			return
++		}
+ 		if r.URL.Path == "/fixture/download" {
+ 			w.Header().Set("Content-Type", "text/plain")
+ 			w.Header().Set("Content-Disposition", `attachment; filename="fixture.txt"`)
+@@ -118,7 +159,7 @@ func TestQuestionBrowser(t *testing.T) {
+ 	})
+ 	httpServer.StartTLS()
+ 	defer httpServer.Close()
+-	for _, script := range []string{"question_browser_test.cjs", "optional_questions_browser_test.cjs", "page_lifecycle_browser_test.cjs", "presentation_browser_test.cjs", "team_settings_browser_test.cjs", "team_activity_browser_test.cjs", "usability_browser_test.cjs", "repository_review_live_browser_test.cjs", "paging_browser_live_test.cjs", "mode_refresh_browser_test.cjs", "cluster_controls_browser_test.cjs", "recovery_display_browser_test.cjs"} {
++	for _, script := range []string{"portal_improvements_browser_test.cjs", "question_browser_test.cjs", "optional_questions_browser_test.cjs", "page_lifecycle_browser_test.cjs", "presentation_browser_test.cjs", "team_settings_browser_test.cjs", "team_activity_browser_test.cjs", "usability_browser_test.cjs", "repository_review_live_browser_test.cjs", "paging_browser_live_test.cjs", "mode_refresh_browser_test.cjs", "cluster_controls_browser_test.cjs", "recovery_display_browser_test.cjs"} {
+ 		t.Run(script, func(t *testing.T) {
+ 			command := exec.Command("node", script, httpServer.URL)
+ 			if output, err := command.CombinedOutput(); err != nil {
+diff --git a/portal/internal/web/server.go b/portal/internal/web/server.go
+index 37b09fc..2601bf3 100644
+--- a/portal/internal/web/server.go
++++ b/portal/internal/web/server.go
+@@ -109,15 +109,16 @@ type cachedRepositories struct {
+ }
+ 
+ type indexSessionStatus struct {
+-	Sensitive           bool      `json:"sensitive,omitempty"`
+-	ObservationIdentity string    `json:"observationIdentity"`
+-	Slug                string    `json:"slug"`
+-	UpdatedAt           time.Time `json:"updatedAt"`
+-	Archived            bool      `json:"archived"`
+-	RepositoryCount     int       `json:"repositoryCount"`
+-	RunningClusters     int       `json:"runningClusters"`
+-	ClusterNotice       string    `json:"clusterNotice,omitempty"`
+-	PendingLifecycle    string    `json:"pendingLifecycle,omitempty"`
++	Sensitive            bool      `json:"sensitive,omitempty"`
++	ObservationIdentity  string    `json:"observationIdentity"`
++	Slug                 string    `json:"slug"`
++	UpdatedAt            time.Time `json:"updatedAt"`
++	Archived             bool      `json:"archived"`
++	RepositoryCount      int       `json:"repositoryCount"`
++	RunningClusters      int       `json:"runningClusters"`
++	RunningClustersKnown bool      `json:"runningClustersKnown"`
++	ClusterNotice        string    `json:"clusterNotice,omitempty"`
++	PendingLifecycle     string    `json:"pendingLifecycle,omitempty"`
+ }
+ 
+ type cachedIndexStatus struct {
+@@ -449,6 +450,7 @@ func New(config Config) (*Server, error) {
+ 		},
+ 		"timeAgo":         timeAgo,
+ 		"workflowSummary": workflowSummary,
++		"artifactTree":    artifactTree,
+ 	}).ParseFS(assets, "templates/*.html")
+ 	if err != nil {
+ 		return nil, err
+@@ -458,6 +460,7 @@ func New(config Config) (*Server, error) {
+ 	policy.AllowAttrs("title").OnElements("a")
+ 	policy.RequireNoFollowOnLinks(true)
+ 	policy.RequireNoReferrerOnLinks(true)
++	policy.AllowAttrs("target").Matching(regexp.MustCompile(`^_blank$`)).OnElements("a")
+ 	operationContext, cancelOperations := context.WithCancel(context.Background())
+ 	operationStore, err := newLifecycleOperationStore(workspace, config.UserStateRoot)
+ 	if err != nil {
+@@ -776,7 +779,7 @@ func (s *Server) route(w http.ResponseWriter, r *http.Request) {
+ 		s.sourcePage(w, r)
+ 	case r.Method == http.MethodGet && r.URL.Path == "/workspace-files":
+ 		s.workspaceSourcePage(w, r)
+-	case r.Method == http.MethodGet && r.URL.Path == "/api/workspace/file":
++	case r.Method == http.MethodGet && (r.URL.Path == "/api/workspace/file" || r.URL.Path == "/api/workspace/file/download"):
+ 		s.workspaceSourceFile(w, r)
+ 	case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, s.config.Workspace+"/"):
+ 		s.sourceRedirect(w, r)
+@@ -977,9 +980,7 @@ func (s *Server) indexStatus(w http.ResponseWriter, r *http.Request) {
+ 	s.indexStatusMu.Unlock()
+ 	operations, _ := s.lifecycleOperations()
+ 	loading := result.created.IsZero() && result.warning == ""
+-	if loading {
+-		result.warning = "Session status is loading."
+-	}
++
+ 	w.Header().Set("Cache-Control", "no-store")
+ 	s.writeJSON(w, http.StatusOK, map[string]any{
+ 		"sessions": result.statuses, "generatedAt": result.created,
+@@ -1000,6 +1001,10 @@ func (s *Server) computeIndexStatus(ctx context.Context) cachedIndexStatus {
+ }
+ 
+ func (s *Server) computeIndexStatusWithPending(ctx context.Context, pending map[string]session.LifecycleProgress, pendingErr error) cachedIndexStatus {
++	return s.computeIndexStatusPublishing(ctx, pending, pendingErr, nil)
++}
++
++func (s *Server) computeIndexStatusPublishing(ctx context.Context, pending map[string]session.LifecycleProgress, pendingErr error, publish func(cachedIndexStatus)) cachedIndexStatus {
+ 	result := cachedIndexStatus{}
+ 	summaries, err := s.listSessionsWithPending(pending, pendingErr)
+ 	operations, _ := s.lifecycleOperations()
+@@ -1012,6 +1017,28 @@ func (s *Server) computeIndexStatusWithPending(ctx context.Context, pending map[
+ 		s.config.Logger.Printf("list sessions for index status: %v", err)
+ 		result.warning = "Some session status is unavailable."
+ 	}
++	// Publish membership before any optional Git, activity or cluster inspection.
++	// Counts stay integers for old assets; only same-identity measured cache is known.
++	if publish != nil {
++		minimal := cachedIndexStatus{authoritative: result.authoritative, warning: result.warning, created: time.Now().UTC()}
++		s.indexStatusMu.Lock()
++		previous := cloneIndexStatus(s.indexStatusCache)
++		s.indexStatusMu.Unlock()
++		for _, summary := range summaries {
++			item := indexSessionStatus{Slug: summary.Slug, Sensitive: summary.Sensitive, UpdatedAt: summary.UpdatedAt,
++				Archived: summary.Archived, ObservationIdentity: summary.ObservationIdentity, RepositoryCount: len(summary.Repositories), PendingLifecycle: pending[summary.Slug].Operation}
++			for _, old := range previous.statuses {
++				if old.Slug == item.Slug && old.ObservationIdentity == item.ObservationIdentity {
++					item.RunningClusters, item.RunningClustersKnown, item.ClusterNotice = old.RunningClusters, old.RunningClustersKnown, old.ClusterNotice
++					if old.UpdatedAt.After(item.UpdatedAt) {
++						item.UpdatedAt = old.UpdatedAt
++					}
++				}
++			}
++			minimal.statuses = append(minimal.statuses, item)
++		}
++		publish(minimal)
++	}
+ 	discovered, discoveryErr := s.discoverRepositories(ctx, false)
+ 	if discoveryErr != nil {
+ 		s.config.Logger.Printf("discover active repositories for index status: %v", discoveryErr)
+@@ -1086,10 +1113,13 @@ func (s *Server) computeIndexStatusWithPending(ctx context.Context, pending map[
+ 			}
+ 		}
+ 	}
+-	clustersBySlug := make(map[string]int)
++	clustersBySlug := make(map[string]*int)
+ 	clusterNotices := make(map[string]string)
+ 	for item := range clusterResults {
+-		clustersBySlug[item.slug] = item.count
++		if item.err == nil {
++			count := item.count
++			clustersBySlug[item.slug] = &count
++		}
+ 		clusterNotices[item.slug] = item.notice
+ 		if item.err != nil {
+ 			s.config.Logger.Printf("inspect clusters for %s: %v", item.slug, item.err)
+@@ -1099,6 +1129,10 @@ func (s *Server) computeIndexStatusWithPending(ctx context.Context, pending map[
+ 		}
+ 	}
+ 	for _, summary := range summaries {
++		if !s.clusters.MayExist(summary.Slug) || summary.Archived {
++			count := 0
++			clustersBySlug[summary.Slug] = &count
++		}
+ 		updated := summary.UpdatedAt
+ 		if !summary.Archived && summary.Codex.ThreadID != "" {
+ 			expectedCwd := filepath.Join(s.config.Workspace, "work", summary.Slug)
+@@ -1114,8 +1148,8 @@ func (s *Server) computeIndexStatusWithPending(ctx context.Context, pending map[
+ 		}
+ 		result.statuses = append(result.statuses, indexSessionStatus{
+ 			Slug: summary.Slug, Sensitive: summary.Sensitive, UpdatedAt: updated, Archived: summary.Archived, ObservationIdentity: summary.ObservationIdentity,
+-			RepositoryCount: len(summary.Repositories),
+-			RunningClusters: clustersBySlug[summary.Slug], ClusterNotice: clusterNotices[summary.Slug], PendingLifecycle: pendingKind,
++			RepositoryCount:      len(summary.Repositories),
++			RunningClustersKnown: clustersBySlug[summary.Slug] != nil, RunningClusters: indexClusterCount(clustersBySlug[summary.Slug]), ClusterNotice: clusterNotices[summary.Slug], PendingLifecycle: pendingKind,
+ 		})
+ 	}
+ 	return result
+@@ -1768,7 +1802,7 @@ func (s *Server) artifactPreview(w http.ResponseWriter, r *http.Request, summary
+ 	text := strings.ToValidUTF8(string(data), "�")
+ 	if kind == "markdown" {
+ 		s.writeJSON(w, http.StatusOK, map[string]string{
+-			"kind": "markdown", "html": string(s.renderTextMarkdown(text)),
++			"kind": "markdown", "html": string(s.renderTextMarkdown(text)), "text": text,
+ 		})
+ 		return
+ 	}
+@@ -1871,7 +1905,7 @@ func sessionAPIPath(requestURL *url.URL) ([]string, bool) {
+ 			return nil, false
+ 		}
+ 	}
+-	if len(parts) == 3 && parts[1] != "queue" && !(parts[1] == "thread" && parts[2] == "page") &&
++	if len(parts) == 3 && !(parts[1] == "file" && parts[2] == "download") && parts[1] != "queue" && !(parts[1] == "thread" && parts[2] == "page") &&
+ 		!((parts[1] == "operation" || parts[1] == "creation") && parts[2] == "retry") {
+ 		return nil, false
+ 	}
+@@ -1928,7 +1962,7 @@ func (s *Server) sessionAPIForSummary(
+ 		s.recoveryAPI(w, r, summary, parts[1])
+ 		return
+ 	}
+-	if len(parts) == 2 && parts[1] == "file" {
++	if (len(parts) == 2 || (len(parts) == 3 && parts[2] == "download")) && parts[1] == "file" {
+ 		if r.Method != http.MethodGet {
+ 			w.Header().Set("Allow", http.MethodGet)
+ 			s.writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "File viewing is read-only."})
+@@ -3650,18 +3684,32 @@ func (s *Server) resolveConversation(
+ 		ModelCatalog: func(ctx context.Context) ([]codex.Model, error) { return s.modelsForSession(ctx, slug, "") },
+ 		Client:       conversationClient, ThreadID: threadID, Directory: expectedCwd,
+ 		Capabilities: capabilities, MutationLock: s.messageLock(request.ID),
+-		TransformTranscript: s.presentTranscript,
+-		Activity:            s.activityProvider(),
+-		Release:             func() { once.Do(release) },
++		PresentTranscript: s.presentTranscript,
++		Activity:          s.activityProvider(),
++		Release:           func() { once.Do(release) },
+ 	}, nil
+ }
+ 
++var teamEnvelopePattern = regexp.MustCompile(`^Team assignment from ([a-z][a-z0-9]{0,127}) to ([a-z][a-z0-9]{0,127}):\r?\n`)
++
+ func (s *Server) presentTranscript(transcript *codex.Transcript) {
+ 	for index := range transcript.Entries {
+ 		entry := &transcript.Entries[index]
+-		if entry.Text != "" &&
+-			(entry.Kind == "agentMessage" || entry.Kind == "reasoning" || entry.Kind == "plan") {
++		if entry.Kind == "mcpToolCall" && entry.Summary == "Tool · team_reporting/report_to_lead" {
++			entry.Communication = &codex.TranscriptCommunication{Kind: "team", To: "lead"}
++		}
++		if entry.Kind == "userMessage" {
++			if envelope := teamEnvelopePattern.FindStringSubmatch(entry.Text); envelope != nil {
++				entry.Communication = &codex.TranscriptCommunication{Kind: "team", From: envelope[1], To: envelope[2]}
++			}
++			text := entry.Text
++			if entry.DisplayText != nil {
++				text = *entry.DisplayText
++			}
++			entry.HTML = string(s.renderTextMarkdown(text))
++		} else if entry.Kind == "agentMessage" || entry.Kind == "reasoning" || entry.Kind == "plan" {
+ 			entry.HTML = string(s.renderTextMarkdown(codex.CitationMarkdown(*entry)))
++
+ 		}
+ 	}
+ }
+@@ -3752,3 +3800,10 @@ func timeAgo(value time.Time) string {
+ 	}
+ 	return fmt.Sprintf("%dd ago", int(duration.Hours()/24))
+ }
++
++func indexClusterCount(count *int) int {
++	if count == nil {
++		return 0
++	}
++	return *count
++}
+diff --git a/portal/internal/web/server_test.go b/portal/internal/web/server_test.go
+index c5855a9..da7b58f 100644
+--- a/portal/internal/web/server_test.go
++++ b/portal/internal/web/server_test.go
+@@ -863,6 +863,26 @@ func TestIndexStatusUsesOneBoundedRefreshForConcurrentRequests(t *testing.T) {
+ 		}
+ 		time.Sleep(5 * time.Millisecond)
+ 	}
++	// Initial HTML and published membership stay usable while enrichment blocks.
++	started := time.Now()
++	initial := httptest.NewRecorder()
++	handler.ServeHTTP(initial, httptest.NewRequest(http.MethodGet, "/", nil))
++	if time.Since(started) > time.Second || !strings.Contains(initial.Body.String(), `data-session-slug="example"`) {
++		t.Fatal("initial membership blocked behind enrichment")
++	}
++	membership := httptest.NewRecorder()
++	handler.ServeHTTP(membership, httptest.NewRequest(http.MethodGet, "/api/index-status?progress=1", nil))
++	var minimal struct {
++		Sessions      []indexSessionStatus `json:"sessions"`
++		Authoritative bool                 `json:"authoritative"`
++	}
++	if err := json.Unmarshal(membership.Body.Bytes(), &minimal); err != nil {
++		t.Fatal(err)
++	}
++	if !minimal.Authoritative || len(minimal.Sessions) != 1 || minimal.Sessions[0].Slug != "example" || minimal.Sessions[0].RunningClustersKnown || minimal.Sessions[0].RunningClusters != 0 {
++		t.Fatalf("membership missing or unknown clusters asserted: %s", membership.Body.String())
++	}
++	t.Logf("blocked optional activity: initial list served in %s; activity calls=1", time.Since(started))
+ 	// Both cold responses must return while native enrichment is still blocked.
+ 	for range 2 {
+ 		select {
+diff --git a/portal/internal/web/source_files.go b/portal/internal/web/source_files.go
+index d76b78d..085c0df 100644
+--- a/portal/internal/web/source_files.go
++++ b/portal/internal/web/source_files.go
+@@ -1,6 +1,9 @@
+ package web
+ 
+ import (
++	"errors"
++	"io"
++	"mime"
+ 	"net/http"
+ 	"net/url"
+ 	"path/filepath"
+@@ -96,6 +99,7 @@ func (s *Server) rewriteSourceLinks(document ast.Node) {
+ 			if err == nil {
+ 				if target, ok := s.sourceLink(input); ok {
+ 					link.Destination = []byte(target)
++					link.SetAttributeString("target", []byte("_blank"))
+ 				}
+ 			}
+ 		}
+@@ -171,13 +175,17 @@ func (s *Server) workspaceSourceFile(w http.ResponseWriter, r *http.Request) {
+ 		s.writeJSON(w, http.StatusBadRequest, map[string]string{"error": "This workspace file link is invalid."})
+ 		return
+ 	}
+-	result, err := s.reviews().reader.WorkspaceSource(r.Context(), path)
++	download := strings.HasSuffix(r.URL.Path, "/download")
++	result, err := s.reviews().reader.WorkspaceSourceContent(r.Context(), path, download)
++	if s.sourceDownloadError(w, err) {
++		return
++	}
+ 	if err != nil {
+ 		s.config.Logger.Printf("workspace source file %s: %v", path, err)
+ 		s.writeJSON(w, http.StatusNotFound, map[string]string{"error": "This file is unavailable. Check that it exists in the workspace and is tracked or not ignored by Git."})
+ 		return
+ 	}
+-	s.writeJSON(w, http.StatusOK, result)
++	s.serveSourceContent(w, result, download)
+ }
+ 
+ func (s *Server) sourceFile(w http.ResponseWriter, r *http.Request, summary *session.Summary) {
+@@ -186,10 +194,14 @@ func (s *Server) sourceFile(w http.ResponseWriter, r *http.Request, summary *ses
+ 		s.writeJSON(w, http.StatusBadRequest, map[string]string{"error": "This file link is invalid."})
+ 		return
+ 	}
++	download := strings.HasSuffix(r.URL.Path, "/download")
+ 	var result repository.SourceFile
+ 	if artifact := query.Get("artifact"); artifact != "" {
+ 		var err error
+-		result, err = s.reviews().reader.TrackingSource(r.Context(), summary, artifact)
++		result, err = s.reviews().reader.TrackingSourceContent(r.Context(), summary, artifact, download)
++		if s.sourceDownloadError(w, err) {
++			return
++		}
+ 		if err != nil {
+ 			s.config.Logger.Printf("session source file %s/%s: %v", summary.Slug, artifact, err)
+ 			s.sourceUnavailable(w)
+@@ -202,14 +214,17 @@ func (s *Server) sourceFile(w http.ResponseWriter, r *http.Request, summary *ses
+ 			return
+ 		}
+ 		var err error
+-		result, err = s.reviews().reader.Source(r.Context(), summary.Slug, item, summary.Archived, query.Get("path"))
++		result, err = s.reviews().reader.SourceContent(r.Context(), summary.Slug, item, summary.Archived, query.Get("path"), download)
++		if s.sourceDownloadError(w, err) {
++			return
++		}
+ 		if err != nil {
+ 			s.config.Logger.Printf("source file %s/%s: %v", summary.Slug, item.Name, err)
+ 			s.sourceUnavailable(w)
+ 			return
+ 		}
+ 	}
+-	s.writeJSON(w, http.StatusOK, result)
++	s.serveSourceContent(w, result, download)
+ }
+ 
+ func (s *Server) sourceUnavailable(w http.ResponseWriter) {
+@@ -220,3 +235,23 @@ func (s *Server) sourceUnavailable(w http.ResponseWriter) {
+ func (s *Server) invalidSourceRequest(r *http.Request) bool {
+ 	return strings.HasPrefix(r.URL.Path, s.config.Workspace+"/") && filepath.Clean(r.URL.Path) != r.URL.Path
+ }
++
++func (s *Server) sourceDownloadError(w http.ResponseWriter, err error) bool {
++	if !errors.Is(err, repository.ErrSourceDownloadLimit) {
++		return false
++	}
++	s.writeJSON(w, http.StatusRequestEntityTooLarge, map[string]string{"error": "This file exceeds the 10 MiB download limit."})
++	return true
++}
++
++func (s *Server) serveSourceContent(w http.ResponseWriter, file repository.SourceFile, download bool) {
++	if !download {
++		s.writeJSON(w, http.StatusOK, file)
++		return
++	}
++	w.Header().Set("Content-Type", "application/octet-stream")
++	w.Header().Set("Content-Security-Policy", "sandbox; default-src 'none'")
++	w.Header().Set("Content-Disposition", mime.FormatMediaType("attachment", map[string]string{"filename": filepath.Base(file.Path)}))
++	w.Header().Set("Content-Length", strconv.Itoa(len(file.Content.Text)))
++	_, _ = io.WriteString(w, file.Content.Text)
++}
+diff --git a/portal/internal/web/source_files_browser_test.cjs b/portal/internal/web/source_files_browser_test.cjs
+index a708300..984e042 100644
+--- a/portal/internal/web/source_files_browser_test.cjs
++++ b/portal/internal/web/source_files_browser_test.cjs
+@@ -27,8 +27,10 @@ const fs = require("node:fs");
+   assert(source.includes(editorImport));
+   const mountedSource = source.replace(editorImport, '({createReviewEditor: () => globalThis.sourceTestEditor})');
+   const {mountSourceFile} = await import("data:text/javascript;base64," + Buffer.from(mountedSource).toString("base64"));
+-  const elements = Object.fromEntries(["notice", "content", "title", "version", "copy"].map(name =>
+-    [`source-file-${name}`, {textContent: "", hidden: false, addEventListener() {}}]));
++  const elements = Object.fromEntries(["notice", "content", "title", "version", "copy", "copy-content", "download"].map(name =>
++    [`source-file-${name}`, {textContent: "", hidden: false, handlers: {}, addEventListener(name, fn) { this.handlers[name] = fn; }}]));
++  let copied;
++  Object.defineProperty(globalThis, "navigator", {value: {clipboard: {writeText: async text => {copied = text;}}}});
+   const events = {};
+   globalThis.document = {getElementById: id => elements[id], querySelector: () => ({content: "nonce"})};
+   globalThis.location = new URL(original + "#L10");
+@@ -70,5 +72,8 @@ const fs = require("node:fs");
+   assert.equal(revealedLine, 93);
+   assert.equal(elements["source-file-title"].textContent, "docs/guide.md");
+   assert.match(elements["source-file-version"].textContent, /Current workspace/);
++  await elements["source-file-copy-content"].handlers.click();
++  assert.equal(copied, "line\n");
++  assert.equal(elements["source-file-download"].href, "/api/workspace/file/download?path=docs%2Fguide.md");
+   console.log("Source file URL and source identity contracts passed.");
+ })().catch(error => { console.error(error); process.exitCode = 1; });
+diff --git a/portal/internal/web/source_files_test.go b/portal/internal/web/source_files_test.go
+index 18652c9..1a76914 100644
+--- a/portal/internal/web/source_files_test.go
++++ b/portal/internal/web/source_files_test.go
+@@ -1,8 +1,10 @@
+ package web
+ 
+ import (
++	"bytes"
+ 	"encoding/json"
+ 	"fmt"
++	"mime"
+ 	"net/http"
+ 	"net/http/httptest"
+ 	"net/url"
+@@ -54,7 +56,7 @@ func TestSourceLinksRewriteHistoryAndRedirect(t *testing.T) {
+ 	s.presentTranscript(&transcript)
+ 	entry := transcript.Entries[0]
+ 	if entry.Text != original || !strings.Contains(entry.HTML, "/files/example?") ||
+-		!strings.Contains(entry.HTML, "#L10") || !strings.Contains(entry.HTML, ">The route</a>") ||
++		!strings.Contains(entry.HTML, `target="_blank"`) || !strings.Contains(entry.HTML, "noopener") || !strings.Contains(entry.HTML, "#L10") || !strings.Contains(entry.HTML, ">The route</a>") ||
+ 		!strings.Contains(entry.HTML, "https://example.test/a:10") {
+ 		t.Fatalf("transcript changed or links missing: %#v", entry)
+ 	}
+@@ -357,8 +359,11 @@ func TestSourceFilesUseArchivedFinalCommitAndCuratedArtifacts(t *testing.T) {
+ 	// still load the final snapshot and must not require a live worktree.
+ 	base := strings.TrimSpace(webGitOutput(t, "--git-dir="+bare, "rev-parse", head+"^"))
+ 	runWebGit(t, "--git-dir="+bare, "update-ref", "refs/heads/feature", base)
+-	file := readSource(t, s, sourceQuery("file"), 200)
+-	if file.Source != "archive" || file.Revision != head || file.Content.Text != "after\n" {
++	download := httptest.NewRecorder()
++ s.Handler().ServeHTTP(download, httptest.NewRequest(http.MethodGet, "/api/sessions/example/file/download"+sourceQuery("file"), nil))
++ if download.Code != 200 || download.Body.String() != "after\n" { t.Fatalf("archived raw download: %d %q", download.Code, download.Body.String()) }
++ file := readSource(t, s, sourceQuery("file"), 200)
++ if file.Source != "archive" || file.Revision != head || file.Content.Text != "after\n" {
+ 		t.Fatalf("archived file = %#v", file)
+ 	}
+ 	if readSource(t, s, sourceQuery("nested/route.nix"), 200).Content.Text != "# nested route\n" {
+@@ -453,3 +458,90 @@ func TestSourceLegacyPathsRejectTraversalBeforeMuxCleaning(t *testing.T) {
+ 		}
+ 	}
+ }
++
++func TestSourceDownloadsReuseEligibilityAndPreserveBytes(t *testing.T) {
++	s, _, worktree, _ := reviewWebFixture(t)
++	request := func(path string, status int) *httptest.ResponseRecorder {
++		t.Helper()
++		response := httptest.NewRecorder()
++		s.Handler().ServeHTTP(response, httptest.NewRequest(http.MethodGet, path, nil))
++		if response.Code != status {
++			t.Fatalf("download %s: %d %s", path, response.Code, response.Body.String())
++		}
++		return response
++	}
++	raw := []byte{0, 255, 'a', '\r', '\n'}
++	name := "space ž %.bin"
++	if err := os.WriteFile(filepath.Join(worktree, name), raw, 0600); err != nil {
++		t.Fatal(err)
++	}
++	result := request("/api/sessions/example/file/download"+sourceQuery(name), 200)
++	if !bytes.Equal(result.Body.Bytes(), raw) || result.Header().Get("Content-Type") != "application/octet-stream" {
++		t.Fatal("download changed original bytes")
++	}
++	disposition, params, err := mime.ParseMediaType(result.Header().Get("Content-Disposition"))
++	if err != nil || disposition != "attachment" || params["filename"] != name {
++		t.Fatalf("unsafe disposition: %v %v", params, err)
++	}
++	large := bytes.Repeat([]byte("x"), repository.MaxReviewBlobBytes+1)
++	if err := os.WriteFile(filepath.Join(worktree, "large"), large, 0600); err != nil {
++		t.Fatal(err)
++	}
++	if !readSource(t, s, sourceQuery("large"), 200).Content.Limited {
++		t.Fatal("expected omitted preview")
++	}
++	if !bytes.Equal(request("/api/sessions/example/file/download"+sourceQuery("large"), 200).Body.Bytes(), large) {
++		t.Fatal("limited preview prevented raw download")
++	}
++	if err := os.WriteFile(filepath.Join(worktree, "oversized"), bytes.Repeat([]byte("x"), repository.MaxSourceDownloadBytes+1), 0600); err != nil {
++		t.Fatal(err)
++	}
++	request("/api/sessions/example/file/download"+sourceQuery("oversized"), 413)
++	if err := os.WriteFile(filepath.Join(worktree, ".gitignore"), []byte("private\n"), 0600); err != nil {
++		t.Fatal(err)
++	}
++	if err := os.WriteFile(filepath.Join(worktree, "private"), raw, 0600); err != nil {
++		t.Fatal(err)
++	}
++	if err := os.Symlink(name, filepath.Join(worktree, "linked")); err != nil {
++		t.Fatal(err)
++	}
++	for _, path := range []string{"private", "linked"} {
++		request("/api/sessions/example/file/download"+sourceQuery(path), 404)
++	}
++	request("/api/sessions/example/file/download"+sourceQuery("../escape"), 400)
++	request("/api/sessions/example/file/download"+sourceQuery(".git/config"), 400)
++	request("/api/sessions/example/file/download?artifact=plan.md", 200)
++}
++
++func TestUserMarkdownUsesDecoratedTextWithoutChangingCanonicalInput(t *testing.T) {
++	s := newTestServer(t)
++	display := "# Display heading\n\n- item\n\n```sh\necho ok\n```\n\n[unsafe](javascript:alert(1))\n<script>alert(1)</script>"
++	original := "Canonical attachment envelope"
++	transcript := codex.Transcript{Entries: []codex.TranscriptEntry{{Kind: "userMessage", Text: original, DisplayText: &display}}}
++	s.presentTranscript(&transcript)
++	entry := transcript.Entries[0]
++	if entry.Text != original || entry.DisplayText == nil || *entry.DisplayText != display {
++		t.Fatal("canonical/decorated input changed")
++	}
++	for _, markup := range []string{"<h1>Display heading</h1>", "<ul>", "<pre><code"} {
++		if !strings.Contains(entry.HTML, markup) {
++			t.Fatalf("missing Markdown %s: %s", markup, entry.HTML)
++		}
++	}
++	if strings.Contains(entry.HTML, "javascript:") || strings.Contains(entry.HTML, "<script>") {
++		t.Fatalf("unsafe user HTML: %s", entry.HTML)
++	}
++	for _, text := range []string{"Team assignment from lead to implementer0:\n\nDo work.", "quoted Team assignment from lead to implementer0:\nDo work.", "Team assignment from <unsafe> to lead:\nDo work."} {
++		transcript.Entries = []codex.TranscriptEntry{{Kind: "userMessage", Text: text}}
++		s.presentTranscript(&transcript)
++		team := transcript.Entries[0].Communication
++		if strings.HasPrefix(text, "Team assignment from lead") {
++			if team == nil || team.From != "lead" || team.To != "implementer0" {
++				t.Fatalf("missing envelope: %#v", team)
++			}
++		} else if team != nil {
++			t.Fatalf("ambiguous envelope classified: %#v", team)
++		}
++	}
++}
+diff --git a/portal/internal/web/static/app.js b/portal/internal/web/static/app.js
+index ba96981..5920a4d 100644
+--- a/portal/internal/web/static/app.js
++++ b/portal/internal/web/static/app.js
+@@ -1,5 +1,6 @@
+ (async () => {
+   let refreshPolicy = null;
++  let sharedTranscriptPresentation = null, sharedTranscriptVisible = null;
+   const apiPath = (slug, operation) => `/api/sessions/${encodeURIComponent(slug)}/${operation}`;
+   const createRequest = (fetchRequest) => async (path, options = {}) => {
+     const response = await fetchRequest(path, {
+@@ -35,7 +36,7 @@
+     autoArchiveHold: (hold, targetId) => request(apiPath(slug, "auto-archive"), {
+       method: "POST", body: JSON.stringify({hold, targetId}),
+     }),
+-    artifactPreview: (path) => request(`${apiPath(slug, "artifact-preview")}?path=${encodeURIComponent(path)}`),
++    artifactPreview: (path, options) => request(`${apiPath(slug, "artifact-preview")}?path=${encodeURIComponent(path)}`, options),
+     archive: (mode, targetId, receiptId) => request(apiPath(slug, "archive"), {
+       method: "POST", body: JSON.stringify({mode, targetId, ...(receiptId ? {receiptId} : {})}),
+     }),
+@@ -223,6 +224,12 @@
+   const messageReceiptLabel = (entry) => entry.dismissed || entry.state === "observed" ? "" :
+     entry.state === "accepted" ? "Sent to Codex" : entry.state === "sending" ? "Sending…" :
+       "Outcome unknown.";
++  const indexClusterPresentation = item => {
++    const known = item.runningClustersKnown !== false && Number.isInteger(item.runningClusters);
++    let text = known ? `${item.runningClusters} running ${item.runningClusters === 1 ? "cluster" : "clusters"}` : "";
++    if (item.clusterNotice) text = known && item.runningClusters ? `${text} · Status updating` : "Cluster status updating";
++    return {text, title: item.clusterNotice || "", hidden: (!known || item.runningClusters === 0) && !item.clusterNotice};
++  };
+   const createIndexSnapshotNotice = (notice) => {
+     let loading = false;
+     return (payload) => {
+@@ -301,7 +308,11 @@
+     const queryTab = new URLSearchParams(search).get("tab");
+     return sessionTabFromHash(hash, panelIDs, panelIDs.includes(queryTab) ? queryTab : fallback);
+   };
++  const transcriptEntryPresentation = entry => sharedTranscriptPresentation?.(entry) || {
++    kind: entry?.kind === "userMessage" ? "user" : ["agentMessage", "reasoning", "plan"].includes(entry?.kind) ? "agent" : entry?.kind === "error" ? "error" : "event", team: false,
++  };
+   const transcriptEntryVisible = (entry, filter) => {
++    if (sharedTranscriptVisible) return sharedTranscriptVisible(entry, filter);
+     if (filter === "all" || entry?.kind === "error") return true;
+     const messageKinds = new Set(["userMessage", "agentMessage", "reasoning", "plan"]);
+     if (filter === "messages") return messageKinds.has(entry?.kind);
+@@ -1166,7 +1177,7 @@
+       cleanupCompletedDeleteStorage,
+       encodeQuestionAnswer,
+       createReadScope, createTimingClock, activityAge, activityPresentation, fileChangeDiffs, formatElapsed, indexStatusFreshForPage,
+-      indexStatusOrder, createLifecycleTargetState, lifecycleOperationMatches, lifecyclePresentation, lifecycleRecoveryAction,
++      indexStatusOrder, indexClusterPresentation, createLifecycleTargetState, lifecycleOperationMatches, lifecyclePresentation, lifecycleRecoveryAction,
+       sessionTabFromHash, sessionTabFromLocation, activityWaitLabel, activityStatusLabel, activityStatusPresentation, teamActivityPresentation, teamWorkPresentation,
+       transcriptEntriesForFilter, transcriptEntryVisible,
+       transcriptErrorPresentation, wrapMarkdownTables,
+@@ -1177,7 +1188,9 @@
+     return;
+   }
+ 
+-  const conversationAssets = await import("/codex/assets/conversation.js?v=18");
++  const conversationAssets = await import("/codex/assets/conversation.js?v=20");
++  sharedTranscriptPresentation = conversationAssets.transcriptEntryPresentation;
++  sharedTranscriptVisible = conversationAssets.transcriptEntryVisible;
+   refreshPolicy = conversationAssets.refreshPolicy;
+   const body = document.body;
+   const sidebarMenu = document.getElementById("sidebar-menu");
+@@ -1614,7 +1627,7 @@
+     if (!warning) return;
+     warning.textContent = indexFailure?.warning ? indexFailure.error.message :
+       progressFailure?.warning ? `Operation status is temporarily unavailable: ${progressFailure.error.message}` :
+-        indexFailure?.loading ? "Session status is loading." : "";
++        "";
+     warning.hidden = !warning.textContent;
+   };
+   const indexNotice = conversationAssets.createRefreshNotice({render: state => {indexFailure = state; renderIndexWarning();}});
+@@ -1877,11 +1890,10 @@
+         if (repositories) updateText(repositories, `${item.repositoryCount} ${item.repositoryCount === 1 ? "repository" : "repositories"}`);
+         const clusters = card.querySelector("[data-session-clusters]");
+         if (clusters) {
+-          let text = `${item.runningClusters} running ${item.runningClusters === 1 ? "cluster" : "clusters"}`;
+-          if (item.clusterNotice) text = item.runningClusters ? `${text} · Status updating` : "Cluster status updating";
+-          updateText(clusters, text);
+-          clusters.title = item.clusterNotice || "";
+-          clusters.hidden = item.runningClusters === 0 && !item.clusterNotice;
++          const state = indexClusterPresentation(item);
++          updateText(clusters, state.text);
++          clusters.title = state.title;
++          clusters.hidden = state.hidden;
+         }
+         const sensitiveBadge = card.querySelector("[data-session-sensitive]");
+         if (sensitiveBadge) sensitiveBadge.hidden = !item.sensitive;
+@@ -2472,6 +2484,8 @@
+   const applyCurrentSettings = (root = document, includeTeamForms = false) => {
+     root.querySelectorAll("[data-model-select]").forEach((modelSelect) => {
+       if (modelSelect.closest("form")?.id === "new-session-form") return;
++      const managed = modelSelect.closest('[data-direct-team-form][data-action="add"]');
++      if (managed?.dataset.teamDirty === "true" || managed?.dataset.teamSubmitting) return;
+       if (!includeTeamForms && modelSelect.closest("[data-direct-team-form]")) return;
+       if (modelSelect.id === "codex-model") { liveSettingsController?.render(); return; }
+       if (modelSelect.id === "team-model") { teamSettingsController?.render(); return; }
+@@ -2517,6 +2531,7 @@
+     const groups = new Map();
+     for (const select of root.querySelectorAll("[data-model-select]")) {
+       const form = select.closest("form");
++      if (form?.dataset.action === "add" && selectModelCatalogs.has(select)) continue;
+       const creation = ["new-session-form", "plan-session-form"].includes(form?.id);
+       const destination = creation || form?.id === "fork-form";
+       const provider = destination ? creationProviderValue(form) : "";
+@@ -2530,7 +2545,7 @@
+         if (!modelCatalogs.has(url)) modelCatalogs.set(url, request(url).catch(error => {modelCatalogs.delete(url); throw error;}));
+         const available = await modelCatalogs.get(url);
+         for (const {select, creation, destination} of entries) {
+-          if (selectModelURLs.get(select) !== url || select.closest("form")?.dataset.requestLocked === "true") continue;
++          if (selectModelURLs.get(select) !== url || select.closest("form")?.dataset.requestLocked === "true" || select.closest("form")?.dataset.teamSubmitting) continue;
+           selectModelCatalogs.set(select, available);
+           if (!destination) models = available;
+           const saved = select.value;
+@@ -2568,6 +2583,8 @@
+ 
+   const bindModelSelects = (root = document) => {
+     root.querySelectorAll("[data-model-select]").forEach((modelSelect) => {
++      if (modelSelect.dataset.modelBound) return;
++      modelSelect.dataset.modelBound = "true";
+       modelSelect.addEventListener("change", () => {
+         if (modelSelect.id === "codex-model") { liveSettingsController?.modelChanged(); return; }
+         if (modelSelect.id === "team-model") { teamSettingsController?.modelChanged(); return; }
+@@ -2591,7 +2608,7 @@
+   });
+   const updateAddMemberEligibility = () => {
+     const form = document.querySelector('[data-direct-team-form][data-action="add"]');
+-    if (!form || !models.length) return;
++    if (!form) return;
+     const model = models.find(candidate => candidate.model === form.elements.model.value);
+     const supported = model?.supportedReasoningEfforts?.some(option => option.reasoningEffort === form.elements.effort.value);
+     const submit = form.querySelector('[type="submit"]');
+@@ -2732,20 +2749,36 @@
+     if (!form) return;
+     event.preventDefault();
+     const action = form.dataset.action;
+-    if (!interactive) return;
++    if (!interactive || form.dataset.teamSubmitting) return;
++    if (action === "add") {
++      const selectedModel = models.find(model => model.model === form.elements.model.value);
++      if (!selectedModel?.supportedReasoningEfforts?.some(option => option.reasoningEffort === form.elements.effort.value)) {
++        updateAddMemberEligibility(); return;
++      }
++    }
+     const status = form.querySelector("[role=status]");
+     const controls = Array.from(form.querySelectorAll("button, input, select, textarea"));
+     const value = name => form.elements[name]?.value?.trim() || "";
+     const body = {action, model: value("model"), reasoningEffort: value("effort")};
+     if (action === "preset") body.preset = value("preset");
+-    if (action === "add") body.role = value("role");
++    if (action === "add") { body.role = value("role"); form.dataset.teamDirty = "true"; }
+     form.dataset.teamSubmitting = "true";
+     controls.forEach(control => { control.disabled = true; });
+     if (status) { status.textContent = "Saving team…"; status.hidden = false; }
+     try {
+       await directTeamRequest(body);
+       if (status) status.textContent = "Saved.";
+-      setTimeout(() => location.reload(), 250);
++      if (action === "add") {
++        // Keep the exact captured selection and its populated options for the
++        // next addition; a reload used to expose a transient default effort.
++        form.elements.role.value = body.role;
++        form.elements.model.value = body.model;
++        form.elements.effort.value = body.reasoningEffort;
++        delete form.dataset.teamSubmitting;
++        controls.forEach(control => { control.disabled = false; });
++        updateAddMemberEligibility();
++        void refreshSessionDetails();
++      } else setTimeout(() => location.reload(), 250);
+     } catch (error) {
+       delete form.dataset.teamSubmitting;
+       form.dataset.teamDirty = "true";
+@@ -3193,11 +3226,22 @@
+   const artifactPreview = document.getElementById("artifact-preview");
+   const artifactTitle = document.getElementById("artifact-title");
+   const artifactDownload = document.getElementById("artifact-download");
+-  let selectedArtifactPath = "";
++  const artifactCopy = document.getElementById("artifact-copy");
++  let selectedArtifactPath = "", artifactGeneration = 0, artifactRead = null, artifactText = null;
++  artifactCopy?.addEventListener("click", async () => {
++    if (artifactText === null) return;
++    const generation = artifactGeneration;
++    try { await navigator.clipboard.writeText(artifactText); if (generation === artifactGeneration) artifactCopy.title = "Content copied"; }
++    catch (_) { if (generation === artifactGeneration) artifactCopy.title = "Unable to copy content. Download the file instead."; }
++  });
+   const showArtifact = async (button) => {
+     const path = button.dataset.artifactPath;
+     if (!path || !artifactPreview) return;
+     selectedArtifactPath = path;
++    const generation = ++artifactGeneration;
++    artifactRead?.abort(); artifactRead = new AbortController();
++    artifactText = null;
++    if (artifactCopy) { artifactCopy.disabled = true; artifactCopy.title = "Copy content"; }
+     artifactButtons().forEach((candidate) => candidate.classList.toggle("active", candidate === button));
+     artifactTitle.textContent = button.dataset.artifactLabel || path;
+     artifactDownload.href = `/artifacts/${encodeURIComponent(slug)}/${path.split("/").map(encodeURIComponent).join("/")}`;
+@@ -3208,8 +3252,10 @@
+     loading.textContent = "Loading artifact…";
+     artifactPreview.append(loading);
+     try {
+-      const result = await client.artifactPreview(path);
+-      if (selectedArtifactPath !== path) return;
++      const result = await client.artifactPreview(path, {signal: artifactRead.signal});
++      if (generation !== artifactGeneration) return;
++      artifactText = typeof result.text === "string" && result.kind !== "image" ? result.text : null;
++      if (artifactCopy) artifactCopy.disabled = artifactText === null;
+       artifactPreview.replaceChildren();
+       if (result.kind === "markdown") {
+         artifactPreview.innerHTML = result.html || "";
+@@ -3225,7 +3271,7 @@
+         artifactPreview.append(pre);
+       }
+     } catch (error) {
+-      if (selectedArtifactPath !== path) return;
++      if (generation !== artifactGeneration) return;
+       const notice = document.createElement("p");
+       notice.className = "notice error";
+       notice.textContent = `Unable to preview artifact: ${error.message}`;
+@@ -3332,7 +3378,13 @@
+         lastRepositoriesHTML = payload.repositoriesHTML;
+       }
+       if (payload.artifactsHTML !== lastArtifactsHTML) {
++        const artifactScroll = artifactList.scrollTop;
++        const directoryState = new Map(Array.from(artifactList.querySelectorAll("[data-artifact-directory]"), node => [node.dataset.artifactDirectory, node.open]));
+         artifactList.innerHTML = payload.artifactsHTML;
++        artifactList.querySelectorAll("[data-artifact-directory]").forEach(node => {
++          if (directoryState.has(node.dataset.artifactDirectory)) node.open = directoryState.get(node.dataset.artifactDirectory);
++        });
++        artifactList.scrollTop = artifactScroll;
+         lastArtifactsHTML = payload.artifactsHTML;
+         const selected = artifactButtons().find((button) => button.dataset.artifactPath === selectedArtifactPath);
+         if (selected) {
+@@ -3340,6 +3392,8 @@
+           artifactTitle.textContent = selected.dataset.artifactLabel || selectedArtifactPath;
+         } else if (selectedArtifactPath) {
+           selectedArtifactPath = "";
++          ++artifactGeneration; artifactRead?.abort(); artifactText = null;
++          if (artifactCopy) artifactCopy.disabled = true;
+           artifactTitle.textContent = "Artifacts";
+           artifactDownload.hidden = true;
+           artifactPreview.textContent = "Choose an artifact to preview it.";
+@@ -3347,10 +3401,12 @@
+       }
+       if (teamGeneration === teamSettingsGeneration && typeof payload.teamHTML === "string" && payload.teamHTML !== lastTeamHTML) {
+         const teamStatus = document.getElementById("team-member-status");
+-        const editingTeam = teamStatus?.querySelector("[data-direct-team-form]:focus-within, [data-direct-team-form][data-team-dirty], [data-direct-team-form][data-team-submitting]");
++        const editingTeam = teamStatus?.querySelector('[data-direct-team-form]:not([data-action="add"]):focus-within, [data-direct-team-form]:not([data-action="add"])[data-team-dirty], [data-direct-team-form]:not([data-action="add"])[data-team-submitting]');
+         if (teamStatus && !editingTeam) {
+           const removedOpen = teamStatus.querySelector(".removed-members")?.open || false;
++          const addForm = teamStatus.querySelector('[data-direct-team-form][data-action="add"]');
+           teamStatus.innerHTML = payload.teamHTML;
++          if (addForm) teamStatus.querySelector('[data-direct-team-form][data-action="add"]')?.replaceWith(addForm);
+           lastTeamHTML = payload.teamHTML;
+           const removed = teamStatus.querySelector(".removed-members");
+           if (removed) removed.open = removedOpen;
+@@ -3689,7 +3745,7 @@
+     onChange: () => { if (optionalQuestionPanel) optionalQuestions.renderPinned(optionalQuestionPanel); },
+     onPanelEmpty: () => document.getElementById("message-form")?.elements.message.focus({preventScroll: true}),
+   });
+-  const transcriptViews = new Map(["all", "messages", "activity"].map((filter) => [filter, {
++  const transcriptViews = new Map(["all", "messages", "team", "activity"].map((filter) => [filter, {
+     disclosures: new Map(), follow: true, initialized: false, scrollTop: 0,
+   }]));
+   let planRenderGeneration = 0;
+@@ -3862,8 +3918,8 @@
+         dismiss.type = "button";
+         dismiss.className = "message-receipt-close";
+         dismiss.textContent = "×";
+-        dismiss.setAttribute("aria-label", "Dismiss message notification");
+-        dismiss.title = entry.state === "accepted" ? "Hide this notification" : "Hide this warning. The message may still be delivered.";
++        dismiss.setAttribute("aria-label", "Dismiss message");
++        dismiss.title = "Dismiss message";
+         dismiss.disabled = inFlightMessageIDs.has(entry.id);
+         dismiss.addEventListener("click", () => {
+           const current = pendingMessages.get(entry.id);
+@@ -4245,7 +4301,8 @@
+     if (time.title !== timestamp.title) time.title = timestamp.title;
+   };
+   const appendMessage = (entry, index, entries, disclosureStates) => {
+-    const kind = entry.kind === "userMessage" ? "user" : ["agentMessage", "reasoning", "plan"].includes(entry.kind) ? "agent" : entry.kind === "error" ? "error" : "event";
++    const presentation = transcriptEntryPresentation(entry);
++    const kind = presentation.kind;
+     const text = entry.displayText ?? entry.text ?? entry.summary ?? "Codex event";
+     const details = entry.details || "";
+     const html = entry.html || "";
+@@ -4279,6 +4336,10 @@
+     } else {
+       element.textContent = text;
+     }
++    if (presentation.team) {
++      const label = document.createElement("div"); label.className = "message-team-label";
++      label.textContent = presentation.label; element.prepend(label);
++    }
+     const questionControls = optionalQuestions?.inline(entry);
+     if (questionControls) element.append(questionControls);
+     if (entry.attachments?.length) element.append(conversationAssets.renderAttachments(entry.attachments, {onRemove: async (file) => {
+@@ -4446,8 +4507,7 @@
+     repairHistoryButton.hidden = !historyNoticeState.warning;
+     repairHistoryButton.disabled = Boolean(historyRead);
+     historyStatus.textContent = historyNoticeState.warning ? historyError :
+-      historyNoticeState.loading ? "Loading earlier messages…" :
+-        pagingUnavailable ? "Older history is unavailable on this server." : "";
++      historyNoticeState.loading ? "Loading earlier messages…" : "";
+     historyControls.hidden = !historyStatus.textContent && repairHistoryButton.hidden;
+   };
+   const observePageReceipts = (entries, threadID) => {
+@@ -4458,6 +4518,7 @@
+         if (!current || current.message !== receipt.message || current.state === "observed") continue;
+         pendingMessages.set(receipt.id, receipt);
+         storeSendAttempt(sendAttemptStorage, slug, threadID, receipt);
++        clearSubmissionFailure(submissionIdentity(threadID, receipt.id));
+       }
+       if (observed.length) renderMessageReceipts();
+       acknowledgeTranscriptMessages();
+@@ -5145,6 +5206,7 @@
+     // The original retry identity remains durable even when this metadata
+     // update fails. Keep the known acceptance visible for this page lifetime.
+     storeSendAttempt(sendAttemptStorage, slug, threadID, accepted);
++    clearSubmissionFailure(submissionIdentity(threadID, attempt.id));
+     renderMessageReceipts();
+   };
+ 
+@@ -5165,8 +5227,10 @@
+         composerUploads.clear();
+       }
+     } catch (error) {
+-      if (threadID === currentThreadId) markMessageOutcomeUnknown(id);
+-      alert(error.message);
++      if (threadID === currentThreadId) {
++        markMessageOutcomeUnknown(id);
++        if (!["accepted", "observed"].includes(pendingMessages.get(id)?.state)) showSubmissionFailure(error, submissionIdentity(threadID, id));
++      }
+     } finally {
+       inFlightMessageIDs.delete(id);
+       renderMessageReceipts();
+@@ -5199,6 +5263,22 @@
+     }
+   };
+ 
++  const submissionStatus = document.getElementById("message-submission-status");
++  const submissionIdentity = (threadID, id, action = "send") => ({conversationID, threadID, id, action});
++  let submissionFailure = null;
++  const clearSubmissionFailure = identity => {
++    if (!submissionFailure || !identity.id ||
++        ["conversationID", "threadID", "id", "action"].some(key => submissionFailure[key] !== identity[key])) return;
++    submissionFailure = null;
++    submissionStatus.hidden = true;
++    submissionStatus.textContent = "";
++  };
++  const showSubmissionFailure = (error, identity) => {
++    if (!submissionStatus || identity.conversationID !== conversationID || identity.threadID !== currentThreadId) return;
++    submissionFailure = {...identity};
++    submissionStatus.textContent = conversationAssets.submissionFailurePresentation?.(error).message || error.message || "Delivery could not be confirmed. Retry the original message to check its status.";
++    submissionStatus.hidden = false;
++  };
+   const form = document.getElementById("message-form");
+   if (form) {
+     const textarea = form.elements.message;
+@@ -5213,12 +5293,14 @@
+     let queueAttemptStorage = null;
+     try { queueAttemptStorage = globalThis.localStorage; } catch (_error) {}
+     const submitMessage = async (queue) => {
+-      if (!interactive || liveSettingsSaving) return;
++      if (!interactive || liveSettingsSaving || form.dataset.submitting) return;
+       const threadID = currentThreadId;
++      const action = queue ? "queue" : "send";
+       const message = textarea.value.trim();
+       if (!message && !composerUploads.count()) return;
+-      let attachments;
+-      try { attachments = composerUploads.ids(); } catch (error) { alert(error.message); return; }
++      let attachments, submittingAttemptID = null;
++      try { attachments = composerUploads.ids(); } catch (error) { showSubmissionFailure(error, submissionIdentity(threadID, null, action)); return; }
++      form.dataset.submitting = "true";
+       composerUploads.lock(true);
+       const controls = Array.from(form.querySelectorAll("button, input, select, textarea"));
+       controls.forEach((control) => { control.disabled = true; });
+@@ -5232,11 +5314,13 @@
+               throw new Error("Browser storage is unavailable; queued messages cannot be submitted safely.");
+             }
+           }
++          submittingAttemptID = attempt.id;
+           await client.queueMessage(message, attempt.id, attachments);
+           optionalQuestions?.ordinaryAccepted();
+           if (!deleteQueueAttempt(queueAttemptStorage, slug, currentThreadId, attempt.id)) {
+             throw new Error("The queued message was accepted, but its retry record could not be cleared.");
+           }
++          clearSubmissionFailure(submissionIdentity(threadID, attempt.id, action));
+         } else {
+           const queueAttempts = requireQueueAttempts(queueAttemptStorage, slug, currentThreadId);
+           if (queueAttempts.some((candidate) => candidate.message === message && sameAttemptAttachments(candidate.attachmentIds, attachments))) {
+@@ -5255,6 +5339,7 @@
+             }
+           }
+           const id = attempt.id;
++          submittingAttemptID = id;
+           if (inFlightMessageIDs.has(id)) throw new Error("This message is already being retried.");
+           inFlightMessageIDs.add(id);
+           pendingMessages.set(id, {...attempt, dismissed: false, state: attempt.state || "sending"});
+@@ -5278,14 +5363,12 @@
+         }
+         scheduleRefresh(0);
+       } catch (error) {
+-        for (const [id, entry] of pendingMessages) {
+-          if (threadID === currentThreadId && entry.state === "sending" && entry.message === message) {
+-            markMessageOutcomeUnknown(id);
+-          }
+-        }
+-        alert(error.message);
++        if (!queue && threadID === currentThreadId && submittingAttemptID) markMessageOutcomeUnknown(submittingAttemptID);
++        const knownReceipt = !queue && threadID === currentThreadId && ["accepted", "observed"].includes(pendingMessages.get(submittingAttemptID)?.state);
++        if (!knownReceipt) showSubmissionFailure(error, submissionIdentity(threadID, submittingAttemptID, action));
+       }
+       finally {
++        delete form.dataset.submitting;
+         controls.forEach((control) => { control.disabled = false; });
+         composerUploads.lock(false);
+         applyCurrentSettings();
+@@ -5317,13 +5400,15 @@
+     if (liveSettingsSaving) return;
+     const queuedSubmissionId = queueStart.dataset.queuedSubmissionId;
+     if (!queuedSubmissionId) return;
++    const identity = submissionIdentity(currentThreadId, queuedSubmissionId, "startQueue");
+     queueStartInFlight = true;
+     queueStart.disabled = true;
+     try {
+       await client.startQueue(queuedSubmissionId);
++      clearSubmissionFailure(identity);
+       followTranscript();
+     } catch (error) {
+-      alert(error.message);
++      showSubmissionFailure(error, identity);
+     } finally {
+       queueStartInFlight = false;
+       await refreshQueue(true);
+diff --git a/portal/internal/web/static/source-file.css b/portal/internal/web/static/source-file.css
+index 9eb48e0..ccd8bc8 100644
+--- a/portal/internal/web/static/source-file.css
++++ b/portal/internal/web/static/source-file.css
+@@ -13,3 +13,5 @@
+   .source-file-heading { flex-direction: column; gap: .5rem; }
+   #source-file-content .cm-editor { max-height: calc(100dvh - 17rem); }
+ }
++
++.source-file-actions { display: flex; align-items: center; gap: .4rem; flex-shrink: 0; }
+diff --git a/portal/internal/web/static/source-file.js b/portal/internal/web/static/source-file.js
+index 80d83f0..0de0124 100644
+--- a/portal/internal/web/static/source-file.js
++++ b/portal/internal/web/static/source-file.js
+@@ -27,6 +27,14 @@ export async function mountSourceFile(root) {
+   const title = document.getElementById("source-file-title");
+   const version = document.getElementById("source-file-version");
+   const copy = document.getElementById("source-file-copy");
++  const copyContent = document.getElementById("source-file-copy-content");
++  const download = document.getElementById("source-file-download");
++  let completeText = null;
++  copyContent?.addEventListener("click", async () => {
++    if (completeText === null) return;
++    try { await navigator.clipboard.writeText(completeText); announce("Content copied."); }
++    catch (_) { announce("Unable to copy the content. Download the file instead."); }
++  });
+   const announce = text => { notice.textContent = text; notice.hidden = !text; };
+   copy.addEventListener("click", async () => {
+     try {
+@@ -44,6 +52,7 @@ export async function mountSourceFile(root) {
+     title.textContent = file.repository ? `${file.repository}/${file.path}` : file.path;
+     document.title = `${title.textContent} · File`;
+     version.textContent = sourceFileVersion(file);
++    if (download) { download.href = `${api}/download${location.search}`; download.hidden = false; }
+     if (file.content.limited) {
+       announce(`Preview omitted: the file exceeds 512 KiB or 12,000 lines (${file.content.bytes.toLocaleString()} bytes).`);
+       return;
+@@ -52,6 +61,8 @@ export async function mountSourceFile(root) {
+       announce("This file cannot be displayed as UTF-8 text.");
+       return;
+     }
++    completeText = file.content.text;
++    if (copyContent) copyContent.disabled = typeof completeText !== "string";
+     const {createReviewEditor} = await import("/static/review-editor.js");
+     const editor = createReviewEditor({
+       parent: content, after: file.content.text, newPath: file.path, mode: "file", fileLabel: "Read-only file",
+diff --git a/portal/internal/web/static/style.css b/portal/internal/web/static/style.css
+index a66b7ef..ccfc409 100644
+--- a/portal/internal/web/static/style.css
++++ b/portal/internal/web/static/style.css
+@@ -231,10 +231,17 @@ dialog::backdrop { background: rgba(0, 0, 0, .72); }
+ .managed-team-form { margin: 1rem 0; }
+ .managed-team-form h3 { margin-top: 0; }
+ .artifacts-panel.active { display: grid; grid-template-columns: minmax(180px, 260px) minmax(0, 1fr); gap: 1.25rem; }
+-.artifact-list { display: grid; align-content: start; gap: .45rem; }
+-.artifact-list button { text-align: left; overflow-wrap: anywhere; }
+-.artifact-list button.active { border-color: var(--accent-2); background: #142b23; }
+-.artifact-view { min-width: 0; }
++.artifact-list { min-width: 0; overflow: auto; max-height: calc(100dvh - 13rem); padding: .25rem; }
++.artifact-list button { display: block; width: 100%; border: 0; border-radius: .25rem; padding: .25rem .4rem; text-align: left; font-size: .82rem; line-height: 1.35; background: transparent; }
++.artifact-list button span { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
++.artifact-list button.active { color: var(--accent-2); background: #142b23; }
++.artifact-directory > summary { font-size: .82rem; padding: .25rem 0; cursor: pointer; overflow-wrap: anywhere; }
++.artifact-directory > div { padding-left: .8rem; border-left: 1px solid var(--line); margin-left: .3rem; }
++.artifact-view { min-width: 0; max-height: calc(100dvh - 13rem); overflow: auto; }
++.artifact-view > .section-heading { position: sticky; top: 0; background: var(--panel); z-index: 1; padding: .25rem 0; gap: .5rem; }
++.artifact-view h2 { overflow-wrap: anywhere; }
++.artifact-actions { display: flex; gap: .35rem; flex-shrink: 0; }
++a.icon-button { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; }
+ .artifact-view img { display: block; max-width: 100%; height: auto; }
+ .document { line-height: 1.62; overflow-wrap: anywhere; }
+ .document pre { overflow-x: auto; padding: 1rem; background: #090d12; border-radius: 9px; }
+@@ -248,8 +255,8 @@ dialog::backdrop { background: rgba(0, 0, 0, .72); }
+ .chat-heading h2 { margin: 0; font-size: 1rem; }
+ .conversation-connection { flex: none; font-size: .8rem; margin: .5rem 0 0; }
+ .conversation-connection button { margin-left: .5rem; padding: .3rem .5rem; }
+-.transcript-history { position: relative; display: flex; flex: 1; min-width: 0; min-height: 0; }
+-.history-controls { position: absolute; z-index: 1; top: .2rem; left: 0; right: 0; display: flex; align-items: center; justify-content: center; gap: .65rem; padding: .45rem 0; color: var(--muted); font-size: .8rem; pointer-events: none; }
++.transcript-history { position: relative; display: flex; flex-direction: column; flex: 1; min-width: 0; min-height: 0; }
++.history-controls { position: static; flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: .65rem; padding: .45rem 0; color: var(--muted); font-size: .8rem; pointer-events: none; }
+ .history-controls[hidden], .lane-status[hidden] { display: none; }
+ .history-controls button { padding: .35rem .6rem; font-size: .8rem; pointer-events: auto; }
+ .lane-status { margin: .25rem 0; color: var(--warning); font-size: .8rem; }
+@@ -263,7 +270,7 @@ dialog::backdrop { background: rgba(0, 0, 0, .72); }
+ .chat-heading { display: flex; align-items: center; gap: .5rem; }
+ .chat-heading .transcript-filters { margin-left: .5rem; margin-right: 0; }
+ .transcript { flex: 1; overflow-y: auto; min-height: 0; padding: 1.2rem .3rem; overscroll-behavior: contain; overflow-anchor: none; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: .7rem; }
+-.transcript-history .transcript { padding-top: 3rem; }
++.transcript-history .transcript { padding-top: .5rem; }
+ .message p:first-child { margin-top: 0; }
+ .message p:last-child { margin-bottom: 0; }
+ .message pre { overflow-x: auto; white-space: pre-wrap; }
+@@ -444,6 +451,8 @@ dialog::backdrop { background: rgba(0, 0, 0, .72); }
+   .repo-grid, .session-grid { grid-template-columns: 1fr; }
+   .panel { padding: 1rem; }
+   .artifacts-panel.active { grid-template-columns: 1fr; }
++  .artifact-list { max-height: 35dvh; }
++  .artifact-view { max-height: none; overflow: visible; }
+ }
+ 
+ .compact-sidebar .workspace-shell { grid-template-columns: 58px minmax(0, 1fr); }
+@@ -548,3 +557,6 @@ button.icon-button:focus-visible { outline: 2px solid var(--accent); outline-off
+ .provider-operation details { font-size: .85rem; }
+ .provider-operation code { overflow-wrap: anywhere; white-space: normal; }
+ @media (max-width: 480px) { .provider-operation dl { grid-template-columns: 1fr; } .provider-operation dd { margin-bottom: .35rem; } }
++
++.message.team { background: #22223c; border-color: #8f83ce; color: var(--text); }
++.message-team-label { color: #c4b7ff; font-size: .75rem; font-weight: 600; margin-bottom: .4rem; }
+diff --git a/portal/internal/web/submission_loss_test.go b/portal/internal/web/submission_loss_test.go
+new file mode 100644
+index 0000000..fefb7cb
+--- /dev/null
++++ b/portal/internal/web/submission_loss_test.go
+@@ -0,0 +1,96 @@
++package web
++
++import (
++	"context"
++	"io"
++	"net/http"
++	"net/http/httptest"
++	"strings"
++	"sync"
++	"testing"
++
++	"github.com/aither64/codex-web/codex"
++)
++
++// The transport fixture retains the same native idempotency contract as Codex:
++// repeated identical IDs return a receipt; mismatched input refuses.
++type responseLossCodex struct {
++	*browserContractCodex
++	mu       sync.Mutex
++	receipts map[string]codex.SendReceipt
++}
++
++func (c *responseLossCodex) Send(ctx context.Context, thread, message, id, action string) (codex.SendReceipt, error) {
++	c.mu.Lock()
++	defer c.mu.Unlock()
++	if receipt, ok := c.receipts[id]; ok {
++		return receipt, nil
++	}
++	receipt, err := c.browserContractCodex.Send(ctx, thread, message, id, action)
++	if err == nil {
++		c.receipts[id] = receipt
++	}
++	return receipt, err
++}
++
++func TestPortalSendResponseLossAndHTTPRestartReconcileOriginalAttempt(t *testing.T) {
++	server := newTestServer(t)
++	defer server.Close()
++	prepareInteractiveConversation(t, server, "example")
++	controller := &browserContractCodex{transcript: codex.Transcript{ThreadID: "thread-1", Status: "idle", CollaborationMode: "default"}}
++	server.config.Codex = &responseLossCodex{browserContractCodex: controller, receipts: make(map[string]codex.SendReceipt)}
++	handler := server.Handler()
++	// Execute the actual handler and then lose its response on the wire. Native
++	// acceptance and the retained submission ledger survive the HTTP restart.
++	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++		recorder := httptest.NewRecorder()
++		handler.ServeHTTP(recorder, r)
++		if recorder.Code != http.StatusAccepted {
++			t.Errorf("initial handler: %d %s", recorder.Code, recorder.Body.String())
++		}
++		conn, _, err := w.(http.Hijacker).Hijack()
++		if err != nil {
++			t.Error(err)
++			return
++		}
++		_ = conn.Close()
++	}))
++	const body = `{"message":"Response-loss fixture","clientUserMessageId":"12c12a7b-1898-4d29-85b4-012345678901"}`
++	send := func(base string, retry bool) (*http.Response, error) {
++		content := body
++		if retry {
++			content = strings.TrimSuffix(content, "}") + `,"retry":true}`
++		}
++		request, err := http.NewRequest(http.MethodPost, base+"/api/sessions/example/message", strings.NewReader(content))
++		if err != nil {
++			t.Fatal(err)
++		}
++		request.Header.Set("Origin", server.config.BaseURL)
++		request.Header.Set("Content-Type", "application/json")
++		return http.DefaultClient.Do(request)
++	}
++	response, err := send(upstream.URL, false)
++	if err == nil {
++		response.Body.Close()
++		t.Fatal("fixture did not lose the response")
++	}
++	upstream.Close()
++	restarted := httptest.NewServer(handler)
++	defer restarted.Close()
++	for range 2 {
++		response, err = send(restarted.URL, true)
++		if err != nil {
++			t.Fatal(err)
++		}
++		data, readErr := io.ReadAll(response.Body)
++		response.Body.Close()
++		if readErr != nil || response.StatusCode != http.StatusAccepted || !strings.Contains(string(data), "12c12a7b-1898-4d29-85b4-012345678901") {
++			t.Fatalf("retry: %v %d %s", readErr, response.StatusCode, data)
++		}
++	}
++	controller.mu.Lock()
++	defer controller.mu.Unlock()
++	if controller.sendCount != 1 {
++		t.Fatalf("response loss created %d native turns", controller.sendCount)
++	}
++}
+diff --git a/portal/internal/web/submission_notice_contract_test.cjs b/portal/internal/web/submission_notice_contract_test.cjs
+new file mode 100644
+index 0000000..cab2bd9
+--- /dev/null
++++ b/portal/internal/web/submission_notice_contract_test.cjs
+@@ -0,0 +1,100 @@
++"use strict";
++const fs = require("node:fs"), vm = require("node:vm"), assert = require("node:assert/strict");
++const {createHash} = require("node:crypto");
++const helpers = require("./static/app.js");
++const source = fs.readFileSync("static/app.js", "utf8");
++const section = (start, end) => {
++  const a = source.indexOf(start), b = source.indexOf(end, a);
++  assert(a > 0 && b > a);
++  return source.slice(a, b);
++};
++const tick = () => new Promise(resolve => setImmediate(resolve));
++function fixture() {
++  let observation;
++  const status = {hidden:true, textContent:""}, records = new Map(), pendingMessages = new Map();
++  const form = {elements:{message:{value:"New draft"}}};
++  const uploads = {values:["new-upload"], ids() {return this.values;}, ready:()=>true, clear() {this.values=[];}};
++  const context = vm.createContext({
++    conversationID:"conversation", currentThreadId:"thread", slug:"session", interactive:true,
++    executionHeld:false, liveSettingsSaving:false, form, composerUploads:uploads, pendingMessages,
++    inFlightMessageIDs:new Set(), sendAttemptStorage:{}, pageReads:{paused:false}, transcriptEntries:[],
++    document:{getElementById:id=>id==="message-submission-status" ? status : form},
++    conversationAssets:{sameAttachments:(a=[],b=[])=>JSON.stringify(a)===JSON.stringify(b)},
++    optionalQuestions:{ordinaryAccepted(){}}, renderMessageReceipts(){}, scheduleRefresh(){},
++    storeSendAttempt:(_storage,_slug,thread,attempt)=>{if (thread==="thread") records.set(attempt.id,{...attempt}); return true;},
++    loadSendAttempts:()=>[...records.values()], deleteSendAttempt:(_storage,_slug,_thread,id)=>records.delete(id),
++    markTranscriptMessagesObserved:(...args)=>(observation=helpers.markTranscriptMessagesObserved(...args)),
++    sendAcknowledgementCandidates:helpers.sendAcknowledgementCandidates,
++    createTranscriptAcknowledgementScheduler:helpers.createTranscriptAcknowledgementScheduler,
++    client:{message:async()=>({steered:false}), acknowledgeMessages:async batch=>({acknowledgedClientUserMessageIds:batch.map(x=>x.clientUserMessageId)})},
++  });
++  vm.runInContext([
++    section('  const submissionStatus =', '  const form = document.getElementById("message-form");'),
++    section('  const markMessageOutcomeUnknown =', '  const recoverPlanAttempts ='),
++    section('  const acknowledgeTranscriptMessages =', '  const renderPlanActions ='),
++    section('  const observePageReceipts =', '  const renderThread ='),
++    'globalThis.test = {showSubmissionFailure, clearSubmissionFailure, submissionIdentity, acceptMessageReceipt, retryMessageReceipt, observePageReceipts};',
++  ].join("\n"), context);
++  const attempt = {id:"original", message:"Original message", state:"unknown", attachmentIds:["original-upload"]};
++  pendingMessages.set(attempt.id, {...attempt}); records.set(attempt.id, {...attempt});
++  const identity = context.test.submissionIdentity("thread", attempt.id);
++  const fail = () => context.test.showSubmissionFailure(new Error("Delivery could not be confirmed."), identity);
++  const entry = {kind:"userMessage",clientUserMessageId:attempt.id,text:"Canonical envelope",displayText:attempt.message,attachments:[{id:"original-upload"}],clientUserMessageDigest:createHash("sha256").update("Canonical envelope").digest("hex")};
++  const observe = async () => {
++    context.transcriptEntries=[entry]; context.test.observePageReceipts([entry],"thread");
++    await observation; await tick(); await tick();
++  };
++  return {context,status,records,pendingMessages,form,uploads,attempt,identity,fail,observe};
++}
++(async () => {
++  // A failed same-ID retry keeps both warning and durable recovery record.
++  let f=fixture(); f.fail();
++  f.context.client.message=async()=>{throw new Error("Still unresolved");};
++  await f.context.test.retryMessageReceipt(f.attempt.id);
++  assert(!f.status.hidden); assert.equal(f.pendingMessages.get(f.attempt.id).state,"unknown");
++  assert(f.records.has(f.attempt.id));
++  // Later success clears exactly that warning, preserving a different draft/upload.
++  const calls=[]; f.context.client.message=async(...args)=>{calls.push(args); return {};};
++  await f.context.test.retryMessageReceipt(f.attempt.id);
++  assert(f.status.hidden); assert.equal(f.status.textContent,"");
++  assert.equal(f.records.get(f.attempt.id).state,"accepted");
++  assert.equal(JSON.stringify(calls),JSON.stringify([[f.attempt.message,f.attempt.id,true,f.attempt.attachmentIds]]));
++  assert.equal(f.form.elements.message.value,"New draft"); assert.deepEqual(f.uploads.values,["new-upload"]);
++
++  // Unrelated conversation/thread/attempt/action confirmations cannot hide it.
++  f=fixture(); f.fail();
++  f.context.test.acceptMessageReceipt({...f.attempt,id:"other"},{},"thread");
++  f.context.test.acceptMessageReceipt(f.attempt,{},"other-thread");
++  f.context.test.clearSubmissionFailure({...f.identity,conversationID:"other-conversation"});
++  f.context.test.clearSubmissionFailure({...f.identity,action:"queue"});
++  assert(!f.status.hidden); assert(f.records.has(f.attempt.id));
++  assert.equal(f.records.get(f.attempt.id).state,"unknown");
++  f.context.test.showSubmissionFailure(new Error("Queue warning"),{...f.identity,action:"queue"});
++  f.context.test.acceptMessageReceipt(f.attempt,{});
++  assert.equal(f.status.textContent,"Queue warning"); assert(!f.status.hidden);
++
++  // Validated transcript proof clears the warning before acknowledgement;
++  // eventual acknowledgement retains a newer draft and different uploads.
++  f=fixture(); f.fail(); await f.observe();
++  assert(f.status.hidden); assert(!f.records.has(f.attempt.id));
++  assert.equal(f.form.elements.message.value,"New draft"); assert.deepEqual(f.uploads.values,["new-upload"]);
++
++  // Observation or acceptance before a lost retry response keeps precedence.
++  for (const proof of ["observed","accepted"]) {
++    f=fixture(); let reject;
++    f.context.client.message=()=>new Promise((_resolve,no)=>{reject=no;});
++    const pending=f.context.test.retryMessageReceipt(f.attempt.id);
++    if (proof==="observed") await f.observe();
++    else f.context.test.acceptMessageReceipt(f.attempt,{});
++    assert.equal(f.pendingMessages.get(f.attempt.id).state,proof);
++    reject(new Error("Late response loss")); await pending;
++    assert(f.status.hidden);
++    assert.equal(f.form.elements.message.value,"New draft"); assert.deepEqual(f.uploads.values,["new-upload"]);
++  }
++  // Equal text with changed uploads is still a different composer draft.
++  f=fixture(); f.form.elements.message.value=f.attempt.message; f.fail();
++  await f.context.test.retryMessageReceipt(f.attempt.id);
++  assert(f.status.hidden); assert.equal(f.form.elements.message.value,f.attempt.message);
++  assert.deepEqual(f.uploads.values,["new-upload"]);
++  console.log("Submission notices follow exact attempt proof and retain unrelated drafts/records.");
++})().catch(error=>{console.error(error);process.exitCode=1;});
+diff --git a/portal/internal/web/submission_notice_contract_test.go b/portal/internal/web/submission_notice_contract_test.go
+new file mode 100644
+index 0000000..444c883
+--- /dev/null
++++ b/portal/internal/web/submission_notice_contract_test.go
+@@ -0,0 +1,16 @@
++package web
++
++import (
++	"os/exec"
++	"testing"
++)
++
++func TestSubmissionNoticeFollowsOriginalAttempt(t *testing.T) {
++	node, err := exec.LookPath("node")
++	if err != nil {
++		t.Skip("node is required")
++	}
++	if output, err := exec.Command(node, "submission_notice_contract_test.cjs").CombinedOutput(); err != nil {
++		t.Fatalf("submission notice: %v\n%s", err, output)
++	}
++}
+diff --git a/portal/internal/web/team_add_contract_test.cjs b/portal/internal/web/team_add_contract_test.cjs
+new file mode 100644
+index 0000000..8f497a6
+--- /dev/null
++++ b/portal/internal/web/team_add_contract_test.cjs
+@@ -0,0 +1,36 @@
++"use strict";
++const fs = require("node:fs"), vm = require("node:vm"), assert = require("node:assert/strict");
++(async () => {
++  const source = fs.readFileSync("static/app.js", "utf8");
++  const start = source.indexOf('  document.addEventListener("submit", async (event) => {\n    const form = event.target.closest("[data-direct-team-form]");');
++  const end = source.indexOf('  document.addEventListener("change", (event) => {', start);
++  assert(start > 0 && end > start);
++  let submit, release, fail = false, requests = [], refreshes = 0;
++  const controls = [{disabled:false}], status = {}, form = {
++    dataset:{action:"add"}, elements:{role:{value:"implementer"}, model:{value:"model-1"}, effort:{value:"xhigh"}},
++    querySelector: () => status, querySelectorAll: () => controls,
++  };
++  const context = {interactive:true, models:[{model:"model-1", supportedReasoningEfforts:[{reasoningEffort:"xhigh"}]}],
++    document:{addEventListener: (type, callback) => {if (type === "submit") submit = callback;}},
++    updateAddMemberEligibility: () => {}, refreshSessionDetails: () => {refreshes++;},
++    directTeamRequest: async body => {requests.push({...body}); await new Promise(resolve => {release = resolve;}); if (fail) throw new Error("fixture failure");},
++    setTimeout: () => {throw new Error("Add must not reload/reset the form");},
++  };
++  vm.runInNewContext(source.slice(start, end), context);
++  const event = {target:{closest: () => form}, preventDefault(){}};
++  const pending = submit(event); await submit(event);
++  assert.equal(requests.length,1); assert(controls[0].disabled);
++  // A delayed response cannot retarget the already captured request.
++  form.elements.effort.value = "low";
++  release(); await pending;
++  assert.equal(requests[0].reasoningEffort,"xhigh"); assert.equal(form.elements.effort.value,"xhigh");
++  assert.equal(form.elements.model.value,"model-1"); assert.equal(form.elements.role.value,"implementer");
++  assert(!controls[0].disabled); assert.equal(refreshes,1);
++  const next = submit(event); release(); await next;
++  assert.equal(requests.length,2); assert.deepEqual(requests[1],requests[0]);
++  fail = true; const failure = submit(event); release(); await failure;
++  assert.equal(form.elements.effort.value,"xhigh"); assert.equal(status.textContent,"fixture failure");
++  assert(!controls[0].disabled); assert(!form.dataset.teamSubmitting);
++  form.elements.effort.value = "unsupported"; await submit(event); assert.equal(requests.length,3);
++  console.log("Add-member captured settings, duplicate submit and sequential/error retention passed.");
++})().catch(error => {console.error(error); process.exitCode=1;});
+diff --git a/portal/internal/web/team_add_contract_test.go b/portal/internal/web/team_add_contract_test.go
+new file mode 100644
+index 0000000..2e19728
+--- /dev/null
++++ b/portal/internal/web/team_add_contract_test.go
+@@ -0,0 +1,16 @@
++package web
++
++import (
++	"os/exec"
++	"testing"
++)
++
++func TestAddMemberCapturesAndRetainsSelection(t *testing.T) {
++	node, err := exec.LookPath("node")
++	if err != nil {
++		t.Skip("node is required")
++	}
++	if output, err := exec.Command(node, "team_add_contract_test.cjs").CombinedOutput(); err != nil {
++		t.Fatalf("add member: %v\n%s", err, output)
++	}
++}
+diff --git a/portal/internal/web/templates/details.html b/portal/internal/web/templates/details.html
+index 129c6d0..894eb4d 100644
+--- a/portal/internal/web/templates/details.html
++++ b/portal/internal/web/templates/details.html
+@@ -49,5 +49,9 @@
+ {{end}}
+ 
+ {{define "artifact-list"}}
+-          {{range .Artifacts}}<button type="button" class="artifact-select quiet" data-artifact-path="{{.Path}}" data-artifact-label="{{.Label}}">{{.Label}}</button>{{end}}
++ {{range artifactTree .Artifacts}}{{template "artifact-node" .}}{{end}}
++{{end}}
++{{define "artifact-node"}}
++ {{if .Artifact}}<button type="button" class="artifact-select quiet" data-artifact-path="{{.Artifact.Path}}" data-artifact-label="{{.Artifact.Label}}" title="{{.Artifact.Label}} · {{.Artifact.Path}}"><span>{{.Name}}</span></button>
++ {{else}}<details class="artifact-directory" data-artifact-directory="{{.Directory}}" open><summary title="{{.Directory}}">{{.Name}}</summary><div>{{range .Children}}{{template "artifact-node" .}}{{end}}</div></details>{{end}}
+ {{end}}
+diff --git a/portal/internal/web/templates/index.html b/portal/internal/web/templates/index.html
+index 378834c..86b6126 100644
+--- a/portal/internal/web/templates/index.html
++++ b/portal/internal/web/templates/index.html
+@@ -5,7 +5,7 @@
+   <meta charset="utf-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+   <title>Workspace</title>
+-  <link rel="stylesheet" href="/static/style.css?v=19">
++  <link rel="stylesheet" href="/static/style.css?v=20">
+   <link rel="stylesheet" href="/codex/assets/uploads.css?v=3">
+ </head>
+ <body data-index data-index-generated-at="{{.IndexGeneratedAt}}">
+@@ -98,7 +98,7 @@
+   <script src="/static/session-attention-store.js?v=3" defer></script>
+   <script src="/static/browser-notifications.js?v=5" defer></script>
+   <script src="/static/preparation.js?v=5" defer></script>
+-  <script src="/static/app.js?v=44" defer></script>
++  <script src="/static/app.js?v=50" defer></script>
+   <script src="/static/coordination.js?v=6" defer></script>
+ </body>
+ </html>
+diff --git a/portal/internal/web/templates/session.html b/portal/internal/web/templates/session.html
+index b01322c..6500816 100644
+--- a/portal/internal/web/templates/session.html
++++ b/portal/internal/web/templates/session.html
+@@ -101,6 +101,7 @@
+         <div class="chat-heading"><h2>Codex</h2><div id="transcript-filters" class="transcript-filters" role="tablist" aria-label="Conversation view">
+           <button type="button" class="quiet" role="tab" aria-selected="false" data-transcript-filter="all">All</button>
+           <button type="button" class="quiet active" role="tab" aria-selected="true" data-transcript-filter="messages">Messages</button>
++          <button type="button" class="quiet" role="tab" aria-selected="false" data-transcript-filter="team">Team</button>
+           <button type="button" class="quiet" role="tab" aria-selected="false" data-transcript-filter="activity">Activity</button>
+         </div><label class="member-selector"><span>Member</span><select id="codex-member"><option value="lead">lead</option>{{range .ReadyMembers}}<option value="{{.Address}}"{{if eq .Address $.SelectedMember}} selected{{end}}>{{.Address}}</option>{{end}}</select></label><span id="codex-status" class="badge">Connecting</span></div>
+         <div id="conversation-connection" class="notice warning conversation-connection" role="status" hidden></div>
+@@ -130,7 +131,8 @@
+         {{end}}
+         </div>
+         {{if and .Session.RecoveryReady (not .PendingLifecycle)}}
+-        <form id="message-form" class="chat-form">
++        <p id="message-submission-status" class="notice warning" role="status" hidden></p>
++          <form id="message-form" class="chat-form">
+           <textarea name="message" required rows="3" maxlength="{{.MaxMessageBytes}}" placeholder="Send a message or steer the current turn…"></textarea>
+           <div id="message-uploads"></div>
+           <div class="chat-actions"><div class="composer-actions"><span id="message-upload-controls"></span><button id="message-send" type="submit"{{if not .Session.Interactive}} disabled{{end}}>Send</button><button id="message-queue" type="button" class="quiet" hidden>Queue next</button><div id="codex-mode" class="mode-toggle" aria-label="Codex mode" hidden></div><span id="codex-mode-status" class="lane-status" role="status" hidden></span></div><div class="composer-controls"><div class="composer-settings"><span id="codex-settings-summary" class="settings-summary">Settings unavailable</span><button id="codex-settings-open" type="button" class="quiet icon-button" title="Edit Codex settings" aria-label="Edit Codex settings" aria-haspopup="dialog" aria-controls="codex-settings-dialog" disabled><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m15 5 4 4M4 20l4-1L20 7a2.8 2.8 0 0 0-4-4L4 15z"/></svg></button></div><button id="interrupt" type="button" class="danger"{{if or (not .Session.Interactive) .Session.ExecutionHeld}} disabled{{end}}>Interrupt</button></div></div>
+@@ -182,11 +184,11 @@
+       </section>
+ 
+       <section id="artifacts" class="tab-panel artifacts-panel" role="tabpanel" aria-labelledby="session-tab-artifacts">
+-        <div class="artifact-list" role="list" aria-label="Session artifacts">
++        <nav class="artifact-list" aria-label="Session artifacts">
+           {{template "artifact-list" .}}
+-        </div>
++        </nav>
+         <div class="artifact-view">
+-          <div class="section-heading"><h2 id="artifact-title">Artifacts</h2><a id="artifact-download" class="button-link" href="#" download hidden>Download</a></div>
++          <div class="section-heading"><h2 id="artifact-title">Artifacts</h2><div class="artifact-actions"><button id="artifact-copy" class="quiet icon-button" type="button" title="Copy content" aria-label="Copy content" disabled>⧉</button><a id="artifact-download" class="button-link icon-button" href="#" title="Download artifact" aria-label="Download artifact" download hidden>↓</a></div></div>
+           <div id="artifact-preview" class="document"><p class="empty">Choose an artifact to preview it.</p></div>
+         </div>
+       </section>
+@@ -258,7 +260,7 @@
+       <div class="dialog-actions"><button type="button" class="quiet" data-dialog-close>Cancel</button><button type="submit" class="danger">Delete session</button></div>
+     </form>
+   </dialog>
+-  <script src="/static/app.js?v=48" defer></script>
++  <script src="/static/app.js?v=50" defer></script>
+   <script src="/static/session-attention-store.js?v=3" defer></script>
+   <script src="/static/browser-notifications.js?v=5" defer></script>
+   <script src="/static/session-attention.js" defer></script>
+diff --git a/portal/internal/web/templates/source-file.html b/portal/internal/web/templates/source-file.html
+index 8473410..d9f1abc 100644
+--- a/portal/internal/web/templates/source-file.html
++++ b/portal/internal/web/templates/source-file.html
+@@ -6,10 +6,10 @@
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+   <meta name="style-nonce" content="{{.StyleNonce}}">
+   <title>File · {{.DisplayLabel}}</title>
+-  <link rel="stylesheet" href="/static/style.css?v=6">
++  <link rel="stylesheet" href="/static/style.css?v=20">
+   <link rel="stylesheet" href="/static/repository-review.css?v=3">
+-  <link rel="stylesheet" href="/static/source-file.css">
+-  <script type="module" src="/static/source-file.js"></script>
++  <link rel="stylesheet" href="/static/source-file.css?v=2">
++  <script type="module" src="/static/source-file.js?v=2"></script>
+ </head>
+ <body>
+   <main class="source-file-page">
+@@ -18,7 +18,11 @@
+     <section id="source-file"{{if .Session}} data-slug="{{.Session.Slug}}"{{end}}{{if .SourceFileAPI}} data-file-api="{{.SourceFileAPI}}"{{end}} aria-labelledby="source-file-title">
+       <header class="source-file-heading">
+         <div><h1 id="source-file-title">File</h1><p id="source-file-version" class="muted"></p></div>
+-        <button id="source-file-copy" type="button" class="quiet">Copy link</button>
++        <div class="source-file-actions">
++          <button id="source-file-copy" type="button" class="quiet">Copy link</button>
++          <button id="source-file-copy-content" type="button" class="quiet icon-button" title="Copy content" aria-label="Copy content" disabled>⧉</button>
++          <a id="source-file-download" class="button-link icon-button" title="Download file" aria-label="Download file" href="#" download hidden>↓</a>
++        </div>
+       </header>
+       <p id="source-file-notice" class="notice" role="status">Loading file…</p>
+       <div id="source-file-content"></div>
+diff --git a/portal/internal/web/workspace_source_files_test.go b/portal/internal/web/workspace_source_files_test.go
+index 5912753..d1c9f0d 100644
+--- a/portal/internal/web/workspace_source_files_test.go
++++ b/portal/internal/web/workspace_source_files_test.go
+@@ -1,7 +1,9 @@
+ package web
+ 
+ import (
++	"bytes"
+ 	"encoding/json"
++	"net/http"
+ 	"net/http/httptest"
+ 	"net/url"
+ 	"os"
+@@ -189,3 +191,24 @@ func TestWorkspaceSourceRequiresExactGitRoot(t *testing.T) {
+ 	runWebGit(t, "-C", parent, "add", "--", filepath.Join(filepath.Base(s.config.Workspace), "AGENTS.md"))
+ 	readWorkspaceSource(t, s, "AGENTS.md", 404)
+ }
++
++func TestWorkspaceDownloadUsesSharedEligibility(t *testing.T) {
++	s := newTestServer(t)
++	runWebGit(t, "-C", s.config.Workspace, "init")
++	raw := []byte{0, 255, 'x', '\r', '\n'}
++	if err := os.WriteFile(filepath.Join(s.config.Workspace, "source.bin"), raw, 0600); err != nil {
++		t.Fatal(err)
++	}
++	response := httptest.NewRecorder()
++	s.Handler().ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/api/workspace/file/download?path=source.bin", nil))
++	if response.Code != 200 || !bytes.Equal(response.Body.Bytes(), raw) {
++		t.Fatalf("shared bytes: %d %q", response.Code, response.Body.Bytes())
++	}
++	for _, path := range []string{"work/example/plan.md", "../escape", ".git/config"} {
++		response = httptest.NewRecorder()
++		s.Handler().ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/api/workspace/file/download?path="+url.QueryEscape(path), nil))
++		if response.Code != 400 {
++			t.Fatalf("unsafe shared path %s: %d", path, response.Code)
++		}
++	}
++}

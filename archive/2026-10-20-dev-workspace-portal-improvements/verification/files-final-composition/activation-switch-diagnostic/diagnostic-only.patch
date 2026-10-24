@@ -1,0 +1,45 @@
+--- original/activate.sh
++++ diagnostic-successor/activate.sh
+@@ -2,4 +2,4 @@
+ set -euo pipefail
+ # PREPARED ONLY. PARENT launches; a utility may observe status, never this driver.
+ cd /home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements
+-exec python3 /home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/files-final-composition/activation/activation-driver.py
++exec python3 /home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/files-final-composition/activation-switch-diagnostic/activation-driver.py
+--- original/smoke.sh
++++ diagnostic-successor/smoke.sh
+@@ -5,4 +5,4 @@
+ unset DEBUG PWDEBUG NODE_DEBUG
+ export NODE_PATH=/nix/store/fg778x0631ld4xd8fim2kbvxll5715xp-playwright-test-1.59.1/lib/node_modules
+ export PLAYWRIGHT_BROWSERS_PATH=/nix/store/f0rap655j6wmqbfvqdw445kwcxkxwf7n-playwright-browsers
+-exec timeout 180 /nix/store/l07gdbxylzfl8pbx9pxy6fyg95w4hjwy-nodejs-24.19.0/bin/node /home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/files-final-composition/activation/continuity-diagnostic.cjs "$@"
++exec timeout 180 /nix/store/l07gdbxylzfl8pbx9pxy6fyg95w4hjwy-nodejs-24.19.0/bin/node /home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/files-final-composition/activation-switch-diagnostic/continuity-diagnostic.cjs "$@"
+--- original/activation-driver.py
++++ diagnostic-successor/activation-driver.py
+@@ -189,12 +189,25 @@
+     save(operation / 'command.json', {'driverPID': os.getpid(), 'commandPID': process.pid, 'argv': argv,
+                                      'startedAt': time.time(), 'claim': CFG['claim']})
+     output_hash, output_bytes = hashlib.sha256(), 0
++    diagnostic_sample = bytearray()
+     for chunk in iter(lambda: process.stdout.read(65536), b''):
+         output_hash.update(chunk)
+         output_bytes += len(chunk)
++        diagnostic_sample.extend(chunk[:max(0, 16384 - len(diagnostic_sample))])
+     code = process.wait()
++    # Fixed markers only: raw command output stays in memory and is never emitted.
++    command_diagnostics = {
++        'unfinishedSessionOperation': b'workspace package transition is blocked by unfinished session operations: ' in diagnostic_sample,
++        'sessionOperationInspection': b'cannot inspect session operation state: ' in diagnostic_sample,
++        'sourceFingerprint': b'source fingerprint failed: ' in diagnostic_sample,
++        'nixBuildCommand': b'command failed: nix build --no-link --print-out-paths ' in diagnostic_sample,
++        'noSpace': b'No space left on device' in diagnostic_sample,
++        'sampleTruncated': output_bytes > len(diagnostic_sample),
++    }
++    diagnostic_sample.clear()
+     save(operation / 'switch-result.json', {'exitCode': code, 'elapsedSeconds': round(time.monotonic() - started, 3),
+-                                         'outputSha256': output_hash.hexdigest(), 'outputBytes': output_bytes, 'effects': effects()})
++                                         'outputSha256': output_hash.hexdigest(), 'outputBytes': output_bytes,
++                                         'commandDiagnostics': command_diagnostics, 'effects': effects()})
+     require(code == 0 and str(PROFILE.resolve(strict=True)) == CFG['candidate'])
+     require(not PENDING.exists() and not PENDING.is_symlink())
+     phase = 'after'

@@ -1,0 +1,4 @@
+- **Result:** Passed; exit code 0.
+- **Elapsed:** 30.23 seconds. Tested head: `483d4e7eafeda974dfe19de45687795562072d7d`.
+- **Logs/artifact:** [operation.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/files-runtime/operation.log), [operation.stderr](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/files-runtime/operation.stderr), [lifecycle.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/files-runtime/lifecycle.log), [browser.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/files-runtime/browser.log), [operation-result.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/files-runtime/operation-result.json).
+- No process remains running; no failure excerpt applies.

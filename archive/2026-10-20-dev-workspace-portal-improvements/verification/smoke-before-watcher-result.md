@@ -1,0 +1,5 @@
+- **Result:** Passed, exit 0.
+- **Revision:** `f8f2938b4e2cfd6e5b82657d08f014357817808f`
+- **Command:** `bash /home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/deployment-smoke-before.sh` — run once; elapsed 5.094 seconds.
+- **Evidence:** [before.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/deployment-smoke/before.log) and [before-result.txt](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/deployment-smoke/before-result.txt)
+- No operation remains running.

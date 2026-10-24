@@ -1,0 +1,148 @@
+diff --git a/docs/browser-notifications-operations.md b/docs/browser-notifications-operations.md
+index 1374aa6..52831c6 100644
+--- a/docs/browser-notifications-operations.md
++++ b/docs/browser-notifications-operations.md
+@@ -69,6 +69,25 @@ attention and reservation markers intact. If cleanup is incomplete, use
+ **Notification settings** to retry Disable. The menu shows a brief notice and a
+ mixed checkbox.
+ 
++Browser Disable commits its durable off gate before server cleanup or local
++unsubscribe. Provider-queued pushes carry their registration ID and are dropped
++by a capable worker while off or after a fresh activation replaces that ID.
++Disable does not queue events for replay. A new Enable accepts only future events;
++continuous idempotent registration preserves its current ID and pending outbox.
++Gate-storage failure still permits cleanup but cannot confirm durable blocking.
++
++The existing version-1 IndexedDB store has a reserved gate containing `identity`,
++`enabled`, `actionToken`, `registrationId` and the fixed `at` retention rank.
++Its transaction-commit compare-and-set and origin-scoped Web Lock fence delayed
++Enable/Disable results and destructive side effects across updated tabs. The
++server's GET and the actual controlling worker advertise `deliveryEpoch: 1`.
++Only after that server capability is known does fresh registration send
++`requireFresh: true`; an existing endpoint returns HTTP 409 instead of adopting
++its ID. Enable performs bounded cleanup and retries once. Old strict JSON
++decoders never receive this optional precondition from updated controls.
++Unsupported server/controller/storage/locking leaves setup incomplete. Preserve
++the gate during forward recovery; deleting it would discard the off fence.
++
+ The browser-local **Play sound** setting uses the existing attention database.
+ Checked leaves `silent` out of the display options; unchecked sets
+ `silent: true` for Test, session and fallback notifications. Storage reads and
+@@ -142,7 +161,9 @@ To disable delivery without stopping sessions, create the owner-only file
+ running sender notices it on its next two-second pass, cancels unsent work and
+ retains keys, registrations and preferences. Settings reports that delivery is
+ disabled. Remove that marker to recover; events observed while disabled do not
+-replay. A push already accepted by its provider may still display.
++replay. A push already accepted by its provider may still display under this
++server-only marker; it does not change a browser's local gate. Use browser Disable
++for the browser's permanent old-epoch drop policy.
+ 
+ For a package defect, use a corrected successor package through the supported
+ forward-only workspace selection policy. Keep private state and version-1
+diff --git a/docs/browser-notifications.md b/docs/browser-notifications.md
+index 36bde94..8aa0125 100644
+--- a/docs/browser-notifications.md
++++ b/docs/browser-notifications.md
+@@ -52,7 +52,10 @@ changing a subscription. Changing **Notifications** uses the same Enable or
+ Disable action as the full panel. Disabling applies across sessions in this
+ browser, while title attention and reservation markers keep updating. Per-session
+ notification settings remain unchanged and apply again after browser Enable.
+-A provider-accepted message may still arrive after Disable.
++Events from the disabled period are dropped permanently. Enabling again starts
++delivery for future events; it does not replay a backlog. A push already accepted
++by the provider may still reach the worker, which drops its old registration
++epoch even after notifications are enabled again.
+ 
+ The **Sound** checkbox in the menu controls the same setting as **Play sound** in
+ settings. It applies to notifications from this portal in the current browser
+@@ -94,7 +97,8 @@ Only older test entries for the same browser registration are closed. Session
+ notification tags and acknowledgement are unchanged.
+ 
+ **Disable on this browser**
+-removes the server registration and unsubscribes locally. It leaves the browser's
++first saves a browser-local off gate, then removes the server registration and
++unsubscribes locally. It leaves the browser's
+ site permission unchanged. The two removals are independent: server failure does
+ not prevent local unsubscribe. If server cleanup remains uncertain, the browser
+ keeps a small deletion selector for an explicit Disable retry, including after
+@@ -105,8 +109,19 @@ Finish pending cleanup before enabling again. Fully disabled means those
+ removals and local absence are confirmed. A lost registration response or saved ID
+ reports incomplete setup; Disable uses the endpoint digest without registering
+ the subscription again.
++If the off gate cannot be saved, cleanup still runs, but Disable remains
++incomplete and retryable. It cannot certify that delayed pushes will be blocked.
+ Denied permission requires a change in the browser's site settings.
+ 
++Enable requires support from the server, the worker actually controlling this
++page, and the browser's Web Locks API. An unconfirmed update or unsupported
++component leaves setup incomplete. Reloading checks again; it does not bypass
++these requirements. Updated tabs serialize subscription and cleanup actions.
++A durable action token prevents an older completion from saving a registration,
++changing the current controls or unsubscribing a newer setup. Fresh activation
++requires an absent server endpoint and a new registration ID. Repeating Enable
++while the same registration remains enabled preserves its ID and pending delivery.
++
+ The browser must support service workers, Notifications and the Push API in a
+ trusted secure context. Firefox and Chrome/Chromium use Web Push to wake the
+ worker with every portal tab closed while the browser is running. Some Chromium
+@@ -145,8 +160,11 @@ up to six attempts within the original expiry. HTTP 404/410 retires the
+ subscription. Permanent provider failures appear in browser Settings. Provider
+ Topic and notification tag coalesce messages for the same session.
+ 
+-The worker attempts to display a visible notification for every delivered push. A
+-bounded authenticated status read verifies its current meaning. Expired,
++The worker checks the browser-local gate before processing a push and again
++immediately before display, after status and sound reads. Managed off, missing
++registration epoch and wrong registration epoch deliveries are dropped without
++a popup or neutral fallback. Gate-storage errors also prevent display. A bounded
++authenticated status read verifies the meaning of a current enabled delivery. Expired,
+ resolved, muted, superseded, acknowledged or unverifiable delivery uses
+ **Session update available**. A missing or inaccessible session uses
+ **Workspace update** without session details. IndexedDB prevents an older
+@@ -160,14 +178,27 @@ database upgrade. These optional fields contain event IDs, revisions, expiry,
+ fixed stage names and an allowlisted browser error category. They contain no
+ endpoint, subscription key, provider response or notification payload. Older
+ clients or workers leave the new result unknown. Local diagnostic storage
+-failure does not prevent the worker from attempting display. The same database
++failure does not prevent display when the delivery gate can still be read. The same database
+ also holds one browser sound preference, separately from the 512 attention and
+ test records. It uses the existing version-1 object store without a database
+ upgrade or a server-side preference. A fixed retention rank, rather than a
+ timestamp, protects this preference from pruning by already-open older pages.
+ 
+-Once accepted by a provider, a message cannot reliably be recalled. A mute or
+-focus race can still produce a visible neutral notification. Clicking a session
++The same object store holds one reserved delivery gate with `enabled`,
++`actionToken` and `registrationId`. Its fixed retention rank protects it from
++pruning; ordinary attention writes cannot replace it. Bounded transactions wait
++for commit and compare the action token before enabling a registration. No
++database upgrade is needed. An installation without a gate retains legacy
++delivery behavior until its first explicit updated Enable or Disable action.
++Once managed, missing or unreadable gate state never silently restores legacy
++delivery during an in-progress attempt.
++
++Once accepted by a provider, a message cannot reliably be recalled. Browser
++Disable drops its old epoch in the capable worker. A mute or focus race within
++the current enabled epoch can still produce a visible neutral notification.
++An already-started display or shown OS notification cannot be recalled. The
++browser's required `userVisibleOnly: true` subscription can have vendor behavior
++outside the application's display calls. Clicking a session
+ notification closes it and focuses an existing tab for the same portal and
+ session, without reloading it, changing its member or section, or losing its
+ unsent draft. If several tabs match,
+@@ -178,8 +209,13 @@ not open a duplicate tab. The click itself does not acknowledge attention;
+ normal visible, focused observation keeps its session identity checks.
+ 
+ The worker caches no portal page or API response. The root worker route retains
+-compatible version-1 payload handling across updates. Old clients ignore the
+-feature. Newly captured requests with `browserNotificationsEnabled` need the
++compatible version-1 payload handling across updates. `registrationId` is an
++additive transport field, including Test; it does not change global attention
++identity or persisted server events. Old workers and loaded controls cannot
++provide the disabled-period drop guarantee. Use updated controls and confirm
++their actual controller before enabling. Keep delivery off and recover forward
++with capable assets if an older worker cannot honor the gate.
++Newly captured requests with `browserNotificationsEnabled` need the
+ capable bundled session helper; predecessor helpers refuse that added receipt
+ field. Existing receipts with the field omitted remain supported. The
+ forward-only package and creation-transition fence keeps portal and helper

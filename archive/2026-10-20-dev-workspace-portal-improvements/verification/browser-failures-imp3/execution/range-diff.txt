@@ -1,0 +1,57 @@
+ 1:  4a2fadd =  1:  4a2fadd deps: update shared conversation presentation helpers
+ 2:  db1e91e =  2:  db1e91e team: project full-team names from actual implementer counts
+ 3:  b006196 =  3:  b006196 portal: add authorized file downloads and source copy actions
+ 4:  5416942 =  4:  5416942 portal: keep large artifact catalogs compact and stable
+ 5:  7d9392e =  5:  7d9392e portal: publish session membership before optional enrichment
+ 6:  5a764b2 =  6:  5a764b2 portal: retain member settings through sequential additions
+ 7:  66fe576 =  7:  66fe576 portal: present team messages and decorated Markdown
+ 8:  2366b1b !  8:  fdd6f77 portal: show delivery recovery beside the composer
+    @@ docs/workspace-portal.md: receipt. **Retry original** retries the receipt's save
+      
+      Successful legacy history fallback is silent. History notices and manual retry
+     
+    + ## portal/internal/web/optional_questions_browser_test.cjs ##
+    +@@ portal/internal/web/optional_questions_browser_test.cjs: const digest = text => createHash("sha256").update(text).digest("hex");
+    +     await page.locator("#message-form").evaluate(form => form.requestSubmit());
+    +     const receipt = page.locator(".message-receipt").filter({hasText: "Ordinary follow-up"});
+    +     await expect(receipt).toContainText("Sent to Codex");
+    +-    await expect(receipt.getByRole("button", {name: "Dismiss message notification"})).toHaveText("×");
+    ++    await expect(receipt.getByRole("button", {name: "Dismiss message", exact: true})).toHaveText("×");
+    +     thread.entries.push(ordinaryReply); await refresh();
+    +     await expect(receipt).toHaveCount(0);
+    +     await expect(page.locator("#codex-status")).toHaveText("active");
+    +
+      ## portal/internal/web/portal_improvements_browser_test.cjs ##
+     @@ portal/internal/web/portal_improvements_browser_test.cjs: const fs = require("node:fs/promises");
+          page.on("pageerror", error => errors.push(error.message));
+    @@ portal/internal/web/portal_improvements_browser_test.cjs: const fs = require("no
+          await expect(page.locator('[data-artifact-path]')).toHaveCount(500);
+          const bottom = page.locator('[data-artifact-path="reports/deep/499.md"]');
+     
+    + ## portal/internal/web/recovery_display_browser_test.cjs ##
+    +@@ portal/internal/web/recovery_display_browser_test.cjs: const baseURL = process.argv[2];
+    +         window.restoreStorage = Storage.prototype.setItem;
+    +         Storage.prototype.setItem = () => { throw new Error("Storage unavailable"); };
+    +       });
+    +-      await receipt("Attachment retry").getByRole("button", {name: "Dismiss message notification", exact: true}).click();
+    ++      await receipt("Attachment retry").getByRole("button", {name: "Dismiss message", exact: true}).click();
+    +       await expect(receipt("Attachment retry")).toBeVisible();
+    +       await page.evaluate(() => { Storage.prototype.setItem = window.restoreStorage; });
+    +-      await receipt("Attachment retry").getByRole("button", {name: "Dismiss message notification", exact: true}).click();
+    ++      await receipt("Attachment retry").getByRole("button", {name: "Dismiss message", exact: true}).click();
+    +       await expect(receipt("Attachment retry")).toHaveCount(0);
+    +       assert.equal(await page.evaluate(savedID => JSON.parse(sessionStorage.getItem(
+    +         `workspace-portal.send-attempt.example.thread-1.${savedID}`,
+    +
+      ## portal/internal/web/static/app.js ##
+     @@
+          return;
+ 9:  d104c1d =  9:  047ea90 portal: browse eligible session files in a lazy tree
+10:  fe89ed6 = 10:  8456880 portal: retire paused read cycles and recover on tab resume
+11:  36f081f = 11:  567686d coordination: derive claims from registered repository identities
+12:  0223677 = 12:  90da5cb portal: measure read stages without logging session content
+13:  96bd793 = 13:  6455204 test: prepare ordinary Firefox acceptance across fifty native tabs
+14:  9077902 = 14:  ed89acc notifications: drop deliveries from disabled browser epochs
+15:  1afddaf = 15:  14a2415 coordination: retain deployed machines through explicit user release
+16:  bf477e4 = 16:  8e971a8 test: match session-scoped model catalogs in settings fixture
+ -:  ------- > 17:  965aadc test: intercept session-scoped limits in usability fixture

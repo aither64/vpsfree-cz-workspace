@@ -1,0 +1,5 @@
+- Result: **passed** (exit 0).
+- Revision: `f8f2938b4e2cfd6e5b82657d08f014357817808f` (the requested revision).
+- Ran the specified browser wrapper once; elapsed time: 16.755310 seconds.
+- Full output: [final-browser.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/final-browser.log). Exit status and elapsed time: [final-browser-result.txt](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/final-browser-result.txt).
+- Evidence: `TestQuestionBrowser` and its browser test passed. No operation remains running.

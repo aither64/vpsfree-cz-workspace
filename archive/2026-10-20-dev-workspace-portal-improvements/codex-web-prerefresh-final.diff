@@ -1,0 +1,694 @@
+diff --git a/codex/client.go b/codex/client.go
+index a1fe681..a403380 100644
+--- a/codex/client.go
++++ b/codex/client.go
+@@ -191,24 +191,33 @@ type TranscriptPage struct {
+ }
+ 
+ type TranscriptEntry struct {
+-	Delivery                string               `json:"delivery,omitempty"`
+-	Questions               []AsyncQuestion      `json:"questions,omitempty"`
+-	QuestionReplies         []AsyncQuestionReply `json:"questionReplies,omitempty"`
+-	DisplayText             *string              `json:"displayText,omitempty"`
+-	Attachments             []Attachment         `json:"attachments,omitempty"`
+-	TurnID                  string               `json:"turnId,omitempty"`
+-	TurnStatus              string               `json:"turnStatus,omitempty"`
+-	ItemID                  string               `json:"itemId,omitempty"`
+-	ClientUserMessageID     string               `json:"clientUserMessageId,omitempty"`
+-	ClientUserMessageDigest string               `json:"clientUserMessageDigest,omitempty"`
+-	Kind                    string               `json:"kind"`
+-	Summary                 string               `json:"summary,omitempty"`
+-	Text                    string               `json:"text,omitempty"`
+-	HTML                    string               `json:"html,omitempty"`
+-	Details                 string               `json:"details,omitempty"`
+-	Timestamp               string               `json:"timestamp,omitempty"`
+-	TimestampApproximate    bool                 `json:"timestampApproximate,omitempty"`
+-	Activity                *TranscriptActivity  `json:"activity,omitempty"`
++	Communication           *TranscriptCommunication `json:"communication,omitempty"`
++	Delivery                string                   `json:"delivery,omitempty"`
++	Questions               []AsyncQuestion          `json:"questions,omitempty"`
++	QuestionReplies         []AsyncQuestionReply     `json:"questionReplies,omitempty"`
++	DisplayText             *string                  `json:"displayText,omitempty"`
++	Attachments             []Attachment             `json:"attachments,omitempty"`
++	TurnID                  string                   `json:"turnId,omitempty"`
++	TurnStatus              string                   `json:"turnStatus,omitempty"`
++	ItemID                  string                   `json:"itemId,omitempty"`
++	ClientUserMessageID     string                   `json:"clientUserMessageId,omitempty"`
++	ClientUserMessageDigest string                   `json:"clientUserMessageDigest,omitempty"`
++	Kind                    string                   `json:"kind"`
++	Summary                 string                   `json:"summary,omitempty"`
++	Text                    string                   `json:"text,omitempty"`
++	HTML                    string                   `json:"html,omitempty"`
++	Details                 string                   `json:"details,omitempty"`
++	Timestamp               string                   `json:"timestamp,omitempty"`
++	TimestampApproximate    bool                     `json:"timestampApproximate,omitempty"`
++	Activity                *TranscriptActivity      `json:"activity,omitempty"`
++}
++
++// TranscriptCommunication is an application-owned presentation hint. It does
++// not authenticate a sender or authorize access to another conversation.
++type TranscriptCommunication struct {
++	Kind string `json:"kind"`
++	From string `json:"from,omitempty"`
++	To   string `json:"to,omitempty"`
+ }
+ 
+ type SendReceipt struct {
+diff --git a/conversation/assets/conversation.css b/conversation/assets/conversation.css
+index 47d673e..9708123 100644
+--- a/conversation/assets/conversation.css
++++ b/conversation/assets/conversation.css
+@@ -27,6 +27,9 @@
+ .codex-connection-status { border: 1px solid #bf8700; padding: .75rem; margin: .5rem 0; }
+ .codex-connection-status button { margin-left: .5rem; }
+ .codex-history-controls { display: flex; align-items: center; gap: .65rem; margin: .5rem 0; font-size: .85rem; }
++.codex-conversation-filter { margin-block: .5rem; font: inherit; font-size: .85rem; }
++.codex-submission-status { margin: .25rem 0; color: #bf8700; overflow-wrap: anywhere; }
++.codex-submission-status[hidden] { display: none; }
+ .codex-history-controls[hidden], .codex-lane-status[hidden] { display: none; }
+ .codex-history-controls button[hidden], .codex-lane-status button[hidden] { display: none; }
+ .codex-lane-status { margin: .4rem 0; color: #bf8700; font-size: .85rem; }
+@@ -55,6 +58,14 @@
+   white-space: pre-wrap;
+ }
+ 
++.codex-entry-team {
++  border-color: light-dark(#7952b3, #bc9aee);
++  background: light-dark(#f5effd, #241c32);
++}
++.codex-entry-team .codex-entry-header { color: light-dark(#633a9a, #cfafff); }
++.codex-entry-markdown { overflow-wrap: anywhere; }
++.codex-entry-markdown > :first-child { margin-top: .5rem; }
++
+ .codex-entry-footer {
+   display: flex;
+   justify-content: flex-end;
+diff --git a/conversation/assets/conversation.js b/conversation/assets/conversation.js
+index 553b702..084b14b 100644
+--- a/conversation/assets/conversation.js
++++ b/conversation/assets/conversation.js
+@@ -66,6 +66,44 @@ function createElement(name, attributes = {}, text = "") {
+   return element;
+ }
+ 
++// Host-supplied communication metadata affects presentation only. Never infer
++// identity or authorization from a message's text or its display label.
++export function transcriptEntryPresentation(entry) {
++  if (entry?.kind === "error") return {kind: "error", label: "Error", team: false};
++  const communication = entry?.communication;
++  if (communication && typeof communication === "object" && !Array.isArray(communication) &&
++      communication.kind === "team") {
++    const from = typeof communication.from === "string" ? communication.from : "";
++    const to = typeof communication.to === "string" ? communication.to : "";
++    const label = from && to ? `${from} → ${to}` : from ? `Team · ${from}` : to ? `Team → ${to}` : "Team";
++    return {kind: "team", label, team: true};
++  }
++  if (entry?.kind === "userMessage") return {kind: "user", label: "You", team: false};
++  if (["agentMessage", "reasoning", "plan"].includes(entry?.kind)) {
++    return {kind: "agent", label: entry.kind === "reasoning" ? "Reasoning" : entry.kind === "plan" ? "Plan" : "Codex", team: false};
++  }
++  return {kind: "event", label: entry?.kind || "Activity", team: false};
++}
++
++export function transcriptEntryVisible(entry, filter = "all") {
++  const presentation = transcriptEntryPresentation(entry);
++  if (presentation.kind === "error") return true;
++  if (filter === "team") return presentation.team;
++  if (filter === "messages") return !presentation.team && ["user", "agent"].includes(presentation.kind);
++  if (filter === "activity") return !presentation.team && presentation.kind === "event";
++  return true;
++}
++
++// This is display text, never a delivery decision or an instruction to clear
++// receipts. Only an explicit server refusal establishes a definitely unsent input.
++export function submissionFailurePresentation(error) {
++  const uncertain = error?.notSent !== true;
++  const detail = typeof error?.message === "string" ? error.message.trim().slice(0, 512) : "";
++  const guidance = uncertain ? "Delivery could not be confirmed. Retry the original submission to check its status." :
++    "The message was not sent. Try again.";
++  return {message: detail ? `${detail} ${guidance}` : guidance, uncertain};
++}
++
+ // Shared typed activity body. Thread identities are text only: a transcript
+ // event cannot grant navigation to another conversation. URL schemes and
+ // credentials are checked again at the browser boundary.
+@@ -869,6 +907,11 @@ export function mountConversation(root, options) {
+   const status = createElement("span", {class: "codex-conversation-status"}, labels.reconnecting);
+   const connectionStatus = createElement("div", {class: "codex-connection-status"});
+   const transcript = createElement("ol", {class: "codex-conversation-transcript"});
++  const filter = createElement("select", {class: "codex-conversation-filter", "aria-label": "Transcript filter"});
++  for (const [value, label] of [["all", "All"], ["messages", "Messages"], ["team", "Team"], ["activity", "Activity"]]) {
++    filter.append(createElement("option", {value}, label));
++  }
++  filter.value = "all";
+   const historyControls = createElement("div", {class: "codex-history-controls"});
+   const loadOlder = createElement("button", {type: "button"}, "Load older");
+   const retryHistory = createElement("button", {type: "button"}, "Retry history");
+@@ -899,7 +942,9 @@ export function mountConversation(root, options) {
+   if (capabilities.queue) actions.append(queueButton);
+   if (capabilities.interrupt) actions.append(interrupt);
+   const form = createElement("form", {class: "codex-conversation-form"});
+-  form.append(textarea, actions);
++  const submissionStatus = createElement("p", {class: "codex-submission-status", role: "status"});
++  submissionStatus.hidden = true;
++  form.append(textarea, actions, submissionStatus);
+   const policy = {...refreshPolicy, ...options?.refreshPolicy};
+   const settingsBar = createElement("div", {class: "codex-conversation-settings"});
+   const settingsSummary = createElement("span", {}, "Settings unavailable");
+@@ -925,7 +970,7 @@ export function mountConversation(root, options) {
+   settingsDialog.append(settingsForm);
+   const children = [status, connectionStatus];
+   if (capabilities.settings) children.push(settingsBar, settingsDialog);
+-  children.push(historyControls, transcript);
++  children.push(filter, historyControls, transcript);
+   if (capabilities.pending) children.push(pendingStatus, prompts);
+   const dock = createElement("div", {class: "codex-conversation-dock"});
+   dock.append(optionalQuestions);
+@@ -1116,8 +1161,7 @@ export function mountConversation(root, options) {
+     retryHistory.hidden = !historyNoticeState.warning;
+     retryHistory.disabled = Boolean(historyRead);
+     historyStatus.textContent = historyNoticeState.warning ? historyError :
+-      historyNoticeState.loading ? "Loading earlier messages…" :
+-        legacy ? "Older history is unavailable on this server." : "";
++      historyRead?.kind === "older" && historyNoticeState.loading ? "Loading earlier messages…" : "";
+     historyControls.hidden = !older && !historyStatus.textContent && retryHistory.hidden;
+   };
+   const laneRead = (timeout) => {
+@@ -1128,12 +1172,18 @@ export function mountConversation(root, options) {
+   };
+   const entryElement = (entry) => {
+     const timestamp = formatTranscriptTimestamp(entry);
+-    const item = createElement("li", {class: "codex-entry codex-entry-" + (entry.kind || "unknown")});
+-    const heading = entry.kind === "userMessage" ? "You" : entry.kind === "agentMessage" ? "Codex" : entry.kind;
++    const presentation = transcriptEntryPresentation(entry);
++    const item = createElement("li", {class: "codex-entry codex-entry-" + (presentation.team ? "team" : entry.kind || "unknown")});
+     const header = createElement("div", {class: "codex-entry-header"});
+-    header.append(createElement("strong", {}, heading || "Activity"));
++    header.append(createElement("strong", {}, presentation.label));
+     item.append(header);
+-    item.append(createTranscriptActivity(entry) || createElement("pre", {}, entry.displayText ?? entry.text ?? entry.summary ?? entry.details ?? ""));
++    let body = createTranscriptActivity(entry);
++    if (!body && ["user", "agent", "team"].includes(presentation.kind) && typeof entry.html === "string") {
++      body = createElement("div", {class: "codex-entry-markdown"});
++      // HTML is generated and sanitized by the trusted host presentation hook.
++      body.innerHTML = entry.html;
++    }
++    item.append(body || createElement("pre", {}, entry.displayText ?? entry.text ?? entry.summary ?? entry.details ?? ""));
+     const questionControls = questions.inline(entry);
+     if (questionControls) item.append(questionControls);
+     if (entry.attachments?.length) item.append(renderAttachments(entry.attachments, {onRemove: removeAttachment}));
+@@ -1157,6 +1207,19 @@ export function mountConversation(root, options) {
+     const nextNodes = new Map(), desired = [];
+     let previousDate = "", dateOccurrence = 0;
+     for (const row of history.rows) {
++      let item = entryNodes.get(row.key);
++      if (!item || changed.has(row.key)) {
++        const replacement = entryElement(row.entry);
++        const oldDetails = item?.querySelectorAll?.("details") || [];
++        const newDetails = replacement.querySelectorAll?.("details") || [];
++        for (let index = 0; index < Math.min(oldDetails.length, newDetails.length); index += 1) {
++          newDetails[index].open = oldDetails[index].open;
++        }
++        item = replacement;
++      }
++      // Keep excluded nodes current so filter changes retain disclosure state.
++      nextNodes.set(row.key, item);
++      if (!transcriptEntryVisible(row.entry, filter.value)) continue;
+       const timestamp = formatTranscriptTimestamp(row.entry);
+       if (timestamp.dateKey && timestamp.dateKey !== previousDate) {
+         const dateKey = "date:" + timestamp.dateKey + ":" + dateOccurrence++;
+@@ -1168,17 +1231,7 @@ export function mountConversation(root, options) {
+         nextNodes.set(dateKey, separator); desired.push(separator);
+         previousDate = timestamp.dateKey;
+       }
+-      let item = entryNodes.get(row.key);
+-      if (!item || changed.has(row.key)) {
+-        const replacement = entryElement(row.entry);
+-        const oldDetails = item?.querySelectorAll?.("details") || [];
+-        const newDetails = replacement.querySelectorAll?.("details") || [];
+-        for (let index = 0; index < Math.min(oldDetails.length, newDetails.length); index += 1) {
+-          newDetails[index].open = oldDetails[index].open;
+-        }
+-        item = replacement;
+-      }
+-      nextNodes.set(row.key, item); desired.push(item);
++      desired.push(item);
+     }
+     if (typeof transcript.insertBefore === "function") {
+       desired.forEach((node, index) => {
+@@ -1195,6 +1248,14 @@ export function mountConversation(root, options) {
+     } else if (prepend) transcript.scrollTop = previousTop + Math.max(0, (transcript.scrollHeight || 0) - previousHeight);
+     else transcript.scrollTop = previousTop;
+   };
++  const filterScroll = new Map();
++  let activeFilter = filter.value;
++  filter.addEventListener("change", () => {
++    filterScroll.set(activeFilter, transcript.scrollTop || 0);
++    activeFilter = filter.value;
++    patchEntries(new Set(), true);
++    transcript.scrollTop = filterScroll.get(activeFilter) || 0;
++  });
+   const acknowledgeRetained = (threadId) => {
+     if (!sender || !capabilities.send) return;
+     const attempt = sender.pending(), draft = textarea.value;
+@@ -1385,14 +1446,23 @@ export function mountConversation(root, options) {
+     if (settingsSaving) return;
+     send.disabled = true;
+     send.textContent = labels.sending;
++    submissionStatus.hidden = true;
++    let submittedAttempt;
+     try {
+       uploads?.lock(true);
+-      await sender.send(textarea.value, uploads?.ids() || []);
++      const submission = sender.send(textarea.value, uploads?.ids() || []);
++      submittedAttempt = sender.pending();
++      await submission;
+       questions.ordinaryAccepted();
+       uploads?.clear();
+       await refresh();
+     } catch (error) {
+-      if (error.name !== "AbortError") status.textContent = error.message;
++      // An observed/acknowledged message takes precedence over a lost response.
++      const retained = sender.pending();
++      if (!submittedAttempt || retained?.id === submittedAttempt.id && !retained.receipt) {
++        submissionStatus.textContent = submissionFailurePresentation(error).message;
++        submissionStatus.hidden = false;
++      }
+     } finally {
+       uploads?.lock(false);
+       send.disabled = uploads ? !uploads.ready() : false;
+@@ -1435,6 +1505,7 @@ export function mountConversation(root, options) {
+     if (settingsSaving) return;
+     const message = textarea.value.trim();
+     if (!message && !uploads?.count()) return;
++    submissionStatus.hidden = true;
+     try {
+       uploads?.lock(true);
+       await sender.queue(message, uploads?.ids() || []);
+@@ -1444,7 +1515,8 @@ export function mountConversation(root, options) {
+       void refreshQueue(true);
+       await refresh();
+     } catch (error) {
+-      status.textContent = error.message;
++      submissionStatus.textContent = submissionFailurePresentation(error).message;
++      submissionStatus.hidden = false;
+     } finally { uploads?.lock(false); }
+   });
+   if (capabilities.interrupt) interrupt.addEventListener("click", () => void client.interrupt().then(refresh).catch((error) => {
+diff --git a/conversation/handler.go b/conversation/handler.go
+index b8ce35c..5987f8d 100644
+--- a/conversation/handler.go
++++ b/conversation/handler.go
+@@ -118,7 +118,10 @@ type Target struct {
+ 	Capabilities        Capabilities
+ 	MutationLock        MutationLocker
+ 	TransformTranscript func(*codex.Transcript)
+-	Release             func()
++	// PresentTranscript renders application-owned presentation after attachment
++	// decoration. TransformTranscript retains its earlier, pre-attachment order.
++	PresentTranscript func(*codex.Transcript)
++	Release           func()
+ }
+ 
+ func (target Target) models(ctx context.Context) ([]codex.Model, error) {
+@@ -418,6 +421,9 @@ func (handler *Handler) serveOperation(
+ 				return
+ 			}
+ 		}
++		if target.PresentTranscript != nil {
++			target.PresentTranscript(&page.Transcript)
++		}
+ 		writeJSON(response, http.StatusOK, page)
+ 	case "activity":
+ 		if request.Method != http.MethodGet || !target.Capabilities.Read {
+@@ -457,6 +463,9 @@ func (handler *Handler) serveOperation(
+ 				return
+ 			}
+ 		}
++		if target.PresentTranscript != nil {
++			target.PresentTranscript(&transcript)
++		}
+ 		writeJSON(response, http.StatusOK, transcript)
+ 	case "pending":
+ 		if request.Method != http.MethodGet || !target.Capabilities.Pending {
+diff --git a/conversation/presentation_test.go b/conversation/presentation_test.go
+new file mode 100644
+index 0000000..8b0adba
+--- /dev/null
++++ b/conversation/presentation_test.go
+@@ -0,0 +1,130 @@
++package conversation
++
++import (
++	"context"
++	"encoding/json"
++	"errors"
++	"net/http"
++	"net/http/httptest"
++	"reflect"
++	"strings"
++	"testing"
++
++	"github.com/aither64/codex-web/codex"
++)
++
++type presentationClient struct{ *fakePageClient }
++
++func (client *presentationClient) ReadThread(_ context.Context, thread string) (codex.Transcript, error) {
++	transcript := client.page.Transcript
++	transcript.ThreadID = thread
++	return transcript, client.err
++}
++
++type presentationAttachments struct {
++	AttachmentProvider
++	observe func(*codex.Transcript) error
++}
++
++func (provider presentationAttachments) ObserveTranscript(_ context.Context, transcript *codex.Transcript) error {
++	return provider.observe(transcript)
++}
++
++func TestTranscriptPresentationOrder(t *testing.T) {
++	for _, route := range []string{"thread", "thread/page"} {
++		for _, mode := range []string{"plain", "decorated", "empty", "attachment error", "nil hooks", "denied", "identity error"} {
++			t.Run(route+"/"+mode, func(t *testing.T) {
++				const original = "canonical attachment envelope"
++				const messageID = "retained-message-id"
++				digest := strings.Repeat("a", 64)
++				client := &presentationClient{&fakePageClient{fakeClient: &fakeClient{}, page: codex.TranscriptPage{
++					Transcript: codex.Transcript{Entries: []codex.TranscriptEntry{{
++						Kind: "userMessage", Text: original, ClientUserMessageID: messageID, ClientUserMessageDigest: digest,
++					}}},
++				}}}
++				if mode == "identity error" {
++					client.verifyErr = errors.New("identity unavailable")
++				}
++				var order []string
++				expectedDisplay := original
++				target := Target{Client: client, ThreadID: "trusted", Directory: "/workspace", Capabilities: Capabilities{Read: mode != "denied"}}
++				if mode != "nil hooks" {
++					target.TransformTranscript = func(transcript *codex.Transcript) {
++						order = append(order, "transform")
++						if transcript.Entries[0].Text != original || transcript.Entries[0].DisplayText != nil {
++							t.Fatal("transform did not receive original input")
++						}
++					}
++					target.PresentTranscript = func(transcript *codex.Transcript) {
++						order = append(order, "present")
++						entry := &transcript.Entries[0]
++						display := entry.Text
++						if entry.DisplayText != nil {
++							display = *entry.DisplayText
++						}
++						if display != expectedDisplay {
++							t.Fatalf("presentation received %q, want %q", display, expectedDisplay)
++						}
++						entry.HTML = "<p>" + display + "</p>"
++						entry.Communication = &codex.TranscriptCommunication{Kind: "team", From: "sender", To: "recipient"}
++					}
++				}
++				if mode == "decorated" || mode == "empty" || mode == "attachment error" {
++					expectedDisplay = "displayed attachment prompt"
++					if mode == "empty" {
++						expectedDisplay = ""
++					}
++					target.Attachments = presentationAttachments{observe: func(transcript *codex.Transcript) error {
++						order = append(order, "attachments")
++						if mode == "attachment error" {
++							return &UploadError{Status: http.StatusServiceUnavailable, Message: "Attachment unavailable"}
++						}
++						transcript.Entries[0].DisplayText = &expectedDisplay
++						return nil
++					}}
++				}
++				handler, err := NewHandler(Options{AllowedOrigins: []string{"https://portal.test"}, Resolver: ResolverFunc(func(context.Context, ResolveRequest) (Target, error) { return target, nil })})
++				if err != nil {
++					t.Fatal(err)
++				}
++				response := httptest.NewRecorder()
++				handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/codex/conversations/opaque/"+route, nil))
++				status := http.StatusOK
++				wantOrder := []string{"transform", "present"}
++				switch mode {
++				case "decorated", "empty":
++					wantOrder = []string{"transform", "attachments", "present"}
++				case "attachment error":
++					status, wantOrder = http.StatusServiceUnavailable, []string{"transform", "attachments"}
++				case "nil hooks":
++					wantOrder = nil
++				case "denied":
++					status, wantOrder = http.StatusForbidden, nil
++				case "identity error":
++					status, wantOrder = http.StatusNotFound, nil
++				}
++				if response.Code != status || !reflect.DeepEqual(order, wantOrder) {
++					t.Fatalf("status=%d order=%v body=%s", response.Code, order, response.Body.String())
++				}
++				if status != http.StatusOK {
++					return
++				}
++				var transcript codex.Transcript
++				if err := json.Unmarshal(response.Body.Bytes(), &transcript); err != nil {
++					t.Fatal(err)
++				}
++				entry := transcript.Entries[0]
++				if entry.Text != original || entry.ClientUserMessageID != messageID || entry.ClientUserMessageDigest != digest {
++					t.Fatalf("canonical delivery identity changed: %#v", entry)
++				}
++				if mode == "nil hooks" {
++					if strings.Contains(response.Body.String(), "communication") || entry.HTML != "" {
++						t.Fatal("nil presentation changed output")
++					}
++				} else if entry.HTML != "<p>"+expectedDisplay+"</p>" || entry.Communication == nil || entry.Communication.From != "sender" || entry.Communication.To != "recipient" {
++					t.Fatalf("presentation output lost: %#v", entry)
++				}
++			})
++		}
++	}
++}
+diff --git a/docs/reference.md b/docs/reference.md
+index a5b99d8..d5721e8 100644
+--- a/docs/reference.md
++++ b/docs/reference.md
+@@ -275,6 +275,36 @@ record time. When an item has no available time, a known turn
+ time is marked approximate; otherwise the timestamp is omitted. This display
+ metadata does not change stored conversations or require a migration.
+ 
++Hosts can annotate internal coordination with
++`TranscriptEntry.Communication: &codex.TranscriptCommunication{Kind: "team",
++From: "sender", To: "recipient"}`. This optional `communication` object is a
++presentation hint, not authenticated identity or authorization. The shared
++module does not infer team membership from message text.
++`transcriptEntryPresentation(entry)` returns `{kind, label, team}`, where kind
++is `user`, `agent`, `team`, `event` or `error`. Only `communication.kind: "team"`
++selects team presentation; unknown metadata preserves ordinary classification.
++Labels include available sender and recipient text and must be inserted as text.
++
++`transcriptEntryVisible(entry, filter = "all")` supports `all`, `messages`,
++`team` and `activity`. Messages includes user, agent, reasoning and plan entries
++without team metadata; Team includes coordination; Activity includes other
++entries without team metadata. Errors appear in every view. Unknown filters
++behave as All. The mounted selector retains each view's scroll position and
++keeps entry disclosure state when switching views. Team entries have a distinct
++color and identify the sender and recipient when available.
++
++`Target.TransformTranscript` runs before attachment observation, preserving its
++existing semantics. Optional `Target.PresentTranscript` runs afterward on both
++`thread` and `thread/page`, including when no attachment provider is configured.
++An attachment failure returns without presentation. Use this final hook to
++render Markdown from `displayText` when present, including an empty string,
++or `text` otherwise. Preserve canonical text, attachment identity, message IDs
++and digests. Hosts own Markdown generation, sanitization and URL rewriting.
++The mounted UI renders host-sanitized message `html`, with a text fallback;
++never provide unsanitized browser input in that field. Older readers ignore the
++additive metadata, and nil hooks retain existing behavior. No stored format or
++Codex protocol change is required.
++
+ Search, agent tool calls and agent lifecycle entries also include typed
+ `activity` data. Their existing `summary` and `details` fields remain available
+ for other renderers and future protocol fields. `createTranscriptActivity(entry)`
+@@ -356,7 +386,7 @@ calls the page route. `mountConversation()` loads the newest page first and offe
+ pages arrive, repairs gaps after missed events, and keeps the visible scroll
+ position when older entries are added. A missing page route or an explicit
+ `transcript_paging_unavailable` response falls back to an authorized `/thread`
+-read; the interface then says that older history is unavailable. Other HTTP,
++read; successful fallback is silent. Other HTTP,
+ timeout, cursor and malformed-response errors do not trigger that fallback.
+ 
+ The composer shows the last confirmed model and reasoning effort with **Edit**.
+@@ -370,7 +400,9 @@ deadlines, retry backoff and notice delays. `createRefreshNotice()` retains the
+ last successful value during background reads. Initial loading appears after
+ 750 ms, manual loading after 250 ms, and refresh failures after 30 continuous
+ visible seconds. Hidden tabs and page restoration restart that warning grace.
+-Access failures and failed user actions appear immediately. Automatic history
++Access failures and failed user actions appear immediately. Initial and automatic
++history repair remain silent while loading; manual older-page reads can show
++loading progress and actionable failures in normal document flow. Automatic history
+ repair retries with capped backoff; manual older-page failures wait for Retry.
+ Hosts can override individual policy values when mounting a conversation or
+ creating a notice or sync controller. Domain controllers retain cursor,
+@@ -487,6 +519,15 @@ pending send is acknowledged only after a matching message is observed in the
+ retained transcript, including an older page; a partial newest page cannot
+ prove that the message is absent.
+ 
++`submissionFailurePresentation(error)` returns `{message, uncertain}` for inline
++delivery errors. Only explicit `error.notSent === true` establishes an unsent
++message. Transport failures, HTTP 502/503/504, aborts and unknown errors remain
++uncertain. The helper preserves the error and performs no request, retry,
++storage change or receipt acknowledgement. The mounted composer retains input
++and the original durable attempt on failure; a previously observed message or
++accepted receipt takes precedence over a lost response. Retry that original
++submission through the durable sender rather than generating a new identity.
++
+ `formatTranscriptTimestamp(entry)` supplies the mounted interface's local clock
+ label, full timestamp tooltip and local calendar date for custom renderers.
+ It returns `text`, `title`, `dateTime`, `dateKey`, `dateLabel` and `approximate`.
+diff --git a/test/conversation_browser_contract_test.cjs b/test/conversation_browser_contract_test.cjs
+index 310f94d..45d2b65 100644
+--- a/test/conversation_browser_contract_test.cjs
++++ b/test/conversation_browser_contract_test.cjs
+@@ -29,9 +29,43 @@ class MemoryStorage {
+     createConversationClient, createDurableAttemptStore, createDurableSender, mountConversation,
+     formatTranscriptTimestamp, transcriptEntryCopyText, createTranscriptCopyButton, createCopyButton,
+     createTranscriptActivity,
++    transcriptEntryPresentation, transcriptEntryVisible, submissionFailurePresentation,
+   } = await import(
+     "../conversation/assets/conversation.js"
+   );
++  const kinds = ["userMessage", "agentMessage", "reasoning", "plan", "commandExecution", "futureKind", "error"];
++  for (const [index, kind] of kinds.entries()) {
++    const ordinary = {kind};
++    const expected = index === 0 ? "user" : index < 4 ? "agent" : kind === "error" ? "error" : "event";
++    assert.equal(transcriptEntryPresentation(ordinary).kind, expected);
++    for (const communication of [undefined, null, [], "team", {kind: "future"}, {from: "sender"}]) {
++      assert.deepEqual(transcriptEntryPresentation({...ordinary, communication}), transcriptEntryPresentation(ordinary));
++    }
++    const team = {...ordinary, communication: {kind: "team", from: "lead", to: "member"}};
++    for (const [filter, visible] of Object.entries({all: true, messages: index < 4,
++      activity: index >= 4, team: false, unknown: true})) {
++      assert.equal(transcriptEntryVisible(ordinary, filter), visible || kind === "error");
++      assert.equal(transcriptEntryVisible(team, filter), kind === "error" || ["all", "team", "unknown"].includes(filter));
++    }
++    assert.equal(transcriptEntryVisible(team), true);
++  }
++  assert.deepEqual(transcriptEntryPresentation({kind: "userMessage", communication: {kind: "team"}}),
++    {kind: "team", label: "Team", team: true});
++  assert.equal(transcriptEntryPresentation({communication: {kind: "team", from: "lead", to: "member"}}).label, "lead → member");
++  assert.equal(transcriptEntryPresentation({communication: {kind: "team", from: "lead"}}).label, "Team · lead");
++  assert.equal(transcriptEntryPresentation({communication: {kind: "team", to: "member"}}).label, "Team → member");
++  assert.equal(transcriptEntryPresentation({communication: {kind: "team", from: {name: "bad"}}}).label, "Team");
++  for (const error of [undefined, new TypeError("Failed to fetch"), new DOMException("Aborted", "AbortError"),
++    ...[502, 503, 504].map(status => Object.freeze({status, code: "transport", message: `Request failed (${status})`})),
++    {notSent: "true"}]) {
++    const before = error && {...error};
++    const failure = submissionFailurePresentation(error);
++    assert.equal(failure.uncertain, true);
++    assert.match(failure.message, /Delivery could not be confirmed/);
++    if (error) assert.deepEqual({...error}, before, "presentation must preserve error metadata");
++  }
++  assert.deepEqual(submissionFailurePresentation({notSent: true, message: "Access denied"}),
++    {message: "Access denied The message was not sent. Try again.", uncertain: false});
+   const timestampOptions = {locales: "en-GB", timeZone: "Europe/Amsterdam"};
+   const evening = formatTranscriptTimestamp({timestamp: "2026-09-11T21:59:00Z"}, timestampOptions);
+   assert.equal(evening.text, "23:59");
+@@ -699,6 +733,99 @@ class MemoryStorage {
+   assert.equal(root.descendants().filter((element) => element.attributes.class === "codex-conversation-date").length, 2);
+   unmount();
+ 
++  const teamRoot = new FakeElement("main");
++  const senderLabel = '<img src=x onerror="bad()">';
++  const disposeTeam = mountConversation(teamRoot, {id: "team", client: {
++    async thread() { return {threadId: "team-thread", status: "idle", entries: [
++      {kind: "userMessage", text: "# original", displayText: "# displayed", html: "<h1>displayed</h1>"},
++      {kind: "userMessage", text: "coordination", communication: {kind: "team", from: senderLabel, to: "member"}},
++      {kind: "commandExecution", summary: "command"},
++      {kind: "error", text: "turn failed", communication: {kind: "team"}},
++    ]}; },
++  }, capabilities: {pending: false, queueRead: false, send: false, queue: false,
++    interrupt: false, settings: false, respond: false, eventStream: false}});
++  await new Promise(resolve => setImmediate(resolve));
++  const teamFilter = teamRoot.descendants().find(el => el.attributes["aria-label"] === "Transcript filter");
++  const transcriptList = teamRoot.descendants().find(el => el.name === "ol");
++  const teamEntry = transcriptList.children.find(el => el.attributes.class === "codex-entry codex-entry-team");
++  assert.equal(teamEntry.children[0].children[0].textContent, `${senderLabel} → member`);
++  assert.equal(teamEntry.children[0].children[0].innerHTML, undefined, "labels must never become HTML");
++  assert.equal(transcriptList.children[0].children[1].innerHTML, "<h1>displayed</h1>");
++  transcriptList.scrollTop = 45;
++  for (const [value, count] of [["messages", 2], ["team", 2], ["activity", 2], ["all", 4]]) {
++    teamFilter.value = value; teamFilter.listeners.get("change")();
++    assert.equal(transcriptList.children.length, count);
++    assert(transcriptList.children.some(el => el.attributes.class === "codex-entry codex-entry-error"));
++  }
++  assert.equal(transcriptList.scrollTop, 45);
++  assert(transcriptList.children.includes(teamEntry), "filter changes preserve message nodes");
++  assert.equal(teamRoot.descendants().find(el => el.attributes.class === "codex-history-controls").hidden, true,
++    "successful legacy fallback is silent");
++  disposeTeam();
++
++  // A failed HTTP response must retain the exact durable attempt, but must not
++  // downgrade a message already observed and acknowledged through the transcript.
++  for (const observedBeforeFailure of [false, true]) {
++    const lossStorage = new MemoryStorage();
++    let lossEvents, rejectSend, sent, accepted = false, backendTurns = 0;
++    const ids = new Set(), lossCalls = [];
++    class LossEvents {
++      constructor() { lossEvents = this; }
++      addEventListener() {}
++      close() {}
++    }
++    const lossClient = {
++      eventsPath: () => "/loss-events",
++      async thread() { return {threadId: "loss-thread", status: "idle", entries: accepted ? [{
++        kind: "userMessage", text: "retained input", clientUserMessageId: sent,
++        clientUserMessageDigest: "b".repeat(64),
++      }] : []}; },
++      async message(message, id, retry, attachmentIds) {
++        lossCalls.push({message, id, retry, attachmentIds}); sent = id;
++        if (!ids.has(id)) { ids.add(id); backendTurns++; }
++        if (lossCalls.length === 1) return new Promise((_, reject) => { rejectSend = reject; });
++        return {turnId: "accepted-turn", clientUserMessageId: id};
++      },
++      async acknowledgeMessages(entries) { return {acknowledgedClientUserMessageIds: entries.map(entry => entry.clientUserMessageId)}; },
++    };
++    const lossRoot = new FakeElement("main");
++    const disposeLoss = mountConversation(lossRoot, {id: "loss", basePath: "/codex", client: lossClient,
++      EventSource: LossEvents, refreshPolicy: {eventDebounceMs: 0}, storage: lossStorage,
++      randomUUID: () => "aa0e3d66-f923-4c79-bde5-c25c1edfd02b",
++      capabilities: {pending: false, queueRead: false, queue: false, interrupt: false, settings: false, respond: false}});
++    await new Promise(resolve => setImmediate(resolve));
++    const lossTextarea = lossRoot.descendants().find(el => el.name === "textarea");
++    const lossForm = lossRoot.descendants().find(el => el.name === "form");
++    const notice = lossRoot.descendants().find(el => el.attributes.class === "codex-submission-status");
++    lossTextarea.value = "retained input";
++    const sending = lossForm.listeners.get("submit")({preventDefault() {}});
++    await new Promise(resolve => setImmediate(resolve));
++    if (observedBeforeFailure) {
++      accepted = true; lossEvents.onmessage();
++      for (let index = 0; index < 50 && lossTextarea.value; index++) await new Promise(resolve => setTimeout(resolve, 5));
++      assert.equal(lossTextarea.value, "");
++    }
++    rejectSend(Object.assign(new Error("Request failed (502)"), {status: 502}));
++    await sending;
++    if (observedBeforeFailure) assert.equal(notice.hidden, true);
++    else {
++      assert.equal(lossTextarea.value, "retained input");
++      assert.equal(notice.hidden, false); assert.match(notice.textContent, /Delivery could not be confirmed/);
++      const retained = createDurableSender({client: lossClient, storage: lossStorage, id: "loss", basePath: "/codex",
++        randomUUID: () => { throw Error("must reuse identity"); }});
++      assert.equal(retained.pending().id, sent);
++      await retained.send("retained input");
++      assert.deepEqual(lossCalls.map(call => [call.id, call.retry]), [[sent, false], [sent, true]]);
++      const receipt = retained.pending().receipt;
++      submissionFailurePresentation({status: 502});
++      assert.deepEqual(retained.pending().receipt, receipt);
++      assert.equal(await retained.acknowledge([]), false);
++      assert(retained.pending(), "unseen receipts stay retained");
++    }
++    assert.equal(backendTurns, 1);
++    disposeLoss();
++  }
++
+   // A late catalog must initialize an already-open editor, and stale reads
+   // must not overwrite a settings acknowledgement.
+   let releaseCatalog, releaseSnapshot, releaseSave, settingsWrites = 0, snapshots = 0;

@@ -1,0 +1,73 @@
+[
+  {
+    "component": "A",
+    "repository": "codex-web",
+    "worktree": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-20-dev-workspace-portal-improvements/codex-web",
+    "base": "57972192e30fe52ab33b867c8fe4d171f59a7fd5",
+    "head": "6e32a9043ee6367d92bfaf8d3ebdf48036e275f9",
+    "series": [
+      "529524829526f41c628bd54d729241c52395c6b2 conversation: present transcripts after attachment decoration",
+      "7fb4ab212ba233b94370eeea131762b729ac2505 conversation: distinguish team traffic and quiet history fallback",
+      "852e8c51091512bc79ca6c921ef1f5ccc46a9535 conversation: reconcile inline submission failure notices",
+      "e8d6d01006d6f4f0c480d9300521b314e174078f conversation: distinguish pending control invalidations",
+      "3d1b21de76df49ad39174ec5e3999d8cffd84bc6 conversation: retire hidden reads and recover current controls",
+      "6e32a9043ee6367d92bfaf8d3ebdf48036e275f9 uploads: recover passive file metadata reads"
+    ],
+    "diffstat": " cmd/codex-web-example/main.go               |   2 +-\n codex/client.go                             | 133 ++++++--\n codex/client_test.go                        |  12 +\n codex/prompt_response_test.go               |  66 ++++\n conversation/assets/conversation.css        |  11 +\n conversation/assets/conversation.js         | 307 +++++++++++++-----\n conversation/assets/sync.js                 |  25 +-\n conversation/assets/uploads.js              | 130 ++++++--\n conversation/events_test.go                 |  83 +++++\n conversation/handler.go                     |  47 ++-\n conversation/presentation_test.go           | 172 ++++++++++\n docs/reference.md                           |  98 +++++-\n test/conversation_browser_contract_test.cjs | 471 ++++++++++++++++++++++++++++\n test/sync_browser_contract_test.cjs         |  52 ++-\n test/uploads_browser_contract_test.cjs      | 102 +++++-\n 15 files changed, 1578 insertions(+), 133 deletions(-)\n",
+    "clean": true
+  },
+  {
+    "component": "B",
+    "repository": "dev-workspace",
+    "worktree": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-20-dev-workspace-portal-improvements/dev-workspace",
+    "base": "968646471b1190c16a8cf60ff50736cd0525fa3f",
+    "head": "133d23f5d341808559b08a533409e748d6a400aa",
+    "series": [
+      "4a2fadd106d5eb9a7dcd92fb7ab28fb8cbd94458 deps: update shared conversation presentation helpers",
+      "db1e91ebd008f479cc1021b25e9756c588c5949a team: project full-team names from actual implementer counts",
+      "b006196781869aec5d267b790ef0a839e4aa57dd portal: add authorized file downloads and source copy actions",
+      "54169426248448119fd257ffbf3d652b1f3b5172 portal: keep large artifact catalogs compact and stable",
+      "7d9392e6643e8d856688ee1dc08ba86146f41ddc portal: publish session membership before optional enrichment",
+      "5a764b28d654c9b00538f333fd550067da7a121d portal: retain member settings through sequential additions",
+      "0ce92e8619f6b1ae9afbe8b6016ba8949c89036c portal: present team messages and decorated Markdown",
+      "cee4cca19ad2fcf98ffb1317aff7876d784e26b5 portal: show delivery recovery beside the composer",
+      "1f162c38138b35bfe9b75b2b7a1af2f18f34e513 portal: browse eligible session files in a lazy tree",
+      "bd46c6ebe326ef2a68bebb9225b7d828224a44aa portal: retire paused read cycles and recover on tab resume",
+      "d2210fa96c86705241a68b397f0a81cca5c83706 coordination: derive claims from registered repository identities",
+      "a6df26e55a1b6a6dd32da76b56bae4a6b71c288a portal: measure read stages without logging session content",
+      "b4709c17cebb1fea281fc18accf4363b3bfbbae3 test: prepare ordinary Firefox acceptance across fifty native tabs",
+      "cb12f4c4f80cde1156eadc5176cb90b8bb369c95 notifications: drop deliveries from disabled browser epochs",
+      "133d23f5d341808559b08a533409e748d6a400aa coordination: retain deployed machines through explicit user release"
+    ],
+    "diffstat": " docs/browser-notifications-operations.md           |  23 +-\n docs/browser-notifications.md                      |  58 ++-\n docs/coordination-operations.md                    |  28 +-\n docs/coordination.md                               |  79 +++-\n docs/workspace-portal.md                           | 131 ++++++-\n flake.lock                                         |   8 +-\n flake.nix                                          |   2 +-\n libexec/workspace-coordination-claims.rb           |  65 +++-\n libexec/workspace-coordination.rb                  | 136 ++++++-\n nix/repository-claim-contract.json                 |   1 +\n nix/workspace-portal.nix                           |   4 +-\n portal/go.mod                                      |   2 +-\n portal/go.sum                                      |   4 +-\n portal/internal/repository/source.go               | 207 +++++++++-\n portal/internal/session/manifest.go                |  30 +-\n portal/internal/teamruntime/runtime.go             |  13 +\n portal/internal/teamruntime/runtime_test.go        |  70 +++-\n portal/internal/web/artifact_tree.go               |  40 ++\n portal/internal/web/artifact_tree_test.go          |  22 ++\n portal/internal/web/attention_browser_test.cjs     | 246 ++++++++++--\n portal/internal/web/auto_archive_test.go           |   2 +-\n portal/internal/web/browser_contract_test.cjs      |   2 +\n .../web/citation_presentation_contract_test.cjs    |  26 ++\n portal/internal/web/citations_test.go              |  35 ++\n portal/internal/web/codex_limits.go                |   4 +\n portal/internal/web/codex_providers.go             |   1 +\n .../internal/web/codex_providers_browser_test.cjs  |  29 +-\n portal/internal/web/firefox_tabs_acceptance.cjs    | 157 ++++++++\n portal/internal/web/firefox_tabs_test.go           | 256 +++++++++++++\n .../internal/web/index_cluster_contract_test.cjs   |  15 +\n portal/internal/web/index_loading_test.go          |  40 ++\n portal/internal/web/notifications.go               |  48 ++-\n portal/internal/web/notifications_browser_test.cjs |  23 +-\n portal/internal/web/notifications_test.go          | 152 +++++++-\n portal/internal/web/operation_state.go             |   6 +-\n .../internal/web/page_lifecycle_browser_test.cjs   |  10 +-\n portal/internal/web/pending_revision.go            |  29 ++\n portal/internal/web/pending_revision_test.go       |  68 ++++\n .../web/portal_improvements_browser_test.cjs       | 174 +++++++++\n portal/internal/web/question_browser_test.go       |  35 +-\n portal/internal/web/read_cycle_browser_test.cjs    | 110 ++++++\n portal/internal/web/read_diagnostics.go            | 172 +++++++++\n portal/internal/web/read_diagnostics_test.go       | 109 ++++++\n portal/internal/web/server.go                      | 167 ++++++--\n portal/internal/web/server_test.go                 |  43 ++-\n portal/internal/web/source_files.go                |  59 ++-\n portal/internal/web/source_files_browser_test.cjs  |   9 +-\n portal/internal/web/source_files_test.go           | 279 +++++++++++++-\n portal/internal/web/static/app.js                  | 422 ++++++++++++++-------\n .../internal/web/static/browser-notifications.js   | 252 +++++++-----\n portal/internal/web/static/codex-providers.js      | 103 ++---\n portal/internal/web/static/notification-worker.js  |  37 +-\n .../internal/web/static/session-attention-store.js |  51 ++-\n portal/internal/web/static/session-attention.js    |  77 ++--\n portal/internal/web/static/source-file.css         |   2 +\n portal/internal/web/static/source-file.js          |  11 +\n portal/internal/web/static/style.css               |  32 +-\n portal/internal/web/submission_loss_test.go        |  96 +++++\n .../web/submission_notice_contract_test.cjs        | 100 +++++\n .../web/submission_notice_contract_test.go         |  16 +\n portal/internal/web/team_add_contract_test.cjs     |  36 ++\n portal/internal/web/team_add_contract_test.go      |  16 +\n .../internal/web/templates/automatic-archival.html |   2 +-\n portal/internal/web/templates/details.html         |   6 +-\n portal/internal/web/templates/index.html           |   8 +-\n portal/internal/web/templates/notifications.html   |   4 +-\n portal/internal/web/templates/session.html         |  28 +-\n portal/internal/web/templates/source-file.html     |  12 +-\n portal/internal/web/workspace_source_files_test.go |  23 ++\n portal/internal/workspacecodex/lead_policy.go      |   6 +\n portal/internal/workspacecodex/lead_policy_test.go |  26 ++\n test/coordination_claims_test.rb                   | 177 +++++++++\n 72 files changed, 4199 insertions(+), 573 deletions(-)\n",
+    "clean": true
+  },
+  {
+    "component": "C",
+    "repository": "workspace",
+    "worktree": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-20-dev-workspace-portal-improvements/workspace",
+    "base": "5276ad798d3dcf2c714f2336b0a50636bab900ae",
+    "head": "7550f0183eaab80873666bb4c886a499609e8817",
+    "series": [
+      "7117fe8006112e2b97ac28bc123e80482d702231 instructions: keep core rules within the discovery limit",
+      "82f1f1cf945560c4ae69928398c250fad4a5b870 teams: default to Full team with implementer-count variants",
+      "e1763e0bff920c174a551de48df80ca9eab92e53 docs: require three gates before deployed machine release",
+      "7550f0183eaab80873666bb4c886a499609e8817 inputs: select responsive portal with protected notifications"
+    ],
+    "diffstat": " AGENTS.md                             | 270 ++++++++++++++++------------------\n config/agent-teams.nix                |  61 +++++---\n docs/agent-instructions/deployment.md |  14 +-\n docs/agent-instructions/git.md        |  10 ++\n docs/agent-instructions/lifecycle.md  |  10 +-\n docs/agent-teams.md                   |  39 ++++-\n docs/coordination.md                  |  56 ++++++-\n flake.lock                            |  16 +-\n flake.nix                             |  31 +++-\n test/agent_instructions_test.rb       |   8 +-\n 10 files changed, 314 insertions(+), 201 deletions(-)\n",
+    "clean": true
+  },
+  {
+    "component": "configuration",
+    "repository": "vpsfree-cz-configuration",
+    "worktree": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-20-dev-workspace-portal-improvements/vpsfree-cz-configuration",
+    "base": "38e7c837893695999e588a73f5d2a0088b8257b1",
+    "head": "cc95d60fbccdff97a3df0fd7973f6b3b6b4f4a68",
+    "series": [
+      "3cc8b745eec48af6703a91819b3075a28d8ed32d docs: apply machine retention to aitherdev deployments",
+      "cc95d60fbccdff97a3df0fd7973f6b3b6b4f4a68 inputs: set devWorkspace to 133d23f5"
+    ],
+    "diffstat": " .../operations/workspace-coordination-aitherdev.md | 39 ++++++++++++++++------\n flake.lock                                         | 14 ++++----\n 2 files changed, 36 insertions(+), 17 deletions(-)\n",
+    "clean": true
+  }
+]

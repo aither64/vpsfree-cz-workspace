@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "nix",
+    "develop",
+    "--no-update-lock-file",
+    "-c",
+    "bash",
+    "-euc",
+    "ruby -c libexec/dev-session\nruby -c test/dev_session/artifact_registration_test.rb\nruby -c test/support/tracking_files_lifecycle_fixture.rb\nnode --check portal/internal/web/static/app.js\nnode --check portal/internal/web/static/source-file.js\nnode --check portal/internal/web/browser_contract_test.cjs\nnode --check portal/internal/web/portal_improvements_browser_test.cjs\nnode --check portal/internal/web/source_files_browser_test.cjs\nnode --check portal/internal/web/read_cycle_browser_test.cjs\ngit diff --check 968646471b1190c16a8cf60ff50736cd0525fa3f HEAD\n"
+  ],
+  "exit_code": 0,
+  "seconds": 8.714190103113651,
+  "head": "483d4e7eafeda974dfe19de45687795562072d7d",
+  "tree": "930467237114bf6e2d953f8e34ea6c352388cfea",
+  "component_tests_rerun": false
+}

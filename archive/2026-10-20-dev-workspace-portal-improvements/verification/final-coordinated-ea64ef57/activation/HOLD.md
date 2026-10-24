@@ -1,0 +1,1 @@
+Prepared only. verification-gates.json is deliberately ABSENT. Parent must inspect/launch all final checks and populate actual passing identity-bound receipts before ordinary profile selection. No helper here has run. User-profile-only; system jwnd/config450/Bf8 remains unchanged. No machine release or lifecycle action.

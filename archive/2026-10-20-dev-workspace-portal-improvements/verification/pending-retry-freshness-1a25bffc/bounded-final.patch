@@ -1,0 +1,170 @@
+diff --git a/portal/internal/web/auto_archive_test.go b/portal/internal/web/auto_archive_test.go
+index 29f6cfd..cb7e90e 100644
+--- a/portal/internal/web/auto_archive_test.go
++++ b/portal/internal/web/auto_archive_test.go
+@@ -40,7 +40,7 @@ func TestAutomaticArchivalPageIsSeparateFromIndex(t *testing.T) {
+ 	if page.Code != http.StatusOK {
+ 		t.Fatalf("dedicated route reached slug lookup: %d: %s", page.Code, page.Body.String())
+ 	}
+-	for _, required := range []string{"data-automatic-archival", "workspace-auto-archive-status", "workspace-auto-archive-rows", `href="/"`, `/static/app.js?v=53`} {
++	for _, required := range []string{"data-automatic-archival", "workspace-auto-archive-status", "workspace-auto-archive-rows", `href="/"`, `/static/app.js?v=54`} {
+ 		if !strings.Contains(page.Body.String(), required) {
+ 			t.Fatalf("overview lacks %q: %s", required, page.Body.String())
+ 		}
+diff --git a/portal/internal/web/read_cycle_browser_test.cjs b/portal/internal/web/read_cycle_browser_test.cjs
+index b456f14..0577b00 100644
+--- a/portal/internal/web/read_cycle_browser_test.cjs
++++ b/portal/internal/web/read_cycle_browser_test.cjs
+@@ -49,14 +49,14 @@ test("deadline failure stays visible and access failures keep their status",asyn
+ // Mount the shipped lane functions, preserving their actual slot/finally wiring.
+ // The transport deliberately ignores AbortSignal to exercise late settlements.
+ function lane(name, typed = false) {
+-  const reads=[], applied=[], timers=new Map(); let timerID=0,time=100000;
++  const reads=[], applied=[], failures=[], timers=new Map(); let timerID=0,time=100000;
+   const request=(_url, options) => {const read=deferred(); reads.push({...read,signal:options.signal}); return read.promise;};
+   const element={hidden:true,textContent:"",querySelector:()=>({textContent:""}),querySelectorAll:()=>[],classList:{contains:()=>true},addEventListener(){}};
+-  const notice={begin(){},success(){applied.push("success");},failure(error){applied.push(error.message);},cancel(){}};
++  const notice={begin(){},success(){applied.push("success");},failure(error){failures.push(error);applied.push(error.message);},cancel(){}};
+   const context={createReadScope,Date:class extends Date {static now(){return time;}},document:{hidden:false,getElementById:()=>element,querySelector:()=>null,querySelectorAll:()=>[]},
+     setTimeout:(fn,delay)=>{timers.set(++timerID,{fn,delay});return timerID;},clearTimeout:id=>timers.delete(id),
+     refreshPolicy:{detailsDeadlineMs:10000,pendingDeadlineMs:10000,queueDeadlineMs:10000,detailsMs:5000,retryInitialMs:2000,retryMaxMs:30000,activityIdleMs:5000,activityActiveMs:1000},
+-    pageReads:createReadScope(),client:{details:options=>request("details",options),pending:options=>request("pending",options),reconcileQueue:async()=>{},queue:options=>request("queue",options),activity:options=>request("activity",options)},request,
++    pendingStatus:element,pageReads:createReadScope(),client:{details:options=>request("details",options),pending:options=>request("pending",options),reconcileQueue:async()=>{},queue:options=>request("queue",options),activity:options=>request("activity",options)},request,
+     slug:"example",interactive:true,executionHeld:false,artifactList:{},teamSettingsGeneration:0,teamSettingsGenerationRead:0,
+     conversationAssets:{createRefreshNotice:()=>notice},reconcileCompletedArchive:()=>false,refreshLifecycleTarget(){},applyRecoveryStatus(){},
+     repositoryReviewLoading:null,repositoryReview:null,selectedMember:"",updateTeamWork(){},refreshTeamLeadSettings(){},teamActivityPresentation:()=>({}),
+@@ -71,7 +71,7 @@ function lane(name, typed = false) {
+   else {start=source.indexOf("  const queueStatus =");end=source.indexOf("  queueRetry?.addEventListener",start);expression="refreshQueue";}
+   assert(start>0 && end>start, name);
+   const api=vm.runInNewContext(source.slice(start,end)+`\n({refresh:${expression},${name==="team"?"payload:()=>teamStatsPayload,":""}})`,context);
+-  return {api,context,reads,applied,timers,setTime:value=>{time=value;},retire(){context.pageReads.pause();context.pageReads.resume();}};
++  return {api,context,reads,applied,failures,timers,setTime:value=>{time=value;},retire(){context.pageReads.pause();context.pageReads.resume();}};
+ }
+ for(const name of ["details","team","activity","pending","queue"]) {
+   test(`${name} starts a resumed read before old success/error/finally settles`,async()=>{
+@@ -100,6 +100,73 @@ test("typed pending hints respect successful freshness and force one invalidatio
+   read=legacy.api.refresh();assert.equal(legacy.reads.length,2);legacy.reads[1].resolve([]);await read;legacy.context.pageReads.pause();
+ });
+ 
++test("typed pending failure after recent success retries on backoff",async(t)=>{
++  const h=lane("pending",true), questions=[{id:"retained-question"}];
++  t.after(()=>h.context.pageReads.pause());
++  let reading=h.api.refresh();h.reads[0].resolve(questions);await reading;
++  let time=100100;h.setTime(time);
++  reading=h.api.refresh(true);h.reads[1].reject(Object.assign(Error("pending 503"),{status:503}));await reading;
++  assert.equal(h.applied.filter(Array.isArray).at(-1),questions,"failure must retain displayed questions");
++  assert.equal(h.failures.at(-1).status,503);
++  for(let i=0;i<100;i++){h.setTime(time+i);await h.api.refresh();}
++  assert.equal(h.reads.length,2,"ordinary hints must respect retry backoff");
++  const fireRetry=async(delay)=>{
++    const entry=[...h.timers].find(([_id,timer])=>timer.delay===delay);
++    assert(entry,`expected retry delay ${delay}`);
++    h.timers.delete(entry[0]);h.setTime(time+=delay);entry[1].fn();await tick();
++  };
++  await fireRetry(2000);
++  assert.equal(h.reads.length,3,"the 2s retry must dispatch inside the previous success window");
++  void h.api.refresh();void h.api.refresh();
++  assert.equal(h.reads.length,3,"retry transport must remain single flight");
++  h.reads[2].reject(Error("pending 503 again"));await tick();
++  let count=3;
++  for(const [index,delay] of [4000,8000,16000,30000,30000].entries()){
++    for(let hint=0;hint<20;hint++)void h.api.refresh();
++    assert.equal(h.reads.length,count,"hints must not bypass a scheduled retry");
++    await fireRetry(delay);assert.equal(h.reads.length,++count);
++    assert.equal(h.applied.filter(Array.isArray).at(-1),questions);
++    if(index===4)h.reads.at(-1).resolve(questions);else h.reads.at(-1).reject(Error("pending still unavailable"));
++    await tick();
++  }
++  assert.equal(h.applied.filter(value=>value==="success").length,2,"only confirmed reads establish success");
++  for(let i=0;i<300;i++){h.setTime(time+i*40);await h.api.refresh();}
++  assert.equal(h.reads.length,count,"recovery must restore the successful 15s freshness floor");
++  reading=h.api.refresh(true);assert.equal(h.reads.length,++count,"typed invalidation still forces freshness");
++  for(let i=0;i<20;i++)void h.api.refresh(true);
++  h.reads.at(-1).resolve(questions);await reading;await tick();
++  assert.equal(h.reads.length,++count,"forced invalidations must coalesce to one rerun");
++  h.reads.at(-1).resolve(questions);await tick();
++  reading=h.api.refresh(true);h.reads.at(-1).reject(Error("new failure"));await reading;
++  assert([...h.timers.values()].some(timer=>timer.delay===2000),"successful recovery must reset backoff to 2s");
++});
++
++test("retired pending failure preserves successor success freshness",async(t)=>{
++  const h=lane("pending",true), questions=[{id:"current-question"}];
++  t.after(()=>h.context.pageReads.pause());
++  const old=h.api.refresh();h.retire();h.setTime(100100);
++  const fresh=h.api.refresh(true);h.reads[1].resolve(questions);await fresh;
++  const effects=[...h.applied],timers=[...h.timers];
++  h.reads[0].reject(Object.assign(Error("retired access failure"),{status:403}));await old;
++  assert.deepEqual(h.applied,effects,"retired failure must not render a warning");
++  assert.equal(h.failures.length,0);assert.deepEqual([...h.timers],timers,"retired failure must not change timers");
++  for(let i=0;i<300;i++){h.setTime(100100+i*40);await h.api.refresh();}
++  assert.equal(h.reads.length,2,"retired failure must not erase successor freshness");
++  const forced=h.api.refresh(true);void h.api.refresh();
++  assert.equal(h.reads.length,3,"current successor remains single flight");
++  h.reads[2].resolve(questions);await forced;
++});
++
++test("current pending access failure keeps its status and last questions",async(t)=>{
++  const h=lane("pending",true), questions=[{id:"authorized-last-value"}];
++  t.after(()=>h.context.pageReads.pause());
++  let reading=h.api.refresh();h.reads[0].resolve(questions);await reading;
++  const denied=Object.assign(Error("Access denied"),{status:403});
++  reading=h.api.refresh(true);h.reads[1].reject(denied);await reading;
++  assert.equal(h.failures.at(-1),denied);assert.equal(h.failures.at(-1).status,403);
++  assert.equal(h.applied.filter(Array.isArray).at(-1),questions);
++});
++
+ test("team HTTP200 preserves genuine stale observation until fresh evidence",async()=>{
+   const h=lane("team"), now=Date.now();
+   let read=h.api.refresh();h.reads[0].resolve({members:[{address:"implementer0",state:"ready",snapshot:{currentState:"working",stale:true,observedAtMs:now-20000}}]});await read;
+diff --git a/portal/internal/web/static/app.js b/portal/internal/web/static/app.js
+index bb0b750..8a99f7e 100644
+--- a/portal/internal/web/static/app.js
++++ b/portal/internal/web/static/app.js
+@@ -5124,6 +5124,8 @@
+       pendingRetryDelay = refreshPolicy.retryInitialMs;
+     }).catch(error => {
+       if (!read.isCurrent()) return;
++      // A failed invalidation must retry on backoff, even after a recent success.
++      pendingSuccessAt = -Infinity;
+       pendingStatus.querySelector("span").textContent = "Requests could not be refreshed. Previously shown questions remain available.";
+       pendingNotice.failure(read.error(error));
+       pendingRetryTimer = setTimeout(() => { pendingRetryTimer = null; void refreshPending(); }, pendingRetryDelay);
+diff --git a/portal/internal/web/templates/automatic-archival.html b/portal/internal/web/templates/automatic-archival.html
+index bf378c8..fa37ca8 100644
+--- a/portal/internal/web/templates/automatic-archival.html
++++ b/portal/internal/web/templates/automatic-archival.html
+@@ -18,7 +18,7 @@
+       <div id="workspace-auto-archive-rows"></div>
+     </section>
+   </main>
+-  <script src="/static/app.js?v=53" defer></script>
++  <script src="/static/app.js?v=54" defer></script>
+ </body>
+ </html>
+ {{end}}
+diff --git a/portal/internal/web/templates/index.html b/portal/internal/web/templates/index.html
+index 05e2d32..07b3dd3 100644
+--- a/portal/internal/web/templates/index.html
++++ b/portal/internal/web/templates/index.html
+@@ -98,7 +98,7 @@
+   <script src="/static/session-attention-store.js?v=4" defer></script>
+   <script src="/static/browser-notifications.js?v=6" defer></script>
+   <script src="/static/preparation.js?v=5" defer></script>
+-  <script src="/static/app.js?v=53" defer></script>
++  <script src="/static/app.js?v=54" defer></script>
+   <script src="/static/coordination.js?v=6" defer></script>
+ </body>
+ </html>
+diff --git a/portal/internal/web/templates/session.html b/portal/internal/web/templates/session.html
+index 8ddf717..ffe7596 100644
+--- a/portal/internal/web/templates/session.html
++++ b/portal/internal/web/templates/session.html
+@@ -256,7 +256,7 @@
+       <div class="dialog-actions"><button type="button" class="quiet" data-dialog-close>Cancel</button><button type="submit" class="danger">Delete session</button></div>
+     </form>
+   </dialog>
+-  <script src="/static/app.js?v=53" defer></script>
++  <script src="/static/app.js?v=54" defer></script>
+   <script src="/static/session-attention-store.js?v=4" defer></script>
+   <script src="/static/browser-notifications.js?v=6" defer></script>
+   <script src="/static/session-attention.js?v=2" defer></script>

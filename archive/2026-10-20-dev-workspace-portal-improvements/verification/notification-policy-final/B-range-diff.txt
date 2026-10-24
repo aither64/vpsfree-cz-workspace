@@ -1,0 +1,33 @@
+ 1:  4a2fadd =  1:  4a2fadd deps: update shared conversation presentation helpers
+ 2:  db1e91e =  2:  db1e91e team: project full-team names from actual implementer counts
+ 3:  b006196 =  3:  b006196 portal: add authorized file downloads and source copy actions
+ 4:  5416942 =  4:  5416942 portal: keep large artifact catalogs compact and stable
+ 5:  7d9392e =  5:  7d9392e portal: publish session membership before optional enrichment
+ 6:  5a764b2 =  6:  5a764b2 portal: retain member settings through sequential additions
+ 7:  0ce92e8 =  7:  0ce92e8 portal: present team messages and decorated Markdown
+ 8:  cee4cca =  8:  cee4cca portal: show delivery recovery beside the composer
+ 9:  1f162c3 =  9:  1f162c3 portal: browse eligible session files in a lazy tree
+10:  f6b72ad ! 10:  bd46c6e portal: retire paused read cycles and recover on tab resume
+    @@ portal/internal/web/attention_browser_test.cjs: test('retained focused document
+      const endpoint = 'https://fcm.googleapis.com/private-endpoint?exact=value';
+      const endpointDigest = require('node:crypto').createHash('sha256').update(endpoint).digest('hex');
+     
+    + ## portal/internal/web/auto_archive_test.go ##
+    +@@ portal/internal/web/auto_archive_test.go: func TestAutomaticArchivalPageIsSeparateFromIndex(t *testing.T) {
+    + 	if page.Code != http.StatusOK {
+    + 		t.Fatalf("dedicated route reached slug lookup: %d: %s", page.Code, page.Body.String())
+    + 	}
+    +-	for _, required := range []string{"data-automatic-archival", "workspace-auto-archive-status", "workspace-auto-archive-rows", `href="/"`, `/static/app.js?v=39`} {
+    ++	for _, required := range []string{"data-automatic-archival", "workspace-auto-archive-status", "workspace-auto-archive-rows", `href="/"`, `/static/app.js?v=52`} {
+    + 		if !strings.Contains(page.Body.String(), required) {
+    + 			t.Fatalf("overview lacks %q: %s", required, page.Body.String())
+    + 		}
+    +
+      ## portal/internal/web/codex_providers_browser_test.cjs ##
+     @@ portal/internal/web/codex_providers_browser_test.cjs: const moduleURL = pathToFileURL(__dirname + "/static/codex-providers.js");
+      const catalog = {active:"openai",providers:[{id:"openai",label:"Subscription"},{id:"pool",label:"Pool"}]};
+11:  efec474 = 11:  d2210fa coordination: derive claims from registered repository identities
+12:  c48b537 = 12:  a6df26e portal: measure read stages without logging session content
+13:  0ba320a = 13:  b4709c1 test: prepare ordinary Firefox acceptance across fifty native tabs
+14:  5ba9f67 = 14:  cb12f4c notifications: drop deliveries from disabled browser epochs
+15:  06126cd = 15:  133d23f coordination: retain deployed machines through explicit user release

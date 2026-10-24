@@ -1,0 +1,57 @@
+diff --git a/portal/internal/web/portal_improvements_browser_test.cjs b/portal/internal/web/portal_improvements_browser_test.cjs
+index 5677032..72673d2 100644
+--- a/portal/internal/web/portal_improvements_browser_test.cjs
++++ b/portal/internal/web/portal_improvements_browser_test.cjs
+@@ -4,7 +4,8 @@ const {chromium, expect} = require("@playwright/test");
+ const baseURL = process.argv[2];
+ const fs = require("node:fs/promises");
+ (async () => {
+-  const browser = await chromium.launch({headless: true, channel: "chromium"});
++  // Chromium's download manager also needs to trust the disposable TLS server.
++  const browser = await chromium.launch({headless: true, channel: "chromium", args: ["--ignore-certificate-errors"]});
+   try {
+     const context = await browser.newContext({ignoreHTTPSErrors: true, permissions: ["clipboard-read", "clipboard-write"], viewport: {width: 1440, height: 850}});
+     const page = await context.newPage(), errors = [], dialogs = [], sends = [], additions = [];
+@@ -50,7 +51,6 @@ const fs = require("node:fs/promises");
+       if (operation === "team-stats") return route.fulfill({json:{members:[]}});
+       return route.continue();
+     });
+-    await page.route("**/artifacts/example/**", route => route.fulfill({headers:{"content-type":"application/octet-stream", "content-disposition":"attachment; filename=fixture.md"}, body:"# Original artifact bytes\r\n"}));
+     await page.goto(baseURL + "/example/");
+     await expect(page.locator("#transcript h1")).toHaveText("User heading");
+     await expect(page.locator("#transcript")).toContainText("fixture.txt");
+@@ -121,6 +121,9 @@ const fs = require("node:fs/promises");
+     await page.locator("#artifact-copy").click();
+     assert.equal(await page.evaluate(() => navigator.clipboard.readText()), "# Raw 4\n");
+     const [artifactDownload] = await Promise.all([page.waitForEvent("download"), page.locator("#artifact-download").click()]);
++    assert.equal(artifactDownload.url(), baseURL + "/artifacts/example/reports/deep/499.md");
++    assert.equal(artifactDownload.suggestedFilename(), "499.md");
++    assert.equal(await artifactDownload.failure(), null, `Artifact download failed: ${artifactDownload.url()}`);
+     assert.equal(await fs.readFile(await artifactDownload.path(), "utf8"), "# Original artifact bytes\r\n");
+     await page.locator('[data-artifact-directory="reports/deep"]').evaluate(node => {node.open = false;});
+     await page.locator('[data-artifact-directory="reports/deep"]').evaluate(node => {node.open = true;});
+diff --git a/portal/internal/web/question_browser_test.go b/portal/internal/web/question_browser_test.go
+index 197ebbf..5b4fec8 100644
+--- a/portal/internal/web/question_browser_test.go
++++ b/portal/internal/web/question_browser_test.go
+@@ -31,11 +31,19 @@ func TestQuestionBrowser(t *testing.T) {
+ 	}
+ 	manifest := "schema: 1\nslug: example\ncodex:\n" +
+ 		"  thread_id: thread-1\n  socket_path: /run/dev-workspace-codex/app-server.sock\n" +
+-		"  client_version: 0.152.1\ncreation:\n  state: ready\n  initial_goal_sent: true\n"
++		"  client_version: 0.152.1\ncreation:\n  state: ready\n  initial_goal_sent: true\n" +
++		"artifacts:\n  - path: reports/deep/499.md\n    label: Report 499\n"
+ 	if err := os.WriteFile(filepath.Join(directory, "portal.yml"), []byte(manifest), 0o644); err != nil {
+ 		t.Fatal(err)
+ 	}
+ 	writeWebTrackingFiles(t, directory, "active")
++	artifactPath := filepath.Join(directory, "reports", "deep", "499.md")
++	if err := os.MkdirAll(filepath.Dir(artifactPath), 0o755); err != nil {
++		t.Fatal(err)
++	}
++	if err := os.WriteFile(artifactPath, []byte("# Original artifact bytes\r\n"), 0o644); err != nil {
++		t.Fatal(err)
++	}
+ 	writeWebRuntimeAuthority(t, server, "example")
+ 	events := make(chan struct{}, 1)
+ 	server.config.Codex = &browserContractCodex{emptyPrompts: true, events: events, transcript: codex.Transcript{

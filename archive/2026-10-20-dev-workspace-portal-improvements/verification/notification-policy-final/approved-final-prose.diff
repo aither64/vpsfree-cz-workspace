@@ -1,0 +1,277 @@
+diff --git a/docs/browser-notifications-operations.md b/docs/browser-notifications-operations.md
+index 1374aa6..52831c6 100644
+--- a/docs/browser-notifications-operations.md
++++ b/docs/browser-notifications-operations.md
+@@ -69,6 +69,25 @@ attention and reservation markers intact. If cleanup is incomplete, use
+ **Notification settings** to retry Disable. The menu shows a brief notice and a
+ mixed checkbox.
+ 
++Browser Disable commits its durable off gate before server cleanup or local
++unsubscribe. Provider-queued pushes carry their registration ID and are dropped
++by a capable worker while off or after a fresh activation replaces that ID.
++Disable does not queue events for replay. A new Enable accepts only future events;
++continuous idempotent registration preserves its current ID and pending outbox.
++Gate-storage failure still permits cleanup but cannot confirm durable blocking.
++
++The existing version-1 IndexedDB store has a reserved gate containing `identity`,
++`enabled`, `actionToken`, `registrationId` and the fixed `at` retention rank.
++Its transaction-commit compare-and-set and origin-scoped Web Lock fence delayed
++Enable/Disable results and destructive side effects across updated tabs. The
++server's GET and the actual controlling worker advertise `deliveryEpoch: 1`.
++Only after that server capability is known does fresh registration send
++`requireFresh: true`; an existing endpoint returns HTTP 409 instead of adopting
++its ID. Enable performs bounded cleanup and retries once. Old strict JSON
++decoders never receive this optional precondition from updated controls.
++Unsupported server/controller/storage/locking leaves setup incomplete. Preserve
++the gate during forward recovery; deleting it would discard the off fence.
++
+ The browser-local **Play sound** setting uses the existing attention database.
+ Checked leaves `silent` out of the display options; unchecked sets
+ `silent: true` for Test, session and fallback notifications. Storage reads and
+@@ -142,7 +161,9 @@ To disable delivery without stopping sessions, create the owner-only file
+ running sender notices it on its next two-second pass, cancels unsent work and
+ retains keys, registrations and preferences. Settings reports that delivery is
+ disabled. Remove that marker to recover; events observed while disabled do not
+-replay. A push already accepted by its provider may still display.
++replay. A push already accepted by its provider may still display under this
++server-only marker; it does not change a browser's local gate. Use browser Disable
++for the browser's permanent old-epoch drop policy.
+ 
+ For a package defect, use a corrected successor package through the supported
+ forward-only workspace selection policy. Keep private state and version-1
+diff --git a/docs/browser-notifications.md b/docs/browser-notifications.md
+index 36bde94..f01081a 100644
+--- a/docs/browser-notifications.md
++++ b/docs/browser-notifications.md
+@@ -52,7 +52,10 @@ changing a subscription. Changing **Notifications** uses the same Enable or
+ Disable action as the full panel. Disabling applies across sessions in this
+ browser, while title attention and reservation markers keep updating. Per-session
+ notification settings remain unchanged and apply again after browser Enable.
+-A provider-accepted message may still arrive after Disable.
++Events from the disabled period are dropped permanently. Enabling again starts
++delivery for future events; it does not replay a backlog. A push already accepted
++by the provider may still reach the worker, which drops its old registration
++epoch even after notifications are enabled again.
+ 
+ The **Sound** checkbox in the menu controls the same setting as **Play sound** in
+ settings. It applies to notifications from this portal in the current browser
+@@ -94,7 +97,8 @@ Only older test entries for the same browser registration are closed. Session
+ notification tags and acknowledgement are unchanged.
+ 
+ **Disable on this browser**
+-removes the server registration and unsubscribes locally. It leaves the browser's
++first saves a browser-local off gate, then removes the server registration and
++unsubscribes locally. It leaves the browser's
+ site permission unchanged. The two removals are independent: server failure does
+ not prevent local unsubscribe. If server cleanup remains uncertain, the browser
+ keeps a small deletion selector for an explicit Disable retry, including after
+@@ -105,8 +109,19 @@ Finish pending cleanup before enabling again. Fully disabled means those
+ removals and local absence are confirmed. A lost registration response or saved ID
+ reports incomplete setup; Disable uses the endpoint digest without registering
+ the subscription again.
++If the off gate cannot be saved, cleanup still runs, but Disable remains
++incomplete and retryable. It cannot certify that delayed pushes will be blocked.
+ Denied permission requires a change in the browser's site settings.
+ 
++Enable requires support from the server, the worker actually controlling this
++page, and the browser's Web Locks API. An unconfirmed update or unsupported
++component leaves setup incomplete. Reloading checks again; it does not bypass
++these requirements. Updated tabs serialize subscription and cleanup actions.
++A durable action token prevents an older completion from saving a registration,
++changing the current controls or unsubscribing a newer setup. Fresh activation
++requires an absent server endpoint and a new registration ID. Repeating Enable
++while the same registration remains enabled preserves its ID and pending delivery.
++
+ The browser must support service workers, Notifications and the Push API in a
+ trusted secure context. Firefox and Chrome/Chromium use Web Push to wake the
+ worker with every portal tab closed while the browser is running. Some Chromium
+@@ -145,8 +160,12 @@ up to six attempts within the original expiry. HTTP 404/410 retires the
+ subscription. Permanent provider failures appear in browser Settings. Provider
+ Topic and notification tag coalesce messages for the same session.
+ 
+-The worker attempts to display a visible notification for every delivered push. A
+-bounded authenticated status read verifies its current meaning. Expired,
++The worker checks the browser-local gate before processing a push and again
++immediately before display, after status and sound reads. For a managed browser,
++the worker drops deliveries while off and deliveries with a missing or mismatched
++registration epoch, without a popup or neutral fallback. Gate-storage errors also
++prevent display. A bounded authenticated status read verifies the meaning of a
++current enabled delivery. Expired,
+ resolved, muted, superseded, acknowledged or unverifiable delivery uses
+ **Session update available**. A missing or inaccessible session uses
+ **Workspace update** without session details. IndexedDB prevents an older
+@@ -160,14 +179,30 @@ database upgrade. These optional fields contain event IDs, revisions, expiry,
+ fixed stage names and an allowlisted browser error category. They contain no
+ endpoint, subscription key, provider response or notification payload. Older
+ clients or workers leave the new result unknown. Local diagnostic storage
+-failure does not prevent the worker from attempting display. The same database
++failure does not prevent display when the delivery gate can still be read. The same database
+ also holds one browser sound preference, separately from the 512 attention and
+ test records. It uses the existing version-1 object store without a database
+ upgrade or a server-side preference. A fixed retention rank, rather than a
+ timestamp, protects this preference from pruning by already-open older pages.
+ 
+-Once accepted by a provider, a message cannot reliably be recalled. A mute or
+-focus race can still produce a visible neutral notification. Clicking a session
++The same object store holds one reserved delivery gate with `enabled`,
++`actionToken` and `registrationId`. Its fixed retention rank protects it from
++pruning; ordinary attention writes cannot replace it. Bounded transactions wait
++for commit and compare the action token before enabling a registration. No
++database upgrade is needed. An installation without a gate retains legacy
++delivery behavior until its first explicit updated Enable or Disable action.
++The gate persists across tabs, reloads and worker restarts. Supported attention
++writes and pruning never delete it, and managed mode never silently returns to
++legacy delivery. A context that has read a managed gate treats unexpected absence
++as a storage failure. Explicitly clearing this site's browser data resets its
++locally retained delivery state.
++
++Once accepted by a provider, a message cannot reliably be recalled. Browser
++Disable drops its old epoch in the capable worker. A mute or focus race within
++the current enabled epoch can still produce a visible neutral notification.
++An already-started display or shown OS notification cannot be recalled. The
++browser's required `userVisibleOnly: true` subscription can have vendor behavior
++outside the application's display calls. Clicking a session
+ notification closes it and focuses an existing tab for the same portal and
+ session, without reloading it, changing its member or section, or losing its
+ unsent draft. If several tabs match,
+@@ -178,8 +213,13 @@ not open a duplicate tab. The click itself does not acknowledge attention;
+ normal visible, focused observation keeps its session identity checks.
+ 
+ The worker caches no portal page or API response. The root worker route retains
+-compatible version-1 payload handling across updates. Old clients ignore the
+-feature. Newly captured requests with `browserNotificationsEnabled` need the
++compatible version-1 payload handling across updates. `registrationId` is an
++additive transport field, including Test; it does not change global attention
++identity or persisted server events. Old workers and loaded controls cannot
++provide the disabled-period drop guarantee. Use updated controls and confirm
++their actual controller before enabling. Keep delivery off and recover forward
++with capable assets if an older worker cannot honor the gate.
++Newly captured requests with `browserNotificationsEnabled` need the
+ capable bundled session helper; predecessor helpers refuse that added receipt
+ field. Existing receipts with the field omitted remain supported. The
+ forward-only package and creation-transition fence keeps portal and helper
+diff --git a/docs/coordination-operations.md b/docs/coordination-operations.md
+index c2c978c..c697409 100644
+--- a/docs/coordination-operations.md
++++ b/docs/coordination-operations.md
+@@ -2,8 +2,12 @@
+ 
+ For resource ownership, use the [claim guide](coordination.md) to acquire,
+ inspect, release or cancel a request. Claims survive disconnection and remain
+-held until explicitly released. Inspect remaining local and remote work before
+-releasing after interruption. Existing snapshot-based operations keep the
++held until explicitly released. After interruption, reconcile remaining local
++and remote effects. Release a repository claim after its safe merge critical
++section; retain every deployed physical machine under the
++[machine retention rule](coordination.md#machine-retention) until integration,
++user acceptance and explicit machine release direction are all established.
++Existing snapshot-based operations keep the
+ procedures below and the [retained workflow guide](coordination-legacy.md).
+ 
+ The remaining sections describe legacy executor recovery. They do not start new
+@@ -82,8 +86,11 @@ use a fresh job to hide the original uncertainty.
+ 
+ Archive and deletion hold notifications and cancel queued operations before
+ cleanup. Coordination receipts bind each ordinary lifecycle journal to exact
+-owner incarnations. Archive completion releases that owner's machine
++owner incarnations. Legacy archive completion releases that owner's machine
+ reservations in the same ledger transaction that records lifecycle completion.
++This implementation behavior grants no permission to archive or bypass the
++machine retention rule. Retain deployed ownership until its integration lineage,
++user acceptance and explicit machine-specific release direction are established.
+ The reservation stays held during failed or interrupted cleanup. Retrying a
+ completed archive receipt can release a hold retained by a predecessor executor;
+ the exact owner binding must still match. Deployment history and recovery
+diff --git a/docs/coordination.md b/docs/coordination.md
+index e25c28e..c0c0f84 100644
+--- a/docs/coordination.md
++++ b/docs/coordination.md
+@@ -108,9 +108,9 @@ dev-session coordination cancel-claim SESSION --as-is --id CLAIM_UUID --json
+ 
+ Release settles a held claim. Cancellation settles a waiting request. Both are
+ owner-only and idempotent; cancellation cannot release held resources. Machine
+-ownership can remain held during human review, feedback and repeated deployment.
+-Release requires no integration proof and grants no merge approval. Session
+-completion still follows its normal exact-head integration requirements.
++ownership follows the retention rule below through human review, feedback and
++repeated deployment. Release grants no merge approval. Session completion still
++follows its normal exact-head integration requirements.
+ 
+ For workspace profile activation, hold a claim covering the configured profile
+ machine and run ordinary `workspace-host switch --source PATH` with
+@@ -119,13 +119,47 @@ machine and run ordinary `workspace-host switch --source PATH` with
+ transition locks. Package compatibility, activation journals and forward recovery
+ remain workspace-host responsibilities.
+ 
++## Machine retention
++
++Retain every deployed physical machine until all three conditions are met:
++
++1. Its deployed feature lineage is integrated into the approved remote default
++   branches, including deployed dependencies.
++2. The user accepts the resulting UI or behavior on that machine.
++3. The user explicitly directs release of that machine.
++
++Idle time, review, feedback, redeployment, disconnects and turn completion do not
++permit release. Review, CI and source completion do not establish user acceptance;
++record the accepted environment and result. Default-branch integration needs its
++own explicit approval. Deployment approval supplies neither merge approval nor
++release direction. Missing evidence keeps the machine held.
++
++Use existing rollout and review receipts for exact system/profile store paths,
++complete source/input graphs, canonical repository/target mapping and machine
++aliases, exact deployed and final intended feature heads, and fresh remote
++ancestry evidence. Retain reviewed old/new base/head ranges, range-diff or
++patch-equivalence evidence and migration lineage when history changes. Do not
++describe a nonancestor deployed commit as literally merged. An independently
++proven equivalent successor can establish integrated feature lineage; a
++substantive successor requires redeployment and renewed user acceptance. Ordinary
++session completion still requires every registered exact final feature head.
++
++Before release, inspect authoritative status for the exact claim owned by this
++session, reconcile known command effects, verify all three conditions, release
++that claim and verify its resulting state. The cooperative owner-only, idempotent
++release API does not enforce this human workflow. Do not introduce release
++receipts, edit claim records or infer acceptance to bypass a missing condition.
++Keep short repository merge claims separate from machine ownership.
++
+ ## Interruption and lifecycle
+ 
+ Claims survive idle agents, disconnections and service restart. They have no
+ automatic expiry. The coordinator does not observe command execution or infer
+ completion. After interruption, inspect the original local and remote work,
+-stop anything still mutating the resources, then explicitly release. Do not
+-release ownership merely because SSH or a client process exited.
++stop anything still mutating the resources and reconcile effects. Release a
++repository merge claim once its critical section is safe. A deployed machine
++remains held until all machine-retention conditions are met. SSH or a client
++process exiting does not permit release.
+ 
+ Held claims block lifecycle cleanup until their owner releases them. Lifecycle
+ fencing cancels waiting requests. Suspension retains ownership and waiting
+@@ -166,3 +200,8 @@ its exact `legacyJobId`; this does not permit submitting an independent new job.
+ Use the [retained workflow guide](coordination-legacy.md),
+ [integration guide](integration.md) and [operations guide](coordination-operations.md)
+ for those records.
++
++Legacy automatic reservation release during lifecycle completion is implementation
++behavior, not permission to archive, delete or release a deployed machine before
++the retention conditions above. Existing journals and recovery contracts remain;
++finishing work or preparing a handoff grants no lifecycle authorization.
+diff --git a/portal/internal/workspacecodex/lead_policy.go b/portal/internal/workspacecodex/lead_policy.go
+index 391d059..c42ca8e 100644
+--- a/portal/internal/workspacecodex/lead_policy.go
++++ b/portal/internal/workspacecodex/lead_policy.go
+@@ -37,6 +37,12 @@ const CoordinationInstructions = "Before merging or deploying, read the selected
+ 	"Shared workspace master integration also takes dev-session-tracking.lock after the claim; if that lock is busy, release the claim instead of waiting. " +
+ 	"If preparation is stale or needs intervention, stop commands, inspect effects and release before repairing outside the claim. Reconcile uncertain mutations before release. " +
+ 	"Never hold a repository claim while waiting for approval, review or tests. Use separate machine reservations for deployment and live review, with builds and copies prepared beforehand. " +
++	"Retain every deployed physical machine until its deployed feature lineage is integrated into approved remote defaults, the user accepts the resulting UI/behavior on that machine, and the user explicitly directs its release. " +
++	"Idle time, review, feedback, redeployment, disconnects and turn completion never authorize release; missing evidence keeps the machine held. Integration needs separate explicit approval. " +
++	"Keep exact system/profile store paths, complete source/input graphs, repository/target and machine aliases, deployed/final heads and fresh remote ancestry evidence in existing rollout/review receipts. " +
++	"For refreshed history, retain reviewed old/new base/head ranges, equivalence and migration evidence; do not call a nonancestor deployed commit literally merged. An independently proven equivalent successor can establish integrated lineage; a substantive successor needs redeployment and renewed user acceptance. " +
++	"Record the accepted environment/result; review or CI is not user acceptance. Before release, inspect authoritative status for the exact claim owned by this session, reconcile known command effects, verify all three conditions, release that claim and verify its resulting state. " +
++	"Legacy automatic lifecycle release is implementation behavior, not permission to archive, delete or release a machine. Preserve original recovery contracts and ordinary exact-final-head completion rules. " +
+ 	"Keep resource waits interruptible; queued claims notify the session when granted."
+ 
+ // LeadThreadPolicy applies only to the normal root conversation. A catalog

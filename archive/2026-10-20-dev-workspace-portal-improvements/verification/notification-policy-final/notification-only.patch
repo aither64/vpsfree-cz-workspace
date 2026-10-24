@@ -1,0 +1,1469 @@
+diff --git a/docs/browser-notifications-operations.md b/docs/browser-notifications-operations.md
+index 1374aa6..52831c6 100644
+--- a/docs/browser-notifications-operations.md
++++ b/docs/browser-notifications-operations.md
+@@ -69,6 +69,25 @@ attention and reservation markers intact. If cleanup is incomplete, use
+ **Notification settings** to retry Disable. The menu shows a brief notice and a
+ mixed checkbox.
+ 
++Browser Disable commits its durable off gate before server cleanup or local
++unsubscribe. Provider-queued pushes carry their registration ID and are dropped
++by a capable worker while off or after a fresh activation replaces that ID.
++Disable does not queue events for replay. A new Enable accepts only future events;
++continuous idempotent registration preserves its current ID and pending outbox.
++Gate-storage failure still permits cleanup but cannot confirm durable blocking.
++
++The existing version-1 IndexedDB store has a reserved gate containing `identity`,
++`enabled`, `actionToken`, `registrationId` and the fixed `at` retention rank.
++Its transaction-commit compare-and-set and origin-scoped Web Lock fence delayed
++Enable/Disable results and destructive side effects across updated tabs. The
++server's GET and the actual controlling worker advertise `deliveryEpoch: 1`.
++Only after that server capability is known does fresh registration send
++`requireFresh: true`; an existing endpoint returns HTTP 409 instead of adopting
++its ID. Enable performs bounded cleanup and retries once. Old strict JSON
++decoders never receive this optional precondition from updated controls.
++Unsupported server/controller/storage/locking leaves setup incomplete. Preserve
++the gate during forward recovery; deleting it would discard the off fence.
++
+ The browser-local **Play sound** setting uses the existing attention database.
+ Checked leaves `silent` out of the display options; unchecked sets
+ `silent: true` for Test, session and fallback notifications. Storage reads and
+@@ -142,7 +161,9 @@ To disable delivery without stopping sessions, create the owner-only file
+ running sender notices it on its next two-second pass, cancels unsent work and
+ retains keys, registrations and preferences. Settings reports that delivery is
+ disabled. Remove that marker to recover; events observed while disabled do not
+-replay. A push already accepted by its provider may still display.
++replay. A push already accepted by its provider may still display under this
++server-only marker; it does not change a browser's local gate. Use browser Disable
++for the browser's permanent old-epoch drop policy.
+ 
+ For a package defect, use a corrected successor package through the supported
+ forward-only workspace selection policy. Keep private state and version-1
+diff --git a/docs/browser-notifications.md b/docs/browser-notifications.md
+index 36bde94..f01081a 100644
+--- a/docs/browser-notifications.md
++++ b/docs/browser-notifications.md
+@@ -52,7 +52,10 @@ changing a subscription. Changing **Notifications** uses the same Enable or
+ Disable action as the full panel. Disabling applies across sessions in this
+ browser, while title attention and reservation markers keep updating. Per-session
+ notification settings remain unchanged and apply again after browser Enable.
+-A provider-accepted message may still arrive after Disable.
++Events from the disabled period are dropped permanently. Enabling again starts
++delivery for future events; it does not replay a backlog. A push already accepted
++by the provider may still reach the worker, which drops its old registration
++epoch even after notifications are enabled again.
+ 
+ The **Sound** checkbox in the menu controls the same setting as **Play sound** in
+ settings. It applies to notifications from this portal in the current browser
+@@ -94,7 +97,8 @@ Only older test entries for the same browser registration are closed. Session
+ notification tags and acknowledgement are unchanged.
+ 
+ **Disable on this browser**
+-removes the server registration and unsubscribes locally. It leaves the browser's
++first saves a browser-local off gate, then removes the server registration and
++unsubscribes locally. It leaves the browser's
+ site permission unchanged. The two removals are independent: server failure does
+ not prevent local unsubscribe. If server cleanup remains uncertain, the browser
+ keeps a small deletion selector for an explicit Disable retry, including after
+@@ -105,8 +109,19 @@ Finish pending cleanup before enabling again. Fully disabled means those
+ removals and local absence are confirmed. A lost registration response or saved ID
+ reports incomplete setup; Disable uses the endpoint digest without registering
+ the subscription again.
++If the off gate cannot be saved, cleanup still runs, but Disable remains
++incomplete and retryable. It cannot certify that delayed pushes will be blocked.
+ Denied permission requires a change in the browser's site settings.
+ 
++Enable requires support from the server, the worker actually controlling this
++page, and the browser's Web Locks API. An unconfirmed update or unsupported
++component leaves setup incomplete. Reloading checks again; it does not bypass
++these requirements. Updated tabs serialize subscription and cleanup actions.
++A durable action token prevents an older completion from saving a registration,
++changing the current controls or unsubscribing a newer setup. Fresh activation
++requires an absent server endpoint and a new registration ID. Repeating Enable
++while the same registration remains enabled preserves its ID and pending delivery.
++
+ The browser must support service workers, Notifications and the Push API in a
+ trusted secure context. Firefox and Chrome/Chromium use Web Push to wake the
+ worker with every portal tab closed while the browser is running. Some Chromium
+@@ -145,8 +160,12 @@ up to six attempts within the original expiry. HTTP 404/410 retires the
+ subscription. Permanent provider failures appear in browser Settings. Provider
+ Topic and notification tag coalesce messages for the same session.
+ 
+-The worker attempts to display a visible notification for every delivered push. A
+-bounded authenticated status read verifies its current meaning. Expired,
++The worker checks the browser-local gate before processing a push and again
++immediately before display, after status and sound reads. For a managed browser,
++the worker drops deliveries while off and deliveries with a missing or mismatched
++registration epoch, without a popup or neutral fallback. Gate-storage errors also
++prevent display. A bounded authenticated status read verifies the meaning of a
++current enabled delivery. Expired,
+ resolved, muted, superseded, acknowledged or unverifiable delivery uses
+ **Session update available**. A missing or inaccessible session uses
+ **Workspace update** without session details. IndexedDB prevents an older
+@@ -160,14 +179,30 @@ database upgrade. These optional fields contain event IDs, revisions, expiry,
+ fixed stage names and an allowlisted browser error category. They contain no
+ endpoint, subscription key, provider response or notification payload. Older
+ clients or workers leave the new result unknown. Local diagnostic storage
+-failure does not prevent the worker from attempting display. The same database
++failure does not prevent display when the delivery gate can still be read. The same database
+ also holds one browser sound preference, separately from the 512 attention and
+ test records. It uses the existing version-1 object store without a database
+ upgrade or a server-side preference. A fixed retention rank, rather than a
+ timestamp, protects this preference from pruning by already-open older pages.
+ 
+-Once accepted by a provider, a message cannot reliably be recalled. A mute or
+-focus race can still produce a visible neutral notification. Clicking a session
++The same object store holds one reserved delivery gate with `enabled`,
++`actionToken` and `registrationId`. Its fixed retention rank protects it from
++pruning; ordinary attention writes cannot replace it. Bounded transactions wait
++for commit and compare the action token before enabling a registration. No
++database upgrade is needed. An installation without a gate retains legacy
++delivery behavior until its first explicit updated Enable or Disable action.
++The gate persists across tabs, reloads and worker restarts. Supported attention
++writes and pruning never delete it, and managed mode never silently returns to
++legacy delivery. A context that has read a managed gate treats unexpected absence
++as a storage failure. Explicitly clearing this site's browser data resets its
++locally retained delivery state.
++
++Once accepted by a provider, a message cannot reliably be recalled. Browser
++Disable drops its old epoch in the capable worker. A mute or focus race within
++the current enabled epoch can still produce a visible neutral notification.
++An already-started display or shown OS notification cannot be recalled. The
++browser's required `userVisibleOnly: true` subscription can have vendor behavior
++outside the application's display calls. Clicking a session
+ notification closes it and focuses an existing tab for the same portal and
+ session, without reloading it, changing its member or section, or losing its
+ unsent draft. If several tabs match,
+@@ -178,8 +213,13 @@ not open a duplicate tab. The click itself does not acknowledge attention;
+ normal visible, focused observation keeps its session identity checks.
+ 
+ The worker caches no portal page or API response. The root worker route retains
+-compatible version-1 payload handling across updates. Old clients ignore the
+-feature. Newly captured requests with `browserNotificationsEnabled` need the
++compatible version-1 payload handling across updates. `registrationId` is an
++additive transport field, including Test; it does not change global attention
++identity or persisted server events. Old workers and loaded controls cannot
++provide the disabled-period drop guarantee. Use updated controls and confirm
++their actual controller before enabling. Keep delivery off and recover forward
++with capable assets if an older worker cannot honor the gate.
++Newly captured requests with `browserNotificationsEnabled` need the
+ capable bundled session helper; predecessor helpers refuse that added receipt
+ field. Existing receipts with the field omitted remain supported. The
+ forward-only package and creation-transition fence keeps portal and helper
+diff --git a/portal/internal/web/attention_browser_test.cjs b/portal/internal/web/attention_browser_test.cjs
+index 2c28250..1724ac7 100644
+--- a/portal/internal/web/attention_browser_test.cjs
++++ b/portal/internal/web/attention_browser_test.cjs
+@@ -26,8 +26,8 @@ function workerHarness() {
+   const sound = {value: true, failed: false};
+   let status = {fresh: true, enabled: true, identity, event: event(), revision: 1}, inaccessible = false;
+   const context = {URL, AbortController, setTimeout, clearTimeout, Date,
+-    importScripts: value => assert.equal(value, '/static/session-attention-store.js?v=3'),
+-    workspaceAttentionStore: {readSound: async () => {soundReads++; if (sound.failed) throw Error("sound read canary"); return sound.value;}, update: async (key, change) => {
++    importScripts: value => assert.equal(value, '/static/session-attention-store.js?v=4'),
++    workspaceAttentionStore: {readDeliveryGate: async () => null, readSound: async () => {soundReads++; if (sound.failed) throw Error("sound read canary"); return sound.value;}, update: async (key, change) => {
+       const record = change(records.get(key) || {identity: key, seen: [], revision: 0, event: null}); records.set(key, record); return record;
+     }},
+     fetch: async (url, options) => { calls.push({url, options}); return {ok: !inaccessible, status: inaccessible ? 401 : 200, json: async () => status}; },
+@@ -93,10 +93,10 @@ test('browser permission is only requested after explicit enable click', async (
+   let prompts = 0;
+   const storage = new Map();
+   const panel = {querySelector: selector => controls[selector.slice(19, -1)]};
+-  const context = {document: {querySelectorAll: selector => [panel.querySelector(selector)].filter(Boolean), getElementById: () => null}, navigator: {serviceWorker: {getRegistration: async () => null}},
++  const context = {document: {querySelectorAll: selector => [panel.querySelector(selector)].filter(Boolean), getElementById: () => null}, navigator: {locks:{request:async(_name,work)=>work()},serviceWorker: {getRegistration: async () => null}},
+     Notification: {permission: 'default', requestPermission: async () => { prompts++; return 'denied'; }},
+     isSecureContext: true, PushManager: function() {}, AbortController, setTimeout, clearTimeout,
+-    localStorage: {getItem: key => storage.get(key) || null},
++    localStorage: {getItem: key => storage.get(key) || null}, workspaceAttentionStore:testStoreHarness().store, crypto:require('node:crypto').webcrypto,
+     fetch: async () => ({ok: true, json: async () => ({available: true, registered: false})}),
+   };
+   vm.runInNewContext(source('browser-notifications.js'), context);
+@@ -212,7 +212,14 @@ test('50 attention documents stop hidden HTTP and storage work and retire old re
+ const browserId = 'd'.repeat(64), browserKey = 'workspace-browser-notifications.v1', cleanupKey = `${browserKey}.cleanup`;
+ const endpoint = 'https://fcm.googleapis.com/private-endpoint?exact=value';
+ const endpointDigest = require('node:crypto').createHash('sha256').update(endpoint).digest('hex');
++function notificationLocks(state) {
++  return state.actionLocks ||= {request(_name, work) {
++    const next = (state.actionTail || Promise.resolve()).then(work);
++    state.actionTail = next.catch(()=>{}); return next;
++  }};
++}
+ async function notificationHarness(state, storage = new Map()) {
++  const gateStorage = state.gateStorage ||= testStoreHarness();
+   const controls = Object.fromEntries(['status', 'enable', 'disable', 'test'].map(name => [name, {disabled: false, addEventListener(type, callback) {this[type] = callback;}}]));
+   const menu = Object.fromEntries(['delivery', 'menu-error'].map(name => [name, {disabled: true, textContent: '', addEventListener(type, callback) {this[type] = callback;}}]));
+   const calls = [], listeners = {};
+@@ -227,7 +234,7 @@ async function notificationHarness(state, storage = new Map()) {
+     }};
+   const registration = {pushManager: {getSubscription: async () => {if (state.subscriptionRead) return state.subscriptionRead(subscription); if (state.lookupFailure) throw Error('lookup unavailable'); return state.subscribed ? subscription : null;},
+     subscribe: async () => {state.subscribed = true; return subscription;}}};
+-  registration.active = {state: 'activated'};
++  registration.active = {state:'activated',postMessage(_message,ports){ports[0].reply({version:1,deliveryEpoch:state.oldWorker?undefined:1});}};
+   registration.update = async () => {};
+   const service = lifecycleTarget({controller: registration.active, getRegistration: async () => registration,
+     register: async () => {state.onWorkerRegister?.(); return registration;}, ready: Promise.resolve(registration)});
+@@ -236,7 +243,8 @@ async function notificationHarness(state, storage = new Map()) {
+   const context = {document: {visibilityState: 'visible', addEventListener: (name, callback) => listeners[name] = callback,
+     querySelectorAll: selector => [controls[selector.slice(19, -1)] || menu[selector.slice(19, -1)]].filter(Boolean), getElementById: () => null},
+     addEventListener: (name, callback) => listeners[name] = callback,
+-    navigator: {serviceWorker: service},
++    navigator: {serviceWorker: service,locks:state.noLocks?undefined:notificationLocks(state)}, workspaceAttentionStore:gateStorage.store,
++    MessageChannel:function(){this.port1={close(){}};this.port2={reply:value=>queueMicrotask(()=>this.port1.onmessage({data:value}))};},
+     Notification: {permission: 'granted', requestPermission: async () => {state.permissionCalls = (state.permissionCalls || 0) + 1; return 'granted';}},
+     PushManager: function() {}, isSecureContext: true, AbortController, setTimeout, clearTimeout, atob, Uint8Array, TextEncoder,
+     crypto: require('node:crypto').webcrypto,
+@@ -244,7 +252,7 @@ async function notificationHarness(state, storage = new Map()) {
+     fetch: async (url, options = {}) => {
+       const body = options.body && JSON.parse(options.body); calls.push({url, body, savedId: storage.get(browserKey)});
+       if (url.endsWith('/register')) {
+-        if (state.registerResponse) return state.registerResponse();
++        if (state.registerResponse) return state.registerResponse(body);
+         state.registered = true;
+         if (state.serverRecords) {
+           state.serverRecords.set(state.replacementId, body.subscription.endpoint);
+@@ -273,13 +281,13 @@ async function notificationHarness(state, storage = new Map()) {
+       }
+       const queriedId = new URL(url, 'https://workspace.example').searchParams.get('registrationId');
+       if (queriedId !== null && state.readResponse) return state.readResponse(queriedId);
+-      return {ok: true, json: async () => ({available: true, publicKey: 'Ag', registered: state.serverRecords ? state.serverRecords.has(queriedId) : state.registered && queriedId === browserId})};
++      return {ok: true, json: async () => ({available: true, deliveryEpoch:state.oldServer?undefined:1, publicKey: 'Ag', registered: state.serverRecords ? state.serverRecords.has(queriedId) : state.registered && queriedId === browserId})};
+     },
+   };
+   vm.runInNewContext(source('browser-notifications.js'), context);
+-  for (let i = 0; i < 30; i++) await Promise.resolve();
+-  const flush = async () => {for (let i = 0; i < 50; i++) await Promise.resolve();};
+-  return {controls, menu, calls, storage, listeners, context, registration, flush};
++  for (let i = 0; i < 100; i++) await Promise.resolve();
++  const flush = async () => {for (let i = 0; i < 300; i++) await Promise.resolve();};
++  return {controls, menu, calls, storage, listeners, context, registration, flush,gateStorage};
+ }
+ 
+ test('lost registration reply, saved ID or changed key disable without registering again', async () => {
+@@ -376,18 +384,17 @@ test('uncertain local absence retains its selector and Disable control across re
+ test('stale saved ID and lost replacement reply retain both deletion obligations and outbox truth', async () => {
+   for (const failSelector of [null, 'registrationId', 'endpointDigest']) {
+     const replacementId = 'e'.repeat(64);
+-    const state = {subscribed: false, registered: true, loseRegisterReply: true, replacementId, failSelector,
+-      serverRecords: new Map([[browserId, 'https://fcm.googleapis.com/old-endpoint']]), outbox: new Set([browserId])};
++    const state = {subscribed: true, registered: true, replacementId, failSelector,
++      serverRecords: new Map([[browserId, 'https://fcm.googleapis.com/old-endpoint'],[replacementId,endpoint]]), outbox: new Set([browserId,replacementId])};
+     const h = await notificationHarness(state, new Map([[browserKey, browserId]]));
+-    await h.controls.enable.click();
+-    assert.equal(h.storage.get(browserKey), browserId, 'lost reply leaves a stale saved ID');
++    assert.equal(h.storage.get(browserKey), browserId, 'retained lost reply leaves a stale saved ID');
+     assert.equal(state.subscribed, true); assert.equal(state.serverRecords.size, 2); assert.equal(state.outbox.size, 2);
+     await h.controls.disable.click();
+     assert.equal(state.subscribed, false, 'one failed deletion cannot block local unsubscribe');
+     const deletions = h.calls.filter(call => call.url.endsWith('/disable'));
+     assert.equal(deletions.length, 2, 'fixed current digest plus saved ID bound');
+     assert.deepEqual(deletions.map(call => Object.keys(call.body)[0]).sort(), ['endpointDigest', 'registrationId']);
+-    assert.equal(h.calls.filter(call => call.url.endsWith('/register')).length, 1, 'Disable does not register');
++    assert.equal(h.calls.filter(call => call.url.endsWith('/register')).length, 0, 'Disable does not register');
+     if (failSelector) {
+       const remaining = failSelector === 'registrationId' ? browserId : replacementId;
+       assert.deepEqual([...state.serverRecords.keys()], [remaining]); assert.deepEqual([...state.outbox], [remaining]);
+@@ -420,19 +427,19 @@ test('successful replacement retires the old ID before overwrite or retains both
+     const retirement = h.calls.find(call => call.url.endsWith('/disable'));
+     assert.deepEqual(retirement.body, {registrationId: browserId});
+     assert.equal(retirement.savedId, browserId, 'old ID was not overwritten before its deletion');
+-    assert.equal(state.subscribed, true, 'Enable does not automatically unsubscribe');
++    assert.equal(state.subscribed, !failure, 'uncertain old cleanup blocks subscription creation');
+     if (failure) {
+       assert.equal(h.storage.get(browserKey), browserId, 'unknown deletion must retain the old ID');
+-      assert.deepEqual(JSON.parse(h.storage.get(cleanupKey)), {endpointDigest});
++      assert.deepEqual(JSON.parse(h.storage.get(cleanupKey)), {registrationId:browserId});
+       assert.equal(h.controls.status.textContent, 'Disabling is incomplete. Retry Disable.');
+       assert.equal(h.controls.disable.disabled, false); assert.equal(h.controls.enable.disabled, true);
+-      assert.equal(state.serverRecords.has(replacementId), true); assert.equal(state.outbox.has(replacementId), true);
++      assert.equal(state.serverRecords.has(replacementId), false); assert.equal(state.outbox.has(replacementId), false);
+       assert.equal(state.serverRecords.has(browserId), failure === 'failed');
+       const reloaded = await notificationHarness(state, h.storage);
+       assert.equal(reloaded.calls.some(call => call.body), false, 'reload preserves obligations without deletion');
+       state.failSelector = null;
+       await reloaded.controls.disable.click();
+-      assert.equal(reloaded.calls.filter(call => call.url.endsWith('/disable')).length, 2);
++      assert.equal(reloaded.calls.filter(call => call.url.endsWith('/disable')).length, 1);
+       assert.match(reloaded.controls.status.textContent, /^Disabled on this browser/);
+     } else {
+       assert.equal(h.storage.get(browserKey), replacementId);
+@@ -480,7 +487,7 @@ function testStoreHarness() {
+     const req = {}; queueMicrotask(() => {req.result = database; req.onsuccess();}); return req;
+   }}, Date, setTimeout, clearTimeout};
+   vm.runInNewContext(source('session-attention-store.js'), context);
+-  return {store: context.workspaceAttentionStore, records, state, versions};
++  return {store: context.workspaceAttentionStore, records, state, versions,reload(){vm.runInNewContext(source('session-attention-store.js'),context);return context.workspaceAttentionStore;}};
+ }
+ const testDescriptor = (revision = 100, digit = 'c') => ({identity: `test-${'d'.repeat(64)}`, id: digit.repeat(64), revision, expiresAt: Date.now() + 60000});
+ const testPayload = descriptor => ({...descriptor, version: 1, kind: 'test', slug: '', route: '/'});
+@@ -518,7 +525,7 @@ test('test receipts distinguish receipt, display resolution/rejection and browse
+     release(); await work;
+     const outcome = h.storage.records.get(descriptor.identity).testOutcome;
+     assert.equal(outcome.received, true); assert.equal(outcome.display, 'resolved'); assert.equal(outcome.browserRecord, record);
+-    assert.deepEqual(JSON.parse(JSON.stringify(h.capabilities())), {version: 1});
++    assert.deepEqual(JSON.parse(JSON.stringify(h.capabilities())), {version:1,deliveryEpoch:1});
+   }
+   for (const name of ['NotAllowedError', 'private-error-canary']) {
+     const h = displayHarness(), descriptor = testDescriptor(); h.state.failure = {name, message: 'secret message canary'};
+@@ -570,7 +577,7 @@ async function feedbackHarness(storage = testStoreHarness(), options = {}) {
+   const state = {descriptor: testDescriptor(now), registered: !options.off, subscribed: !options.off, available: options.available ?? true, workerVersion: options.workerVersion ?? 1, update: options.update, noReply: options.noReply};
+   const subscription = {endpoint, options: {}, toJSON: () => ({endpoint, keys: {p256dh: 'public', auth: 'auth'}}), unsubscribe: async () => {state.subscribed = false; return true;}};
+   const registration = lifecycleTarget({update: async () => {state.updateChecks = (state.updateChecks || 0) + 1; if (state.update) await state.update();},
+-    active: lifecycleTarget({state: 'activated', postMessage(_message, ports) {state.probes = (state.probes || 0) + 1; if (!state.noReply) ports[0].reply({version: state.workerVersion});}}),
++    active: lifecycleTarget({state: 'activated', postMessage(_message, ports) {state.probes = (state.probes || 0) + 1; if (!state.noReply) ports[0].reply({version: state.workerVersion,deliveryEpoch:1});}}),
+     pushManager: {getSubscription: async () => state.subscribed ? subscription : null,
+       subscribe: async () => {state.subscribes = (state.subscribes || 0) + 1; state.subscribed = true; return subscription;}}});
+   if (options.waitingWorker) registration.waiting = lifecycleTarget({state: 'installed'});
+@@ -579,7 +586,7 @@ async function feedbackHarness(storage = testStoreHarness(), options = {}) {
+   const addServiceListener = service.addEventListener;
+   service.addEventListener = (name, callback) => {addServiceListener(name, callback); listeners[name] = event => service.dispatch(name, event);};
+   const context = {document: {visibilityState: 'visible', getElementById: () => ({querySelector: selector => controls[selector.slice(19, -1) || 'status']}),
+-    addEventListener: (name, callback) => listeners[name] = callback}, navigator: {serviceWorker: service}, addEventListener: (name, callback) => listeners[name] = callback,
++    addEventListener: (name, callback) => listeners[name] = callback}, navigator: {serviceWorker: service,locks:notificationLocks(state)}, addEventListener: (name, callback) => listeners[name] = callback,
+     Date: class extends Date {static now() {return now;}}, Notification: {permission: options.permission || 'granted', requestPermission: async () => {state.permissions = (state.permissions || 0) + 1; if (state.permissionReply) return state.permissionReply(); return 'granted';}, prototype: options.noSilent ? {} : {silent: false}}, PushManager: function() {}, isSecureContext: options.unsupported ? false : true,
+     workspaceAttentionStore: options.oldStore ? {} : storage.store, AbortController, Uint8Array, TextEncoder, atob, crypto: require('node:crypto').webcrypto,
+     MessageChannel: function() {this.port1 = {close() {}}; this.port2 = {reply: value => queueMicrotask(() => this.port1.onmessage({data: value}))};},
+@@ -589,7 +596,7 @@ async function feedbackHarness(storage = testStoreHarness(), options = {}) {
+       if (url.endsWith('/test') && state.testReply) return state.testReply();
+       if (url.endsWith('/disable')) state.registered = false;
+       if (url.endsWith('/register')) {state.registered = true; return {ok: true, json: async () => ({registrationId: browserId})};}
+-      return {ok: true, json: async () => url.endsWith('/test') ? {ok: true, test: options.oldServer ? null : state.descriptor} : {available: state.available, registered: state.registered, publicKey: 'Ag', result: 'provider_accepted'}};},
++      return {ok: true, json: async () => url.endsWith('/test') ? {ok: true, test: options.oldServer ? null : state.descriptor} : {available: state.available, deliveryEpoch:1, registered: state.registered, publicKey: 'Ag', result: 'provider_accepted'}};},
+   };
+   context.document.querySelectorAll = selector => {
+     const name = selector.slice(19, -1);
+@@ -597,7 +604,7 @@ async function feedbackHarness(storage = testStoreHarness(), options = {}) {
+   };
+   context.document.getElementById = name => name === 'sidebar-menu' ? {addEventListener: (_name, callback) => listeners.menutoggle = callback} : null;
+   vm.runInNewContext(source('browser-notifications.js'), context);
+-  const flush = async () => {for (let i = 0; i < 80; i++) await Promise.resolve();};
++  const flush = async () => {for (let i = 0; i < 300; i++) await Promise.resolve();};
+   await flush();
+   return {controls: options.menuOnly ? menuControls : controls, menuControls, storage, state, timers, calls, context, listeners, registration, service, async advance(ms) {now += ms;
+     const ready = [...timers].filter(([,timer]) => timer.at <= now); for (const [id,timer] of ready) {timers.delete(id); timer.callback(); await flush();}}, flush};
+@@ -636,7 +643,9 @@ test('test wait survives reopen, stops at pagehide/expiry/disable and treats old
+   await reopened.controls.disable.click();
+   assert.equal(h.storage.records.get(h.state.descriptor.identity).testPending, undefined);
+   for (const options of [{oldServer: true}, {oldStore: true}]) {
+-    const old = await feedbackHarness(testStoreHarness(), options); await old.controls.test.click();
++    const old = await feedbackHarness(testStoreHarness(), options);
++    if (options.oldStore) {assert.equal(old.controls.test.disabled,true); continue;}
++    await old.controls.test.click();
+     assert.match(old.controls['test-status'].textContent, /matching test result is unavailable/);
+     assert.equal(old.timers.size, 0);
+   }
+@@ -1166,7 +1175,7 @@ test('menu-only owner reads status on load/open without permission, subscription
+   assert.equal(h.timers.size, 0, 'menu does not resume panel Test polling');
+   storage.state.failed = true;
+   h.listeners.menutoggle({newState: 'open'}); await h.flush();
+-  assert.equal(h.controls['menu-error'].textContent, 'Could not read the sound setting.');
++  assert.equal(h.controls['menu-error'].textContent, 'Could not check notifications.');
+   assert.equal(h.controls.sound.disabled, true);
+ });
+ 
+@@ -1407,7 +1416,7 @@ test('compact projection cannot enable from pending, contradictory, stale or ret
+ test('compact notices use domain priority and clear only on that domain current success, without parsing detailed text', async () => {
+   const h = await feedbackHarness(testStoreHarness(), {menu: true});
+   h.storage.state.failed = true; h.listeners.menutoggle({newState: 'open'}); await h.flush();
+-  assert.equal(h.menuControls['menu-error'].textContent, 'Could not read the sound setting.');
++  assert.equal(h.menuControls['menu-error'].textContent, 'Could not check notifications.');
+   h.listeners.storage({key: browserKey, newValue: null}); await h.flush();
+   assert.equal(h.menuControls['menu-error'].textContent, 'Notification setup needs attention.');
+   h.storage.state.failed = false; h.menuControls.sound.checked = false; await h.menuControls.sound.change();
+@@ -1417,8 +1426,8 @@ test('compact notices use domain priority and clear only on that domain current
+   assert.equal(clean.menuControls['menu-error'].textContent, 'Could not save the sound setting.');
+   clean.controls.status.textContent = 'arbitrary backend/private status';
+   clean.listeners.controllerchange(); await clean.flush();
+-  assert.equal(clean.menuControls['menu-error'].textContent, 'Could not save the sound setting.', 'delivery refresh alone cannot clear sound error');
+-  clean.storage.state.commitFailure = false;
++  assert.equal(clean.menuControls['menu-error'].textContent, 'Could not check notifications.', 'unreadable delivery gate takes priority over sound error');
++  clean.storage.state.commitFailure = false; clean.listeners.controllerchange(); await clean.flush();
+   clean.listeners['session-section-change']({detail: 'settings'}); await clean.flush();
+   assert.equal(clean.menuControls['menu-error'].textContent, '');
+   const worker = await feedbackHarness(testStoreHarness(), {menu: true, waitingWorker: true});
+@@ -1487,3 +1496,145 @@ for (const method of ['getSubscription', 'subscribe']) {
+     assert.equal(toggle.disabled, true); assert.equal(h.menuControls['menu-error'].textContent, 'Could not update notifications.');
+   });
+ }
++
++test('delivery gate commits CAS epochs in the existing v1 store and survives attention pruning', async () => {
++  const h=testStoreHarness(), token='action-one';
++  assert.equal(await h.store.readDeliveryGate(),null);
++  await h.store.writeDeliveryGate({enabled:false,actionToken:token,registrationId:''},null);
++  const enabled=await h.store.writeDeliveryGate({enabled:true,actionToken:token,registrationId:browserId},token);
++  assert.equal(enabled.enabled,true);
++  assert.equal(await h.store.writeDeliveryGate({enabled:false,actionToken:'stale',registrationId:''},null),null);
++  await h.store.writeDeliveryGate({enabled:false,actionToken:'action-two',registrationId:''});
++  assert.equal(await h.store.writeDeliveryGate({enabled:true,actionToken:token,registrationId:browserId},token),null);
++  assert.equal((await h.store.readDeliveryGate()).enabled,false);
++  await assert.rejects(h.store.update('browser-notification-delivery'),/Reserved/);
++  await h.store.writeSound(false);
++  for(let i=0;i<520;i++) h.records.set(`old-${i}`,{identity:`old-${i}`,at:i});
++  await h.store.update(identity);
++  assert.equal((await h.store.readDeliveryGate()).actionToken,'action-two');
++  assert.equal((await h.reload().readDeliveryGate()).actionToken,'action-two','fresh context reads durable managed state');
++  assert.equal(await h.store.readSound(),false);
++  assert.deepEqual(h.versions,[1,1], 'reload reopens the existing database version without an upgrade');
++  h.records.delete('browser-notification-delivery');
++  await assert.rejects(h.store.readDeliveryGate(),/cannot save notification settings/,'managed context cannot return to legacy');
++  await h.store.writeDeliveryGate({enabled:false,actionToken:'recovered',registrationId:''});
++  h.state.holdCommit=true;
++  const write=h.store.writeDeliveryGate({enabled:false,actionToken:'pending',registrationId:''});
++  let settled=false; void write.then(()=>{settled=true;});
++  for(let i=0;i<20;i++) await Promise.resolve();
++  assert.equal(settled,false); h.state.holdCommit=false; h.state.completion(); await write;
++});
++
++test('managed worker drops off, old and missing epochs before every fallback and Test branch', async () => {
++  const old=browserId, fresh='e'.repeat(64);
++  const payloads=[event(),{...event(),expiresAt:1},testPayload(testDescriptor()),{version:99},null];
++  for(const enabled of [false,true]) for(const payload of payloads) for(const epoch of [undefined,old]) {
++    const h=workerHarness();
++    h.context.workspaceAttentionStore.readDeliveryGate=async()=>({enabled,actionToken:'new',registrationId:fresh});
++    await h.push(payload && {...payload,registrationId:epoch});
++    assert.equal(h.notifications.length,0); assert.equal(h.calls.length,0); assert.equal(h.soundReads(),0);
++  }
++  const h=workerHarness(); let gate={enabled:true,actionToken:'one',registrationId:old};
++  h.context.workspaceAttentionStore.readDeliveryGate=async()=>gate;
++  await h.push({...event(),registrationId:old}); assert.equal(h.notifications.length,1);
++  gate={enabled:false,actionToken:'off',registrationId:''};
++  await h.push({...event(),registrationId:old});
++  gate={enabled:true,actionToken:'two',registrationId:fresh};
++  await h.push({...event(),registrationId:old}); assert.equal(h.notifications.length,1);
++  h.inaccessible(); await h.push({...event(),registrationId:fresh});
++  assert.equal(h.notifications.length,2); assert.equal(h.notifications.at(-1).title,'Workspace update','current epoch keeps neutral fallbacks');
++});
++
++test('managed worker rechecks Disable after status and sound awaits and fails closed on gate errors', async () => {
++  for(const stage of ['status','sound']) {
++    const h=workerHarness(); let gate={enabled:true,actionToken:'one',registrationId:browserId}, release;
++    h.context.workspaceAttentionStore.readDeliveryGate=async()=>gate;
++    if(stage==='status') h.context.fetch=()=>new Promise(resolve=>{release=()=>resolve({status:503,ok:false});});
++    else h.context.workspaceAttentionStore.readSound=()=>new Promise(resolve=>{release=()=>resolve(true);});
++    const work=h.push({...event(),registrationId:browserId});
++    for(let i=0;i<30&&!release;i++) await Promise.resolve(); assert.equal(typeof release,'function');
++    gate={enabled:false,actionToken:'off',registrationId:''}; release(); await work;
++    assert.equal(h.notifications.length,0);
++  }
++  const h=workerHarness(); h.context.workspaceAttentionStore.readDeliveryGate=async()=>{throw Error('private gate canary');};
++  await h.push({...event(),registrationId:browserId}); assert.equal(h.notifications.length,0);
++  const storage=testStoreHarness(), t=displayHarness(storage);
++  await storage.store.writeDeliveryGate({enabled:true,actionToken:'active',registrationId:browserId});
++  let release;
++  storage.store.readSound=()=>new Promise(resolve=>{release=()=>resolve(true);});
++  const work=t.push({...testDescriptor(),registrationId:browserId});
++  for(let i=0;i<100&&!release;i++) await Promise.resolve();
++  await storage.store.writeDeliveryGate({enabled:false,actionToken:'off',registrationId:''}); release(); await work;
++  assert.equal(t.shown.length,0,'Test has the same final display fence');
++});
++
++test('protected Enable rejects old server, old controlling worker and missing Web Locks', async () => {
++  for(const option of ['oldServer','oldWorker','noLocks']) {
++    const h=await notificationHarness({[option]:true,subscribed:false,registered:false});
++    await h.controls.enable.click();
++    assert.match(h.controls.status.textContent,/Notification protection is unavailable/);
++    assert.equal(h.calls.filter(c=>c.url.endsWith('/register')).length,0);
++    assert.equal(h.storage.has(browserKey),false);
++    assert.equal(h.menu.delivery.checked,false);
++  }
++});
++
++test('continuous enabled registration retains its epoch and pending outbox', async () => {
++  const gateStorage=testStoreHarness();
++  await gateStorage.store.writeDeliveryGate({enabled:true,actionToken:'continuous',registrationId:browserId});
++  const state={gateStorage,subscribed:true,registered:true,outbox:new Set([browserId])};
++  const h=await notificationHarness(state,new Map([[browserKey,browserId]]));
++  await h.controls.enable.click();
++  assert.match(h.controls.status.textContent,/^Enabled/);
++  assert.equal(h.calls.some(c=>c.url.endsWith('/disable')),false);
++  assert.equal(Object.hasOwn(h.calls.find(c=>c.url.endsWith('/register')).body,'requireFresh'),false);
++  assert.equal((await gateStorage.store.readDeliveryGate()).actionToken,'continuous');
++  assert.equal(state.outbox.has(browserId),true);
++});
++
++test('fresh Enable cannot adopt a late old registration and bounds cleanup retries', async () => {
++  for(const repeated of [false,true]) {
++    let attempts=0;
++    const state={subscribed:true,registered:false,registerResponse:async body=>{
++      assert.equal(body.requireFresh,true); attempts++;
++      return repeated||attempts===1 ? {ok:false,status:409,json:async()=>({error:'existing endpoint'})} :
++        {ok:true,json:async()=>({registrationId:browserId})};
++    }};
++    const h=await notificationHarness(state);
++    await h.controls.enable.click();
++    assert.equal(attempts,2); assert.equal(h.calls.filter(c=>c.url.endsWith('/disable')).length,2);
++    const gate=await h.gateStorage.store.readDeliveryGate();
++    assert.equal(gate.enabled,!repeated); assert.equal(h.storage.has(browserKey),!repeated);
++  }
++});
++
++test('Disable fences a delayed old Enable across tabs before local storage or unsubscribe side effects', async () => {
++  for(const stage of ['permission','registration']) {
++    const state={subscribed:stage==='registration',registered:false}; const local=new Map();
++    const first=await notificationHarness(state,local); let release;
++    if(stage==='permission') first.context.Notification.requestPermission=()=>new Promise(resolve=>{release=()=>resolve('granted');});
++    else state.registerResponse=()=>new Promise(resolve=>{release=()=>{state.registered=true;resolve({ok:true,json:async()=>({registrationId:browserId})});};});
++    const enabling=first.controls.enable.click(); await first.flush();
++    for(let i=0;i<100&&!release;i++) await new Promise(resolve=>setImmediate(resolve));
++    assert.equal(typeof release,'function',stage);
++    const second=await notificationHarness(state,local);
++    const disabling=second.controls.disable.click(); await second.flush();
++    assert.equal((await state.gateStorage.store.readDeliveryGate()).enabled,false);
++    release(); await Promise.all([enabling,disabling]);
++    assert.equal(local.has(browserKey),false); assert.equal(state.subscribed,false);
++    assert.equal((await state.gateStorage.store.readDeliveryGate()).enabled,false);
++    assert.doesNotMatch(first.controls.status.textContent,/^Enabled/);
++    assert.match(second.controls.status.textContent,/^Disabled/);
++    if(stage==='permission') assert.equal(first.calls.some(c=>c.url.endsWith('/register')),false);
++  }
++});
++
++test('Disable storage failure still cleans both transports but stays incomplete and retryable', async () => {
++  const h=await notificationHarness({subscribed:true,registered:true},new Map([[browserKey,browserId]]));
++  h.gateStorage.state.commitFailure=true;
++  await h.controls.disable.click();
++  assert.equal(h.storage.has(browserKey),false); assert.equal(h.calls.filter(c=>c.url.endsWith('/disable')).length,2);
++  assert.match(h.controls.status.textContent,/blocking could not be saved/); assert.equal(h.controls.disable.disabled,false);
++  h.gateStorage.state.commitFailure=false; await h.controls.disable.click();
++  assert.match(h.controls.status.textContent,/^Disabled/);
++});
+diff --git a/portal/internal/web/notifications.go b/portal/internal/web/notifications.go
+index 43fbdae..0050714 100644
+--- a/portal/internal/web/notifications.go
++++ b/portal/internal/web/notifications.go
+@@ -24,6 +24,8 @@ type notificationService struct {
+ 	client webpush.HTTPClient
+ }
+ 
++var errNotificationRegistrationExists = errors.New("This browser still has a notification registration. Choose Disable again before enabling notifications.")
++
+ func (s *Server) initNotifications() {
+ 	if !s.config.ObserveActivity {
+ 		return
+@@ -188,7 +190,30 @@ func (n *notificationService) sendNext(ctx context.Context, now time.Time) {
+ 	if browser.Disabled || validatePushSubscription(browser.Subscription, browser.ExpiresAt, now) != nil {
+ 		return
+ 	}
+-	data, _ := json.Marshal(delivery.Event)
++	// Observation may wait on dependencies. Revalidate its copied transport job
++	// against current registration/mute/outbox state immediately before sending.
++	n.store.mu.Lock()
++	current, found := n.store.state.Outbox[key]
++	registered, registeredNow := n.store.state.Browsers[delivery.Browser]
++	presence := n.store.presence[notificationDeliveryKey(delivery.Browser, delivery.Event.Slug)]
++	baseline := n.store.state.Sessions[delivery.Event.Slug]
++	sendingAt := time.Now()
++	eligible := !n.store.failed && !n.disabled() && found && current.Event.ID == delivery.Event.ID &&
++		current.Event.Revision == delivery.Event.Revision && current.Browser == delivery.Browser && registeredNow && !registered.Disabled &&
++		registered.Origin == browser.Origin && registered.Subscription.Endpoint == browser.Subscription.Endpoint &&
++		validatePushSubscription(registered.Subscription, registered.ExpiresAt, sendingAt) == nil &&
++		delivery.Event.ExpiresAt > sendingAt.UnixMilli() && (presence.Identity != delivery.Event.Identity || !presence.Until.After(sendingAt)) &&
++		(delivery.Event.Kind == "test" || baseline.Eligible && baseline.Event != nil && baseline.Event.ID == delivery.Event.ID &&
++			baseline.Identity == delivery.Event.Identity && notificationEnabled(&n.store.state, delivery.Event.Slug, delivery.Event.Identity))
++	if eligible {
++		browser = registered
++	}
++	n.store.mu.Unlock()
++	if !eligible {
++		return
++	}
++	// registrationId belongs only to this transport attempt, never event identity.
++	data := notificationPayload(delivery)
+ 	requestCtx, cancel := context.WithTimeout(ctx, 12*time.Second)
+ 	response, err := webpush.SendNotificationWithContext(requestCtx, data, &browser.Subscription, &webpush.Options{
+ 		HTTPClient: n.client, Subscriber: n.server.config.BaseURL, VAPIDPrivateKey: private, VAPIDPublicKey: public,
+@@ -204,7 +229,7 @@ func (n *notificationService) sendNext(ctx context.Context, now time.Time) {
+ 	defer n.store.mu.Unlock()
+ 	_ = n.store.change(func(state *notificationState) error {
+ 		current, found := state.Outbox[key]
+-		if !found || current.Event.ID != delivery.Event.ID {
++		if !found || current.Event.ID != delivery.Event.ID || current.Event.Revision != delivery.Event.Revision || current.Browser != delivery.Browser {
+ 			return nil
+ 		}
+ 		b, found := state.Browsers[delivery.Browser]
+@@ -239,6 +264,15 @@ func (n *notificationService) sendNext(ctx context.Context, now time.Time) {
+ 	})
+ }
+ 
++// The registration epoch is transport-only; persisted events keep their shape.
++func notificationPayload(delivery notificationDelivery) []byte {
++	data, _ := json.Marshal(struct {
++		attentionEvent
++		RegistrationID string `json:"registrationId"`
++	}{delivery.Event, delivery.Browser})
++	return data
++}
++
+ func attentionRelevant(event attentionEvent, observation attentionObservation) bool {
+ 	if event.Kind != "done" {
+ 		for _, request := range observation.Requests {
+@@ -314,7 +348,7 @@ func (s *Server) browserNotificationsAPI(w http.ResponseWriter, r *http.Request)
+ 		if found && browser.Origin == origin {
+ 			result = browser.Result
+ 		}
+-		s.writeJSON(w, http.StatusOK, map[string]any{"version": 1, "publicKey": n.store.state.PublicKey, "registered": registered, "result": result, "available": !n.disabled()})
++		s.writeJSON(w, http.StatusOK, map[string]any{"version": 1, "deliveryEpoch": 1, "publicKey": n.store.state.PublicKey, "registered": registered, "result": result, "available": !n.disabled()})
+ 		return
+ 	}
+ 	if r.URL.Path == "/api/browser-notifications/disable" {
+@@ -367,6 +401,7 @@ func (s *Server) browserNotificationsAPI(w http.ResponseWriter, r *http.Request)
+ 		RegistrationID string               `json:"registrationId"`
+ 		Subscription   webpush.Subscription `json:"subscription"`
+ 		ExpirationTime *int64               `json:"expirationTime"`
++		RequireFresh   bool                 `json:"requireFresh"`
+ 	}
+ 	r.Body = http.MaxBytesReader(w, r.Body, 8192)
+ 	if !s.decodeJSON(w, r, &input) {
+@@ -392,6 +427,9 @@ func (s *Server) browserNotificationsAPI(w http.ResponseWriter, r *http.Request)
+ 					if browser.Origin != origin {
+ 						return errors.New("This subscription belongs to another portal origin.")
+ 					}
++					if input.RequireFresh {
++						return errNotificationRegistrationExists
++					}
+ 					outputID = id
+ 				}
+ 			}
+@@ -422,6 +460,10 @@ func (s *Server) browserNotificationsAPI(w http.ResponseWriter, r *http.Request)
+ 		return nil
+ 	})
+ 	if err != nil {
++		if errors.Is(err, errNotificationRegistrationExists) {
++			s.writeError(w, r, http.StatusConflict, err.Error())
++			return
++		}
+ 		s.writeError(w, r, http.StatusBadRequest, err.Error())
+ 		return
+ 	}
+diff --git a/portal/internal/web/notifications_browser_test.cjs b/portal/internal/web/notifications_browser_test.cjs
+index a3d4797..4798c05 100644
+--- a/portal/internal/web/notifications_browser_test.cjs
++++ b/portal/internal/web/notifications_browser_test.cjs
+@@ -230,7 +230,7 @@ async function checkWorkerUpgrade(browser, engine) {
+     const queued = controls.waitForResponse(response => new URL(response.url()).pathname === "/api/browser-notifications/test" && response.request().method() === "POST");
+     await controls.locator("[data-notification-test]").click();
+     const descriptor = (await (await queued).json()).test;
+-    await successor.evaluate(descriptor => self.dispatchEvent(new PushEvent("push", {data: JSON.stringify({...descriptor, version: 1, kind: "test", slug: "", route: "/"})})), descriptor);
++    await successor.evaluate(descriptor => self.dispatchEvent(new PushEvent("push", {data: JSON.stringify({...descriptor, registrationId:descriptor.identity.slice(5), version: 1, kind: "test", slug: "", route: "/"})})), descriptor);
+     await expect(controls.locator("[data-notification-test-status]")).toContainText("browser accepted the display request");
+     assert.equal(await successor.evaluate(() => Object.hasOwn(self.fixtureSoundDisplays[0], "silent")), false);
+     await expect(sound).toBeEnabled(); await expect(sound).toBeChecked();
+@@ -240,12 +240,12 @@ async function checkWorkerUpgrade(browser, engine) {
+     const queuedSilent = controls.waitForResponse(response => new URL(response.url()).pathname === "/api/browser-notifications/test" && response.request().method() === "POST");
+     await controls.locator("[data-notification-test]").click();
+     const silentDescriptor = (await (await queuedSilent).json()).test;
+-    await successor.evaluate(descriptor => self.dispatchEvent(new PushEvent("push", {data: JSON.stringify({...descriptor, version: 1, kind: "test", slug: "", route: "/"})})), silentDescriptor);
++    await successor.evaluate(descriptor => self.dispatchEvent(new PushEvent("push", {data: JSON.stringify({...descriptor, registrationId:descriptor.identity.slice(5), version: 1, kind: "test", slug: "", route: "/"})})), silentDescriptor);
+     await expect(controls.locator("[data-notification-test-status]")).toContainText("browser accepted the display request");
+     assert.equal(await successor.evaluate(() => self.fixtureSoundDisplays.at(-1).silent), true);
+     const sessionPayload = await controls.evaluate(async () => {
+       const status = await (await fetch("/api/sessions/example/attention")).json();
+-      return {version: 1, identity: status.identity, id: "b".repeat(64), revision: 1, slug: "example", kind: "input",
++      return {version: 1, registrationId:(await workspaceAttentionStore.readDeliveryGate()).registrationId, identity: status.identity, id: "b".repeat(64), revision: 1, slug: "example", kind: "input",
+         member: "implementer0", route: "/example/?member=implementer0#codex", expiresAt: Date.now() + 60000};
+     });
+     await successor.evaluate(payload => self.dispatchEvent(new PushEvent("push", {data: JSON.stringify(payload)})), sessionPayload);
+@@ -410,7 +410,7 @@ async function checkWorkerUpgrade(browser, engine) {
+         const descriptor = (await (await queued).json()).test;
+         await expect(page.locator("#browser-notifications [data-notification-status]")).toContainText("A test notification will be sent in 10 seconds.");
+         await page.close(); assert.equal(context.pages().length, 0);
+-        await worker.evaluate(descriptor => self.dispatchEvent(new PushEvent("push", {data: JSON.stringify({...descriptor, version: 1, kind: "test", slug: "", route: "/"})})), descriptor);
++        await worker.evaluate(descriptor => self.dispatchEvent(new PushEvent("push", {data: JSON.stringify({...descriptor, registrationId:descriptor.identity.slice(5), version: 1, kind: "test", slug: "", route: "/"})})), descriptor);
+         await expect.poll(() => worker.evaluate(async descriptor => {
+           const outcome = (await workspaceAttentionStore.read(descriptor.identity))?.testOutcome;
+           return workspaceAttentionStore.testMatches(outcome, descriptor) && outcome.display;
+@@ -419,7 +419,7 @@ async function checkWorkerUpgrade(browser, engine) {
+         await expect(testReopened.locator("[data-notification-test-status]")).toContainText("browser accepted the display request");
+         await expect(testReopened.locator("[data-notification-test-status]")).toContainText("unconfirmed");
+         await testReopened.close();
+-        const payload = {version: 1, identity: await worker.evaluate(async () => (await (await fetch("/api/sessions/example/attention")).json()).identity), id: "b".repeat(64), revision: 1, slug: "example", kind: "input", member: "implementer0", route: "/example/?member=implementer0#codex", expiresAt: Date.now() + 60000};
++        const payload = {version: 1, registrationId:await worker.evaluate(async()=>(await workspaceAttentionStore.readDeliveryGate()).registrationId), identity: await worker.evaluate(async () => (await (await fetch("/api/sessions/example/attention")).json()).identity), id: "b".repeat(64), revision: 1, slug: "example", kind: "input", member: "implementer0", route: "/example/?member=implementer0#codex", expiresAt: Date.now() + 60000};
+         assert.equal(context.pages().length, 0);
+         await worker.evaluate(payload => self.dispatchEvent(new PushEvent("push", {data: JSON.stringify(payload)})), payload);
+         await expect.poll(() => worker.evaluate(() => self.fixtureDisplays.length)).toBe(2);
+@@ -432,6 +432,19 @@ async function checkWorkerUpgrade(browser, engine) {
+         await reopenedDelivery.click();
+         await expect(reopenedDelivery).toBeEnabled(); await expect(reopenedDelivery).not.toBeChecked();
+         await expect(reopened.locator("#browser-notifications [data-notification-status]")).toContainText("Disabled on this browser");
++        const beforeOff = await worker.evaluate(()=>self.fixtureDisplays.length);
++        await worker.evaluate(payload=>display(payload),payload);
++        assert.equal(await worker.evaluate(()=>self.fixtureDisplays.length),beforeOff,"off epoch has no neutral popup");
++        await reopenedDelivery.click();
++        await expect(reopenedDelivery).toBeEnabled(); await expect(reopenedDelivery).toBeChecked();
++        const freshId=await reopened.evaluate(async()=>(await workspaceAttentionStore.readDeliveryGate()).registrationId);
++        assert.notEqual(freshId,payload.registrationId,"reenabling establishes a fresh transport epoch");
++        await worker.evaluate(payload=>display(payload),payload);
++        assert.equal(await worker.evaluate(()=>self.fixtureDisplays.length),beforeOff,"old provider delivery stays dropped after reenable");
++        await worker.evaluate(payload=>self.dispatchEvent(new PushEvent("push",{data:JSON.stringify(payload)})),{...payload,registrationId:freshId});
++        await expect.poll(()=>worker.evaluate(()=>self.fixtureDisplays.length)).toBe(beforeOff+1);
++        await reopenedDelivery.click();
++        await expect(reopenedDelivery).toBeEnabled(); await expect(reopenedDelivery).not.toBeChecked();
+       }
+       assert.deepEqual(errors, [], `${engine.name()} loaded real notification UI without script errors`);
+       console.log(`${engine.name()}: real template, CSP, permission separation and worker route passed${engine === chromium ? "; registered worker received synthetic push with zero tabs" : ""}`);
+diff --git a/portal/internal/web/notifications_test.go b/portal/internal/web/notifications_test.go
+index d4eafad..c2c9de5 100644
+--- a/portal/internal/web/notifications_test.go
++++ b/portal/internal/web/notifications_test.go
+@@ -89,7 +89,7 @@ func TestNotificationsPageIsSeparateFromIndex(t *testing.T) {
+ 			t.Fatalf("compact menu contains detailed controls or help: %s", removed)
+ 		}
+ 	}
+-	if strings.Count(index.Body.String(), `src="/static/browser-notifications.js?v=5" defer`) != 1 {
++	if strings.Count(index.Body.String(), `src="/static/browser-notifications.js?v=6" defer`) != 1 {
+ 		t.Fatal("index must initialize one notification owner")
+ 	}
+ 	page := httptest.NewRecorder()
+@@ -97,13 +97,13 @@ func TestNotificationsPageIsSeparateFromIndex(t *testing.T) {
+ 	if page.Code != http.StatusOK {
+ 		t.Fatalf("notification page: %d: %s", page.Code, page.Body.String())
+ 	}
+-	for _, required := range []string{`id="browser-notifications"`, "data-notification-enable", "data-notification-test", "data-notification-disable", `type="checkbox" data-notification-sound aria-describedby="notification-sound-hint notification-sound-status" disabled`, `data-notification-sound-status role="status"`, `src="/static/browser-notifications.js?v=5" defer`, `href="/"`} {
++	for _, required := range []string{`id="browser-notifications"`, "data-notification-enable", "data-notification-test", "data-notification-disable", `type="checkbox" data-notification-sound aria-describedby="notification-sound-hint notification-sound-status" disabled`, `data-notification-sound-status role="status"`, `src="/static/browser-notifications.js?v=6" defer`, `href="/"`} {
+ 		if !strings.Contains(page.Body.String(), required) {
+ 			t.Fatalf("notification page lacks %s", required)
+ 		}
+ 	}
+-	if strings.Index(page.Body.String(), `src="/static/session-attention-store.js?v=3"`) < 0 ||
+-		strings.Index(page.Body.String(), `src="/static/session-attention-store.js?v=3"`) > strings.Index(page.Body.String(), `src="/static/browser-notifications.js?v=5"`) {
++	if strings.Index(page.Body.String(), `src="/static/session-attention-store.js?v=4"`) < 0 ||
++		strings.Index(page.Body.String(), `src="/static/session-attention-store.js?v=4"`) > strings.Index(page.Body.String(), `src="/static/browser-notifications.js?v=6"`) {
+ 		t.Fatal("notification page must initialize the shared store before the client")
+ 	}
+ }
+@@ -412,6 +412,7 @@ func TestNotificationsDisableRejectsInvalidSelectorsAndOrigins(t *testing.T) {
+ }
+ 
+ type mockPushClient struct {
++	before  func()
+ 	code    int
+ 	err     error
+ 	calls   int
+@@ -420,6 +421,9 @@ type mockPushClient struct {
+ 
+ func (m *mockPushClient) Do(r *http.Request) (*http.Response, error) {
+ 	m.calls++
++	if m.before != nil {
++		m.before()
++	}
+ 	m.headers = r.Header.Clone()
+ 	if m.err != nil {
+ 		return nil, m.err
+@@ -605,3 +609,143 @@ func TestNotificationsObserverOutboxWithoutBrowserConnections(t *testing.T) {
+ 		t.Fatal("archived session eligible")
+ 	}
+ }
++
++func TestNotificationsFreshEpochDoesNotReplayDisabledPeriod(t *testing.T) {
++	n := testNotifications(t)
++	subscription := testPushSubscription(t)
++	body, _ := json.Marshal(map[string]any{"subscription": subscription})
++	register := func(fresh bool) string {
++		t.Helper()
++		input := body
++		if fresh {
++			input, _ = json.Marshal(map[string]any{"subscription": subscription, "requireFresh": true})
++		}
++		w := notificationRequest(n, http.MethodPost, "/api/browser-notifications/register", string(input))
++		if w.Code != http.StatusOK {
++			t.Fatalf("register status %d", w.Code)
++		}
++		var reply struct {
++			RegistrationID string `json:"registrationId"`
++		}
++		if err := json.Unmarshal(w.Body.Bytes(), &reply); err != nil {
++			t.Fatal(err)
++		}
++		return reply.RegistrationID
++	}
++	old := register(false)
++	w := notificationRequest(n, http.MethodGet, "/api/browser-notifications?registrationId="+old, "")
++	var capability struct {
++		DeliveryEpoch int `json:"deliveryEpoch"`
++	}
++	json.Unmarshal(w.Body.Bytes(), &capability)
++	if capability.DeliveryEpoch != 1 {
++		t.Fatal("missing negotiated epoch capability")
++	}
++	notificationRequest(n, http.MethodPost, "/api/browser-notifications/test", `{"registrationId":"`+old+`"}`)
++	if register(false) != old || len(n.store.state.Outbox) != 1 {
++		t.Fatal("continuous registration reset pending delivery")
++	}
++	freshBody, _ := json.Marshal(map[string]any{"subscription": subscription, "requireFresh": true})
++	w = notificationRequest(n, http.MethodPost, "/api/browser-notifications/register", string(freshBody))
++	if w.Code != http.StatusConflict || len(n.store.state.Browsers) != 1 || len(n.store.state.Outbox) != 1 {
++		t.Fatal("fresh activation adopted an existing endpoint")
++	}
++	other := strings.Repeat("e", 64)
++	otherSub := subscription
++	otherSub.Endpoint += "-other"
++	now := time.Now()
++	observation := attentionFixture()
++	observation.Lead.LatestTurnStatus = "inProgress"
++	observation.Lead.CurrentState = "working"
++	observations := map[string]attentionObservation{observation.Slug: observation}
++	n.store.mu.Lock()
++	err := n.store.change(func(state *notificationState) error {
++		state.Browsers[other] = browserRegistration{ID: other, Origin: "https://workspace.example", Subscription: otherSub}
++		reconcileNotificationState(state, observations, false, now)
++		return nil
++	})
++	n.store.mu.Unlock()
++	if err != nil {
++		t.Fatal(err)
++	}
++	if w := notificationRequest(n, http.MethodPost, "/api/browser-notifications/disable", `{"registrationId":"`+old+`"}`); w.Code != http.StatusOK {
++		t.Fatal(w.Code)
++	}
++	observation.Lead.LatestTurnStatus = "completed"
++	observation.Lead.CurrentState = "idle"
++	observations[observation.Slug] = observation
++	n.store.mu.Lock()
++	err = n.store.change(func(state *notificationState) error {
++		reconcileNotificationState(state, observations, false, now.Add(time.Second))
++		return nil
++	})
++	n.store.mu.Unlock()
++	if err != nil {
++		t.Fatal(err)
++	}
++	if len(n.store.state.Outbox) != 1 || n.store.state.Outbox[notificationDeliveryKey(other, observation.Slug)].Browser != other {
++		t.Fatal("off period affected other browser or retained disabled work")
++	}
++	fresh := register(true)
++	if fresh == old || len(n.store.state.Outbox) != 1 {
++		t.Fatal("reenable replayed a historical event")
++	}
++	n.store.mu.Lock()
++	err = n.store.change(func(state *notificationState) error {
++		reconcileNotificationState(state, observations, false, now.Add(2*time.Second))
++		observation.Lead.CurrentTurnID = "next"
++		observation.Lead.LatestTurnStatus = "inProgress"
++		observation.Lead.CurrentState = "working"
++		observations[observation.Slug] = observation
++		reconcileNotificationState(state, observations, false, now.Add(3*time.Second))
++		observation.Lead.LatestTurnStatus = "completed"
++		observation.Lead.CurrentState = "idle"
++		observations[observation.Slug] = observation
++		reconcileNotificationState(state, observations, false, now.Add(4*time.Second))
++		return nil
++	})
++	n.store.mu.Unlock()
++	if err != nil {
++		t.Fatal(err)
++	}
++	delivery := n.store.state.Outbox[notificationDeliveryKey(fresh, observation.Slug)]
++	if delivery.Browser != fresh || len(n.store.state.Outbox) != 2 {
++		t.Fatal("future event did not reach both current registrations")
++	}
++	var payload map[string]any
++	json.Unmarshal(notificationPayload(delivery), &payload)
++	if payload["registrationId"] != fresh || payload["id"] != delivery.Event.ID || payload["version"] != float64(1) {
++		t.Fatal("transport epoch changed event contract")
++	}
++	persisted, _ := json.Marshal(n.store.state)
++	if n.store.state.Schema != 1 || strings.Contains(string(persisted), `"registrationId"`) {
++		t.Fatal("transport epoch leaked into persisted state")
++	}
++}
++
++func TestNotificationsDisableDuringProviderSendCannotRecreateRegistrationOrJob(t *testing.T) {
++	for _, code := range []int{201, 503} {
++		t.Run(http.StatusText(code), func(t *testing.T) {
++			n := testNotifications(t)
++			sub := testPushSubscription(t)
++			body, _ := json.Marshal(map[string]any{"subscription": sub})
++			w := notificationRequest(n, http.MethodPost, "/api/browser-notifications/register", string(body))
++			var reply struct {
++				RegistrationID string `json:"registrationId"`
++			}
++			json.Unmarshal(w.Body.Bytes(), &reply)
++			notificationRequest(n, http.MethodPost, "/api/browser-notifications/test", `{"registrationId":"`+reply.RegistrationID+`"}`)
++			client := &mockPushClient{code: code, before: func() {
++				w := notificationRequest(n, http.MethodPost, "/api/browser-notifications/disable", `{"registrationId":"`+reply.RegistrationID+`"}`)
++				if w.Code != http.StatusOK {
++					t.Fatal(w.Code)
++				}
++			}}
++			n.client = client
++			n.sendNext(context.Background(), time.Now().Add(11*time.Second))
++			if client.calls != 1 || len(n.store.state.Browsers) != 0 || len(n.store.state.Outbox) != 0 {
++				t.Fatal("provider completion resurrected disabled delivery")
++			}
++		})
++	}
++}
+diff --git a/portal/internal/web/static/browser-notifications.js b/portal/internal/web/static/browser-notifications.js
+index 4d8cd01..2fa2e03 100644
+--- a/portal/internal/web/static/browser-notifications.js
++++ b/portal/internal/web/static/browser-notifications.js
+@@ -9,7 +9,7 @@
+   const deliveryControls = elements("delivery"), menuErrors = elements("menu-error");
+   if (!statuses.length && !deliveryControls.length && !soundControls.length) return;
+   let menuValue = null, menuReading = false, menuAvailable = null;
+-  let deliveryError = null, soundError = null, workerError = false;
++  let deliveryError = null, soundError = null, workerError = false, epochReady = false, deliveryUncertain = false;
+   const menuMessages = {
+     setup: "Notification setup needs attention.", read: "Could not check notifications.",
+     blocked: "Notifications are blocked.", unsupported: "Notifications are unavailable here.",
+@@ -115,7 +115,7 @@
+     const generation = refreshGeneration, deadline = Date.now() + 10000;
+     const valid = () => current() && generation === refreshGeneration && !pageClosed && !observationRetired;
+     if (!valid()) return;
+-    workerError = false; soundReady = false; renderSound();
++    workerError = false; soundReady = false; epochReady = false; renderSound();
+     setText(workerStatus, "Updating browser notifications… You can keep your tabs open.");
+     if (update && !workerUpdate) workerUpdate = Promise.resolve().then(() => registration.update());
+     const activated = await new Promise(resolve => {
+@@ -168,13 +168,14 @@
+       const cancel = () => finish(false);
+       cancelReadiness = cancel;
+       timer = setTimeout(() => finish(false), Math.max(0, Math.min(1500, deadline - Date.now())));
+-      channel.port1.onmessage = event => finish(event.data?.version === 1);
++      channel.port1.onmessage = event => finish(event.data?.version === 1 ? event.data : null);
+       try {controller.postMessage({type: "notification-test-capabilities"}, [channel.port2]);}
+       catch (_) {finish(false);}
+     });
+     if (valid() && controller === navigator.serviceWorker.controller && controller === registration.active && !registration.waiting && !registration.installing) {
+-      workerError = !supported; soundReady = supported; renderSound();
++      workerError = !supported; soundReady = Boolean(supported); epochReady = supported?.deliveryEpoch === 1; renderSound();
+       setText(workerStatus, supported ? "" : "Detailed test results are unavailable. Refresh this page to check for a notification update.");
++      return epochReady;
+     }
+   }
+   async function pollTest() {
+@@ -282,12 +283,12 @@
+     try {
+       const response = await fetch(`/api/browser-notifications${path}`, {cache: "no-store", credentials: "same-origin", signal: controller.signal,
+         ...(body ? {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)} : {})});
+-      const value = await response.json(); if (!response.ok) throw new Error(value.error || "Browser notifications are unavailable."); return value;
++      const value = await response.json(); if (!response.ok) throw Object.assign(new Error(value.error || "Browser notifications are unavailable."), {status: response.status}); return value;
+     } finally { clearTimeout(deadline); }
+   };
+   const buttons = () => {
+     enables.forEach(control => {control.disabled = busy || soundBusy || !supported || Notification.permission === "denied" || Boolean(pendingCleanup);});
+-    disables.forEach(control => {control.disabled = busy || soundBusy || (!localSubscription && !registrationId && !pendingCleanup);});
++    disables.forEach(control => {control.disabled = busy || soundBusy || (!localSubscription && !registrationId && !pendingCleanup && !deliveryUncertain);});
+     tests.forEach(control => {control.disabled = busy || soundBusy || !registered || Boolean(pendingCleanup);});
+     renderSound();
+   };
+@@ -306,18 +307,24 @@
+       if (!current()) return;
+       const state = await api(`?registrationId=${encodeURIComponent(identity)}`);
+       if (!current()) return;
++      const gate = await store.readDeliveryGate();
++      if (!current()) return;
++      const managedReady = !gate?.enabled || state.deliveryEpoch === 1 && Boolean(navigator.locks?.request) &&
++        await workerReadiness(local, true, current);
++      if (!current()) return;
+       localSubscription = observedSubscription; localKnown = observedKnown;
+       menuAvailable = state.available;
+       const off = !state.registered && localKnown && !localSubscription && !registrationId && !pendingCleanup;
+-      registered = Boolean(!pendingCleanup && state.registered && localSubscription && Notification.permission === "granted");
++      registered = Boolean(!pendingCleanup && state.registered && localSubscription && Notification.permission === "granted" &&
++        (gate === null || gate.enabled && gate.registrationId === identity && managedReady));
+       menuValue = registered && state.available ? true : off ? false : null;
+       deliveryError = pendingCleanup || (!off && !registered) ? "setup" : Notification.permission === "denied" ? "blocked" : !state.available ? "unavailable" : null;
+       menuReading = false;
+       setText(providerStatus, lastProvider(state.result) ? `Last push-service result; it may be from another notification: ${lastProvider(state.result)}` : "");
+-      setStatus(pendingCleanup ? cleanupStatus() : localSubscription && !registered ? incomplete : Notification.permission === "denied" ? "Notifications are blocked. Change this site's notification permission in your browser settings." :
++      setStatus(gate?.enabled && !managedReady ? protectionUnavailable : pendingCleanup ? cleanupStatus() : localSubscription && !registered ? incomplete : Notification.permission === "denied" ? "Notifications are blocked. Change this site's notification permission in your browser settings." :
+         !state.available ? "Notification delivery is disabled on the server." : state.result === "expired" ? "The browser subscription expired. Enable notifications again." : registered ?
+         "Enabled on this browser." : "Disabled on this browser.");
+-      if (resume) { void workerReadiness(local, true, current); void resumeTest(); }
++      if (resume) { if (!gate?.enabled) void workerReadiness(local, true, current); void resumeTest(); }
+     } catch (error) {
+       if (!current()) return;
+       localSubscription = observedSubscription; localKnown = observedKnown;
+@@ -325,115 +332,166 @@
+     }
+     if (current()) buttons();
+   }
++  const retiredAction = () => new Error("Notification settings changed in another tab. Check the current setting before trying again.");
++  const protectionUnavailable = "Notification protection is unavailable. Reload this page before enabling notifications.";
++  const deliveryLock = work => navigator.locks?.request ? navigator.locks.request("workspace-browser-notifications", work) : work();
++  // Invoked only while holding the origin's action lock. Keep both old-ID and
++  // current-endpoint obligations across lost registration/deletion replies.
++  async function removeServerRegistration(subscription, guard) {
++    await guard();
++    readCleanup();
++    let selector = pendingCleanup, currentBound = !subscription;
++    if (!registrationId && selector?.registrationId) {
++      registrationId = selector.registrationId;
++      localStorage.setItem(key, registrationId);
++    }
++    try {
++      if (subscription) {selector = await subscriptionSelector(subscription); currentBound = true;}
++    } catch (_) {}
++    await guard();
++    selector ||= registrationId ? {registrationId} : null;
++    if (selector) saveCleanup(selector);
++    const knownId = registrationId;
++    const selectorRemoval = selector ? api("/disable", selector).then(() => true, () => false) : Promise.resolve(true);
++    const idRemoval = knownId ? selector?.registrationId === knownId ? selectorRemoval :
++      api("/disable", {registrationId: knownId}).then(() => true, () => false) : Promise.resolve(true);
++    const [selectorAbsent, idAbsent] = await Promise.all([selectorRemoval, idRemoval]);
++    await guard();
++    if (idAbsent && currentBound) clearRegistration(knownId);
++    return currentBound && selectorAbsent && idAbsent;
++  }
+   async function enableNotifications() {
+     if (soundBusy || busy || !supported || Notification.permission === "denied") return;
+     readCleanup();
+-    if (pendingCleanup) { menuValue = null; deliveryError = "setup"; setStatus(cleanupStatus()); buttons(); return; }
++    if (pendingCleanup) {menuValue = null; deliveryError = "setup"; setStatus(cleanupStatus()); buttons(); return;}
+     deliveryError = null; menuReading = false;
+-    invalidateRefresh(true); observationRetired = false;
++    invalidateRefresh(true); observationRetired = false; cancelTest();
+     const generation = refreshGeneration, currentAction = () => generation === refreshGeneration && !pageClosed && !observationRetired;
+-    cancelTest();
+     busy = true; buttons();
+-    let menuAbsenceConfirmed = menuValue === false;
++    let token, gate, continuous = false, menuAbsenceConfirmed = menuValue === false;
++    const guard = async () => {
++      if (!currentAction()) throw retiredAction();
++      const latest = await store.readDeliveryGate();
++      if (!currentAction() || latest?.actionToken !== token) throw retiredAction();
++    };
+     try {
++      if (!navigator.locks?.request || !store?.writeDeliveryGate) throw new Error(protectionUnavailable);
++      // Capture intent before waiting on permission/the lock. A later Disable
++      // supersedes it durably, including a delayed registration response.
++      gate = await store.readDeliveryGate();
++      if (!currentAction()) throw retiredAction();
++      continuous = Boolean(gate?.enabled && gate.registrationId === registrationId);
++      token = continuous ? gate.actionToken : crypto.randomUUID();
++      if (!continuous && !await store.writeDeliveryGate({enabled:false,actionToken:token,registrationId:""}, gate?.actionToken ?? null)) throw retiredAction();
++      await guard();
+       const permission = await Notification.requestPermission();
+-      if (currentAction() && permission !== "granted") deliveryError = permission === "denied" ? "blocked" : "action";
++      await guard();
++      if (permission === "denied") deliveryError = "blocked";
+       if (permission !== "granted") throw new Error(permission === "denied" ? "Notifications are blocked. Change this site's notification permission in your browser settings." : "Notification permission was not granted.");
+-      const state = await api("");
+-      if (currentAction()) menuAvailable = state.available;
+-      if (!state.available) {if (currentAction()) deliveryError = "unavailable"; throw new Error("Notification delivery is disabled on the server.");}
+-      const registration = await navigator.serviceWorker.register("/notification-worker.js", {scope: "/", updateViaCache: "none"});
+-      await navigator.serviceWorker.ready;
+-      menuAbsenceConfirmed = false;
+-      let subscription = await registration.pushManager.getSubscription();
+-      menuAbsenceConfirmed = !subscription;
+-      localSubscription = subscription;
+-      const applicationServerKey = Uint8Array.from(atob(state.publicKey.replace(/-/g, "+").replace(/_/g, "/")), char => char.charCodeAt(0));
+-      if (subscription && subscription.options.applicationServerKey &&
+-          [...new Uint8Array(subscription.options.applicationServerKey)].join() !== [...applicationServerKey].join()) {
+-        throw new Error("The server's push key changed. Disable this browser subscription, then enable it again.");
+-      }
+-      if (!subscription) {
++      await deliveryLock(async () => {
++        await guard();
++        registrationId = localStorage.getItem(key) || ""; readCleanup();
++        if (pendingCleanup) throw new Error(disablingIncomplete);
++        const state = await api(continuous ? `?registrationId=${encodeURIComponent(registrationId)}` : "");
++        await guard(); menuAvailable = state.available;
++        if (!state.available) throw new Error("Notification delivery is disabled on the server.");
++        if (state.deliveryEpoch !== 1) throw new Error(protectionUnavailable);
++        const registration = await navigator.serviceWorker.register("/notification-worker.js", {scope:"/",updateViaCache:"none"});
++        await guard();
++        if (!await workerReadiness(registration, true, currentAction)) throw new Error(protectionUnavailable);
++        await guard();
+         menuAbsenceConfirmed = false;
+-        subscription = await registration.pushManager.subscribe({userVisibleOnly: true, applicationServerKey});
+-      }
+-      localSubscription = subscription;
+-      const value = subscription.toJSON();
+-      const saved = await api("/register", {subscription: {endpoint: value.endpoint, keys: value.keys}, expirationTime: value.expirationTime ?? null});
+-      const replacement = registrationId && registrationId !== saved.registrationId;
+-      if (replacement) cancelTest();
+-      if (replacement) {
+-        // Do not overwrite an older deletion obligation with the new ID.
+-        saveCleanup(await subscriptionSelector(subscription));
+-        await api("/disable", {registrationId});
+-      }
+-      registrationId = saved.registrationId;
+-      localStorage.setItem(key, registrationId);
+-      if (localStorage.getItem(key) !== registrationId) throw new Error("Browser registration could not be saved. Try enabling notifications again.");
+-      if (replacement && !clearCleanup()) throw new Error();
+-      if (currentAction()) {menuValue = true; deliveryError = null;}
+-      registered = true; setStatus("Enabled on this browser. Send a test notification to check delivery.");
+-      void workerReadiness(registration, true);
++        let subscription = await registration.pushManager.getSubscription();
++        await guard(); localSubscription = subscription; menuAbsenceConfirmed = !subscription;
++        const applicationServerKey = Uint8Array.from(atob(state.publicKey.replace(/-/g,"+").replace(/_/g,"/")), char=>char.charCodeAt(0));
++        if (subscription?.options.applicationServerKey && [...new Uint8Array(subscription.options.applicationServerKey)].join() !== [...applicationServerKey].join()) {
++          throw new Error("The server's push key changed. Disable this browser subscription, then enable it again.");
++        }
++        continuous = continuous && state.registered && gate.registrationId === registrationId && Boolean(subscription);
++        if (!continuous) {
++          if (gate?.enabled) {
++            const nextToken = crypto.randomUUID();
++            if (!await store.writeDeliveryGate({enabled:false,actionToken:nextToken,registrationId:""},token)) throw retiredAction();
++            token = nextToken;
++          }
++          await guard();
++          if (!await removeServerRegistration(subscription,guard) || !clearCleanup()) throw new Error(disablingIncomplete);
++        }
++        if (!subscription) {
++          menuAbsenceConfirmed = false;
++          subscription = await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey});
++          await guard(); localSubscription = subscription;
++        }
++        const value = subscription.toJSON();
++        let saved;
++        for (let attempt=0; attempt<2; attempt++) {
++          await guard();
++          try {
++            saved = await api("/register",{subscription:{endpoint:value.endpoint,keys:value.keys},expirationTime:value.expirationTime??null,...(continuous?{}:{requireFresh:true})});
++            break;
++          } catch (error) {
++            if (continuous || error.status !== 409 || attempt) throw error;
++            // A lost prior request may have registered after earlier cleanup.
++            if (!await removeServerRegistration(subscription,guard) || !clearCleanup()) throw new Error(disablingIncomplete);
++          }
++        }
++        await guard();
++        if (!digestPattern.test(saved?.registrationId) || continuous && saved.registrationId !== gate.registrationId) throw new Error(incomplete);
++        // Storage and gate side effects remain inside the lock and token fence.
++        const enabled = await store.writeDeliveryGate({enabled:true,actionToken:token,registrationId:saved.registrationId},token);
++        if (!enabled) throw retiredAction();
++        await guard();
++        registrationId = saved.registrationId;
++        localStorage.setItem(key,registrationId);
++        if (localStorage.getItem(key) !== registrationId) throw new Error("Browser registration could not be saved. Try enabling notifications again.");
++        deliveryUncertain = false; registered = true; menuValue = true; deliveryError = null;
++        setStatus("Enabled on this browser. Send a test notification to check delivery.");
++      });
+     } catch (error) {
+-      registered = false;
+       if (currentAction()) {
++        registered = false;
+         menuValue = menuAbsenceConfirmed && !localSubscription && !registrationId && !pendingCleanup ? false : null;
+         deliveryError = pendingCleanup || localSubscription || registrationId ? "setup" : deliveryError || "action";
++        setStatus(error.message === protectionUnavailable ? protectionUnavailable : pendingCleanup ? disablingIncomplete : localSubscription ? incomplete : `Registration failed: ${error.message}`);
+       }
+-      setStatus(pendingCleanup ? disablingIncomplete : localSubscription ? incomplete : `Registration failed: ${error.message}`); }
+-    finally { busy = false; buttons(); }
++    } finally {busy = false; buttons();}
+   }
+   async function disableNotifications() {
+     if (soundBusy || busy) return;
+-    deliveryError = null; menuReading = false;
+-    invalidateRefresh(true);
++    deliveryError = null; menuReading = false; invalidateRefresh(true); cancelTest();
+     const generation = refreshGeneration, currentAction = () => generation === refreshGeneration && !pageClosed && !observationRetired;
+-    cancelTest();
+     busy = true; registered = false; buttons();
+-    let registration = null, subscription = localSubscription, selector = null, currentBound = false;
+-    readCleanup();
++    const token = crypto.randomUUID();
++    let gateSaved = false;
++    const guard = async () => {
++      if (!currentAction()) throw retiredAction();
++      if (gateSaved && (await store.readDeliveryGate())?.actionToken !== token) throw retiredAction();
++      if (!currentAction()) throw retiredAction();
++    };
+     try {
+-      registration = await navigator.serviceWorker.getRegistration("/");
+-      subscription = await registration?.pushManager.getSubscription() || subscription;
+-    } catch (_) {}
+-    selector = pendingCleanup;
+-    if (!registrationId && selector?.registrationId) {
+-      registrationId = selector.registrationId;
+-      try { localStorage.setItem(key, registrationId); } catch (_) {}
+-    }
+-    currentBound = !subscription;
+-    try {
+-      if (subscription) {
+-        selector = await subscriptionSelector(subscription);
+-        currentBound = true;
+-      }
+-    } catch (_) {}
+-    selector ||= registrationId ? {registrationId} : null;
+-    // The saved ID may predate a replacement whose register reply was lost.
+-    // Keep its obligation separately from the current subscription's digest.
+-    if (selector) saveCleanup(selector);
+-    const knownId = registrationId;
+-    const selectorRemoval = selector ? api("/disable", selector).then(() => true, () => false) : Promise.resolve(true);
+-    const idRemoval = knownId ? selector?.registrationId === knownId ? selectorRemoval :
+-      api("/disable", {registrationId: knownId}).then(() => true, () => false) : Promise.resolve(true);
+-    const [selectorAbsent, idAbsent] = await Promise.all([selectorRemoval, idRemoval]);
+-    if (idAbsent && currentBound) clearRegistration(knownId);
+-    const serverAbsent = currentBound && Boolean(selector || knownId) && selectorAbsent && idAbsent;
+-    // Local removal is independent of the server response. A false/throwing
+-    // unsubscribe is followed by a read, which establishes actual absence.
+-    try { if (subscription) await subscription.unsubscribe(); } catch (_) {}
+-    localKnown = false;
+-    try {
+-      registration ||= await navigator.serviceWorker.getRegistration("/");
+-      localSubscription = await registration?.pushManager.getSubscription() || null;
+-      localKnown = true;
+-    } catch (_) {}
+-    if (serverAbsent && localKnown && !localSubscription && !registrationId) clearCleanup();
+-    const complete = serverAbsent && localKnown && !localSubscription && !pendingCleanup && !registrationId;
+-    if (currentAction()) {menuValue = complete ? false : null; deliveryError = complete ? null : "setup";}
+-    setStatus(complete ? "Disabled on this browser. Site permission remains in your browser settings." :
+-      localKnown && !localSubscription && !serverAbsent ? serverPending : disablingIncomplete);
+-    busy = false; buttons();
++      // Failures do not stop cleanup, but cannot certify durable Disable.
++      try {gateSaved = Boolean(await store.writeDeliveryGate({enabled:false,actionToken:token,registrationId:""}));} catch (_) {}
++      deliveryUncertain = !gateSaved;
++      await deliveryLock(async () => {
++        await guard();
++        registrationId = localStorage.getItem(key) || registrationId; readCleanup();
++        let registration, subscription = localSubscription;
++        try {registration = await navigator.serviceWorker.getRegistration("/"); subscription = await registration?.pushManager.getSubscription() || subscription;} catch (_) {}
++        await guard();
++        const serverAbsent = await removeServerRegistration(subscription,guard);
++        await guard();
++        try {if (subscription) await subscription.unsubscribe();} catch (_) {}
++        await guard(); localKnown = false;
++        try {registration ||= await navigator.serviceWorker.getRegistration("/"); localSubscription = await registration?.pushManager.getSubscription() || null; localKnown = true;} catch (_) {}
++        await guard();
++        if (serverAbsent && localKnown && !localSubscription && !registrationId) clearCleanup();
++        const complete = gateSaved && serverAbsent && localKnown && !localSubscription && !pendingCleanup && !registrationId;
++        menuValue = complete ? false : null; deliveryError = complete ? null : "setup";
++        setStatus(complete ? "Disabled on this browser. Site permission remains in your browser settings." : !gateSaved ?
++          "Notification blocking could not be saved. Cleanup was attempted. Choose Disable again." : localKnown && !localSubscription && !serverAbsent ? serverPending : disablingIncomplete);
++      });
++    } catch (error) {if (currentAction()) {menuValue=null;deliveryError="setup";setStatus(error.message);}}
++    finally {busy = false; buttons();}
+   }
+   enables.forEach(control => control.addEventListener("click", enableNotifications));
+   disables.forEach(control => control.addEventListener("click", disableNotifications));
+diff --git a/portal/internal/web/static/notification-worker.js b/portal/internal/web/static/notification-worker.js
+index 886cc73..9eebef4 100644
+--- a/portal/internal/web/static/notification-worker.js
++++ b/portal/internal/web/static/notification-worker.js
+@@ -1,5 +1,5 @@
+ "use strict";
+-importScripts("/static/session-attention-store.js?v=3");
++importScripts("/static/session-attention-store.js?v=4");
+ 
+ const reason = kind => ({input: "Your answer is needed", approval: "Approval needed", done: "Response finished", test: "Browser notification test"})[kind];
+ const safeRoute = value => {
+@@ -26,13 +26,18 @@ async function boundedTestRead(promise, fallback) {
+   catch (_) { return fallback; }
+   finally { clearTimeout(timer); }
+ }
+-async function show(title, options) {
++const deliveryGate = () => boundedTestRead(Promise.resolve().then(() => workspaceAttentionStore.readDeliveryGate()), false);
++const gateAccepts = (gate, payload) => gate === null || Boolean(gate && gate.enabled && payload?.registrationId === gate.registrationId);
++async function show(title, options, payload, initialGate) {
+   // Read at the display attempt, after status/receipt work, so a newly saved
+   // visual-only choice also applies to delivery already waiting in this worker.
+   const playSound = await boundedTestRead(Promise.resolve().then(() => workspaceAttentionStore.readSound()), false);
+-  return self.registration.showNotification(title, {...options, ...(playSound === true ? {} : {silent: true})});
++  const gate = await deliveryGate();
++  if (!gateAccepts(gate, payload) || (initialGate && (!gate || gate.actionToken !== initialGate.actionToken))) return false;
++  await self.registration.showNotification(title, {...options, ...(playSound === true ? {} : {silent: true})});
++  return true;
+ }
+-async function displayTest(payload) {
++async function displayTest(payload, gate) {
+   const descriptor = workspaceAttentionStore.testDescriptor?.(payload);
+   const save = async outcome => {
+     if (!descriptor) return;
+@@ -49,8 +54,8 @@ async function displayTest(payload) {
+       Number.isSafeInteger(item.data.testRevision) && item.data.testRevision < payload.revision).slice(0, 32).forEach(item => item.close());
+   } catch (_) {}
+   try {
+-    await show("Workspace", {body: reason("test"), tag, renotify: false,
+-      data: {route: "/", testIdentity: payload.identity, testRevision: payload.revision}});
++    if (!await show("Workspace", {body: reason("test"), tag, renotify: false,
++      data: {route: "/", testIdentity: payload.identity, testRevision: payload.revision}}, payload, gate)) return;
+   } catch (error) {
+     await save({received: true, display: "rejected", error: workspaceAttentionStore.testError?.(error) || "UnknownError", browserRecord: "unavailable"});
+     return;
+@@ -62,18 +67,21 @@ async function displayTest(payload) {
+ }
+ 
+ async function display(payload) {
++  // Reject old epochs before every branch, including invalid/Test/fallback data.
++  const gate = await deliveryGate();
++  if (!gateAccepts(gate, payload)) return;
+   if (!valid(payload)) {
+-    await show("Workspace update", {body: "Open the workspace to check its current status.", tag: "workspace-update", renotify: false, data: {route: "/"}});
++    await show("Workspace update", {body: "Open the workspace to check its current status.", tag: "workspace-update", renotify: false, data: {route: "/"}}, payload, gate);
+     return;
+   }
+   if (payload.kind === "test" && /^test-[0-9a-f]{64}$/.test(payload.identity)) {
+-    await displayTest(payload);
++    await displayTest(payload, gate);
+     return;
+   }
+   let record, trusted = payload.kind === "test";
+   try {
+     record = await workspaceAttentionStore.update(payload.identity, value => {
+-      if (payload.revision > value.revision) { value.revision = payload.revision; value.event = payload; }
++      if (payload.revision > value.revision) { const {registrationId, ...event} = payload; value.revision = payload.revision; value.event = event; }
+       return value;
+     });
+     if (payload.kind !== "test") {
+@@ -81,7 +89,7 @@ async function display(payload) {
+       try {
+         const response = await fetch(`/api/sessions/${encodeURIComponent(payload.slug)}/attention`, {credentials: "same-origin", cache: "no-store", signal: controller.signal});
+         if (response.status === 404 || response.status === 403 || response.status === 401) {
+-          await show("Workspace update", {body: "Open the workspace to check its current status.", tag: `session-${payload.identity}`, renotify: false, data: {route: "/"}});
++          await show("Workspace update", {body: "Open the workspace to check its current status.", tag: `session-${payload.identity}`, renotify: false, data: {route: "/"}}, payload, gate);
+           return;
+         }
+         const status = response.ok ? await response.json() : null;
+@@ -90,14 +98,13 @@ async function display(payload) {
+       } finally { clearTimeout(deadline); }
+     }
+   } catch (_) { trusted = false; }
+-  // Attempt visible display for every delivered push. Duplicate,
+-  // reordered or unverifiable delivery replaces the same entry with neutral copy.
++  // A still-enabled current epoch retains neutral delivery fallbacks.
+   const current = record?.event || payload;
+-  await show(current.slug || "Workspace", {
++  if (!await show(current.slug || "Workspace", {
+     body: trusted ? `${current.member && current.member !== "lead" ? `${current.member}: ` : ""}${reason(current.kind)}` : "Session update available",
+     tag: `session-${payload.identity}`, renotify: false,
+     data: {route: safeRoute(current.route)?.pathname + (safeRoute(current.route)?.search || "") + (safeRoute(current.route)?.hash || ""), identity: payload.identity},
+-  });
++  }, payload, gate)) return;
+   const windows = await self.clients.matchAll({type: "window", includeUncontrolled: true});
+   windows.forEach(client => client.postMessage({type: "session-attention-update", identity: payload.identity}));
+ }
+@@ -126,7 +133,7 @@ self.addEventListener("notificationclick", event => {
+ });
+ self.addEventListener("message", event => {
+   if (event.data?.type === "notification-test-capabilities") {
+-    event.ports?.[0]?.postMessage({version: 1});
++    event.ports?.[0]?.postMessage({version: 1, deliveryEpoch: 1});
+     return;
+   }
+   if (event.data?.type !== "session-attention-ack" || !/^[0-9a-f]{64}$/.test(event.data.identity)) return;
+diff --git a/portal/internal/web/static/session-attention-store.js b/portal/internal/web/static/session-attention-store.js
+index 7833f62..3d2b293 100644
+--- a/portal/internal/web/static/session-attention-store.js
++++ b/portal/internal/web/static/session-attention-store.js
+@@ -3,6 +3,8 @@
+ (() => {
+   "use strict";
+   const soundIdentity = "browser-notification-sound";
++  const deliveryIdentity = "browser-notification-delivery";
++  let deliveryManaged = false;
+   let opening;
+   const open = () => opening ||= new Promise((resolve, reject) => {
+     const request = indexedDB.open("workspace-session-attention", 1);
+@@ -11,7 +13,7 @@
+     request.onerror = () => { opening = null; reject(new Error("Attention storage is unavailable.")); };
+   });
+   const update = async (identity, change = value => value) => {
+-    if (identity === soundIdentity) throw new Error("Reserved attention identity.");
++    if ([soundIdentity, deliveryIdentity].includes(identity)) throw new Error("Reserved attention identity.");
+     const db = await open();
+     return new Promise((resolve, reject) => {
+       const tx = db.transaction("sessions", "readwrite"), store = tx.objectStore("sessions");
+@@ -24,7 +26,7 @@
+         result.seen = [...new Set(result.seen || [])].slice(-32);
+         store.put(result);
+         const all = store.getAll();
+-        all.onsuccess = () => all.result.filter(item => item.identity !== soundIdentity).sort((a,b) => b.at-a.at).slice(512).forEach(item => store.delete(item.identity));
++        all.onsuccess = () => all.result.filter(item => ![soundIdentity, deliveryIdentity].includes(item.identity)).sort((a,b) => b.at-a.at).slice(512).forEach(item => store.delete(item.identity));
+       };
+       tx.oncomplete = () => resolve(result);
+       tx.onerror = tx.onabort = () => reject(new Error("Attention storage is unavailable."));
+@@ -79,6 +81,49 @@
+   });
+   const readSound = () => sound(false);
+   const writeSound = playSound => typeof playSound === "boolean" ? sound(true, playSound) : Promise.reject(new Error("Invalid sound preference."));
++  // One reserved v1 record fences transport epochs, independently of attention.
++  // A write with expectedToken is a compare-and-set, committed in the same tx.
++  const validGate = value => value && value.identity === deliveryIdentity &&
++    Object.keys(value).length === 5 && value.at === Number.MAX_SAFE_INTEGER &&
++    typeof value.enabled === "boolean" && typeof value.actionToken === "string" &&
++    value.actionToken.length > 0 && value.actionToken.length <= 128 &&
++    typeof value.registrationId === "string" && (value.enabled ? /^[0-9a-f]{64}$/.test(value.registrationId) : value.registrationId === "");
++  const deliveryGate = (next, expectedToken) => new Promise((resolve, reject) => {
++    let tx, finished = false, result;
++    const finish = error => {
++      if (finished) return;
++      finished = true; clearTimeout(timer);
++      if (error) reject(new Error("This browser cannot save notification settings."));
++      else {if (result?.identity === deliveryIdentity) deliveryManaged = true; resolve(result);}
++    };
++    const timer = setTimeout(() => {finish(true); try {tx?.abort();} catch (_) {}}, 750);
++    open().then(db => {
++      if (finished) return;
++      try {
++        tx = db.transaction("sessions", next ? "readwrite" : "readonly");
++        tx.oncomplete = () => finish(false);
++        tx.onerror = tx.onabort = () => finish(true);
++        const store = tx.objectStore("sessions"), request = store.get(deliveryIdentity);
++        request.onerror = () => finish(true);
++        request.onsuccess = () => {
++          const prior = request.result;
++          if (!next) {
++            if (prior === undefined && !deliveryManaged) result = null; // Legacy installation.
++            else if (prior === undefined) finish(true); // Unexpected loss cannot unmanage this context.
++            else if (validGate(prior)) result = prior;
++            else finish(true);
++            return;
++          }
++          if (expectedToken !== undefined && (expectedToken === null ? prior !== undefined : !validGate(prior) || prior.actionToken !== expectedToken)) {result = null; return;}
++          result = {...next, identity: deliveryIdentity, at: Number.MAX_SAFE_INTEGER};
++          if (!validGate(result)) {finish(true); try {tx.abort();} catch (_) {} return;}
++          store.put(result);
++        };
++      } catch (_) {finish(true);}
++    }, () => finish(true));
++  });
++  const readDeliveryGate = () => deliveryGate();
++  const writeDeliveryGate = (value, expectedToken) => deliveryGate(value, expectedToken);
+   const testDescriptor = value => value && typeof value.id === "string" && /^[0-9a-f]{64}$/.test(value.id) &&
+     typeof value.identity === "string" && /^test-[0-9a-f]{64}$/.test(value.identity) &&
+     Number.isSafeInteger(value.revision) && value.revision > 0 && Number.isSafeInteger(value.expiresAt) && value.expiresAt > 0 ?
+@@ -102,5 +147,5 @@
+       return value;
+     });
+   };
+-  globalThis.workspaceAttentionStore = {update, read, readSound, writeSound, testDescriptor, testMatches, testError, saveTest};
++  globalThis.workspaceAttentionStore = {update, read, readSound, writeSound, readDeliveryGate, writeDeliveryGate, testDescriptor, testMatches, testError, saveTest};
+ })();
+diff --git a/portal/internal/web/templates/index.html b/portal/internal/web/templates/index.html
+index 32f45ff..b0e3504 100644
+--- a/portal/internal/web/templates/index.html
++++ b/portal/internal/web/templates/index.html
+@@ -95,8 +95,8 @@
+   </main>
+   </div>
+   <template id="session-card-template">{{template "session-card"}}</template>
+-  <script src="/static/session-attention-store.js?v=3" defer></script>
+-  <script src="/static/browser-notifications.js?v=5" defer></script>
++  <script src="/static/session-attention-store.js?v=4" defer></script>
++  <script src="/static/browser-notifications.js?v=6" defer></script>
+   <script src="/static/preparation.js?v=5" defer></script>
+   <script src="/static/app.js?v=52" defer></script>
+   <script src="/static/coordination.js?v=6" defer></script>
+diff --git a/portal/internal/web/templates/notifications.html b/portal/internal/web/templates/notifications.html
+index 4da0027..68296cd 100644
+--- a/portal/internal/web/templates/notifications.html
++++ b/portal/internal/web/templates/notifications.html
+@@ -15,8 +15,8 @@
+   <main class="page">
+     {{template "browser-notifications"}}
+   </main>
+-  <script src="/static/session-attention-store.js?v=3" defer></script>
+-  <script src="/static/browser-notifications.js?v=5" defer></script>
++  <script src="/static/session-attention-store.js?v=4" defer></script>
++  <script src="/static/browser-notifications.js?v=6" defer></script>
+ </body>
+ </html>
+ {{end}}
+diff --git a/portal/internal/web/templates/session.html b/portal/internal/web/templates/session.html
+index 98aaa1b..609ef20 100644
+--- a/portal/internal/web/templates/session.html
++++ b/portal/internal/web/templates/session.html
+@@ -257,8 +257,8 @@
+     </form>
+   </dialog>
+   <script src="/static/app.js?v=52" defer></script>
+-  <script src="/static/session-attention-store.js?v=3" defer></script>
+-  <script src="/static/browser-notifications.js?v=5" defer></script>
++  <script src="/static/session-attention-store.js?v=4" defer></script>
++  <script src="/static/browser-notifications.js?v=6" defer></script>
+   <script src="/static/session-attention.js?v=2" defer></script>
+   <script src="/static/coordination.js?v=6" defer></script>
+ </body>

@@ -1,0 +1,37 @@
+ 1:  4a2fadd =  1:  4a2fadd deps: update shared conversation presentation helpers
+ 2:  db1e91e =  2:  db1e91e team: project full-team names from actual implementer counts
+ 3:  b006196 =  3:  b006196 portal: add authorized file downloads and source copy actions
+ 4:  5416942 =  4:  5416942 portal: keep large artifact catalogs compact and stable
+ 5:  31ab0c6 =  5:  31ab0c6 portal: publish session membership before optional enrichment
+ 6:  58f6093 =  6:  58f6093 portal: retain member settings through sequential additions
+ 7:  ec23d84 !  7:  e1c08d3 portal: present team messages and decorated Markdown
+    @@ portal/internal/web/static/style.css: button.icon-button:focus-visible { outline
+     +.message.team { background: #22223c; border-color: #8f83ce; color: var(--text); }
+     +.message-team-label { color: #c4b7ff; font-size: .75rem; font-weight: 600; margin-bottom: .4rem; }
+     
+    + ## portal/internal/web/team_settings_browser_test.cjs ##
+    +@@ portal/internal/web/team_settings_browser_test.cjs: const baseURL = process.argv[2];
+    +       await expect(save).toBeDisabled(); await close.click(); await assertLayout();
+    +     }
+    +     await page.setViewportSize({width: 1280, height: 720});
+    +-    await page.getByRole("tab", {name: "Team"}).click();
+    ++    await page.getByRole("tablist", {name: "Session sections", exact: true})
+    ++      .getByRole("tab", {name: "Team", exact: true}).click();
+    +     const row = page.locator('[data-team-stats="architect0"]');
+    +     await expect(row.locator('[data-team-metric="sent"]')).toHaveText("37");
+    +     await expect(row.locator('[data-team-metric="received"]')).toHaveText("12");
+    +
+      ## portal/internal/web/templates/index.html ##
+     @@
+        <meta charset="utf-8">
+ 8:  7915116 =  8:  90dccba portal: show delivery recovery beside the composer
+ 9:  9b981f1 =  9:  02ee0ae portal: browse eligible session files in a lazy tree
+10:  16c1215 = 10:  6947699 portal: retire paused read cycles and recover on tab resume
+11:  c4f966d = 11:  e75b097 coordination: derive claims from registered repository identities
+12:  582fbb9 = 12:  5094022 portal: measure read stages without logging session content
+13:  4b538f5 = 13:  2cc9a2a test: prepare ordinary Firefox acceptance across fifty native tabs
+14:  50cc811 = 14:  0dddb3e notifications: drop deliveries from disabled browser epochs
+15:  e2e5278 = 15:  12c8284 coordination: retain deployed machines through explicit user release
+16:  bad9a7a = 16:  4d59c98 test: match session-scoped model catalogs in settings fixture
+17:  548bce4 = 17:  a8a3fdb test: intercept session-scoped limits in usability fixture
+ -:  ------- > 18:  8675c87 test: await application of stale recovery responses

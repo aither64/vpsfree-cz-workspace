@@ -1,0 +1,5 @@
+- **Result:** Passed; helper exit status **0** (`fresh_authoritative_publication_settled`).
+- **Identity and command:** Exact bound session verified; ran `python3 /tmp/portal-improvements-index-acceptance.py` once from the authorized workspace. Elapsed time: **3.415 seconds**.
+- **Safe observations:** 1 normal demand, 4 progress reads, 2 stable samples. Final response was HTTP 200, authoritative, and not loading; no warning or cluster notices.
+- **Evidence:** Complete helper stdout/stderr: [index-helper.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/index-helper.log). The helper’s status, observations, and result artifacts are under `verification/deployment-index-publication`.
+- **Running operation:** None.

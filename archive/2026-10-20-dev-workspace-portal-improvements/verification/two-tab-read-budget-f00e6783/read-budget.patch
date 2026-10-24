@@ -1,0 +1,125 @@
+diff --git a/portal/internal/web/firefox_tabs_acceptance.cjs b/portal/internal/web/firefox_tabs_acceptance.cjs
+index c67294a..c02aa60 100644
+--- a/portal/internal/web/firefox_tabs_acceptance.cjs
++++ b/portal/internal/web/firefox_tabs_acceptance.cjs
+@@ -9,6 +9,8 @@ const net = require("node:net");
+ const https = require("node:https");
+ const {spawn} = require("node:child_process");
+ const {waitForRestoredStream} = require("./firefox_tabs_readiness.cjs");
++const readBudget = process.argv[3] === "--read-budget";
++assert(process.argv.length === 3 || (process.argv.length === 4 && readBudget), "Unknown Firefox fixture mode");
+ const origin = new URL(process.argv[2]);
+ assert(["127.0.0.1", "localhost", "[::1]"].includes(origin.hostname) && origin.protocol === "https:", "Requires the disposable loopback HTTPS fixture");
+ assert(process.env.DISPLAY, "A real headful display or reviewed Xvfb environment is required");
+@@ -106,6 +108,69 @@ function assertBackgroundUnchanged(before, after, active) {
+       "moz:firefoxOptions":{binary:firefox,args:["--remote-allow-system-access","-profile",profile]}}}});
+     session=created.sessionId;
+     assert.equal(created.capabilities.browserName,"firefox");
++    if (readBudget) {
++      stage="read-budget-initialize";
++      const handles=[await command("/window")];
++      for(let index=0;index<2;index++) {
++        if(index)handles.push((await command("/window/new",{type:"tab"})).handle);
++        await switchTo(handles[index]);await command("/url",{url:new URL(`/example/?fixtureTab=${index}`,origin).href});await ready(index);
++        if(index===0)await command(`/element/${await element("css selector",'#message-form textarea[name="message"]')}/value`,{text:"Disposable draft retained across native tab switches"});
++        await until(async()=>{
++          const stats=await fixture("/fixture/firefox/status");lastCounts=stats.counts;
++          return stats.counts[index]?.thread?.Count>0&&stats.counts[index]?.pending?.Count>0&&stats.counts[index]?.events?.Active===1;
++        },`tab ${index} transcript, pending and single SSE ready`);
++      }
++      assert.equal((await command("/window/handles")).length,2);
++      await settledBackground(1);
++      stage="read-budget-observation";
++      const observationStart=Date.now(), before=await fixture("/fixture/firefox/status");
++      assert.deepEqual(Object.keys(before.counts).sort(),["0","1"]);
++      await wait(5000);
++      const observed=await fixture("/fixture/firefox/status"), observedWindowMs=Date.now()-observationStart;
++      lastCounts=observed.counts;
++      for(const lane of new Set([...Object.keys(before.counts[0]),...Object.keys(observed.counts[0]??{})])) {
++        assert.equal(observed.counts[0]?.[lane]?.Count??0,before.counts[0][lane]?.Count??0,`Hidden document 0 emitted ${lane}`);
++        assert.equal(before.counts[0][lane]?.Active??0,0);assert.equal(observed.counts[0]?.[lane]?.Active??0,0);
++      }
++      assert(observed.counts[1].thread.Count>before.counts[1].thread.Count,"Foreground transcript did not continue refreshing");
++      assert.equal(observed.counts[1].events.Active,1,"Foreground requires exactly one SSE");
++      assert(observed.counts[1].pending.Count-before.counts[1].pending.Count<=1+Math.floor(observedWindowMs/15000),"Generic 200ms hints bypassed pending freshness");
++
++      stage="read-budget-switch-back";
++      await switchTo(handles[0]);await ready(0);
++      const transitions=await execute("return portalVisibility;");
++      const hiddenIndex=transitions.findIndex(value=>value.hidden&&value.state==="hidden");
++      assert(hiddenIndex>=0&&transitions.slice(hiddenIndex+1).some(value=>!value.hidden&&value.state==="visible"),"Tab 0 must observe real hidden then visible transitions");
++      visibleLog.push({document:0,transitions});
++      assert.equal(await execute('return document.querySelector("#message-form textarea").value;'),"Disposable draft retained across native tab switches");
++      await until(async()=>{
++        const stats=await fixture("/fixture/firefox/status");lastCounts=stats.counts;
++        return stats.counts[0].events.Count>observed.counts[0].events.Count&&stats.counts[0].events.Active===1&&stats.counts[0].pending.Count>observed.counts[0].pending.Count;
++      },"fresh pending and single SSE after switch back");
++      await settledBackground(0);
++      const returned=await fixture("/fixture/firefox/status");
++      stage="read-budget-typed-question";
++      const questionStart=Date.now();await fixture("/fixture/firefox/control?action=question","POST");
++      await until(()=>execute('return document.getElementById("pending").textContent.includes("Disposable Firefox question");'),"typed question invalidation",5000);
++      const questionLatencyMs=Date.now()-questionStart;
++      await fixture("/fixture/firefox/control?action=clear-question","POST");
++      await until(()=>execute('return !document.getElementById("pending").textContent.includes("Disposable Firefox question");'),"question removal",5000);
++      stage="read-budget-pending-retry";
++      const failureBefore=await fixture("/fixture/firefox/status");await fixture("/fixture/firefox/control?action=fail-pending","POST");
++      await until(async()=>{
++        const stats=await fixture("/fixture/firefox/status");lastCounts=stats.counts;
++        return stats.counts[0].pending.Failed===1&&stats.counts[0].pending.Count>=failureBefore.counts[0].pending.Count+2;
++      },"pending retry without reload",10000);
++      const final=await fixture("/fixture/firefox/status");
++      for(const lane of new Set([...Object.keys(returned.counts[1]),...Object.keys(final.counts[1]??{})])) {
++        assert.equal(final.counts[1]?.[lane]?.Count??0,returned.counts[1][lane]?.Count??0,`Hidden document 1 emitted ${lane}`);
++        assert.equal(final.counts[1]?.[lane]?.Active??0,0);
++      }
++      assert.equal(final.counts[0].events.Active,1);assert.equal(final.sendAttempts,0);assert.equal(final.dispatches,0);assert.equal(final.journalEntries,0);
++      console.log(JSON.stringify({fixture:"portal-firefox-read-budget-v1",mode:"read-budget",browser:created.capabilities.browserVersion,tabs:2,
++        observedWindowMs,questionLatencyMs,visibility:visibleLog,counts:final.counts,sendAttempts:final.sendAttempts,dispatches:final.dispatches,journalEntries:final.journalEntries}));
++      return;
++    }
+     stage="initialize-tabs";
+     const handles=[await command("/window")];
+     for(let index=0;index<50;index++) {
+@@ -206,7 +271,7 @@ function assertBackgroundUnchanged(before, after, active) {
+       counts=currentCounts;sendStatus=mutationStatus;
+     }catch(_){/* Retain prior observations if status is unavailable. */}
+     if (beforeSendControls) {try {sendControls=await readSendControls();}catch(_){/* Never replace the original failure. */}}
+-    console.error(JSON.stringify({fixture:"portal-firefox-tabs-v1",stage,visibility:lastVisibility,
++    console.error(JSON.stringify({fixture:readBudget?"portal-firefox-read-budget-v1":"portal-firefox-tabs-v1",mode:readBudget?"read-budget":"native-tabs",stage,visibility:lastVisibility,
+       nativeDiscard,nativeRestore,beforeDiscard:beforeDiscard?.counts?.[5]??null,counts,
+       beforeSendStatus,beforeSendControls,sendStatus,sendControls}));
+     throw error;
+diff --git a/portal/internal/web/firefox_tabs_test.go b/portal/internal/web/firefox_tabs_test.go
+index 384cba9..3848c18 100644
+--- a/portal/internal/web/firefox_tabs_test.go
++++ b/portal/internal/web/firefox_tabs_test.go
+@@ -114,6 +114,18 @@ func TestFirefoxTabs(t *testing.T) {
+ 	if os.Getenv("PORTAL_FIREFOX_TABS_TEST") != "1" {
+ 		t.Skip("set PORTAL_FIREFOX_TABS_TEST=1 after review with ordinary Firefox, Geckodriver and a display")
+ 	}
++	runFirefoxFixture(t, false)
++}
++
++func TestFirefoxReadBudget(t *testing.T) {
++	if os.Getenv("PORTAL_FIREFOX_READ_BUDGET_TEST") != "1" {
++		t.Skip("set PORTAL_FIREFOX_READ_BUDGET_TEST=1 after review with ordinary Firefox, Geckodriver and a display")
++	}
++	runFirefoxFixture(t, true)
++}
++
++func runFirefoxFixture(t *testing.T, readBudget bool) {
++	t.Helper()
+ 	server := newTestServer(t)
+ 	prepareInteractiveConversation(t, server, "example")
+ 	controller := &firefoxTabsCodex{browserContractCodex: &browserContractCodex{emptyPrompts: true,
+@@ -260,6 +272,9 @@ func TestFirefoxTabs(t *testing.T) {
+ 		}
+ 	}()
+ 	command := exec.Command("node", "firefox_tabs_acceptance.cjs", httpServer.URL)
++	if readBudget {
++		command.Args = append(command.Args, "--read-budget")
++	}
+ 	if output, err := command.CombinedOutput(); err != nil {
+ 		t.Fatalf("ordinary Firefox acceptance: %v\n%s", err, output)
+ 	} else {

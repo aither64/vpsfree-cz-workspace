@@ -1,0 +1,235 @@
+diff --git a/portal/internal/web/firefox_tabs_acceptance.cjs b/portal/internal/web/firefox_tabs_acceptance.cjs
+--- a/portal/internal/web/firefox_tabs_acceptance.cjs
++++ b/portal/internal/web/firefox_tabs_acceptance.cjs
+@@ -8,6 +8,7 @@
+ const net = require("node:net");
+ const https = require("node:https");
+ const {spawn} = require("node:child_process");
++const {waitForRestoredStream} = require("./firefox_tabs_readiness.cjs");
+ const origin = new URL(process.argv[2]);
+ assert(["127.0.0.1", "localhost", "[::1]"].includes(origin.hostname) && origin.protocol === "https:", "Requires the disposable loopback HTTPS fixture");
+ assert(process.env.DISPLAY, "A real headful display or reviewed Xvfb environment is required");
+@@ -60,6 +61,7 @@
+   const element=async(using,value)=>{const found=await command("/element",{using,value});return found["element-6066-11e4-a52e-4f735466cecf"];};
+   const click=async(using,value)=>command(`/element/${await element(using,value)}/click`,{});
+   const visibleLog=[];
++  let stage="driver-start", lastVisibility=null, beforeDiscard=null, nativeDiscard=null, nativeRestore=null, lastCounts=null;
+   async function ready(index) {
+     await until(()=>execute('return !!document.getElementById("message-send") && !document.getElementById("message-send").disabled;'),`tab ${index} composer ready`,60000);
+     const state=await execute(`
+@@ -70,6 +72,7 @@
+         document.addEventListener("visibilitychange",record);record();
+       }
+       return {hidden:document.hidden,state:document.visibilityState};`);
++    lastVisibility={document:index,...state};
+     assert.equal(state.hidden,false);assert.equal(state.state,"visible");
+   }
+   async function settledBackground(active) {
+@@ -87,6 +90,7 @@
+       "moz:firefoxOptions":{binary:firefox,args:["--remote-allow-system-access","-profile",profile]}}}});
+     session=created.sessionId;
+     assert.equal(created.capabilities.browserName,"firefox");
++    stage="initialize-tabs";
+     const handles=[await command("/window")];
+     for(let index=0;index<50;index++) {
+       if(index)handles.push((await command("/window/new",{type:"tab"})).handle);
+@@ -94,6 +98,7 @@
+       if(index===0)await command(`/element/${await element("css selector",'#message-form textarea[name="message"]')}/value`,{text:"Disposable draft retained across native tab switches"});
+     }
+     assert.equal((await command("/window/handles")).length,50);
++    stage="native-visibility-switches";
+     // Selecting real tabs records both actual hidden and visible transitions.
+     for(let index=0;index<50;index++) {
+       await switchTo(handles[index]);await ready(index);
+@@ -107,6 +112,7 @@
+     const initialized=await fixture("/fixture/firefox/status");
+     assert.equal(Object.keys(initialized.counts).length,50,"All 50 documents must perform actual reads");
+     for(const lanes of Object.values(initialized.counts)) {assert(lanes.pending?.Count>0);assert(lanes.events?.Count>0);}
++    stage="sustained-foreground";
+     const before=await fixture("/fixture/firefox/status");await wait(35000);const sustained=await fixture("/fixture/firefox/status");
+     assertBackgroundUnchanged(before,sustained,0);
+     assert(sustained.counts[0].pending.Count-before.counts[0].pending.Count<=4,"Generic 200ms hints bypassed pending freshness");
+@@ -115,6 +121,8 @@
+ 
+     // Firefox's own tabbrowser discards a background document in this isolated
+     // profile. The pending attribute is evidence of native unload, not navigation.
++    stage="native-discard";
++    beforeDiscard=await fixture("/fixture/firefox/status");
+     await command("/moz/context",{context:"chrome"});
+     let discarded=await execute(`
+       const browser=Services.wm.getMostRecentWindow("navigator:browser").gBrowser;
+@@ -122,24 +130,46 @@
+       if(!tab||tab.selected)throw Error("background fixture tab missing");
+       tab.setAttribute("portal-fixture-discard","5");
+       browser.discardBrowser(tab,true);return {pending:tab.hasAttribute("pending"),selected:tab.selected};`);
++    nativeDiscard=discarded;
+     if (!discarded.pending) {
+       await until(()=>execute('const browser=Services.wm.getMostRecentWindow("navigator:browser").gBrowser;return Array.from(browser.tabs).some(tab=>tab.getAttribute("portal-fixture-discard")==="5"&&tab.hasAttribute("pending"));'),"native discard completion",5000);
+       discarded={pending:true,selected:false};
+     }
++    nativeDiscard=discarded;
+     assert.equal(discarded.pending,true,"Native Firefox discard was not established");assert.equal(discarded.selected,false);
+     await command("/moz/context",{context:"content"});
++    stage="native-restoration";
+     await switchTo(handles[5]);await ready(5);await settledBackground(5);
+-    const restored=await fixture("/fixture/firefox/status");assert(restored.counts[5].events.Count>initialized.counts[5].events.Count);
++    const restoredDocument=await execute('return {fixtureTab:new URL(location.href).searchParams.get("fixtureTab"),hidden:document.hidden,state:document.visibilityState};');
++    lastVisibility={document:5,...restoredDocument};
++    assert.equal(restoredDocument.fixtureTab,"5");assert.equal(restoredDocument.hidden,false);assert.equal(restoredDocument.state,"visible");
++    await command("/moz/context",{context:"chrome"});
++    nativeRestore=await execute(`
++      const browser=Services.wm.getMostRecentWindow("navigator:browser").gBrowser;
++      const tab=Array.from(browser.tabs).find(tab=>tab.getAttribute("portal-fixture-discard")==="5");
++      return {found:!!tab,pending:tab?.hasAttribute("pending")??null,selected:tab?.selected??null};`);
++    assert.equal(nativeRestore.found,true);assert.equal(nativeRestore.pending,false);assert.equal(nativeRestore.selected,true);
++    await command("/moz/context",{context:"content"});
++    stage="restored-stream";
++    const restored=await waitForRestoredStream({baseline:beforeDiscard.counts[5].events.Count,
++      status:async()=>{const snapshot=await fixture("/fixture/firefox/status");lastCounts=snapshot.counts;return snapshot;}});
++    assert(restored.counts[5].events.Count>beforeDiscard.counts[5].events.Count);
++    assert.equal(restored.counts[5].events.Active,1);
++    await settledBackground(5);
++    stage="restore-original-foreground";
+     await switchTo(handles[0]);await ready(0);await settledBackground(0);
+     assert.equal(await execute('return document.querySelector("#message-form textarea").value;'),"Disposable draft retained across native tab switches");
+ 
++    stage="typed-question";
+     const questionStart=Date.now();await fixture("/fixture/firefox/control?action=question","POST");
+     await until(()=>execute('return document.getElementById("pending").textContent.includes("Disposable Firefox question");'),"typed question invalidation",5000);
+     const questionLatencyMs=Date.now()-questionStart;
+     await fixture("/fixture/firefox/control?action=clear-question","POST");
+     await until(()=>execute('return !document.getElementById("pending").textContent.includes("Disposable Firefox question");'),"question removal",5000);
++    stage="pending-read-retry";
+     const failureBefore=await fixture("/fixture/firefox/status");await fixture("/fixture/firefox/control?action=fail-pending","POST");
+     await until(async()=>{const stats=await fixture("/fixture/firefox/status");return stats.counts[0].pending.Failed===1&&stats.counts[0].pending.Count>=failureBefore.counts[0].pending.Count+2;},"pending retry without reload",10000);
++    stage="durable-original-retry";
+     await click("css selector","#message-send");
+     await until(()=>execute('return Array.from(document.querySelectorAll("button")).some(button=>button.textContent.trim()==="Retry original");'),"lost-response durable receipt");
+     assert.equal(await execute('return document.querySelector("#message-form textarea").value;'),"Disposable draft retained across native tab switches");
+@@ -148,6 +178,14 @@
+     const final=await fixture("/fixture/firefox/status");assert.equal(final.dispatches,1);assert.equal(final.journalEntries,1);assert.equal(final.sendAttempts,2);
+     console.log(JSON.stringify({fixture:"portal-firefox-tabs-v1",browser:created.capabilities.browserVersion,tabs:50,nativeDiscard:true,restored:true,foregroundMs:35000,
+       questionLatencyMs,visibility:visibleLog,counts:final.counts,dispatches:final.dispatches,journalEntries:final.journalEntries,sendAttempts:final.sendAttempts}));
++  } catch(error) {
++    // Preserve fixed stage/counter and observed native/visibility evidence before
++    // cleanup. Never include browser contents, URLs or the disposable profile.
++    let counts=lastCounts??beforeDiscard?.counts??null;
++    try {counts=(await fixture("/fixture/firefox/status")).counts;}catch(_){/* Retain prior observations if status is unavailable. */}
++    console.error(JSON.stringify({fixture:"portal-firefox-tabs-v1",stage,visibility:lastVisibility,
++      nativeDiscard,nativeRestore,beforeDiscard:beforeDiscard?.counts?.[5]??null,counts}));
++    throw error;
+   } finally {
+     if(session) {try {await command("",undefined,"DELETE");}catch(_){/* Stop only this owned driver below. */}}
+     if(child.pid && child.exitCode===null && child.signalCode===null) {child.kill("SIGTERM");await Promise.race([new Promise(resolve=>child.once("exit",resolve)),wait(5000)]);}
+diff --git a/portal/internal/web/firefox_tabs_readiness.cjs b/portal/internal/web/firefox_tabs_readiness.cjs
+new file mode 100644
+--- /dev/null
++++ b/portal/internal/web/firefox_tabs_readiness.cjs
+@@ -0,0 +1,18 @@
++"use strict";
++
++// Specific to the native tab-5 discard/restoration acceptance fixture. The
++// composer can be ready before its asynchronously opened EventSource arrives.
++async function waitForRestoredStream({baseline, status, now = Date.now,
++  sleep = ms => new Promise(resolve => setTimeout(resolve, ms))}) {
++  const deadline = now() + 20000;
++  while (now() < deadline) {
++    const snapshot = await status();
++    if (now() >= deadline) break;
++    const events = snapshot.counts?.[5]?.events;
++    if (events?.Count > baseline && events.Active === 1) return snapshot;
++    await sleep(100);
++  }
++  throw Error("Native restored tab 5 did not establish one new stream within 20000ms");
++}
++
++module.exports = {waitForRestoredStream};
+diff --git a/portal/internal/web/firefox_tabs_readiness_test.cjs b/portal/internal/web/firefox_tabs_readiness_test.cjs
+new file mode 100644
+--- /dev/null
++++ b/portal/internal/web/firefox_tabs_readiness_test.cjs
+@@ -0,0 +1,67 @@
++"use strict";
++const assert = require("node:assert/strict");
++const {test} = require("node:test");
++const {waitForRestoredStream} = require("./firefox_tabs_readiness.cjs");
++
++function fixture(states) {
++  let time = 0, reads = 0, sleeps = 0;
++  const status = async () => {
++    const events = states[Math.min(reads++, states.length - 1)];
++    return {counts: {0: {events: {Count: 8, Active: 0}}, 5: {events}}};
++  };
++  return {
++    options: {baseline: 3, status, now: () => time,
++      sleep: async ms => { assert.equal(ms, 100); time += ms; sleeps++; }},
++    observed: () => ({time, reads, sleeps}),
++  };
++}
++
++test("composer ready and hidden tabs quiescent do not establish restored SSE", async () => {
++  // This is exactly the state admitted by the old composer/background gates.
++  // Its immediate Count assertion fails even though restoration soon succeeds.
++  const before = {Count: 3, Active: 0};
++  const run = fixture([before, {Count: 4, Active: 0}, {Count: 4, Active: 1}]);
++  const restored = await waitForRestoredStream(run.options);
++  assert.equal(restored.counts[5].events.Count, 4);
++  assert.deepEqual(run.observed(), {time: 200, reads: 3, sleeps: 2});
++});
++
++test("an unchanged counter cannot certify a new stream even if active", async () => {
++  const run = fixture([{Count: 3, Active: 1}, {Count: 4, Active: 1}]);
++  await waitForRestoredStream(run.options);
++  assert.deepEqual(run.observed(), {time: 100, reads: 2, sleeps: 1});
++});
++
++test("two active streams cannot satisfy restoration", async () => {
++  const run = fixture([{Count: 4, Active: 2}, {Count: 5, Active: 1}]);
++  const restored = await waitForRestoredStream(run.options);
++  assert.equal(restored.counts[5].events.Active, 1);
++  assert.deepEqual(run.observed(), {time: 100, reads: 2, sleeps: 1});
++});
++
++for (const [label, states] of [
++  ["no new stream", [{Count: 3, Active: 0}]],
++  ["new request never remains active", [{Count: 4, Active: 0}]],
++  ["missing restored-document counters", [undefined]],
++]) {
++  test(`${label} fails at the existing 20-second deadline`, async () => {
++    const run = fixture(states);
++    await assert.rejects(waitForRestoredStream(run.options),
++      /Native restored tab 5 did not establish one new stream within 20000ms/);
++    assert.deepEqual(run.observed(), {time: 20000, reads: 200, sleeps: 200});
++  });
++}
++
++test("status transport failure stays a failure", async () => {
++  await assert.rejects(waitForRestoredStream({baseline: 3,
++    status: async () => { throw Error("Fixture transport failed"); }}),
++  /Fixture transport failed/);
++});
++
++
++test("a stream observed after the deadline cannot satisfy restoration", async () => {
++  let time = 0;
++  await assert.rejects(waitForRestoredStream({baseline: 3, now: () => time,
++    status: async () => { time = 20001; return {counts: {5: {events: {Count: 4, Active: 1}}}}; }}),
++  /Native restored tab 5 did not establish one new stream within 20000ms/);
++});
+diff --git a/portal/internal/web/firefox_tabs_test.go b/portal/internal/web/firefox_tabs_test.go
+--- a/portal/internal/web/firefox_tabs_test.go
++++ b/portal/internal/web/firefox_tabs_test.go
+@@ -100,6 +100,13 @@
+ 	data, err := os.ReadFile(c.journal)
+ 	if err != nil || strings.Count(string(data), "\n") != 1 {
+ 		t.Fatal("fixture acceptance journal missing", err)
++	}
++}
++
++func TestFirefoxFixtureReadiness(t *testing.T) {
++	output, err := exec.Command("node", "--test", "firefox_tabs_readiness_test.cjs").CombinedOutput()
++	if err != nil {
++		t.Fatalf("Firefox restoration readiness: %v\n%s", err, output)
+ 	}
+ }
+ 

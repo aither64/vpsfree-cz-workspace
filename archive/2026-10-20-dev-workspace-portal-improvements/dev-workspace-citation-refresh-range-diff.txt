@@ -1,0 +1,183 @@
+1:  3ca73c1 < -:  ------- deps: update shared conversation presentation helpers
+-:  ------- > 1:  ca56a20 deps: update shared conversation presentation helpers
+2:  b1c4054 = 2:  df3830a team: project full-team names from actual implementer counts
+3:  19ea2a6 ! 3:  a846b4f portal: add authorized file downloads and source copy actions
+    @@ portal/internal/repository/source.go: func ReadSourcePreview(reader io.Reader, s
+     
+      ## portal/internal/web/server.go ##
+     @@ portal/internal/web/server.go: func New(config Config) (*Server, error) {
+    - 	policy := bluemonday.UGCPolicy()
+    + 	policy.AllowAttrs("title").OnElements("a")
+      	policy.RequireNoFollowOnLinks(true)
+      	policy.RequireNoReferrerOnLinks(true)
+     +	policy.AllowAttrs("target").Matching(regexp.MustCompile(`^_blank$`)).OnElements("a")
+4:  0208147 = 4:  b0ff062 portal: keep large artifact catalogs compact and stable
+5:  5c1f065 = 5:  f94b7ce portal: publish session membership before optional enrichment
+6:  d877b46 = 6:  df50d90 portal: retain member settings through sequential additions
+7:  2dc2dc7 ! 7:  3f0eae0 portal: present team messages and preserve delivery recovery inline
+    @@ docs/workspace-portal.md: receipt. **Retry original** retries the receipt's save
+      A manual older-page failure offers Retry for that page. Expired cursors trigger
+      reconnection and a check of retained history. Servers without paging keep the
+     
+    + ## portal/internal/web/browser_contract_test.cjs ##
+    +@@ portal/internal/web/browser_contract_test.cjs: if (!conversationModulePath) throw new Error("browser contract test requires the
+    + await require("./preparation_browser_contract_test.cjs")();
+    + const conversationAssets = await import(pathToFileURL(conversationModulePath).href);
+    + require("./refresh_presentation_contract_test.cjs")(conversationAssets);
+    ++require("./citation_presentation_contract_test.cjs")(conversationAssets);
+    + assert.equal(hasTranscriptPagingHelpers(conversationAssets), true);
+    + assert.equal(hasTranscriptPagingHelpers({
+    +   ...conversationAssets, createTranscriptHistory: undefined,
+    +
+    + ## portal/internal/web/citation_presentation_contract_test.cjs (new) ##
+    +@@
+    ++"use strict";
+    ++const assert = require("node:assert/strict");
+    ++module.exports = assets => {
+    ++  const token = "\ue200cite\ue202ref\ue201", prefix = "Příliš 🐈 **answer** ";
+    ++  const text = `${prefix}${token}\n\n\`${token}\``;
+    ++  const citation = {start:Buffer.byteLength(prefix),end:Buffer.byteLength(prefix+token),sources:[]};
+    ++  const agent = {turnId:"turn",itemId:"agent",kind:"agentMessage",turnStatus:"completed",text,citations:[citation],citationsPending:true};
+    ++  const user = {turnId:"turn",itemId:"user",kind:"userMessage",text:"canonical attachment envelope",displayText:`# User\n${token}`,citations:[citation]};
+    ++  const team = {turnId:"turn",itemId:"team",kind:"userMessage",text:"unchanged team",communication:{kind:"team",from:"lead",to:"implementer0"}};
+    ++  const history = assets.createTranscriptHistory({policy:{historyRepairMs:0}});
+    ++  history.applyNewest({threadId:"thread",entries:[agent,user,team],hasOlder:true,olderCursor:"older"});
+    ++  const next = {turnId:"turn",itemId:"next",kind:"agentMessage",turnStatus:"completed",text:"Next"};
+    ++  history.applyNewest({threadId:"thread",entries:[user,team,next],hasOlder:true,olderCursor:"pending-page"});
+    ++  assert.equal(history.repairCursor,"pending-page");
+    ++  assert.equal(assets.transcriptEntryVisible(team,"messages"),false);
+    ++  assert.equal(assets.transcriptEntryVisible(team,"team"),true);
+    ++  assert.equal(assets.transcriptEntryPresentation(team).label,"lead → implementer0");
+    ++  const resolved = {...agent,citationsPending:false,citations:[{...citation,sources:[{url:"https://example.test/source",title:'Český "title"',number:1}]}]};
+    ++  history.applyRepair({threadId:"thread",requestCursor:"pending-page",entries:[resolved,user],hasOlder:false});
+    ++  const retained = history.entries.find(entry=>entry.itemId==="agent");
+    ++  assert.equal(retained.text,text); assert.equal(retained.citationsPending,false);
+    ++  const copied = assets.citationCopyText(retained);
+    ++  assert(copied.includes("https://example.test/source")); assert(copied.includes(`\`${token}\``));
+    ++  assert.equal(assets.citationCopyText(user),user.text);
+    ++  assert.deepEqual(history.entries.filter(entry=>assets.transcriptEntryVisible(entry,"messages")).map(entry=>entry.itemId),["agent","user","next"]);
+    ++};
+    +
+    + ## portal/internal/web/citations_test.go ##
+    +@@ portal/internal/web/citations_test.go: func TestCitationMarkdownPresentation(t *testing.T) {
+    + 		t.Fatal("unsafe source URL rendered")
+    + 	}
+    + }
+    ++
+    ++func TestCitationsComposeWithDecoratedUserMarkdownAndTeamPresentation(t *testing.T) {
+    ++	s := newTestServer(t)
+    ++	token := "\ue200cite\ue202ref\ue201"
+    ++	prefix := "Příliš 🐈 **answer** "
+    ++	canonical := prefix + token + "\n\n`" + token + "`"
+    ++	display := "# User heading\n\n" + token
+    ++	empty := ""
+    ++	agent := codex.TranscriptEntry{Kind: "agentMessage", TurnStatus: "completed", Text: canonical, ClientUserMessageDigest: "unchanged-digest", CitationsPending: true,
+    ++		Citations: []codex.CitationSpan{{Start: len(prefix), End: len(prefix) + len(token)}}}
+    ++	user := codex.TranscriptEntry{Kind: "userMessage", Text: "attachment envelope", DisplayText: &display, Citations: agent.Citations, Attachments: []codex.Attachment{{ID: "file", Name: "file.txt"}}}
+    ++	transcript := codex.Transcript{Entries: []codex.TranscriptEntry{agent, user, {Kind: "userMessage", Text: "Team assignment from lead to implementer0:\n\nWork."}, {Kind: "userMessage", Text: "hidden envelope", DisplayText: &empty}}}
+    ++	s.presentTranscript(&transcript)
+    ++	if !strings.Contains(transcript.Entries[0].HTML, "[source pending]") {
+    ++		t.Fatal("pending citation disappeared")
+    ++	}
+    ++	if !strings.Contains(transcript.Entries[1].HTML, "<h1>User heading</h1>") || !strings.Contains(transcript.Entries[1].HTML, token) || strings.Contains(transcript.Entries[1].HTML, "attachment envelope") {
+    ++		t.Fatalf("user citation/display handling: %s", transcript.Entries[1].HTML)
+    ++	}
+    ++	if transcript.Entries[2].Communication == nil || transcript.Entries[2].Communication.To != "implementer0" || transcript.Entries[3].HTML != "" {
+    ++		t.Fatal("team/empty user display changed")
+    ++	}
+    ++	// A late source update must render from original UTF-8 offsets even after the
+    ++	// message is retained outside the newest page. Neither canonical text changes.
+    ++	transcript.Entries[0].CitationsPending = false
+    ++	transcript.Entries[0].Citations[0].Sources = []codex.CitationSource{{URL: "https://example.test/source", Title: `Český "title" <script>`, Number: 1}}
+    ++	s.presentTranscript(&transcript)
+    ++	got := transcript.Entries[0]
+    ++	if got.Text != canonical || got.ClientUserMessageDigest != "unchanged-digest" || !strings.Contains(got.HTML, `href="https://example.test/source"`) || !strings.Contains(got.HTML, `title="Český &#34;title&#34; &lt;script&gt;"`) || strings.Contains(got.HTML, "<script>") || strings.Count(got.HTML, token) != 1 {
+    ++		t.Fatalf("citation composition: %#v", got)
+    ++	}
+    ++	if transcript.Entries[1].Text != "attachment envelope" || *transcript.Entries[1].DisplayText != display || len(transcript.Entries[1].Attachments) != 1 {
+    ++		t.Fatal("user canonical/attachments changed")
+    ++	}
+    ++}
+    +
+      ## portal/internal/web/portal_improvements_browser_test.cjs (new) ##
+     @@
+     +"use strict";
+    @@ portal/internal/web/portal_improvements_browser_test.cjs (new)
+     +    await expect(page.locator("#transcript")).toContainText("fixture.txt");
+     +    await expect(page.locator("#transcript")).not.toContainText("Generated attachment envelope");
+     +    await expect(page.locator("#transcript")).not.toContainText("Internal work.");
+    ++    const citation = page.locator('#transcript a[href="https://example.test/source"]');
+    ++    await expect(citation).toHaveText("[1]");
+    ++    await expect(citation).toHaveAttribute("title", 'Český "title"');
+    ++    await expect(page.locator("#transcript code")).toContainText("\ue200cite\ue202ref\ue201");
+    ++    await citation.locator('xpath=ancestor::*[contains(concat(" ", normalize-space(@class), " "), " message ")][1]').getByRole("button", {name: "Copy message", exact: true}).click();
+    ++    assert((await page.evaluate(() => navigator.clipboard.readText())).includes("https://example.test/source"));
+     +    await page.locator('[data-transcript-filter="team"]').click();
+     +    await expect(page.locator("#transcript .message.team")).toContainText("lead → implementer0");
+     +    await expect(page.locator("#transcript")).toContainText("Internal work.");
+    @@ portal/internal/web/question_browser_test.go: func TestQuestionBrowser(t *testin
+     +				{Kind: "userMessage", ItemID: "team", Text: "Team assignment from lead to implementer0:\n\nInternal work."},
+     +				{Kind: "agentMessage", ItemID: "agent", Text: "A reply."},
+     +			}}
+    ++			token, prefix := "\ue200cite\ue202ref\ue201", "Příliš 🐈 **answer** "
+    ++			transcript.Entries[2].Text = prefix + token + "\n\n`" + token + "`"
+    ++			transcript.Entries[2].Citations = []codex.CitationSpan{{Start: len(prefix), End: len(prefix) + len(token), Sources: []codex.CitationSource{{URL: "https://example.test/source", Title: `Český "title"`, Number: 1}}}}
+     +			display := transcript.Entries[0].Text
+     +			transcript.Entries[0].Text += "\n\nGenerated attachment envelope"
+     +			transcript.Entries[0].DisplayText = &display
+    @@ portal/internal/web/server.go: func (s *Server) resolveConversation(
+      		entry := &transcript.Entries[index]
+     -		if entry.Text != "" &&
+     -			(entry.Kind == "agentMessage" || entry.Kind == "reasoning" || entry.Kind == "plan") {
+    --			entry.HTML = string(s.renderTextMarkdown(entry.Text))
+     +		if entry.Kind == "mcpToolCall" && entry.Summary == "Tool · team_reporting/report_to_lead" {
+     +			entry.Communication = &codex.TranscriptCommunication{Kind: "team", To: "lead"}
+     +		}
+    @@ portal/internal/web/server.go: func (s *Server) resolveConversation(
+     +			if envelope := teamEnvelopePattern.FindStringSubmatch(entry.Text); envelope != nil {
+     +				entry.Communication = &codex.TranscriptCommunication{Kind: "team", From: envelope[1], To: envelope[2]}
+     +			}
+    -+		}
+    -+		if entry.Kind == "userMessage" || entry.Kind == "agentMessage" || entry.Kind == "reasoning" || entry.Kind == "plan" {
+     +			text := entry.Text
+     +			if entry.DisplayText != nil {
+     +				text = *entry.DisplayText
+     +			}
+     +			entry.HTML = string(s.renderTextMarkdown(text))
+    ++		} else if entry.Kind == "agentMessage" || entry.Kind == "reasoning" || entry.Kind == "plan" {
+    + 			entry.HTML = string(s.renderTextMarkdown(codex.CitationMarkdown(*entry)))
+    ++
+      		}
+      	}
+      }
+    @@ portal/internal/web/static/app.js
+          return;
+        }
+      
+    --  const conversationAssets = await import("/codex/assets/conversation.js?v=17");
+    -+  const conversationAssets = await import("/codex/assets/conversation.js?v=18");
+    +-  const conversationAssets = await import("/codex/assets/conversation.js?v=18");
+    ++  const conversationAssets = await import("/codex/assets/conversation.js?v=19");
+     +  sharedTranscriptPresentation = conversationAssets.transcriptEntryPresentation;
+     +  sharedTranscriptVisible = conversationAssets.transcriptEntryVisible;
+        refreshPolicy = conversationAssets.refreshPolicy;
+    @@ portal/internal/web/templates/index.html
+        <script src="/static/browser-notifications.js?v=5" defer></script>
+        <script src="/static/preparation.js?v=5" defer></script>
+     -  <script src="/static/app.js?v=44" defer></script>
+    -+  <script src="/static/app.js?v=48" defer></script>
+    ++  <script src="/static/app.js?v=49" defer></script>
+        <script src="/static/coordination.js?v=6" defer></script>
+      </body>
+      </html>
+    @@ portal/internal/web/templates/session.html
+            <div class="dialog-actions"><button type="button" class="quiet" data-dialog-close>Cancel</button><button type="submit" class="danger">Delete session</button></div>
+          </form>
+        </dialog>
+    --  <script src="/static/app.js?v=47" defer></script>
+    -+  <script src="/static/app.js?v=48" defer></script>
+    +-  <script src="/static/app.js?v=48" defer></script>
+    ++  <script src="/static/app.js?v=49" defer></script>
+        <script src="/static/session-attention-store.js?v=3" defer></script>
+        <script src="/static/browser-notifications.js?v=5" defer></script>
+        <script src="/static/session-attention.js" defer></script>

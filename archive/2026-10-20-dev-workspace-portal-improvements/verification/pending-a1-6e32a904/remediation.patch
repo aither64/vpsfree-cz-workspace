@@ -1,0 +1,195 @@
+diff --git a/cmd/codex-web-example/main.go b/cmd/codex-web-example/main.go
+index 73aa71c..63877b1 100644
+--- a/cmd/codex-web-example/main.go
++++ b/cmd/codex-web-example/main.go
+@@ -30,7 +30,7 @@ var page = template.Must(template.New("page").Parse(`<!doctype html>
+ <body>
+   <main id="conversation"></main>
+   <script type="module">
+-    import {mountConversation} from "/codex/assets/conversation.js?v=21";
++    import {mountConversation} from "/codex/assets/conversation.js?v=22";
+     mountConversation(document.querySelector("#conversation"), {
+ 	  id: "current",
+     });
+diff --git a/cmd/codex-web-example/main_test.go b/cmd/codex-web-example/main_test.go
+index c579009..807cca5 100644
+--- a/cmd/codex-web-example/main_test.go
++++ b/cmd/codex-web-example/main_test.go
+@@ -1,11 +1,23 @@
+ package main
+ 
+ import (
++	"bytes"
+ 	"net/http"
+ 	"net/http/httptest"
++	"strings"
+ 	"testing"
+ )
+ 
++func TestStandaloneExampleUsesCurrentConversationAsset(t *testing.T) {
++	var rendered bytes.Buffer
++	if err := page.Execute(&rendered, nil); err != nil {
++		t.Fatal(err)
++	}
++	if !strings.Contains(rendered.String(), `import {mountConversation} from "/codex/assets/conversation.js?v=22"`) {
++		t.Fatal("standalone page must load the current mounted conversation asset")
++	}
++}
++
+ func TestStandaloneCapabilitiesCoverMountedConversation(t *testing.T) {
+ 	capabilities := standaloneCapabilities()
+ 	if !capabilities.Read || !capabilities.Pending || !capabilities.QueueRead ||
+diff --git a/conversation/assets/conversation.js b/conversation/assets/conversation.js
+index 47c91ab..a65a6e5 100644
+--- a/conversation/assets/conversation.js
++++ b/conversation/assets/conversation.js
+@@ -1393,6 +1393,7 @@ export function mountConversation(root, options) {
+       schedulePending();
+     }).catch(error => {
+       if (!current() || globalThis.document?.hidden) return;
++      pendingLastRead = -Infinity;
+       pendingStatusLabel.textContent = "Requests could not be refreshed. The last result may be out of date.";
+       pendingNotice.failure(error);
+       pendingRetryTimer = setTimeout(() => { pendingRetryTimer = null; void refreshPending(); }, pendingRetryDelay);
+diff --git a/test/conversation_browser_contract_test.cjs b/test/conversation_browser_contract_test.cjs
+index 4a94d18..b3f39ea 100644
+--- a/test/conversation_browser_contract_test.cjs
++++ b/test/conversation_browser_contract_test.cjs
+@@ -1208,6 +1208,73 @@ class MemoryStorage {
+   assert.match(controlText,/current control/); assert.doesNotMatch(controlText,/obsolete control/);
+   disposeControl();
+ 
++  // A forced failure retires successful freshness; the actual retry timer
++  // must read again after two seconds, then restore the success floor.
++  const pendingClockDocument = globalThis.document, pendingClockNow = Date.now;
++  const pendingClockLater = globalThis.setTimeout, pendingClockClear = globalThis.clearTimeout;
++  let pendingAt = 100_000, pendingTimerID = 0, retryEvents, failPending = false, pendingAttempts = 0;
++  const pendingTimers = new Map(), retryRoot = new FakeElement("main");
++  const settlePending = () => new Promise(resolve => setImmediate(resolve));
++  const advancePending = async ms => {
++    const end = pendingAt + ms;
++    for (;;) {
++      const next = [...pendingTimers].sort((a,b) => a[1].at - b[1].at)[0];
++      if (!next || next[1].at > end) break;
++      pendingAt = Math.max(pendingAt, next[1].at);
++      pendingTimers.delete(next[0]); next[1].callback(); await settlePending();
++    }
++    pendingAt = end; await settlePending();
++  };
++  let disposeRetry;
++  try {
++    globalThis.document = Object.assign(new EventTarget(), pendingClockDocument, {hidden:false});
++    Date.now = () => pendingAt;
++    globalThis.setTimeout = (callback, ms) => {
++      const id = ++pendingTimerID; pendingTimers.set(id, {callback, at: pendingAt + ms}); return id;
++    };
++    globalThis.clearTimeout = id => pendingTimers.delete(id);
++    class RetryEvents {
++      listeners = new Map();
++      constructor() { retryEvents = this; }
++      addEventListener(name, callback) { this.listeners.set(name, callback); }
++      close() {}
++    }
++    disposeRetry = mountConversation(retryRoot, {id:"pending-retry", client:{
++      eventsPath:()=>"/pending-retry-events",
++      thread:async()=>({threadId:"pending-retry-thread",status:"idle",entries:[]}),
++      pending:async()=>{
++        pendingAttempts++;
++        if (failPending) { failPending = false; throw Object.assign(Error("unavailable"), {status:503}); }
++        return [{id:"retained-pending",params:{message:"retained prompt"}}];
++      },
++    }, EventSource:RetryEvents,
++    capabilities:{send:false,queueRead:false,queue:false,interrupt:false,settings:false,respond:false},
++    refreshPolicy:{eventDebounceMs:0}});
++    retryEvents.onopen();
++    retryEvents.listeners.get("ready")({data:'{"heartbeatIntervalMs":20000,"pendingInvalidation":true}'});
++    await advancePending(0);
++    const successfulReads = pendingAttempts;
++    assert(successfulReads > 0);
++    await advancePending(100);
++    failPending = true; retryEvents.listeners.get("pending")(); await settlePending();
++    assert.equal(pendingAttempts, successfulReads + 1);
++    assert.match(retryRoot.descendants().map(el=>el.textContent).join(" "), /retained prompt/);
++    await advancePending(1999);
++    assert.equal(pendingAttempts, successfulReads + 1, "failure backoff cannot dispatch early");
++    await advancePending(1);
++    assert.equal(pendingAttempts, successfulReads + 2, "the real two-second retry must bypass old successful freshness");
++    assert.equal(pendingAt, 102_100);
++    retryEvents.onmessage(); await advancePending(0);
++    await advancePending(14_999);
++    assert.equal(pendingAttempts, successfulReads + 2, "retry success restores the full success freshness floor");
++    await advancePending(1);
++    assert.equal(pendingAttempts, successfulReads + 3, "the due timer reads when successful freshness expires");
++  } finally {
++    disposeRetry?.();
++    globalThis.document = pendingClockDocument; Date.now = pendingClockNow;
++    globalThis.setTimeout = pendingClockLater; globalThis.clearTimeout = pendingClockClear;
++  }
++
+   const timeoutRoot = new FakeElement("main");
+   const disposeTimeout = mountConversation(timeoutRoot,{id:"timeouts",client:{
+     thread:async()=>({threadId:"timeout-thread",status:"idle",entries:[]}),
+diff --git a/test/refresh_browser_contract_test.cjs b/test/refresh_browser_contract_test.cjs
+index d684502..4df2334 100644
+--- a/test/refresh_browser_contract_test.cjs
++++ b/test/refresh_browser_contract_test.cjs
+@@ -1,5 +1,7 @@
+ const assert = require('node:assert/strict');
+ const {test} = require('node:test');
++const fs = require('node:fs');
++const vm = require('node:vm');
+ const ready = import('../conversation/assets/refresh.js');
+ 
+ async function fixture(t) {
+@@ -64,3 +66,51 @@ test('page restoration starts a fresh grace and destroyed notices stop publishin
+   const previous = f.state(); f.notice.destroy(); f.pageEvent('pageshow'); f.advance(60_000);
+   assert.equal(f.state(), previous);
+ });
++
++test('a retired mounted pending failure cannot retire successor success freshness', async () => {
++  const source = fs.readFileSync(require.resolve('../conversation/assets/conversation.js'), 'utf8');
++  const start = source.indexOf('  const schedulePending = () => {');
++  const end = source.indexOf('  const scheduleQueue = () => {', start);
++  assert(start >= 0 && end > start);
++  let at = 100_000, failures = 0;
++  const calls = [], timers = new Map();
++  const context = {
++    document:{hidden:false}, Date:{now:()=>at},
++    setTimeout:(fn,ms)=>{const id = {}; timers.set(id,{fn,at:at+ms}); return id;},
++    clearTimeout:id=>timers.delete(id),
++    client:{pending:()=>new Promise((resolve,reject)=>calls.push({resolve,reject}))},
++    pendingNotice:{begin(){},success(){},failure(){failures++;}},
++    renderPrompts(){}, pendingStatusLabel:{},
++  };
++  // The real lane abort race normally settles catch before a resumed success.
++  // Hold that settlement here to exercise the shipped catch's ownership guard.
++  vm.runInNewContext(`
++    const capabilities = {pending:true}, policy = {pendingMs:15000,pendingDeadlineMs:10000,retryInitialMs:2000,retryMaxMs:30000};
++    const sync = {pendingInvalidationSupported:true}, currentThread = {threadId:"thread"};
++    let destroyed = false, paused = false, pendingRead = null, pendingScope = null;
++    let pendingRetryTimer = null, pendingDueTimer = null, pendingRerun = false;
++    let pendingGeneration = 0, pendingLastRead = -Infinity, pendingRetryDelay = 2000;
++    const laneRead = () => ({signal:{aborted:false},run:operation=>Promise.resolve().then(operation),finish(){}});
++    ${source.slice(start,end)}
++    globalThis.controls = {refreshPending,
++      retire(){++pendingGeneration; pendingScope = null; pendingRead = null;},
++      lastRead:()=>pendingLastRead};
++  `, context);
++  const settle = () => new Promise(resolve=>setImmediate(resolve));
++  const initial = context.controls.refreshPending(); await settle();
++  calls[0].resolve([]); await initial;
++  assert.equal(context.controls.lastRead(), 100_000);
++  at = 100_100;
++  const retired = context.controls.refreshPending(true); await settle();
++  context.controls.retire();
++  at = 100_200;
++  const successor = context.controls.refreshPending(true); await settle();
++  calls[2].resolve([]); await successor;
++  calls[1].reject(Object.assign(Error('retired unavailable'),{status:503})); await retired;
++  assert.equal(context.controls.lastRead(), 100_200, 'retired catch must preserve successor successful freshness');
++  assert.equal(failures, 0, 'retired catch cannot publish a failure notice');
++  at = 102_100;
++  void context.controls.refreshPending(); await settle();
++  assert.equal(calls.length, 3, 'ordinary output still respects successor successful freshness');
++  assert.deepEqual([...timers.values()].map(timer=>timer.at), [115_200]);
++});

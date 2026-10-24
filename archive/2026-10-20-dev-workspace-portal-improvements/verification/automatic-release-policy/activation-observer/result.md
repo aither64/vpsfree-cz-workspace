@@ -1,0 +1,5 @@
+**Observer result: passed.** The existing activation attempt reached `passed` / `complete`; the profile switch exit code was 0. Effects report user-profile-only activation, no system activation, and no pending reconciliation.
+
+Status: [status.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/automatic-release-policy/activation/attempts/ff9e386c-4e00-4a88-9e23-b711979f83bc/status.json). Result: [result.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/automatic-release-policy/activation/attempts/ff9e386c-4e00-4a88-9e23-b711979f83bc/result.json).
+
+No operation remained running at the final observation. This reports the activation state only; acceptance and any follow-up remain with the parent.

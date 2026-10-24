@@ -1,0 +1,8 @@
+**Result: failed** — the single assigned command exited **1** after **489.92 seconds**. Tested source was the supplied frozen head set: A6e32/Bd617/C482/config9ab. Script SHA-256 and manifest SHA-256 matched the supplied pins; all `SHA256SUMS` entries verified.
+
+- Source guards: passed.
+- B full browser suite: failed (exit 1, 411.16s). The retained log includes failures in `portal_improvements_browser_test.cjs`, `optional_questions_browser_test.cjs`, `team_settings_browser_test.cjs`, `usability_browser_test.cjs`, `paging_browser_live_test.cjs`, and `recovery_display_browser_test.cjs`. Bounded excerpt: `recovery_display_browser_test.cjs` timed out clicking the “Dismiss message notification” button.
+- A paging fixture: passed (14.72s).
+- C agent instructions, deployment contract, and cluster provider composition: passed (5.14s, 38.27s, 19.39s).
+
+Full driver output: [operation.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/followup-browser-final/watcher/operation.log). Exact command, exit status, and elapsed time: [operation-result.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/followup-browser-final/watcher/operation-result.json). Stage receipts and logs are retained under `/home/aither/workspace/ai/vpsfree.cz/work/2026-10-20-dev-workspace-portal-improvements/verification/followup-browser-final/run/`. No retry or cancellation occurred.

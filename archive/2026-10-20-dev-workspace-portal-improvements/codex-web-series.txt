@@ -1,0 +1,34 @@
+commit bf47be996bf39ad06ad15f99368e5b71aea4a3c5
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Tue Oct 20 22:25:14 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Tue Oct 20 23:29:33 2026 +0200
+
+    conversation: present transcripts after attachment decoration
+    
+    Add an optional presentation hook after attachment observation while
+    retaining the existing transform order. Hosts can render decorated prompts
+    without exposing attachment envelopes or changing message delivery identity.
+    
+    Add optional host-owned communication metadata for team presentation. These
+    additions preserve nil-hook behavior and existing transcript consumers; no
+    persisted state or App Server protocol changes are required.
+
+commit 2ea01d5fc5672da25cca8d5b45ce6aa7f7c52b70
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Tue Oct 20 22:25:23 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Tue Oct 20 23:31:30 2026 +0200
+
+    conversation: distinguish team traffic and quiet history fallback
+    
+    Share transcript classification and filtering across mounted and host UIs,
+    with text-only team labels and a separate coordination view. Render trusted
+    host-sanitized message HTML while retaining canonical text for copying.
+    
+    Keep successful legacy history fallback silent and show delivery failures
+    inline without discarding the original durable attempt. Previously observed
+    messages and accepted receipts take precedence over a lost response.
+    
+    The helpers add presentation only and preserve existing authorization,
+    paging fallback and same-identity retry contracts.

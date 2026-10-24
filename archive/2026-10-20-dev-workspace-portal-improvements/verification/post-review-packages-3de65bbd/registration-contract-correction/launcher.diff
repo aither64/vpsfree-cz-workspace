@@ -1,0 +1,19 @@
+--- portal-improvements-post-review-packages.before-registration-correction.sh
++++ portal-improvements-post-review-packages.sh
+@@ -53,12 +53,8 @@
+   --state-root "$verification_logs/disposable-registration/state" \
+   --workspace "$verification_logs/disposable-registration/workspace" \
+   > "$verification_logs/registration.json" 2> "$verification_logs/registration.log"
+-python3 - "$verification_logs/registration.json" <<'REGISTRATION'
+-import json,sys
+-plan=json.load(open(sys.argv[1]))
+-assert plan['schema']==1 and plan['policy']==1
+-assert plan['required_native_child_threads']==0
+-assert plan['argv']==[] and plan['states']==[]
+-print('Direct-thread registration remains capacity 0 with no native role arguments')
+-REGISTRATION
++python3 /tmp/portal-improvements-post-review-registration.py \
++  "$verification_logs/registration.json" "$verification_package" \
++  "$verification_logs/disposable-registration/state" \
++  "$verification_logs/disposable-registration/workspace"
+ printf '%s\n' "Package verification and disposable metadata assertions passed"

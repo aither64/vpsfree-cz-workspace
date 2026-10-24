@@ -1,0 +1,393 @@
+diff --git a/AGENTS.md b/AGENTS.md
+index 52bc0391..4143603e 100644
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -7,14 +7,12 @@ are, and what compatibility and deployment constraints are known.
+ 
+ ## Required procedure routing
+ 
+-The procedures below are mandatory parts of these workspace instructions, not
+-optional reference material. Before the listed activity, read every applicable
+-file in full. Paths in this table are relative to this AGENTS.md; other paths
+-follow the workspace layout. Do not treat a link, prior summary, or skill catalog
+-entry as having read the procedure. Reuse an already-read, unchanged procedure
+-within the current context; reread it if its contents changed or were lost from
+-context. Recheck this table when the task expands or changes phase. If a required
+-file cannot be read, stop the affected action and report the missing guidance.
++These procedures are mandatory. Before each listed activity, read every
++applicable file in full. Table paths are relative to this AGENTS.md; other
++paths follow the workspace layout. Links, summaries and skill catalog entries
++do not count as reading. Reuse unchanged procedures read in the current context;
++reread after changes or context loss. Recheck this table when scope or phase
++changes. If guidance cannot be read, stop the affected action and report it.
+ 
+ | Before this activity | Read |
+ | --- | --- |
+@@ -29,12 +27,10 @@ file cannot be read, stop the affected action and report the missing guidance.
+ | Authoring/reviewing user-facing prose, translations, examples, KB pages or media; changing visible WebUI behavior that can affect KB text/screenshots; using KB staging/publication tools | [Knowledge base and writing](docs/agent-instructions/knowledge-base.md) |
+ | Creating or amending any commit, installing hooks, or preparing commit messages | [Commits and hooks](docs/agent-instructions/commits.md) |
+ 
+-Read the affected repository's AGENTS.md before changing its content and follow
+-its required procedure routes too. Shell working-directory changes do not prove
+-that repository instructions were loaded. For an authorized subagent, include
+-its task scope, applicable instruction/procedure paths and constraints; require
+-it to read the applicable guidance before acting. Delegation does not transfer
+-the parent's responsibility for choosing scope or accepting results.
++Before changing a repository, read its AGENTS.md and required procedures.
++Changing CWD does not establish this. Give authorized subagents their scope,
++applicable guidance paths and constraints, and require reading before action.
++The parent remains responsible for scope and accepting results.
+ 
+ ## Always-applicable workspace boundaries
+ 
+@@ -96,9 +92,10 @@ the parent's responsibility for choosing scope or accepting results.
+   and investigate under the verification procedure's documented exceptions.
+ - For a direct team, use the session's retained roster settings for members
+   and the installed catalog for new presets. New architects use GPT-6 Astra
+-  with xhigh effort. Leads and implementers use `gpt-6.1-sol`. The default
+-  `lead_reviewed` uses Sol/xhigh and Astra/xhigh; other reviewers use their
+-  catalog settings. Verification watchers use GPT-6 Luna/low.
++  with xhigh effort. Leads and implementers use `gpt-6.1-sol`.
++  Full team with two implementers (`delegated`) is the default. The
++  `lead_reviewed` preset uses Sol/xhigh and Astra/xhigh; other reviewers use
++  their catalog settings. Verification watchers use GPT-6 Luna/low.
+   Existing members retain their saved model, effort, access, and instructions.
+   Execution uses installed policy.
+   Substantive design uses xhigh. High is allowed for a bounded simple design or
+@@ -225,19 +222,15 @@ and any fallback reason.
+ 
+ ## Rule Precedence
+ 
+-This top-level `AGENTS.md` controls workspace orchestration, tracking,
+-worktrees, SSH remote policy, cross-project planning, and compatibility
+-expectations.
++This AGENTS.md controls workspace orchestration, tracking, worktrees, SSH remotes,
++cross-project planning and compatibility expectations.
+ 
+-Repository-local `AGENTS.md` files control only that repository: project
+-structure, coding style, build and test commands, generated files, release rules,
+-hooks, branch names, PR workflows, commit formats and tooling. Do not apply these
+-requirements to other repositories.
++Repository-local AGENTS.md controls that repository's structure, coding style,
++build/test commands, generated files, release rules, hooks, branch names, PRs,
++commit formats and tooling. Do not apply it to other repositories. For content
++conflicts, follow local rules while preserving workspace tracking, compatibility
++and SSH-based Git remotes.
+ 
+-When rules conflict, follow the repository-local rule for repository content
+-while preserving the top-level requirements for tracking, compatibility
+-analysis, and SSH-based Git remotes.
+-
+-Do not assume that commands from one repository apply to another. Use the local
+-`AGENTS.md`, README, flake, Gemfile, go.mod, Makefile, Rakefile, Composer
+-configuration, and existing CI definitions as the source of truth.
++Never assume one repository's commands apply elsewhere. Use its AGENTS.md,
++README, flake, Gemfile, go.mod, Makefile, Rakefile, Composer configuration and
++existing CI definitions as sources of truth.
+diff --git a/config/agent-teams.nix b/config/agent-teams.nix
+index 4f3a13a6..4a7b2f19 100644
+--- a/config/agent-teams.nix
++++ b/config/agent-teams.nix
+@@ -14,7 +14,7 @@ let
+   '';
+   defaultInstructions = {
+     team_lead = ''
+-      Lead this Full-team development session as coordinator and user contact. For each substantive work item, inspect the verified same-session roster with dev-session team list <verified-slug> --as-is. Delegate substantive investigation and design to a ready design-purpose member; the architect writes work/<slug>/design.md and identifies implementation boundaries and dependencies before substantive implementation. Assign complete execution packages to ready implementation-purpose members using dev-session team assign <verified-slug> --as-is --to ADDRESS --message-stdin. Use both implementers for independent work when available. A bounded small edit may go directly to an implementer. Keep a compact backlog with owners, expected results, acceptance criteria, dependencies and checks. Implementers own diagnosis, source, tests, technical documentation, quick checks, commits and follow-up fixes, including review findings. Delegate dependent implementation and integration fixes too; waiting for specialists is not a reason to duplicate their investigation or take over their work. Serialize overlapping edits and Git operations in each repository. Briefly tell the user who owns what, assess reports and acceptance evidence, resolve dependencies and keep the user informed. Keep brief scoping, acceptance inspection, session tracking, approval-bound coordination and required context-dependent user-facing writing yourself. Keep only short coordination steps yourself. Check saved workspace-write access before assigning edits. If a member cannot write or resolve this session, investigate and resolve the access or session identity failure; tell the user and do not take over delegated application edits. If no implementation-purpose member exists in the live roster, do the implementation yourself; a busy, unready or inaccessible member still exists. If no design-purpose member exists, own the design. Preserve retained member settings and use interruptible waits for reports.
++      Lead this Full-team development session as coordinator and user contact. For each substantive work item, inspect the verified same-session roster with dev-session team list <verified-slug> --as-is. Delegate substantive investigation and design to a ready design-purpose member; the architect writes work/<slug>/design.md and identifies implementation boundaries and dependencies before substantive implementation. Assign complete execution packages to ready implementation-purpose members using dev-session team assign <verified-slug> --as-is --to ADDRESS --message-stdin. Use available implementers for independent work. A bounded small edit may go directly to an implementer. Keep a compact backlog with owners, expected results, acceptance criteria, dependencies and checks. Implementers own diagnosis, source, tests, technical documentation, quick checks, commits and follow-up fixes, including review findings. Delegate dependent implementation and integration fixes too; waiting for specialists is not a reason to duplicate their investigation or take over their work. Serialize overlapping edits and Git operations in each repository. Briefly tell the user who owns what, assess reports and acceptance evidence, resolve dependencies and keep the user informed. Keep brief scoping, acceptance inspection, session tracking, approval-bound coordination and required context-dependent user-facing writing yourself. Keep only short coordination steps yourself. Check saved workspace-write access before assigning edits. If a member cannot write or resolve this session, investigate and resolve the access or session identity failure; tell the user and do not take over delegated application edits. If no implementation-purpose member exists in the live roster, do the implementation yourself; a busy, unready or inaccessible member still exists. If no design-purpose member exists, own the design. Preserve retained member settings and use interruptible waits for reports.
+     ''
+     + leadRequirements;
+     lead_designed_lead = ''
+@@ -116,14 +116,47 @@ let
+       inherit implementer reviewer;
+     };
+   };
++  mkFullTeam =
++    count:
++    commonDevelopment
++    // {
++      description = "Sol coordinates; Astra designs; ${toString count} Sol implementers execute; Sol reviews";
++      initial_member_counts.implementer = count;
++      max_open_agents = count + 2;
++      design_owner = "designer";
++      routing = {
++        design_simple_effort = "high";
++        implementer_simple_effort = "high";
++      };
++      roles = commonDevelopment.roles // {
++        team_lead = solLead;
++        inherit designer;
++      };
++    };
++  fullTeams = builtins.listToAttrs (
++    map
++      (count: {
++        name = if count == 2 then "delegated" else "delegated_${toString count}";
++        value = mkFullTeam count;
++      })
++      [
++        2
++        3
++        4
++        5
++        6
++      ]
++  );
+ in
+-{
++rec {
+   schema_version = 6;
+   execution_access = "full_access";
+-  default_team = "lead_reviewed";
+-  default_development_team = "lead_reviewed";
++  default_team = "delegated";
++  default_development_team = "delegated";
+ 
+-  capacity.required_native_child_threads = 4;
++  capacity.required_native_child_threads = builtins.foldl' (
++    maximum: team: if team.max_open_agents > maximum then team.max_open_agents else maximum
++  ) 0 (builtins.attrValues teams);
+ 
+   work_policy = {
+     design = {
+@@ -185,21 +218,6 @@ in
+       };
+     };
+ 
+-    delegated = commonDevelopment // {
+-      description = "Sol coordinates; Astra designs; two Sol implementers execute; Sol reviews";
+-      initial_member_counts.implementer = 2;
+-      max_open_agents = 4;
+-      design_owner = "designer";
+-      routing = {
+-        design_simple_effort = "high";
+-        implementer_simple_effort = "high";
+-      };
+-      roles = commonDevelopment.roles // {
+-        team_lead = solLead;
+-        inherit designer;
+-      };
+-    };
+-
+     lead_designed = commonDevelopment // {
+       description = "Sol lead designs; Sol implements and reviews";
+       design_owner = "team_lead";
+@@ -215,7 +233,8 @@ in
+         };
+       };
+     };
+-  };
++  }
++  // fullTeams;
+ 
+   utilities.verification_watcher = {
+     model = "gpt-6-luna";
+diff --git a/docs/agent-teams.md b/docs/agent-teams.md
+index a4caf3a3..b147b899 100644
+--- a/docs/agent-teams.md
++++ b/docs/agent-teams.md
+@@ -33,10 +33,12 @@ Saved role access remains part of retained settings; it does not restrict
+ execution under this package policy. Reviewers follow read-only review
+ instructions despite having full execution access.
+ 
+-New teams use GPT-6.1 Sol (`gpt-6.1-sol`) for leads and implementers. The default
+-Lead and reviewer team uses a Sol/xhigh lead and an Astra/xhigh reviewer; the
+-other presets use Sol reviewers. Architects use GPT-6 Astra/xhigh. A separate
+-GPT-6 Luna/low utility watches long checks.
++New teams default to Full team with two implementers (`delegated`). Full-team
++variants offer two through six implementers. Leads and implementers use GPT-6.1
++Sol (`gpt-6.1-sol`); Full-team leads use high effort, implementers use xhigh,
++architects use GPT-6 Astra/xhigh and reviewers use Sol/xhigh. The selectable
++Lead and reviewer preset retains its Sol/xhigh lead and Astra/xhigh reviewer.
++A separate GPT-6 Luna/low utility watches long checks.
+ 
+ Members can message ready peers in the same session with `dev-session team
+ assign <slug> --as-is --from <own-address> --to <peer-address> --message TEXT
+@@ -47,9 +49,29 @@ uncertain delivery. `report_to_lead` remains dedicated to lead reports.
+ | Preset | Persistent members | Design owner | Application edits | Specialist slots |
+ | --- | --- | --- | --- | --- |
+ | `solo` | lead (1 total) | lead | lead | 0 |
+-| `lead_reviewed` (Lead and reviewer, default) | lead, reviewer (2 total) | lead | lead | 1 |
++| `lead_reviewed` (Lead and reviewer) | lead, reviewer (2 total) | lead | lead | 1 |
+ | `lead_designed` | lead, implementer, reviewer (3 total) | lead | implementer | 2 |
+-| `delegated` (Full team) | lead, architect, two implementers, reviewer (5 total) | architect | implementers | 4 |
++| `delegated` (Full team, 2 implementers, default) | lead, architect, 2 implementers, reviewer (5 total) | architect | implementers | 4 |
++| `delegated_3` (Full team, 3 implementers) | lead, architect, 3 implementers, reviewer (6 total) | architect | implementers | 5 |
++| `delegated_4` (Full team, 4 implementers) | lead, architect, 4 implementers, reviewer (7 total) | architect | implementers | 6 |
++| `delegated_5` (Full team, 5 implementers) | lead, architect, 5 implementers, reviewer (8 total) | architect | implementers | 7 |
++| `delegated_6` (Full team, 6 implementers) | lead, architect, 6 implementers, reviewer (9 total) | architect | implementers | 8 |
++
++For N implementers, specialist slots are N + 2: the implementers, architect and
++reviewer. The lead adds one persistent thread. The catalog derives its capacity
++from the largest preset, currently 8, and package metadata publishes that value
++for `agents.max_concurrent_threads_per_session`. Direct team registration still
++requests zero native child threads and adds no native role startup arguments;
++team members run as independent App Server threads. The capacity change does not
++reconfigure native launchers or existing sessions.
++
++The verification watcher remains a separate operation with `max_concurrent = 1`;
++it occupies no persistent specialist slot. Native utility capacity failures keep
++the monitoring skill's visible fallback. Without an eligible retained reviewer,
++mandatory review selects the first review-purpose role by name from the default
++development team, now delegated's Sol/xhigh reviewer. An explicitly selected
++Lead and reviewer team still uses Astra/xhigh. Retained reviewers keep their
++saved model and effort.
+ 
+ Solo leads investigate, design and implement without automatic specialists.
+ In Lead and reviewer sessions, the lead does the same and uses the retained
+@@ -65,8 +87,9 @@ substantive investigation and design and identifies independent implementation
+ packages. Implementers own their packages through diagnosis, source, tests,
+ technical documentation, quick checks, commits and follow-up fixes, including
+ review findings. The lead keeps a compact backlog with owners, acceptance
+-criteria, dependencies and checks, assigns independent work to both implementers,
+-and serializes overlapping edits and Git operations within each repository.
++criteria, dependencies and checks, assigns independent work to available
++implementers, and serializes overlapping edits and Git operations within each
++repository.
+ Dependent implementation stays with an implementer. Leads assess reports and
+ acceptance evidence without duplicating specialist investigation while waiting.
+ 
+diff --git a/flake.lock b/flake.lock
+index 2c5875ba..9a5bac1d 100644
+--- a/flake.lock
++++ b/flake.lock
+@@ -45,17 +45,17 @@
+     "codex-web": {
+       "flake": false,
+       "locked": {
+-        "lastModified": 1792527062,
+-        "narHash": "sha256-PIvAf2Qd80Cw1Kws1l5XpUDqm2OgjS32OZH6sJt5e5I=",
++        "lastModified": 1792533707,
++        "narHash": "sha256-6dAMMwgGkCJVxUGyckpzyir6ETxpVHvI0w4b00ZQbIc=",
+         "owner": "aither64",
+         "repo": "codex-web",
+-        "rev": "57972192e30fe52ab33b867c8fe4d171f59a7fd5",
++        "rev": "852e8c51091512bc79ca6c921ef1f5ccc46a9535",
+         "type": "github"
+       },
+       "original": {
+         "owner": "aither64",
+         "repo": "codex-web",
+-        "rev": "57972192e30fe52ab33b867c8fe4d171f59a7fd5",
++        "rev": "852e8c51091512bc79ca6c921ef1f5ccc46a9535",
+         "type": "github"
+       }
+     },
+@@ -66,17 +66,17 @@
+         "nixpkgs": "nixpkgs_2"
+       },
+       "locked": {
+-        "lastModified": 1792529558,
+-        "narHash": "sha256-HjVzqCVJ+VJr9cByJD4esv1S7BEKin2d441nVwBBfhA=",
++        "lastModified": 1792534561,
++        "narHash": "sha256-YF9+Yd24UK8KbrGcuklUtTW2qSAlVz1TZahRBv9lzyw=",
+         "owner": "aither64",
+         "repo": "dev-workspace",
+-        "rev": "52dcd471186ef874c5c93f4133744195d4815454",
++        "rev": "db25364999aa4bf12b67506662a08e9e464bee33",
+         "type": "github"
+       },
+       "original": {
+         "owner": "aither64",
+         "repo": "dev-workspace",
+-        "rev": "52dcd471186ef874c5c93f4133744195d4815454",
++        "rev": "db25364999aa4bf12b67506662a08e9e464bee33",
+         "type": "github"
+       }
+     },
+diff --git a/flake.nix b/flake.nix
+index cd84e618..15461c78 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -5,7 +5,7 @@
+     nixpkgs.follows = "vpsfree-dev-workspace/nixpkgs";
+     vpsfree-dev-workspace = {
+       url = "github:vpsfreecz/dev-workspace/767dfd587e346168e1443e65ccdb67ce748f3fe3";
+-      inputs.dev-workspace.url = "github:aither64/dev-workspace/52dcd471186ef874c5c93f4133744195d4815454";
++      inputs.dev-workspace.url = "github:aither64/dev-workspace/db25364999aa4bf12b67506662a08e9e464bee33";
+     };
+   };
+ 
+@@ -98,11 +98,28 @@
+               metadata=${package}/share/dev-workspace/package.json
+               test -f "$catalog"
+               ${pkgs.jq}/bin/jq -e '
++                . as $catalog |
++                [{id: "delegated", count: 2}, {id: "delegated_3", count: 3},
++                 {id: "delegated_4", count: 4}, {id: "delegated_5", count: 5},
++                 {id: "delegated_6", count: 6}] as $variants |
+                 .schema_version == 6 and
+                 .execution_access == "full_access" and
+-                .default_team == "lead_reviewed" and
+-                .default_development_team == "lead_reviewed" and
+-                .capacity.required_native_child_threads == 4 and
++                .default_team == "delegated" and
++                .default_development_team == "delegated" and
++                (.teams | keys) == ["delegated", "delegated_3", "delegated_4", "delegated_5", "delegated_6", "lead_designed", "lead_reviewed", "solo"] and
++                .capacity.required_native_child_threads == 8 and
++                .capacity.required_native_child_threads == ([.teams[].max_open_agents] | max) and
++                (all($variants[]; . as $variant | $catalog.teams[$variant.id] |
++                  .initial_member_counts == {implementer: $variant.count} and
++                  .max_open_agents == ($variant.count + 2) and
++                  .design_owner == "designer" and
++                  .roles == $catalog.teams.delegated.roles and
++                  .routing == $catalog.teams.delegated.routing and
++                  .lifecycle == $catalog.teams.delegated.lifecycle and
++                  .mode == "development" and .service_policy == "non_priority"
++                )) and
++                (.teams[.default_development_team].roles | to_entries |
++                  map(select(.value.purpose == "review")) | sort_by(.key) | .[0].value) == .teams.delegated.roles.reviewer and
+                 .work_policy.design.default == "xhigh" and
+                 .work_policy.design.simple == "high" and
+                 .work_policy.design.allowed == ["high", "xhigh"] and
+@@ -132,6 +149,7 @@
+                 .teams.delegated.roles.team_lead.model == "gpt-6.1-sol" and
+                 .teams.delegated.roles.team_lead.effort == "high" and
+                 (.teams.delegated.roles.team_lead.instructions | contains("At the end of every turn")) and
++                (.teams.delegated.roles.team_lead.instructions | contains("Use available implementers for independent work")) and
+                 (.teams.delegated.roles.team_lead.instructions | contains("do not take over delegated application edits")) and
+                 (.teams.delegated.roles.team_lead.instructions | contains("complete base-to-head commit series")) and
+                 .teams.delegated.roles.designer.model == "gpt-6-astra" and
+@@ -192,13 +210,14 @@
+                   contains("Earlier review requires an explicit user request, is advisory, and does not replace final review") and
+                   contains("Adding, replacing or reconfiguring team members requires explicit user direction")
+                 )) and
+-                ([.teams.delegated, .teams.lead_designed] | all(
++                ([.teams[] | select(.roles.implementer)] | all(
+                   .roles.implementer.instructions | contains("architect-owned or lead-owned design and verification brief for substantive work")
+                 )) and
+                 .utilities.verification_watcher.model == "gpt-6-luna" and
+                 .utilities.verification_watcher.effort == "low" and
+                 .utilities.verification_watcher.behavior == "verification_watcher" and
+                 .utilities.verification_watcher.lifetime == "operation" and
++                .utilities.verification_watcher.max_concurrent == 1 and
+                 .utilities.verification_watcher.required_for == [
+                   "long_check", "uncertain_check", "workflow_wait", "ci_wait", "deployment_wait"
+                 ] and
+@@ -210,7 +229,7 @@
+                 .agent_teams.managed == true and
+                 .agent_teams.catalog.schema_version == 6 and
+                 .agent_teams.native_capacity.config_key == "agents.max_concurrent_threads_per_session" and
+-                .agent_teams.native_capacity.required_value == 4
++                .agent_teams.native_capacity.required_value == 8
+               ' "$metadata" >/dev/null
+               ${pkgs.jq}/bin/jq -r '.agent_teams.native_role_configs[].path' "$metadata" |
+                 while IFS= read -r path; do
+diff --git a/test/agent_instructions_test.rb b/test/agent_instructions_test.rb
+index 47b1d245..6cce4e77 100644
+--- a/test/agent_instructions_test.rb
++++ b/test/agent_instructions_test.rb
+@@ -92,7 +92,13 @@ class AgentInstructionsTest < Minitest::Test
+ 
+   def test_implementer_packages_and_small_team_fallback_are_documented
+     teams = File.read(File.join(ROOT, 'docs/agent-teams.md')).gsub(/\s+/, ' ')
+-    assert_includes(teams, 'two implementers, reviewer (5 total)')
++    assert_includes(teams, 'New teams default to Full team with two implementers (`delegated`)')
++    (2..6).each do |count|
++      id = count == 2 ? 'delegated' : "delegated_#{count}"
++      assert_match(/`#{id}` .*#{count} implementers.*reviewer \(#{count + 3} total\).*\| #{count + 2} \|/, teams)
++    end
++    assert_includes(teams, 'Direct team registration still requests zero native child threads')
++    assert_includes(teams, 'now delegated\'s Sol/xhigh reviewer')
+     assert_includes(teams, 'Dependent implementation stays with an implementer')
+     assert_includes(teams, 'live roster without implementation members')
+     assert_includes(teams, 'Busy, unready or inaccessible members')

@@ -1,0 +1,591 @@
+diff --git a/portal/internal/repository/source.go b/portal/internal/repository/source.go
+index 89d4353..32ef5f6 100644
+--- a/portal/internal/repository/source.go
++++ b/portal/internal/repository/source.go
+@@ -5,11 +5,8 @@ import (
+ 	"context"
+ 	"errors"
+ 	"io"
+-	"math"
+-	"os"
+ 	"os/exec"
+ 	"path/filepath"
+-	"sort"
+ 	"strconv"
+ 	"strings"
+ 	"unicode"
+@@ -30,11 +27,19 @@ const (
+ )
+ 
+ type SourceFile struct {
+-	Path       string     `json:"path"`
+-	Repository string     `json:"repository,omitempty"`
+-	Source     SourceKind `json:"source"`
+-	Revision   string     `json:"revision,omitempty"`
+-	Content    ReviewBlob `json:"content"`
++	Path       string         `json:"path"`
++	Repository string         `json:"repository,omitempty"`
++	Source     SourceKind     `json:"source"`
++	Revision   string         `json:"revision,omitempty"`
++	Content    ReviewBlob     `json:"content"`
++	Preview    *SourcePreview `json:"preview,omitempty"`
++}
++
++// SourcePreview is optional presentation metadata; Content retains original bytes.
++type SourcePreview struct {
++	Kind string `json:"kind"`
++	HTML string `json:"html,omitempty"`
++	URL  string `json:"url,omitempty"`
+ }
+ 
+ func ValidSourcePath(path string) bool {
+@@ -98,9 +103,8 @@ func (r ReviewReader) workspaceSourceRoot(ctx context.Context) error {
+ 	return nil
+ }
+ 
+-// TrackingSource preserves explicit artifact access and also admits ordinary
+-// workspace files beneath the session's actual tracking root. The artifact
+-// source values are retained for existing viewer clients.
++// TrackingSource reads only the selected session's current tracking root.
++// Artifact source values remain compatible with existing viewer clients.
+ func (r ReviewReader) TrackingSource(ctx context.Context, summary *session.Summary, path string) (SourceFile, error) {
+ 	return r.TrackingSourceContent(ctx, summary, path, false)
+ }
+@@ -111,122 +115,47 @@ type TrackingFile struct {
+ 	Registered bool   `json:"registered"`
+ }
+ 
+-// TrackingFiles enumerates metadata only. Opening a row still revalidates through
+-// TrackingSourceContent; listing never publishes files into the artifact catalog.
++// TrackingFiles enumerates metadata only, independently of Git and registration.
++// Every content request reopens the selected file through the same confinement.
+ func (r ReviewReader) TrackingFiles(ctx context.Context, summary *session.Summary) ([]TrackingFile, error) {
+-	if summary.Workspace != r.Workspace || !session.ValidSlug(summary.Slug) ||
+-		(summary.Root != "work" && summary.Root != "archive") {
++	if summary == nil || summary.Workspace != r.Workspace {
+ 		return nil, errors.New("invalid session tracking root")
+ 	}
+-	files := make(map[string]TrackingFile)
+-	for _, item := range session.AvailableArtifacts(summary) {
+-		if !ValidSourcePath(item.Path) {
+-			continue
+-		}
+-		if err := ctx.Err(); err != nil {
+-			return nil, err
+-		}
+-		file, _, err := session.OpenRegularFile(r.Workspace, filepath.Join(summary.Root, summary.Slug, item.Path))
+-		if err != nil {
+-			continue
+-		}
+-		file.Close()
+-		files[item.Path] = TrackingFile{Path: item.Path, Label: item.Label,
+-			Registered: item.Path != "plan.md" && item.Path != "state.md"}
+-	}
+-	// Explicit publication works without a workspace Git repository, as does its
+-	// existing source reader. Ordinary discovery still requires a verified root.
+-	_, gitErr := os.Lstat(filepath.Join(r.Workspace, ".git"))
+-	if !errors.Is(gitErr, os.ErrNotExist) {
+-		if err := r.workspaceSourceRoot(ctx); err != nil {
+-			return nil, err
+-		}
+-		prefix := filepath.ToSlash(filepath.Join(summary.Root, summary.Slug)) + "/"
+-		tracked, err := r.git(ctx, r.Workspace, maxReviewOutput, "--literal-pathspecs", "ls-files", "--stage", "-z", "--", strings.TrimSuffix(prefix, "/"))
+-		if err != nil {
+-			return nil, err
+-		}
+-		candidates := make(map[string]struct{})
+-		for _, entry := range strings.Split(strings.TrimSuffix(string(tracked), "\x00"), "\x00") {
+-			if entry == "" {
+-				continue
+-			}
+-			metadata, path, ok := strings.Cut(entry, "\t")
+-			fields := strings.Fields(metadata)
+-			if !ok || len(fields) != 3 {
+-				return nil, errors.New("invalid tracked file listing")
+-			}
+-			if regularGitMode(fields[0]) {
+-				candidates[path] = struct{}{}
+-			}
+-		}
+-		args, err := r.sourceExcludesArgs(ctx, r.Workspace)
+-		if err != nil {
+-			return nil, err
+-		}
+-		args = append(args, "--literal-pathspecs", "ls-files", "--others", "--exclude-standard", "-z", "--", strings.TrimSuffix(prefix, "/"))
+-		untracked, err := r.git(ctx, r.Workspace, maxReviewOutput, args...)
+-		if err != nil {
+-			return nil, err
+-		}
+-		for _, path := range strings.Split(strings.TrimSuffix(string(untracked), "\x00"), "\x00") {
+-			if path != "" {
+-				candidates[path] = struct{}{}
+-			}
+-		}
+-		if len(tracked)+len(untracked) > maxReviewOutput || len(candidates) > maxReviewFiles {
+-			return nil, ErrReviewLimit
+-		}
+-		for path := range candidates {
+-			if err := ctx.Err(); err != nil {
+-				return nil, err
+-			}
+-			relative, ok := strings.CutPrefix(path, prefix)
+-			if !ok || !ValidSourcePath(relative) {
+-				continue
+-			}
+-			if _, found := files[relative]; found {
+-				continue
+-			}
+-			file, _, err := session.OpenRegularFile(r.Workspace, path)
+-			if err != nil {
+-				continue
+-			}
+-			file.Close()
+-			files[relative] = TrackingFile{Path: relative}
+-		}
+-	}
+-	if len(files) > maxReviewFiles {
++	paths, err := session.ListTrackingFiles(ctx, summary, maxReviewFiles, maxReviewOutput)
++	if errors.Is(err, session.ErrTrackingFilesLimit) {
+ 		return nil, ErrReviewLimit
+ 	}
+-	result := make([]TrackingFile, 0, len(files))
+-	for _, item := range files {
+-		result = append(result, item)
++	if err != nil {
++		return nil, err
++	}
++	result := make([]TrackingFile, 0, len(paths))
++	for _, path := range paths {
++		result = append(result, TrackingFile{Path: path})
+ 	}
+-	sort.Slice(result, func(i, j int) bool { return result[i].Path < result[j].Path })
+ 	return result, nil
+ }
+ 
+ func (r ReviewReader) TrackingSourceContent(ctx context.Context, summary *session.Summary, path string, download bool) (SourceFile, error) {
+ 	result := SourceFile{Path: path, Source: SourceArtifact}
+-	if summary.Archived {
++	if summary != nil && summary.Archived {
+ 		result.Source = SourceArchivedArtifact
+ 	}
+-	file, info, err := session.OpenArtifact(summary, path, math.MaxInt64)
+-	if err == nil {
+-		defer file.Close()
+-		result.Path = session.ArtifactRelativePath(summary, path)
+-		result.Content, err = readSourceContent(file, info.Size(), download)
++	if err := ctx.Err(); err != nil {
+ 		return result, err
+ 	}
+-	if summary.Workspace != r.Workspace || !session.ValidSlug(summary.Slug) ||
+-		(summary.Root != "work" && summary.Root != "archive") || !ValidSourcePath(path) {
+-		return result, errors.New("invalid session source path")
++	if summary == nil || summary.Workspace != r.Workspace {
++		return result, errors.New("invalid session tracking root")
+ 	}
+-	if err := r.workspaceSourceRoot(ctx); err != nil {
++	file, info, canonical, err := session.OpenTrackingFile(summary, path)
++	if err != nil {
+ 		return result, err
+ 	}
+-	result.Content, err = r.workingSourceContent(ctx, "", filepath.Join(summary.Root, summary.Slug, path), download)
++	defer file.Close()
++	result.Path = canonical
++	result.Content, err = readSourceContent(file, info.Size(), download)
++	if err == nil {
++		err = ctx.Err()
++	}
+ 	return result, err
+ }
+ 
+diff --git a/portal/internal/web/server.go b/portal/internal/web/server.go
+index da411ce..4f06ef0 100644
+--- a/portal/internal/web/server.go
++++ b/portal/internal/web/server.go
+@@ -14,6 +14,7 @@ import (
+ 	"io"
+ 	"io/fs"
+ 	"log"
++	"mime"
+ 	"net/http"
+ 	"net/url"
+ 	"os"
+@@ -1737,24 +1738,6 @@ func (s *Server) artifactImage(w http.ResponseWriter, r *http.Request) {
+ 	s.serveArtifactFile(w, r, remainder, true)
+ }
+ 
+-func artifactContentType(path string) (string, string, bool) {
+-	extension := strings.ToLower(filepath.Ext(path))
+-	types := map[string]struct {
+-		kind        string
+-		contentType string
+-	}{
+-		".gif": {"image", "image/gif"}, ".jpeg": {"image", "image/jpeg"},
+-		".jpg": {"image", "image/jpeg"}, ".png": {"image", "image/png"},
+-		".webp": {"image", "image/webp"}, ".json": {"text", "application/json"},
+-		".log":  {"text", "text/plain; charset=utf-8"},
+-		".md":   {"markdown", "text/markdown; charset=utf-8"},
+-		".txt":  {"text", "text/plain; charset=utf-8"},
+-		".yaml": {"text", "application/yaml"}, ".yml": {"text", "application/yaml"},
+-	}
+-	presentation, ok := types[extension]
+-	return presentation.kind, presentation.contentType, ok
+-}
+-
+ func (s *Server) serveArtifactFile(w http.ResponseWriter, r *http.Request, remainder string, imageOnly bool) {
+ 	parts := strings.SplitN(remainder, "/", 2)
+ 	if len(parts) != 2 {
+@@ -1766,60 +1749,67 @@ func (s *Server) serveArtifactFile(w http.ResponseWriter, r *http.Request, remai
+ 		http.NotFound(w, r)
+ 		return
+ 	}
+-	file, info, err := session.OpenArtifact(summary, parts[1], 10*1024*1024)
++	if !imageOnly {
++		result, err := s.trackingSourceContent(r.Context(), summary, parts[1], true)
++		if s.sourceDownloadError(w, err) {
++			return
++		}
++		if err != nil {
++			http.NotFound(w, r)
++			return
++		}
++		s.serveSourceContent(w, result, true)
++		return
++	}
++	file, info, canonical, err := session.OpenTrackingFile(summary, parts[1])
+ 	if err != nil {
+ 		http.NotFound(w, r)
+ 		return
+ 	}
+ 	defer file.Close()
+-	kind, contentType, allowed := artifactContentType(parts[1])
+-	if !allowed || (imageOnly && kind != "image") {
++	if info.Size() > repository.MaxSourceDownloadBytes {
++		s.sourceDownloadError(w, repository.ErrSourceDownloadLimit)
++		return
++	}
++	contentType, allowed := sniffArtifactImage(file, canonical)
++	if !allowed {
+ 		http.Error(w, "artifact type is not available", http.StatusUnsupportedMediaType)
+ 		return
+ 	}
++	if _, err := file.Seek(0, io.SeekStart); err != nil {
++		http.NotFound(w, r)
++		return
++	}
+ 	w.Header().Set("Content-Security-Policy", "sandbox; default-src 'none'")
++	w.Header().Set("X-Content-Type-Options", "nosniff")
+ 	w.Header().Set("Content-Type", contentType)
+-	disposition := "attachment"
+-	if imageOnly {
+-		disposition = "inline"
+-	}
+-	w.Header().Set("Content-Disposition", fmt.Sprintf("%s; filename=%q", disposition, info.Name()))
++	w.Header().Set("Content-Disposition", mime.FormatMediaType("inline", map[string]string{"filename": filepath.Base(canonical)}))
+ 	http.ServeContent(w, r, info.Name(), info.ModTime(), file)
+ }
+ 
+ func (s *Server) artifactPreview(w http.ResponseWriter, r *http.Request, summary *session.Summary) {
+-	path := strings.TrimSpace(r.URL.Query().Get("path"))
+-	kind, _, allowed := artifactContentType(path)
+-	if !allowed {
+-		s.writeJSON(w, http.StatusUnsupportedMediaType, map[string]string{"error": "artifact type is not available"})
+-		return
+-	}
+-	file, _, err := session.OpenArtifact(summary, path, 10*1024*1024)
++	path := r.URL.Query().Get("path")
++	result, err := s.trackingSourceContent(r.Context(), summary, path, false)
+ 	if err != nil {
+ 		s.writeJSON(w, http.StatusNotFound, map[string]string{"error": "artifact is not available"})
+ 		return
+ 	}
+-	defer file.Close()
+-	if kind == "image" {
+-		s.writeJSON(w, http.StatusOK, map[string]string{
+-			"kind": "image", "url": "/artifact-previews/" +
+-				url.PathEscape(summary.Slug) + "/" + strings.ReplaceAll(url.PathEscape(path), "%2F", "/"),
+-		})
+-		return
+-	}
+-	data, err := io.ReadAll(io.LimitReader(file, 10*1024*1024+1))
+-	if err != nil || len(data) > 10*1024*1024 {
+-		s.writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "unable to read artifact"})
++	if result.Preview != nil {
++		preview := map[string]string{"kind": result.Preview.Kind}
++		if result.Preview.Kind == "image" {
++			preview["url"] = result.Preview.URL
++		} else {
++			preview["html"] = result.Preview.HTML
++			preview["text"] = result.Content.Text
++		}
++		s.writeJSON(w, http.StatusOK, preview)
+ 		return
+ 	}
+-	text := strings.ToValidUTF8(string(data), "�")
+-	if kind == "markdown" {
+-		s.writeJSON(w, http.StatusOK, map[string]string{
+-			"kind": "markdown", "html": string(s.renderTextMarkdown(text)), "text": text,
+-		})
++	if result.Content.Binary || result.Content.Limited {
++		s.writeJSON(w, http.StatusUnsupportedMediaType, map[string]string{"error": "artifact type is not available"})
+ 		return
+ 	}
+-	s.writeJSON(w, http.StatusOK, map[string]string{"kind": "text", "text": text})
++	s.writeJSON(w, http.StatusOK, map[string]string{"kind": "text", "text": result.Content.Text})
+ }
+ 
+ func (s *Server) sessionAPI(w http.ResponseWriter, r *http.Request) {
+diff --git a/portal/internal/web/server_test.go b/portal/internal/web/server_test.go
+index 81dbdde..540bde6 100644
+--- a/portal/internal/web/server_test.go
++++ b/portal/internal/web/server_test.go
+@@ -494,8 +494,8 @@ func TestArtifactsUseAPassiveAllowlistAndDownloadDisposition(t *testing.T) {
+ 			request := httptest.NewRequest(http.MethodGet, "/artifacts/example/report"+extension, nil)
+ 			response := httptest.NewRecorder()
+ 			server.Handler().ServeHTTP(response, request)
+-			if response.Code != http.StatusUnsupportedMediaType {
+-				t.Fatalf("status = %d", response.Code)
++			if response.Code != http.StatusOK || response.Header().Get("Content-Type") != "application/octet-stream" || !strings.HasPrefix(response.Header().Get("Content-Disposition"), "attachment;") {
++				t.Fatalf("passive attachment = %d %v", response.Code, response.Header())
+ 			}
+ 		})
+ 	}
+@@ -572,6 +572,9 @@ func TestArtifactPreviewRendersSanitizedMarkdownAndEscapedText(t *testing.T) {
+ func TestArtifactImagePreviewIsInlineAndStillConfined(t *testing.T) {
+ 	server := newTestServer(t)
+ 	writeArtifactSession(t, server.config.Workspace, "image.png")
++	if err := os.WriteFile(filepath.Join(server.config.Workspace, "work", "example", "image.png"), []byte("\x89PNG\r\n\x1a\nfixture"), 0644); err != nil {
++		t.Fatal(err)
++	}
+ 	response := httptest.NewRecorder()
+ 	server.Handler().ServeHTTP(response, httptest.NewRequest(
+ 		http.MethodGet, "/api/sessions/example/artifact-preview?path=image.png", nil,
+diff --git a/portal/internal/web/source_files.go b/portal/internal/web/source_files.go
+index c0732ce..43d64ae 100644
+--- a/portal/internal/web/source_files.go
++++ b/portal/internal/web/source_files.go
+@@ -1,6 +1,7 @@
+ package web
+ 
+ import (
++	"context"
+ 	"errors"
+ 	"io"
+ 	"mime"
+@@ -198,7 +199,7 @@ func (s *Server) sourceFile(w http.ResponseWriter, r *http.Request, summary *ses
+ 	var result repository.SourceFile
+ 	if artifact := query.Get("artifact"); artifact != "" {
+ 		var err error
+-		result, err = s.reviews().reader.TrackingSourceContent(r.Context(), summary, artifact, download)
++		result, err = s.trackingSourceContent(r.Context(), summary, artifact, download)
+ 		if s.sourceDownloadError(w, err) {
+ 			return
+ 		}
+@@ -227,6 +228,52 @@ func (s *Server) sourceFile(w http.ResponseWriter, r *http.Request, summary *ses
+ 	s.serveSourceContent(w, result, download)
+ }
+ 
++// The same confined opener serves the ordinary viewer and all legacy adapters.
++func (s *Server) trackingSourceContent(ctx context.Context, summary *session.Summary, path string, download bool) (repository.SourceFile, error) {
++	result, err := s.reviews().reader.TrackingSourceContent(ctx, summary, path, download)
++	if err != nil || download {
++		return result, err
++	}
++	if strings.EqualFold(filepath.Ext(result.Path), ".md") && !result.Content.Binary && !result.Content.Limited {
++		result.Preview = &repository.SourcePreview{Kind: "markdown", HTML: string(s.renderTextMarkdown(result.Content.Text))}
++	} else if _, image := artifactImageType(result.Path); image {
++		file, info, canonical, openErr := session.OpenTrackingFile(summary, result.Path)
++		if openErr != nil {
++			return result, openErr
++		}
++		defer file.Close()
++		if info.Size() <= repository.MaxSourceDownloadBytes {
++			if _, matches := sniffArtifactImage(file, canonical); matches {
++				result.Preview = &repository.SourcePreview{Kind: "image", URL: artifactImageURL(summary.Slug, canonical)}
++			}
++		}
++	}
++	return result, ctx.Err()
++}
++
++func artifactImageURL(slug, path string) string {
++	return "/artifact-previews/" + url.PathEscape(slug) + "/" + strings.ReplaceAll(url.PathEscape(path), "%2F", "/")
++}
++
++func artifactImageType(path string) (string, bool) {
++	types := map[string]string{".gif": "image/gif", ".jpeg": "image/jpeg", ".jpg": "image/jpeg", ".png": "image/png", ".webp": "image/webp"}
++	value, ok := types[strings.ToLower(filepath.Ext(path))]
++	return value, ok
++}
++
++func sniffArtifactImage(file io.Reader, path string) (string, bool) {
++	expected, allowed := artifactImageType(path)
++	if !allowed {
++		return "", false
++	}
++	var head [512]byte
++	count, err := file.Read(head[:])
++	if err != nil && err != io.EOF {
++		return "", false
++	}
++	return expected, count > 0 && http.DetectContentType(head[:count]) == expected
++}
++
+ func (s *Server) trackingFiles(w http.ResponseWriter, r *http.Request, summary *session.Summary) {
+ 	files, err := s.reviews().reader.TrackingFiles(r.Context(), summary)
+ 	if err != nil {
+@@ -242,7 +289,7 @@ func (s *Server) trackingFiles(w http.ResponseWriter, r *http.Request, summary *
+ }
+ 
+ func (s *Server) sourceUnavailable(w http.ResponseWriter) {
+-	s.writeJSON(w, http.StatusNotFound, map[string]string{"error": "This file is unavailable. Check that it exists in the session, is tracked or not ignored by Git, or is a published artifact."})
++	s.writeJSON(w, http.StatusNotFound, map[string]string{"error": "This file is unavailable. Check that it exists in the session or registered repository."})
+ }
+ 
+ // Reject malformed legacy paths before ServeMux can clean or redirect them.
+diff --git a/portal/internal/web/source_files_test.go b/portal/internal/web/source_files_test.go
+index fec7573..dece11b 100644
+--- a/portal/internal/web/source_files_test.go
++++ b/portal/internal/web/source_files_test.go
+@@ -223,14 +223,14 @@ func TestSourceTrackingFilesDoNotRequireArtifactPublication(t *testing.T) {
+ 			t.Fatalf("tracking source %q = %#v", path, file)
+ 		}
+ 	}
+-	readSource(t, s, "?artifact=private.secret", 404)
++	readSource(t, s, "?artifact=private.secret", 200)
+ 	readSource(t, s, "?artifact=missing.md", 404)
+ 	readSource(t, s, "?artifact=reports", 404)
+ 	readSource(t, s, "?artifact=.git/config", 404)
+-	// A retained own-workspace prefix is a publication alias when its literal
+-	// nested file is absent; direct source links do not publish unrelated files.
++	// A retained own-workspace prefix aliases a missing literal nested file.
++	// Both source and legacy preview routes read unregistered session files.
+ 	reviewRequest(t, s, "GET", "/api/sessions/example/artifact-preview?path=design.md", "", 200)
+-	reviewRequest(t, s, "GET", "/api/sessions/example/artifact-preview?path=reports/new%20space%20%C5%BE.md", "", 404)
++	reviewRequest(t, s, "GET", "/api/sessions/example/artifact-preview?path=reports/new%20space%20%C5%BE.md", "", 200)
+ 	if err := os.Symlink("design.md", filepath.Join(tracking, "link.md")); err != nil {
+ 		t.Fatal(err)
+ 	}
+@@ -239,7 +239,7 @@ func TestSourceTrackingFilesDoNotRequireArtifactPublication(t *testing.T) {
+ 	}
+ 	readSource(t, s, "?artifact=link.md", 404)
+ 	readSource(t, s, "?artifact=fifo", 404)
+-	// Explicit publication continues to authorize ignored artifacts.
++	// Legacy publication metadata remains readable but does not govern access.
+ 	manifest += "  - label: Published report\n    path: private.secret\n"
+ 	write("portal.yml", manifest)
+ 	readSource(t, s, "?artifact=private.secret", 200)
+@@ -286,8 +286,8 @@ func TestSourceFilesRespectConfiguredGlobalExcludes(t *testing.T) {
+ 	}
+ 	readSource(t, s, sourceQuery("private.env"), 404)
+ 	readWorkspaceSource(t, s, "private.env", 404)
+-	readSource(t, s, "?artifact=private.env", 404)
+-	// Existing index/publication authorization remains independent of excludes.
++	readSource(t, s, "?artifact=private.env", 200)
++	// Repository/workspace index eligibility stays independent of session files.
+ 	runWebGit(t, "-C", worktree, "add", "--force", "private.env")
+ 	runWebGit(t, "-C", root, "add", "--force", "private.env")
+ 	readSource(t, s, sourceQuery("private.env"), 200)
+@@ -325,7 +325,7 @@ func TestSourceFilesUseArchivedFinalCommitAndCuratedArtifacts(t *testing.T) {
+ 	if err := os.WriteFile(filepath.Join(tracking, "private.md"), []byte("not published"), 0644); err != nil {
+ 		t.Fatal(err)
+ 	}
+-	readSource(t, s, "?artifact=private.md", 404)
++	readSource(t, s, "?artifact=private.md", 200)
+ 	manifest, err := os.ReadFile(filepath.Join(tracking, "portal.yml"))
+ 	if err != nil {
+ 		t.Fatal(err)
+@@ -422,6 +422,10 @@ func TestSourceArtifactsFollowCatalogPathContract(t *testing.T) {
+ 			t.Fatal(err)
+ 		}
+ 		query := "?" + url.Values{"artifact": {path}}.Encode()
++		if strings.Contains(path, ".git/") || strings.Contains(path, "\\") {
++			readSource(t, s, query, 404)
++			continue
++		}
+ 		if got := readSource(t, s, query, 200); got.Content.Text != "# Published artifact\n" || got.Path != filepath.Clean(path) {
+ 			t.Fatalf("artifact %q: %#v", path, got)
+ 		}
+@@ -550,7 +554,7 @@ func TestUserMarkdownUsesDecoratedTextWithoutChangingCanonicalInput(t *testing.T
+ 	}
+ }
+ 
+-func TestTrackingFilesListUsesExistingSourceEligibility(t *testing.T) {
++func TestTrackingFilesListIncludesIgnoredAndUnregistered(t *testing.T) {
+ 	s, _, _, _ := reviewWebFixture(t)
+ 	root := s.config.Workspace
+ 	runWebGit(t, "init", "--initial-branch=master", root)
+@@ -604,22 +608,23 @@ func TestTrackingFilesListUsesExistingSourceEligibility(t *testing.T) {
+ 		rows[row.Path] = row
+ 		readSource(t, s, "?"+url.Values{"artifact": {row.Path}}.Encode(), 200)
+ 	}
+-	for _, path := range []string{"tracked.sh", "registered.sh", "notes/a space.py", "design.md"} {
++	for _, path := range []string{"tracked.sh", "registered.sh", "notes/a space.py", "design.md", "ignored.sh", "global.secret", "private.excluded"} {
+ 		if _, ok := rows[path]; !ok {
+ 			t.Fatalf("eligible file missing: %q (%s)", path, encoded)
+ 		}
+ 	}
+-	for _, path := range []string{"ignored.sh", "global.secret", "private.excluded", "link.md", "pipe.txt", "work/example/design.md"} {
++	for _, path := range []string{"link.md", "pipe.txt", "work/example/design.md"} {
+ 		if _, ok := rows[path]; ok {
+ 			t.Fatalf("ineligible/duplicate file listed: %q", path)
+ 		}
+ 	}
+-	if rows["design.md"].Label != "First label" || !rows["registered.sh"].Registered || rows["tracked.sh"].Registered {
+-		t.Fatal("registration projection changed")
++	for _, row := range listed {
++		if row.Label != "" || row.Registered {
++			t.Fatal("listing projected obsolete registration metadata")
++		}
+ 	}
+-	// Scripts remain unavailable through legacy rich preview, but the ordinary
+-	// viewer and original-byte download accept the existing publication.
+-	reviewRequest(t, s, "GET", "/api/sessions/example/artifact-preview?path=registered.sh", "", 415)
++	// Scripts remain passive text in both the legacy preview and source viewer.
++	reviewRequest(t, s, "GET", "/api/sessions/example/artifact-preview?path=registered.sh", "", 200)
+ 	raw := httptest.NewRecorder()
+ 	s.Handler().ServeHTTP(raw, httptest.NewRequest("GET", "/api/sessions/example/file/download?artifact=registered.sh", nil))
+ 	if raw.Code != 200 || raw.Body.String() != "registered original\r\n" || raw.Header().Get("Content-Type") != "application/octet-stream" {
+@@ -674,7 +679,7 @@ func TestTrackingFilesRegisteredFallbackAndArchiveAlias(t *testing.T) {
+ 		if err := json.Unmarshal(encoded, &rows); err != nil {
+ 			t.Fatal(err)
+ 		}
+-		if len(rows) != 3 {
++		if len(rows) != 5 {
+ 			t.Fatalf("no-Git files: %s", encoded)
+ 		}
+ 		for _, row := range rows {
+@@ -682,7 +687,7 @@ func TestTrackingFilesRegisteredFallbackAndArchiveAlias(t *testing.T) {
+ 		}
+ 		readSource(t, s, "?artifact=work/example/view.sh", 200)
+ 		readSource(t, s, "?artifact=archive/example/view.sh", 200)
+-		readSource(t, s, "?artifact=unregistered.py", 404)
++		readSource(t, s, "?artifact=unregistered.py", 200)
+ 	}
+ 	check()
+ 	writeWebTrackingFiles(t, tracking, "complete")
+@@ -705,18 +710,18 @@ func TestTrackingFilesRefusesOversizedWholeResult(t *testing.T) {
+ 			s, _, _, _ := reviewWebFixture(t)
+ 			root := s.config.Workspace
+ 			runWebGit(t, "init", "--initial-branch=master", root)
+-			var index strings.Builder
+ 			count, prefix := 5001, ""
+ 			if outputBound {
+ 				count, prefix = 4500, strings.Repeat("long/", 200)
+ 			}
+-			for i := 0; i < count; i++ {
+-				fmt.Fprintf(&index, "100644 %s\twork/example/%s%04d.txt\n", strings.Repeat("a", 40), prefix, i)
++			directory := filepath.Join(root, "work", "example", prefix)
++			if err := os.MkdirAll(directory, 0755); err != nil {
++				t.Fatal(err)
+ 			}
+-			cmd := exec.Command("git", "-C", root, "update-index", "--index-info")
+-			cmd.Stdin = strings.NewReader(index.String())
+-			if output, err := cmd.CombinedOutput(); err != nil {
+-				t.Fatalf("index: %v %s", err, output)
++			for i := 0; i < count; i++ {
++				if err := os.WriteFile(filepath.Join(directory, fmt.Sprintf("%04d.txt", i)), nil, 0644); err != nil {
++					t.Fatal(err)
++				}
+ 			}
+ 			response := httptest.NewRecorder()
+ 			s.Handler().ServeHTTP(response, httptest.NewRequest("GET", "/api/sessions/example/files", nil))

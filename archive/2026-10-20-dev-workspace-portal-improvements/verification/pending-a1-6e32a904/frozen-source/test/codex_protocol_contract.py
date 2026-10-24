@@ -1,0 +1,1009 @@
+#!/usr/bin/env python3
+"""Validate every Codex App Server shape used by the portal."""
+
+import json
+import pathlib
+import re
+import sys
+from collections import Counter
+
+from jsonschema import Draft7Validator
+
+
+COVERAGE_ONLY = len(sys.argv) > 1 and sys.argv[1] == "--coverage-only"
+if COVERAGE_ONLY:
+    if len(sys.argv) != 3:
+        raise SystemExit("usage: codex_protocol_contract.py --coverage-only CLIENT_SOURCE")
+    SCHEMA_DIR = None
+    CLIENT_SOURCE = pathlib.Path(sys.argv[2])
+else:
+    if len(sys.argv) not in (2, 3):
+        raise SystemExit("usage: codex_protocol_contract.py SCHEMA_DIR [CLIENT_SOURCE]")
+    SCHEMA_DIR = pathlib.Path(sys.argv[1])
+    CLIENT_SOURCE = (
+        pathlib.Path(sys.argv[2])
+        if len(sys.argv) == 3
+        else pathlib.Path(__file__).resolve().parents[1] / "codex/client.go"
+    )
+
+
+def validate(file_name, value, label):
+    schema = json.loads((SCHEMA_DIR / file_name).read_text())
+    errors = sorted(Draft7Validator(schema).iter_errors(value), key=lambda error: list(error.path))
+    if errors:
+        details = "\n".join(f"  {list(error.path)}: {error.message}" for error in errors)
+        raise SystemExit(f"{label} is incompatible with {file_name}:\n{details}")
+
+
+def require_fields(file_name, value, paths, label):
+    schema = json.loads((SCHEMA_DIR / file_name).read_text())
+    validator = Draft7Validator(schema)
+    for path in paths:
+        candidate = json.loads(json.dumps(value))
+        parent = candidate
+        for component in path[:-1]:
+            parent = parent[component]
+        del parent[path[-1]]
+        if validator.is_valid(candidate):
+            rendered = ".".join(str(component) for component in path)
+            raise SystemExit(
+                f"{label} requires {rendered}, but {file_name} permits it to be absent"
+            )
+
+
+def require_declared_property(file_name, definition, property_name, label):
+    schema = json.loads((SCHEMA_DIR / file_name).read_text())
+    properties = schema.get("definitions", {}).get(definition, {}).get("properties", {})
+    if property_name not in properties:
+        raise SystemExit(
+            f"{label} requires declared {definition}.{property_name}, "
+            f"but {file_name} does not define it"
+        )
+
+
+def require_root_property(file_name, property_name, label):
+    schema = json.loads((SCHEMA_DIR / file_name).read_text())
+    if property_name not in schema.get("properties", {}):
+        raise SystemExit(f"{label} requires declared {property_name} in {file_name}")
+
+
+def request(method, params):
+    return {"id": 1, "method": method, "params": params}
+
+
+environment = {
+    "DEV_SESSION_SLUG": "example",
+    "DEV_SESSION_WORKSPACE": "/workspace",
+}
+lifecycle_developer_instructions = (
+    "Completing work, preparing a handoff, or setting lifecycle state does not "
+    "authorize archiving, deleting, stopping, finalizing, removing, invoking "
+    "private lifecycle helpers, or scheduling delayed or background cleanup for "
+    "this session. Perform a session lifecycle action only when the user "
+    "explicitly requests that exact action for this exact session in the current "
+    "conversation; otherwise leave the session open."
+)
+text_input = [{"type": "text", "text": "continue"}]
+
+client_requests = [
+    request(
+        "initialize",
+        {
+            "capabilities": {"experimentalApi": True},
+            "clientInfo": {
+                "name": "dev-workspace-portal",
+                "title": "Development Workspace Portal",
+                "version": "0.1.0",
+            },
+        },
+    ),
+    request(
+        "thread/start",
+        {
+            "cwd": "/workspace/work/example",
+            "developerInstructions": lifecycle_developer_instructions,
+            "runtimeWorkspaceRoots": ["/workspace"],
+            "config": {"shell_environment_policy": {"set": environment}},
+        },
+    ),
+    request("project/create", {
+        "name": "example reviewer0", "roots": [],
+        "idempotencyKey": "dev-workspace-member:example:reviewer0",
+    }),
+    request("project/read", {"projectId": "00000000-0000-7000-8000-000000000001"}),
+    request(
+        "thread/resume",
+        {
+            "threadId": "thread-1",
+            "cwd": "/workspace/work/example",
+            "developerInstructions": lifecycle_developer_instructions,
+            "excludeTurns": True,
+            "config": {"shell_environment_policy": {"set": environment}},
+        },
+    ),
+    request(
+        "model/list",
+        {"limit": 100, "includeHidden": False},
+    ),
+    request("collaborationMode/list", {}),
+    request("account/rateLimits/read", None),
+    request("thread/settings/update", {
+        "threadId": "thread-1",
+        "sandboxPolicy": {"type": "dangerFullAccess"},
+        "approvalPolicy": "never",
+    }),
+    request("account/rateLimitResetCredit/consume", {"idempotencyKey": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", "creditId": "reset-credit-1"}),
+    request(
+        "thread/settings/update",
+        {
+            "threadId": "thread-1",
+            "model": "test-model",
+            "effort": "high",
+            "collaborationMode": {
+                "mode": "plan",
+                "settings": {
+                    "model": "test-model",
+                    "reasoning_effort": "high",
+                    # Keep Codex's built-in Default/Plan instructions. The
+                    # lifecycle policy is the independent thread-level
+                    # developerInstructions value refreshed above.
+                    "developer_instructions": None,
+                },
+            },
+        },
+    ),
+    request(
+        "thread/fork",
+        {
+            "threadId": "thread-1",
+            "cwd": "/workspace/work/fork",
+            "runtimeWorkspaceRoots": ["/workspace"],
+            "excludeTurns": True,
+            "deferGoalContinuation": True,
+            "developerInstructions": lifecycle_developer_instructions,
+            "model": "test-model",
+            "config": {
+                "shell_environment_policy": {"set": environment},
+                "model_reasoning_effort": "high",
+            },
+        },
+    ),
+    # Cold-load and already-loaded branches use the same absolute policy.
+    request("thread/settings/update", {
+        "threadId": "thread-1",
+        "sandboxPolicy": {"type": "dangerFullAccess"},
+        "approvalPolicy": "never",
+    }),
+    request(
+        "thread/list",
+        {
+            "cwd": "/workspace/work/example",
+            "limit": 100,
+            "sortDirection": "asc",
+            "sourceKinds": ["vscode"],
+            "archived": True,
+            "cursor": "next-page",
+        },
+    ),
+    request("thread/name/set", {"threadId": "thread-1", "name": "example"}),
+    request("thread/read", {"threadId": "thread-1"}),
+    request("thread/read", {"threadId": "thread-1"}),
+    request("thread/read", {"threadId": "thread-1", "includeTurns": False}),
+    request("thread/read", {"threadId": "thread-1"}),
+    request("thread/read", {"threadId": "thread-1"}),
+    request("thread/read", {"threadId": "thread-1", "excludeTurns": True}),
+    request("thread/read", {"threadId": "thread-1", "excludeTurns": True}),
+    request("thread/read", {"threadId": "thread-1", "excludeTurns": True}),
+    request("thread/loaded/list", {"limit": 100}),
+    request("thread/goal/get", {"threadId": "thread-1"}),
+    request("thread/resume", {
+        "threadId": "thread-1", "excludeTurns": True,
+        "model": "fixture-model", "reasoningEffort": "low",
+        "developerInstructions": lifecycle_developer_instructions,
+    }),
+    request(
+        "thread/turns/list",
+        {"threadId": "thread-1", "limit": 20, "sortDirection": "desc", "itemsView": "full"},
+    ),
+    request(
+        "thread/turns/list",
+        {"threadId": "thread-1", "limit": 20, "sortDirection": "desc", "itemsView": "notLoaded", "cursor": "older-page"},
+    ),
+    request(
+        "thread/turns/list",
+        {"threadId": "thread-1", "limit": 1, "sortDirection": "desc", "itemsView": "notLoaded"},
+    ),
+    request(
+        "thread/turns/list",
+        {"threadId": "thread-1", "limit": 1, "sortDirection": "desc", "itemsView": "notLoaded"},
+    ),
+    request(
+        "thread/turns/list",
+        {"threadId": "thread-1", "limit": 100, "sortDirection": "desc", "itemsView": "notLoaded", "cursor": "older-page"},
+    ),
+    request(
+        "thread/turns/list",
+        {"threadId": "thread-1", "limit": 1, "sortDirection": "asc", "itemsView": "full"},
+    ),
+    request(
+        "thread/turns/list",
+        {"threadId": "thread-1", "limit": 1, "sortDirection": "desc", "itemsView": "notLoaded"},
+    ),
+    request(
+        "thread/items/list",
+        {"threadId": "thread-1", "limit": 100, "sortDirection": "desc"},
+    ),
+    request(
+        "thread/items/list",
+        {"threadId": "thread-1", "turnId": "turn-1", "limit": 100, "sortDirection": "desc", "cursor": "older-items"},
+    ),
+    request("thread/unsubscribe", {"threadId": "thread-1"}),
+    request("thread/archive", {"threadId": "thread-1"}),
+    request("thread/unarchive", {"threadId": "thread-1"}),
+    request(
+        "thread/inject_items",
+        {
+            "threadId": "thread-1",
+            "items": [{
+                "type": "message",
+                "role": "developer",
+                "content": [{"type": "input_text", "text": "Internal team member initialization"}],
+            }],
+        },
+    ),
+    request("thread/delete", {"threadId": "thread-1"}),
+    request("thread/queue/list", {"threadId": "thread-1", "limit": 100}),
+    request(
+        "thread/queue/add",
+        {
+            "threadId": "thread-1",
+            "input": text_input,
+            "clientUserMessageId": "00000000-0000-4000-8000-000000000001",
+        },
+    ),
+    request(
+        "thread/queue/delete",
+        {"threadId": "thread-1", "queuedSubmissionId": "queued-1"},
+    ),
+    request(
+        "thread/queue/start",
+        {"threadId": "thread-1", "queuedSubmissionId": "queued-1"},
+    ),
+    request("turn/start", {"threadId": "thread-1", "input": text_input}),
+    request("turn/start", {"threadId": "thread-1", "input": text_input}),
+    request(
+        "turn/steer",
+        {"threadId": "thread-1", "expectedTurnId": "turn-1", "input": text_input},
+    ),
+    request("turn/interrupt", {"threadId": "thread-1", "turnId": "turn-1"}),
+]
+# Each entry below corresponds to one additional literal utility call site.
+# The production helper embeds this same fixed policy artifact.
+utility_policy = json.loads((CLIENT_SOURCE.parent / "ephemeral_policy.json").read_text())
+utility_policy["mcp_servers"] = {"literal.name": {"enabled": False}}
+utility_cwd = "/private/cwd"
+utility_schema = {"type": "object", "properties": {"name": {"type": "string"}}, "required": ["name"], "additionalProperties": False}
+client_requests.extend([
+    request("config/read", {"cwd": utility_cwd, "includeLayers": False}),
+    request("configRequirements/read", None),
+    request("model/list", {"limit": 100, "includeHidden": True, "cursor": "utility-next"}),
+    request("thread/start", {
+        "ephemeral": True, "model": "gpt-5.5", "allowProviderModelFallback": False,
+        "cwd": utility_cwd, "baseInstructions": "Return the requested JSON.",
+        "developerInstructions": "", "approvalPolicy": "never", "sandbox": "read-only",
+        "environments": [], "runtimeWorkspaceRoots": [], "selectedCapabilityRoots": [],
+        "dynamicTools": [], "config": utility_policy,
+    }),
+    request("turn/start", {
+        "threadId": "utility-thread", "input": [{"type": "text", "text": "raw input"}],
+        "model": "gpt-5.5", "effort": "low", "outputSchema": utility_schema,
+        "cwd": utility_cwd, "approvalPolicy": "never",
+        "sandboxPolicy": {"type": "readOnly", "networkAccess": False},
+        "environments": [], "runtimeWorkspaceRoots": [],
+    }),
+    request("turn/interrupt", {"threadId": "utility-thread", "turnId": "utility-turn"}),
+    request("thread/unsubscribe", {"threadId": "utility-thread"}),
+])
+client_source = CLIENT_SOURCE.read_text()
+# Public client behavior is split into small implementation files. Keep every
+# outgoing call in the schema corpus, including the optional activity reader.
+client_source += "\n" + "\n".join(
+    source.read_text() for source in sorted(CLIENT_SOURCE.parent.glob("*.go"))
+    if source != CLIENT_SOURCE and not source.name.endswith("_test.go")
+)
+client_requests.extend([
+    request("thread/read", {"threadId": "thread-1", "excludeTurns": True}),
+    request("thread/read", {"threadId": "thread-1", "excludeTurns": True}),
+    request("thread/turns/list", {
+        "threadId": "thread-1", "limit": 20, "sortDirection": "desc", "itemsView": "notLoaded",
+    }),
+    request("thread/turns/list", {
+        "threadId": "thread-1", "limit": 20, "sortDirection": "desc", "itemsView": "notLoaded",
+    }),
+    request("thread/turns/list", {
+        "threadId": "thread-1", "limit": 20, "sortDirection": "desc", "itemsView": "notLoaded", "cursor": "older-page",
+    }),
+    request("thread/turns/list", {
+        "threadId": "thread-1", "limit": 1, "sortDirection": "desc", "itemsView": "notLoaded",
+    }),
+    request("thread/items/list", {
+        "threadId": "thread-1", "turnId": "turn-1", "limit": 32, "sortDirection": "asc", "cursor": "older-items",
+    }),
+])
+# Passive citation recovery reads earlier turns and items with bounded pages.
+client_requests.extend([
+    request("thread/turns/list", {
+        "threadId": "thread-1", "limit": 32, "sortDirection": "desc", "itemsView": "notLoaded", "cursor": "citation-turns",
+    }),
+    request("thread/items/list", {
+        "threadId": "thread-1", "turnId": "turn-1", "limit": 32, "sortDirection": "desc", "cursor": "citation-items",
+    }),
+])
+call_pattern = re.compile(
+    r'\b(?:Request|historyRequest|requestConnected|requestConnectedGeneration|requestOn|request)\s*\([^)]*?"([a-z][A-Za-z]*(?:/[A-Za-z_]+)*)"',
+    re.DOTALL,
+)
+implemented_calls = Counter(call_pattern.findall(client_source))
+covered_calls = Counter(message["method"] for message in client_requests)
+if implemented_calls != covered_calls:
+    raise SystemExit(
+        "Codex request call sites and schema corpus differ: "
+        f"implemented={implemented_calls}, covered={covered_calls}"
+    )
+if COVERAGE_ONLY:
+    raise SystemExit(0)
+for message in client_requests:
+    validate("ClientRequest.json", message, f"client request {message['method']}")
+
+for method, name in (("thread/start", "ThreadStart"), ("thread/resume", "ThreadResume"), ("thread/fork", "ThreadFork")):
+    require_root_property(f"v2/{name}Params.json", "modelProvider", "explicit lifecycle routing")
+    require_root_property(f"v2/{name}Response.json", "modelProvider", "effective lifecycle routing")
+    routing_schema = json.loads((SCHEMA_DIR / f"v2/{name}Response.json").read_text())
+    if "modelProvider" not in routing_schema.get("required", []):
+        raise ValueError("effective lifecycle provider must be required")
+    params = {"modelProvider": "pool", "model": "test-model", "config": {"model_reasoning_effort": "low"}}
+    if method != "thread/start":
+        params["threadId"] = "thread-1"
+    validate("ClientRequest.json", request(method, params), "lifecycle provider override")
+
+require_root_property(
+    "v2/ThreadListParams.json", "useStateDbOnly", "database-only thread discovery"
+)
+for params in ({}, {"cwd": "/workspace/work/example", "limit": 100, "useStateDbOnly": True}):
+    validate("v2/ThreadListParams.json", params, "database-only thread list params")
+    validate("ClientRequest.json", request("thread/list", params), "database-only thread list request")
+
+for message in [
+    request("thread/start", {
+        "cwd": "/workspace/work/example",
+        "developerInstructions": lifecycle_developer_instructions + "\n\nReview the assigned change.",
+        "sandbox": "read-only", "projectId": "member:example:reviewer0",
+        "config": {"shell_environment_policy": {"set": environment}},
+    }),
+    request("thread/resume", {
+        "threadId": "thread-1", "developerInstructions": lifecycle_developer_instructions + "\n\nReview the assigned change.",
+        "sandbox": "read-only", "excludeTurns": True,
+    }),
+    request("thread/list", {"projectId": "member:example:reviewer0", "limit": 100}),
+]:
+    validate("ClientRequest.json", message, f"member policy request {message['method']}")
+
+for method in ("thread/start", "thread/resume", "thread/fork"):
+    params = {"sandbox": "danger-full-access", "approvalPolicy": "never"}
+    if method == "thread/start":
+        params["cwd"] = "/workspace/work/example"
+    else:
+        params["threadId"] = "thread-1"
+    validate("ClientRequest.json", request(method, params), "explicit unrestricted thread policy")
+
+validate("ClientNotification.json", {"method": "initialized"}, "initialized notification")
+
+rate_limits = {
+    "rateLimits": {
+        "limitId": "codex",
+        "primary": {"usedPercent": 42, "windowDurationMins": 10080, "resetsAt": 1789730400},
+        "secondary": None,
+    },
+    "rateLimitsByLimitId": {
+        "codex": {
+            "primary": {"usedPercent": 42, "windowDurationMins": 10080, "resetsAt": 1789730400},
+            "secondary": {"usedPercent": 0, "windowDurationMins": 300, "resetsAt": None},
+        },
+        "model-specific": {"primary": {"usedPercent": 1}},
+    },
+}
+rate_limits["accountId"] = "fixture-account"
+rate_limits["rateLimitResetCredits"] = {"availableCount": 3, "credits": [{"id": "reset-credit-1", "resetType": "codexRateLimits", "status": "available", "grantedAt": 1789730400, "expiresAt": None, "title": None, "description": None}]}
+rate_limits["rateLimitsByLimitId"]["codex"]["credits"] = {"hasCredits": True, "unlimited": False, "balance": "12.50"}
+validate("v2/GetAccountRateLimitsResponse.json", rate_limits, "account rate limits result")
+for outcome in ["reset", "alreadyRedeemed", "nothingToReset", "noCredit"]:
+    validate("v2/ConsumeAccountRateLimitResetCreditResponse.json", {"outcome": outcome}, "reset-credit result")
+validate("v2/ConsumeAccountRateLimitResetCreditParams.json", {"idempotencyKey": "fixture-next"}, "next reset-credit request")
+validate(
+    "v2/GetAccountRateLimitsResponse.json",
+    {"rateLimits": {"primary": None, "secondary": None}, "rateLimitsByLimitId": None},
+    "account rate limits result without reported windows",
+)
+require_fields(
+    "v2/GetAccountRateLimitsResponse.json", rate_limits,
+    [("rateLimits",), ("rateLimits", "primary", "usedPercent")],
+    "account rate limits result",
+)
+
+server_requests = [
+    request(
+        "item/commandExecution/requestApproval",
+        {
+            "threadId": "thread-1",
+            "turnId": "turn-1",
+            "itemId": "item-command",
+            "startedAtMs": 1,
+            "command": "echo test",
+            "cwd": "/workspace",
+        },
+    ),
+    request(
+        "item/fileChange/requestApproval",
+        {
+            "threadId": "thread-1",
+            "turnId": "turn-1",
+            "itemId": "item-file",
+            "startedAtMs": 1,
+        },
+    ),
+    request(
+        "item/permissions/requestApproval",
+        {
+            "threadId": "thread-1",
+            "turnId": "turn-1",
+            "itemId": "item-permissions",
+            "startedAtMs": 1,
+            "cwd": "/workspace",
+            "permissions": {},
+        },
+    ),
+    request(
+        "item/tool/requestUserInput",
+        {
+            "threadId": "thread-1",
+            "turnId": "turn-1",
+            "itemId": "item-input",
+            "isBlocking": True,
+            "questions": [
+                {
+                    "id": "choice",
+                    "header": "Choice",
+                    "question": "Choose",
+                    "isOther": True,
+                    "options": [{"label": "First", "description": "first choice"}],
+                }
+            ],
+        },
+    ),
+]
+for message in server_requests:
+    validate("ServerRequest.json", message, f"server request {message['method']}")
+supported_server_methods = set(
+    re.findall(r'case "(item/[^"]+/request(?:Approval|UserInput))"', client_source)
+)
+covered_server_methods = {message["method"] for message in server_requests}
+if supported_server_methods != covered_server_methods:
+    raise SystemExit(
+        "handled Codex server requests and schema corpus differ: "
+        f"implemented={supported_server_methods}, covered={covered_server_methods}"
+    )
+
+command_with_decisions = json.loads(json.dumps(server_requests[0]))
+command_with_decisions["params"]["availableDecisions"] = [
+    "accept",
+    "acceptForSession",
+    "decline",
+    "cancel",
+]
+validate(
+    "ServerRequest.json",
+    command_with_decisions,
+    "server command approval request with advertised decisions",
+)
+
+validate(
+    "ServerNotification.json",
+    {"method": "serverRequest/resolved", "params": {"requestId": 1, "threadId": "thread-1"}},
+    "resolved-request notification",
+)
+validate(
+    "ServerNotification.json",
+    {
+        "method": "thread/settings/updated",
+        "params": {
+            "threadId": "thread-1",
+            "threadSettings": {
+                "approvalPolicy": "never",
+                "approvalsReviewer": "user",
+                "collaborationMode": {
+                    "mode": "plan",
+                    "settings": {
+                        "model": "test-model",
+                        "reasoning_effort": "high",
+                        "developer_instructions": None,
+                    },
+                },
+                "cwd": "/workspace/work/example",
+                "effort": "high",
+                "model": "test-model",
+                "modelProvider": "openai",
+                "sandboxPolicy": {"type": "dangerFullAccess"},
+            },
+        },
+    },
+    "thread settings notification",
+)
+validate(
+    "ServerNotification.json",
+    {"method": "thread/queue/changed", "params": {"threadId": "thread-1"}},
+    "thread queue notification",
+)
+
+for method, definition, timestamp_field, timestamp in [
+    ("item/started", "ItemStartedNotification", "startedAtMs", 1789120800123),
+    ("item/completed", "ItemCompletedNotification", "completedAtMs", 1789120830000),
+]:
+    message = {
+        "method": method,
+        "params": {
+            "threadId": "thread-1",
+            "turnId": "turn-1",
+            "item": {"id": "item-agent", "type": "agentMessage", "text": "response"},
+            timestamp_field: timestamp,
+        },
+    }
+    label = f"{method} timestamp notification"
+    validate("ServerNotification.json", message, label)
+    require_fields(
+        "ServerNotification.json",
+        message,
+        [
+            ["params"],
+            ["params", "threadId"],
+            ["params", "turnId"],
+            ["params", "item"],
+            ["params", "item", "id"],
+            ["params", timestamp_field],
+        ],
+        label,
+    )
+    require_declared_property("ServerNotification.json", definition, timestamp_field, label)
+
+for decision in ("accept", "acceptForSession", "decline", "cancel"):
+    validate(
+        "CommandExecutionRequestApprovalResponse.json",
+        {"decision": decision},
+        f"command approval response {decision}",
+    )
+    validate(
+        "FileChangeRequestApprovalResponse.json",
+        {"decision": decision},
+        f"file-change approval response {decision}",
+    )
+validate(
+    "ToolRequestUserInputResponse.json",
+    {"answers": {"choice": {"answers": ["First"]}}},
+    "user-input response",
+)
+
+thread = {
+    "cliVersion": "test",
+    "createdAt": 1,
+    "cwd": "/workspace/work/example",
+    "ephemeral": False,
+    "historyMode": "paginated",
+    "id": "thread-1",
+    "modelProvider": "openai",
+    "path": "/workspace/.codex/session.jsonl",
+    "preview": "example",
+    "projectId": None,
+    "sessionId": "session-1",
+    "source": "vscode",
+    "status": {"type": "idle"},
+    "turns": [],
+    "updatedAt": 1,
+}
+turn = {"id": "turn-1", "items": [], "status": "completed"}
+command_item = {
+    "id": "item-command",
+    "type": "commandExecution",
+    "command": "echo test",
+    "commandActions": [],
+    "cwd": "/workspace",
+    "status": "completed",
+    "exitCode": 0,
+}
+file_item = {
+    "id": "item-file",
+    "type": "fileChange",
+    "changes": [],
+    "status": "completed",
+}
+transcript_turn = {
+    "id": "turn-1",
+    "status": "completed",
+    "items": [
+        {"id": "item-user", "type": "userMessage", "content": [{"type": "text", "text": "request"}]},
+        {"id": "item-agent", "type": "agentMessage", "text": "response"},
+        command_item,
+        file_item,
+        {
+            "id": "item-tool",
+            "type": "mcpToolCall",
+            "arguments": {},
+            "server": "server",
+            "status": "completed",
+            "tool": "tool",
+        },
+        {"id": "item-reasoning", "type": "reasoning", "summary": ["summary"]},
+        {"id": "item-plan", "type": "plan", "text": "plan"},
+    ],
+}
+
+validate(
+    "v1/InitializeResponse.json",
+    {"codexHome": "/home/test/.codex", "platformFamily": "unix", "platformOs": "linux", "userAgent": "test"},
+    "initialize result",
+)
+common_start = {
+    "approvalPolicy": "never",
+    "approvalsReviewer": "user",
+    "cwd": "/workspace/work/example",
+    "model": "test-model",
+    "modelProvider": "openai",
+    "sandbox": {"type": "dangerFullAccess"},
+    "thread": thread,
+}
+validate("v2/ThreadStartResponse.json", common_start, "thread/start result")
+validate("v2/ThreadResumeResponse.json", common_start, "thread/resume result")
+validate("v2/ThreadUnarchiveResponse.json", {"thread": thread}, "thread/unarchive result")
+fork_thread = dict(thread)
+fork_thread["id"] = "thread-fork"
+fork_thread["cwd"] = "/workspace/work/fork"
+fork_thread["forkedFromId"] = "thread-1"
+validate(
+    "v2/ThreadForkResponse.json",
+    {**common_start, "cwd": "/workspace/work/fork", "thread": fork_thread},
+    "thread/fork result",
+)
+model = {
+    "id": "model-id",
+    "model": "test-model",
+    "displayName": "Test model",
+    "description": "Test model for the protocol contract.",
+    "isDefault": True,
+    "hidden": False,
+    "defaultReasoningEffort": "high",
+    "supportedReasoningEfforts": [
+        {"reasoningEffort": "high", "description": "Thorough reasoning."}
+    ],
+}
+validate(
+    "v2/ModelListResponse.json",
+    {"data": [model], "nextCursor": None},
+    "model/list result",
+)
+validate("v2/ThreadListResponse.json", {"data": [thread]}, "thread/list result")
+project = {
+    "id": "00000000-0000-7000-8000-000000000001",
+    "name": "example reviewer0", "roots": [], "metadata": {},
+    "position": 0, "createdAt": 1, "updatedAt": 1, "recencyAt": None,
+}
+validate("v2/ProjectCreateResponse.json", {"project": project}, "project/create result")
+validate("v2/ProjectReadResponse.json", {"project": project}, "project/read result")
+validate(
+    "v2/ThreadLoadedListResponse.json",
+    {"data": ["thread-1"], "nextCursor": None},
+    "thread/loaded/list result",
+)
+validate(
+    "v2/ThreadLoadedListParams.json",
+    {"limit": 100, "cursor": "next-page"},
+    "thread/loaded/list pagination params",
+)
+validate("v2/ThreadReadResponse.json", {"thread": thread}, "thread/read result")
+validate(
+    "v2/ThreadTurnsListResponse.json",
+    {"data": [transcript_turn]},
+    "thread/turns/list result",
+)
+validate(
+    "v2/ThreadItemsListResponse.json",
+    {"data": [{"turnId": "turn-1", "item": command_item}, {"turnId": "turn-1", "item": file_item}]},
+    "thread/items/list result",
+)
+page_turn = {**transcript_turn, "items": [], "itemsView": "notLoaded", "status": "failed", "error": {"message": "fixture failure"}}
+validate("v2/ThreadTurnsListResponse.json", {"data": [page_turn], "nextCursor": "older-turns"}, "paged turn metadata")
+validate("v2/ThreadItemsListResponse.json", {
+    "data": [{"turnId": "turn-1", "item": command_item}], "nextCursor": "older-items",
+}, "turn-filtered item page")
+for name, fields in {
+    "ThreadReadParams.json": ["threadId", "includeTurns"],
+    "ThreadTurnsListParams.json": ["threadId", "limit", "sortDirection", "itemsView", "cursor"],
+    "ThreadItemsListParams.json": ["threadId", "turnId", "limit", "sortDirection", "cursor"],
+    "ThreadTurnsListResponse.json": ["data", "nextCursor"],
+    "ThreadItemsListResponse.json": ["data", "nextCursor"],
+}.items():
+    for field in fields:
+        require_root_property("v2/" + name, field, "paged transcript protocol")
+for name, definition, fields in (
+    ("ThreadTurnsListResponse.json", "Turn", ["id", "status", "error", "startedAt", "completedAt"]),
+    ("ThreadItemsListResponse.json", "ThreadItemEntry", ["turnId", "item"]),
+):
+    for field in fields:
+        require_declared_property("v2/" + name, definition, field, "paged transcript response")
+validate("v2/ThreadUnsubscribeResponse.json", {"status": "unsubscribed"}, "thread/unsubscribe result")
+validate("v2/ThreadSetNameResponse.json", {}, "thread/name/set result")
+validate(
+    "v2/CollaborationModeListResponse.json",
+    {
+        "data": [
+            {"name": "Default", "mode": "default", "model": None, "reasoning_effort": None},
+            {"name": "Plan", "mode": "plan", "model": None, "reasoning_effort": "medium"},
+        ]
+    },
+    "collaborationMode/list result",
+)
+validate("v2/ThreadSettingsUpdateResponse.json", {}, "thread/settings/update result")
+queued_submission = {
+    "id": "queued-1",
+    "clientUserMessageId": "00000000-0000-4000-8000-000000000001",
+    "input": text_input,
+}
+validate(
+    "v2/ThreadQueueListResponse.json",
+    {"data": [queued_submission], "nextCursor": None},
+    "thread/queue/list result",
+)
+validate(
+    "v2/ThreadQueueAddResponse.json",
+    {"queuedSubmission": queued_submission},
+    "thread/queue/add result",
+)
+validate(
+    "v2/ThreadQueueDeleteResponse.json",
+    {"deleted": True},
+    "thread/queue/delete result",
+)
+validate(
+    "v2/ThreadQueueStartResponse.json",
+    {"turn": turn},
+    "thread/queue/start result",
+)
+validate("v2/TurnStartResponse.json", {"turn": turn}, "turn/start result")
+validate("v2/TurnSteerResponse.json", {"turnId": "turn-1"}, "turn/steer result")
+validate("v2/TurnInterruptResponse.json", {}, "turn/interrupt result")
+validate("JSONRPCResponse.json", {"id": 1, "result": {}}, "successful response envelope")
+validate(
+    "JSONRPCError.json",
+    {
+        "id": 1,
+        "error": {"code": -32601, "message": "workspace portal does not support this request"},
+    },
+    "unsupported-request error envelope",
+)
+
+for file_name, value, paths, label in [
+    (
+        "v2/ThreadStartResponse.json",
+        common_start,
+        [["thread"], ["thread", "id"], ["thread", "cwd"]],
+        "thread/start result",
+    ),
+    (
+        "v2/ThreadResumeResponse.json",
+        common_start,
+        [["thread"], ["thread", "id"], ["thread", "cwd"]],
+        "thread/resume result",
+    ),
+    (
+        "v2/ThreadUnarchiveResponse.json",
+        {"thread": thread},
+        [["thread"], ["thread", "id"], ["thread", "cwd"], ["thread", "source"]],
+        "thread/unarchive result",
+    ),
+    (
+        "v2/ThreadForkResponse.json",
+        {**common_start, "cwd": "/workspace/work/fork", "thread": fork_thread},
+        [["thread"], ["thread", "id"], ["thread", "cwd"]],
+        "thread/fork result",
+    ),
+    (
+        "v2/ModelListResponse.json",
+        {"data": [model], "nextCursor": None},
+        [["data"]],
+        "model/list result",
+    ),
+    (
+        "v2/ThreadListResponse.json",
+        {"data": [thread]},
+        [["data"]],
+        "thread/list result",
+    ),
+    (
+        "v2/ThreadLoadedListResponse.json",
+        {"data": ["thread-1"], "nextCursor": None},
+        [["data"]],
+        "thread/loaded/list result",
+    ),
+    (
+        "v2/ThreadReadResponse.json",
+        {"thread": thread},
+        [
+            ["thread"],
+            ["thread", "id"],
+            ["thread", "cwd"],
+            ["thread", "source"],
+            ["thread", "ephemeral"],
+            ["thread", "preview"],
+            ["thread", "status"],
+            ["thread", "turns"],
+        ],
+        "thread/read result",
+    ),
+    (
+        "v2/ThreadTurnsListResponse.json",
+        {"data": [transcript_turn]},
+        [["data"]],
+        "thread/turns/list result",
+    ),
+    (
+        "v2/ThreadItemsListResponse.json",
+        {"data": [{"turnId": "turn-1", "item": command_item}]},
+        [["data"], ["data", 0, "turnId"], ["data", 0, "item"]],
+        "thread/items/list result",
+    ),
+]:
+    require_fields(file_name, value, paths, label)
+
+# Thread.path is intentionally nullable for remote and ephemeral Codex threads,
+# but the portal requires the property to exist and validates a non-null path at
+# runtime for its local persistent App Server threads.
+require_declared_property(
+    "v2/ThreadReadResponse.json", "Thread", "path", "thread/read result"
+)
+require_declared_property(
+    "v2/ThreadReadResponse.json", "Thread", "model", "thread/read result"
+)
+require_declared_property(
+    "v2/ThreadReadResponse.json", "Thread", "reasoningEffort", "thread/read result"
+)
+require_declared_property(
+    "v2/ThreadForkResponse.json", "Thread", "forkedFromId", "thread/fork result"
+)
+require_declared_property(
+    "v2/ThreadListResponse.json", "Thread", "forkedFromId", "thread/list fork recovery result"
+)
+for field in (
+    "model",
+    "displayName",
+    "description",
+    "isDefault",
+    "defaultReasoningEffort",
+    "supportedReasoningEfforts",
+):
+    require_declared_property("v2/ModelListResponse.json", "Model", field, "model/list result")
+
+for message in server_requests:
+    require_fields(
+        "ServerRequest.json",
+        message,
+        [["params"], ["params", "threadId"], ["params", "turnId"], ["params", "itemId"]],
+        f"server request {message['method']}",
+    )
+
+
+# Typed activity and observer fields consumed from the selected Codex schema.
+activity_items = [
+    {"id": "search", "type": "webSearch", "query": "protocol", "action": {"type": "search", "queries": ["protocol"]},
+     "results": [{"url": "https://example.test/", "title": "Example"}]},
+    {"id": "open", "type": "webSearch", "query": "", "action": {"type": "openPage", "url": "https://example.test/"}},
+    {"id": "find", "type": "webSearch", "query": "", "action": {"type": "findInPage", "url": "https://example.test/", "pattern": "text"}},
+    {"id": "agent", "type": "collabAgentToolCall", "tool": "spawnAgent", "status": "completed",
+     "senderThreadId": "thread-1", "receiverThreadIds": ["child"], "agentsStates": {"child": {"status": "completed", "message": "Result"}},
+     "model": "example", "reasoningEffort": "xhigh", "prompt": "Task"},
+    {"id": "lifecycle", "type": "subAgentActivity", "agentThreadId": "child", "agentPath": "/root/review", "kind": "completed"},
+]
+activity_turn = {"id": "turn-1", "status": "completed", "items": activity_items,
+                 "itemsView": "full", "startedAt": 1000, "completedAt": 1010, "durationMs": 10000}
+validate("v2/ThreadTurnsListResponse.json", {"data": [activity_turn], "nextCursor": "opaque"}, "typed activity turns")
+for view in ("full", "notLoaded"):
+    validate("ClientRequest.json", request("thread/turns/list", {
+        "threadId": "thread-1", "limit": 20, "sortDirection": "desc", "itemsView": view, "cursor": "opaque",
+    }), "paginated activity history")
+for method in ("turn/started", "turn/completed"):
+    validate("ServerNotification.json", {"method": method, "params": {"threadId": "thread-1", "turn": activity_turn}}, "activity turn boundary")
+validate("ServerNotification.json", {"method": "thread/status/changed", "params": {
+    "threadId": "thread-1", "status": {"type": "active", "activeFlags": ["waitingOnApproval", "waitingOnUserInput"]},
+}}, "activity status coverage")
+validate("ClientRequest.json", request("thread/resume", {"threadId": "thread-1", "excludeTurns": True}), "observer resume without overrides")
+for definition, fields in {
+    "Turn": ["startedAt", "completedAt", "durationMs", "itemsView"],
+    "ThreadTurnsListResponse": [],
+}.items():
+    for field in fields:
+        require_declared_property("v2/ThreadTurnsListResponse.json", definition, field, "activity turn metadata")
+
+# Utility-only consumed shapes. Optional phase/path/model properties are checked
+# at runtime; requiring their schema presence would invent a wire guarantee.
+utility_thread = {**thread, "id": "utility-thread", "cwd": utility_cwd, "ephemeral": True, "path": None}
+utility_start = {**common_start, "thread": utility_thread, "cwd": utility_cwd,
+                 "model": "gpt-5.5", "sandbox": {"type": "readOnly", "networkAccess": False}}
+validate("v2/ThreadStartResponse.json", utility_start, "ephemeral thread result")
+require_fields("v2/ThreadStartResponse.json", utility_start,
+               [("model",), ("cwd",), ("thread", "id"), ("thread", "cwd"), ("thread", "ephemeral")],
+               "ephemeral thread identity")
+require_declared_property("v2/ThreadStartResponse.json", "Thread", "path", "ephemeral absent rollout")
+final_item = {"id": "utility-answer", "type": "agentMessage", "phase": "final_answer", "text": '{"name":"fix runtime session names"}'}
+utility_turn = {"id": "utility-turn", "status": "completed", "items": [final_item]}
+validate("v2/TurnStartResponse.json", {"turn": utility_turn}, "ephemeral turn result")
+require_fields("v2/TurnStartResponse.json", {"turn": utility_turn},
+               [("turn", "id"), ("turn", "status"), ("turn", "items")], "ephemeral turn identity")
+completion = {"threadId": "utility-thread", "turnId": "utility-turn", "completedAtMs": 1, "item": final_item}
+validate("v2/ItemCompletedNotification.json", completion, "ephemeral completed final item")
+require_fields("v2/ItemCompletedNotification.json", completion,
+               [("threadId",), ("turnId",), ("item",), ("item", "id"), ("item", "text")], "ephemeral final item")
+# ThreadItem is a union; explicitly validate phase literals against its declared
+# MessagePhase definition. Missing phase is a protocol failure in the helper.
+phase_schema = json.loads((SCHEMA_DIR / "v2/ItemCompletedNotification.json").read_text())["definitions"]["MessagePhase"]
+if not Draft7Validator(phase_schema).is_valid("final_answer") or Draft7Validator(phase_schema).is_valid("unknown"):
+    raise SystemExit("ephemeral final phase convention differs")
+finished = {"threadId": "utility-thread", "turn": utility_turn}
+early_started = {"threadId": "utility-thread", "turn": {"id": "utility-turn", "status": "inProgress", "items": []}}
+validate("v2/TurnStartedNotification.json", early_started, "ephemeral early cleanup identity")
+require_fields("v2/TurnStartedNotification.json", early_started,
+               [("threadId",), ("turn", "id"), ("turn", "status"), ("turn", "items")], "ephemeral early cleanup identity")
+validate("ServerNotification.json", {"method": "turn/started", "params": early_started}, "ephemeral early cleanup notification")
+validate("v2/TurnCompletedNotification.json", finished, "ephemeral successful completion")
+require_fields("v2/TurnCompletedNotification.json", finished,
+               [("threadId",), ("turn", "id"), ("turn", "status"), ("turn", "items")], "ephemeral successful completion")
+utility_catalog = "/private/package/codex-models.json"
+validate("v2/ConfigReadResponse.json", {
+    "config": {"model_catalog_json": utility_catalog, "mcp_servers": {"literal.name": {"command": "synthetic"}}},
+    "origins": {"model_catalog_json": {"name": {"type": "sessionFlags"}, "version": "fixture"}},
+}, "ephemeral startup CLI catalog and MCP inventory")
+validate("v2/ConfigRequirementsReadResponse.json", {"requirements": None}, "ephemeral no managed requirements")
+validate("v2/ConfigRequirementsReadResponse.json", {"requirements": {"featureRequirements": {"shell_tool": True}}}, "ephemeral rejected managed requirement")
+validate("v2/ThreadUnsubscribeResponse.json", {"status": "unsubscribed"}, "ephemeral unsubscribe")
+require_fields("v2/ThreadUnsubscribeResponse.json", {"status": "unsubscribed"}, [("status",)], "ephemeral unsubscribe")
+# Server-request errors use the shared JSON-RPC error envelope, not an answer.
+validate("JSONRPCError.json", {"id": "question-1", "error": {"code": -32601, "message": "Questions are unavailable for ephemeral utility turns"}}, "ephemeral question rejection")
+
+# The tagged fixture discovers eligible synthetic hooks before its ordinary
+# control. This test-only request is excluded from production call-site counts.
+validate("ClientRequest.json", request("hooks/list", {"cwds": [utility_cwd]}), "fixture eligible hook discovery")
+hook = {"key": "fixture-hook", "currentHash": "fixture-hash", "source": "user",
+        "eventName": "sessionStart", "handlerType": "command", "command": "/private/hook.sh",
+        "sourcePath": "/private/hooks.json", "timeoutSec": 1, "displayOrder": 0,
+        "enabled": True, "isManaged": False, "trustStatus": "trusted"}
+hook_inventory = {"data": [{"cwd": utility_cwd, "hooks": [hook], "warnings": [], "errors": []}]}
+validate("v2/HooksListResponse.json", hook_inventory, "fixture synthetic hook eligibility")
+require_fields("v2/HooksListResponse.json", hook_inventory,
+               [("data",), ("data", 0, "hooks"), ("data", 0, "hooks", 0, "key"),
+                ("data", 0, "hooks", 0, "currentHash"), ("data", 0, "hooks", 0, "source")],
+               "fixture hook identity/trust")
+
+# Async questions carry agent-message metadata and no outer request ID. Ordinary
+# final messages may omit or null that metadata; the helper checks it at runtime.
+async_item = {**final_item, "delivery": "async", "questions": [{"title": "Synthetic question?", "options": ["Continue", "Stop"]}]}
+for method, timestamp, file_name in (
+    ("item/started", "startedAtMs", "v2/ItemStartedNotification.json"),
+    ("item/completed", "completedAtMs", "v2/ItemCompletedNotification.json"),
+):
+    params = {"threadId": "utility-thread", "turnId": "utility-turn", timestamp: 1, "item": async_item}
+    validate(file_name, params, "ephemeral rejected async question")
+    validate("ServerNotification.json", {"method": method, "params": params}, "ephemeral async notification without ID")
+    for item in (final_item, {**final_item, "delivery": None, "questions": None}):
+        validate(file_name, {**params, "item": item}, "ordinary final metadata absent/null")
+    definitions = json.loads((SCHEMA_DIR / file_name).read_text())["definitions"]
+    if definitions["AgentMessageDelivery"].get("enum") != ["async"]:
+        raise SystemExit("ephemeral async delivery convention differs")
+    if not Draft7Validator(definitions["AsyncUserInputQuestion"]).is_valid({"title": "Synthetic question?"}):
+        raise SystemExit("ephemeral async question convention differs")
+
+print("Codex App Server protocol contract is compatible")

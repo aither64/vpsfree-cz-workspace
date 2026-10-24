@@ -1,0 +1,109 @@
+ 1:  cdfeaa7 =  1:  cdfeaa7 deps: update shared conversation presentation helpers
+ 2:  cb0bed0 =  2:  cb0bed0 team: project full-team names from actual implementer counts
+ 3:  e9523ab =  3:  e9523ab portal: add authorized file downloads and source copy actions
+ 4:  63d0e68 =  4:  63d0e68 portal: keep large artifact catalogs compact and stable
+ 5:  b3974e9 =  5:  b3974e9 portal: publish session membership before optional enrichment
+ 6:  3d5196b =  6:  3d5196b portal: retain member settings through sequential additions
+ 7:  0c9eb32 =  7:  0c9eb32 portal: present team messages and decorated Markdown
+ 8:  2d8a521 =  8:  2d8a521 portal: show delivery recovery beside the composer
+ 9:  de990bb =  9:  de990bb portal: browse eligible session files in a lazy tree
+10:  dad03aa = 10:  dad03aa portal: retire paused read cycles and recover on tab resume
+11:  a515f1d = 11:  a515f1d coordination: derive claims from registered repository identities
+12:  909accc = 12:  909accc portal: measure read stages without logging session content
+13:  aec9a8b ! 13:  d20601c test: prepare ordinary Firefox acceptance across fifty native tabs
+    @@ portal/internal/web/firefox_tabs_acceptance.cjs (new)
+     +  const click=async(using,value)=>command(`/element/${await element(using,value)}/click`,{});
+     +  const visibleLog=[];
+     +  let stage="driver-start", lastVisibility=null, beforeDiscard=null, nativeDiscard=null, nativeRestore=null, lastCounts=null;
+    ++  let beforeSendStatus=null, beforeSendControls=null;
+    ++  const readSendControls=()=>execute(`
+    ++    const form=document.getElementById("message-form"), send=document.getElementById("message-send"), textarea=form?.elements.message;
+    ++    if (!window.portalSendEvents) {
+    ++      window.portalSendEvents={submit:0,invalid:0};
+    ++      form?.addEventListener("submit",()=>{portalSendEvents.submit=Math.min(1000,portalSendEvents.submit+1);},true);
+    ++      form?.addEventListener("invalid",()=>{portalSendEvents.invalid=Math.min(1000,portalSendEvents.invalid+1);},true);
+    ++    }
+    ++    const receipts={sending:0,unknown:0,accepted:0,observed:0,other:0};
+    ++    for (const receipt of document.querySelectorAll("#message-receipts [data-receipt-state]")) {
+    ++      const category=Object.hasOwn(receipts,receipt.dataset.receiptState)?receipt.dataset.receiptState:"other";
+    ++      receipts[category]=Math.min(1000,receipts[category]+1);
+    ++    }
+    ++    return {sendPresent:!!send,sendDisabled:send?.disabled??null,textareaNonempty:!!textarea?.value.trim(),
+    ++      expectedDraft:textarea?.value==="Disposable draft retained across native tab switches",formValid:form?.matches(":valid")??null,
+    ++      submitting:!!form?.dataset.submitting,submitEvents:portalSendEvents.submit,invalidEvents:portalSendEvents.invalid,receipts};`);
+     +  async function ready(index) {
+     +    await until(()=>execute('return !!document.getElementById("message-send") && !document.getElementById("message-send").disabled;'),`tab ${index} composer ready`,60000);
+     +    const state=await execute(`
+    @@ portal/internal/web/firefox_tabs_acceptance.cjs (new)
+     +    const failureBefore=await fixture("/fixture/firefox/status");await fixture("/fixture/firefox/control?action=fail-pending","POST");
+     +    await until(async()=>{const stats=await fixture("/fixture/firefox/status");return stats.counts[0].pending.Failed===1&&stats.counts[0].pending.Count>=failureBefore.counts[0].pending.Count+2;},"pending retry without reload",10000);
+     +    stage="durable-original-retry";
+    ++    const {fixture:sendFixture,counts:sendCounts,...sendStatus}=await fixture("/fixture/firefox/status");
+    ++    beforeSendStatus=sendStatus;
+    ++    beforeSendControls=await readSendControls();
+     +    await click("css selector","#message-send");
+     +    await until(()=>execute('return Array.from(document.querySelectorAll("button")).some(button=>button.textContent.trim()==="Retry original");'),"lost-response durable receipt");
+     +    assert.equal(await execute('return document.querySelector("#message-form textarea").value;'),"Disposable draft retained across native tab switches");
+    @@ portal/internal/web/firefox_tabs_acceptance.cjs (new)
+     +  } catch(error) {
+     +    // Preserve fixed stage/counter and observed native/visibility evidence before
+     +    // cleanup. Never include browser contents, URLs or the disposable profile.
+    -+    let counts=lastCounts??beforeDiscard?.counts??null;
+    -+    try {counts=(await fixture("/fixture/firefox/status")).counts;}catch(_){/* Retain prior observations if status is unavailable. */}
+    ++    let counts=lastCounts??beforeDiscard?.counts??null, sendStatus=null, sendControls=null;
+    ++    try {
+    ++      const {fixture:statusFixture,counts:currentCounts,...mutationStatus}=await fixture("/fixture/firefox/status");
+    ++      counts=currentCounts;sendStatus=mutationStatus;
+    ++    }catch(_){/* Retain prior observations if status is unavailable. */}
+    ++    if (beforeSendControls) {try {sendControls=await readSendControls();}catch(_){/* Never replace the original failure. */}}
+     +    console.error(JSON.stringify({fixture:"portal-firefox-tabs-v1",stage,visibility:lastVisibility,
+    -+      nativeDiscard,nativeRestore,beforeDiscard:beforeDiscard?.counts?.[5]??null,counts}));
+    ++      nativeDiscard,nativeRestore,beforeDiscard:beforeDiscard?.counts?.[5]??null,counts,
+    ++      beforeSendStatus,beforeSendControls,sendStatus,sendControls}));
+     +    throw error;
+     +  } finally {
+     +    if(session) {try {await command("",undefined,"DELETE");}catch(_){/* Stop only this owned driver below. */}}
+    @@ portal/internal/web/firefox_tabs_test.go (new)
+     +	}
+     +	var mu sync.Mutex
+     +	counts := make(map[string]map[string]*firefoxLaneCount)
+    -+	var failPending, lostResponse atomic.Bool
+    -+	var sendAttempts atomic.Int64
+    ++	var failPending, lostResponse, lossInjected, lossHijackError atomic.Bool
+    ++	var sendAttempts, lastHandlerStatus atomic.Int64
+     +	handler := server.Handler()
+     +	httpServer.Config.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+     +		if r.URL.Path == "/fixture/firefox/status" {
+    @@ portal/internal/web/firefox_tabs_test.go (new)
+     +			dispatches := controller.sendCount
+     +			controller.mu.Unlock()
+     +			server.writeJSON(w, 200, map[string]any{"fixture": "portal-firefox-tabs-v1", "counts": counts,
+    -+				"sendAttempts": sendAttempts.Load(), "dispatches": dispatches, "journalEntries": strings.Count(string(journal), "\n")})
+    ++				"sendAttempts": sendAttempts.Load(), "dispatches": dispatches, "journalEntries": strings.Count(string(journal), "\n"),
+    ++				"lastHandlerStatus": lastHandlerStatus.Load(), "lossAttempted": lostResponse.Load(),
+    ++				"lossInjected": lossInjected.Load(), "hijackError": lossHijackError.Load()})
+     +			return
+     +		}
+     +		if r.URL.Path == "/fixture/firefox/control" && r.Method == "POST" {
+    @@ portal/internal/web/firefox_tabs_test.go (new)
+     +			sendAttempts.Add(1)
+     +			response := httptest.NewRecorder()
+     +			handler.ServeHTTP(response, r)
+    ++			lastHandlerStatus.Store(int64(response.Code))
+     +			if response.Code < 300 && lostResponse.CompareAndSwap(false, true) {
+     +				connection, _, err := w.(http.Hijacker).Hijack()
+     +				if err != nil {
+    ++					lossHijackError.Store(true)
+     +					t.Error("fixture could not lose the accepted response")
+     +					return
+     +				}
+     +				_ = connection.Close()
+    ++				lossInjected.Store(true)
+     +				return
+     +			}
+     +			for key, values := range response.Header() {
+14:  6837701 = 14:  2a6a67a notifications: drop deliveries from disabled browser epochs
+15:  125b860 = 15:  705425b coordination: retain deployed machines through explicit user release
+16:  017f3d8 = 16:  4717ae0 test: match session-scoped model catalogs in settings fixture
+17:  764a7b0 = 17:  699b083 test: intercept session-scoped limits in usability fixture
+18:  0c0dd2d = 18:  f00e678 test: await applied recovery state responses

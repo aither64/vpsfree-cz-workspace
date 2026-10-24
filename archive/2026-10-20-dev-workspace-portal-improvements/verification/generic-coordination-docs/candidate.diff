@@ -1,0 +1,252 @@
+diff --git a/AGENTS.md b/AGENTS.md
+index 5215d99d..c3a4a003 100644
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -169,12 +169,10 @@ Repository claims cover approved shared merges only; feature work, hook setup, t
+ and review need none. Prepare, then claim one repository for fresh target checks,
+ merge/hooks, SSH push and remote proof; release before CI, records or cleanup.
+ On stale preparation/intervention, stop commands and verify effects; repair
+-unlocked; reconcile uncertain shared mutations before release. Build/copy
+-before machine claims when supported. Once deployment/effect verification succeeds
+-and deployed feature lineage is integrated into approved remote defaults,
+-promptly release the exact claim owned by this session and verify its released
+-status, without another user confirmation. Missing proof or uncertain effects keep
+-ownership. Read the selected coordination guide; keep existing recovery contracts.
++unlocked; reconcile uncertain shared mutations before release. For machine
++reservations and automatic release, follow the runtime policy referenced by
++[machine retention](docs/coordination.md#machine-retention). Preserve existing
++recovery contracts.
+ 
+ Prefer clean designs that can be deployed incrementally. Incompatible changes
+ are allowed only when they are intentional and recorded in the plan with the
+diff --git a/docs/agent-instructions/deployment.md b/docs/agent-instructions/deployment.md
+index 4d5af9a4..444fee4c 100644
+--- a/docs/agent-instructions/deployment.md
++++ b/docs/agent-instructions/deployment.md
+@@ -8,26 +8,12 @@ The selected package also provides the authoritative installed guides through
+ `workspace-host coordination guide`, including before workspace integration.
+ 
+ Before deployment activation or a workspace profile switch, read
+-[coordination](../coordination.md) in full. Build and copy before taking machine
+-ownership when supported. Under a claims runtime, acquire the physical machine,
+-request only the machine, run authorized activation commands and verify actual
+-results. Repository ownership is never held through builds or live review. Once
+-deployment and effect verification succeeds and the complete deployed feature
+-lineage is integrated into approved remote defaults, promptly release the exact
+-claim owned by this session and verify its released status, without another user
+-confirmation. Follow [machine retention](../coordination.md#machine-retention) for
+-source, system/profile and verification evidence and the final ownership check.
+-Missing proof or uncertain effects keep ownership; idle time or turn completion
+-does not replace either proof. Pass the held claim and exact session identity to
+-ordinary workspace-host profile activation.
+-Release supplies no merge approval. Legacy jobs/reservations keep their original
+-approval, integration-proof and recovery requirements. Held new claims require
+-explicit release before lifecycle cleanup.
+-
+-Legacy automatic reservation release during lifecycle completion is an
+-implementation behavior, not permission to bypass machine retention or perform
+-a lifecycle action. Preserve the original recovery contract without initiating
+-archive, deletion or release merely to finish a deployment.
++[coordination](../coordination.md) and its authoritative runtime
++[machine retention and release policy](../coordination.md#machine-retention).
++Pass the held machine claim and exact session identity to ordinary workspace-host
++profile activation. Deployment and release supply no merge or lifecycle approval.
++Legacy jobs and reservations retain their original approval, integration-proof
++and recovery requirements through the runtime's operations guide.
+ 
+ In every confctl-managed configuration repository, inspect its defined
+ channels and the channel-to-input mapping before updating a flake input. For a
+@@ -54,7 +40,7 @@ portal is still under development, keep its `vpsfree-cz-configuration` changes
+ on the dated initiative branch. The workspace application itself is deployed
+ from its own user profile and must not be added to, pinned by, or iterated
+ through the system configuration. Do not merge or push configuration changes
+-to `master` merely to deploy aitherdev. Integrate that branch only after the
++to `master` merely to deploy them. Integrate that branch only after the
+ user explicitly directs the merge; accepting a plan or deployment result alone
+ is insufficient.
+ 
+diff --git a/docs/agent-instructions/git.md b/docs/agent-instructions/git.md
+index 91951da3..6adee812 100644
+--- a/docs/agent-instructions/git.md
++++ b/docs/agent-instructions/git.md
+@@ -61,15 +61,8 @@ This gate does not apply to tracking-only coordination commits on the shared
+ workspace `master`; stage only owned tracking paths and never include feature
+ content in that exception.
+ 
+-Integration proof for a deployed machine must account for its complete deployed
+-feature lineage, including dependency pins and canonical repository/target
+-aliases. Preserve old/new base/head ranges and reviewed equivalence or substantive
+-replacement evidence when history changes; a nonancestor deployed commit is not
+-literally merged. See [machine retention](../coordination.md#machine-retention).
+-Once deployment and effect verification succeeds and the complete deployed
+-feature lineage is integrated into approved remote defaults, promptly release the
+-exact claim owned by this session and verify its released status, without another
+-user confirmation. Missing proof or uncertain effects keep ownership.
++For deployed-lineage evidence and machine release, follow the authoritative
++runtime policy referenced by [machine retention](../coordination.md#machine-retention).
+ Repository merge claims remain short and separate; release them before CI or
+ records.
+ 
+diff --git a/docs/agent-instructions/lifecycle.md b/docs/agent-instructions/lifecycle.md
+index 7f593b61..8a48e705 100644
+--- a/docs/agent-instructions/lifecycle.md
++++ b/docs/agent-instructions/lifecycle.md
+@@ -5,20 +5,17 @@ Its rules retain workspace scope and precedence. Paths and commands are relative
+ to the coordination workspace unless the text specifies another repository.
+ 
+ Read [coordination](../coordination.md) before a lifecycle/package mutation that
+-affects queued work or a machine reservation. Running/uncertain operations fence
+-lifecycle changes. Legacy archive completion automatically releases machine
+-reservations; that is implementation behavior, not permission to archive or
+-release a machine. Before any lifecycle action that could release deployed
+-ownership, satisfy [machine retention](../coordination.md#machine-retention):
+-successful deployment and effect verification, and complete deployed feature
+-lineage integrated into approved remote defaults. Promptly release the exact
+-claim owned by this session and verify its released status, without another user
+-confirmation. Missing proof or uncertain effects keep ownership. Release does
+-not authorize a session lifecycle action. Failed or interrupted archival keeps
+-deployed holds until recovery completes.
+-Revival does not reacquire released machines or resume canceled work. Deletion
+-retains its recovery holds. Package candidates must preserve the coordination
+-contract and retained artifacts; inactivity alone never frees a review reservation.
++affects queued work or a machine reservation. Running or uncertain operations
++fence lifecycle changes. Apply the runtime's
++[machine retention and release policy](../coordination.md#machine-retention)
++and preserve its original recovery contracts.
++
++Legacy archive completion automatically releases machine reservations; this is
++implementation behavior, not permission for a lifecycle action. Failed or
++interrupted archival keeps deployed holds until recovery completes. Revival does
++not reacquire released machines or resume canceled work. Deletion retains its
++recovery holds. Package candidates must preserve the coordination contract and
++retained artifacts.
+ 
+ Sensitive sessions keep these lifecycle and coordination checks, but their
+ tracking moves stay local and do not require or create Git commits. Preserve
+diff --git a/docs/coordination.md b/docs/coordination.md
+index 5975dc73..a9a0f6d6 100644
+--- a/docs/coordination.md
++++ b/docs/coordination.md
+@@ -27,10 +27,10 @@ turn when only waiting remains. Read `claim-status` before acting on any notice.
+ A notice neither authorizes work nor proves command completion.
+ 
+ Run the shared merge or deployment only while its claim is held. Independent
+-feature commands remain available during a merge wait. Keep machine ownership
+-until deployment and integration are verified as described below. Aitherdev system
+-activation and workspace profile selection share the physical resource
+-`vpsfree:aitherdev`.
++feature commands remain available during a merge wait. Follow the runtime's
++[machine retention and release policy](#machine-retention). Select machine
++identities from the configured catalog and the configuration repository's
++operations guide.
+ Use `release SESSION --as-is --id UUID` after the applicable release requirements
+ are met, or `cancel-claim` for an unneeded waiting request. Retrying the exact
+ acquire request returns the same claim even after release; a new attempt needs
+@@ -53,36 +53,9 @@ resources before mutation and keep ownership until the work is safe to release.
+ 
+ ## Machine retention
+ 
+-Promptly release each deployed physical machine once both conditions are met:
+-
+-1. Deployment and its effects have been successfully verified.
+-2. Its complete deployed feature lineage is integrated into the approved remote
+-   default branches, including deployed dependencies.
+-
+-The agent runs the normal release command without another user confirmation.
+-No separate UI acceptance or release direction is required. Missing integration
+-or failed/uncertain deployment keeps ownership. Idle time, feedback, review,
+-redeployment, disconnects and turn completion do not replace either proof.
+-Default-branch integration still needs its own explicit approval; deployment
+-approval grants no merge approval.
+-
+-Retain the rollout and review receipts: physical machine and aliases, resolved
+-system and user-profile store paths, complete source/input graph, canonical
+-repository/target mapping, exact deployed and intended final feature heads, and
+-fresh remote ancestry proofs. For refreshed history, retain reviewed old/new
+-base/head ranges, range-diff or patch-equivalence evidence and migration lineage.
+-Do not call a nonancestor deployed commit literally merged. An independently
+-proven equivalent successor can establish integrated feature lineage; a
+-substantive successor requires its own verified deployment. Ordinary session
+-completion still requires every registered exact final feature head.
+-
+-Before release, inspect authoritative status for the exact claim owned by this
+-session, reconcile known command effects and verify both conditions.
+-Promptly release that claim and verify its resulting state. The owner-only,
+-idempotent release API does not enforce this workflow. Do not edit claim
+-records or add release receipts to substitute for the evidence.
+-Release does not archive, delete, stop or clean a session. A later deployment
+-requires a fresh machine claim.
++The runtime's [machine retention and release policy](https://github.com/aither64/dev-workspace/blob/master/docs/coordination.md#machine-retention)
++governs ownership and automatic release for all deployed physical machines.
++Use `workspace-host coordination guide` to read the selected package's version.
+ 
+ ## Git and deployment
+ 
+@@ -124,6 +97,7 @@ operations retain their dated recovery procedures. The generic package installs
+ the retained integration guide alongside current coordination/recovery guides.
+ 
+ Legacy lifecycle completion can automatically release reservations as part of
+-its existing implementation. That behavior grants no permission to archive,
+-delete or release a deployed machine before the retention conditions above.
+-No lifecycle action is implied by finishing work or preparing a handoff.
++its existing implementation. Follow the runtime's
++[operations and recovery guide](https://github.com/aither64/dev-workspace/blob/master/docs/coordination-operations.md)
++for retained operations. Finishing work, releasing a claim or preparing a handoff
++does not authorize archiving, deleting, stopping or cleaning a session.
+diff --git a/test/agent_instructions_test.rb b/test/agent_instructions_test.rb
+index f5269d67..e6c9c907 100644
+--- a/test/agent_instructions_test.rb
++++ b/test/agent_instructions_test.rb
+@@ -39,29 +39,36 @@ class AgentInstructionsTest < Minitest::Test
+     assert_match(/ready, awaiting merge approval/, sessions)
+   end
+ 
+-  def test_machine_release_follows_verified_deployment_and_integration
+-    paths = %w[AGENTS.md docs/coordination.md docs/agent-instructions/deployment.md
+-               docs/agent-instructions/lifecycle.md docs/agent-instructions/git.md]
++  def test_machine_release_routes_to_the_authoritative_runtime_policy
++    coordination = File.read(File.join(ROOT, 'docs/coordination.md')).gsub(/\s+/, ' ')
++    canonical = 'https://github.com/aither64/dev-workspace/blob/master/docs/coordination.md#machine-retention'
+ 
++    assert_includes(coordination, "](#{canonical})")
++    assert_includes(coordination, 'automatic release for all deployed physical machines')
++    assert_includes(coordination, '`workspace-host coordination guide`')
++    assert_includes(coordination, 'https://github.com/aither64/dev-workspace/blob/master/docs/coordination-operations.md')
++    refute_match(/aitherdev/i, coordination, 'Machine identity belongs in configured catalogs and operations guides')
++    refute_match(/Promptly release each deployed physical machine once both conditions/, coordination,
++                 'Release prerequisites belong in the runtime guide')
++
++    paths = %w[AGENTS.md docs/agent-instructions/deployment.md
++               docs/agent-instructions/lifecycle.md docs/agent-instructions/git.md]
+     paths.each do |path|
+-      text = File.read(File.join(ROOT, path)).gsub(/\s+/, ' ')
+-      assert_match(/deployment(?:\/effect verification| and (?:its )?effects?| and effect verification)/i, text, path)
+-      assert_match(/deployed feature lineage.*approved remote default(?:s| branches)/, text, path)
+-      assert_match(/promptly release/i, text, path)
+-      assert_match(/without another user confirmation/, text, path)
+-      refute_match(/all three conditions|user accepts (?:the resulting|its)|renewed user acceptance|explicit direction to release that (?:physical )?machine|explicitly directs (?:its release|release of that machine)/, text, path)
++      text = File.read(File.join(ROOT, path))
++      target = path == 'AGENTS.md' ? 'docs/coordination.md#machine-retention' : '../coordination.md#machine-retention'
++      assert_includes(text, "](#{target})", path)
++      resolved = File.expand_path(target.split('#').first, File.dirname(File.join(ROOT, path)))
++      assert_equal(File.join(ROOT, 'docs/coordination.md'), resolved, path)
++      refute_match(/promptly release|without another user confirmation/i, text,
++                   "#{path} must reference, rather than copy, the release policy")
+     end
+ 
+-    coordination = File.read(File.join(ROOT, 'docs/coordination.md')).gsub(/\s+/, ' ')
+-    assert_match(/authoritative status for the exact claim owned by this session/, coordination)
+-    assert_match(/reconcile known command effects and verify both conditions/, coordination)
+-    assert_match(/release that claim and verify its resulting state/, coordination)
+-    assert_match(/Release does not archive, delete, stop or clean a session/, coordination)
+-    assert_match(/A later deployment requires a fresh machine claim/, coordination)
+-
++    deployment = File.read(File.join(ROOT, 'docs/agent-instructions/deployment.md')).gsub(/\s+/, ' ')
++    assert_includes(deployment, 'Deployment and release supply no merge or lifecycle approval')
+     lifecycle = File.read(File.join(ROOT, 'docs/agent-instructions/lifecycle.md')).gsub(/\s+/, ' ')
+     assert_match(/Do not infer permission to archive, delete, or stop a session/, lifecycle)
+     assert_match(/Legacy archive completion automatically releases machine reservations/, lifecycle)
++    assert_match(/original recovery contracts/, lifecycle)
+   end
+ 
+   def test_review_uses_saved_member_settings_or_catalog_fallback

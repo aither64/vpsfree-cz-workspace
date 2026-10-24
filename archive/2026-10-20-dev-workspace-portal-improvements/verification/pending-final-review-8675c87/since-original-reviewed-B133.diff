@@ -1,0 +1,910 @@
+diff --git a/portal/internal/web/auto_archive_test.go b/portal/internal/web/auto_archive_test.go
+index 6177e89..cb7e90e 100644
+--- a/portal/internal/web/auto_archive_test.go
++++ b/portal/internal/web/auto_archive_test.go
+@@ -40,7 +40,7 @@ func TestAutomaticArchivalPageIsSeparateFromIndex(t *testing.T) {
+ 	if page.Code != http.StatusOK {
+ 		t.Fatalf("dedicated route reached slug lookup: %d: %s", page.Code, page.Body.String())
+ 	}
+-	for _, required := range []string{"data-automatic-archival", "workspace-auto-archive-status", "workspace-auto-archive-rows", `href="/"`, `/static/app.js?v=52`} {
++	for _, required := range []string{"data-automatic-archival", "workspace-auto-archive-status", "workspace-auto-archive-rows", `href="/"`, `/static/app.js?v=54`} {
+ 		if !strings.Contains(page.Body.String(), required) {
+ 			t.Fatalf("overview lacks %q: %s", required, page.Body.String())
+ 		}
+diff --git a/portal/internal/web/firefox_tabs_acceptance.cjs b/portal/internal/web/firefox_tabs_acceptance.cjs
+index 57c19dd..d9a8639 100644
+--- a/portal/internal/web/firefox_tabs_acceptance.cjs
++++ b/portal/internal/web/firefox_tabs_acceptance.cjs
+@@ -8,6 +8,7 @@ const path = require("node:path");
+ const net = require("node:net");
+ const https = require("node:https");
+ const {spawn} = require("node:child_process");
++const {waitForRestoredStream} = require("./firefox_tabs_readiness.cjs");
+ const origin = new URL(process.argv[2]);
+ assert(["127.0.0.1", "localhost", "[::1]"].includes(origin.hostname) && origin.protocol === "https:", "Requires the disposable loopback HTTPS fixture");
+ assert(process.env.DISPLAY, "A real headful display or reviewed Xvfb environment is required");
+@@ -60,6 +61,7 @@ function assertBackgroundUnchanged(before, after, active) {
+   const element=async(using,value)=>{const found=await command("/element",{using,value});return found["element-6066-11e4-a52e-4f735466cecf"];};
+   const click=async(using,value)=>command(`/element/${await element(using,value)}/click`,{});
+   const visibleLog=[];
++  let stage="driver-start", lastVisibility=null, beforeDiscard=null, nativeDiscard=null, nativeRestore=null, lastCounts=null;
+   async function ready(index) {
+     await until(()=>execute('return !!document.getElementById("message-send") && !document.getElementById("message-send").disabled;'),`tab ${index} composer ready`,60000);
+     const state=await execute(`
+@@ -70,6 +72,7 @@ function assertBackgroundUnchanged(before, after, active) {
+         document.addEventListener("visibilitychange",record);record();
+       }
+       return {hidden:document.hidden,state:document.visibilityState};`);
++    lastVisibility={document:index,...state};
+     assert.equal(state.hidden,false);assert.equal(state.state,"visible");
+   }
+   async function settledBackground(active) {
+@@ -87,6 +90,7 @@ function assertBackgroundUnchanged(before, after, active) {
+       "moz:firefoxOptions":{binary:firefox,args:["--remote-allow-system-access","-profile",profile]}}}});
+     session=created.sessionId;
+     assert.equal(created.capabilities.browserName,"firefox");
++    stage="initialize-tabs";
+     const handles=[await command("/window")];
+     for(let index=0;index<50;index++) {
+       if(index)handles.push((await command("/window/new",{type:"tab"})).handle);
+@@ -94,6 +98,7 @@ function assertBackgroundUnchanged(before, after, active) {
+       if(index===0)await command(`/element/${await element("css selector",'#message-form textarea[name="message"]')}/value`,{text:"Disposable draft retained across native tab switches"});
+     }
+     assert.equal((await command("/window/handles")).length,50);
++    stage="native-visibility-switches";
+     // Selecting real tabs records both actual hidden and visible transitions.
+     for(let index=0;index<50;index++) {
+       await switchTo(handles[index]);await ready(index);
+@@ -107,6 +112,7 @@ function assertBackgroundUnchanged(before, after, active) {
+     const initialized=await fixture("/fixture/firefox/status");
+     assert.equal(Object.keys(initialized.counts).length,50,"All 50 documents must perform actual reads");
+     for(const lanes of Object.values(initialized.counts)) {assert(lanes.pending?.Count>0);assert(lanes.events?.Count>0);}
++    stage="sustained-foreground";
+     const before=await fixture("/fixture/firefox/status");await wait(35000);const sustained=await fixture("/fixture/firefox/status");
+     assertBackgroundUnchanged(before,sustained,0);
+     assert(sustained.counts[0].pending.Count-before.counts[0].pending.Count<=4,"Generic 200ms hints bypassed pending freshness");
+@@ -115,6 +121,8 @@ function assertBackgroundUnchanged(before, after, active) {
+ 
+     // Firefox's own tabbrowser discards a background document in this isolated
+     // profile. The pending attribute is evidence of native unload, not navigation.
++    stage="native-discard";
++    beforeDiscard=await fixture("/fixture/firefox/status");
+     await command("/moz/context",{context:"chrome"});
+     let discarded=await execute(`
+       const browser=Services.wm.getMostRecentWindow("navigator:browser").gBrowser;
+@@ -122,24 +130,46 @@ function assertBackgroundUnchanged(before, after, active) {
+       if(!tab||tab.selected)throw Error("background fixture tab missing");
+       tab.setAttribute("portal-fixture-discard","5");
+       browser.discardBrowser(tab,true);return {pending:tab.hasAttribute("pending"),selected:tab.selected};`);
++    nativeDiscard=discarded;
+     if (!discarded.pending) {
+       await until(()=>execute('const browser=Services.wm.getMostRecentWindow("navigator:browser").gBrowser;return Array.from(browser.tabs).some(tab=>tab.getAttribute("portal-fixture-discard")==="5"&&tab.hasAttribute("pending"));'),"native discard completion",5000);
+       discarded={pending:true,selected:false};
+     }
++    nativeDiscard=discarded;
+     assert.equal(discarded.pending,true,"Native Firefox discard was not established");assert.equal(discarded.selected,false);
+     await command("/moz/context",{context:"content"});
++    stage="native-restoration";
+     await switchTo(handles[5]);await ready(5);await settledBackground(5);
+-    const restored=await fixture("/fixture/firefox/status");assert(restored.counts[5].events.Count>initialized.counts[5].events.Count);
++    const restoredDocument=await execute('return {fixtureTab:new URL(location.href).searchParams.get("fixtureTab"),hidden:document.hidden,state:document.visibilityState};');
++    lastVisibility={document:5,...restoredDocument};
++    assert.equal(restoredDocument.fixtureTab,"5");assert.equal(restoredDocument.hidden,false);assert.equal(restoredDocument.state,"visible");
++    await command("/moz/context",{context:"chrome"});
++    nativeRestore=await execute(`
++      const browser=Services.wm.getMostRecentWindow("navigator:browser").gBrowser;
++      const tab=Array.from(browser.tabs).find(tab=>tab.getAttribute("portal-fixture-discard")==="5");
++      return {found:!!tab,pending:tab?.hasAttribute("pending")??null,selected:tab?.selected??null};`);
++    assert.equal(nativeRestore.found,true);assert.equal(nativeRestore.pending,false);assert.equal(nativeRestore.selected,true);
++    await command("/moz/context",{context:"content"});
++    stage="restored-stream";
++    const restored=await waitForRestoredStream({baseline:beforeDiscard.counts[5].events.Count,
++      status:async()=>{const snapshot=await fixture("/fixture/firefox/status");lastCounts=snapshot.counts;return snapshot;}});
++    assert(restored.counts[5].events.Count>beforeDiscard.counts[5].events.Count);
++    assert.equal(restored.counts[5].events.Active,1);
++    await settledBackground(5);
++    stage="restore-original-foreground";
+     await switchTo(handles[0]);await ready(0);await settledBackground(0);
+     assert.equal(await execute('return document.querySelector("#message-form textarea").value;'),"Disposable draft retained across native tab switches");
+ 
++    stage="typed-question";
+     const questionStart=Date.now();await fixture("/fixture/firefox/control?action=question","POST");
+     await until(()=>execute('return document.getElementById("pending").textContent.includes("Disposable Firefox question");'),"typed question invalidation",5000);
+     const questionLatencyMs=Date.now()-questionStart;
+     await fixture("/fixture/firefox/control?action=clear-question","POST");
+     await until(()=>execute('return !document.getElementById("pending").textContent.includes("Disposable Firefox question");'),"question removal",5000);
++    stage="pending-read-retry";
+     const failureBefore=await fixture("/fixture/firefox/status");await fixture("/fixture/firefox/control?action=fail-pending","POST");
+     await until(async()=>{const stats=await fixture("/fixture/firefox/status");return stats.counts[0].pending.Failed===1&&stats.counts[0].pending.Count>=failureBefore.counts[0].pending.Count+2;},"pending retry without reload",10000);
++    stage="durable-original-retry";
+     await click("css selector","#message-send");
+     await until(()=>execute('return Array.from(document.querySelectorAll("button")).some(button=>button.textContent.trim()==="Retry original");'),"lost-response durable receipt");
+     assert.equal(await execute('return document.querySelector("#message-form textarea").value;'),"Disposable draft retained across native tab switches");
+@@ -148,6 +178,14 @@ function assertBackgroundUnchanged(before, after, active) {
+     const final=await fixture("/fixture/firefox/status");assert.equal(final.dispatches,1);assert.equal(final.journalEntries,1);assert.equal(final.sendAttempts,2);
+     console.log(JSON.stringify({fixture:"portal-firefox-tabs-v1",browser:created.capabilities.browserVersion,tabs:50,nativeDiscard:true,restored:true,foregroundMs:35000,
+       questionLatencyMs,visibility:visibleLog,counts:final.counts,dispatches:final.dispatches,journalEntries:final.journalEntries,sendAttempts:final.sendAttempts}));
++  } catch(error) {
++    // Preserve fixed stage/counter and observed native/visibility evidence before
++    // cleanup. Never include browser contents, URLs or the disposable profile.
++    let counts=lastCounts??beforeDiscard?.counts??null;
++    try {counts=(await fixture("/fixture/firefox/status")).counts;}catch(_){/* Retain prior observations if status is unavailable. */}
++    console.error(JSON.stringify({fixture:"portal-firefox-tabs-v1",stage,visibility:lastVisibility,
++      nativeDiscard,nativeRestore,beforeDiscard:beforeDiscard?.counts?.[5]??null,counts}));
++    throw error;
+   } finally {
+     if(session) {try {await command("",undefined,"DELETE");}catch(_){/* Stop only this owned driver below. */}}
+     if(child.pid && child.exitCode===null && child.signalCode===null) {child.kill("SIGTERM");await Promise.race([new Promise(resolve=>child.once("exit",resolve)),wait(5000)]);}
+diff --git a/portal/internal/web/firefox_tabs_readiness.cjs b/portal/internal/web/firefox_tabs_readiness.cjs
+new file mode 100644
+index 0000000..1e86f7e
+--- /dev/null
++++ b/portal/internal/web/firefox_tabs_readiness.cjs
+@@ -0,0 +1,18 @@
++"use strict";
++
++// Specific to the native tab-5 discard/restoration acceptance fixture. The
++// composer can be ready before its asynchronously opened EventSource arrives.
++async function waitForRestoredStream({baseline, status, now = Date.now,
++  sleep = ms => new Promise(resolve => setTimeout(resolve, ms))}) {
++  const deadline = now() + 20000;
++  while (now() < deadline) {
++    const snapshot = await status();
++    if (now() >= deadline) break;
++    const events = snapshot.counts?.[5]?.events;
++    if (events?.Count > baseline && events.Active === 1) return snapshot;
++    await sleep(100);
++  }
++  throw Error("Native restored tab 5 did not establish one new stream within 20000ms");
++}
++
++module.exports = {waitForRestoredStream};
+diff --git a/portal/internal/web/firefox_tabs_readiness_test.cjs b/portal/internal/web/firefox_tabs_readiness_test.cjs
+new file mode 100644
+index 0000000..e9183ee
+--- /dev/null
++++ b/portal/internal/web/firefox_tabs_readiness_test.cjs
+@@ -0,0 +1,67 @@
++"use strict";
++const assert = require("node:assert/strict");
++const {test} = require("node:test");
++const {waitForRestoredStream} = require("./firefox_tabs_readiness.cjs");
++
++function fixture(states) {
++  let time = 0, reads = 0, sleeps = 0;
++  const status = async () => {
++    const events = states[Math.min(reads++, states.length - 1)];
++    return {counts: {0: {events: {Count: 8, Active: 0}}, 5: {events}}};
++  };
++  return {
++    options: {baseline: 3, status, now: () => time,
++      sleep: async ms => { assert.equal(ms, 100); time += ms; sleeps++; }},
++    observed: () => ({time, reads, sleeps}),
++  };
++}
++
++test("composer ready and hidden tabs quiescent do not establish restored SSE", async () => {
++  // This is exactly the state admitted by the old composer/background gates.
++  // Its immediate Count assertion fails even though restoration soon succeeds.
++  const before = {Count: 3, Active: 0};
++  const run = fixture([before, {Count: 4, Active: 0}, {Count: 4, Active: 1}]);
++  const restored = await waitForRestoredStream(run.options);
++  assert.equal(restored.counts[5].events.Count, 4);
++  assert.deepEqual(run.observed(), {time: 200, reads: 3, sleeps: 2});
++});
++
++test("an unchanged counter cannot certify a new stream even if active", async () => {
++  const run = fixture([{Count: 3, Active: 1}, {Count: 4, Active: 1}]);
++  await waitForRestoredStream(run.options);
++  assert.deepEqual(run.observed(), {time: 100, reads: 2, sleeps: 1});
++});
++
++test("two active streams cannot satisfy restoration", async () => {
++  const run = fixture([{Count: 4, Active: 2}, {Count: 5, Active: 1}]);
++  const restored = await waitForRestoredStream(run.options);
++  assert.equal(restored.counts[5].events.Active, 1);
++  assert.deepEqual(run.observed(), {time: 100, reads: 2, sleeps: 1});
++});
++
++for (const [label, states] of [
++  ["no new stream", [{Count: 3, Active: 0}]],
++  ["new request never remains active", [{Count: 4, Active: 0}]],
++  ["missing restored-document counters", [undefined]],
++]) {
++  test(`${label} fails at the existing 20-second deadline`, async () => {
++    const run = fixture(states);
++    await assert.rejects(waitForRestoredStream(run.options),
++      /Native restored tab 5 did not establish one new stream within 20000ms/);
++    assert.deepEqual(run.observed(), {time: 20000, reads: 200, sleeps: 200});
++  });
++}
++
++test("status transport failure stays a failure", async () => {
++  await assert.rejects(waitForRestoredStream({baseline: 3,
++    status: async () => { throw Error("Fixture transport failed"); }}),
++  /Fixture transport failed/);
++});
++
++
++test("a stream observed after the deadline cannot satisfy restoration", async () => {
++  let time = 0;
++  await assert.rejects(waitForRestoredStream({baseline: 3, now: () => time,
++    status: async () => { time = 20001; return {counts: {5: {events: {Count: 4, Active: 1}}}}; }}),
++  /Native restored tab 5 did not establish one new stream within 20000ms/);
++});
+diff --git a/portal/internal/web/firefox_tabs_test.go b/portal/internal/web/firefox_tabs_test.go
+index e76bdc6..624fe1c 100644
+--- a/portal/internal/web/firefox_tabs_test.go
++++ b/portal/internal/web/firefox_tabs_test.go
+@@ -103,6 +103,13 @@ func TestFirefoxFixtureJournalReconcilesOriginalAttempt(t *testing.T) {
+ 	}
+ }
+ 
++func TestFirefoxFixtureReadiness(t *testing.T) {
++	output, err := exec.Command("node", "--test", "firefox_tabs_readiness_test.cjs").CombinedOutput()
++	if err != nil {
++		t.Fatalf("Firefox restoration readiness: %v\n%s", err, output)
++	}
++}
++
+ func TestFirefoxTabs(t *testing.T) {
+ 	if os.Getenv("PORTAL_FIREFOX_TABS_TEST") != "1" {
+ 		t.Skip("set PORTAL_FIREFOX_TABS_TEST=1 after review with ordinary Firefox, Geckodriver and a display")
+diff --git a/portal/internal/web/optional_questions_browser_test.cjs b/portal/internal/web/optional_questions_browser_test.cjs
+index fc7b0b7..b46978c 100644
+--- a/portal/internal/web/optional_questions_browser_test.cjs
++++ b/portal/internal/web/optional_questions_browser_test.cjs
+@@ -176,7 +176,7 @@ const digest = text => createHash("sha256").update(text).digest("hex");
+     await page.locator("#message-form").evaluate(form => form.requestSubmit());
+     const receipt = page.locator(".message-receipt").filter({hasText: "Ordinary follow-up"});
+     await expect(receipt).toContainText("Sent to Codex");
+-    await expect(receipt.getByRole("button", {name: "Dismiss message notification"})).toHaveText("×");
++    await expect(receipt.getByRole("button", {name: "Dismiss message", exact: true})).toHaveText("×");
+     thread.entries.push(ordinaryReply); await refresh();
+     await expect(receipt).toHaveCount(0);
+     await expect(page.locator("#codex-status")).toHaveText("active");
+diff --git a/portal/internal/web/page_lifecycle_browser_test.cjs b/portal/internal/web/page_lifecycle_browser_test.cjs
+index 7e83a96..3976661 100644
+--- a/portal/internal/web/page_lifecycle_browser_test.cjs
++++ b/portal/internal/web/page_lifecycle_browser_test.cjs
+@@ -33,6 +33,7 @@ const checkSidebarMenu = async page => {
+       const page = await browser.newPage({ignoreHTTPSErrors: true});
+       const errors = [], notices = [];
+       let details = 0, activity = 0, failActivity = false, holdDetails = false, releaseDetails;
++      let staleRepliesConstructed = 0, staleRepliesFulfilled = 0;
+       let recoveryOverride = null;
+       let recoveryNoticeID = "notice-one", noticeDismissed = false, failDismissal = false, staleNoticeRead = false;
+       let dismissals = 0, continuationRequests = 0;
+@@ -64,11 +65,18 @@ const checkSidebarMenu = async page => {
+             return route.abort("failed").catch(() => {});
+           }
+           if (recoveryOverride) {
++            const state = recoveryOverride, staleReply = staleNoticeRead && state === "waiting";
++            const noticeId = recoveryNoticeID, dismissed = noticeDismissed;
+             const response = await route.fetch(), payload = await response.json();
+-            return route.fulfill({response, json: {...payload,
+-              interactive: recoveryOverride !== "stopped", recovery: {state: recoveryOverride,
+-                ...(recoveryOverride === "waiting" ? {noticeId: recoveryNoticeID,
+-                  noticeDismissed: noticeDismissed && !staleNoticeRead} : {})}}});
++            const staleReplyID = staleReply ? ++staleRepliesConstructed : 0;
++            if (staleReply) assert(dismissed, "stale reply must contradict a completed dismissal");
++            await route.fulfill({response, json: {...payload,
++              ...(staleReply ? {repositoriesHTML: payload.repositoriesHTML +
++                `<span hidden data-fixture-stale-notice-reply="${staleReplyID}"></span>`} : {}),
++              interactive: state !== "stopped", recovery: {state,
++                ...(state === "waiting" ? {noticeId, noticeDismissed: dismissed && !staleReply} : {})}}});
++            if (staleReply) staleRepliesFulfilled = staleReplyID;
++            return;
+           }
+         }
+         if (operation === "activity") {
+@@ -142,9 +150,16 @@ const checkSidebarMenu = async page => {
+       await expect(composer).toHaveValue("Keep this unsent recovery draft");
+       assert(await composer.evaluate(element => element === window.recoveryComposer));
+       staleNoticeRead = true;
+-      const beforeStaleRefresh = details;
+-      await page.evaluate(() => dispatchEvent(new Event("focus")));
+-      await expect.poll(() => details).toBeGreaterThan(beforeStaleRefresh);
++      const beforeStaleRefresh = details, beforeStaleReply = staleRepliesConstructed;
++      await expect.poll(async () => {
++        if (details <= beforeStaleRefresh) await page.evaluate(() => dispatchEvent(new Event("focus")));
++        const replyID = staleRepliesFulfilled;
++        return {started: details > beforeStaleRefresh, constructed: staleRepliesConstructed > beforeStaleReply,
++          fulfilled: replyID > beforeStaleReply,
++          consumed: replyID > beforeStaleReply && await page.locator(
++            `#repositories [data-fixture-stale-notice-reply="${replyID}"]`).count() === 1};
++      }).toEqual({started: true, constructed: true, fulfilled: true, consumed: true});
++      expect(details).toBeGreaterThan(beforeStaleRefresh);
+       await expect(page.locator("#session-recovery")).toBeHidden();
+       staleNoticeRead = false;
+       await page.reload();
+diff --git a/portal/internal/web/paging_browser_live_test.cjs b/portal/internal/web/paging_browser_live_test.cjs
+index fad1c8b..42eb27d 100644
+--- a/portal/internal/web/paging_browser_live_test.cjs
++++ b/portal/internal/web/paging_browser_live_test.cjs
+@@ -94,7 +94,6 @@ const items = (first, last) => Array.from({length: last - first + 1}, (_, index)
+     await page.evaluate(() => {
+       const log = document.getElementById("transcript");
+       log.scrollTop = 260;
+-      window.pagingViewport = log.getBoundingClientRect().top;
+     });
+     await page.waitForTimeout(50);
+     assert.equal(olderReads, 0, "filter and resize restoration must not load history");
+@@ -109,8 +108,16 @@ const items = (first, last) => Array.from({length: last - first + 1}, (_, index)
+       "native wheel scrolling must cross the top threshold");
+     await expect(page.locator("#history-status")).toHaveText("Loading earlier messages…");
+     assert.equal(await page.locator("#history-controls").evaluate(node => getComputedStyle(node).justifyContent), "center");
+-    assert.equal(await page.locator("#transcript").evaluate(node => node.getBoundingClientRect().top),
+-      await page.evaluate(() => window.pagingViewport), "loading status must not move the transcript");
++    const historyLayout = await page.evaluate(() => {
++      const notice = document.getElementById("history-controls"), log = document.getElementById("transcript");
++      const noticeBox = notice.getBoundingClientRect(), logBox = log.getBoundingClientRect();
++      return {position: getComputedStyle(notice).position, noticeHeight: noticeBox.height,
++        noticeBottom: noticeBox.bottom, transcriptTop: logBox.top, transcriptHeight: logBox.height};
++    });
++    assert.equal(historyLayout.position, "static", JSON.stringify(historyLayout));
++    assert(historyLayout.noticeHeight > 0 && historyLayout.transcriptHeight > 0, JSON.stringify(historyLayout));
++    assert(historyLayout.noticeBottom <= historyLayout.transcriptTop + 1,
++      "history loading must occupy normal layout space above, without covering the transcript: " + JSON.stringify(historyLayout));
+     await page.mouse.wheel(0, -120);
+     assert.equal(olderReads, 1, "one in-flight older read is allowed");
+     await page.locator("#transcript").evaluate(node => new Promise(resolve => {
+@@ -125,17 +132,20 @@ const items = (first, last) => Array.from({length: last - first + 1}, (_, index)
+       const log = document.getElementById("transcript");
+       const anchor = [...log.querySelectorAll(".message")].find(node =>
+         node.getBoundingClientRect().bottom > log.getBoundingClientRect().top);
+-      window.pagingAnchor = {node: anchor, top: anchor.getBoundingClientRect().top};
++      window.pagingAnchor = {node: anchor,
++        offset: anchor.getBoundingClientRect().top - log.getBoundingClientRect().top};
+     });
+     await page.waitForTimeout(50);
+-    assert.equal(await page.evaluate(() => window.pagingAnchor.node.getBoundingClientRect().top),
+-      await page.evaluate(() => window.pagingAnchor.top), "held loading must preserve the anchor");
++    assert.equal(await page.evaluate(() => window.pagingAnchor.node.getBoundingClientRect().top -
++      document.getElementById("transcript").getBoundingClientRect().top),
++      await page.evaluate(() => window.pagingAnchor.offset), "held loading must preserve the within-transcript anchor");
+     releaseFirstOlder();
+     holdFirstOlder = false;
+     await expect(page.locator("#transcript .message")).toHaveCount(200);
+     const anchorShift = await page.evaluate(() => ({
+       same: [...document.querySelectorAll("#transcript .message")].some(node => node === window.pagingAnchor.node),
+-      shift: Math.abs(window.pagingAnchor.node.getBoundingClientRect().top - window.pagingAnchor.top),
++      shift: Math.abs(window.pagingAnchor.node.getBoundingClientRect().top -
++        document.getElementById("transcript").getBoundingClientRect().top - window.pagingAnchor.offset),
+     }));
+     assert.equal(anchorShift.same, true);
+     assert(anchorShift.shift < 8, `older page moved the scroll anchor by ${anchorShift.shift}px`);
+@@ -151,12 +161,15 @@ const items = (first, last) => Array.from({length: last - first + 1}, (_, index)
+       const log = document.getElementById("transcript");
+       const anchor = [...log.querySelectorAll(".message")].find(node =>
+         node.getBoundingClientRect().bottom > log.getBoundingClientRect().top);
+-      window.retryAnchor = {node: anchor, top: anchor.getBoundingClientRect().top};
++      window.retryAnchor = {node: anchor,
++        offset: anchor.getBoundingClientRect().top - log.getBoundingClientRect().top};
+     });
+     releaseSecondError();
+     await expect(page.locator("#history-status")).toContainText("Earlier messages could not be loaded");
++    assert(await page.evaluate(() => window.retryAnchor.node.isConnected), "error must retain the same message node");
+     assert((await page.evaluate(() => Math.abs(window.retryAnchor.node.getBoundingClientRect().top -
+-      window.retryAnchor.top))) < 8, "error status moved the scroll anchor");
++      document.getElementById("transcript").getBoundingClientRect().top - window.retryAnchor.offset))) < 8,
++      "error status moved the within-transcript scroll anchor");
+     await expect(page.locator("#repair-history")).toBeVisible();
+     await page.mouse.wheel(0, -120);
+     assert.equal(olderReads, 2, "failure must pause automatic reads");
+@@ -169,8 +182,10 @@ const items = (first, last) => Array.from({length: last - first + 1}, (_, index)
+     await page.locator("#repair-history").click();
+     await expect(page.locator("#transcript .message")).toHaveCount(301);
+     assert.equal(olderReads, 3, "Retry must repeat the failed older cursor");
++    assert(await page.evaluate(() => window.retryAnchor.node.isConnected), "retry must retain the same message node");
+     assert((await page.evaluate(() => Math.abs(window.retryAnchor.node.getBoundingClientRect().top -
+-      window.retryAnchor.top))) < 8, "retry prepend moved the scroll anchor");
++      document.getElementById("transcript").getBoundingClientRect().top - window.retryAnchor.offset))) < 8,
++      "retry prepend moved the within-transcript scroll anchor");
+     await expect(page.locator("#repair-history")).toBeHidden();
+     await page.evaluate(() => { document.getElementById("transcript").scrollTop = 0; });
+     await page.mouse.wheel(0, -120);
+diff --git a/portal/internal/web/portal_improvements_browser_test.cjs b/portal/internal/web/portal_improvements_browser_test.cjs
+index e047559..a0bb678 100644
+--- a/portal/internal/web/portal_improvements_browser_test.cjs
++++ b/portal/internal/web/portal_improvements_browser_test.cjs
+@@ -109,6 +109,7 @@ const fs = require("node:fs/promises");
+     await expect(page.locator("#message-submission-status")).toBeHidden();
+ 
+     assert.equal(filesReads, 0, "Unopened Files tab must not enumerate files");
++    await input.fill("Draft retained while browsing files");
+     await page.evaluate(() => {location.hash = "artifacts";});
+     await expect(page.locator("#files")).toBeVisible();
+     await expect(page.locator(".session-file")).toHaveCount(503);
+@@ -119,7 +120,6 @@ const fs = require("node:fs/promises");
+     await expect(bottom).toHaveAttribute("rel", /noopener/);
+     await expect(bottom.locator("..")).toContainText("Report 499");
+     await expect(bottom.locator("..")).toContainText("Registered");
+-    await input.fill("Draft retained while browsing files");
+     const [fileViewer] = await Promise.all([context.waitForEvent("page"), bottom.click()]);
+     await fileViewer.waitForLoadState();
+     await expect(fileViewer.locator("#source-file-copy-content")).toBeEnabled();
+diff --git a/portal/internal/web/read_cycle_browser_test.cjs b/portal/internal/web/read_cycle_browser_test.cjs
+index 900cd41..0577b00 100644
+--- a/portal/internal/web/read_cycle_browser_test.cjs
++++ b/portal/internal/web/read_cycle_browser_test.cjs
+@@ -49,14 +49,14 @@ test("deadline failure stays visible and access failures keep their status",asyn
+ // Mount the shipped lane functions, preserving their actual slot/finally wiring.
+ // The transport deliberately ignores AbortSignal to exercise late settlements.
+ function lane(name, typed = false) {
+-  const reads=[], applied=[], timers=new Map(); let timerID=0,time=100000;
++  const reads=[], applied=[], failures=[], timers=new Map(); let timerID=0,time=100000;
+   const request=(_url, options) => {const read=deferred(); reads.push({...read,signal:options.signal}); return read.promise;};
+   const element={hidden:true,textContent:"",querySelector:()=>({textContent:""}),querySelectorAll:()=>[],classList:{contains:()=>true},addEventListener(){}};
+-  const notice={begin(){},success(){applied.push("success");},failure(error){applied.push(error.message);},cancel(){}};
++  const notice={begin(){},success(){applied.push("success");},failure(error){failures.push(error);applied.push(error.message);},cancel(){}};
+   const context={createReadScope,Date:class extends Date {static now(){return time;}},document:{hidden:false,getElementById:()=>element,querySelector:()=>null,querySelectorAll:()=>[]},
+     setTimeout:(fn,delay)=>{timers.set(++timerID,{fn,delay});return timerID;},clearTimeout:id=>timers.delete(id),
+     refreshPolicy:{detailsDeadlineMs:10000,pendingDeadlineMs:10000,queueDeadlineMs:10000,detailsMs:5000,retryInitialMs:2000,retryMaxMs:30000,activityIdleMs:5000,activityActiveMs:1000},
+-    pageReads:createReadScope(),client:{details:options=>request("details",options),pending:options=>request("pending",options),reconcileQueue:async()=>{},queue:options=>request("queue",options),activity:options=>request("activity",options)},request,
++    pendingStatus:element,pageReads:createReadScope(),client:{details:options=>request("details",options),pending:options=>request("pending",options),reconcileQueue:async()=>{},queue:options=>request("queue",options),activity:options=>request("activity",options)},request,
+     slug:"example",interactive:true,executionHeld:false,artifactList:{},teamSettingsGeneration:0,teamSettingsGenerationRead:0,
+     conversationAssets:{createRefreshNotice:()=>notice},reconcileCompletedArchive:()=>false,refreshLifecycleTarget(){},applyRecoveryStatus(){},
+     repositoryReviewLoading:null,repositoryReview:null,selectedMember:"",updateTeamWork(){},refreshTeamLeadSettings(){},teamActivityPresentation:()=>({}),
+@@ -71,7 +71,7 @@ function lane(name, typed = false) {
+   else {start=source.indexOf("  const queueStatus =");end=source.indexOf("  queueRetry?.addEventListener",start);expression="refreshQueue";}
+   assert(start>0 && end>start, name);
+   const api=vm.runInNewContext(source.slice(start,end)+`\n({refresh:${expression},${name==="team"?"payload:()=>teamStatsPayload,":""}})`,context);
+-  return {api,context,reads,applied,timers,setTime:value=>{time=value;},retire(){context.pageReads.pause();context.pageReads.resume();}};
++  return {api,context,reads,applied,failures,timers,setTime:value=>{time=value;},retire(){context.pageReads.pause();context.pageReads.resume();}};
+ }
+ for(const name of ["details","team","activity","pending","queue"]) {
+   test(`${name} starts a resumed read before old success/error/finally settles`,async()=>{
+@@ -100,6 +100,73 @@ test("typed pending hints respect successful freshness and force one invalidatio
+   read=legacy.api.refresh();assert.equal(legacy.reads.length,2);legacy.reads[1].resolve([]);await read;legacy.context.pageReads.pause();
+ });
+ 
++test("typed pending failure after recent success retries on backoff",async(t)=>{
++  const h=lane("pending",true), questions=[{id:"retained-question"}];
++  t.after(()=>h.context.pageReads.pause());
++  let reading=h.api.refresh();h.reads[0].resolve(questions);await reading;
++  let time=100100;h.setTime(time);
++  reading=h.api.refresh(true);h.reads[1].reject(Object.assign(Error("pending 503"),{status:503}));await reading;
++  assert.equal(h.applied.filter(Array.isArray).at(-1),questions,"failure must retain displayed questions");
++  assert.equal(h.failures.at(-1).status,503);
++  for(let i=0;i<100;i++){h.setTime(time+i);await h.api.refresh();}
++  assert.equal(h.reads.length,2,"ordinary hints must respect retry backoff");
++  const fireRetry=async(delay)=>{
++    const entry=[...h.timers].find(([_id,timer])=>timer.delay===delay);
++    assert(entry,`expected retry delay ${delay}`);
++    h.timers.delete(entry[0]);h.setTime(time+=delay);entry[1].fn();await tick();
++  };
++  await fireRetry(2000);
++  assert.equal(h.reads.length,3,"the 2s retry must dispatch inside the previous success window");
++  void h.api.refresh();void h.api.refresh();
++  assert.equal(h.reads.length,3,"retry transport must remain single flight");
++  h.reads[2].reject(Error("pending 503 again"));await tick();
++  let count=3;
++  for(const [index,delay] of [4000,8000,16000,30000,30000].entries()){
++    for(let hint=0;hint<20;hint++)void h.api.refresh();
++    assert.equal(h.reads.length,count,"hints must not bypass a scheduled retry");
++    await fireRetry(delay);assert.equal(h.reads.length,++count);
++    assert.equal(h.applied.filter(Array.isArray).at(-1),questions);
++    if(index===4)h.reads.at(-1).resolve(questions);else h.reads.at(-1).reject(Error("pending still unavailable"));
++    await tick();
++  }
++  assert.equal(h.applied.filter(value=>value==="success").length,2,"only confirmed reads establish success");
++  for(let i=0;i<300;i++){h.setTime(time+i*40);await h.api.refresh();}
++  assert.equal(h.reads.length,count,"recovery must restore the successful 15s freshness floor");
++  reading=h.api.refresh(true);assert.equal(h.reads.length,++count,"typed invalidation still forces freshness");
++  for(let i=0;i<20;i++)void h.api.refresh(true);
++  h.reads.at(-1).resolve(questions);await reading;await tick();
++  assert.equal(h.reads.length,++count,"forced invalidations must coalesce to one rerun");
++  h.reads.at(-1).resolve(questions);await tick();
++  reading=h.api.refresh(true);h.reads.at(-1).reject(Error("new failure"));await reading;
++  assert([...h.timers.values()].some(timer=>timer.delay===2000),"successful recovery must reset backoff to 2s");
++});
++
++test("retired pending failure preserves successor success freshness",async(t)=>{
++  const h=lane("pending",true), questions=[{id:"current-question"}];
++  t.after(()=>h.context.pageReads.pause());
++  const old=h.api.refresh();h.retire();h.setTime(100100);
++  const fresh=h.api.refresh(true);h.reads[1].resolve(questions);await fresh;
++  const effects=[...h.applied],timers=[...h.timers];
++  h.reads[0].reject(Object.assign(Error("retired access failure"),{status:403}));await old;
++  assert.deepEqual(h.applied,effects,"retired failure must not render a warning");
++  assert.equal(h.failures.length,0);assert.deepEqual([...h.timers],timers,"retired failure must not change timers");
++  for(let i=0;i<300;i++){h.setTime(100100+i*40);await h.api.refresh();}
++  assert.equal(h.reads.length,2,"retired failure must not erase successor freshness");
++  const forced=h.api.refresh(true);void h.api.refresh();
++  assert.equal(h.reads.length,3,"current successor remains single flight");
++  h.reads[2].resolve(questions);await forced;
++});
++
++test("current pending access failure keeps its status and last questions",async(t)=>{
++  const h=lane("pending",true), questions=[{id:"authorized-last-value"}];
++  t.after(()=>h.context.pageReads.pause());
++  let reading=h.api.refresh();h.reads[0].resolve(questions);await reading;
++  const denied=Object.assign(Error("Access denied"),{status:403});
++  reading=h.api.refresh(true);h.reads[1].reject(denied);await reading;
++  assert.equal(h.failures.at(-1),denied);assert.equal(h.failures.at(-1).status,403);
++  assert.equal(h.applied.filter(Array.isArray).at(-1),questions);
++});
++
+ test("team HTTP200 preserves genuine stale observation until fresh evidence",async()=>{
+   const h=lane("team"), now=Date.now();
+   let read=h.api.refresh();h.reads[0].resolve({members:[{address:"implementer0",state:"ready",snapshot:{currentState:"working",stale:true,observedAtMs:now-20000}}]});await read;
+@@ -108,3 +175,157 @@ test("team HTTP200 preserves genuine stale observation until fresh evidence",asy
+   assert.equal(teamWorkPresentation(h.api.payload().members,"lead",now).stale,false);
+   h.context.pageReads.pause();
+ });
++
++function historyLane({gap = true, citationsPending = false} = {}) {
++  const reads = [], applied = [], effects = [], timers = new Map(), handlers = new Map();
++  let timerID = 0;
++  const elements = new Map(["history-controls", "repair-history", "history-status"].map(id => [id, {
++    hidden: true, disabled: false, textContent: "", addEventListener: (event, fn) => handlers.set(id + ":" + event, fn),
++  }]));
++  const retained = {rows: [{node: {}}], olderCursor: "older-1", repairCursor: "repair-1", repairVersion: 1,
++    hasOlder: true, gap, citationsPending};
++  const draft = {message: "Unsent draft", attachments: ["upload-1"]};
++  const context = {AbortController, DOMException, document: {hidden: false, getElementById: id => elements.get(id)},
++    setTimeout: (fn, delay) => {timers.set(++timerID, {fn, delay}); return timerID;}, clearTimeout: id => timers.delete(id),
++    refreshPolicy: {transcriptDeadlineMs: 35000, historyPageMs: 40, retryInitialMs: 2000, retryMaxMs: 30000},
++    transcriptHistory: retained, pagingUnavailable: false, currentThreadId: "thread-1", draft,
++    resetHistoryNavigation: () => effects.push("controls"),
++    renderThread: (page, isCurrent, kind) => {assert(isCurrent()); applied.push({page, kind}); retained.gap = false; retained.citationsPending = false;},
++    client: {threadPage(options) {const read = deferred(); reads.push({...read, ...options}); return read.promise;}},
++    conversationAssets: {
++      readTranscriptPage: (client, options) => client.threadPage(options),
++      createRefreshNotice: ({render}) => {
++        let state = {loading: false, warning: false};
++        const publish = kind => {effects.push(kind); render(state);};
++        return {
++          begin() {state = {...state, loading: true}; publish("begin");},
++          success() {state = {loading: false, warning: false}; publish("success");},
++          failure(error) {state = {loading: false, warning: true, error}; publish("failure");},
++          cancel() {state = {...state, loading: false}; publish("cancel");},
++        };
++      },
++    },
++    scheduleRefresh: () => effects.push("refresh"),
++    filesReads: {pause() {}, resume() {}}, filesLoaded: true,
++    pageLeaving: false, detailsTimer: null, teamStatsReceivedAt: 0, repositoryReview: null,
++    pauseTiming() {}, resumeTiming() {}, refreshSessionDetails() {}, refreshTeamStats() {},
++    pendingRetryTimer: null, pendingDueTimer: null, queueRetryTimer: null, pendingRerun: false, queueRerun: false,
++    pendingNotice: {cancel() {}}, queueNotice: {cancel() {}}, detailsNotice: {cancel() {}},
++    refreshPending() {}, refreshQueue() {},
++  };
++  const slice = (start, end) => {
++    const first = source.indexOf(start), last = source.indexOf(end, first);
++    assert(first > 0 && last > first, start);
++    return source.slice(first, last);
++  };
++  const api = vm.runInNewContext(
++    slice("  const createReadScope =", "  const createTimingClock =") +
++    "\nconst pageReads = createReadScope(); let historyRead = null, historyRetryTimer = null, historyError = '', historyFailure = null;\n" +
++    "let startOlderHistoryRead, resumeHistory, pauseConversationReads, resumeConversationReads;\n" +
++    slice("  const historyControls =", "  const observePageReceipts =") +
++    slice("  const runHistoryRead =", "  const showPromptStatus =") +
++    slice("  pauseConversationReads =", "  function scheduleRefresh(") +
++    slice("  const suspendPageReads =", "  // Firefox can reject") +
++    `\n({read: runHistoryRead, suspend: suspendPageReads, resume: resumePageReads, schedule: scheduleHistoryRepair,
++      state: () => ({read: historyRead, timer: historyRetryTimer, error: historyError, failure: historyFailure,
++        notice: historyNoticeState, retryDelay: historyRetryDelay})})`, context);
++  return {api, reads, applied, effects, timers, retained, draft, elements, handlers,
++    fire(id) {const timer = timers.get(id); assert(timer, "expected owned timer"); timers.delete(id); timer.fn();}};
++}
++
++test("history retires loading and starts one resumed repair before old success or failure settles", async () => {
++  for (const kind of ["older", "repair"]) for (const fails of [false, true]) {
++    const h = historyLane(), row = h.retained.rows[0], draft = h.draft.attachments;
++    const old = h.api.read(kind); await tick();
++    h.api.suspend();
++    assert(h.reads[0].signal.aborted);
++    assert.equal(h.api.state().read, null);
++    assert.equal(h.api.state().notice.loading, false);
++    assert.equal(h.api.state().timer, null);
++    h.api.resume(); h.api.resume();
++    const repairTimer = h.api.state().timer;
++    assert.equal(h.timers.get(repairTimer).delay, 40);
++    h.fire(repairTimer); await tick();
++    assert.equal(h.reads.length, 2);
++    assert.equal(h.reads[1].cursor, "repair-1");
++    assert.equal(h.reads[1].expectedThreadId, "thread-1");
++    const successor = h.api.state().read, effects = h.effects.slice(), timers = [...h.timers];
++    assert(successor);
++    assert.equal(h.elements.get("repair-history").disabled, true);
++    h.api.schedule(); await h.api.read("older");
++    assert.deepEqual([...h.timers], timers, "in-flight repair creates no 100ms busy loop");
++    if (fails) h.reads[0].reject(Error("retired failure")); else h.reads[0].resolve({entries: ["retired"]});
++    await old;
++    assert.equal(h.api.state().read, successor, "old finally cannot clear the successor");
++    assert.equal(h.api.state().notice.loading, true);
++    assert.equal(h.elements.get("repair-history").disabled, true);
++    assert.deepEqual(h.effects, effects, "old settlement cannot render, cancel notices or schedule work");
++    assert.deepEqual([...h.timers], timers);
++    assert.equal(h.applied.length, 0);
++    assert.equal(h.retained.rows[0], row);
++    assert.equal(h.retained.olderCursor, "older-1");
++    assert.equal(h.draft.message, "Unsent draft"); assert.equal(h.draft.attachments, draft);
++    h.reads[1].resolve({entries: ["current"]}); await tick();
++    assert.equal(h.applied.length, 1);
++    assert.equal(h.applied[0].kind, "repair");
++    assert.equal(h.api.state().read, null);
++    assert.equal(h.api.state().notice.loading, false);
++    assert.equal(h.api.state().timer, null);
++    h.api.suspend();
++  }
++});
++
++test("canceled manual history stays retryable and retains a prior failure without replay", async () => {
++  const h = historyLane({gap: false});
++  const first = h.api.read("older"); h.reads[0].reject(Error("current failure")); await first;
++  const failure = h.api.state().failure, error = h.api.state().error;
++  assert.equal(failure.kind, "older"); assert(error);
++  const retry = h.api.read("older"); await tick(); h.api.suspend(); h.api.resume();
++  assert.equal(h.api.state().failure, failure); assert.equal(h.api.state().error, error);
++  assert.equal(h.elements.get("repair-history").disabled, false);
++  assert.equal(h.api.state().timer, null, "manual older reads are not automatically replayed");
++  h.handlers.get("repair-history:click")(); await tick();
++  assert.equal(h.reads.length, 3); assert.equal(h.reads[2].cursor, "older-1");
++  const effects = h.effects.slice(); h.reads[1].reject(Error("late retry failure")); await retry;
++  assert.deepEqual(h.effects, effects);
++  h.reads[2].resolve({entries: []}); await tick();
++  assert.equal(h.api.state().failure, null); assert.equal(h.api.state().error, "");
++  h.api.suspend();
++});
++
++test("history resume repairs pending citations and retires backoff without losing current errors", async () => {
++  const h = historyLane({gap: false, citationsPending: true});
++  const first = h.api.read("repair"); h.reads[0].reject(Error("current failure")); await first;
++  const failure = h.api.state().failure, timer = h.api.state().timer;
++  assert.equal(h.timers.get(timer).delay, 2000);
++  h.api.suspend(); assert(!h.timers.has(timer)); assert.equal(h.api.state().timer, null);
++  h.api.resume(); h.api.resume(); const resumed = h.api.state().timer;
++  assert(resumed); h.fire(resumed); await tick();
++  assert.equal(h.reads.length, 2); assert.equal(h.api.state().failure, failure);
++  h.reads[1].resolve({entries: []}); await tick();
++  assert.equal(h.api.state().failure, null); assert.equal(h.api.state().timer, null);
++  h.api.suspend();
++});
++
++test("history current deadline and access failures remain visible", async () => {
++  for (const status of [401, 403, "deadline"]) {
++    const h = historyLane(), reading = h.api.read("repair");
++    let expected;
++    if (status === "deadline") {
++      const deadline = [...h.timers].find(([, timer]) => timer.delay === 35000)[0];
++      h.fire(deadline); expected = h.reads[0].signal.reason;
++      h.reads[0].resolve({entries: ["past deadline"]});
++    } else {
++      expected = Object.assign(Error("Access denied"), {status}); h.reads[0].reject(expected);
++    }
++    await reading;
++    assert.equal(h.applied.length, 0);
++    assert.equal(h.api.state().notice.warning, true);
++    assert.equal(h.api.state().notice.error, expected);
++    assert.equal(h.elements.get("repair-history").disabled, false);
++    assert.equal(h.api.state().failure.kind, "repair");
++    if (status === "deadline") {assert.equal(expected.name, "TimeoutError"); assert(h.api.state().timer);}
++    else assert.equal(h.api.state().timer, null, "access errors do not auto retry");
++    h.api.suspend();
++  }
++});
+diff --git a/portal/internal/web/recovery_display_browser_test.cjs b/portal/internal/web/recovery_display_browser_test.cjs
+index 714ab12..d9843b6 100644
+--- a/portal/internal/web/recovery_display_browser_test.cjs
++++ b/portal/internal/web/recovery_display_browser_test.cjs
+@@ -132,10 +132,10 @@ const baseURL = process.argv[2];
+         window.restoreStorage = Storage.prototype.setItem;
+         Storage.prototype.setItem = () => { throw new Error("Storage unavailable"); };
+       });
+-      await receipt("Attachment retry").getByRole("button", {name: "Dismiss message notification", exact: true}).click();
++      await receipt("Attachment retry").getByRole("button", {name: "Dismiss message", exact: true}).click();
+       await expect(receipt("Attachment retry")).toBeVisible();
+       await page.evaluate(() => { Storage.prototype.setItem = window.restoreStorage; });
+-      await receipt("Attachment retry").getByRole("button", {name: "Dismiss message notification", exact: true}).click();
++      await receipt("Attachment retry").getByRole("button", {name: "Dismiss message", exact: true}).click();
+       await expect(receipt("Attachment retry")).toHaveCount(0);
+       assert.equal(await page.evaluate(savedID => JSON.parse(sessionStorage.getItem(
+         `workspace-portal.send-attempt.example.thread-1.${savedID}`,
+@@ -187,7 +187,8 @@ const baseURL = process.argv[2];
+       await expect.poll(indexSnapshotReads).toBeGreaterThan(0);
+       await expect.poll(() => indexReads).toBeGreaterThan(0);
+       await page.clock.runFor(749); await expect(indexWarning).toBeHidden();
+-      await page.clock.runFor(1); await expect(indexWarning).toHaveText(warning);
++      await page.clock.runFor(1); await expect(indexWarning).toHaveText("");
++      await expect(indexWarning).toBeHidden();
+       loading = false; statusCode = 403;
+       await page.clock.runFor(15_000);
+       await expect(indexWarning).toHaveText("Access denied");
+diff --git a/portal/internal/web/static/app.js b/portal/internal/web/static/app.js
+index a2a8d91..8a99f7e 100644
+--- a/portal/internal/web/static/app.js
++++ b/portal/internal/web/static/app.js
+@@ -4632,22 +4632,24 @@
+     const threadID = currentThreadId;
+     const readVersion = transcriptHistory.repairVersion;
+     const read = pageReads.begin(refreshPolicy.transcriptDeadlineMs);
+-    historyRead = true;
++    historyRead = read;
++    clearTimeout(historyRetryTimer); historyRetryTimer = null;
+     historyNotice.begin({manual});
+-    historyError = "";
+-    historyFailure = null;
+     renderHistoryControls();
+     try {
+       const page = await conversationAssets.readTranscriptPage(client, {
+         cursor, signal: read.signal, expectedThreadId: threadID,
+       });
+-      if (!read.isCurrent() || threadID !== currentThreadId ||
++      if (historyRead !== read || !read.isCurrent() || threadID !== currentThreadId ||
+           readVersion !== transcriptHistory.repairVersion) return;
+-      renderThread(page, () => read.isCurrent() && threadID === currentThreadId, kind);
++      read.signal.throwIfAborted();
++      historyError = ""; historyFailure = null;
++      renderThread(page, () => historyRead === read && read.isCurrent() && threadID === currentThreadId, kind);
+       historyRetryDelay = refreshPolicy.retryInitialMs; historyNotice.success();
+     } catch (error) {
+-      if (!read.isCurrent() || threadID !== currentThreadId ||
++      if (historyRead !== read || !read.isCurrent() || threadID !== currentThreadId ||
+           readVersion !== transcriptHistory.repairVersion) return;
++      error = read.error(error);
+       if (error.code === "transcript_cursor_expired" || error.code === "transcript_reset_required") {
+         transcriptHistory.invalidateCursor();
+         historyError = "History changed. Reconnecting…";
+@@ -4669,6 +4671,7 @@
+       }
+     } finally {
+       read.finish();
++      if (historyRead !== read || !read.isCurrent()) return;
+       historyRead = null;
+       historyNotice.cancel();
+       renderHistoryControls();
+@@ -4680,12 +4683,10 @@
+     (!historyFailure || historyFailure.kind === "repair") && (!historyError || historyFailure?.kind === "repair") &&
+     !pageReads.paused && !document.hidden && !pagingUnavailable;
+   const scheduleHistoryRepair = (delay = transcriptHistory?.gap ? refreshPolicy.historyPageMs : refreshPolicy.retryInitialMs) => {
+-    if (!canRepairHistory() || historyRetryTimer !== null) return;
++    if (!canRepairHistory() || historyRead || historyRetryTimer !== null) return;
+     historyRetryTimer = setTimeout(() => {
+       historyRetryTimer = null;
+-      if (!canRepairHistory()) return;
+-      if (historyRead) scheduleHistoryRepair(100);
+-      else void runHistoryRead("repair");
++      if (canRepairHistory() && !historyRead) void runHistoryRead("repair");
+     }, delay);
+   };
+   resumeHistory = () => scheduleHistoryRepair(historyFailure ? historyRetryDelay : refreshPolicy.historyPageMs);
+@@ -5123,6 +5124,8 @@
+       pendingRetryDelay = refreshPolicy.retryInitialMs;
+     }).catch(error => {
+       if (!read.isCurrent()) return;
++      // A failed invalidation must retry on backoff, even after a recent success.
++      pendingSuccessAt = -Infinity;
+       pendingStatus.querySelector("span").textContent = "Requests could not be refreshed. Previously shown questions remain available.";
+       pendingNotice.failure(read.error(error));
+       pendingRetryTimer = setTimeout(() => { pendingRetryTimer = null; void refreshPending(); }, pendingRetryDelay);
+@@ -5221,8 +5224,11 @@
+     clearTimeout(pendingRetryTimer); pendingRetryTimer = null;
+     clearTimeout(pendingDueTimer); pendingDueTimer = null;
+     clearTimeout(queueRetryTimer); queueRetryTimer = null;
++    clearTimeout(historyRetryTimer); historyRetryTimer = null;
++    historyRead?.finish();
++    historyRead = null;
+     pendingRerun = false; queueRerun = false;
+-    pendingNotice.cancel(); queueNotice.cancel(); detailsNotice.cancel();
++    pendingNotice.cancel(); queueNotice.cancel(); detailsNotice.cancel(); historyNotice.cancel();
+   };
+   resumeConversationReads = () => { void refreshPending(true); void refreshQueue(true); };
+   if (pageReads.paused) pauseConversationReads();
+diff --git a/portal/internal/web/team_settings_browser_test.cjs b/portal/internal/web/team_settings_browser_test.cjs
+index 7f73779..943bdd5 100644
+--- a/portal/internal/web/team_settings_browser_test.cjs
++++ b/portal/internal/web/team_settings_browser_test.cjs
+@@ -10,6 +10,7 @@ const baseURL = process.argv[2];
+     const errors = [];
+     const saved = [];
+     const savedSettings = [];
++    let modelCatalogReads = 0;
+     let serverPair = {model: "model-1", reasoningEffort: "medium"};
+     let memberPair = {model: "model-1", reasoningEffort: "medium"};
+     let fixtureTeamHTML = "";
+@@ -24,12 +25,16 @@ const baseURL = process.argv[2];
+     let holdSettingsWrite = false, releaseSettingsWrite = () => {};
+     const writeFailure = "Fixture write failure: " + "diagnostic-".repeat(80);
+     page.on("pageerror", error => errors.push(error.message));
+-    await page.route("**/api/models", route => route.fulfill({json: [
++    await page.route(url => url.pathname === "/api/models" && url.searchParams.get("session") === "example" &&
++      url.searchParams.size === 1, route => {
++      modelCatalogReads++;
++      return route.fulfill({json: [
+       {model: "model-1", displayName: "gpt-6.1-sol", isDefault: true,
+         defaultReasoningEffort: "medium", supportedReasoningEfforts: [{reasoningEffort: "medium"}, {reasoningEffort: "high"}]},
+       {model: "model-2", displayName: "gpt-6-astra", defaultReasoningEffort: "medium",
+         supportedReasoningEfforts: [{reasoningEffort: "medium"}, {reasoningEffort: "high"}]},
+-    ]}));
++      ]});
++    });
+     await page.route("**/api/collaboration-modes", route => route.fulfill({json: [
+       {mode: "default", name: "Default"}, {mode: "plan", name: "Plan"},
+     ]}));
+@@ -138,6 +143,8 @@ const baseURL = process.argv[2];
+       await expect(edit).toBeEnabled(); await expect(dialog).toBeHidden();
+       await assertLayout();
+       await edit.click(); await expect(liveModel).toHaveValue("model-1");
++      await expect.poll(() => modelCatalogReads).toBeGreaterThan(0);
++      await expect(liveModel.locator('option[value="model-2"]')).toHaveText("gpt-6-astra");
+       await expect(save).toBeDisabled();
+       await liveModel.selectOption("model-2"); await liveEffort.selectOption("high");
+       await expect(save).toBeEnabled(); await assertLayout();
+@@ -185,7 +192,8 @@ const baseURL = process.argv[2];
+       await expect(save).toBeDisabled(); await close.click(); await assertLayout();
+     }
+     await page.setViewportSize({width: 1280, height: 720});
+-    await page.getByRole("tab", {name: "Team"}).click();
++    await page.getByRole("tablist", {name: "Session sections", exact: true})
++      .getByRole("tab", {name: "Team", exact: true}).click();
+     const row = page.locator('[data-team-stats="architect0"]');
+     await expect(row.locator('[data-team-metric="sent"]')).toHaveText("37");
+     await expect(row.locator('[data-team-metric="received"]')).toHaveText("12");
+diff --git a/portal/internal/web/templates/automatic-archival.html b/portal/internal/web/templates/automatic-archival.html
+index 545ed7a..fa37ca8 100644
+--- a/portal/internal/web/templates/automatic-archival.html
++++ b/portal/internal/web/templates/automatic-archival.html
+@@ -18,7 +18,7 @@
+       <div id="workspace-auto-archive-rows"></div>
+     </section>
+   </main>
+-  <script src="/static/app.js?v=52" defer></script>
++  <script src="/static/app.js?v=54" defer></script>
+ </body>
+ </html>
+ {{end}}
+diff --git a/portal/internal/web/templates/index.html b/portal/internal/web/templates/index.html
+index b0e3504..07b3dd3 100644
+--- a/portal/internal/web/templates/index.html
++++ b/portal/internal/web/templates/index.html
+@@ -98,7 +98,7 @@
+   <script src="/static/session-attention-store.js?v=4" defer></script>
+   <script src="/static/browser-notifications.js?v=6" defer></script>
+   <script src="/static/preparation.js?v=5" defer></script>
+-  <script src="/static/app.js?v=52" defer></script>
++  <script src="/static/app.js?v=54" defer></script>
+   <script src="/static/coordination.js?v=6" defer></script>
+ </body>
+ </html>
+diff --git a/portal/internal/web/templates/session.html b/portal/internal/web/templates/session.html
+index 609ef20..ffe7596 100644
+--- a/portal/internal/web/templates/session.html
++++ b/portal/internal/web/templates/session.html
+@@ -256,7 +256,7 @@
+       <div class="dialog-actions"><button type="button" class="quiet" data-dialog-close>Cancel</button><button type="submit" class="danger">Delete session</button></div>
+     </form>
+   </dialog>
+-  <script src="/static/app.js?v=52" defer></script>
++  <script src="/static/app.js?v=54" defer></script>
+   <script src="/static/session-attention-store.js?v=4" defer></script>
+   <script src="/static/browser-notifications.js?v=6" defer></script>
+   <script src="/static/session-attention.js?v=2" defer></script>
+diff --git a/portal/internal/web/usability_browser_test.cjs b/portal/internal/web/usability_browser_test.cjs
+index 0d421ef..0c5614c 100644
+--- a/portal/internal/web/usability_browser_test.cjs
++++ b/portal/internal/web/usability_browser_test.cjs
+@@ -22,7 +22,11 @@ const baseURL = process.argv[2];
+         {id: "reset-3", title: "Unknown fixture reset", resetType: "unknown", status: "available", expiresAt: null},
+       ]}});
+     // Every account read and mutation is intercepted. This fixture never uses a live reset.
+-    await context.route("**/api/codex-limits", route => route.fulfill({json: snapshot()}));
++    let mockedSessionLimits = false;
++    await context.route(url => url.pathname === "/api/codex-limits", async route => {
++      await route.fulfill({json: snapshot()});
++      if (new URL(route.request().url()).searchParams.get("session") === "example") mockedSessionLimits = true;
++    });
+     await context.route("**/api/codex-limits/reset", route => {
+       attempts.push(route.request().postDataJSON());
+       if (!consumed) {
+@@ -32,6 +36,7 @@ const baseURL = process.argv[2];
+       return route.fulfill({json: {outcome: "alreadyRedeemed"}});
+     });
+     await page.goto(baseURL + "/example/");
++    await expect.poll(() => mockedSessionLimits).toBe(true);
+     await expect(page.locator(".limits-account-summary")).toContainText("13 credits");
+     await expect(page.locator(".limits-account-summary")).toContainText("3 banked resets");
+     const summaryLayout = await page.locator("[data-limits-content]").evaluate(content => {

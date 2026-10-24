@@ -1,0 +1,36 @@
+ 1:  4a2fadd =  1:  4a2fadd deps: update shared conversation presentation helpers
+ 2:  db1e91e =  2:  db1e91e team: project full-team names from actual implementer counts
+ 3:  b006196 =  3:  b006196 portal: add authorized file downloads and source copy actions
+ 4:  5416942 =  4:  5416942 portal: keep large artifact catalogs compact and stable
+ 5:  7d9392e !  5:  31ab0c6 portal: publish session membership before optional enrichment
+    @@ portal/internal/web/operation_state.go: func (s *Server) refreshDisplaySnapshots
+      			return err
+      		}
+     
+    + ## portal/internal/web/recovery_display_browser_test.cjs ##
+    +@@ portal/internal/web/recovery_display_browser_test.cjs: const baseURL = process.argv[2];
+    +       await expect.poll(indexSnapshotReads).toBeGreaterThan(0);
+    +       await expect.poll(() => indexReads).toBeGreaterThan(0);
+    +       await page.clock.runFor(749); await expect(indexWarning).toBeHidden();
+    +-      await page.clock.runFor(1); await expect(indexWarning).toHaveText(warning);
+    ++      await page.clock.runFor(1); await expect(indexWarning).toHaveText("");
+    ++      await expect(indexWarning).toBeHidden();
+    +       loading = false; statusCode = 403;
+    +       await page.clock.runFor(15_000);
+    +       await expect(indexWarning).toHaveText("Access denied");
+    +
+      ## portal/internal/web/server.go ##
+     @@ portal/internal/web/server.go: type cachedRepositories struct {
+      }
+ 6:  5a764b2 =  6:  58f6093 portal: retain member settings through sequential additions
+ 7:  66fe576 =  7:  ec23d84 portal: present team messages and decorated Markdown
+ 8:  fdd6f77 =  8:  7915116 portal: show delivery recovery beside the composer
+ 9:  047ea90 =  9:  9b981f1 portal: browse eligible session files in a lazy tree
+10:  8456880 = 10:  57ad98e portal: retire paused read cycles and recover on tab resume
+11:  567686d = 11:  3c4abb6 coordination: derive claims from registered repository identities
+12:  90da5cb = 12:  a23ea46 portal: measure read stages without logging session content
+13:  6455204 = 13:  032c058 test: prepare ordinary Firefox acceptance across fifty native tabs
+14:  ed89acc = 14:  e746006 notifications: drop deliveries from disabled browser epochs
+15:  14a2415 = 15:  c423e7e coordination: retain deployed machines through explicit user release
+16:  8e971a8 = 16:  957250f test: match session-scoped model catalogs in settings fixture
+17:  965aadc = 17:  1a25bff test: intercept session-scoped limits in usability fixture

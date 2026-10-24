@@ -1,0 +1,29 @@
+--- package.py
++++ package-v4.py
+@@ -156,9 +156,16 @@
+     derivation = capture(['nix', 'derivation', 'show', drv])
+     (operation / (label + '-derivation.json')).write_bytes(derivation)
+     record = json.loads(derivation)
++    require(set(record) == {'derivations', 'version'} and record['version'] == 4 and
++            set(record['derivations']) == {Path(drv).name}, 'expected exact Nix v4 derivation envelope')
++    record = {drv: record['derivations'][Path(drv).name]}
+     require(list(record) == [drv] and set(record[drv]['outputs']) == {'out'}, 'expected one derivation output')
+-    output = record[drv]['outputs']['out']['path']
++    output = '/nix/store/' + record[drv]['outputs']['out']['path']
+     require(re.fullmatch('/nix/store/[a-z0-9]{32}-[^/]+', output), 'invalid evaluated output')
++    if label == 'workspace':
++        require(drv == '/nix/store/715a6j8ncmaa9a2qylrd2ds8nj9w56ax-dev-workspace-0.2.0.drv' and
++                output == '/nix/store/4cn1hh88xdpql5jp9pyrnf5fvnqsc829-dev-workspace-0.2.0',
++                'workspace identity differs from preserved first evaluation')
+     require(capture(['nix-store', '--query', '--outputs', drv]).decode().splitlines() == [output],
+             'evaluated output query differs')
+     # Persist the immutable source/attribute and evaluated identities before realization.
+@@ -214,7 +221,7 @@
+ 
+ def main():
+     proof = guards()  # All PENDING/absent-review guards precede Nix and result creation.
+-    operation = HERE / 'run'
++    operation = HERE / 'run-v4'
+     operation.mkdir(exist_ok=False)
+     (operation / 'roots').mkdir()
+     write(operation / 'guards.json', proof)

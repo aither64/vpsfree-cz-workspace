@@ -1,0 +1,2430 @@
+diff --git a/cmd/codex-web-example/main.go b/cmd/codex-web-example/main.go
+index f00d79b..73aa71c 100644
+--- a/cmd/codex-web-example/main.go
++++ b/cmd/codex-web-example/main.go
+@@ -30,7 +30,7 @@ var page = template.Must(template.New("page").Parse(`<!doctype html>
+ <body>
+   <main id="conversation"></main>
+   <script type="module">
+-    import {mountConversation} from "/codex/assets/conversation.js";
++    import {mountConversation} from "/codex/assets/conversation.js?v=21";
+     mountConversation(document.querySelector("#conversation"), {
+ 	  id: "current",
+     });
+diff --git a/codex/client.go b/codex/client.go
+index a885b2e..c22076c 100644
+--- a/codex/client.go
++++ b/codex/client.go
+@@ -191,26 +191,35 @@ type TranscriptPage struct {
+ }
+ 
+ type TranscriptEntry struct {
+-	Citations               []CitationSpan       `json:"citations,omitempty"`
+-	CitationsPending        bool                 `json:"citationsPending,omitempty"`
+-	Delivery                string               `json:"delivery,omitempty"`
+-	Questions               []AsyncQuestion      `json:"questions,omitempty"`
+-	QuestionReplies         []AsyncQuestionReply `json:"questionReplies,omitempty"`
+-	DisplayText             *string              `json:"displayText,omitempty"`
+-	Attachments             []Attachment         `json:"attachments,omitempty"`
+-	TurnID                  string               `json:"turnId,omitempty"`
+-	TurnStatus              string               `json:"turnStatus,omitempty"`
+-	ItemID                  string               `json:"itemId,omitempty"`
+-	ClientUserMessageID     string               `json:"clientUserMessageId,omitempty"`
+-	ClientUserMessageDigest string               `json:"clientUserMessageDigest,omitempty"`
+-	Kind                    string               `json:"kind"`
+-	Summary                 string               `json:"summary,omitempty"`
+-	Text                    string               `json:"text,omitempty"`
+-	HTML                    string               `json:"html,omitempty"`
+-	Details                 string               `json:"details,omitempty"`
+-	Timestamp               string               `json:"timestamp,omitempty"`
+-	TimestampApproximate    bool                 `json:"timestampApproximate,omitempty"`
+-	Activity                *TranscriptActivity  `json:"activity,omitempty"`
++	Communication           *TranscriptCommunication `json:"communication,omitempty"`
++	Citations               []CitationSpan           `json:"citations,omitempty"`
++	CitationsPending        bool                     `json:"citationsPending,omitempty"`
++	Delivery                string                   `json:"delivery,omitempty"`
++	Questions               []AsyncQuestion          `json:"questions,omitempty"`
++	QuestionReplies         []AsyncQuestionReply     `json:"questionReplies,omitempty"`
++	DisplayText             *string                  `json:"displayText,omitempty"`
++	Attachments             []Attachment             `json:"attachments,omitempty"`
++	TurnID                  string                   `json:"turnId,omitempty"`
++	TurnStatus              string                   `json:"turnStatus,omitempty"`
++	ItemID                  string                   `json:"itemId,omitempty"`
++	ClientUserMessageID     string                   `json:"clientUserMessageId,omitempty"`
++	ClientUserMessageDigest string                   `json:"clientUserMessageDigest,omitempty"`
++	Kind                    string                   `json:"kind"`
++	Summary                 string                   `json:"summary,omitempty"`
++	Text                    string                   `json:"text,omitempty"`
++	HTML                    string                   `json:"html,omitempty"`
++	Details                 string                   `json:"details,omitempty"`
++	Timestamp               string                   `json:"timestamp,omitempty"`
++	TimestampApproximate    bool                     `json:"timestampApproximate,omitempty"`
++	Activity                *TranscriptActivity      `json:"activity,omitempty"`
++}
++
++// TranscriptCommunication is an application-owned presentation hint. It does
++// not authenticate a sender or authorize access to another conversation.
++type TranscriptCommunication struct {
++	Kind string `json:"kind"`
++	From string `json:"from,omitempty"`
++	To   string `json:"to,omitempty"`
+ }
+ 
+ type SendReceipt struct {
+@@ -786,10 +795,14 @@ type Client struct {
+ 	writeMu      sync.Mutex
+ 	nextID       atomic.Uint64
+ 
+-	pendingMu sync.Mutex
+-	pending   map[uint64]pendingCall
+-	requests  map[string]PendingRequest
+-	notices   map[string][]Prompt
++	pendingMu         sync.Mutex
++	pending           map[uint64]pendingCall
++	requests          map[string]PendingRequest
++	notices           map[string][]Prompt
++	pendingRevisionMu sync.Mutex
++	pendingSequence   uint64
++	pendingReset      uint64
++	pendingRevisions  map[string]uint64
+ 
+ 	subscribersMu sync.Mutex
+ 	subscribers   map[chan struct{}]string
+@@ -1177,6 +1190,7 @@ func (c *Client) writeOffer(ctx context.Context, connection *websocket.Conn, gen
+ 	if offer != nil {
+ 		if err == nil {
+ 			delete(c.requests, offer.ID)
++			c.bumpPendingLocked(requestThreadID(*offer))
+ 		}
+ 		c.pendingMu.Unlock()
+ 	}
+@@ -1314,6 +1328,7 @@ func (c *Client) admitPrompt(request *PendingRequest) bool {
+ 	}
+ 	request.token = rand.Text()
+ 	c.requests[request.ID] = *request
++	c.bumpPendingLocked(requestThreadID(*request))
+ 	return true
+ }
+ 
+@@ -1348,6 +1363,8 @@ func (c *Client) claimAutoResolvableUserInput(id, threadID, token string) (Pendi
+ 	}
+ 	request.claimed = true
+ 	c.requests[id] = request
++	c.bumpPendingLocked(threadID)
++	c.broadcast(threadID)
+ 	return request, true
+ }
+ 
+@@ -1375,8 +1392,13 @@ func (c *Client) snoozeUserInput(id, threadID, token string) error {
+ 	if prompt.ThreadID != threadID || prompt.Kind != "userInput" {
+ 		return errors.New("this request does not support auto-resolution control")
+ 	}
++	if request.snoozed {
++		return nil
++	}
+ 	request.snoozed = true
+ 	c.requests[id] = request
++	c.bumpPendingLocked(threadID)
++	c.broadcast(threadID)
+ 	return nil
+ }
+ 
+@@ -1427,9 +1449,11 @@ func (c *Client) handleResolved(params json.RawMessage, generation uint64) {
+ 	threadID := threadIDFromParams(request.Params)
+ 	if request.generation == generation {
+ 		delete(c.requests, string(resolved.RequestID))
++		c.bumpPendingLocked(threadID)
+ 	}
+ 	c.pendingMu.Unlock()
+ 	c.broadcast(threadID)
++	c.prunePendingRevision(threadID)
+ }
+ 
+ func (c *Client) rejectUnsupported(request PendingRequest, cause error) {
+@@ -1449,6 +1473,7 @@ func (c *Client) rejectUnsupported(request PendingRequest, cause error) {
+ 			notices = notices[len(notices)-20:]
+ 		}
+ 		c.notices[threadID] = notices
++		c.bumpPendingLocked(threadID)
+ 		c.pendingMu.Unlock()
+ 	}
+ 	var rawID any
+@@ -1502,6 +1527,11 @@ func (c *Client) markDisconnected(connection *websocket.Conn, generation uint64,
+ 		}
+ 		delete(c.pending, id)
+ 	}
++	c.pendingRevisionMu.Lock()
++	c.pendingSequence++
++	c.pendingReset = c.pendingSequence
++	c.pendingRevisions = nil
++	c.pendingRevisionMu.Unlock()
+ 	for id, request := range c.requests {
+ 		if request.generation == generation {
+ 			delete(c.requests, id)
+@@ -1572,6 +1602,7 @@ func (c *Client) removeWatch(threadID string) {
+ 	}
+ 	c.watchedMu.Unlock()
+ 	if removed {
++		c.prunePendingRevision(threadID)
+ 		c.connectionMu.Lock()
+ 		generation := c.generation
+ 		c.connectionMu.Unlock()
+@@ -1743,6 +1774,7 @@ func (c *Client) recordWatchError(threadID string, err error) {
+ 		notices = append(notices, message)
+ 	}
+ 	c.notices[threadID] = notices
++	c.bumpPendingLocked(threadID)
+ 	c.pendingMu.Unlock()
+ 	c.broadcast(threadID)
+ }
+@@ -1753,11 +1785,59 @@ func (c *Client) clearWatchError(threadID string) {
+ 	for index := range notices {
+ 		if notices[index].ID == "watch:"+threadID {
+ 			notices = append(notices[:index], notices[index+1:]...)
++			c.bumpPendingLocked(threadID)
++			defer c.broadcast(threadID)
+ 			break
+ 		}
+ 	}
+ 	c.notices[threadID] = notices
+ 	c.pendingMu.Unlock()
++	c.prunePendingRevision(threadID)
++}
++
++// PendingRevision reads an in-memory invalidation token, without native RPCs or
++// durable ledger access. The value is meaningful only within this client.
++func (c *Client) PendingRevision(threadID string) uint64 {
++	c.pendingRevisionMu.Lock()
++	defer c.pendingRevisionMu.Unlock()
++	return max(c.pendingReset, c.pendingRevisions[threadID])
++}
++
++// Caller holds pendingMu. Advance before publishing the corresponding hint.
++func (c *Client) bumpPendingLocked(threadID string) {
++	c.pendingRevisionMu.Lock()
++	defer c.pendingRevisionMu.Unlock()
++	if threadID == "" {
++		return
++	}
++	c.pendingSequence++
++	if c.pendingRevisions == nil {
++		c.pendingRevisions = make(map[string]uint64)
++	}
++	c.pendingRevisions[threadID] = c.pendingSequence
++}
++
++// Tokens need live watchers or a retained pending/notice projection, just as
++// their underlying thread state does. Call without pendingMu held.
++func (c *Client) prunePendingRevision(threadID string) {
++	c.watchedMu.Lock()
++	defer c.watchedMu.Unlock()
++	if c.watched[threadID] != 0 {
++		return
++	}
++	c.pendingMu.Lock()
++	defer c.pendingMu.Unlock()
++	if len(c.notices[threadID]) != 0 {
++		return
++	}
++	for _, request := range c.requests {
++		if requestThreadID(request) == threadID {
++			return
++		}
++	}
++	c.pendingRevisionMu.Lock()
++	delete(c.pendingRevisions, threadID)
++	c.pendingRevisionMu.Unlock()
+ }
+ 
+ func (c *Client) broadcast(threadID string) {
+@@ -1945,6 +2025,8 @@ func (c *Client) claim(id, threadID, token string) (PendingRequest, Prompt, erro
+ 	}
+ 	request.claimed = true
+ 	c.requests[id] = request
++	c.bumpPendingLocked(threadID)
++	c.broadcast(threadID)
+ 	return request, prompt, nil
+ }
+ 
+@@ -1954,8 +2036,10 @@ func (c *Client) releaseClaim(request PendingRequest) {
+ 	if ok && current.generation == request.generation && current.token == request.token {
+ 		current.claimed = false
+ 		c.requests[request.ID] = current
++		c.bumpPendingLocked(requestThreadID(request))
+ 	}
+ 	c.pendingMu.Unlock()
++	c.broadcast(requestThreadID(request))
+ }
+ 
+ func (c *Client) finishResponse(ctx context.Context, request PendingRequest, result any) error {
+@@ -1981,6 +2065,7 @@ func (c *Client) finishResponse(ctx context.Context, request PendingRequest, res
+ 		return &PromptResponseError{Code: "prompt_transport", NotSent: errors.Is(err, errConnectionChanged), Err: err}
+ 	}
+ 	c.broadcast(requestThreadID(request))
++	c.prunePendingRevision(requestThreadID(request))
+ 	return nil
+ }
+ 
+diff --git a/codex/client_test.go b/codex/client_test.go
+index 5588989..c0c3476 100644
+--- a/codex/client_test.go
++++ b/codex/client_test.go
+@@ -3967,7 +3967,16 @@ func TestStaleDisconnectDoesNotClearReplacementConnection(t *testing.T) {
+ 	first := client.connection
+ 	firstGeneration := client.generation
+ 	client.connectionMu.Unlock()
++	request := questionRequest(first, firstGeneration)
++	if !client.admitPrompt(&request) {
++		t.Fatal("current request not admitted")
++	}
++	priorRevision := client.PendingRevision("thread-1")
+ 	client.markDisconnected(first, firstGeneration, errors.New("test replacement"))
++	resetRevision := client.PendingRevision("thread-1")
++	if resetRevision <= priorRevision || len(client.Prompts("thread-1")) != 0 {
++		t.Fatal("disconnect did not invalidate the pending projection")
++	}
+ 	if err := client.Ensure(ctx); err != nil {
+ 		t.Fatal(err)
+ 	}
+@@ -3975,6 +3984,9 @@ func TestStaleDisconnectDoesNotClearReplacementConnection(t *testing.T) {
+ 	replacement := client.connection
+ 	client.connectionMu.Unlock()
+ 	client.markDisconnected(first, firstGeneration, errors.New("stale reader"))
++	if client.PendingRevision("thread-1") != resetRevision {
++		t.Fatal("retired disconnect invalidated the replacement projection")
++	}
+ 	client.connectionMu.Lock()
+ 	actual := client.connection
+ 	client.connectionMu.Unlock()
+diff --git a/codex/prompt_response_test.go b/codex/prompt_response_test.go
+index 3f985bd..8b69722 100644
+--- a/codex/prompt_response_test.go
++++ b/codex/prompt_response_test.go
+@@ -248,3 +248,69 @@ func TestReissuedOfferWhileAnswerWaitsForWrite(t *testing.T) {
+ 		t.Fatal("replacement answer was not delivered")
+ 	}
+ }
++
++func TestPendingRevisionTracksVisibleProjectionWithoutRPC(t *testing.T) {
++	client := newTestClient("")
++	connection := &websocket.Conn{}
++	client.connection, client.generation = connection, 1
++	client.watched["thread-1"] = 1
++	first := questionRequest(connection, 1)
++	if client.PendingRevision("thread-1") != 0 {
++		t.Fatal("nonempty initial revision")
++	}
++	if !client.admitPrompt(&first) {
++		t.Fatal("admission failed")
++	}
++	// Pending projection mutation can hold pendingMu during a transport write.
++	// The SSE getter must stay independent of that transport wait.
++	client.pendingMu.Lock()
++	read := make(chan uint64, 1)
++	go func() { read <- client.PendingRevision("thread-1") }()
++	select {
++	case <-read:
++	case <-time.After(time.Second):
++		client.pendingMu.Unlock()
++		t.Fatal("pending revision blocked behind transport ownership")
++	}
++	client.pendingMu.Unlock()
++	admitted := client.PendingRevision("thread-1")
++	if admitted == 0 || client.PendingRevision("other") != 0 {
++		t.Fatal("revision not thread scoped")
++	}
++	duplicate := questionRequest(connection, 1)
++	if client.admitPrompt(&duplicate) || client.PendingRevision("thread-1") != admitted {
++		t.Fatal("duplicate invalidated projection")
++	}
++	if err := client.snoozeUserInput(first.ID, "thread-1", first.token); err != nil {
++		t.Fatal(err)
++	}
++	snoozed := client.PendingRevision("thread-1")
++	if snoozed <= admitted {
++		t.Fatal("snooze not invalidated")
++	}
++	request, _, err := client.claim(first.ID, "thread-1", first.token)
++	if err != nil {
++		t.Fatal(err)
++	}
++	claimed := client.PendingRevision("thread-1")
++	if claimed <= snoozed || len(client.Prompts("thread-1")) != 0 {
++		t.Fatal("claim did not invalidate hidden offer")
++	}
++	client.releaseClaim(request)
++	if client.PendingRevision("thread-1") <= claimed || len(client.Prompts("thread-1")) != 1 {
++		t.Fatal("released claim not invalidated")
++	}
++	client.handleResolved(json.RawMessage(`{"requestId":"question"}`), 1)
++	if len(client.Prompts("thread-1")) != 0 || client.PendingRevision("thread-1") <= claimed {
++		t.Fatal("resolution not invalidated")
++	}
++	delete(client.watched, "thread-1")
++	client.prunePendingRevision("thread-1")
++	if len(client.pendingRevisions) != 0 {
++		t.Fatal("retired pending projection retained its token")
++	}
++	// A getter and projection changes require neither a socket nor a ledger.
++	if len(client.pending) != 0 || client.queueLedgerPath != "" && client.queueLedgerLock != nil {
++		t.Fatal("revision performed transport/ledger work")
++	}
++}
+diff --git a/conversation/assets/conversation.css b/conversation/assets/conversation.css
+index 47d673e..9708123 100644
+--- a/conversation/assets/conversation.css
++++ b/conversation/assets/conversation.css
+@@ -27,6 +27,9 @@
+ .codex-connection-status { border: 1px solid #bf8700; padding: .75rem; margin: .5rem 0; }
+ .codex-connection-status button { margin-left: .5rem; }
+ .codex-history-controls { display: flex; align-items: center; gap: .65rem; margin: .5rem 0; font-size: .85rem; }
++.codex-conversation-filter { margin-block: .5rem; font: inherit; font-size: .85rem; }
++.codex-submission-status { margin: .25rem 0; color: #bf8700; overflow-wrap: anywhere; }
++.codex-submission-status[hidden] { display: none; }
+ .codex-history-controls[hidden], .codex-lane-status[hidden] { display: none; }
+ .codex-history-controls button[hidden], .codex-lane-status button[hidden] { display: none; }
+ .codex-lane-status { margin: .4rem 0; color: #bf8700; font-size: .85rem; }
+@@ -55,6 +58,14 @@
+   white-space: pre-wrap;
+ }
+ 
++.codex-entry-team {
++  border-color: light-dark(#7952b3, #bc9aee);
++  background: light-dark(#f5effd, #241c32);
++}
++.codex-entry-team .codex-entry-header { color: light-dark(#633a9a, #cfafff); }
++.codex-entry-markdown { overflow-wrap: anywhere; }
++.codex-entry-markdown > :first-child { margin-top: .5rem; }
++
+ .codex-entry-footer {
+   display: flex;
+   justify-content: flex-end;
+diff --git a/conversation/assets/conversation.js b/conversation/assets/conversation.js
+index f0c9951..47c91ab 100644
+--- a/conversation/assets/conversation.js
++++ b/conversation/assets/conversation.js
+@@ -1,9 +1,9 @@
+-import {attachmentIDs, sameAttachments, mountUploads, renderAttachments} from "./uploads.js?v=6";
++import {attachmentIDs, sameAttachments, mountUploads, renderAttachments} from "./uploads.js?v=7";
+ import {citationCopyText, createCitationMessage} from "./citations.js?v=1";
+ export {citationCopyText, createCitationMessage} from "./citations.js?v=1";
+-export {attachmentIDs, sameAttachments, mountUploads, renderAttachments, createUploadClient} from "./uploads.js?v=6";
+-import {createConversationSync, renderConnectionStatus} from "./sync.js?v=2";
+-export {createConversationSync, renderConnectionStatus, connectionMessage} from "./sync.js?v=2";
++export {attachmentIDs, sameAttachments, mountUploads, renderAttachments, createUploadClient} from "./uploads.js?v=7";
++import {createConversationSync, renderConnectionStatus} from "./sync.js?v=3";
++export {createConversationSync, renderConnectionStatus, connectionMessage} from "./sync.js?v=3";
+ import {refreshPolicy, createRefreshNotice} from "./refresh.js?v=1";
+ import {createAsyncQuestions} from "./questions.js?v=3";
+ export {createAsyncQuestions, asyncQuestionReply} from "./questions.js?v=3";
+@@ -68,6 +68,44 @@ function createElement(name, attributes = {}, text = "") {
+   return element;
+ }
+ 
++// Host-supplied communication metadata affects presentation only. Never infer
++// identity or authorization from a message's text or its display label.
++export function transcriptEntryPresentation(entry) {
++  if (entry?.kind === "error") return {kind: "error", label: "Error", team: false};
++  const communication = entry?.communication;
++  if (communication && typeof communication === "object" && !Array.isArray(communication) &&
++      communication.kind === "team") {
++    const from = typeof communication.from === "string" ? communication.from : "";
++    const to = typeof communication.to === "string" ? communication.to : "";
++    const label = from && to ? `${from} → ${to}` : from ? `Team · ${from}` : to ? `Team → ${to}` : "Team";
++    return {kind: "team", label, team: true};
++  }
++  if (entry?.kind === "userMessage") return {kind: "user", label: "You", team: false};
++  if (["agentMessage", "reasoning", "plan"].includes(entry?.kind)) {
++    return {kind: "agent", label: entry.kind === "reasoning" ? "Reasoning" : entry.kind === "plan" ? "Plan" : "Codex", team: false};
++  }
++  return {kind: "event", label: entry?.kind || "Activity", team: false};
++}
++
++export function transcriptEntryVisible(entry, filter = "all") {
++  const presentation = transcriptEntryPresentation(entry);
++  if (presentation.kind === "error") return true;
++  if (filter === "team") return presentation.team;
++  if (filter === "messages") return !presentation.team && ["user", "agent"].includes(presentation.kind);
++  if (filter === "activity") return !presentation.team && presentation.kind === "event";
++  return true;
++}
++
++// This is display text, never a delivery decision or an instruction to clear
++// receipts. Only an explicit server refusal establishes a definitely unsent input.
++export function submissionFailurePresentation(error) {
++  const uncertain = error?.notSent !== true;
++  const detail = typeof error?.message === "string" ? error.message.trim().slice(0, 512) : "";
++  const guidance = uncertain ? "Delivery could not be confirmed. Retry the original submission to check its status." :
++    "The message was not sent. Try again.";
++  return {message: detail ? `${detail} ${guidance}` : guidance, uncertain};
++}
++
+ // Shared typed activity body. Thread identities are text only: a transcript
+ // event cannot grant navigation to another conversation. URL schemes and
+ // credentials are checked again at the browser boundary.
+@@ -888,6 +926,11 @@ export function mountConversation(root, options) {
+   const status = createElement("span", {class: "codex-conversation-status"}, labels.reconnecting);
+   const connectionStatus = createElement("div", {class: "codex-connection-status"});
+   const transcript = createElement("ol", {class: "codex-conversation-transcript"});
++  const filter = createElement("select", {class: "codex-conversation-filter", "aria-label": "Transcript filter"});
++  for (const [value, label] of [["all", "All"], ["messages", "Messages"], ["team", "Team"], ["activity", "Activity"]]) {
++    filter.append(createElement("option", {value}, label));
++  }
++  filter.value = "all";
+   const historyControls = createElement("div", {class: "codex-history-controls"});
+   const loadOlder = createElement("button", {type: "button"}, "Load older");
+   const retryHistory = createElement("button", {type: "button"}, "Retry history");
+@@ -918,7 +961,33 @@ export function mountConversation(root, options) {
+   if (capabilities.queue) actions.append(queueButton);
+   if (capabilities.interrupt) actions.append(interrupt);
+   const form = createElement("form", {class: "codex-conversation-form"});
+-  form.append(textarea, actions);
++  const submissionStatus = createElement("p", {class: "codex-submission-status", role: "status"});
++  submissionStatus.hidden = true;
++  let submissionFailure = null;
++  const renderSubmissionFailure = () => {
++    submissionStatus.hidden = !submissionFailure || submissionFailure.threadId !== currentThread?.threadId;
++    submissionStatus.textContent = submissionFailure?.message || "";
++  };
++  const confirmSubmission = (action, attempt, threadId) => {
++    if (!attempt?.id || submissionFailure?.conversation !== client ||
++        submissionFailure.threadId !== threadId || currentThread?.threadId !== threadId ||
++        submissionFailure.action !== action || submissionFailure.attemptId !== attempt.id) return;
++    submissionFailure = null;
++    renderSubmissionFailure();
++  };
++  const failSubmission = (error, action, attempt, threadId) => {
++    if (currentThread?.threadId === threadId && attempt?.id && history.entries.some(entry =>
++      entry.kind === "userMessage" && entry.clientUserMessageId === attempt.id &&
++      /^[0-9a-f]{64}$/.test(entry.clientUserMessageDigest || ""))) return;
++    // A different operation cannot replace an unresolved attempt's warning.
++    if (submissionFailure && (submissionFailure.conversation !== client ||
++        submissionFailure.threadId !== threadId || submissionFailure.action !== action ||
++        submissionFailure.attemptId !== attempt?.id)) return;
++    submissionFailure = {conversation: client, threadId, action, attemptId: attempt?.id,
++      message: submissionFailurePresentation(error).message};
++    renderSubmissionFailure();
++  };
++  form.append(textarea, actions, submissionStatus);
+   const policy = {...refreshPolicy, ...options?.refreshPolicy};
+   const settingsBar = createElement("div", {class: "codex-conversation-settings"});
+   const settingsSummary = createElement("span", {}, "Settings unavailable");
+@@ -944,7 +1013,7 @@ export function mountConversation(root, options) {
+   settingsDialog.append(settingsForm);
+   const children = [status, connectionStatus];
+   if (capabilities.settings) children.push(settingsBar, settingsDialog);
+-  children.push(historyControls, transcript);
++  children.push(filter, historyControls, transcript);
+   if (capabilities.pending) children.push(pendingStatus, prompts);
+   const dock = createElement("div", {class: "codex-conversation-dock"});
+   dock.append(optionalQuestions);
+@@ -1111,7 +1180,8 @@ export function mountConversation(root, options) {
+   let metadataRetryTimer = null, metadataRetryDelay = policy.retryInitialMs;
+   let pendingRead = null, queueRead = null, pendingScope = null, queueScope = null;
+   let pendingRetryTimer = null, queueRetryTimer = null;
+-  let pendingRetryDelay = policy.retryInitialMs, queueRetryDelay = policy.retryInitialMs, pendingLastRead = 0;
++  let pendingRetryDelay = policy.retryInitialMs, queueRetryDelay = policy.retryInitialMs, pendingLastRead = -Infinity;
++  let pendingGeneration = 0, queueGeneration = 0, pendingRerun = false, queueRerun = false, pendingDueTimer = null, queueDueTimer = null;
+   let lastSyncStatus = "", lastThreadStatus = "", destroyed = false, paused = false;
+   let generation = 0, sync = null;
+   let entryNodes = new Map();
+@@ -1135,25 +1205,41 @@ export function mountConversation(root, options) {
+     retryHistory.hidden = !historyNoticeState.warning;
+     retryHistory.disabled = Boolean(historyRead);
+     historyStatus.textContent = historyNoticeState.warning ? historyError :
+-      historyNoticeState.loading ? "Loading earlier messages…" :
+-        legacy ? "Older history is unavailable on this server." : "";
++      historyRead?.kind === "older" && historyNoticeState.loading ? "Loading earlier messages…" : "";
+     historyControls.hidden = !older && !historyStatus.textContent && retryHistory.hidden;
+   };
+   const laneRead = (timeout) => {
+     const controller = new AbortController();
+     const timer = setTimeout(() => controller.abort(new Error("Conversation request timed out")), timeout);
+-    return {signal: AbortSignal.any([abort.signal, controller.signal]), finish: () => clearTimeout(timer),
++    const signal = AbortSignal.any([abort.signal, controller.signal]);
++    let abortListener;
++    return {signal,
++      run(operation) {
++        const canceled = new Promise((_, reject) => {
++          abortListener = () => reject(signal.reason);
++          if (signal.aborted) abortListener();
++          else signal.addEventListener("abort", abortListener, {once:true});
++        });
++        return Promise.race([Promise.resolve().then(() => {signal.throwIfAborted(); return operation();}), canceled]);
++      },
++      finish() { clearTimeout(timer); if (abortListener) signal.removeEventListener("abort", abortListener); },
+       cancel: () => controller.abort()};
+   };
+   const entryElement = (entry) => {
+     const timestamp = formatTranscriptTimestamp(entry);
+-    const item = createElement("li", {class: "codex-entry codex-entry-" + (entry.kind || "unknown")});
+-    const heading = entry.kind === "userMessage" ? "You" : entry.kind === "agentMessage" ? "Codex" : entry.kind;
++    const presentation = transcriptEntryPresentation(entry);
++    const item = createElement("li", {class: "codex-entry codex-entry-" + (presentation.team ? "team" : entry.kind || "unknown")});
+     const header = createElement("div", {class: "codex-entry-header"});
+-    header.append(createElement("strong", {}, heading || "Activity"));
++    header.append(createElement("strong", {}, presentation.label));
+     item.append(header);
+-    item.append(createTranscriptActivity(entry) || (entry.citations?.length ? createCitationMessage(entry) :
+-      createElement("pre", {}, entry.displayText ?? entry.text ?? entry.summary ?? entry.details ?? "")));
++    let body = createTranscriptActivity(entry);
++    if (!body && ["user", "agent", "team"].includes(presentation.kind) && typeof entry.html === "string") {
++      body = createElement("div", {class: "codex-entry-markdown"});
++      // HTML is generated and sanitized by the trusted host presentation hook.
++      body.innerHTML = entry.html;
++    }
++    if (!body && entry.citations?.length) body = createCitationMessage(entry);
++    item.append(body || createElement("pre", {}, entry.displayText ?? entry.text ?? entry.summary ?? entry.details ?? ""));
+     const questionControls = questions.inline(entry);
+     if (questionControls) item.append(questionControls);
+     if (entry.attachments?.length) item.append(renderAttachments(entry.attachments, {onRemove: removeAttachment}));
+@@ -1177,6 +1263,19 @@ export function mountConversation(root, options) {
+     const nextNodes = new Map(), desired = [];
+     let previousDate = "", dateOccurrence = 0;
+     for (const row of history.rows) {
++      let item = entryNodes.get(row.key);
++      if (!item || changed.has(row.key)) {
++        const replacement = entryElement(row.entry);
++        const oldDetails = item?.querySelectorAll?.("details") || [];
++        const newDetails = replacement.querySelectorAll?.("details") || [];
++        for (let index = 0; index < Math.min(oldDetails.length, newDetails.length); index += 1) {
++          newDetails[index].open = oldDetails[index].open;
++        }
++        item = replacement;
++      }
++      // Keep excluded nodes current so filter changes retain disclosure state.
++      nextNodes.set(row.key, item);
++      if (!transcriptEntryVisible(row.entry, filter.value)) continue;
+       const timestamp = formatTranscriptTimestamp(row.entry);
+       if (timestamp.dateKey && timestamp.dateKey !== previousDate) {
+         const dateKey = "date:" + timestamp.dateKey + ":" + dateOccurrence++;
+@@ -1188,17 +1287,7 @@ export function mountConversation(root, options) {
+         nextNodes.set(dateKey, separator); desired.push(separator);
+         previousDate = timestamp.dateKey;
+       }
+-      let item = entryNodes.get(row.key);
+-      if (!item || changed.has(row.key)) {
+-        const replacement = entryElement(row.entry);
+-        const oldDetails = item?.querySelectorAll?.("details") || [];
+-        const newDetails = replacement.querySelectorAll?.("details") || [];
+-        for (let index = 0; index < Math.min(oldDetails.length, newDetails.length); index += 1) {
+-          newDetails[index].open = oldDetails[index].open;
+-        }
+-        item = replacement;
+-      }
+-      nextNodes.set(row.key, item); desired.push(item);
++      desired.push(item);
+     }
+     if (typeof transcript.insertBefore === "function") {
+       desired.forEach((node, index) => {
+@@ -1215,12 +1304,25 @@ export function mountConversation(root, options) {
+     } else if (prepend) transcript.scrollTop = previousTop + Math.max(0, (transcript.scrollHeight || 0) - previousHeight);
+     else transcript.scrollTop = previousTop;
+   };
++  const filterScroll = new Map();
++  let activeFilter = filter.value;
++  filter.addEventListener("change", () => {
++    filterScroll.set(activeFilter, transcript.scrollTop || 0);
++    activeFilter = filter.value;
++    patchEntries(new Set(), true);
++    transcript.scrollTop = filterScroll.get(activeFilter) || 0;
++  });
+   const acknowledgeRetained = (threadId) => {
+     if (!sender || !capabilities.send) return;
+     const attempt = sender.pending(), draft = textarea.value;
+     void sender.acknowledge(history.entries).then(acknowledged => {
+-      if (acknowledged && currentThread?.threadId === threadId &&
+-          draft.trim() === attempt?.message && textarea.value === draft) textarea.value = "";
++      if (!acknowledged || currentThread?.threadId !== threadId) return;
++      confirmSubmission("send", attempt, threadId);
++      if (draft.trim() === attempt?.message && textarea.value === draft &&
++          (!uploads || uploads.ready() && sameAttachments(uploads.ids(), attempt.attachmentIds || []))) {
++        textarea.value = "";
++        uploads?.clear();
++      }
+     }).catch(error => { status.textContent = error.message; });
+   };
+   const renderThread = (page, isCurrent = () => true, kind = "newest") => {
+@@ -1235,6 +1337,7 @@ export function mountConversation(root, options) {
+         historyRead.newerKeys.add(transcriptEntryKey(entry, index, page.entries));
+       });
+       currentThread = page;
++      renderSubmissionFailure();
+       legacy = Boolean(page.legacy);
+       if (!history.gap && !historyRead) {historyError = ""; historyFailureKind = null; historyNotice.success();}
+       applyThreadSettings();
+@@ -1250,60 +1353,96 @@ export function mountConversation(root, options) {
+         metadataRetryTimer = setTimeout(() => { metadataRetryTimer = null; sync?.scheduleRefresh(0); }, metadataRetryDelay);
+         metadataRetryDelay = Math.min(policy.retryMaxMs, metadataRetryDelay * 2);
+       } else metadataRetryDelay = policy.retryInitialMs;
+-      if (Date.now() - pendingLastRead >= policy.pendingMs) void refreshPending();
++      if (!sync?.pendingInvalidationSupported || Date.now() - pendingLastRead >= policy.pendingMs) void refreshPending();
++    }
++    if (submissionFailure && history.entries.some(entry => entry.kind === "userMessage" &&
++        entry.clientUserMessageId === submissionFailure.attemptId &&
++        /^[0-9a-f]{64}$/.test(entry.clientUserMessageDigest || ""))) {
++      confirmSubmission(submissionFailure.action, {id: submissionFailure.attemptId}, page.threadId);
+     }
+     acknowledgeRetained(page.threadId);
+     renderHistoryControls();
+     scheduleHistoryRepair();
+   };
++  const schedulePending = () => {
++    clearTimeout(pendingDueTimer); pendingDueTimer = null;
++    if (destroyed || paused || globalThis.document?.hidden || !capabilities.pending) return;
++    pendingDueTimer = setTimeout(() => { pendingDueTimer = null; void refreshPending(); },
++      Math.max(0, policy.pendingMs - (Date.now() - pendingLastRead)));
++  };
+   const refreshPending = (force = false, manual = false) => {
+-    if (!capabilities.pending || destroyed || paused || globalThis.document?.hidden || pendingRead) return pendingRead || Promise.resolve();
++    if (!capabilities.pending || destroyed || paused || globalThis.document?.hidden) return Promise.resolve();
++    if (force) ++pendingGeneration;
++    if (pendingRead) { if (force) pendingRerun = true; return pendingRead; }
+     if (pendingRetryTimer !== null && !force) return Promise.resolve();
+-    if (pendingRetryTimer !== null) clearTimeout(pendingRetryTimer);
+-    pendingRetryTimer = null;
+-    const read = laneRead(policy.pendingDeadlineMs), threadId = currentThread?.threadId;
++    if (!force && sync?.pendingInvalidationSupported && Date.now() - pendingLastRead < policy.pendingMs) {
++      schedulePending(); return Promise.resolve();
++    }
++    clearTimeout(pendingRetryTimer); pendingRetryTimer = null;
++    clearTimeout(pendingDueTimer); pendingDueTimer = null;
++    const read = laneRead(policy.pendingDeadlineMs), threadId = currentThread?.threadId, generation = pendingGeneration;
+     pendingScope = read;
++    const current = () => !destroyed && !paused && pendingScope === read && generation === pendingGeneration &&
++      (!threadId || currentThread?.threadId === threadId);
+     pendingNotice.begin({manual});
+-    pendingRead = client.pending({signal: read.signal}).then(entries => {
+-      if (destroyed || (threadId && currentThread?.threadId !== threadId)) return;
++    pendingRead = read.run(() => client.pending({signal: read.signal})).then(entries => {
++      if (!current() || read.signal.aborted) return;
+       if (!Array.isArray(entries)) throw new Error("Invalid pending requests");
+-      renderPrompts(entries);
+-      pendingNotice.success();
+-      pendingLastRead = Date.now();
+-      pendingRetryDelay = policy.retryInitialMs;
++      renderPrompts(entries); pendingNotice.success();
++      pendingLastRead = Date.now(); pendingRetryDelay = policy.retryInitialMs;
++      schedulePending();
+     }).catch(error => {
+-      if (destroyed || paused || globalThis.document?.hidden) return;
++      if (!current() || globalThis.document?.hidden) return;
+       pendingStatusLabel.textContent = "Requests could not be refreshed. The last result may be out of date.";
+       pendingNotice.failure(error);
+       pendingRetryTimer = setTimeout(() => { pendingRetryTimer = null; void refreshPending(); }, pendingRetryDelay);
+       pendingRetryDelay = Math.min(policy.retryMaxMs, pendingRetryDelay * 2);
+-    }).finally(() => { read.finish(); pendingScope = null; pendingRead = null; });
++    }).finally(() => {
++      read.finish();
++      if (pendingScope !== read) return;
++      pendingScope = null; pendingRead = null;
++      if (pendingRerun) { pendingRerun = false; void refreshPending(true); }
++    });
+     return pendingRead;
+   };
++  const scheduleQueue = () => {
++    clearTimeout(queueDueTimer); queueDueTimer = null;
++    if (destroyed || paused || globalThis.document?.hidden || !capabilities.queueRead) return;
++    queueDueTimer = setTimeout(() => { queueDueTimer = null; void refreshQueue(); }, policy.queueMs);
++  };
+   const refreshQueue = (force = false, manual = false) => {
+-    if (!capabilities.queueRead || destroyed || paused || globalThis.document?.hidden || queueRead) return queueRead || Promise.resolve();
++    if (!capabilities.queueRead || destroyed || paused || globalThis.document?.hidden) return Promise.resolve();
++    if (force) ++queueGeneration;
++    if (queueRead) { if (force) queueRerun = true; return queueRead; }
+     if (queueRetryTimer !== null && !force) return Promise.resolve();
+-    if (queueRetryTimer !== null) clearTimeout(queueRetryTimer);
+-    queueRetryTimer = null;
+-    const read = laneRead(policy.queueDeadlineMs), threadId = currentThread?.threadId;
++    clearTimeout(queueRetryTimer); queueRetryTimer = null;
++    clearTimeout(queueDueTimer); queueDueTimer = null;
++    const read = laneRead(policy.queueDeadlineMs), threadId = currentThread?.threadId, generation = queueGeneration;
+     queueScope = read;
++    const current = () => !destroyed && !paused && queueScope === read && generation === queueGeneration &&
++      (!threadId || currentThread?.threadId === threadId);
+     queueNotice.begin({manual});
+-    queueRead = Promise.resolve().then(async () => {
++    queueRead = read.run(async () => {
+       if (capabilities.queue && typeof client.reconcileQueue === "function") await client.reconcileQueue({signal: read.signal});
++      if (read.signal.aborted) read.signal.throwIfAborted();
+       return client.queue({signal: read.signal});
+     }).then(entries => {
+-      if (destroyed || (threadId && currentThread?.threadId !== threadId)) return;
++      if (!current() || read.signal.aborted) return;
+       if (!Array.isArray(entries)) throw new Error("Invalid queue");
+-      renderQueue(entries);
+-      queueNotice.success();
+-      queueRetryDelay = policy.retryInitialMs;
++      renderQueue(entries); queueNotice.success(); queueRetryDelay = policy.retryInitialMs;
++      scheduleQueue();
+     }).catch(error => {
+-      if (destroyed || paused || globalThis.document?.hidden) return;
++      if (!current() || globalThis.document?.hidden) return;
+       queueStatusLabel.textContent = "Queued messages could not be refreshed. The last result may be out of date.";
+       queueNotice.failure(error);
+       queueRetryTimer = setTimeout(() => { queueRetryTimer = null; void refreshQueue(); }, queueRetryDelay);
+       queueRetryDelay = Math.min(policy.retryMaxMs, queueRetryDelay * 2);
+-    }).finally(() => { read.finish(); queueScope = null; queueRead = null; });
++    }).finally(() => {
++      read.finish();
++      if (queueScope !== read) return;
++      queueScope = null; queueRead = null;
++      if (queueRerun) { queueRerun = false; void refreshQueue(true); }
++    });
+     return queueRead;
+   };
+   const runHistoryRead = async (kind, manual = kind === "older") => {
+@@ -1313,20 +1452,21 @@ export function mountConversation(root, options) {
+     const threadId = history.threadId, readGeneration = generation;
+     const readVersion = history.repairVersion;
+     const read = laneRead(policy.transcriptDeadlineMs);
+-    historyRead = {...read, kind, newerKeys: new Set()}; historyError = ""; historyFailureKind = null; historyNotice.begin({manual}); renderHistoryControls();
++    const cycle = {...read, kind, newerKeys: new Set()};
++    historyRead = cycle; historyError = ""; historyFailureKind = null; historyNotice.begin({manual}); renderHistoryControls();
+     try {
+-      const page = await readTranscriptPage(client, {cursor, signal: read.signal, expectedThreadId: threadId});
+-      if (destroyed || paused || readGeneration !== generation || history.threadId !== threadId ||
++      const page = await read.run(() => readTranscriptPage(client, {cursor, signal: read.signal, expectedThreadId: threadId}));
++      if (destroyed || paused || historyRead !== cycle || read.signal.aborted || readGeneration !== generation || history.threadId !== threadId ||
+           readVersion !== history.repairVersion) return;
+       const current = new Map(history.rows.map(row => [row.key, row.entry]));
+       const entries = page.entries.map((entry, index) => {
+         const key = transcriptEntryKey(entry, index, page.entries);
+-        return historyRead.newerKeys.has(key) ? current.get(key) || entry : entry;
++        return cycle.newerKeys.has(key) ? current.get(key) || entry : entry;
+       });
+       renderThread({...page, entries}, () => true, kind);
+       historyRetryDelay = policy.retryInitialMs; historyNotice.success();
+     } catch (error) {
+-      if (destroyed || paused || readGeneration !== generation || history.threadId !== threadId ||
++      if (destroyed || paused || historyRead !== cycle || readGeneration !== generation || history.threadId !== threadId ||
+           readVersion !== history.repairVersion) return;
+       if (error.code === "transcript_cursor_expired" || error.code === "transcript_reset_required") {
+         history.invalidateCursor();
+@@ -1346,7 +1486,9 @@ export function mountConversation(root, options) {
+         }
+       }
+     } finally {
+-      read.finish(); historyRead = null; historyNotice.cancel(); renderHistoryControls();
++      read.finish();
++      if (historyRead !== cycle) return;
++      historyRead = null; historyNotice.cancel(); renderHistoryControls();
+       if (!historyError) scheduleHistoryRepair();
+     }
+   };
+@@ -1368,13 +1510,20 @@ export function mountConversation(root, options) {
+   retryQueue.addEventListener("click", () => { void refreshQueue(true, true); });
+   const suspendLanes = () => {
+     paused = true;
+-    historyRead?.cancel(); pendingScope?.cancel(); queueScope?.cancel();
++    ++pendingGeneration; ++queueGeneration;
++    historyRead?.cancel(); historyRead = null; historyNotice.cancel();
++    pendingScope?.cancel(); queueScope?.cancel();
++    pendingScope = queueScope = null; pendingRead = queueRead = null;
++    pendingRerun = queueRerun = false;
++    clearTimeout(pendingDueTimer); pendingDueTimer = null;
++    clearTimeout(queueDueTimer); queueDueTimer = null;
++    pendingNotice.cancel(); queueNotice.cancel();
+     for (const timer of [historyRetryTimer, metadataRetryTimer, pendingRetryTimer, queueRetryTimer]) clearTimeout(timer);
+     historyRetryTimer = metadataRetryTimer = pendingRetryTimer = queueRetryTimer = null;
+   };
+   const onVisibility = () => {
+     if (globalThis.document?.hidden) suspendLanes();
+-    else { paused = false; void refreshPending(true); void refreshQueue(true); scheduleHistoryRepair(historyFailureKind ? historyRetryDelay : policy.historyPageMs); }
++    else { paused = false; renderHistoryControls(); void refreshPending(true); void refreshQueue(true); scheduleHistoryRepair(historyFailureKind ? historyRetryDelay : policy.historyPageMs); }
+   };
+   const onPageshow = () => { paused = false; onVisibility(); };
+   globalThis.document?.addEventListener?.("visibilitychange", onVisibility);
+@@ -1390,6 +1539,7 @@ export function mountConversation(root, options) {
+       return {...await readTranscriptPage(client, {signal, legacy}), settingsGeneration: readGeneration};
+     },
+     apply: (page, {isCurrent}) => renderThread(page, isCurrent),
++    onPendingInvalidation: () => { void refreshPending(true); },
+     onStateChange: state => {
+       renderConnectionStatus(connectionStatus, state, () => sync.retry());
+       if (state.status === "connected" && lastSyncStatus !== "connected") {
+@@ -1405,14 +1555,25 @@ export function mountConversation(root, options) {
+     if (settingsSaving) return;
+     send.disabled = true;
+     send.textContent = labels.sending;
++    const threadId = currentThread?.threadId;
++    let submittedAttempt, submittedAttachments = [];
+     try {
++      submittedAttachments = uploads?.ids() || [];
+       uploads?.lock(true);
+-      await sender.send(textarea.value, uploads?.ids() || []);
++      const submission = sender.send(textarea.value, submittedAttachments);
++      submittedAttempt = sender.pending();
++      await submission;
++      confirmSubmission("send", submittedAttempt, threadId);
+       questions.ordinaryAccepted();
+-      uploads?.clear();
++      if (currentThread?.threadId === threadId && textarea.value.trim() === submittedAttempt?.message &&
++          (!uploads || uploads.ready() && sameAttachments(uploads.ids(), submittedAttachments))) uploads?.clear();
+       await refresh();
+     } catch (error) {
+-      if (error.name !== "AbortError") status.textContent = error.message;
++      // An observed/acknowledged message takes precedence over a lost response.
++      const retained = sender.pending();
++      if (!submittedAttempt || retained?.id === submittedAttempt.id && !retained.receipt) {
++        failSubmission(error, "send", submittedAttempt, threadId);
++      }
+     } finally {
+       uploads?.lock(false);
+       send.disabled = uploads ? !uploads.ready() : false;
+@@ -1455,16 +1616,25 @@ export function mountConversation(root, options) {
+     if (settingsSaving) return;
+     const message = textarea.value.trim();
+     if (!message && !uploads?.count()) return;
++    const threadId = currentThread?.threadId;
++    let submittedAttempt, submittedAttachments = [];
+     try {
++      submittedAttachments = uploads?.ids() || [];
+       uploads?.lock(true);
+-      await sender.queue(message, uploads?.ids() || []);
++      const submission = sender.queue(message, submittedAttachments);
++      submittedAttempt = sender.pendingQueue();
++      await submission;
++      confirmSubmission("queue", submittedAttempt, threadId);
+       questions.ordinaryAccepted();
+-      uploads?.clear();
+-      textarea.value = "";
++      if (currentThread?.threadId === threadId && textarea.value.trim() === message &&
++          (!uploads || uploads.ready() && sameAttachments(uploads.ids(), submittedAttachments))) {
++        uploads?.clear();
++        textarea.value = "";
++      }
+       void refreshQueue(true);
+       await refresh();
+     } catch (error) {
+-      status.textContent = error.message;
++      failSubmission(error, "queue", submittedAttempt, threadId);
+     } finally { uploads?.lock(false); }
+   });
+   if (capabilities.interrupt) interrupt.addEventListener("click", () => void client.interrupt().then(refresh).catch((error) => {
+@@ -1475,12 +1645,9 @@ export function mountConversation(root, options) {
+   void refresh();
+   void refreshPending();
+   void refreshQueue();
+-  const pendingInterval = setInterval(() => { void refreshPending(); }, policy.pendingMs);
+-  const queueInterval = setInterval(() => { void refreshQueue(); }, policy.queueMs);
+ 
+   return () => {
+     destroyed = true;
+-    clearInterval(pendingInterval); clearInterval(queueInterval);
+     suspendLanes();
+     globalThis.document?.removeEventListener?.("visibilitychange", onVisibility);
+     globalThis.removeEventListener?.("pagehide", suspendLanes);
+diff --git a/conversation/assets/sync.js b/conversation/assets/sync.js
+index 1b9b722..a72d7ac 100644
+--- a/conversation/assets/sync.js
++++ b/conversation/assets/sync.js
+@@ -24,6 +24,7 @@ export function createConversationSync(options) {
+   let streamOpen = !streaming, streamFailed = false, needsSync = true, readError = null;
+   let lastState = "";
+   let warningTimer = null, recoverySince = null;
++  let pendingInvalidationSupported = false;
+ 
+   const publish = () => {
+     const status = readError || streamFailed ?
+@@ -54,6 +55,7 @@ export function createConversationSync(options) {
+     old?.close();
+     streamOpen = !streaming;
+     heartbeatDeadline = null;
++    pendingInvalidationSupported = false;
+   };
+   const cancelRead = () => {
+     const old = active;
+@@ -161,12 +163,18 @@ export function createConversationSync(options) {
+     events.addEventListener("ready", event => {
+       if (!current()) return;
+       try {
+-        const interval = JSON.parse(event.data).heartbeatIntervalMs;
++        const ready = JSON.parse(event.data), interval = ready.heartbeatIntervalMs;
++        pendingInvalidationSupported = ready.pendingInvalidation === true;
+         if (Number.isSafeInteger(interval) && interval > 0) heartbeatDeadline = interval * 2 + policy.heartbeatGraceMs;
+       } catch (_) {}
+       lastTraffic = now();
+     });
+     events.addEventListener("heartbeat", () => { if (current()) lastTraffic = now(); });
++    events.addEventListener("pending", () => {
++      if (!current() || !pendingInvalidationSupported) return;
++      lastTraffic = now();
++      options.onPendingInvalidation?.();
++    });
+     events.onmessage = () => {
+       if (!current()) return;
+       lastTraffic = now();
+@@ -217,7 +225,7 @@ export function createConversationSync(options) {
+     lastWatch = at;
+     watchTimer = later(watch, policy.watchMs);
+   };
+-  const visibility = () => { if (!hidden()) recover(false); else publish(); };
++  const visibility = () => { if (hidden()) pagehide(); else if (suspended) pageshow(); else recover(false); };
+   const focus = () => recover(false);
+   const online = () => recover(true);
+   const offline = () => {
+@@ -227,13 +235,15 @@ export function createConversationSync(options) {
+   };
+   const pagehide = () => {
+     suspended = true;
++    dirty = true; needsSync = true;
+     clear(warningTimer); warningTimer = null; recoverySince = null;
+     cancelRead(); closeStream(); clearRefresh();
+     clear(retryTimer); retryTimer = null;
+     clear(watchTimer); watchTimer = null;
+   };
+   const pageshow = () => {
+-    if (destroyed) return;
++    if (destroyed || hidden()) return;
++    if (!suspended) { recover(false); return; }
+     suspended = false;
+     lastRecovery = -Infinity;
+     recover();
+@@ -243,10 +253,15 @@ export function createConversationSync(options) {
+     [browser, "online", online], [browser, "offline", offline],
+     [browser, "pagehide", pagehide], [browser, "pageshow", pageshow]];
+   for (const [target, name, callback] of listeners) target?.addEventListener?.(name, callback);
+-  publish(); connect(); scheduleRefresh(0);
+-  if (live) watchTimer = later(watch, policy.watchMs);
++  suspended = hidden();
++  publish();
++  if (!suspended) {
++    connect(); scheduleRefresh(0);
++    if (live) watchTimer = later(watch, policy.watchMs);
++  }
+   return {
+     refresh, scheduleRefresh, retry: recover,
++    get pendingInvalidationSupported() { return pendingInvalidationSupported; },
+     destroy() {
+       destroyed = true;
+       pagehide();
+diff --git a/conversation/assets/uploads.js b/conversation/assets/uploads.js
+index 9eb5933..e562681 100644
+--- a/conversation/assets/uploads.js
++++ b/conversation/assets/uploads.js
+@@ -57,8 +57,16 @@ function localURL(value) {
+   return parsed.pathname + parsed.search;
+ }
+ 
+-async function payload(response) {
+-  const data = await response.json().catch(() => ({}));
++async function payload(response, signal, read) {
++  let data;
++  try { data = response.status === 204 ? {} : await response.json(); }
++  catch (error) {
++    signal?.throwIfAborted();
++    if (response.ok && read) throw new Error("Invalid file status response");
++    if (read && error?.name !== "SyntaxError") throw error;
++    data = {};
++  }
++  signal?.throwIfAborted();
+   if (!response.ok) {
+     const error = new Error(data.error || `File operation failed (${response.status})`);
+     error.status = response.status;
+@@ -71,12 +79,21 @@ export function createUploadClient(basePath, options = {}) {
+   const base = localURL(basePath);
+   if (base.includes("?") || base.endsWith("/")) throw new TypeError("Invalid upload endpoint");
+   const fetchRequest = options.fetch || globalThis.fetch.bind(globalThis);
+-  const request = (suffix, init = {}) => fetchRequest(base + suffix, {
+-    credentials: "same-origin", signal: options.signal, ...init,
+-  }).then(payload);
++  const request = async (suffix, init = {}) => {
++    const read = !init.method || init.method === "GET";
++    const deadline = read ? new AbortController() : null;
++    const timer = deadline ? setTimeout(() => deadline.abort(new Error("File status request timed out")), options.readDeadlineMs || 10_000) : null;
++    const signals = [options.signal, init.signal, deadline?.signal].filter(Boolean);
++    const signal = signals.length ? AbortSignal.any(signals) : undefined;
++    try {
++      return await payload(await fetchRequest(base + suffix, {
++        credentials: "same-origin", ...init, signal,
++      }), signal, read);
++    } finally { clearTimeout(timer); }
++  };
+   const path = (id) => { if (!idPattern.test(id)) throw new TypeError("Invalid upload ID"); return `/${id}`; };
+   return {
+-    list: () => request(""),
++    list: (read = {}) => request("", {signal: read.signal}),
+     create: (file, clientId) => request("", {method: "POST", headers: {"Content-Type": "application/json"},
+       body: JSON.stringify({name: file.name, size: file.size, clientId})}),
+     status: (id) => request(path(id)),
+@@ -208,6 +225,8 @@ export function mountUploads(root, options) {
+   let active = 0;
+   let resumeEntry = null;
+   let persistenceError = "";
++  let draftRevision = 0, metadataRead = null, metadataRetry = null, metadataDelay = 2000;
++  let metadataPaused = Boolean(globalThis.document?.hidden), metadataFatal = false, metadataFailed = false;
+   const controllers = new Map();
+   const controlsRoot = options.controlsRoot || root;
+   const initiallyHidden = root.hidden;
+@@ -275,9 +294,14 @@ export function mountUploads(root, options) {
+   controls.append(button, picker, menu); controlsRoot.append(controls);
+   notice.hidden = true; summary.hidden = true; list.hidden = true;
+   if (controlsRoot !== root) root.hidden = true;
+-  root.append(notice, summary, list);
++  const retryMetadata = document.createElement("button");
++  retryMetadata.type = "button"; retryMetadata.className = "quiet"; retryMetadata.textContent = "Retry file status";
++  retryMetadata.hidden = true;
++  retryMetadata.addEventListener("click", () => { void refreshMetadata(); });
++  root.append(notice, retryMetadata, summary, list);
+   const ready = () => Boolean(limits) && !persistenceError && entries.every((entry) => entry.state === "ready" && !entry.error && !entry.removing);
+   const save = (next = entries) => {
++    ++draftRevision;
+     try {
+       if (numbersChanged) {
+         const value = JSON.stringify([...clipboardNumbers]);
+@@ -318,6 +342,7 @@ export function mountUploads(root, options) {
+     button.disabled = locked || !limits; attach.disabled = button.disabled;
+     if (button.disabled) closeMenu();
+     if (persistenceError) notice.textContent = persistenceError;
++    retryMetadata.hidden = !metadataFailed || metadataFatal; retryMetadata.disabled = Boolean(metadataRead);
+     notice.hidden = !notice.textContent; list.hidden = entries.length === 0;
+     summary.hidden = entries.length === 0;
+     const total = entries.reduce((sum, entry) => sum + entry.size, 0);
+@@ -463,39 +488,98 @@ export function mountUploads(root, options) {
+     add(files, true);
+   };
+   pasteTarget?.addEventListener("paste", paste);
++  const refreshMetadata = () => {
++    if (stopped || metadataPaused || globalThis.document?.hidden || metadataFatal) return Promise.resolve();
++    if (metadataRead) return metadataRead.promise;
++    clearTimeout(metadataRetry); metadataRetry = null;
++    const cycle = {controller: new AbortController(), promise: null}, revision = draftRevision;
++    metadataRead = cycle;
++    const current = () => metadataRead === cycle && !stopped && !metadataPaused;
++    const signal = cycle.controller.signal;
++    let rejectAbort;
++    const aborted = new Promise((_, reject) => { rejectAbort = reject; });
++    const onAbort = () => rejectAbort(signal.reason);
++    signal.addEventListener("abort", onAbort, {once: true});
++    const deadline = setTimeout(() => cycle.controller.abort(new Error("File status request timed out")), options.readDeadlineMs || 10_000);
++    cycle.promise = (async () => {
++      try {
++        const snapshot = await Promise.race([Promise.resolve().then(() => client.list({signal})), aborted]);
++        if (!current() || signal.aborted) return;
++        if (!snapshot || !Array.isArray(snapshot.files) || !snapshot.limits ||
++            !["chunkBytes", "fileBytes", "promptBytes", "files"].every(field => Number.isSafeInteger(snapshot.limits[field]) && snapshot.limits[field] > 0)) {
++          throw new Error("Invalid file status response");
++        }
++        limits = snapshot.limits;
++        for (const file of [...entries, ...snapshot.files]) reservedNames.add(file.name);
++        const available = new Map(snapshot.files.map(file => [file.id, file]));
++        // An older listing cannot undo a selection, removal or transfer receipt.
++        if (revision === draftRevision) {
++          for (const entry of entries) {
++            if (entry.running || entry.removing) continue;
++            if (entry.id && available.has(entry.id)) {
++              Object.assign(entry, available.get(entry.id)); entry.creation = "created";
++              if (entry.state === "ready") entry.error = null;
++            }
++            if (entry.id && (!available.has(entry.id) || entry.state === "deleted")) {
++              entry.state = "missing"; entry.error = "File expired or was removed. Remove it and upload again.";
++            }
++          }
++        }
++        save(); metadataFailed = false; metadataDelay = 2000; notice.textContent = "";
++      } catch (error) {
++        if (!current()) return;
++        metadataFailed = true; notice.textContent = error.message;
++        if (!persistenceError && error.status !== 401 && error.status !== 403) {
++          metadataRetry = setTimeout(() => { metadataRetry = null; void refreshMetadata(); }, metadataDelay);
++          metadataDelay = Math.min(30_000, metadataDelay * 2);
++        }
++      } finally {
++        clearTimeout(deadline); signal.removeEventListener("abort", onAbort);
++        if (metadataRead === cycle) { metadataRead = null; render(); }
++      }
++    })();
++    render(); return cycle.promise;
++  };
++  const pauseMetadata = () => {
++    metadataPaused = true; clearTimeout(metadataRetry); metadataRetry = null;
++    const old = metadataRead; metadataRead = null; old?.controller.abort();
++  };
++  const resumeMetadata = () => {
++    if (stopped || globalThis.document?.hidden) return;
++    const wasPaused = metadataPaused;
++    metadataPaused = false;
++    if (wasPaused || metadataFailed || !limits) void refreshMetadata();
++  };
++  const metadataVisibility = () => globalThis.document?.hidden ? pauseMetadata() : resumeMetadata();
++  globalThis.document?.addEventListener?.("visibilitychange", metadataVisibility);
++  globalThis.addEventListener?.("pagehide", pauseMetadata);
++  globalThis.addEventListener?.("pageshow", resumeMetadata);
+   const initialized = (async () => {
+     try {
+       const saved = JSON.parse(storage.getItem(key) || "[]");
+-      if (!Array.isArray(saved) || saved.length > 100 || saved.some((entry) => !idPattern.test(entry.clientId))) throw new Error("Stored attachment draft is invalid");
++      if (!Array.isArray(saved) || saved.length > 100 || saved.some(entry => !idPattern.test(entry.clientId))) throw new Error("Stored attachment draft is invalid");
+       entries = saved;
+       const numbers = JSON.parse(storage.getItem(numberKey) || "[]");
+       if (!Array.isArray(numbers) || numbers.some(pair => !Array.isArray(pair) || pair.length !== 2 ||
+           typeof pair[0] !== "string" || !Number.isSafeInteger(pair[1]) || pair[1] < 1)) throw new Error("Stored clipboard numbering is invalid");
+       clipboardNumbers = new Map(numbers);
+-      const snapshot = await client.list(); limits = snapshot.limits;
+-      for (const file of [...entries, ...snapshot.files]) reservedNames.add(file.name);
+-      const available = new Map(snapshot.files.map((file) => [file.id, file]));
+-      for (const entry of entries) {
+-        if (entry.id && available.has(entry.id)) {
+-          Object.assign(entry, available.get(entry.id));
+-          entry.creation = "created";
+-          if (entry.state === "ready") entry.error = null;
+-        }
+-        if (entry.id && (!available.has(entry.id) || entry.state === "deleted")) { entry.state = "missing"; entry.error = "File expired or was removed. Remove it and upload again."; }
+-      }
+-      save();
+-    } catch (error) { notice.textContent = error.message; }
+-    render();
++    } catch (error) { metadataFatal = true; persistenceError = error.message; render(); return; }
++    await refreshMetadata();
+   })();
+   return {
+     initialized,
++    refresh: refreshMetadata,
+     ready,
+     count: () => entries.length,
+     ids: () => { if (!ready()) throw new Error("Wait for uploads to finish, or remove the unfinished files"); return attachmentIDs(entries.map((entry) => entry.id)); },
+     clear: () => { save([]); entries = []; render(); },
+     lock: (value) => { locked = value; render(); if (!value) pump(); },
+     destroy: () => {
+-      closeMenu(); stopped = true; controllers.forEach((controller) => controller.abort());
++      closeMenu(); pauseMetadata(); stopped = true;
++      globalThis.document?.removeEventListener?.("visibilitychange", metadataVisibility);
++      globalThis.removeEventListener?.("pagehide", pauseMetadata);
++      globalThis.removeEventListener?.("pageshow", resumeMetadata);
++      controllers.forEach((controller) => controller.abort());
+       globalThis.removeEventListener("resize", positionMenu); globalThis.removeEventListener("scroll", positionMenu, true);
+       dropTarget.removeEventListener("dragover", drag); dropTarget.removeEventListener("dragleave", leave); dropTarget.removeEventListener("drop", drop);
+       pasteTarget?.removeEventListener("paste", paste);
+diff --git a/conversation/events_test.go b/conversation/events_test.go
+index bf29d5f..9972f67 100644
+--- a/conversation/events_test.go
++++ b/conversation/events_test.go
+@@ -3,7 +3,10 @@ package conversation
+ import (
+ 	"context"
+ 	"errors"
++	"fmt"
+ 	"net/http/httptest"
++	"strings"
++	"sync/atomic"
+ 	"testing"
+ 	"time"
+ )
+@@ -77,3 +80,83 @@ func TestEventStreamStopsOnWriteFailure(t *testing.T) {
+ 		t.Fatal("failed stream remained open")
+ 	}
+ }
++
++func TestPendingRevisionSurvivesCoalescingWithoutChangingGenericUpdates(t *testing.T) {
++	ctx, cancel := context.WithCancel(context.Background())
++	defer cancel()
++	r := &streamRecorder{ResponseRecorder: httptest.NewRecorder(), flushed: make(chan string, 8)}
++	events := make(chan struct{}, 1)
++	var revision atomic.Uint64
++	done := make(chan struct{})
++	go func() {
++		(&Handler{}).streamEvents(r, httptest.NewRequest("GET", "/events", nil).WithContext(ctx), r, events, nil, revision.Load)
++		close(done)
++	}()
++	next := func() string {
++		t.Helper()
++		select {
++		case value := <-r.flushed:
++			return value
++		case <-time.After(time.Second):
++			t.Fatal("stream did not flush")
++			return ""
++		}
++	}
++	if got := next(); got != "event: ready\ndata: {\"heartbeatIntervalMs\":20000,\"pendingInvalidation\":true}\n\n" {
++		t.Fatal(got)
++	}
++	revision.Add(3)
++	events <- struct{}{}
++	if got := next(); got != "event: pending\ndata: update\n\ndata: update\n\n" {
++		t.Fatal(got)
++	}
++	events <- struct{}{}
++	if got := next(); got != "data: update\n\n" {
++		t.Fatal(got)
++	}
++	revision.Add(1)
++	events <- struct{}{}
++	if got := next(); got != "event: pending\ndata: update\n\ndata: update\n\n" {
++		t.Fatal(got)
++	}
++	cancel()
++	<-done
++}
++
++type revisionClient struct {
++	*fakeClient
++	reads atomic.Uint64
++}
++
++func (c *revisionClient) PendingRevision(string) uint64 { return c.reads.Add(1) }
++
++func TestPendingRevisionAdvertisementRequiresPendingAuthority(t *testing.T) {
++	for _, allowed := range []bool{false, true} {
++		t.Run(fmt.Sprint(allowed), func(t *testing.T) {
++			ctx, cancel := context.WithCancel(context.Background())
++			defer cancel()
++			r := &streamRecorder{ResponseRecorder: httptest.NewRecorder(), flushed: make(chan string, 2)}
++			client := &revisionClient{fakeClient: &fakeClient{}}
++			done := make(chan struct{})
++			go func() {
++				(&Handler{}).events(r, httptest.NewRequest("GET", "/events", nil).WithContext(ctx), Target{
++					Client: client, ThreadID: "trusted-thread", Capabilities: Capabilities{EventStream: true, Pending: allowed},
++				})
++				close(done)
++			}()
++			select {
++			case ready := <-r.flushed:
++				if strings.Contains(ready, `"pendingInvalidation":true`) != allowed {
++					t.Fatal(ready)
++				}
++			case <-time.After(time.Second):
++				t.Fatal("no ready event")
++			}
++			cancel()
++			<-done
++			if (client.reads.Load() != 0) != allowed {
++				t.Fatal("getter called without pending authority")
++			}
++		})
++	}
++}
+diff --git a/conversation/handler.go b/conversation/handler.go
+index 2c7b048..a60a635 100644
+--- a/conversation/handler.go
++++ b/conversation/handler.go
+@@ -86,6 +86,12 @@ type TranscriptPageReader interface {
+ 	ReadThreadPage(context.Context, string, string) (codex.TranscriptPage, error)
+ }
+ 
++// PendingRevisionProvider supplies an in-memory pending-control invalidation
++// token. Reading it must not perform RPCs or access durable submission state.
++type PendingRevisionProvider interface {
++	PendingRevision(threadID string) uint64
++}
++
+ // PromptResponder adds request-bound responses without changing the legacy
+ // Client interface used by existing embedding applications.
+ type PromptResponder interface {
+@@ -118,7 +124,10 @@ type Target struct {
+ 	Capabilities        Capabilities
+ 	MutationLock        MutationLocker
+ 	TransformTranscript func(*codex.Transcript)
+-	Release             func()
++	// PresentTranscript renders application-owned presentation after attachment
++	// decoration. TransformTranscript retains its earlier, pre-attachment order.
++	PresentTranscript func(*codex.Transcript)
++	Release           func()
+ }
+ 
+ func (target Target) models(ctx context.Context) ([]codex.Model, error) {
+@@ -418,6 +427,9 @@ func (handler *Handler) serveOperation(
+ 				return
+ 			}
+ 		}
++		if target.PresentTranscript != nil {
++			target.PresentTranscript(&page.Transcript)
++		}
+ 		writeJSON(response, http.StatusOK, page)
+ 	case "activity":
+ 		if request.Method != http.MethodGet || !target.Capabilities.Read {
+@@ -457,6 +469,9 @@ func (handler *Handler) serveOperation(
+ 				return
+ 			}
+ 		}
++		if target.PresentTranscript != nil {
++			target.PresentTranscript(&transcript)
++		}
+ 		writeJSON(response, http.StatusOK, transcript)
+ 	case "pending":
+ 		if request.Method != http.MethodGet || !target.Capabilities.Pending {
+@@ -936,13 +951,28 @@ func (handler *Handler) events(response http.ResponseWriter, request *http.Reque
+ 	defer unsubscribe()
+ 	keepalive := time.NewTicker(heartbeatInterval)
+ 	defer keepalive.Stop()
+-	handler.streamEvents(response, request, flusher, events, keepalive.C)
++	var revision func() uint64
++	if provider, ok := target.Client.(PendingRevisionProvider); ok && target.Capabilities.Pending {
++		revision = func() uint64 { return provider.PendingRevision(target.ThreadID) }
++	}
++	handler.streamEvents(response, request, flusher, events, keepalive.C, revision)
+ }
+ 
+-func (handler *Handler) streamEvents(response http.ResponseWriter, request *http.Request, flusher http.Flusher, events <-chan struct{}, keepalive <-chan time.Time) {
++func (handler *Handler) streamEvents(response http.ResponseWriter, request *http.Request, flusher http.Flusher, events <-chan struct{}, keepalive <-chan time.Time, revisions ...func() uint64) {
++	var revision func() uint64
++	if len(revisions) != 0 {
++		revision = revisions[0]
++	}
++	var previous uint64
++	ready := map[string]any{"heartbeatIntervalMs": heartbeatInterval.Milliseconds()}
++	if revision != nil {
++		previous = revision()
++		ready["pendingInvalidation"] = true
++	}
++	data, _ := json.Marshal(ready)
+ 	response.Header().Set("Content-Type", "text/event-stream")
+ 	response.Header().Set("X-Accel-Buffering", "no")
+-	if _, err := fmt.Fprintf(response, "event: ready\ndata: {\"heartbeatIntervalMs\":%d}\n\n", heartbeatInterval.Milliseconds()); err != nil {
++	if _, err := fmt.Fprintf(response, "event: ready\ndata: %s\n\n", data); err != nil {
+ 		return
+ 	}
+ 	flusher.Flush()
+@@ -961,6 +991,15 @@ func (handler *Handler) streamEvents(response http.ResponseWriter, request *http
+ 			if !open {
+ 				return
+ 			}
++			if revision != nil {
++				current := revision()
++				if current != previous {
++					if _, err := io.WriteString(response, "event: pending\ndata: update\n\n"); err != nil {
++						return
++					}
++					previous = current
++				}
++			}
+ 			if _, err := io.WriteString(response, "data: update\n\n"); err != nil {
+ 				return
+ 			}
+diff --git a/conversation/presentation_test.go b/conversation/presentation_test.go
+new file mode 100644
+index 0000000..bef37fa
+--- /dev/null
++++ b/conversation/presentation_test.go
+@@ -0,0 +1,172 @@
++package conversation
++
++import (
++	"context"
++	"encoding/json"
++	"errors"
++	"net/http"
++	"net/http/httptest"
++	"reflect"
++	"strings"
++	"testing"
++
++	"github.com/aither64/codex-web/codex"
++)
++
++type presentationClient struct{ *fakePageClient }
++
++func (client *presentationClient) ReadThread(_ context.Context, thread string) (codex.Transcript, error) {
++	transcript := client.page.Transcript
++	transcript.ThreadID = thread
++	return transcript, client.err
++}
++
++type presentationAttachments struct {
++	AttachmentProvider
++	observe func(*codex.Transcript) error
++}
++
++func (provider presentationAttachments) ObserveTranscript(_ context.Context, transcript *codex.Transcript) error {
++	return provider.observe(transcript)
++}
++
++func TestTranscriptPresentationOrder(t *testing.T) {
++	for _, route := range []string{"thread", "thread/page"} {
++		for _, mode := range []string{"plain", "decorated", "empty", "attachment error", "nil hooks", "denied", "identity error"} {
++			t.Run(route+"/"+mode, func(t *testing.T) {
++				const original = "canonical attachment envelope"
++				const messageID = "retained-message-id"
++				digest := strings.Repeat("a", 64)
++				client := &presentationClient{&fakePageClient{fakeClient: &fakeClient{}, page: codex.TranscriptPage{
++					Transcript: codex.Transcript{Entries: []codex.TranscriptEntry{{
++						Kind: "userMessage", Text: original, ClientUserMessageID: messageID, ClientUserMessageDigest: digest,
++					}}},
++				}}}
++				if mode == "identity error" {
++					client.verifyErr = errors.New("identity unavailable")
++				}
++				var order []string
++				expectedDisplay := original
++				target := Target{Client: client, ThreadID: "trusted", Directory: "/workspace", Capabilities: Capabilities{Read: mode != "denied"}}
++				if mode != "nil hooks" {
++					target.TransformTranscript = func(transcript *codex.Transcript) {
++						order = append(order, "transform")
++						if transcript.Entries[0].Text != original || transcript.Entries[0].DisplayText != nil {
++							t.Fatal("transform did not receive original input")
++						}
++					}
++					target.PresentTranscript = func(transcript *codex.Transcript) {
++						order = append(order, "present")
++						entry := &transcript.Entries[0]
++						display := entry.Text
++						if entry.DisplayText != nil {
++							display = *entry.DisplayText
++						}
++						if display != expectedDisplay {
++							t.Fatalf("presentation received %q, want %q", display, expectedDisplay)
++						}
++						entry.HTML = "<p>" + display + "</p>"
++						entry.Communication = &codex.TranscriptCommunication{Kind: "team", From: "sender", To: "recipient"}
++					}
++				}
++				if mode == "decorated" || mode == "empty" || mode == "attachment error" {
++					expectedDisplay = "displayed attachment prompt"
++					if mode == "empty" {
++						expectedDisplay = ""
++					}
++					target.Attachments = presentationAttachments{observe: func(transcript *codex.Transcript) error {
++						order = append(order, "attachments")
++						if mode == "attachment error" {
++							return &UploadError{Status: http.StatusServiceUnavailable, Message: "Attachment unavailable"}
++						}
++						transcript.Entries[0].DisplayText = &expectedDisplay
++						return nil
++					}}
++				}
++				handler, err := NewHandler(Options{AllowedOrigins: []string{"https://portal.test"}, Resolver: ResolverFunc(func(context.Context, ResolveRequest) (Target, error) { return target, nil })})
++				if err != nil {
++					t.Fatal(err)
++				}
++				response := httptest.NewRecorder()
++				handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/codex/conversations/opaque/"+route, nil))
++				status := http.StatusOK
++				wantOrder := []string{"transform", "present"}
++				switch mode {
++				case "decorated", "empty":
++					wantOrder = []string{"transform", "attachments", "present"}
++				case "attachment error":
++					status, wantOrder = http.StatusServiceUnavailable, []string{"transform", "attachments"}
++				case "nil hooks":
++					wantOrder = nil
++				case "denied":
++					status, wantOrder = http.StatusForbidden, nil
++				case "identity error":
++					status, wantOrder = http.StatusNotFound, nil
++				}
++				if response.Code != status || !reflect.DeepEqual(order, wantOrder) {
++					t.Fatalf("status=%d order=%v body=%s", response.Code, order, response.Body.String())
++				}
++				if status != http.StatusOK {
++					return
++				}
++				var transcript codex.Transcript
++				if err := json.Unmarshal(response.Body.Bytes(), &transcript); err != nil {
++					t.Fatal(err)
++				}
++				entry := transcript.Entries[0]
++				if entry.Text != original || entry.ClientUserMessageID != messageID || entry.ClientUserMessageDigest != digest {
++					t.Fatalf("canonical delivery identity changed: %#v", entry)
++				}
++				if mode == "nil hooks" {
++					if strings.Contains(response.Body.String(), "communication") || entry.HTML != "" {
++						t.Fatal("nil presentation changed output")
++					}
++				} else if entry.HTML != "<p>"+expectedDisplay+"</p>" || entry.Communication == nil || entry.Communication.From != "sender" || entry.Communication.To != "recipient" {
++					t.Fatalf("presentation output lost: %#v", entry)
++				}
++			})
++		}
++	}
++}
++
++func TestTranscriptPresentationPreservesCitationIdentity(t *testing.T) {
++	for _, route := range []string{"thread", "thread/page"} {
++		t.Run(route, func(t *testing.T) {
++			prefix, token := "Příliš 🐈 ", "\ue200cite\ue202fixture\ue201"
++			entry := codex.TranscriptEntry{
++				Kind: "agentMessage", Text: prefix + token + " done", TurnStatus: "completed",
++				ClientUserMessageID: "original-id", ClientUserMessageDigest: strings.Repeat("b", 64),
++				Citations: []codex.CitationSpan{{Start: len(prefix), End: len(prefix + token), Sources: []codex.CitationSource{{URL: "https://example.com/source", Title: "Source", Number: 1}}}},
++			}
++			client := &presentationClient{&fakePageClient{fakeClient: &fakeClient{}, page: codex.TranscriptPage{Transcript: codex.Transcript{Entries: []codex.TranscriptEntry{entry}}}}}
++			handler, err := NewHandler(Options{AllowedOrigins: []string{"https://portal.test"}, Resolver: ResolverFunc(func(context.Context, ResolveRequest) (Target, error) {
++				return Target{Client: client, ThreadID: "trusted", Directory: "/workspace", Capabilities: Capabilities{Read: true},
++					Attachments: presentationAttachments{observe: func(transcript *codex.Transcript) error {
++						value := "decorated display is not a citation offset source"
++						transcript.Entries[0].DisplayText = &value
++						return nil
++					}},
++					PresentTranscript: func(transcript *codex.Transcript) {
++						transcript.Entries[0].HTML = codex.CitationMarkdown(transcript.Entries[0])
++						transcript.Entries[0].Communication = &codex.TranscriptCommunication{Kind: "team"}
++					}}, nil
++			})})
++			if err != nil {
++				t.Fatal(err)
++			}
++			response := httptest.NewRecorder()
++			handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/codex/conversations/opaque/"+route, nil))
++			var transcript codex.Transcript
++			if response.Code != http.StatusOK || json.Unmarshal(response.Body.Bytes(), &transcript) != nil {
++				t.Fatalf("response = %d %s", response.Code, response.Body.String())
++			}
++			actual := transcript.Entries[0]
++			if actual.Text != entry.Text || !reflect.DeepEqual(actual.Citations, entry.Citations) || actual.ClientUserMessageID != entry.ClientUserMessageID || actual.ClientUserMessageDigest != entry.ClientUserMessageDigest {
++				t.Fatalf("citation or delivery identity changed: %#v", actual)
++			}
++			if !strings.HasPrefix(actual.HTML, prefix+"[\\[1\\]](<https://example.com/source>") {
++				t.Fatalf("citation did not use original UTF-8 offsets: %q", actual.HTML)
++			}
++		})
++	}
++}
+diff --git a/docs/reference.md b/docs/reference.md
+index 2b970d7..134e87c 100644
+--- a/docs/reference.md
++++ b/docs/reference.md
+@@ -275,6 +275,37 @@ record time. When an item has no available time, a known turn
+ time is marked approximate; otherwise the timestamp is omitted. This display
+ metadata does not change stored conversations or require a migration.
+ 
++Hosts can annotate internal coordination with
++`TranscriptEntry.Communication: &codex.TranscriptCommunication{Kind: "team",
++From: "sender", To: "recipient"}`. This optional `communication` object is a
++presentation hint, not authenticated identity or authorization. The shared
++module does not infer team membership from message text.
++`transcriptEntryPresentation(entry)` returns `{kind, label, team}`, where kind
++is `user`, `agent`, `team`, `event` or `error`. Only `communication.kind: "team"`
++selects team presentation; unknown metadata preserves ordinary classification.
++Labels include available sender and recipient text and must be inserted as text.
++
++`transcriptEntryVisible(entry, filter = "all")` supports `all`, `messages`,
++`team` and `activity`. Messages includes user, agent, reasoning and plan entries
++without team metadata; Team includes coordination; Activity includes other
++entries without team metadata. Errors appear in every view. Unknown filters
++behave as All. The mounted selector retains each view's scroll position and
++keeps entry disclosure state when switching views. Team entries have a distinct
++color and identify the sender and recipient when available.
++
++`Target.TransformTranscript` runs before attachment observation, preserving its
++existing semantics. Optional `Target.PresentTranscript` runs afterward on both
++`thread` and `thread/page`, including when no attachment provider is configured.
++An attachment failure returns without presentation. Use this final hook to
++render Markdown from `displayText` when present, including an empty string,
++or `text` otherwise. Preserve canonical text, attachment identity, message IDs
++and digests. Hosts own Markdown generation, sanitization and URL rewriting.
++The mounted UI renders typed activity first. For messages, it prefers
++host-sanitized `html`, then text with citation links, then plain text. Never put
++unsanitized browser input in `html`. Older readers ignore the additive metadata,
++and nil hooks preserve existing behavior. No stored format or Codex protocol
++change is required.
++
+ Search, agent tool calls and agent lifecycle entries also include typed
+ `activity` data. Their existing `summary` and `details` fields remain available
+ for other renderers and future protocol fields. `createTranscriptActivity(entry)`
+@@ -356,7 +387,7 @@ calls the page route. `mountConversation()` loads the newest page first and offe
+ pages arrive, repairs gaps after missed events, and keeps the visible scroll
+ position when older entries are added. A missing page route or an explicit
+ `transcript_paging_unavailable` response falls back to an authorized `/thread`
+-read; the interface then says that older history is unavailable. Other HTTP,
++read; successful fallback is silent. Other HTTP,
+ timeout, cursor and malformed-response errors do not trigger that fallback.
+ 
+ The composer shows the last confirmed model and reasoning effort with **Edit**.
+@@ -370,7 +401,9 @@ deadlines, retry backoff and notice delays. `createRefreshNotice()` retains the
+ last successful value during background reads. Initial loading appears after
+ 750 ms, manual loading after 250 ms, and refresh failures after 30 continuous
+ visible seconds. Hidden tabs and page restoration restart that warning grace.
+-Access failures and failed user actions appear immediately. Automatic history
++Access failures and failed user actions appear immediately. Initial and automatic
++history repair remain silent while loading; manual older-page reads can show
++loading progress and actionable failures in normal document flow. Automatic history
+ repair retries with capped backoff; manual older-page failures wait for Retry.
+ Hosts can override individual policy values when mounting a conversation or
+ creating a notice or sync controller. Domain controllers retain cursor,
+@@ -468,6 +501,20 @@ browser client exposes `activity()` for applications that enable it. A client
+ without a recorder still aggregates historical boundaries and explicitly
+ unclassified turn time, without subscribing or resuming the thread.
+ 
++Clients can implement optional `PendingRevisionProvider.PendingRevision(threadID)`
++to identify changes to the visible pending-request projection. The getter reads
++only memory; it performs no native RPC or durable ledger access. The native
++client advances the revision before broadcasting request, response, snooze,
++notice and connection changes. Revision bookkeeping retires with its watched or pending thread state;
++persisted formats remain unchanged.
++
++For an authorized Pending target with this provider, the SSE `ready` event adds
++`pendingInvalidation: true`. A changed revision emits the named `pending` event
++with `data: update`, alongside the unchanged generic update. Comparing the latest
++revision preserves invalidation when generic updates coalesce. Initial reads
++and reads after reconnect remain authoritative. Clients without the optional
++interface retain the existing stream contract.
++
+ The handler also serves `assets/conversation.js`. Import
+ `createConversationClient()` for the HTTP API, `createDurableSender()` for
+ response-loss-safe message delivery, or `mountConversation()` for the complete
+@@ -487,6 +534,20 @@ pending send is acknowledged only after a matching message is observed in the
+ retained transcript, including an older page; a partial newest page cannot
+ prove that the message is absent.
+ 
++`submissionFailurePresentation(error)` returns `{message, uncertain}` for inline
++delivery errors. Only explicit `error.notSent === true` establishes an unsent
++message. Transport failures, HTTP 502/503/504, aborts and unknown errors remain
++uncertain. The helper preserves the error and performs no request, retry,
++storage change or receipt acknowledgement. The mounted composer retains input
++and the original durable attempt on failure; a previously observed message or
++accepted receipt takes precedence over a lost response. Retry that original
++submission through the durable sender rather than generating a new identity.
++The notice belongs to the original conversation, thread, attempt and action.
++Acceptance or observation of that attempt clears the notice; unrelated
++confirmations leave it unchanged. Clearing the notice does not remove a durable
++retry record.
++Changed draft text or attachment selections remain intact during reconciliation.
++
+ `formatTranscriptTimestamp(entry)` supplies the mounted interface's local clock
+ label, full timestamp tooltip and local calendar date for custom renderers.
+ It returns `text`, `title`, `dateTime`, `dateKey`, `dateLabel` and `approximate`.
+@@ -535,6 +596,25 @@ and named `heartbeat` events every 20 seconds. The browser allows two advertised
+ intervals plus five seconds before treating a stream as stale. Existing message notifications
+ keep their format. Servers without this advertisement use snapshot polling.
+ 
++Hidden documents close their stream, cancel current snapshot reads and stop
++retry and watch timers. Returning to a visible document or restoring a page
++starts one current recovery cycle. Late responses and callbacks from retired
++cycles cannot replace data or change a newer cycle's status. These browser
++changes leave the server observer, session execution and unsent drafts intact.
++
++`createConversationSync()` also accepts `onPendingInvalidation()` and exposes
++read-only `pendingInvalidationSupported`. The getter resets when the stream
++closes and becomes true only after the current `ready` event advertises support.
++The callback runs only for a named pending hint from that current stream.
++With this capability, ordinary output respects the mounted UI's 15-second
++pending-read freshness budget. Actual pending hints, local responses, manual
++retry and reconnection force a fresh read. Invalidations during a current read
++coalesce into one successor, and the older result cannot restore stale controls.
++Without the capability, generic updates retain pending refresh behavior.
++A due timer also refreshes controls when output stops. Pending and queue panels
++retain their last rows while hidden and start fresh reads when restored. Current
++deadline failures still show the normal retry notice.
++
+ GET client methods accept an optional `{signal}` and have a 35-second request
+ deadline. `reconcileQueue({signal})` also accepts cancellation; other mutation
+ methods retain their existing behavior. Cancellation of a request does not
+@@ -600,6 +680,20 @@ selection. Hosts may use 404 for a temporarily unavailable scope. Browser storag
+ must confirm the updated draft before the card disappears; an already deleted
+ file cannot become ready again while its card awaits local removal.
+ 
++`createUploadClient().list({signal})` accepts cancellation. Metadata GETs have a
++ten-second deadline and preserve body-read cancellation; malformed successful
++JSON is an error. File writes retain their existing outcome and retry rules.
++
++`mountUploads()` loads metadata with one current read and capped retry backoff.
++**Retry file status** retries a failed read. Hiding the document cancels only
++metadata reads and their retry timer; returning to a visible document or
++restoring the page starts a fresh read. The last selection and transfer receipts
++remain intact, and an older listing cannot undo a newer selection, removal or
++transfer result. A successful retry updates composer readiness without reloading,
++including when no files are selected. Draft-storage and configuration failures
++remain visible and do not trigger write retries. Metadata recovery never repeats
++upload creation, chunks, completion, deletion or message submission.
++
+ Upload names are untrusted display metadata. Render them as text, serialize
+ prompt references as JSON, and derive storage paths from application-generated
+ identities. Download responses use MIME filename encoding and attachment
+diff --git a/test/conversation_browser_contract_test.cjs b/test/conversation_browser_contract_test.cjs
+index 310f94d..4a94d18 100644
+--- a/test/conversation_browser_contract_test.cjs
++++ b/test/conversation_browser_contract_test.cjs
+@@ -29,9 +29,43 @@ class MemoryStorage {
+     createConversationClient, createDurableAttemptStore, createDurableSender, mountConversation,
+     formatTranscriptTimestamp, transcriptEntryCopyText, createTranscriptCopyButton, createCopyButton,
+     createTranscriptActivity,
++    transcriptEntryPresentation, transcriptEntryVisible, submissionFailurePresentation,
+   } = await import(
+     "../conversation/assets/conversation.js"
+   );
++  const kinds = ["userMessage", "agentMessage", "reasoning", "plan", "commandExecution", "futureKind", "error"];
++  for (const [index, kind] of kinds.entries()) {
++    const ordinary = {kind};
++    const expected = index === 0 ? "user" : index < 4 ? "agent" : kind === "error" ? "error" : "event";
++    assert.equal(transcriptEntryPresentation(ordinary).kind, expected);
++    for (const communication of [undefined, null, [], "team", {kind: "future"}, {from: "sender"}]) {
++      assert.deepEqual(transcriptEntryPresentation({...ordinary, communication}), transcriptEntryPresentation(ordinary));
++    }
++    const team = {...ordinary, communication: {kind: "team", from: "lead", to: "member"}};
++    for (const [filter, visible] of Object.entries({all: true, messages: index < 4,
++      activity: index >= 4, team: false, unknown: true})) {
++      assert.equal(transcriptEntryVisible(ordinary, filter), visible || kind === "error");
++      assert.equal(transcriptEntryVisible(team, filter), kind === "error" || ["all", "team", "unknown"].includes(filter));
++    }
++    assert.equal(transcriptEntryVisible(team), true);
++  }
++  assert.deepEqual(transcriptEntryPresentation({kind: "userMessage", communication: {kind: "team"}}),
++    {kind: "team", label: "Team", team: true});
++  assert.equal(transcriptEntryPresentation({communication: {kind: "team", from: "lead", to: "member"}}).label, "lead → member");
++  assert.equal(transcriptEntryPresentation({communication: {kind: "team", from: "lead"}}).label, "Team · lead");
++  assert.equal(transcriptEntryPresentation({communication: {kind: "team", to: "member"}}).label, "Team → member");
++  assert.equal(transcriptEntryPresentation({communication: {kind: "team", from: {name: "bad"}}}).label, "Team");
++  for (const error of [undefined, new TypeError("Failed to fetch"), new DOMException("Aborted", "AbortError"),
++    ...[502, 503, 504].map(status => Object.freeze({status, code: "transport", message: `Request failed (${status})`})),
++    {notSent: "true"}]) {
++    const before = error && {...error};
++    const failure = submissionFailurePresentation(error);
++    assert.equal(failure.uncertain, true);
++    assert.match(failure.message, /Delivery could not be confirmed/);
++    if (error) assert.deepEqual({...error}, before, "presentation must preserve error metadata");
++  }
++  assert.deepEqual(submissionFailurePresentation({notSent: true, message: "Access denied"}),
++    {message: "Access denied The message was not sent. Try again.", uncertain: false});
+   const timestampOptions = {locales: "en-GB", timeZone: "Europe/Amsterdam"};
+   const evening = formatTranscriptTimestamp({timestamp: "2026-09-11T21:59:00Z"}, timestampOptions);
+   assert.equal(evening.text, "23:59");
+@@ -552,6 +586,7 @@ class MemoryStorage {
+   globalThis.Element = FakeElement;
+   globalThis.document = {
+     createElement: (name) => new FakeElement(name),
++    createTextNode: text => Object.assign(new FakeElement("#text"), {textContent: text}),
+     createElementNS: (_namespace, name) => new FakeElement(name),
+   };
+   const typedSearch = createTranscriptActivity({
+@@ -699,6 +734,304 @@ class MemoryStorage {
+   assert.equal(root.descendants().filter((element) => element.attributes.class === "codex-conversation-date").length, 2);
+   unmount();
+ 
++  const teamRoot = new FakeElement("main");
++  const senderLabel = '<img src=x onerror="bad()">';
++  const disposeTeam = mountConversation(teamRoot, {id: "team", client: {
++    async thread() { return {threadId: "team-thread", status: "idle", entries: [
++      {kind: "userMessage", text: "# original", displayText: "# displayed", html: "<h1>displayed</h1>"},
++      {kind: "userMessage", text: "coordination", communication: {kind: "team", from: senderLabel, to: "member"}},
++      {kind: "commandExecution", summary: "command"},
++      {kind: "error", text: "turn failed", communication: {kind: "team"}},
++    ]}; },
++  }, capabilities: {pending: false, queueRead: false, send: false, queue: false,
++    interrupt: false, settings: false, respond: false, eventStream: false}});
++  await new Promise(resolve => setImmediate(resolve));
++  const teamFilter = teamRoot.descendants().find(el => el.attributes["aria-label"] === "Transcript filter");
++  const transcriptList = teamRoot.descendants().find(el => el.name === "ol");
++  const teamEntry = transcriptList.children.find(el => el.attributes.class === "codex-entry codex-entry-team");
++  assert.equal(teamEntry.children[0].children[0].textContent, `${senderLabel} → member`);
++  assert.equal(teamEntry.children[0].children[0].innerHTML, undefined, "labels must never become HTML");
++  assert.equal(transcriptList.children[0].children[1].innerHTML, "<h1>displayed</h1>");
++  transcriptList.scrollTop = 45;
++  for (const [value, count] of [["messages", 2], ["team", 2], ["activity", 2], ["all", 4]]) {
++    teamFilter.value = value; teamFilter.listeners.get("change")();
++    assert.equal(transcriptList.children.length, count);
++    assert(transcriptList.children.some(el => el.attributes.class === "codex-entry codex-entry-error"));
++  }
++  assert.equal(transcriptList.scrollTop, 45);
++  assert(transcriptList.children.includes(teamEntry), "filter changes preserve message nodes");
++  assert.equal(teamRoot.descendants().find(el => el.attributes.class === "codex-history-controls").hidden, true,
++    "successful legacy fallback is silent");
++  disposeTeam();
++
++  const citationToken = "\ue200cite\ue202fixture\ue201", citationPrefix = "Příliš 🐈 ";
++  const citationStart = Buffer.byteLength(citationPrefix);
++  const citationEntry = {kind: "agentMessage", turnStatus: "completed", text: citationPrefix + citationToken + " done",
++    citations: [{start: citationStart, end: citationStart + Buffer.byteLength(citationToken),
++      sources: [{url: "https://example.com/source", title: 'Source "title"', number: 1}]}]};
++  const citationOriginal = JSON.stringify(citationEntry);
++  const citationRoot = new FakeElement("main");
++  const disposeCitations = mountConversation(citationRoot, {id: "citations", client: {
++    async thread() { return {threadId: "citation-thread", status: "idle", entries: [
++      citationEntry,
++      {...citationEntry, html: '<p>Host <a href="https://example.com/source">[1]</a></p>'},
++      {...citationEntry, kind: "userMessage", displayText: "decorated user", html: "<p>decorated user</p>"},
++      {...citationEntry, kind: "mcpToolCall", summary: "Typed activity", activity: {status: "completed"}, html: "<p>unused</p>"},
++    ]}; },
++  }, capabilities: {pending: false, queueRead: false, send: false, queue: false,
++    interrupt: false, settings: false, respond: false, eventStream: false}});
++  await new Promise(resolve => setImmediate(resolve));
++  const citationRows = citationRoot.descendants().find(el => el.name === "ol").children;
++  const fallback = citationRows[0].children[1];
++  assert.equal(fallback.name, "pre");
++  assert.equal(fallback.children.find(el => el.name === "a").attributes.href, "https://example.com/source");
++  assert.equal(fallback.children.find(el => el.name === "a").attributes.title, 'Source "title"');
++  assert.equal(citationRows[1].children[1].innerHTML, '<p>Host <a href="https://example.com/source">[1]</a></p>');
++  assert.equal(citationRows[2].children[1].innerHTML, "<p>decorated user</p>");
++  assert.equal(citationRows[3].children[1].attributes.class, "codex-typed-activity");
++  for (const kind of ["agentMessage", "reasoning", "plan"]) {
++    assert.equal(transcriptEntryCopyText({...citationEntry, kind}),
++      'Příliš 🐈 [\\[1\\]](<https://example.com/source> "Source \\"title\\"") done');
++  }
++  assert.equal(transcriptEntryCopyText({...citationEntry, kind: "userMessage"}), citationEntry.text);
++  assert.equal(JSON.stringify(citationEntry), citationOriginal, "render and copy preserve raw text and UTF-8 spans");
++  disposeCitations();
++
++  // Completed citation rows still resolve after leaving the newest page, even
++  // while a filter excludes them. Filtering cannot gate history observations.
++  let citationEvents, citationNewestReads = 0, citationRepairs = 0;
++  class CitationEvents {
++    constructor() { citationEvents = this; }
++    addEventListener() {}
++    close() {}
++  }
++  const pendingCitation = {...citationEntry, turnId: "citation-turn", itemId: "pending", citationsPending: true,
++    citations: [{...citationEntry.citations[0], sources: [], unavailable: true}]};
++  const overlap = {kind: "agentMessage", turnId: "overlap", itemId: "overlap", turnStatus: "completed", text: "overlap"};
++  const repairRootCitations = new FakeElement("main");
++  const disposeRepairCitations = mountConversation(repairRootCitations, {id: "pending-citations", EventSource: CitationEvents,
++    refreshPolicy: {eventDebounceMs: 0, retryInitialMs: 30, historyRepairMs: 0, historyPageMs: 1},
++    client: {
++      eventsPath: () => "/citation-events",
++      async threadPage({cursor} = {}) {
++        if (cursor) {
++          citationRepairs++;
++          return {threadId: "pending-citations", status: "idle", hasOlder: false, olderCursor: null,
++            entries: [{...citationEntry, turnId: "citation-turn", itemId: "pending", citationsPending: false}]};
++        }
++        citationNewestReads++;
++        return {threadId: "pending-citations", status: "idle", hasOlder: true, olderCursor: "find-citation",
++          entries: citationNewestReads === 1 ? [pendingCitation, overlap] : [overlap,
++            {kind: "agentMessage", turnId: "latest", itemId: "latest", text: "newest"}]};
++      },
++    }, capabilities: {pending: false, queueRead: false, send: false, queue: false,
++      interrupt: false, settings: false, respond: false, eventStream: true}});
++  await new Promise(resolve => setImmediate(resolve));
++  const citationFilter = repairRootCitations.descendants().find(el => el.attributes["aria-label"] === "Transcript filter");
++  citationFilter.value = "team"; citationFilter.listeners.get("change")();
++  const citationList = repairRootCitations.descendants().find(el => el.name === "ol");
++  assert.equal(citationList.children.length, 0);
++  citationEvents.onmessage();
++  for (let index = 0; index < 100 && !citationRepairs; index++) await new Promise(resolve => setTimeout(resolve, 5));
++  assert.equal(citationRepairs, 1);
++  assert.equal(citationList.children.length, 0, "repair does not change active filter");
++  assert.equal(repairRootCitations.descendants().find(el => el.attributes.class === "codex-history-controls").children[1].textContent, "",
++    "background citation repair stays quiet");
++  citationFilter.value = "all"; citationFilter.listeners.get("change")();
++  const repairedLink = citationList.descendants().find(el => el.name === "a");
++  assert.equal(repairedLink.attributes.href, "https://example.com/source");
++  assert.equal(citationList.children.length, 3);
++  disposeRepairCitations();
++
++  // A failed HTTP response must retain the exact durable attempt, but must not
++  // downgrade a message already observed and acknowledged through the transcript.
++  for (const observedBeforeFailure of [false, true]) {
++    const lossStorage = new MemoryStorage();
++    let lossEvents, rejectSend, sent, accepted = false, backendTurns = 0;
++    const ids = new Set(), lossCalls = [];
++    class LossEvents {
++      constructor() { lossEvents = this; }
++      addEventListener() {}
++      close() {}
++    }
++    const lossClient = {
++      eventsPath: () => "/loss-events",
++      async thread() { return {threadId: "loss-thread", status: "idle", entries: accepted ? [{
++        kind: "userMessage", text: "retained input", clientUserMessageId: sent,
++        clientUserMessageDigest: "b".repeat(64),
++      }] : []}; },
++      async message(message, id, retry, attachmentIds) {
++        lossCalls.push({message, id, retry, attachmentIds}); sent = id;
++        if (!ids.has(id)) { ids.add(id); backendTurns++; }
++        if (lossCalls.length === 1) return new Promise((_, reject) => { rejectSend = reject; });
++        return {turnId: "accepted-turn", clientUserMessageId: id};
++      },
++      async acknowledgeMessages(entries) { return {acknowledgedClientUserMessageIds: entries.map(entry => entry.clientUserMessageId)}; },
++    };
++    const lossRoot = new FakeElement("main");
++    const disposeLoss = mountConversation(lossRoot, {id: "loss", basePath: "/codex", client: lossClient,
++      EventSource: LossEvents, refreshPolicy: {eventDebounceMs: 0}, storage: lossStorage,
++      randomUUID: () => "aa0e3d66-f923-4c79-bde5-c25c1edfd02b",
++      capabilities: {pending: false, queueRead: false, queue: false, interrupt: false, settings: false, respond: false}});
++    await new Promise(resolve => setImmediate(resolve));
++    const lossTextarea = lossRoot.descendants().find(el => el.name === "textarea");
++    const lossForm = lossRoot.descendants().find(el => el.name === "form");
++    const notice = lossRoot.descendants().find(el => el.attributes.class === "codex-submission-status");
++    lossTextarea.value = "retained input";
++    const sending = lossForm.listeners.get("submit")({preventDefault() {}});
++    await new Promise(resolve => setImmediate(resolve));
++    if (observedBeforeFailure) {
++      accepted = true; lossEvents.onmessage();
++      for (let index = 0; index < 50 && lossTextarea.value; index++) await new Promise(resolve => setTimeout(resolve, 5));
++      assert.equal(lossTextarea.value, "");
++    }
++    rejectSend(Object.assign(new Error("Request failed (502)"), {status: 502}));
++    await sending;
++    if (observedBeforeFailure) assert.equal(notice.hidden, true);
++    else {
++      assert.equal(lossTextarea.value, "retained input");
++      assert.equal(notice.hidden, false); assert.match(notice.textContent, /Delivery could not be confirmed/);
++      const retained = createDurableSender({client: lossClient, storage: lossStorage, id: "loss", basePath: "/codex",
++        randomUUID: () => { throw Error("must reuse identity"); }});
++      assert.equal(retained.pending().id, sent);
++      await retained.send("retained input");
++      assert.deepEqual(lossCalls.map(call => [call.id, call.retry]), [[sent, false], [sent, true]]);
++      const receipt = retained.pending().receipt;
++      submissionFailurePresentation({status: 502});
++      assert.deepEqual(retained.pending().receipt, receipt);
++      assert.equal(await retained.acknowledge([]), false);
++      assert(retained.pending(), "unseen receipts stay retained");
++    }
++    assert.equal(backendTurns, 1);
++    disposeLoss();
++  }
++
++  // Recovery order is independent of rendering. Exercise the mounted composer
++  // and real upload selection, including unrelated confirmations and edits.
++  class UploadElement extends FakeElement {
++    constructor(name) {
++      super(name);
++      this.classList = {add() {}, remove() {}};
++    }
++    append(...nodes) { for (const node of nodes) { node.remove?.(); node.parent = this; this.children.push(node); } }
++    prepend(...nodes) { for (const node of [...nodes].reverse()) { node.remove?.(); node.parent = this; this.children.unshift(node); } }
++    insertBefore(node, reference) {
++      if (node === reference) return;
++      node.remove?.(); node.parent = this;
++      const index = this.children.indexOf(reference);
++      this.children.splice(index < 0 ? this.children.length : index, 0, node);
++    }
++    replaceChildren(...nodes) { this.children.forEach(node => { node.parent = null; }); this.children = []; this.append(...nodes); }
++    remove() { if (this.parent) this.parent.children = this.parent.children.filter(node => node !== this); this.parent = null; }
++    removeEventListener(name) { this.listeners.delete(name); }
++    matches() { return false; }
++    focus() {}
++  }
++  const recoveryGlobals = {document: globalThis.document, fetch: globalThis.fetch,
++    add: globalThis.addEventListener, remove: globalThis.removeEventListener};
++  try {
++    globalThis.document = {...recoveryGlobals.document,
++      createElement: name => new UploadElement(name),
++      createElementNS: (_namespace, name) => new UploadElement(name)};
++    globalThis.addEventListener = globalThis.removeEventListener = () => {};
++    for (const action of ["send", "queue"]) for (const confirmation of ["retry", "observe", "unrelated", "thread", "draft", "attachments"]) {
++      const recoveryStorage = new MemoryStorage();
++      const files = [
++        {id: "ca0e3d66-f923-4c79-bde5-c25c1edfd02b", clientId: "ca0e3d66-f923-4c79-bde5-c25c1edfd02b", name: "first.txt", size: 1, state: "ready"},
++        {id: "cb0e3d66-f923-4c79-bde5-c25c1edfd02b", clientId: "cb0e3d66-f923-4c79-bde5-c25c1edfd02b", name: "second.txt", size: 1, state: "ready"},
++      ];
++      recoveryStorage.setItem("codex-web:uploads:/recovery-uploads", JSON.stringify(files));
++      globalThis.fetch = async (_path, options = {}) => ({ok: true, json: async () => options.method === "DELETE" ? {} : {
++        limits: {chunkBytes: 4, fileBytes: 100, promptBytes: 100, files: 10}, files,
++      }});
++      let recoveryEvents, recoveryThread = "original-thread", observedID = "", recoveryReads = 0;
++      const recoveryCalls = [];
++      class RecoveryEvents {
++        constructor() { recoveryEvents = this; }
++        addEventListener() {}
++        close() {}
++      }
++      const dispatchRecovery = async (message, id, attachmentIds) => {
++        recoveryCalls.push({message, id, attachmentIds});
++        if (recoveryCalls.length === 1) throw Object.assign(new Error("Request failed (502)"), {status: 502});
++        return action === "send" ? {turnId: "accepted", clientUserMessageId: id} : {id: "queued", clientUserMessageId: id};
++      };
++      const recoveryClient = {
++        eventsPath: () => "/recovery-events",
++        async thread() {
++          recoveryReads++;
++          return {threadId: recoveryThread, status: "active", entries: observedID ? [{kind: "userMessage", text: "original",
++            clientUserMessageId: observedID, clientUserMessageDigest: "c".repeat(64)}] : []};
++        },
++        message: (message, id, _retry, attachmentIds) => dispatchRecovery(message, id, attachmentIds),
++        queueMessage: dispatchRecovery,
++        async acknowledgeMessages(entries) { return {acknowledgedClientUserMessageIds: entries.map(entry => entry.clientUserMessageId)}; },
++      };
++      const recoveryRoot = new UploadElement("main");
++      const disposeRecovery = mountConversation(recoveryRoot, {id: "recovery", basePath: "/codex", client: recoveryClient,
++        EventSource: RecoveryEvents, storage: recoveryStorage, uploadBasePath: "/recovery-uploads",
++        randomUUID: () => "cc0e3d66-f923-4c79-bde5-c25c1edfd02b", refreshPolicy: {eventDebounceMs: 0},
++        capabilities: {pending: false, queueRead: false, interrupt: false, settings: false, respond: false}});
++      await new Promise(resolve => setImmediate(resolve));
++      const recoveryTextarea = recoveryRoot.descendants().find(el => el.name === "textarea");
++      const recoveryForm = recoveryRoot.descendants().find(el => el.name === "form");
++      const recoveryQueue = recoveryRoot.descendants().find(el => el.textContent === "Queue");
++      const recoveryNotice = recoveryRoot.descendants().find(el => el.attributes.class === "codex-submission-status");
++      const submitRecovery = () => action === "send" ? recoveryForm.listeners.get("submit")({preventDefault() {}}) : recoveryQueue.listeners.get("click")();
++      const retainedRecovery = createDurableSender({client: recoveryClient, id: "recovery", basePath: "/codex", storage: recoveryStorage});
++      const pendingRecovery = () => action === "send" ? retainedRecovery.pending() : retainedRecovery.pendingQueue();
++      const refreshRecovery = async () => {
++        const reads = recoveryReads; recoveryEvents.onmessage();
++        for (let index = 0; index < 50 && recoveryReads === reads; index++) await new Promise(resolve => setTimeout(resolve, 5));
++        assert(recoveryReads > reads);
++        await new Promise(resolve => setImmediate(resolve));
++      };
++      recoveryTextarea.value = "original";
++      await submitRecovery();
++      assert.equal(recoveryNotice.hidden, false, `${action}/${confirmation}: initial uncertainty`);
++      const originalAttempt = pendingRecovery();
++      assert.deepEqual(originalAttempt.attachmentIds, files.map(file => file.id));
++      if (confirmation === "retry") {
++        await submitRecovery();
++        assert.equal(recoveryNotice.hidden, true, `${action}: matching acceptance clears notice`);
++        assert.deepEqual(recoveryCalls.map(call => call.id), [originalAttempt.id, originalAttempt.id]);
++        if (action === "send") assert(pendingRecovery().receipt, "accepted send receipt stays until observation");
++        else assert.equal(pendingRecovery(), null);
++      } else if (confirmation === "unrelated" || confirmation === "thread") {
++        observedID = "unrelated-attempt";
++        if (confirmation === "thread") recoveryThread = "other-thread";
++        await refreshRecovery();
++        if (confirmation === "thread") {
++          assert.equal(recoveryNotice.hidden, true, "notice stays scoped to original thread");
++          recoveryThread = "original-thread"; observedID = ""; await refreshRecovery();
++        }
++        assert.equal(recoveryNotice.hidden, false, "unrelated confirmation cannot retire original warning");
++        assert.deepEqual(pendingRecovery(), originalAttempt);
++        assert.equal(recoveryTextarea.value, "original");
++      } else {
++        if (confirmation === "draft") recoveryTextarea.value = "new draft";
++        if (confirmation === "attachments") {
++          await recoveryRoot.descendants().find(el => el.attributes["aria-label"] === "Remove first.txt").listeners.get("click")();
++        }
++        observedID = originalAttempt.id; await refreshRecovery();
++        assert.equal(recoveryNotice.hidden, true, `${action}/${confirmation}: matching observation clears notice`);
++        if (confirmation === "draft") assert.equal(recoveryTextarea.value, "new draft");
++        if (confirmation === "attachments") {
++          assert.equal(recoveryTextarea.value, "original", "changed attachments preserve current draft");
++          assert.deepEqual(JSON.parse(recoveryStorage.getItem("codex-web:uploads:/recovery-uploads")).map(file => file.id), [files[1].id]);
++        }
++        if (action === "queue") assert.deepEqual(pendingRecovery(), originalAttempt, "visual observation never clears durable queue uncertainty");
++        else assert.equal(pendingRecovery(), null);
++      }
++      disposeRecovery();
++    }
++  } finally {
++    globalThis.document = recoveryGlobals.document;
++    globalThis.fetch = recoveryGlobals.fetch;
++    globalThis.addEventListener = recoveryGlobals.add;
++    globalThis.removeEventListener = recoveryGlobals.remove;
++  }
++
+   // A late catalog must initialize an already-open editor, and stale reads
+   // must not overwrite a settings acknowledgement.
+   let releaseCatalog, releaseSnapshot, releaseSave, settingsWrites = 0, snapshots = 0;
+@@ -795,6 +1128,97 @@ class MemoryStorage {
+   await new Promise(resolve => setImmediate(resolve));
+   unmountPaged();
+ 
++  // Retired control reads may settle after resume and after its replacement.
++  const originalLaneDocument = globalThis.document;
++  for (const outcome of ["resolve", "reject"]) {
++    globalThis.document = Object.assign(new EventTarget(), originalLaneDocument, {hidden:false});
++    const laneRoot = new FakeElement("main"), pendingCalls = [], queueCalls = [];
++    const deferred = calls => ({signal} = {}) => new Promise((resolve, reject) => calls.push({resolve, reject, signal}));
++    const disposeLane = mountConversation(laneRoot, {id:"lanes", client:{
++      thread: async () => ({threadId:"lanes-thread",status:"idle",entries:[]}),
++      pending:deferred(pendingCalls), queue:deferred(queueCalls),
++    }, capabilities:{send:false,queue:false,interrupt:false,settings:false,respond:false,eventStream:false},
++    refreshPolicy:{warningMs:0, eventDebounceMs:0}});
++    await new Promise(resolve => setImmediate(resolve));
++    globalThis.document.hidden = true; globalThis.document.dispatchEvent(new Event("visibilitychange"));
++    assert(pendingCalls[0].signal.aborted && queueCalls[0].signal.aborted);
++    globalThis.document.hidden = false; globalThis.document.dispatchEvent(new Event("visibilitychange"));
++    await new Promise(resolve => setImmediate(resolve));
++    assert.equal(pendingCalls.length,2); assert.equal(queueCalls.length,2);
++    const freshPending = {id:"fresh",params:{message:"fresh request"}};
++    pendingCalls[1].resolve([freshPending]); queueCalls[1].resolve([{id:"fresh",text:"fresh queue"}]);
++    await new Promise(resolve => setImmediate(resolve));
++    // Reconnection may invalidate a read begun before its current snapshot.
++    // Complete that one coalesced successor, never the retired pre-hide read.
++    for (let index=2; index<pendingCalls.length; index++) pendingCalls[index].resolve([freshPending]);
++    for (let index=2; index<queueCalls.length; index++) queueCalls[index].resolve([{id:"fresh",text:"fresh queue"}]);
++    await new Promise(resolve => setImmediate(resolve));
++    if (outcome === "resolve") {
++      pendingCalls[0].resolve([{id:"old",params:{message:"old request"}}]); queueCalls[0].resolve([{id:"old",text:"old queue"}]);
++    } else {
++      pendingCalls[0].reject(Error("retired failure")); queueCalls[0].reject(Error("retired failure"));
++    }
++    await new Promise(resolve => setImmediate(resolve));
++    const texts = laneRoot.descendants().map(element => element.textContent).join(" ");
++    assert.match(texts,/fresh request/); assert.match(texts,/fresh queue/);
++    assert.doesNotMatch(texts,/old request|old queue|could not be refreshed|retired failure/);
++    disposeLane();
++  }
++  globalThis.document = originalLaneDocument;
++
++  // Typed invalidations bypass the success floor; output alone does not.
++  let controlEvents, controlPending = 0, controlSnapshots = 0, holdControl = false;
++  const controlReads = [];
++  class ControlEvents {
++    listeners = new Map();
++    constructor() {controlEvents = this;}
++    addEventListener(name, callback) {this.listeners.set(name,callback);}
++    close() {}
++  }
++  const controlRoot = new FakeElement("main");
++  const disposeControl = mountConversation(controlRoot,{id:"control-hints",client:{
++    eventsPath:()=>"/control-events",
++    thread:async()=>{controlSnapshots++;return {threadId:"control-thread",status:"idle",entries:[]};},
++    pending:async()=>{controlPending++;return holdControl ? new Promise(resolve=>controlReads.push(resolve)) : [];},
++  },EventSource:ControlEvents,capabilities:{send:false,queueRead:false,queue:false,interrupt:false,settings:false,respond:false},
++  refreshPolicy:{eventDebounceMs:0}});
++  controlEvents.onopen(); controlEvents.listeners.get("ready")({data:'{"heartbeatIntervalMs":20000,"pendingInvalidation":true}'});
++  await new Promise(resolve=>setTimeout(resolve,5));
++  const beforeOutput = controlPending, wallNow = Date.now;
++  try {
++    for(let index=0;index<200;index++) {
++      Date.now = () => wallNow() + index * 500;
++      controlEvents.onmessage(); await new Promise(resolve=>setTimeout(resolve,1));
++    }
++  } finally { Date.now = wallNow; }
++  assert(controlSnapshots>1);
++  assert.equal(controlPending,beforeOutput+6,"two hundred output hints over 100 seconds respect the 15-second success floor");
++  controlEvents.listeners.get("pending")(); await new Promise(resolve=>setImmediate(resolve));
++  assert.equal(controlPending,beforeOutput+7,"real control invalidation must bypass the floor");
++  holdControl = true;
++  controlEvents.listeners.get("pending")(); await new Promise(resolve=>setImmediate(resolve));
++  for(let index=0;index<3;index++) controlEvents.listeners.get("pending")();
++  assert.equal(controlReads.length,1,"invalidation cannot overlap a current control read");
++  controlReads[0]([{id:"obsolete",params:{text:"obsolete control"}}]);
++  await new Promise(resolve=>setImmediate(resolve));
++  assert.equal(controlReads.length,2,"invalidations coalesce into one successor");
++  controlReads[1]([{id:"current",params:{text:"current control"}}]);
++  await new Promise(resolve=>setImmediate(resolve));
++  const controlText = controlRoot.descendants().map(element=>element.textContent).join(" ");
++  assert.match(controlText,/current control/); assert.doesNotMatch(controlText,/obsolete control/);
++  disposeControl();
++
++  const timeoutRoot = new FakeElement("main");
++  const disposeTimeout = mountConversation(timeoutRoot,{id:"timeouts",client:{
++    thread:async()=>({threadId:"timeout-thread",status:"idle",entries:[]}),
++    pending:()=>new Promise(()=>{}),queue:()=>new Promise(()=>{}),
++  },capabilities:{send:false,queue:false,interrupt:false,settings:false,respond:false,eventStream:false},
++  refreshPolicy:{pendingDeadlineMs:5,queueDeadlineMs:5,warningMs:0,retryInitialMs:1000,eventDebounceMs:0}});
++  await new Promise(resolve=>setTimeout(resolve,40));
++  const timeoutText = timeoutRoot.descendants().map(element=>element.textContent).join(" ");
++  assert.match(timeoutText,/Requests could not be refreshed/); assert.match(timeoutText,/Queued messages could not be refreshed/);
++  disposeTimeout();
++
+   // A failed automatic repair must restart after hiding during its backoff.
+   const plainDocument = globalThis.document;
+   globalThis.document = Object.assign(new EventTarget(), plainDocument, {hidden:false});
+@@ -835,6 +1259,53 @@ class MemoryStorage {
+   assert.equal(repairRoot.descendants().filter(el => el.attributes.class?.startsWith("codex-entry ")).length,3);
+   disposeRepair(); globalThis.document = plainDocument;
+ 
++  // A retired history transport may settle after a resumed repair has started.
++  // Neither settlement may replace rows, invalidate cursors or clear that repair.
++  for (const oldFailure of [false, true]) {
++    globalThis.document = Object.assign(new EventTarget(), plainDocument, {hidden:false});
++    let historyEvents, newestHistoryReads = 0;
++    const heldHistory = [];
++    class HistoryEvents {
++      constructor() {historyEvents = this;}
++      addEventListener() {}
++      close() {}
++    }
++    const historyRoot = new FakeElement("main");
++    const disposeHistory = mountConversation(historyRoot, {id:`late-history-${oldFailure}`, EventSource:HistoryEvents,
++      client:{eventsPath:()=>"/history-events", threadPage:({cursor, signal} = {}) => {
++        if (cursor) return new Promise((resolve,reject) => heldHistory.push({cursor,signal,resolve,reject}));
++        newestHistoryReads++;
++        return Promise.resolve({threadId:"repair-thread",status:"idle",entries:[repairEntry(newestHistoryReads === 1 ? 1 : 3)],
++          hasOlder:true,olderCursor:"repair-cursor"});
++      }},refreshPolicy:{eventDebounceMs:0,historyPageMs:1,retryInitialMs:40,warningMs:0},
++      storage:new MemoryStorage(),conversationPath:`/history/${oldFailure}`,
++      capabilities:{pending:false,queueRead:false,settings:false,send:true,queue:false,interrupt:false,respond:false,eventStream:true}});
++    await until(()=>newestHistoryReads === 1);
++    const historyDraft = historyRoot.descendants().find(el=>el.name === "textarea");
++    historyDraft.value = "Retained draft";
++    historyEvents.onmessage(); await until(()=>heldHistory.length === 1);
++    const historyList = historyRoot.descendants().find(el=>el.name === "ol");
++    const retainedRows = [...historyList.children];
++    globalThis.document.hidden = true; globalThis.document.dispatchEvent(new Event("visibilitychange"));
++    assert.equal(heldHistory[0].signal.aborted,true);
++    globalThis.document.hidden = false; globalThis.document.dispatchEvent(new Event("visibilitychange"));
++    await until(()=>heldHistory.length === 2);
++    if (oldFailure) heldHistory[0].reject(Object.assign(Error("Old cursor expired"),{code:"transcript_cursor_expired"}));
++    else heldHistory[0].resolve({threadId:"repair-thread",status:"idle",entries:[repairEntry(99)],hasOlder:false});
++    await new Promise(resolve=>setImmediate(resolve));
++    assert.deepEqual(historyList.children,retainedRows,"retired history cannot replace retained row nodes");
++    assert.equal(historyDraft.value,"Retained draft");
++    assert.equal(historyRoot.descendants().find(el=>el.attributes.class === "codex-history-controls").children[1].textContent,"");
++    assert.equal(heldHistory.length,2,"old completion cannot schedule another repair or clear its successor");
++    assert.equal(heldHistory[1].signal.aborted,false);
++    assert.equal(heldHistory[1].cursor,"repair-cursor","resume preserves paging authority");
++    heldHistory[1].resolve({threadId:"repair-thread",status:"idle",entries:[repairEntry(1),repairEntry(2)],hasOlder:false});
++    await until(()=>historyList.children.length === 3);
++    assert.doesNotMatch(historyList.descendants().map(el=>el.textContent).join(" "),/Entry 99/);
++    assert.equal(historyDraft.value,"Retained draft");
++    disposeHistory(); globalThis.document = plainDocument;
++  }
++
+   const promptRoot = new FakeElement("main");
+   const promptActions = [];
+   const promptClient = {
+diff --git a/test/sync_browser_contract_test.cjs b/test/sync_browser_contract_test.cjs
+index eb73b1f..6609b06 100644
+--- a/test/sync_browser_contract_test.cjs
++++ b/test/sync_browser_contract_test.cjs
+@@ -255,12 +255,13 @@ test("the advertised heartbeat interval determines the stream deadline", async t
+ });
+ 
+ 
+-test("brief focus refresh keeps the healthy stream and stays quiet", async t => {
++test("brief hiding closes the stream and resumes one quiet replacement", async t => {
+   const f = await fixture(t); f.open(); await f.clock.advance(0);
+   f.browser.hidden = true; f.emit("visibilitychange"); await f.clock.advance(1000);
+   f.browser.hidden = false; f.emit("visibilitychange"); f.emit("focus");
+-  assert.equal(f.sources.length, 1);
+-  assert.equal(f.reads.length, 1);
++  assert.equal(f.sources.length, 2);
++  assert.equal(f.sources[0].closed, true);
++  f.open();
+   assert.equal(f.state().showWarning, false);
+   await f.clock.advance(0);
+   assert.equal(f.state().status, "connected");
+@@ -284,3 +285,48 @@ test("access errors bypass the recovery grace", async t => {
+   const {connectionMessage} = await moduleReady;
+   assert.match(connectionMessage(f.state()), /access denied/i);
+ });
++
++test("fifty loaded documents release hidden streams, reads and all timers", async t => {
++  const documents = [];
++  for (let i = 0; i < 50; i++) {
++    const f = await fixture(t); f.open(); await f.clock.advance(0); documents.push(f);
++    f.browser.hidden = true; f.emit("visibilitychange");
++    assert.equal(f.sources[0].closed, true);
++    assert.equal(f.clock.timers.size, 0);
++    f.sources[0].event("message"); f.sources[0].event("error");
++    await f.clock.advance(120_000);
++    assert.equal(f.reads.length, 1);
++    assert.equal(f.sources.length, 1);
++  }
++  const foreground = documents[0];
++  foreground.browser.hidden = false;
++  for (const event of ["visibilitychange", "pageshow", "focus", "online"]) foreground.emit(event);
++  assert.equal(foreground.sources.length, 2);
++  foreground.open(); await foreground.clock.advance(0);
++  assert.equal(foreground.reads.length, 2);
++  assert.equal(foreground.state().status, "connected");
++});
++
++test("initially hidden and restored documents create only current resources", async t => {
++  const page = new Browser(); page.hidden = true;
++  const f = await fixture(t, {controller: {document: page}});
++  assert.equal(f.sources.length, 0); assert.equal(f.clock.timers.size, 0);
++  page.hidden = false; page.dispatchEvent(new Event("visibilitychange"));
++  f.open(); await f.clock.advance(0);
++  assert.equal(f.sources.length, 1); assert.equal(f.reads.length, 1);
++});
++
++test("pending invalidations require current advertised stream capability", async t => {
++  let hints = 0;
++  const f = await fixture(t, {controller: {onPendingInvalidation: () => hints++}});
++  f.open();
++  f.sources[0].event("pending"); assert.equal(hints, 0);
++  f.sources[0].event("ready", '{"heartbeatIntervalMs":20000,"pendingInvalidation":true}');
++  assert.equal(f.sync.pendingInvalidationSupported, true);
++  f.sources[0].event("pending"); assert.equal(hints, 1);
++  f.browser.hidden = true; f.emit("visibilitychange");
++  assert.equal(f.sync.pendingInvalidationSupported, false);
++  f.sources[0].event("pending"); assert.equal(hints, 1);
++  f.browser.hidden = false; f.emit("visibilitychange");
++  f.open(); assert.equal(f.sync.pendingInvalidationSupported, false);
++});
+diff --git a/test/uploads_browser_contract_test.cjs b/test/uploads_browser_contract_test.cjs
+index 28a1bf2..e42b929 100644
+--- a/test/uploads_browser_contract_test.cjs
++++ b/test/uploads_browser_contract_test.cjs
+@@ -139,7 +139,7 @@ async function uploadComposer(t, options = {}) {
+   const events = new EventTarget();
+   for (const [key, value] of Object.entries({
+     addEventListener: events.addEventListener.bind(events), removeEventListener: events.removeEventListener.bind(events),
+-    document: {createElement: () => new Element(), createElementNS: () => new Element()},
++    document: Object.assign(new EventTarget(), {hidden:false, createElement: () => new Element(), createElementNS: () => new Element()}),
+   })) {
+     const descriptor = Object.getOwnPropertyDescriptor(globalThis, key);
+     Object.defineProperty(globalThis, key, {value, configurable: true});
+@@ -197,6 +197,8 @@ async function uploadComposer(t, options = {}) {
+   };
+   return {
+     client, calls, files, changes, card, click, cards, storage,
++    refresh: () => upload.refresh(),
++    page: globalThis.document, events,
+     summary: () => root.children.find((child) => child.className === 'codex-upload-summary'),
+     notice: () => root.children.find((child) => child.className === 'codex-upload-notice'),
+     lock: (value) => upload.lock(value), clear: () => upload.clear(),
+@@ -659,3 +661,101 @@ test('numbering storage failures prevent upload creation and submission', async
+   await eventually(() => composer.ready());
+   assert.deepEqual(composer.saved().map(file => file.name), ['image-1.png', 'image-2.png']);
+ });
++
++test('failed metadata read recovers empty composer without replaying writes', async t => {
++  let reads = 0;
++  const composer = await uploadComposer(t, {client:{list:async()=>{
++    if (++reads === 1) throw Error('Temporary metadata failure');
++    return {limits,files:[]};
++  }}});
++  assert.equal(composer.ready(),false); assert.match(composer.notice().textContent,/Temporary/);
++  await composer.refresh();
++  assert.equal(composer.ready(),true); assert.equal(composer.changes.at(-1).ready,true);
++  assert.equal(composer.notice().textContent,'');
++  assert.deepEqual(composer.calls,{create:[],remove:[],append:[]});
++});
++
++test('metadata cancellation retires old ownership before real visible resume', async t => {
++  const reads=[];
++  const composer = await uploadComposer(t);
++  composer.client.list=({signal})=>new Promise((resolve,reject)=>reads.push({signal,resolve,reject}));
++  const old = composer.refresh(); await new Promise(resolve=>setImmediate(resolve));
++  composer.page.hidden=true; composer.page.dispatchEvent(new Event('visibilitychange'));
++  assert.equal(reads[0].signal.aborted,true);
++  composer.page.hidden=false; composer.page.dispatchEvent(new Event('visibilitychange'));
++  await new Promise(resolve=>setImmediate(resolve));
++  assert.equal(reads.length,2);
++  const same = composer.refresh();
++  reads[0].resolve({limits,files:[{id,name:'obsolete.txt',state:'ready'}]});
++  await old;
++  assert.equal(composer.refresh(),same,'old finally cannot release the replacement');
++  reads[1].resolve({limits,files:[]}); await same;
++  assert.equal(composer.ready(),true); assert.equal(composer.count(),0);
++  assert.deepEqual(composer.calls,{create:[],remove:[],append:[]});
++});
++
++test('metadata response cannot restore a removed selection or stale transfer status', async t => {
++  const selected={id,clientId:id,name:'selected.txt',size:1,state:'ready'};
++  const composer=await uploadComposer(t,{saved:[selected],files:[selected]});
++  let release;
++  composer.client.list=()=>new Promise(resolve=>{release=resolve;});
++  const read=composer.refresh(); await new Promise(resolve=>setImmediate(resolve));
++  composer.clear();
++  release({limits,files:[{...selected,state:'uploading'}]}); await read;
++  assert.equal(composer.count(),0); assert.equal(composer.ready(),true);
++  assert.deepEqual(composer.saved(),[]);
++});
++
++test('metadata GET preserves body abort and rejects malformed successful JSON', async t => {
++  const {createUploadClient}=await modules;
++  const abort=new AbortController();
++  const client=createUploadClient('/files',{fetch:async(_url,{signal})=>({ok:true,status:200,
++    json:()=>new Promise((resolve,reject)=>signal.addEventListener('abort',()=>reject(signal.reason),{once:true}))})});
++  const read=client.list({signal:abort.signal}); await new Promise(resolve=>setImmediate(resolve));
++  abort.abort(new Error('retired metadata')); await assert.rejects(read,/retired metadata/);
++  const malformed=createUploadClient('/files',{fetch:async()=>({ok:true,status:200,json:async()=>{throw new SyntaxError('bad');}})});
++  await assert.rejects(malformed.list(),/Invalid file status response/);
++});
++
++test('automatic metadata backoff retries only reads and restores readiness', async t => {
++  t.mock.timers.enable({apis:['setTimeout']});
++  let reads=0;
++  const composer=await uploadComposer(t,{client:{list:async()=>{
++    if(++reads===1) throw Error('transient read');
++    return {limits,files:[]};
++  }}});
++  assert.equal(reads,1); assert.equal(composer.ready(),false);
++  t.mock.timers.tick(1999); await new Promise(resolve=>setImmediate(resolve)); assert.equal(reads,1);
++  t.mock.timers.tick(1); await new Promise(resolve=>setImmediate(resolve));
++  assert.equal(reads,2); assert.equal(composer.ready(),true);
++  assert.deepEqual(composer.calls,{create:[],remove:[],append:[]});
++});
++
++test('hung metadata reaches its deadline and releases the read for recovery', async t => {
++  t.mock.timers.enable({apis:['setTimeout']});
++  const composer=await uploadComposer(t);
++  let release, signal;
++  composer.client.list=options=>new Promise(resolve=>{release=resolve;signal=options.signal;});
++  const read=composer.refresh(); await new Promise(resolve=>setImmediate(resolve));
++  t.mock.timers.tick(10_000); await read;
++  assert.equal(signal.aborted,true); assert.match(composer.notice().textContent,/File status request timed out/);
++  composer.client.list=async()=>({limits,files:[]});
++  await composer.refresh();
++  release({limits:null,files:[]}); await new Promise(resolve=>setImmediate(resolve));
++  assert.equal(composer.ready(),true); assert.equal(composer.notice().textContent,'');
++  assert.deepEqual(composer.calls,{create:[],remove:[],append:[]});
++});
++
++test('metadata storage failure stays visible without automatic retries', async t => {
++  t.mock.timers.enable({apis:['setTimeout']});
++  const composer=await uploadComposer(t);
++  let reads=0;
++  composer.client.list=async()=>{reads++;return {limits,files:[]};};
++  composer.failWrites(true); await composer.refresh();
++  assert.equal(composer.ready(),false); assert.match(composer.notice().textContent,/Storage write failed/);
++  t.mock.timers.tick(30_000); await new Promise(resolve=>setImmediate(resolve));
++  assert.equal(reads,1,'storage failure cannot loop as transient metadata failure');
++  composer.failWrites(false); await composer.refresh();
++  assert.equal(reads,2); assert.equal(composer.ready(),true);
++  assert.deepEqual(composer.calls,{create:[],remove:[],append:[]});
++});
