@@ -1,0 +1,21 @@
+You are a fresh temporary verification watcher under retained utility policy gpt-6-luna/low/full_access, native config dw_91978c240a6a43c2168b5be643cb58668a0bdf42d703ed0e, catalog ffaf9deb97720995ad1d662badae7645eba1fede5068eef529c9024efa7e7376. Read /home/aither/.codex/skills/dev-session-monitor/SKILL.md and follow only watcher instructions. No source edits, diagnosis, retry, nested agents, acceptance decisions, session changes or publishing. Full reviewed deliverable is committed; runtime and actual client default/blocking tests+docs passed. Fixture owner is independently correcting fixture-only tests, no shared Cargo target or application runtime changes.
+
+Execute following three sequential operations, stop first failure. cwd /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-18-rust-client-generator/vpsadmin-rust-client. Guard HEAD=1605ee3a9e140f472dd0734f248bd69da2ac305b before each operation. Complete stdout/stderr logs to /home/aither/workspace/ai/vpsfree.cz/work/2026-10-18-rust-client-generator/artifacts/msrv-package-live/{msrv,package,live}.log, corresponding .result exit/elapsed/head. Build outputs/logs allowed, no lock updates. No invented timeout or killing quiet processes. Cancel/report only unexpected kernel compilation. No command exists yet; own execution. Env unset BUNDLE_GEMFILE RUBYOPT GEM_HOME GEM_PATH around nix commands.
+
+1. Rust MSRV exact command:
+nix develop --no-write-lock-file .#default --command nix shell github:NixOS/nixpkgs/29916453413845e54a65b8a1cf996842300cd299#rustc github:NixOS/nixpkgs/29916453413845e54a65b8a1cf996842300cd299#cargo --command bash -euo pipefail -c '
+export RUSTC=/nix/store/wnhmqix7bippbbzasj29qiyb422g9asg-rustc-wrapper-1.95.0/bin/rustc
+export RUSTDOC=/nix/store/wnhmqix7bippbbzasj29qiyb422g9asg-rustc-wrapper-1.95.0/bin/rustdoc
+export CARGO_TARGET_DIR=target/msrv-1.95
+unset RUSTC_WRAPPER RUSTC_WORKSPACE_WRAPPER
+msrv_cargo=/nix/store/z480b23kymbmrijrl49246mrzyphli15-cargo-1.95.0/bin/cargo
+"$RUSTC" --version --verbose
+"$msrv_cargo" --version --verbose
+"$msrv_cargo" check --locked --all-targets
+"$msrv_cargo" check --locked --all-targets --features blocking
+'
+2. nix develop --command cargo package --locked
+3. nix develop --command cargo run --locked --manifest-path /home/aither/workspace/ai/vpsfree.cz/work/2026-10-18-rust-client-generator/artifacts/live-public-smoke/Cargo.toml
+This reviewed external harness makes exactly two fixed unauthenticated GETs to https://api.vpsfree.cz/v7.0/cluster/public_stats, async then blocking. No credentials, other requests or mutations. Source SHA a5a5ffb4d4333baf036a462f0c41ecd3090dbc26250711f48e97bfd3118fd302; verify before operation3. It prints PASS/status only, no payload/secret values. Do not change it or substitute a request.
+
+Return compact per-operation result, exact head/command/elapsed, logs, bounded error excerpt, any process still active. Save final result to artifacts/msrv-package-live/watcher-result.txt. Return without retry or diagnosis.

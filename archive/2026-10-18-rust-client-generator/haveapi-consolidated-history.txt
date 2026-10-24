@@ -1,0 +1,55 @@
+commit 0717da05eb2a6dec60e2fce2a57d97b5bb556653
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Mon Oct 19 19:21:12 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Mon Oct 19 19:21:32 2026 +0200
+
+    clients/rust: add embedded protocol runtime
+    
+    Generated typed clients need common protocol and HTTP behavior without
+    a separate runtime package. Maintain embeddable Rust modules with shared
+    request validation and envelope decoding for async and optional blocking
+    execution.
+    
+    Preserve omitted and explicit null inputs, partial output and metadata,
+    and explicit authentication steps. Bound response bodies and deadlines,
+    disable redirects and retries, and keep credentials and wire values out
+    of diagnostics. Keep the private harness and behavioral fixtures outside
+    the copied modules.
+
+commit e93e51ac9edaef7e7cf5ff57e42ee6a292d6c10c
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Mon Oct 19 19:23:21 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Mon Oct 19 19:44:08 2026 +0200
+
+    clients/rust: generate clients from saved API schemas
+    
+    Add Ruby and ERB generation for self-contained async and blocking Rust
+    clients. Preserve omitted and null inputs, partial outputs, metadata and
+    authentication actions without depending on a runtime crate.
+    
+    Separate explicit-version acquisition from offline rendering.
+    Sanitize structural snapshots, reject unsafe paths and ambiguous names,
+    and confine atomic regeneration and read-only checks to the owned tree.
+    
+    Add a locked component bundle, pinned Nix tools, focused specs, opt-in
+    Rust checks and generation guidance. Keep publication targets separate.
+
+commit 874e8f2fd8c94a4bc34008936e13b856b82cdd2b
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Mon Oct 19 19:27:34 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Mon Oct 19 19:44:17 2026 +0200
+
+    clients/rust: add protocol acceptance fixtures
+    
+    Exercise generated async and blocking clients against the real HaveAPI
+    server and scripted HTTP responses. Keep local fixture extensions apart
+    from production schemas, including token challenges and empty revoke
+    responses.
+    
+    Add a composed launcher for the real vpsAdmin API with its own
+    disposable MariaDB instance and the generated client repository
+    acceptance tests. Document standalone commands and retain private
+    failure diagnostics.

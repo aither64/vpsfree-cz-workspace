@@ -1,0 +1,90 @@
+Successfully installed bundler-4.0.23
+1 gem installed
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=rbs version=3.4.0 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=racc version=1.7.3 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=debug version=1.9.2 platform=ruby> because it is missing extensions
+Bundle complete! 6 Gemfile dependencies, 53 gems now installed.
+Use `bundle info [gemname]` to see where a bundled gem is installed.
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=rbs version=3.4.0 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=racc version=1.7.3 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=debug version=1.9.2 platform=ruby> because it is missing extensions
+    Updating crates.io index
+     Locking 158 packages to latest Rust 1.95 compatible versions
+   Compiling haveapi-rust-fixture v0.1.0 (/home/aither/workspace/ai/vpsfree.cz/work/2026-10-18-rust-client-generator/artifacts/haveapi-integration/tmp/nix-shell.wReMQL/haveapi-rust-integration-20261019-3419405-5n9f79)
+warning: module `authentication__token__token` should have a snake case name
+ --> src/generated/resources/mod.rs:3:9
+  |
+3 | pub mod authentication__token__token;
+  |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `authentication_token_token`
+  |
+  = note: `#[warn(non_snake_case)]` (part of `#[warn(nonstandard_style)]`) on by default
+
+warning: module `project__task` should have a snake case name
+ --> src/generated/resources/mod.rs:5:9
+  |
+5 | pub mod project__task;
+  |         ^^^^^^^^^^^^^ help: convert the identifier to snake case: `project_task`
+
+warning: method `authentication__token__token` should have a snake case name
+  --> src/generated/resources/authentication__token__token/mod.rs:14:12
+   |
+14 |     pub fn authentication__token__token(&self) -> Handle<'_, C> {
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `authentication_token_token`
+
+warning: method `project__task` should have a snake case name
+  --> src/generated/resources/project__task/mod.rs:14:12
+   |
+14 |     pub fn project__task(&self, project_id: impl ToString) -> Handle<'_, C> {
+   |            ^^^^^^^^^^^^^ help: convert the identifier to snake case: `project_task`
+
+warning: `haveapi-rust-fixture` (lib) generated 4 warnings
+warning: `haveapi-rust-fixture` (lib test) generated 4 warnings (4 duplicates)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 18.81s
+     Running unittests src/lib.rs (clients/rust/runtime/target/debug/deps/haveapi_rust_fixture-23b38570ed9a9ff7)
+
+running 2 tests
+test generated::runtime::client::tests::basic_encoding_matches_rfc7617 ... ok
+test generated::runtime::validation::tests::datetime_grammar_and_calendar ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/real_server.rs (clients/rust/runtime/target/debug/deps/real_server-09d85e80ace776b4)
+
+running 6 tests
+test blocking_lifecycle_on_current_thread ... ok
+test blocking_lifecycle_on_multiple_threads ... ok
+test existing_oauth2_token_and_deadline ... ok
+test real_haveapi_async ... FAILED
+test real_haveapi_blocking ... FAILED
+test started_blocking_work_keeps_its_http_deadline_after_abort ... ok
+
+failures:
+
+---- real_haveapi_async stdout ----
+
+thread 'real_haveapi_async' (3422552) panicked at tests/real_server.rs:186:5:
+called `Result::unwrap()` on an `Err` value: HaveAPI action failed with HTTP status 200
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- real_haveapi_blocking stdout ----
+
+thread 'real_haveapi_blocking' (3422594) panicked at tests/real_server.rs:197:5:
+called `Result::unwrap()` on an `Err` value: HaveAPI action failed with HTTP status 200
+
+
+failures:
+    real_haveapi_async
+    real_haveapi_blocking
+
+test result: FAILED. 4 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.97s
+
+error: test failed, to rerun pass `--test real_server`
+HaveAPI fixture failure log: /home/aither/workspace/ai/vpsfree.cz/work/2026-10-18-rust-client-generator/artifacts/haveapi-integration/tmp/nix-shell.wReMQL/rust-haveapi-fixture-log20261019-3419405-weu7gw
+clients/rust/spec/integration/run.rb:117:in `block (3 levels) in run': Generated fixture acceptance failed at mount / (RuntimeError)
+	from clients/rust/spec/integration/run.rb:49:in `with_server'
+	from clients/rust/spec/integration/run.rb:85:in `block (2 levels) in run'
+	from clients/rust/spec/integration/run.rb:84:in `each'
+	from clients/rust/spec/integration/run.rb:84:in `block in run'
+	from /nix/store/mdxh20cd9flvz6bbr7xw0qsh1aa3mhni-ruby-3.3.10/lib/ruby/3.3.0/tmpdir.rb:99:in `mktmpdir'
+	from clients/rust/spec/integration/run.rb:82:in `run'
+	from clients/rust/spec/integration/run.rb:124:in `<main>'

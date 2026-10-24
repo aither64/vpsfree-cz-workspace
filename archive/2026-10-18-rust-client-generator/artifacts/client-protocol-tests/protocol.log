@@ -1,0 +1,103 @@
+building '/nix/store/af7jrc0v3a0dj5ghpn5fmhvlpcs1jdxm-haveapi-rust-client-env.drv'...
+Successfully installed bundler-4.0.23
+1 gem installed
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=rbs version=3.4.0 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=racc version=1.7.3 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=debug version=1.9.2 platform=ruby> because it is missing extensions
+Bundle complete! 6 Gemfile dependencies, 53 gems now installed.
+Use `bundle info [gemname]` to see where a bundled gem is installed.
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=rbs version=3.4.0 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=racc version=1.7.3 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=debug version=1.9.2 platform=ruby> because it is missing extensions
+    Updating crates.io index
+     Locking 158 packages to latest Rust 1.95 compatible versions
+   Compiling haveapi-rust-fixture v0.1.0 (/home/aither/workspace/ai/vpsfree.cz/work/2026-10-18-rust-client-generator/artifacts/haveapi-integration/tmp/nix-shell.9PJjZr/haveapi-rust-integration-20261019-3317609-ijwvyk)
+warning: module `authentication__token__token` should have a snake case name
+ --> src/generated/resources/mod.rs:3:9
+  |
+3 | pub mod authentication__token__token;
+  |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `authentication_token_token`
+  |
+  = note: `#[warn(non_snake_case)]` (part of `#[warn(nonstandard_style)]`) on by default
+
+warning: module `project__task` should have a snake case name
+ --> src/generated/resources/mod.rs:5:9
+  |
+5 | pub mod project__task;
+  |         ^^^^^^^^^^^^^ help: convert the identifier to snake case: `project_task`
+
+warning: method `authentication__token__token` should have a snake case name
+  --> src/generated/resources/authentication__token__token/mod.rs:14:12
+   |
+14 |     pub fn authentication__token__token(&self) -> Handle<'_, C> {
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `authentication_token_token`
+
+warning: method `project__task` should have a snake case name
+  --> src/generated/resources/project__task/mod.rs:14:12
+   |
+14 |     pub fn project__task(&self, project_id: impl ToString) -> Handle<'_, C> {
+   |            ^^^^^^^^^^^^^ help: convert the identifier to snake case: `project_task`
+
+warning: `haveapi-rust-fixture` (lib) generated 4 warnings
+error[E0308]: mismatched types
+   --> tests/real_server.rs:11:9
+    |
+ 11 |         $request.send().await
+    |         ^^^^^^^^^^^^^^^^^^^^^ expected `Output`, found a different `Output`
+...
+186 |     real_protocol_cases!(client, async_response);
+    |     -------------------------------------------- in this macro invocation
+    |
+    = note: expected enum `Result<Response<haveapi_rust_fixture::resources::rust_fixture::query::Output, haveapi_rust_fixture::resources::rust_fixture::query::Meta>, _>`
+               found enum `Result<Response<haveapi_rust_fixture::resources::rust_fixture::delete_query::Output, haveapi_rust_fixture::resources::rust_fixture::delete_query::Meta>, _>`
+    = note: this error originates in the macro `async_response` which comes from the expansion of the macro `real_protocol_cases` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0599]: no method named `custom` found for struct `haveapi_rust_fixture::resources::rust_fixture::Handle<'a, C>` in the current scope
+   --> tests/real_server.rs:54:48
+    |
+ 54 |         let result = $send!(api.rust_fixture().custom().value(custom.clone())).unwrap();
+    |                                                ^^^^^^
+...
+186 |     real_protocol_cases!(client, async_response);
+    |     -------------------------------------------- in this macro invocation
+    |
+    = note: this error originates in the macro `real_protocol_cases` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0308]: mismatched types
+   --> tests/real_server.rs:18:9
+    |
+ 18 |         $request.send()
+    |         ^^^^^^^^^^^^^^^ expected `Output`, found a different `Output`
+...
+197 |     real_protocol_cases!(client, blocking_response);
+    |     ----------------------------------------------- in this macro invocation
+    |
+    = note: expected enum `Result<Response<haveapi_rust_fixture::resources::rust_fixture::query::Output, haveapi_rust_fixture::resources::rust_fixture::query::Meta>, _>`
+               found enum `Result<Response<haveapi_rust_fixture::resources::rust_fixture::delete_query::Output, haveapi_rust_fixture::resources::rust_fixture::delete_query::Meta>, _>`
+    = note: this error originates in the macro `blocking_response` which comes from the expansion of the macro `real_protocol_cases` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0599]: no method named `custom` found for struct `haveapi_rust_fixture::resources::rust_fixture::Handle<'a, C>` in the current scope
+   --> tests/real_server.rs:54:48
+    |
+ 54 |         let result = $send!(api.rust_fixture().custom().value(custom.clone())).unwrap();
+    |                                                ^^^^^^
+...
+197 |     real_protocol_cases!(client, blocking_response);
+    |     ----------------------------------------------- in this macro invocation
+    |
+    = note: this error originates in the macro `real_protocol_cases` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: `haveapi-rust-fixture` (lib test) generated 4 warnings (4 duplicates)
+Some errors have detailed explanations: E0308, E0599.
+For more information about an error, try `rustc --explain E0308`.
+error: could not compile `haveapi-rust-fixture` (test "real_server") due to 4 previous errors
+warning: build failed, waiting for other jobs to finish...
+HaveAPI fixture failure log: /home/aither/workspace/ai/vpsfree.cz/work/2026-10-18-rust-client-generator/artifacts/haveapi-integration/tmp/nix-shell.9PJjZr/rust-haveapi-fixture-log20261019-3317609-dtm5n1
+clients/rust/spec/integration/run.rb:117:in `block (3 levels) in run': Generated fixture acceptance failed at mount / (RuntimeError)
+	from clients/rust/spec/integration/run.rb:49:in `with_server'
+	from clients/rust/spec/integration/run.rb:85:in `block (2 levels) in run'
+	from clients/rust/spec/integration/run.rb:84:in `each'
+	from clients/rust/spec/integration/run.rb:84:in `block in run'
+	from /nix/store/mdxh20cd9flvz6bbr7xw0qsh1aa3mhni-ruby-3.3.10/lib/ruby/3.3.0/tmpdir.rb:99:in `mktmpdir'
+	from clients/rust/spec/integration/run.rb:82:in `run'
+	from clients/rust/spec/integration/run.rb:124:in `<main>'

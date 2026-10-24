@@ -1,0 +1,33 @@
+commit b8235d129ce2dad34e466f3a3d8754eacef49f53
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Mon Oct 19 19:29:52 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Mon Oct 19 19:46:52 2026 +0200
+
+    Add the vpsAdmin API 7.0 Rust client package
+    
+    Define a self-contained async client crate with optional blocking support,
+    examples and disposable real-server acceptance tests. Retain the sanitized
+    public API description, exact capture inventory and generator provenance
+    so the described surface can be reproduced without live discovery.
+    
+    Keep package SemVer separate from API 7.0 and declare Rust 1.95 as the
+    minimum compiler. Pin the generation environment, document offline
+    regeneration and add CI for source drift, feature combinations and MSRV.
+    The generated source and copied runtime follow in a separate commit.
+
+commit 58acdd6f95c6e03f57edeb3a533a9563649590a4
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Mon Oct 19 19:30:09 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Mon Oct 19 19:46:52 2026 +0200
+
+    Generate the captured vpsAdmin API 7.0 client
+    
+    Render all 524 described actions from the sanitized public snapshot and
+    copy the common HaveAPI runtime into the crate. Async and blocking modes
+    share the generated builders, models, validation and wire descriptions.
+    
+    Use HaveAPI source 874e8f2fd8c94a4bc34008936e13b856b82cdd2b and the recorded
+    formatter. The ownership manifest binds the snapshot, generator source,
+    Ruby lock and runtime digests for reproducible offline refreshes.
