@@ -1,0 +1,384 @@
+diff --git a/Makefile b/Makefile
+index 9f9948b..09da118 100644
+--- a/Makefile
++++ b/Makefile
+@@ -19,7 +19,7 @@ release-deps:
+ 	cd servers/ruby && bundle install
+ 	cd clients/ruby && bundle install
+ 	cd clients/go && bundle install
+-	cd clients/js && npm install --no-audit --no-fund
++	cd clients/js && npm ci --no-audit --no-fund
+ 	cd clients/php && composer install --no-interaction --prefer-dist
+ 	cd clients/python && uv sync --locked
+ 
+@@ -43,7 +43,8 @@ version:
+ 	@sed -ri "s/ VERSION = '[^']+'/ VERSION = '$(VERSION)'/" clients/ruby/lib/haveapi/client/version.rb
+ 	@sed -ri "s/ VERSION = '[^']+'/ VERSION = '$(VERSION)'/" clients/go/lib/haveapi/go_client/version.rb
+ 	@sed -ri "s/\"version\": \"[^\"]+\"/\"version\": \"$(VERSION)\"/" clients/js/package.json
+-	@sed -ri "s/Client\.Version = '[^']+'/Client.Version = '$(VERSION)'/" clients/js/src/haveapi/client.js
++	@node -e 'const fs = require("fs"); const p = "clients/js/package-lock.json"; const lock = JSON.parse(fs.readFileSync(p, "utf8")); lock.version = lock.packages[""].version = process.argv[1]; fs.writeFileSync(p, JSON.stringify(lock, null, "\t") + "\n");' "$(VERSION)"
++	@sed -ri "s/Client\.Version = '[^']+'/Client.Version = '$(VERSION)'/" clients/js/src/haveapi/client.ts
+ 	@sed -ri "s/Client\.Version = '[^']+'/Client.Version = '$(VERSION)'/" clients/js/dist/haveapi-client.js
+ 	@sed -ri "s/\"version\": \"[^\"]+\"/\"version\": \"$(VERSION)\"/" clients/php/composer.json
+ 	@sed -ri "s/const VERSION = '[^']+'/const VERSION = '$(VERSION)'/" clients/php/src/Client.php
+diff --git a/README.md b/README.md
+index d267e5e..fc3a82a 100644
+--- a/README.md
++++ b/README.md
+@@ -35,7 +35,7 @@ Available clients:
+ - Ruby client library and CLI at [clients/ruby](clients/ruby)
+ - PHP client at [clients/php](clients/php)
+ - Python synchronous and asynchronous client at [clients/python](clients/python)
+-- JavaScript client at [clients/js](clients/js)
++- JavaScript and TypeScript client at [clients/js](clients/js)
+ - Go client generator at [clients/go](clients/go)
+ - Elixir client at [clients/elixir](clients/elixir) (outdated)
+ 
+diff --git a/doc/agent-instructions/releases.md b/doc/agent-instructions/releases.md
+index f19b2e9..b71e7f8 100644
+--- a/doc/agent-instructions/releases.md
++++ b/doc/agent-instructions/releases.md
+@@ -19,10 +19,13 @@ All maintained components use the shared version and are released together:
+ | Ruby server | RubyGems `haveapi` |
+ | Ruby client and CLI | RubyGems `haveapi-client` |
+ | Go client generator, implemented in Ruby | RubyGems `haveapi-go-client` |
+-| JavaScript client | npm `haveapi-client` and a browser bundle |
++| JavaScript and TypeScript client | One npm `haveapi-client` package with both clients and TypeScript declarations; a JavaScript browser bundle |
+ | PHP client | Composer `haveapi/client`, through `vpsfreecz/haveapi-client-php` |
+ | Python client | PyPI `haveapi-client` |
+ 
++`CallbackClient` (also available as `Client`) and `AsyncClient` share the same
++JavaScript package and version.
++
+ The Elixir server and client are unmaintained and excluded from releases.
+ Consumers keep their existing package names and installation commands. Release
+ automation does not change API behavior, data formats or deployment ordering.
+@@ -89,8 +92,10 @@ Run release commands from the top-level `nix develop` shell.
+    tests all maintained components and builds the packages in the locked Nix
+    toolchain. It retains `release-<run-id>` as an Actions artifact for 90 days.
+    Its manifest records source commit, version, checksums, tool versions and
+-   resolved dependency locks. Dependencies are resolved for this build; separate
+-   builds are not promised to be byte-identical.
++   resolved dependency locks. JavaScript build dependencies use `npm ci` with the
++   committed lockfile. Other components retain their existing dependency
++   resolution; separate complete release builds are not promised to be
++   byte-identical.
+ 5. Open the Actions run and inspect its test results, candidate summary and
+    artifacts. Click **Review deployments**, select `release`, then **Approve and
+    deploy**. This authorizes RubyGems/npm/PyPI publication and synchronization into
+@@ -140,6 +145,25 @@ It never uploads packages. Component gems use the local Ruby client, so a new
+ shared version need not already exist on RubyGems.
+ Do not commit generated server documentation or build artifacts.
+ 
++The JavaScript packaging step runs gulp before `npm pack`. Gulp compiles the
++TypeScript sources into `dist/haveapi-client.js` and `dist/types`; the npm archive
++ships both client interfaces and their declarations together. The standalone
++browser bundle uses the same JavaScript as the npm package. TypeScript consumers
++resolve the declaration entry through the package's `types` field.
++
++`make version` updates the npm manifest and both root version fields in the
++JavaScript lockfile; release checks require the lock's package identity and
++versions to agree with `VERSION`. Package inspection validates the exact
++`main`/`types` entries, nonempty declarations, README, both async guides and
++`LICENSE.txt`, and checks that the standalone bundle matches the packed one.
++The npm smoke check installs the retained tarball in a temporary consumer with
++install scripts disabled and `NODE_PATH` unset. It imports `haveapi-client` by
++package name, checks `Client === CallbackClient` and the version, constructs
++both callback and async clients, then compiles a strict TypeScript consumer.
++Compilation checks the transitive declarations; the compiler's file list must
++resolve only the consumer, installed package declarations and standard libraries,
++without checkout source or declarations.
++
+ The Ruby server packaging specs extract a gem and test its documentation routes.
+ They require `make doc`, which `make test` runs automatically. Direct server
+ `bundle exec rake build` still rejects missing or empty shared documentation.
+diff --git a/utils/release/artifacts.rb b/utils/release/artifacts.rb
+index 2f009e1..8da956f 100644
+--- a/utils/release/artifacts.rb
++++ b/utils/release/artifacts.rb
+@@ -72,7 +72,7 @@ module HaveAPI
+           'servers/ruby/lib/haveapi/version.rb' => /\bVERSION = '([^']+)'/,
+           'clients/ruby/lib/haveapi/client/version.rb' => /\bVERSION = '([^']+)'/,
+           'clients/go/lib/haveapi/go_client/version.rb' => /\bVERSION = '([^']+)'/,
+-          'clients/js/src/haveapi/client.js' => /Client\.Version = '([^']+)'/,
++          'clients/js/src/haveapi/client.ts' => /Client\.Version = '([^']+)'/,
+           'clients/php/src/Client.php' => /const VERSION = '([^']+)'/,
+           'clients/python/pyproject.toml' => /^version = "([^"]+)"/
+         }
+@@ -83,6 +83,11 @@ module HaveAPI
+         %w[clients/js/package.json clients/php/composer.json].each do |path|
+           raise Error, "Version mismatch in #{path}" unless JSON.parse(File.read(File.join(root, path))).fetch('version') == version
+         end
++        lock = JSON.parse(File.read(File.join(root, 'clients/js/package-lock.json')))
++        unless [lock, lock.fetch('packages').fetch('')].all? { |entry| entry.values_at('name', 'version') == ['haveapi-client', version] }
++          raise Error, 'Identity or version mismatch in clients/js/package-lock.json'
++        end
++
+         %w[servers/ruby/haveapi.gemspec clients/go/haveapi-go-client.gemspec].each do |path|
+           dependency = File.read(File.join(root, path)).match(/add_dependency 'haveapi-client', '([^']+)'/)
+           raise Error, "Dependency mismatch in #{path}" unless dependency && dependency[1] == "~> #{version}"
+@@ -185,33 +190,77 @@ module HaveAPI
+           required = %w[json-schema.html protocol.md create-client.md typed-input-validation.md protocol.png].map { |f| "doc/#{f}" }
+           raise Error, 'Server gem is missing shared documentation' unless (required - package.contents).empty?
+         end
++        inspect_npm(directory)
++
++        php = tar_files(File.join(directory, "haveapi-client-php-#{version}.tar"))
++        raise Error, 'Wrong Composer identity' unless JSON.parse(php.fetch('composer.json').first).values_at('name', 'version') == ['haveapi/client', version]
++
++        Release.capture('python', File.join(root, 'utils/release/python_artifacts.py'), directory, version)
++      end
++
++      def inspect_npm(directory)
+         npm = tar_files(File.join(directory, "haveapi-client-#{version}.tgz"), gzip: true)
+         metadata = JSON.parse(npm.fetch('package/package.json').first)
+         repository = metadata.fetch('repository')
+         unless metadata.values_at('name', 'version') == ['haveapi-client', version] && repository.fetch('url') == "https://github.com/#{REPOSITORY}"
+           raise Error, 'Wrong npm identity or publishing repository'
+         end
++        unless metadata.values_at('main', 'types') == ['dist/haveapi-client.js', 'dist/types/haveapi.d.ts']
++          raise Error, 'Wrong npm main or types entry'
++        end
++
++        required = %w[README.md doc-async-client.md doc-async-resources.md LICENSE.txt dist/types/haveapi.d.ts]
++        required.each do |name|
++          raise Error, "npm tarball is missing or has empty #{name}" unless npm.has_key?("package/#{name}") && !npm.fetch("package/#{name}").first.strip.empty?
++        end
++        npm.each do |name, (content, _mode)|
++          next unless name.start_with?('package/dist/types/') && name.end_with?('.d.ts')
++
++          raise Error, "Empty npm declaration: #{name}" if content.strip.empty?
++        end
+ 
+         bundle = File.binread(File.join(directory, 'haveapi-client.js'))
+         raise Error, 'npm tarball does not contain the built bundle' unless npm.fetch('package/dist/haveapi-client.js').first == bundle
+         raise Error, 'Wrong browser bundle version' unless bundle.include?("Client.Version = '#{version}'")
+-
+-        php = tar_files(File.join(directory, "haveapi-client-php-#{version}.tar"))
+-        raise Error, 'Wrong Composer identity' unless JSON.parse(php.fetch('composer.json').first).values_at('name', 'version') == ['haveapi/client', version]
+-
+-        Release.capture('python', File.join(root, 'utils/release/python_artifacts.py'), directory, version)
+       end
+ 
+       def smoke_npm(directory)
+-        files = tar_files(File.join(directory, "haveapi-client-#{version}.tgz"), gzip: true)
++        inspect_npm(directory)
++        archive = File.expand_path("haveapi-client-#{version}.tgz", directory)
++        compiler = File.join(root, 'clients/js/node_modules/typescript/bin/tsc')
+         Dir.mktmpdir('haveapi-npm-') do |tmp|
+-          files.each do |name, (content, mode)|
+-            path = File.join(tmp, name)
+-            FileUtils.mkdir_p(File.dirname(path))
+-            File.write(path, content, mode: 'wb', perm: mode)
++          env = { 'NODE_PATH' => nil }
++          File.write(File.join(tmp, 'package.json'), JSON.generate({ name: 'haveapi-release-smoke', private: true }))
++          Release.run(env, 'npm', 'install', '--ignore-scripts', '--no-audit', '--no-fund', archive, chdir: tmp)
++          script = <<~JS
++            const fs = require('fs');
++            const assert = require('assert');
++            assert.strictEqual(fs.realpathSync(require.resolve('haveapi-client')),
++              fs.realpathSync('node_modules/haveapi-client/dist/haveapi-client.js'));
++            const api = require('haveapi-client');
++            assert.strictEqual(api.CallbackClient, api.Client);
++            assert.strictEqual(api.Client.Version, process.argv[1]);
++            new api.CallbackClient('http://localhost');
++            new api.AsyncClient('http://localhost');
++            console.log('Installed npm callback/async exports valid: ' + api.Client.Version);
++          JS
++          Release.run(env, 'node', '-e', script, version, chdir: tmp)
++          FileUtils.cp(File.join(__dir__, 'npm-consumer.ts'), File.join(tmp, 'consumer.ts'))
++          stdout, stderr, status = Open3.capture3(env, 'node', compiler, '--strict', '--noEmit', '--target', 'ES2020', '--module', 'commonjs',
++                                                  '--moduleResolution', 'node', '--lib', 'ES2020,DOM', '--listFiles', 'consumer.ts', chdir: tmp)
++          raise Error, "Installed npm declarations failed to compile:\n#{stdout}#{stderr}" unless status.success?
++
++          files = stdout.lines.map(&:strip)
++          types = File.realpath(File.join(tmp, 'node_modules/haveapi-client/dist/types'))
++          compiler_lib = File.realpath(File.join(root, 'clients/js/node_modules/typescript/lib'))
++          unless files.include?(File.join(types, 'haveapi.d.ts')) && files.all? do |path|
++            actual = File.realpath(File.expand_path(path, tmp))
++            actual == File.join(tmp, 'consumer.ts') || actual.start_with?("#{types}/", "#{compiler_lib}/")
+           end
+-          script = "const api = require(process.argv[1]); if (api.Client.Version !== process.argv[2]) process.exit(1); new api.Client('http://localhost');"
+-          Release.run({ 'NODE_PATH' => File.join(root, 'clients/js/node_modules') }, 'node', '-e', script, File.join(tmp, 'package'), version)
++            raise Error, 'npm smoke resolved types outside the installed package or compiler library'
++          end
++
++          puts 'Installed npm declarations valid (package-name consumer)'
+         end
+       end
+     end
+diff --git a/utils/release/spec/release_spec.rb b/utils/release/spec/release_spec.rb
+index 70ab131..fc9e4cb 100644
+--- a/utils/release/spec/release_spec.rb
++++ b/utils/release/spec/release_spec.rb
+@@ -30,6 +30,56 @@ RSpec.describe HaveAPI::Release do
+     end
+   end
+ 
++  def npm_fixture
++    {
++      'package/package.json' => JSON.generate({ name: 'haveapi-client', version: artifacts.version,
++                                                repository: { url: 'https://github.com/vpsfreecz/haveapi' }, main: 'dist/haveapi-client.js', types: 'dist/types/haveapi.d.ts' }),
++      'package/dist/haveapi-client.js' => "function Client() {} Client.Version = '#{artifacts.version}'; module.exports = { Client, CallbackClient: Client, AsyncClient: function AsyncClient() {} };",
++      'package/dist/types/haveapi.d.ts' => "export * from './client';\n",
++      'package/dist/types/client.d.ts' => <<~TS,
++        export declare class Client {
++          constructor(url: string);
++          setLanguage(language: string): void;
++          setup(callback: (client: Client, ok: boolean) => void): void;
++        }
++        export { Client as CallbackClient };
++        export interface RequestResult<T> { data: T; }
++        export declare class AsyncClient {
++          constructor(url: string);
++          request<T>(spec: { method: string; path: string }): Promise<RequestResult<T>>;
++        }
++        export declare class AsyncError { constructor(kind: string, message: string); }
++      TS
++      'package/README.md' => 'Client usage',
++      'package/doc-async-client.md' => 'Async client usage',
++      'package/doc-async-resources.md' => 'Async resources',
++      'package/LICENSE.txt' => 'MIT license'
++    }
++  end
++
++  def npm_tar(files)
++    path = File.join(tmp, "haveapi-client-#{artifacts.version}.tgz")
++    tar(File.join(tmp, 'npm.tar'), files)
++    Zlib::GzipWriter.open(path) { |gzip| gzip.write(File.binread(File.join(tmp, 'npm.tar'))) }
++    File.binwrite(File.join(tmp, 'haveapi-client.js'), files.fetch('package/dist/haveapi-client.js'))
++    path
++  end
++
++  def stub_npm_install(archive)
++    allow(described_class).to receive(:run).and_raise('Unexpected npm smoke command')
++    allow(described_class).to receive(:run).with({ 'NODE_PATH' => nil }, 'node', any_args, chdir: kind_of(String)).and_call_original
++    allow(described_class).to receive(:run).with({ 'NODE_PATH' => nil }, 'npm', 'install', '--ignore-scripts', '--no-audit', '--no-fund', archive, chdir: kind_of(String)) do |*_args, **options|
++      consumer = options.fetch(:chdir)
++      expect(consumer).not_to start_with(root)
++      expect(JSON.parse(File.read(File.join(consumer, 'package.json'))).fetch('private')).to be(true)
++      artifacts.tar_files(archive, gzip: true).each do |name, (content, _mode)|
++        path = File.join(consumer, 'node_modules/haveapi-client', name.delete_prefix('package/'))
++        FileUtils.mkdir_p(File.dirname(path))
++        File.binwrite(path, content)
++      end
++    end
++  end
++
+   def fixture_manifest
+     allow(artifacts).to receive(:source).and_return('a' * 40)
+     allow(artifacts).to receive(:inspect_packages)
+@@ -47,6 +97,50 @@ RSpec.describe HaveAPI::Release do
+       expect { artifacts.check }.not_to raise_error
+     end
+ 
++    it 'rejects a mismatched authored JavaScript client version' do
++      allow(File).to receive(:read).and_call_original
++      allow(File).to receive(:read).with(File.join(root, 'clients/js/src/haveapi/client.ts')).and_return("Client.Version = '999.0.0';")
++      expect { artifacts.check }.to raise_error(HaveAPI::Release::Error, %r{Version mismatch in clients/js/src/haveapi/client\.ts})
++    end
++
++    ['', 'packages'].each do |location|
++      %w[name version].each do |field|
++        it "rejects mismatched npm lock #{location.empty? ? 'top-level' : 'package root'} #{field}" do
++          path = File.join(root, 'clients/js/package-lock.json')
++          lock = JSON.parse(File.read(path))
++          entry = location.empty? ? lock : lock.fetch('packages').fetch('')
++          entry[field] = 'wrong'
++          allow(File).to receive(:read).and_call_original
++          allow(File).to receive(:read).with(path).and_return(JSON.generate(lock))
++          expect { artifacts.check }.to raise_error(HaveAPI::Release::Error, %r{mismatch in clients/js/package-lock})
++        end
++      end
++    end
++
++    it 'updates both npm lock roots without changing any nested dependency bytes in a disposable version bump' do
++      copy = File.join(tmp, 'source')
++      git(root, 'ls-files', '-z').split("\0").each do |name|
++        destination = File.join(copy, name)
++        FileUtils.mkdir_p(File.dirname(destination))
++        FileUtils.cp(File.join(root, name), destination)
++      end
++      path = File.join(copy, 'clients/js/package-lock.json')
++      before = File.read(path)
++      old_lock = JSON.parse(before)
++      described_class.capture('make', 'version', 'VERSION=999.0.0', chdir: copy)
++      after = File.read(path)
++      expected = old_lock.merge('version' => '999.0.0', 'packages' => old_lock.fetch('packages').merge('' => old_lock.fetch('packages').fetch('').merge('version' => '999.0.0')))
++      expect(JSON.parse(after)).to eq(expected)
++      dependency_start = "\t\t\"node_modules/"
++      expect(after[after.index(dependency_start)..]).to eq(before[before.index(dependency_start)..])
++      File.write(File.join(copy, 'CHANGELOG.md'), "# 2099-01-01 - version 999.0.0\n\n## Changed\nDisposable fixture.\n")
++      candidate = described_class::Artifacts.new(copy)
++      expect { candidate.check }.not_to raise_error
++      expected['packages']['']['version'] = artifacts.version
++      File.write(path, JSON.generate(expected))
++      expect { candidate.check }.to raise_error(HaveAPI::Release::Error, %r{mismatch in clients/js/package-lock})
++    end
++
+     it 'rejects a version tag that differs from VERSION' do
+       expect { artifacts.check_tag('v999.0.0') }.to raise_error(HaveAPI::Release::Error, /Tag must be/)
+     end
+@@ -101,6 +195,62 @@ RSpec.describe HaveAPI::Release do
+     end
+   end
+ 
++  describe 'npm package contract' do
++    it 'accepts the retained bundle, declarations and owning documentation' do
++      npm_tar(npm_fixture)
++      expect { artifacts.inspect_npm(tmp) }.not_to raise_error
++    end
++
++    %w[main types].each do |field|
++      it "rejects the wrong package #{field} entry" do
++        files = npm_fixture
++        metadata = JSON.parse(files.fetch('package/package.json'))
++        metadata[field] = 'src/haveapi.ts'
++        files['package/package.json'] = JSON.generate(metadata)
++        npm_tar(files)
++        expect { artifacts.inspect_npm(tmp) }.to raise_error(HaveAPI::Release::Error, /Wrong npm main or types/)
++      end
++    end
++
++    %w[README.md doc-async-client.md doc-async-resources.md LICENSE.txt dist/types/haveapi.d.ts].each do |name|
++      it "rejects missing #{name}" do
++        npm_tar(npm_fixture.reject { |path, _content| path == "package/#{name}" })
++        expect { artifacts.inspect_npm(tmp) }.to raise_error(HaveAPI::Release::Error, /missing or has empty #{Regexp.escape(name)}/)
++      end
++    end
++
++    it 'rejects an empty transitive declaration' do
++      npm_tar(npm_fixture.merge('package/dist/types/client.d.ts' => ' '))
++      expect { artifacts.inspect_npm(tmp) }.to raise_error(HaveAPI::Release::Error, /Empty npm declaration/)
++    end
++
++    it 'rejects a bundle different from the standalone browser artifact' do
++      npm_tar(npm_fixture)
++      File.write(File.join(tmp, 'haveapi-client.js'), 'different bundle')
++      expect { artifacts.inspect_npm(tmp) }.to raise_error(HaveAPI::Release::Error, /does not contain the built bundle/)
++    end
++
++    it 'runs package-name CommonJS and the pinned compiler against an isolated installed fixture' do
++      stub_npm_install(npm_tar(npm_fixture))
++      expect { artifacts.smoke_npm(tmp) }.not_to raise_error
++      expect(described_class).to have_received(:run).with({ 'NODE_PATH' => nil }, 'npm', 'install', any_args, chdir: kind_of(String))
++    end
++
++    it 'rejects a missing transitive declaration through the real compiler' do
++      stub_npm_install(npm_tar(npm_fixture.except('package/dist/types/client.d.ts')))
++      expect { artifacts.smoke_npm(tmp) }.to raise_error(HaveAPI::Release::Error, %r{failed to compile:.*Cannot find module '\./client'}m)
++    end
++
++    it 'rejects a declaration reference outside the installed package' do
++      outside = File.join(tmp, 'outside.d.ts')
++      File.write(outside, 'export {};')
++      files = npm_fixture
++      files['package/dist/types/haveapi.d.ts'] = "/// <reference path=\"#{outside}\" />\n#{files.fetch('package/dist/types/haveapi.d.ts')}"
++      stub_npm_install(npm_tar(files))
++      expect { artifacts.smoke_npm(tmp) }.to raise_error(HaveAPI::Release::Error, /resolved types outside the installed package/)
++    end
++  end
++
+   describe 'artifact reuse' do
+     let(:workflow) { HaveAPI::Release::Workflow }
+ 

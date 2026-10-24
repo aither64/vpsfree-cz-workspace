@@ -1,0 +1,15 @@
+commit dce4784fe0069b061dd76cdf689e2099b4b0e66d
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Mon Oct 19 22:39:59 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Mon Oct 19 22:39:59 2026 +0200
+
+    coordination: validate hooks with the repository shell Ruby
+    
+    Resolve Ruby from the initialized repository shell when preparing merge
+    hooks. Using the coordinator's absolute interpreter can reject native gems
+    built for the repository's different Ruby ABI.
+    
+    Keep dependency validation and retained hook environments unchanged. Exercise
+    the selected shell interpreter and real missing-dependency failure in the
+    existing preparation tests.

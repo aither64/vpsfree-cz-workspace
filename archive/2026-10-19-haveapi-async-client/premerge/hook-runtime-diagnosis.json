@@ -1,0 +1,159 @@
+{
+  "schema": 1,
+  "kind": "read_only_hook_runtime_diagnosis",
+  "session": "2026-10-19-haveapi-async-client",
+  "author": "implementer1",
+  "selectedPackage": "/nix/store/i144xnc9p02svar5kz6jxjjpp6gz4cwh-dev-workspace-0.2.0",
+  "retainedSource": {
+    "path": "/home/aither/.local/state/dev-workspaces/coordination/sources/19c20c90cc957d4225ece50a92e190855f252710/checkout",
+    "head": "19c20c90cc957d4225ece50a92e190855f252710"
+  },
+  "runtimes": {
+    "coordinator": {
+      "executable": "/nix/store/5shv7ihqxa98r1psfz995q3j2cwk22sa-ruby-3.4.9/bin/ruby",
+      "version": "3.4.9",
+      "extensionApi": "3.4.0",
+      "arch": "x86_64-linux",
+      "libruby": "libruby-3.4.9.so.3.4.9"
+    },
+    "repository": {
+      "executable": "/nix/store/mdxh20cd9flvz6bbr7xw0qsh1aa3mhni-ruby-3.3.10/bin/ruby",
+      "version": "3.3.10",
+      "extensionApi": "3.3.0",
+      "arch": "x86_64-linux",
+      "libruby": "libruby-3.3.10.so.3.3.10",
+      "flakeSelection": "pkgs.ruby_3_3"
+    },
+    "method": "Direct absolute Ruby --disable-gems -rrbconfig read; repository build logs and Makefiles independently agree."
+  },
+  "nativeDependencies": {
+    "lockedGems": [
+      "json-2.21.2",
+      "racc-1.8.1",
+      "prism-1.9.0",
+      "bigdecimal-4.1.3"
+    ],
+    "gemHome": "/home/aither/.local/state/dev-workspaces/coordination/sources/19c20c90cc957d4225ece50a92e190855f252710/checkout/.gems",
+    "presentCompletionMarkers": [
+      "/home/aither/.local/state/dev-workspaces/coordination/sources/19c20c90cc957d4225ece50a92e190855f252710/checkout/.gems/extensions/x86_64-linux/3.3.0/json-2.21.2/gem.build_complete",
+      "/home/aither/.local/state/dev-workspaces/coordination/sources/19c20c90cc957d4225ece50a92e190855f252710/checkout/.gems/extensions/x86_64-linux/3.3.0/racc-1.8.1/gem.build_complete",
+      "/home/aither/.local/state/dev-workspaces/coordination/sources/19c20c90cc957d4225ece50a92e190855f252710/checkout/.gems/extensions/x86_64-linux/3.3.0/prism-1.9.0/gem.build_complete",
+      "/home/aither/.local/state/dev-workspaces/coordination/sources/19c20c90cc957d4225ece50a92e190855f252710/checkout/.gems/extensions/x86_64-linux/3.3.0/bigdecimal-4.1.3/gem.build_complete"
+    ],
+    "coordinatorApiExtensionDirectoryPresent": false,
+    "meaning": "Missing for the coordinator extension API; not missing from the repository Ruby installation."
+  },
+  "failure": {
+    "class": "Bundler::GemNotFound",
+    "missing": "json-2.21.2, racc-1.8.1, prism-1.9.0, bigdecimal-4.1.3",
+    "site": "workspace-coordination-execution.rb:355, prepare_merge_hooks",
+    "mechanism": "nix develop runs the repository shellHook, then executes the absolute coordinator RbConfig.ruby rather than the ruby selected by shell PATH.",
+    "preparedEnvironment": "Bundler.setup fails before the WORKSPACE_MERGE_HOOK_ENV marker. Repository shellHook assigns GEM_HOME=.gems; coordinator clears incoming gem/bundle variables before entry.",
+    "jobAdmission": "Lead reports preparation stopped before job admission; this diagnosis did not invoke coordinator status or prepare."
+  },
+  "sameHomeInstallAssessment": {
+    "safeStandardRecipe": false,
+    "installExtensionInLib": true,
+    "evidence": "RubyGems ext_conf_builder.rb:49-60 copies native outputs to gem lib_dir with cp_r remove_destination:true, besides the API-specific extension directory.",
+    "sharedNativeFiles": [
+      "/home/aither/.local/state/dev-workspaces/coordination/sources/19c20c90cc957d4225ece50a92e190855f252710/checkout/.gems/gems/json-2.21.2/lib/json/ext/generator.so",
+      "/home/aither/.local/state/dev-workspaces/coordination/sources/19c20c90cc957d4225ece50a92e190855f252710/checkout/.gems/gems/json-2.21.2/lib/json/ext/parser.so",
+      "/home/aither/.local/state/dev-workspaces/coordination/sources/19c20c90cc957d4225ece50a92e190855f252710/checkout/.gems/gems/racc-1.8.1/lib/racc/cparse.so",
+      "/home/aither/.local/state/dev-workspaces/coordination/sources/19c20c90cc957d4225ece50a92e190855f252710/checkout/.gems/gems/prism-1.9.0/lib/prism/prism.so",
+      "/home/aither/.local/state/dev-workspaces/coordination/sources/19c20c90cc957d4225ece50a92e190855f252710/checkout/.gems/gems/bigdecimal-4.1.3/lib/bigdecimal.so"
+    ],
+    "conclusion": "Installing the same versions with coordinator Ruby into the existing gem home can overwrite non-ABI-separated native library files. No such install was attempted.",
+    "separateGemHome": "Not a repair within current preparation: incoming gem variables are cleared and repository shellHook sets its own .gems."
+  },
+  "proposal": {
+    "minimumCoreChange": "In prepare_merge_hooks, replace the RbConfig.ruby argv element after --command with 'ruby', resolving the entered repository shell PATH.",
+    "preserve": [
+      "declared shellHook",
+      "Bundler.setup and require overcommit validation",
+      "prepared environment allowlist",
+      "normal hooks",
+      "coordinator queue and approval gates"
+    ],
+    "requiredScope": "Architect-owned correction design and supported reviewed package workflow; not a local selected-runtime edit.",
+    "currentPackageDependencyRepairCommand": null,
+    "postCorrectionDependencyCommandOnlyIfNeeded": "nix develop /home/aither/.local/state/dev-workspaces/coordination/sources/19c20c90cc957d4225ece50a92e190855f252710/checkout --command bundle install",
+    "commandCwd": "/home/aither/.local/state/dev-workspaces/coordination/sources/19c20c90cc957d4225ece50a92e190855f252710/checkout",
+    "executed": false
+  },
+  "evidence": [
+    {
+      "kind": "prepare_error",
+      "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-19-haveapi-async-client/premerge/prepare.log",
+      "sha256": "1ffc1ec413816ee7d3e81349944c753850a7ca4a3ac30555c7f5955347278fcd"
+    },
+    {
+      "kind": "coordinator_entry",
+      "path": "/nix/store/i144xnc9p02svar5kz6jxjjpp6gz4cwh-dev-workspace-0.2.0/libexec/.workspace-host-wrapped",
+      "sha256": "9c4bcf3af132fce96f73b7638334489339844f623a561a21d8e96f039850c002"
+    },
+    {
+      "kind": "coordinator_hook_preparation",
+      "path": "/nix/store/i144xnc9p02svar5kz6jxjjpp6gz4cwh-dev-workspace-0.2.0/libexec/workspace-coordination-execution.rb",
+      "sha256": "201cd3103a7a068f2a87001d28433ee45070d016fd4012d0cc7fad921f4f9999"
+    },
+    {
+      "kind": "repository_shell",
+      "path": "/home/aither/.local/state/dev-workspaces/coordination/sources/19c20c90cc957d4225ece50a92e190855f252710/checkout/flake.nix",
+      "sha256": "dc62ba1df85858929b6197ccd77104d1a97e2b364019a24fbdc852dc8e3949dc"
+    },
+    {
+      "kind": "locked_dependencies",
+      "path": "/home/aither/.local/state/dev-workspaces/coordination/sources/19c20c90cc957d4225ece50a92e190855f252710/checkout/Gemfile.lock",
+      "sha256": "450de01a459fd59f8237065094ee4bf59d1263049af14244a768b29b7f2ebfc5"
+    },
+    {
+      "kind": "json_native_build",
+      "path": "/home/aither/.local/state/dev-workspaces/coordination/sources/19c20c90cc957d4225ece50a92e190855f252710/checkout/.gems/extensions/x86_64-linux/3.3.0/json-2.21.2/gem_make.out",
+      "sha256": "e24bbe3e88aa0f26a80da72a51db1a015a8e603f1f7c89c759ba3496d6016879"
+    },
+    {
+      "kind": "prism_native_build",
+      "path": "/home/aither/.local/state/dev-workspaces/coordination/sources/19c20c90cc957d4225ece50a92e190855f252710/checkout/.gems/extensions/x86_64-linux/3.3.0/prism-1.9.0/gem_make.out",
+      "sha256": "1e17de249af380d7151e4744a0869556b59e832d7cdc125268a2d012bc2a225f"
+    },
+    {
+      "kind": "rubygems_extension_copy",
+      "path": "/nix/store/5shv7ihqxa98r1psfz995q3j2cwk22sa-ruby-3.4.9/lib/ruby/3.4.0/rubygems/ext/ext_conf_builder.rb",
+      "sha256": "8b680509d6ad74c38ec524fa195d9a6c5cc1980c3f1638b27a4006941ccef80d"
+    },
+    {
+      "kind": "rubygems_load_paths",
+      "path": "/nix/store/5shv7ihqxa98r1psfz995q3j2cwk22sa-ruby-3.4.9/lib/ruby/3.4.0/rubygems/basic_specification.rb",
+      "sha256": "7e30afcfd8d15bd3d252e2295c6223d96259221fae3b8332020d98ec42d81a25"
+    }
+  ],
+  "unchangedExistingPremergeJsonSha256": {
+    "ci-summary.json": "eefb3a439af5a96fd42bd950fcb1b61b80bfdc89d113437d72fda0f1c5488b2e",
+    "final-review.json": "ef71c9b8e46caaaa10c46f8ba0697f1e739dac05c6ec528e08eb972d6c960856",
+    "lineage.json": "3ecce9721e7d9884a71dfe7e636fd36bb34b27d61f3df424254d25ae54a95fa6",
+    "merge-lineage.json": "3ecce9721e7d9884a71dfe7e636fd36bb34b27d61f3df424254d25ae54a95fa6",
+    "prepare-request-v2.json": "36291f8bdfbd8f867d9c9f4b94e46fd964aedc5210367e6cf8914fc5298958dd",
+    "prepare-request.json": "6d2648aa4ef74ed15449cc369d55e3011b7863a4face959da77dfb8f48e5a332",
+    "prepare-result.json": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "user-approval.json": "eb8f28c7040b58c3e19083b993a8b85489accc09c1d5dd3c3dc889793df89201",
+    "verification.json": "ad1a90ba46bddc2ec87484e6268db7fc643d03d508a775f811222cd2c23423b5"
+  },
+  "boundaries": {
+    "installRun": false,
+    "nixDevelopRun": false,
+    "testsBuildsBrowsersRun": false,
+    "sourceIndexConfigLedgerChanged": false,
+    "packageOrProfileChanged": false,
+    "mergeOrPushRun": false,
+    "watcherLaunched": false,
+    "onlyAuthorizedWrites": [
+      "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-19-haveapi-async-client/premerge/hook-runtime-diagnosis.json",
+      "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-19-haveapi-async-client/premerge/hook-runtime-diagnosis.md"
+    ]
+  },
+  "limits": [
+    "No mutation or corrective package was tested.",
+    "Canonical latest source inspection and correction design belong to architect0.",
+    "A later corrected package must still pass its prescribed checks/review and ordinary coordinator admission."
+  ]
+}

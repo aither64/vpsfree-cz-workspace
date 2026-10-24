@@ -1,0 +1,340 @@
+diff --git a/clients/js/dist/haveapi-client.js b/clients/js/dist/haveapi-client.js
+index 5850b39..a790281 100644
+--- a/clients/js/dist/haveapi-client.js
++++ b/clients/js/dist/haveapi-client.js
+@@ -2787,6 +2787,12 @@ function isRecord(value) {
+ function own(value, key) {
+     return Object.prototype.hasOwnProperty.call(value, key);
+ }
++function isApiErrors(value) {
++    return isRecord(value) && Object.keys(value).every(function (key) {
++        var errors = value[key];
++        return Array.isArray(errors) ? errors.every(function (message) { return typeof message === 'string'; }) : isApiErrors(errors);
++    });
++}
+ function mergeHeaders() {
+     var sources = [];
+     for (var _i = 0; _i < arguments.length; _i++) {
+@@ -2857,9 +2863,7 @@ function decode(status, text, namespace, metaNamespace) {
+     }
+     if (!isRecord(parsed) || typeof parsed.status !== 'boolean' ||
+         (parsed.message != null && typeof parsed.message !== 'string') ||
+-        (parsed.errors != null && (!isRecord(parsed.errors) || Object.keys(parsed.errors).some(function (key) {
+-            return !Array.isArray(parsed.errors[key]) || parsed.errors[key].some(function (value) { return typeof value !== 'string'; });
+-        }))))
++        (parsed.errors != null && !isApiErrors(parsed.errors)))
+         throw new AsyncError('protocol', 'Invalid API response envelope', { httpStatus: status });
+     var envelope = parsed;
+     var data = envelope.response;
+diff --git a/clients/js/dist/types/haveapi.d.ts b/clients/js/dist/types/haveapi.d.ts
+index d447d5b..e343c33 100644
+--- a/clients/js/dist/types/haveapi.d.ts
++++ b/clients/js/dist/types/haveapi.d.ts
+@@ -19,4 +19,4 @@ export { AsyncError } from './haveapi/async/error';
+ export { AsyncResourceInstance } from './haveapi/async/resource_instance';
+ export { AsyncResourceList } from './haveapi/async/resource_list';
+ export type { AsyncResource, AsyncAction, AsyncActionOptions } from './haveapi/async/resource';
+-export type { RequestSpec, RequestResult, InvocationResult, AsyncResourceContext, AsyncErrorKind, AsyncErrorDetails, AsyncAuthenticationOptions, CompletionOptions, CompletionResult, ActionStateSnapshot } from './haveapi/async/types';
++export type { ApiErrors, RequestSpec, RequestResult, InvocationResult, AsyncResourceContext, AsyncErrorKind, AsyncErrorDetails, AsyncAuthenticationOptions, CompletionOptions, CompletionResult, ActionStateSnapshot } from './haveapi/async/types';
+diff --git a/clients/js/dist/types/haveapi/async/error.d.ts b/clients/js/dist/types/haveapi/async/error.d.ts
+index 3f0ddd7..cdf3c62 100644
+--- a/clients/js/dist/types/haveapi/async/error.d.ts
++++ b/clients/js/dist/types/haveapi/async/error.d.ts
+@@ -1,11 +1,11 @@
+-import type { AsyncErrorDetails, AsyncErrorKind, RequestResult, ActionStateSnapshot } from './types';
+-import type { Envelope, ValidationErrors } from '../types';
++import type { ApiErrors, AsyncErrorDetails, AsyncErrorKind, RequestResult, ActionStateSnapshot } from './types';
++import type { Envelope } from '../types';
+ export declare class AsyncError extends Error implements AsyncErrorDetails {
+     readonly kind: AsyncErrorKind;
+     httpStatus?: number;
+     response?: RequestResult<unknown>;
+-    envelope?: Envelope;
+-    errors?: ValidationErrors;
++    envelope?: Envelope<unknown, ApiErrors>;
++    errors?: ApiErrors;
+     state?: ActionStateSnapshot;
+     cause?: unknown;
+     reason?: string;
+diff --git a/clients/js/dist/types/haveapi/async/types.d.ts b/clients/js/dist/types/haveapi/async/types.d.ts
+index d2e97bc..3c909f2 100644
+--- a/clients/js/dist/types/haveapi/async/types.d.ts
++++ b/clients/js/dist/types/haveapi/async/types.d.ts
+@@ -1,6 +1,9 @@
+-import type { ActionDescription, Description, Envelope, HeaderMap, Meta, Params, Values, ValidationErrors } from '../types';
++import type { ActionDescription, Description, Envelope, HeaderMap, Meta, Params, Values } from '../types';
+ import type { AsyncError } from './error';
+ export type AsyncErrorKind = 'validation' | 'transport' | 'protocol' | 'authentication' | 'api' | 'action-failed' | 'timeout' | 'aborted';
++export interface ApiErrors {
++    [parameter: string]: string[] | ApiErrors;
++}
+ export interface RequestSpec {
+     method: string;
+     path: string;
+@@ -16,7 +19,7 @@ export interface RequestSpec {
+ export interface RequestResult<T = unknown> {
+     data: T;
+     meta: Meta;
+-    envelope: Envelope;
++    envelope: Envelope<unknown, ApiErrors>;
+     httpStatus: number;
+ }
+ export interface InvocationResult<T = unknown> {
+@@ -40,8 +43,8 @@ export interface ActionStateSnapshot {
+ export interface AsyncErrorDetails {
+     httpStatus?: number;
+     response?: RequestResult<unknown>;
+-    envelope?: Envelope;
+-    errors?: ValidationErrors;
++    envelope?: Envelope<unknown, ApiErrors>;
++    errors?: ApiErrors;
+     state?: ActionStateSnapshot;
+     cause?: unknown;
+     reason?: string;
+diff --git a/clients/js/dist/types/haveapi/types.d.ts b/clients/js/dist/types/haveapi/types.d.ts
+index 25c6817..7e24d3c 100644
+--- a/clients/js/dist/types/haveapi/types.d.ts
++++ b/clients/js/dist/types/haveapi/types.d.ts
+@@ -75,11 +75,11 @@ export interface Versions {
+     versions: Array<string | number>;
+     default: string | number;
+ }
+-export interface Envelope<T = unknown> {
++export interface Envelope<T = unknown, Errors = ValidationErrors> {
+     status: boolean;
+     response?: T | null;
+     message?: string | null;
+-    errors?: ValidationErrors | null;
++    errors?: Errors | null;
+     version?: string;
+ }
+ export interface Credentials {
+diff --git a/clients/js/doc-async-client.md b/clients/js/doc-async-client.md
+index 6dee17c..ed07719 100644
+--- a/clients/js/doc-async-client.md
++++ b/clients/js/doc-async-client.md
+@@ -125,6 +125,14 @@ HTTP failure and HaveAPI envelope failure are both checked; HTTP status remains
+ available independently of the envelope. Request credentials and headers are
+ not attached to errors.
+ 
++Server `errors` can contain nested parameter maps with arrays of strings at
++their leaves. `ApiErrors` describes this wire shape; local parameter validation
++still produces a flat map of string arrays. The server's public `error!` method
++forwards custom error maps through recursive localization, although standard
++parameter validation produces flat errors. A valid nested rejection retains its
++errors, envelope and response receipt as an `api` failure for both HTTP 200 and
++error statuses. Scalar error leaves and invalid metadata remain protocol errors.
++
+ After validating the envelope, payload decoding errors retain a `response`
+ receipt. Its `data` is the raw `envelope.response`, or `undefined` if the payload
+ is missing. `meta` contains validated metadata or an empty object.
+diff --git a/clients/js/src/haveapi.ts b/clients/js/src/haveapi.ts
+index d2b6e64..4acded7 100644
+--- a/clients/js/src/haveapi.ts
++++ b/clients/js/src/haveapi.ts
+@@ -52,4 +52,4 @@ export { AsyncError } from './haveapi/async/error';
+ export { AsyncResourceInstance } from './haveapi/async/resource_instance';
+ export { AsyncResourceList } from './haveapi/async/resource_list';
+ export type { AsyncResource, AsyncAction, AsyncActionOptions } from './haveapi/async/resource';
+-export type { RequestSpec, RequestResult, InvocationResult, AsyncResourceContext, AsyncErrorKind, AsyncErrorDetails, AsyncAuthenticationOptions, CompletionOptions, CompletionResult, ActionStateSnapshot } from './haveapi/async/types';
++export type { ApiErrors, RequestSpec, RequestResult, InvocationResult, AsyncResourceContext, AsyncErrorKind, AsyncErrorDetails, AsyncAuthenticationOptions, CompletionOptions, CompletionResult, ActionStateSnapshot } from './haveapi/async/types';
+diff --git a/clients/js/src/haveapi/async/error.ts b/clients/js/src/haveapi/async/error.ts
+index 42284d7..2378d8e 100644
+--- a/clients/js/src/haveapi/async/error.ts
++++ b/clients/js/src/haveapi/async/error.ts
+@@ -1,12 +1,12 @@
+-import type { AsyncErrorDetails, AsyncErrorKind, RequestResult, ActionStateSnapshot } from './types';
+-import type { Envelope, ValidationErrors } from '../types';
++import type { ApiErrors, AsyncErrorDetails, AsyncErrorKind, RequestResult, ActionStateSnapshot } from './types';
++import type { Envelope } from '../types';
+ 
+ export class AsyncError extends Error implements AsyncErrorDetails {
+ 	readonly kind: AsyncErrorKind;
+ 	httpStatus?: number;
+ 	response?: RequestResult<unknown>;
+-	envelope?: Envelope;
+-	errors?: ValidationErrors;
++	envelope?: Envelope<unknown, ApiErrors>;
++	errors?: ApiErrors;
+ 	state?: ActionStateSnapshot;
+ 	cause?: unknown;
+ 	reason?: string;
+diff --git a/clients/js/src/haveapi/async/request.ts b/clients/js/src/haveapi/async/request.ts
+index afa6337..789a1b8 100644
+--- a/clients/js/src/haveapi/async/request.ts
++++ b/clients/js/src/haveapi/async/request.ts
+@@ -3,7 +3,7 @@ import { addParamsToQuery, resolveApiUrl } from '../protocol';
+ import { I18n } from '../i18n';
+ import { AsyncError, asAsyncError } from './error';
+ import type { Credentials, Envelope, HeaderMap, HttpOptions, Language, LegacyXMLHttpRequest, Meta, Values } from '../types';
+-import type { RequestResult, RequestSpec } from './types';
++import type { ApiErrors, RequestResult, RequestSpec } from './types';
+ 
+ export interface RequestContext {
+ 	baseUrl: string;
+@@ -19,6 +19,12 @@ export function isRecord(value: unknown): value is Values {
+ export function own(value: object, key: PropertyKey): boolean {
+ 	return Object.prototype.hasOwnProperty.call(value, key);
+ }
++function isApiErrors(value: unknown): value is ApiErrors {
++	return isRecord(value) && Object.keys(value).every(key => {
++		const errors = value[key];
++		return Array.isArray(errors) ? errors.every(message => typeof message === 'string') : isApiErrors(errors);
++	});
++}
+ export function mergeHeaders(...sources: Array<HeaderMap | undefined>): HeaderMap {
+ 	const result: HeaderMap = Object.create(null);
+ 	sources.forEach(source => Object.keys(source || {}).forEach(name => {
+@@ -71,10 +77,9 @@ function decode<T>(status: number, text: string, namespace: string | null | unde
+ 	catch (cause) { throw new AsyncError('protocol', 'Invalid JSON response', {httpStatus: status, cause}); }
+ 	if (!isRecord(parsed) || typeof parsed.status !== 'boolean' ||
+ 		(parsed.message != null && typeof parsed.message !== 'string') ||
+-		(parsed.errors != null && (!isRecord(parsed.errors) || Object.keys(parsed.errors).some(key =>
+-			!Array.isArray((parsed.errors as Values)[key]) || ((parsed.errors as Values)[key] as unknown[]).some(value => typeof value !== 'string')))))
++		(parsed.errors != null && !isApiErrors(parsed.errors)))
+ 		throw new AsyncError('protocol', 'Invalid API response envelope', {httpStatus: status});
+-	const envelope = parsed as unknown as Envelope;
++	const envelope = parsed as unknown as Envelope<unknown, ApiErrors>;
+ 	let data: unknown = envelope.response;
+ 	let meta: Meta = {};
+ 	// Keep the validated envelope receipt even if its payload cannot be decoded.
+diff --git a/clients/js/src/haveapi/async/types.ts b/clients/js/src/haveapi/async/types.ts
+index 5ce6da5..c513177 100644
+--- a/clients/js/src/haveapi/async/types.ts
++++ b/clients/js/src/haveapi/async/types.ts
+@@ -1,7 +1,10 @@
+-import type { ActionDescription, Description, Envelope, HeaderMap, Meta, Params, Values, ValidationErrors } from '../types';
++import type { ActionDescription, Description, Envelope, HeaderMap, Meta, Params, Values } from '../types';
+ import type { AsyncError } from './error';
+ 
+ export type AsyncErrorKind = 'validation' | 'transport' | 'protocol' | 'authentication' | 'api' | 'action-failed' | 'timeout' | 'aborted';
++export interface ApiErrors {
++	[parameter: string]: string[] | ApiErrors;
++}
+ export interface RequestSpec {
+ 	method: string;
+ 	path: string;
+@@ -17,7 +20,7 @@ export interface RequestSpec {
+ export interface RequestResult<T = unknown> {
+ 	data: T;
+ 	meta: Meta;
+-	envelope: Envelope;
++	envelope: Envelope<unknown, ApiErrors>;
+ 	httpStatus: number;
+ }
+ export interface InvocationResult<T = unknown> {
+@@ -37,8 +40,8 @@ export interface ActionStateSnapshot {
+ export interface AsyncErrorDetails {
+ 	httpStatus?: number;
+ 	response?: RequestResult<unknown>;
+-	envelope?: Envelope;
+-	errors?: ValidationErrors;
++	envelope?: Envelope<unknown, ApiErrors>;
++	errors?: ApiErrors;
+ 	state?: ActionStateSnapshot;
+ 	cause?: unknown;
+ 	reason?: string;
+diff --git a/clients/js/src/haveapi/types.ts b/clients/js/src/haveapi/types.ts
+index 0c26e98..5c4f8a1 100644
+--- a/clients/js/src/haveapi/types.ts
++++ b/clients/js/src/haveapi/types.ts
+@@ -78,11 +78,11 @@ export interface Versions {
+ 	default: string | number;
+ }
+ 
+-export interface Envelope<T = unknown> {
++export interface Envelope<T = unknown, Errors = ValidationErrors> {
+ 	status: boolean;
+ 	response?: T | null;
+ 	message?: string | null;
+-	errors?: ValidationErrors | null;
++	errors?: Errors | null;
+ 	version?: string;
+ }
+ 
+diff --git a/clients/js/test/async/core.spec.cjs b/clients/js/test/async/core.spec.cjs
+index 7382250..d481597 100644
+--- a/clients/js/test/async/core.spec.cjs
++++ b/clients/js/test/async/core.spec.cjs
+@@ -87,6 +87,46 @@ test('API, malformed envelopes/JSON, namespace and origin failures reject with s
+   assert.equal(requests.length, count);
+ });
+ 
++for (const status of [200, 422]) {
++  test(`nested application errors retain their rejection receipt at HTTP ${status}`, async () => {
++    const {HaveAPI, requests} = harness(); const api = new HaveAPI.AsyncClient('https://api.example');
++    const body = {status: false, message: 'Validation failed', response: null,
++      errors: {vps: {memory: ['too large'], limits: {disk: ['too small']}}, name: ['required']}};
++    const pending = api.request({method: 'POST', path: '/vpses/123/start'});
++    const checked = assert.rejects(pending, error => {
++      assert.ok(error instanceof HaveAPI.AsyncError);
++      assert.equal(error.kind, 'api');
++      assert.equal(error.httpStatus, status);
++      assert.equal(JSON.stringify(error.envelope), JSON.stringify(body));
++      assert.equal(error.errors, error.envelope.errors);
++      assert.equal(error.response.envelope, error.envelope);
++      assert.equal(error.response.httpStatus, status);
++      assert.equal(error.response.data, null);
++      assert.equal(Object.keys(error.response.meta).length, 0);
++      return true;
++    });
++    requests[0].respond(body, status); await checked;
++    assert.equal(requests.length, 1);
++  });
++}
++
++test('malformed nested error leaves and metadata remain protocol failures', async () => {
++  const {HaveAPI, requests} = harness(); const api = new HaveAPI.AsyncClient('https://api.example');
++  for (const status of [200, 422]) {
++    for (const errors of [{vps: {memory: 'too large'}}, {vps: {memory: [1]}}, {vps: null}, {vps: [{memory: ['bad']}]}]) {
++      const pending = api.request({method: 'POST', path: '/vpses/123/start'});
++      const checked = assert.rejects(pending, error => error.kind === 'protocol' &&
++        error.httpStatus === status && error.envelope === undefined && error.response === undefined);
++      requests[requests.length - 1].respond({status: false, response: null, errors}, status); await checked;
++    }
++    const pending = api.request({method: 'POST', path: '/vpses/123/start'});
++    const checked = assert.rejects(pending, error => error.kind === 'protocol' &&
++      error.httpStatus === status && error.message === 'Invalid response metadata');
++    requests[requests.length - 1].respond({status: false, errors: {vps: {memory: ['bad']}}, response: {_meta: []}}, status);
++    await checked;
++  }
++});
++
+ test('transport errors, pre/inflight abort and timeout settle once and release listeners', async () => {
+   for (const fail of [{open: true}, {send: true}]) {
+     const {HaveAPI} = harness(fail);
+diff --git a/clients/js/test/types/async.ts b/clients/js/test/types/async.ts
+index 0476c32..59a0edc 100644
+--- a/clients/js/test/types/async.ts
++++ b/clients/js/test/types/async.ts
+@@ -1,5 +1,5 @@
+ import { AsyncClient, AsyncError, AsyncResourceInstance, AsyncResourceList } from '../../dist/types/haveapi';
+-import type { InvocationResult, RequestResult, AsyncResource, AsyncAction } from '../../dist/types/haveapi';
++import type { ApiErrors, Envelope, InvocationResult, RequestResult, AsyncResource, AsyncAction } from '../../dist/types/haveapi';
+ 
+ const client = new AsyncClient('https://api.example', { language: 'en' });
+ const setup: Promise<void> = client.setup();
+@@ -20,6 +20,17 @@ const item: AsyncResourceInstance | undefined = list.itemAt(0);
+ for (const member of list.items) member.get('label');
+ const error: AsyncError = new AsyncError('protocol', 'bad response');
+ const kind: string = error.kind;
++const apiErrors: ApiErrors = {vps: {memory: ['too large']}, name: ['required']};
++const rejected = new AsyncError('api', 'Validation failed', {
++  errors: apiErrors, envelope: {status: false, errors: apiErrors}
++});
++const wireErrors: ApiErrors | null | undefined = (null! as RequestResult).envelope.errors;
++const defaultEnvelope: Envelope = {status: false, errors: {memory: ['too large']}};
++const flatErrors: Record<string, string[]> | null | undefined = defaultEnvelope.errors;
++// @ts-expect-error The callback envelope default retains flat validation errors.
++const nestedCallback: Envelope = {status: false, errors: {vps: {memory: ['too large']}}};
++// @ts-expect-error Error-map leaves are string arrays, never scalar messages.
++const invalidErrors: ApiErrors = {vps: {memory: 'too large'}};
+ 
+ // @ts-expect-error Async actions accept options rather than callbacks.
+ action(7, (client: unknown, result: unknown) => {});
+@@ -34,4 +45,4 @@ const legacy: void = action();
+ // @ts-expect-error Returned objects expose a noncallable then.
+ created.then();
+ 
+-void [setup, authenticated, invocation, invoked, read, saved, association, then, item, kind];
++void [setup, authenticated, invocation, invoked, read, saved, association, then, item, kind, rejected, wireErrors, flatErrors];

@@ -1,0 +1,303 @@
+warning: Git tree '/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-19-haveapi-async-client/vpsadmin-webui-async' is dirty
+
+ RUN  v4.1.11 /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-19-haveapi-async-client/vpsadmin-webui-async
+
+ ❯ src/lib/api/profile.test.ts (9 tests | 3 failed) 85ms
+     × fetchUserPublicKeys uses /users/:id/public_keys and public_key namespace for query params 52ms
+     × fetchUserSessions uses /user_sessions and user_session namespace 7ms
+     × fetchMetricsAccessTokens uses /metrics_access_tokens and metrics_access_token namespace 3ms
+ ❯ src/lib/api/nodeHistory.test.ts (7 tests | 5 failed) 85ms
+     × scopes and paginates function fetchNodeKernelHistory(nodeId, options = {}) {
+  return list(`/nodes/${nodeId}/kernel_history`, "kernel_history", {}, options);
+} using its declared namespace 45ms
+     × scopes and paginates function fetchNodeSystemHistory(nodeId, options = {}) {
+  return list("/node_system_states", "node_system_state", { node: nodeId }, options);
+} using its declared namespace 6ms
+     × scopes and paginates function fetchNodeKernelParameters(nodeId, options = {}) {
+  return list("/node_kernel_parameters", "node_kernel_parameter", { node: nodeId, source: "current" }, options);
+} using its declared namespace 5ms
+     × scopes and paginates function fetchNodeSysctls(nodeId, options = {}) {
+  return list("/node_sysctls", "node_sysctl", { node: nodeId, source: "current" }, options);
+} using its declared namespace 5ms
+     × scopes and paginates function fetchNodeSoftwareVersions(nodeId, options = {}) {
+  return list("/node_software_versions", "node_software_version", { node: nodeId, source: "current" }, options);
+} using its declared namespace 5ms
+ ❯ src/lib/api/exports.test.ts (4 tests | 2 failed) 94ms
+     × createExport sends export namespace 21ms
+     × exact eligible-ID probe sends one ascending row after the preceding ID 12ms
+ ❯ src/lib/api/datasets.test.ts (12 tests | 1 failed) 121ms
+     × createDatasetSnapshot sends namespaced payload 16ms
+ ❯ src/lib/api/vpsAccess.test.ts (6 tests | 1 failed) 92ms
+     × loads saved public keys for the VPS owner via the user dossier endpoint 22ms
+ ❯ src/lib/api/ipAddresses.test.ts (23 tests | 3 failed) 96ms
+     × fetchIpAddresses forwards cancellation to the HaveAPI request 14ms
+     × ascending admin IP request keeps count metadata and the exact ID cursor 4ms
+     × ascending host request uses supported exact filter and nested includes 3ms
+ ❯ src/lib/api/nodes.test.ts (13 tests | 1 failed) 93ms
+     × fetchNodePools limits pools to the selected node 18ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 16 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/api/datasets.test.ts > datasets API wrappers > createDatasetSnapshot sends namespaced payload
+AssertionError: expected 'application/json; charset=utf-8' to be 'application/json' // Object.is equality
+
+Expected: "application/json"
+Received: "application/json; charset=utf-8"
+
+ ❯ src/lib/api/datasets.test.ts:172:60
+    170|     const [, init] = firstFetchCall(fetchMock);
+    171|     expect(init?.method).toBe('POST');
+    172|     expect(new Headers(init?.headers).get('Content-Type')).toBe('appli…
+       |                                                            ^
+    173|
+    174|     const body = JSON.parse(String(init?.body));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/16]⎯
+
+ FAIL  src/lib/api/exports.test.ts > exports API wrappers > createExport sends export namespace
+AssertionError: expected 'application/json; charset=utf-8' to be 'application/json' // Object.is equality
+
+Expected: "application/json"
+Received: "application/json; charset=utf-8"
+
+ ❯ src/lib/api/exports.test.ts:71:60
+     69|     const [, init] = firstFetchCall(fetchMock);
+     70|     expect(init?.method).toBe('POST');
+     71|     expect(new Headers(init?.headers).get('Content-Type')).toBe('appli…
+       |                                                            ^
+     72|
+     73|     const body = JSON.parse(String(init?.body));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/16]⎯
+
+ FAIL  src/lib/api/exports.test.ts > exports API wrappers > exact eligible-ID probe sends one ascending row after the preceding ID
+AssertionError: expected undefined to be AbortSignal { aborted: false } // Object.is equality
+
+- Expected:
+AbortSignal {
+  Symbol(kEvents): Map {},
+  Symbol(events.maxEventTargetListeners): 0,
+  Symbol(events.maxEventTargetListenersWarned): false,
+  Symbol(kHandlers): undefined,
+  Symbol(kAborted): false,
+  Symbol(kReason): undefined,
+  Symbol(kComposite): false,
+}
+
++ Received:
+undefined
+
+ ❯ src/lib/api/exports.test.ts:128:26
+    126|     expect(u.searchParams.get('host_ip_address[routed]')).toBe('true');
+    127|     expect(u.searchParams.has('host_ip_address[q]')).toBe(false);
+    128|     expect(init?.signal).toBe(controller.signal);
+       |                          ^
+    129|   });
+    130| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/16]⎯
+
+ FAIL  src/lib/api/ipAddresses.test.ts > network address API wrappers > fetchIpAddresses forwards cancellation to the HaveAPI request
+AssertionError: expected undefined to be AbortSignal { aborted: false } // Object.is equality
+
+- Expected:
+AbortSignal {
+  Symbol(kEvents): Map {},
+  Symbol(events.maxEventTargetListeners): 0,
+  Symbol(events.maxEventTargetListenersWarned): false,
+  Symbol(kHandlers): undefined,
+  Symbol(kAborted): false,
+  Symbol(kReason): undefined,
+  Symbol(kComposite): false,
+}
+
++ Received:
+undefined
+
+ ❯ src/lib/api/ipAddresses.test.ts:128:26
+    126|
+    127|     const [, init] = lastFetchCall();
+    128|     expect(init?.signal).toBe(controller.signal);
+       |                          ^
+    129|   });
+    130|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/16]⎯
+
+ FAIL  src/lib/api/ipAddresses.test.ts > network address API wrappers > ascending admin IP request keeps count metadata and the exact ID cursor
+AssertionError: expected undefined to be AbortSignal { aborted: false } // Object.is equality
+
+- Expected:
+AbortSignal {
+  Symbol(kEvents): Map {},
+  Symbol(events.maxEventTargetListeners): 0,
+  Symbol(events.maxEventTargetListenersWarned): false,
+  Symbol(kHandlers): undefined,
+  Symbol(kAborted): false,
+  Symbol(kReason): undefined,
+  Symbol(kComposite): false,
+}
+
++ Received:
+undefined
+
+ ❯ src/lib/api/ipAddresses.test.ts:145:26
+    143|     expect(parsed.searchParams.get('ip_address[order]')).toBe('asc');
+    144|     expect(parsed.searchParams.get('_meta[count]')).toBe('true');
+    145|     expect(init?.signal).toBe(controller.signal);
+       |                          ^
+    146|     expect(response.data).toEqual([{ id: 18 }]);
+    147|     expect(response.meta).toEqual({ total_count: 1 });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/16]⎯
+
+ FAIL  src/lib/api/ipAddresses.test.ts > network address API wrappers > ascending host request uses supported exact filter and nested includes
+AssertionError: expected undefined to be AbortSignal { aborted: false } // Object.is equality
+
+- Expected:
+AbortSignal {
+  Symbol(kEvents): Map {},
+  Symbol(events.maxEventTargetListeners): 0,
+  Symbol(events.maxEventTargetListenersWarned): false,
+  Symbol(kHandlers): undefined,
+  Symbol(kAborted): false,
+  Symbol(kReason): undefined,
+  Symbol(kComposite): false,
+}
+
++ Received:
+undefined
+
+ ❯ src/lib/api/ipAddresses.test.ts:164:26
+    162|     expect(parsed.searchParams.get('_meta[count]')).toBe('true');
+    163|     expect(parsed.searchParams.get('_meta[includes]')).toBe('ip_addres…
+    164|     expect(init?.signal).toBe(controller.signal);
+       |                          ^
+    165|   });
+    166|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/16]⎯
+
+ FAIL  src/lib/api/nodeHistory.test.ts > node history API contracts > scopes and paginates function fetchNodeKernelHistory(nodeId, options = {}) {
+  return list(`/nodes/${nodeId}/kernel_history`, "kernel_history", {}, options);
+} using its declared namespace
+ FAIL  src/lib/api/nodeHistory.test.ts > node history API contracts > scopes and paginates function fetchNodeSystemHistory(nodeId, options = {}) {
+  return list("/node_system_states", "node_system_state", { node: nodeId }, options);
+} using its declared namespace
+ FAIL  src/lib/api/nodeHistory.test.ts > node history API contracts > scopes and paginates function fetchNodeKernelParameters(nodeId, options = {}) {
+  return list("/node_kernel_parameters", "node_kernel_parameter", { node: nodeId, source: "current" }, options);
+} using its declared namespace
+ FAIL  src/lib/api/nodeHistory.test.ts > node history API contracts > scopes and paginates function fetchNodeSysctls(nodeId, options = {}) {
+  return list("/node_sysctls", "node_sysctl", { node: nodeId, source: "current" }, options);
+} using its declared namespace
+ FAIL  src/lib/api/nodeHistory.test.ts > node history API contracts > scopes and paginates function fetchNodeSoftwareVersions(nodeId, options = {}) {
+  return list("/node_software_versions", "node_software_version", { node: nodeId, source: "current" }, options);
+} using its declared namespace
+TypeError: Cannot read properties of undefined (reading 'calls')
+ ❯ src/lib/api/nodeHistory.test.ts:19:42
+     17|     const controller = new AbortController();
+     18|     expect(await load(5, { fromId: 12, signal: controller.signal })).t…
+     19|     const [url, init] = vi.mocked(fetch).mock.calls.at(-1)!;
+       |                                          ^
+     20|     const parsed = new URL(String(url));
+     21|     expect(parsed.pathname).toBe(`/v7.0${path}`);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/16]⎯
+
+ FAIL  src/lib/api/nodes.test.ts > nodes API wrappers > fetchNodePools limits pools to the selected node
+AssertionError: expected undefined to be AbortSignal { aborted: false } // Object.is equality
+
+- Expected:
+AbortSignal {
+  Symbol(kEvents): Map {},
+  Symbol(events.maxEventTargetListeners): 0,
+  Symbol(events.maxEventTargetListenersWarned): false,
+  Symbol(kHandlers): undefined,
+  Symbol(kAborted): false,
+  Symbol(kReason): undefined,
+  Symbol(kComposite): false,
+}
+
++ Received:
+undefined
+
+ ❯ src/lib/api/nodes.test.ts:72:26
+     70|     expect(u.searchParams.get('pool[node]')).toBe('12');
+     71|     expect(u.searchParams.get('pool[limit]')).toBe('100');
+     72|     expect(init?.signal).toBe(controller.signal);
+       |                          ^
+     73|   });
+     74|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/16]⎯
+
+ FAIL  src/lib/api/profile.test.ts > user dossier API wrappers > fetchUserPublicKeys uses /users/:id/public_keys and public_key namespace for query params
+AssertionError: expected 'https://api.example.test/v7.0/users/1…' to contain 'public_key%5Blimit%5D=10'
+
+Expected: "public_key%5Blimit%5D=10"
+Received: "https://api.example.test/v7.0/users/123/public_keys?public_key[limit]=10"
+
+ ❯ src/lib/api/profile.test.ts:64:25
+     62|     const [url] = getFetchCall(fetchMock);
+     63|     expect(String(url)).toContain('/v7.0/users/123/public_keys?');
+     64|     expect(String(url)).toContain('public_key%5Blimit%5D=10');
+       |                         ^
+     65|   });
+     66|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/16]⎯
+
+ FAIL  src/lib/api/profile.test.ts > user dossier API wrappers > fetchUserSessions uses /user_sessions and user_session namespace
+AssertionError: expected 'https://api.example.test/v7.0/user_se…' to contain 'user_session%5Blimit%5D=25'
+
+Expected: "user_session%5Blimit%5D=25"
+Received: "https://api.example.test/v7.0/user_sessions?user_session[limit]=25&user_session[state]=open"
+
+ ❯ src/lib/api/profile.test.ts:95:25
+     93|     const [url] = getFetchCall(fetchMock);
+     94|     expect(String(url)).toContain('/v7.0/user_sessions?');
+     95|     expect(String(url)).toContain('user_session%5Blimit%5D=25');
+       |                         ^
+     96|     expect(String(url)).toContain('user_session%5Bstate%5D=open');
+     97|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/16]⎯
+
+ FAIL  src/lib/api/profile.test.ts > user dossier API wrappers > fetchMetricsAccessTokens uses /metrics_access_tokens and metrics_access_token namespace
+AssertionError: expected 'https://api.example.test/v7.0/metrics…' to contain 'metrics_access_token%5Blimit%5D=10'
+
+Expected: "metrics_access_token%5Blimit%5D=10"
+Received: "https://api.example.test/v7.0/metrics_access_tokens?metrics_access_token[limit]=10"
+
+ ❯ src/lib/api/profile.test.ts:153:25
+    151|     const [url] = getFetchCall(fetchMock);
+    152|     expect(String(url)).toContain('/v7.0/metrics_access_tokens?');
+    153|     expect(String(url)).toContain('metrics_access_token%5Blimit%5D=10'…
+       |                         ^
+    154|   });
+    155|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/16]⎯
+
+ FAIL  src/lib/api/vpsAccess.test.ts > vps access API wrappers > loads saved public keys for the VPS owner via the user dossier endpoint
+AssertionError: expected 'https://api.example.test/v7.0/users/9…' to contain 'public_key%5Blimit%5D=100'
+
+Expected: "public_key%5Blimit%5D=100"
+Received: "https://api.example.test/v7.0/users/99/public_keys?public_key[limit]=100"
+
+ ❯ src/lib/api/vpsAccess.test.ts:101:25
+     99|     const [url] = getFetchCall(fetchMock);
+    100|     expect(String(url)).toContain('/v7.0/users/99/public_keys?');
+    101|     expect(String(url)).toContain('public_key%5Blimit%5D=100');
+       |                         ^
+    102|     expect(res.data).toEqual([{ id: 7, label: 'laptop' }]);
+    103|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/16]⎯
+
+
+ Test Files  7 failed | 28 passed (35)
+      Tests  16 failed | 204 passed (220)
+   Start at  12:51:51
+   Duration  9.38s (transform 164.35s, setup 7.31s, import 245.40s, tests 2.39s, environment 45.86s)
+

@@ -1,0 +1,104 @@
+commit 991101f212eb7da24b5ba71e679eb4b59baef56d
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Mon Oct 19 17:49:42 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Mon Oct 19 22:16:06 2026 +0200
+
+    clients/js: capture callback bundle compatibility
+    
+    Record the existing distributed client's loading and callable behavior before
+    moving its implementation to TypeScript. Keep callback returns, synchronous
+    throws, hooks and function-object semantics covered independently of the new
+    Promise client.
+
+commit 0d2111e5a93490abbad2f5167d45dea026f663f3
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Mon Oct 19 18:02:54 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Mon Oct 19 22:16:07 2026 +0200
+
+    clients/js: author callback client in TypeScript
+    
+    Move the callback client implementation to checked TypeScript modules
+    and emit declarations from its public signatures. This prepares a shared
+    typed protocol foundation while keeping the existing callback API and
+    runtime requirements available to current JavaScript consumers.
+    
+    Compile ES5 JavaScript through the retained gulp entry point and bundle
+    it with Rollup inside the existing CommonJS, browser and AMD loader
+    shell. Preserve callable constructors, callback returns, synchronous
+    failures and legacy sloppy-mode behavior. Keep the generated translation
+    catalog intact and ship matching declarations alongside the existing
+    bundle path.
+    
+    Use explicit host properties for the four observable callback globals so
+    strict module consumers preserve their values and live registry reads.
+
+commit 8f8e5766b8be9c99d2bf39a9e1fe7f80220fade5
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Mon Oct 19 18:23:40 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Mon Oct 19 22:16:08 2026 +0200
+
+    clients/js: add an independent typed Promise client
+    
+    Add AsyncClient beside the existing callback Client so applications can
+    await API requests without changing callback consumers. Share URL,
+    query, XHR and validation helpers while retaining the callback
+    transport's observable mapping and runtime requirements.
+    
+    Give async requests structured results and errors, local cancellation,
+    timeouts and independent authentication state. Publish validated
+    resource bindings atomically, reject stale sends and keep server
+    completion as a separate bounded operation. Async resources support
+    explicit association loads and save identity updates without exposing
+    callback helpers.
+    
+    Generate both public declaration surfaces from TypeScript and keep the
+    existing CommonJS, AMD and browser bundle entry. Include the request and
+    resource guides with the package so its linked documentation is
+    available to installed consumers.
+
+commit f3fcd33fdbc1d00461535d95f0337c44aa0d12d4
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Mon Oct 19 18:29:39 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Mon Oct 19 22:16:09 2026 +0200
+
+    clients/js: document TypeScript source workflow
+    
+    The client source is now TypeScript. Point contributors to the authored
+    sources and the gulp-generated ES5-compatible UMD bundle and declarations
+    so future changes follow the implemented build workflow.
+
+commit 19c20c90cc957d4225ece50a92e190855f252710
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Mon Oct 19 21:39:22 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Mon Oct 19 22:16:09 2026 +0200
+
+    clients/js: expose the callback client as CallbackClient
+    
+    Export CallbackClient as the existing Client constructor so
+    applications can name callback and Promise clients explicitly. Keep
+    Client supported with the same identity, name, prototype, statics and
+    callback behavior.
+    
+    Document the explicit names and check runtime loader identity and
+    emitted TypeScript value and instance aliases.
+
+commit f94e65e35166a0bf8048a27c9d57c7d36957d65b
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Tue Oct 20 12:43:00 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Tue Oct 20 12:43:00 2026 +0200
+
+    clients/js: preserve nested API rejection errors
+    
+    Accept recursive error maps with string-array leaves in async responses.
+    The server forwards custom error maps through recursive localization,
+    so valid nested rejections must retain their API error kind and receipt.
+    
+    Keep malformed leaves and metadata as protocol failures. Preserve flat
+    local validation errors and the callback envelope's default error type.
+    Expose the recursive wire shape through the async declarations.

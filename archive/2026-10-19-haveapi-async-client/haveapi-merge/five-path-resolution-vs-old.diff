@@ -1,0 +1,253 @@
+diff --git a/Makefile b/Makefile
+index 4b5ebde..09da118 100644
+--- a/Makefile
++++ b/Makefile
+@@ -12,6 +12,8 @@ test: doc
+ 	cd clients/go && bundle exec rspec
+ 	cd clients/js && npm test
+ 	cd clients/php && vendor/bin/phpunit
++	clients/python/utils/check.sh
++	cd clients/python && uv run --locked pytest tests/integration
+ 
+ release-deps:
+ 	cd servers/ruby && bundle install
+@@ -19,12 +21,14 @@ release-deps:
+ 	cd clients/go && bundle install
+ 	cd clients/js && npm ci --no-audit --no-fund
+ 	cd clients/php && composer install --no-interaction --prefer-dist
++	cd clients/python && uv sync --locked
+ 
+ release-check:
+ 	ruby utils/release/cli.rb check
+ 
+ release-test:
+ 	bundle exec rspec utils/release/spec
++	python utils/release/spec/python_artifacts_test.py
+ 
+ release:
+ 	bash utils/release/build.sh
+@@ -44,6 +48,8 @@ version:
+ 	@sed -ri "s/Client\.Version = '[^']+'/Client.Version = '$(VERSION)'/" clients/js/dist/haveapi-client.js
+ 	@sed -ri "s/\"version\": \"[^\"]+\"/\"version\": \"$(VERSION)\"/" clients/php/composer.json
+ 	@sed -ri "s/const VERSION = '[^']+'/const VERSION = '$(VERSION)'/" clients/php/src/Client.php
++	@sed -ri 's/^version = "[^"]+"/version = "$(VERSION)"/' clients/python/pyproject.toml
++	@cd clients/python && uv lock
+ 	@sed -ri "s/s.add_dependency 'haveapi-client', '~> [^']+'/s.add_dependency 'haveapi-client', '~> $(VERSION)'/" servers/ruby/haveapi.gemspec
+ 	@sed -ri "s/spec.add_dependency 'haveapi-client', '~> [^']+'/spec.add_dependency 'haveapi-client', '~> $(VERSION)'/" clients/go/haveapi-go-client.gemspec
+ 	@sed -ri "s/gem 'haveapi', '~> [^']+'/gem 'haveapi', '~> $(VERSION)'/" examples/servers/ruby/activerecord_auth/Gemfile
+diff --git a/README.md b/README.md
+index b785543..fc3a82a 100644
+--- a/README.md
++++ b/README.md
+@@ -34,6 +34,7 @@ Available clients:
+ 
+ - Ruby client library and CLI at [clients/ruby](clients/ruby)
+ - PHP client at [clients/php](clients/php)
++- Python synchronous and asynchronous client at [clients/python](clients/python)
+ - JavaScript and TypeScript client at [clients/js](clients/js)
+ - Go client generator at [clients/go](clients/go)
+ - Elixir client at [clients/elixir](clients/elixir) (outdated)
+diff --git a/doc/agent-instructions/releases.md b/doc/agent-instructions/releases.md
+index 07ffa2b..b71e7f8 100644
+--- a/doc/agent-instructions/releases.md
++++ b/doc/agent-instructions/releases.md
+@@ -21,6 +21,7 @@ All maintained components use the shared version and are released together:
+ | Go client generator, implemented in Ruby | RubyGems `haveapi-go-client` |
+ | JavaScript and TypeScript client | One npm `haveapi-client` package with both clients and TypeScript declarations; a JavaScript browser bundle |
+ | PHP client | Composer `haveapi/client`, through `vpsfreecz/haveapi-client-php` |
++| Python client | PyPI `haveapi-client` |
+ 
+ `CallbackClient` (also available as `Client`) and `AsyncClient` share the same
+ JavaScript package and version.
+@@ -61,6 +62,14 @@ source revision.
+ 6. Set the HaveAPI repository Actions variable `HAVEAPI_RELEASE_ENABLED` to
+    `true` after setup is complete. Tag builds fail visibly while publication is
+    disabled or the release environment lacks required reviewers.
++7. Configure a [PyPI trusted publisher](https://docs.pypi.org/trusted-publishers/)
++   for project `haveapi-client`: owner `vpsfreecz`, repository `haveapi`, workflow
++   `release.yml`, environment `release`. Before the first upload, confirm control
++   of the project name and use PyPI's pending-publisher setup if needed. A 404
++   from the package JSON endpoint does not establish ownership or availability.
++   The official PyPA action exchanges the job's OIDC identity for a short-lived
++   upload credential; no PyPI password or API token is configured. TestPyPI needs
++   its own publisher configuration.
+ 
+ Only the publishing job receives OIDC and repository write permissions. It uses
+ the top-level Nix shell with `HAVEAPI_RELEASE_TOOLS_ONLY=1`, which skips dependency
+@@ -89,19 +98,23 @@ Run release commands from the top-level `nix develop` shell.
+    byte-identical.
+ 5. Open the Actions run and inspect its test results, candidate summary and
+    artifacts. Click **Review deployments**, select `release`, then **Approve and
+-   deploy**. This authorizes RubyGems/npm publication and synchronization into
++   deploy**. This authorizes RubyGems/npm/PyPI publication and synchronization into
+    `haveapi-client-php/master` with the corresponding version tag. Rejecting the
+    request fails the workflow before the publishing job starts.
+ 6. The publishing job verifies the saved files and retains them in a draft
+-   GitHub Release. It validates the PHP mirror before writing to any registry,
+-   then pushes the Ruby client before its dependent server and
+-   Go-generator gems, publishes the npm tarball and updates the PHP mirror. It
++   GitHub Release. It validates the PHP mirror and existing registry hashes
++   before writing to any registry. The PyPA action uploads missing retained
++   Python files, then the helper confirms their PyPI hashes. It pushes the Ruby
++   client before its dependent server and Go-generator gems, publishes the npm
++   tarball and updates the PHP mirror. It
+    publishes the GitHub Release only after all destinations succeed.
+ 7. Confirm the workflow's publication receipts and verify that the PHP version
+    appears on Packagist. Packagist indexes the mirror asynchronously.
+ 
+ The GitHub Release contains the three gems, npm tarball, browser bundle, PHP
+-source archive, release notes and manifest. No package is rebuilt after approval.
++source archive, Python wheel and sdist, release notes and manifest. Python uses
++the shared `VERSION`; `make version` updates its pyproject and lockfile, and
++release checks reject a mismatch. No package is rebuilt after approval.
+ `make publish` directs maintainers to this workflow and exits without publishing.
+ 
+ ## Build-only checks and local packaging
+@@ -121,13 +134,15 @@ make release
+ make test
+ ruby utils/release/cli.rb smoke-npm dist
+ ruby utils/release/cli.rb verify dist
++cd clients/python && uv run --locked python utils/package_smoke.py
+ ```
+ 
+ `make release` requires a clean tracked checkout and an empty `dist` directory.
+ Move earlier artifacts aside before building. It generates shared documentation
+ for the Ruby server, builds three gems, rebuilds and packs JavaScript, and
+-archives the tracked PHP subtree. It never uploads packages. Component gems use
+-the local Ruby client, so a new shared version need not already exist on RubyGems.
++archives the tracked PHP subtree, and builds the Python wheel and sdist with uv.
++It never uploads packages. Component gems use the local Ruby client, so a new
++shared version need not already exist on RubyGems.
+ Do not commit generated server documentation or build artifacts.
+ 
+ The JavaScript packaging step runs gulp before `npm pack`. Gulp compiles the
+@@ -173,7 +188,11 @@ Each destination is checked before publication. Existing gems must match the
+ retained SHA-256; npm must match package identity and tarball integrity. An
+ existing PHP tag must contain the same snapshot and HaveAPI source commit. The
+ workflow skips only verified matches. Conflicting versions, authentication
+-errors and network errors fail visibly.
++errors and network errors fail visibly. Existing PyPI filenames and SHA-256
++values must match the manifest. Unexpected or changed files stop the release.
++On partial Python publication, only missing original files are staged for the
++PyPA action. The workflow does not use `skip-existing` or rebuild those files.
++Final release completion requires both Python files with their original hashes.
+ 
+ If retained Actions artifacts have expired, preserve or download the draft
+ Release assets and their manifest for recovery. Operator-assisted recovery must
+diff --git a/utils/release/artifacts.rb b/utils/release/artifacts.rb
+index 2e4f710..8da956f 100644
+--- a/utils/release/artifacts.rb
++++ b/utils/release/artifacts.rb
+@@ -51,7 +51,11 @@ module HaveAPI
+         GEMS.keys.map { |name| "#{name}-#{version}.gem" } + [
+           "haveapi-client-#{version}.tgz", 'haveapi-client.js',
+           "haveapi-client-php-#{version}.tar", 'release-notes.md'
+-        ]
++        ] + python_names
++      end
++
++      def python_names
++        ["haveapi_client-#{version}-py3-none-any.whl", "haveapi_client-#{version}.tar.gz"]
+       end
+ 
+       def notes
+@@ -69,7 +73,8 @@ module HaveAPI
+           'clients/ruby/lib/haveapi/client/version.rb' => /\bVERSION = '([^']+)'/,
+           'clients/go/lib/haveapi/go_client/version.rb' => /\bVERSION = '([^']+)'/,
+           'clients/js/src/haveapi/client.ts' => /Client\.Version = '([^']+)'/,
+-          'clients/php/src/Client.php' => /const VERSION = '([^']+)'/
++          'clients/php/src/Client.php' => /const VERSION = '([^']+)'/,
++          'clients/python/pyproject.toml' => /^version = "([^"]+)"/
+         }
+         paths.each do |path, pattern|
+           actual = File.read(File.join(root, path)).match(pattern)&.captures&.first
+@@ -121,11 +126,11 @@ module HaveAPI
+         File.write(File.join(directory, 'release-notes.md'), notes)
+         inspect_packages(directory)
+         files = names.to_h { |name| [name, Digest::SHA256.file(File.join(directory, name)).hexdigest] }
+-        tools = %w[ruby gem node npm go php composer].to_h do |tool|
++        tools = %w[ruby gem node npm go php composer python uv].to_h do |tool|
+           flag = tool == 'go' ? 'version' : '--version'
+           [tool, Release.capture(tool, flag).strip]
+         end
+-        lock_paths = %w[Gemfile.lock servers/ruby/Gemfile.lock clients/ruby/Gemfile.lock clients/go/Gemfile.lock clients/js/package-lock.json clients/php/composer.lock]
++        lock_paths = %w[Gemfile.lock servers/ruby/Gemfile.lock clients/ruby/Gemfile.lock clients/go/Gemfile.lock clients/js/package-lock.json clients/php/composer.lock clients/python/uv.lock]
+         dependency_locks = lock_paths.to_h { |path| [path, File.read(File.join(root, path))] }
+         manifest = { schema: 1, source:, version:, tag:, run_id: ENV.fetch('GITHUB_RUN_ID', 'local'), files:, tools:, dependency_locks: }
+         File.write(File.join(directory, 'release-manifest.json'), "#{JSON.pretty_generate(manifest)}\n")
+@@ -189,6 +194,8 @@ module HaveAPI
+ 
+         php = tar_files(File.join(directory, "haveapi-client-php-#{version}.tar"))
+         raise Error, 'Wrong Composer identity' unless JSON.parse(php.fetch('composer.json').first).values_at('name', 'version') == ['haveapi/client', version]
++
++        Release.capture('python', File.join(root, 'utils/release/python_artifacts.py'), directory, version)
+       end
+ 
+       def inspect_npm(directory)
+diff --git a/utils/release/spec/release_spec.rb b/utils/release/spec/release_spec.rb
+index 9c74bed..fc9e4cb 100644
+--- a/utils/release/spec/release_spec.rb
++++ b/utils/release/spec/release_spec.rb
+@@ -294,6 +294,62 @@ RSpec.describe HaveAPI::Release do
+ 
+     before { fixture_manifest }
+ 
++    def pypi_metadata(names = artifacts.python_names)
++      {
++        'info' => { 'name' => 'haveapi-client', 'version' => artifacts.version },
++        'urls' => names.map do |name|
++          { 'filename' => name, 'digests' => { 'sha256' => Digest::SHA256.file(File.join(tmp, name)).hexdigest } }
++        end
++      }
++    end
++
++    it 'accepts only the original Python artifact hashes from PyPI' do
++      allow(publisher).to receive(:registry_json).and_return(pypi_metadata)
++      expect(publisher.pypi_files.keys).to eq(artifacts.python_names)
++      mismatched = pypi_metadata
++      mismatched['urls'][0]['digests']['sha256'] = 'different'
++      allow(publisher).to receive(:registry_json).and_return(mismatched)
++      expect { publisher.pypi_files }.to raise_error(HaveAPI::Release::Error, /PyPI file differs/)
++    end
++
++    it 'refuses unexpected Python files and duplicate filenames' do
++      metadata = pypi_metadata
++      metadata['urls'] << metadata['urls'].first
++      allow(publisher).to receive(:registry_json).and_return(metadata)
++      expect { publisher.pypi_files }.to raise_error(HaveAPI::Release::Error, /unexpected files/)
++    end
++
++    it 'stages only missing original Python files after all registry preflights' do
++      allow(publisher).to receive(:with_php_mirror).and_yield('mirror', {})
++      allow(publisher).to receive(:preflight_php)
++      allow(publisher).to receive(:gem_present?)
++      allow(publisher).to receive(:npm_present?)
++      allow(publisher).to receive(:registry_json).and_return(pypi_metadata([artifacts.python_names.first]))
++      allow(ENV).to receive(:fetch).and_call_original
++      output = File.join(tmp, 'output')
++      allow(ENV).to receive(:fetch).with('GITHUB_OUTPUT').and_return(output)
++      publisher.prepare_pypi
++      expect(publisher).to have_received(:preflight_php).with('mirror').ordered
++      HaveAPI::Release::GEMS.each_key { |name| expect(publisher).to have_received(:gem_present?).with(name).ordered }
++      expect(publisher).to have_received(:npm_present?).ordered
++      staged = File.join(tmp, 'python-publish')
++      expect(Dir.children(staged)).to eq([artifacts.python_names.last])
++      expect(File.binread(File.join(staged, artifacts.python_names.last))).to eq(File.binread(File.join(tmp, artifacts.python_names.last)))
++      expect(File.read(output)).to eq("publish=true\n")
++    end
++
++    it 'does not write registries or the PHP mirror while Python publication is incomplete' do
++      allow(publisher).to receive(:registry_json).and_return(nil)
++      allow(publisher).to receive(:with_php_mirror).and_yield('mirror', {})
++      allow(publisher).to receive(:preflight_php)
++      allow(publisher).to receive(:publish_registries)
++      allow(publisher).to receive(:sync_php)
++      expect { publisher.publish }.to raise_error(HaveAPI::Release::Error, /PyPI publication is incomplete/)
++      expect(publisher).to have_received(:preflight_php).with('mirror')
++      expect(publisher).not_to have_received(:publish_registries)
++      expect(publisher).not_to have_received(:sync_php)
++    end
++
+     it 'accepts a gem only when its registry checksum matches the retained gem' do
+       name = "haveapi-client-#{artifacts.version}.gem"
+       allow(publisher).to receive(:registry_json).and_return({ 'sha' => Digest::SHA256.file(File.join(tmp, name)).hexdigest })

@@ -1,0 +1,267 @@
+Successfully installed bundler-4.0.23
+1 gem installed
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=redcarpet version=3.6.1 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=racc version=1.8.1 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=io-console version=0.9.4 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=date version=3.6.0 platform=ruby> because it is missing extensions
+Bundle complete! 5 Gemfile dependencies, 33 gems now installed.
+Use `bundle info [gemname]` to see where a bundled gem is installed.
++ export 'GIT_AUTHOR_NAME=Jakub Skokan' GIT_AUTHOR_EMAIL=jakub.skokan@havefun.cz 'GIT_COMMITTER_NAME=Jakub Skokan' GIT_COMMITTER_EMAIL=jakub.skokan@havefun.cz
++ GIT_AUTHOR_NAME='Jakub Skokan'
++ GIT_AUTHOR_EMAIL=jakub.skokan@havefun.cz
++ GIT_COMMITTER_NAME='Jakub Skokan'
++ GIT_COMMITTER_EMAIL=jakub.skokan@havefun.cz
++ export GIT_TRACE=/home/aither/workspace/ai/vpsfree.cz/work/2026-10-19-haveapi-async-client/haveapi-merge/final-integration/execution/merge.trace
++ GIT_TRACE=/home/aither/workspace/ai/vpsfree.cz/work/2026-10-19-haveapi-async-client/haveapi-merge/final-integration/execution/merge.trace
++ export GIT_TRACE2_EVENT=/home/aither/workspace/ai/vpsfree.cz/work/2026-10-19-haveapi-async-client/haveapi-merge/final-integration/execution/merge.trace2.jsonl
++ GIT_TRACE2_EVENT=/home/aither/workspace/ai/vpsfree.cz/work/2026-10-19-haveapi-async-client/haveapi-merge/final-integration/execution/merge.trace2.jsonl
++ cd /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-19-haveapi-async-client/haveapi-master-integration
++ git merge --ff-only 7835acafdda19779815a0f1ba905d78e0085456d
+Updating a8ea313..7835aca
+Fast-forward
+ AGENTS.md                                          |    4 +-
+ Makefile                                           |    5 +-
+ README.md                                          |    2 +-
+ clients/js/.gitignore                              |    1 +
+ clients/js/README.md                               |   39 +-
+ clients/js/dist/haveapi-client.js                  | 6483 +++++++++++---------
+ clients/js/dist/types/haveapi.d.ts                 |   22 +
+ clients/js/dist/types/haveapi/action.d.ts          |   70 +
+ clients/js/dist/types/haveapi/action_state.d.ts    |   50 +
+ .../dist/types/haveapi/async/authentication.d.ts   |   10 +
+ clients/js/dist/types/haveapi/async/client.d.ts    |   33 +
+ .../js/dist/types/haveapi/async/completion.d.ts    |    8 +
+ clients/js/dist/types/haveapi/async/error.d.ts     |   14 +
+ clients/js/dist/types/haveapi/async/request.d.ts   |   15 +
+ clients/js/dist/types/haveapi/async/resource.d.ts  |   39 +
+ .../types/haveapi/async/resource_instance.d.ts     |   35 +
+ .../js/dist/types/haveapi/async/resource_list.d.ts |   16 +
+ clients/js/dist/types/haveapi/async/types.d.ts     |   85 +
+ clients/js/dist/types/haveapi/authentication.d.ts  |   41 +
+ .../js/dist/types/haveapi/authentication/base.d.ts |   16 +
+ .../dist/types/haveapi/authentication/basic.d.ts   |   20 +
+ .../dist/types/haveapi/authentication/oauth2.d.ts  |   27 +
+ .../dist/types/haveapi/authentication/token.d.ts   |   35 +
+ clients/js/dist/types/haveapi/base_resource.d.ts   |   30 +
+ clients/js/dist/types/haveapi/client.d.ts          |  106 +
+ clients/js/dist/types/haveapi/exceptions.d.ts      |   21 +
+ clients/js/dist/types/haveapi/hooks.d.ts           |   22 +
+ clients/js/dist/types/haveapi/http.d.ts            |   14 +
+ clients/js/dist/types/haveapi/i18n.d.ts            |   13 +
+ clients/js/dist/types/haveapi/legacy_globals.d.ts  |   10 +
+ clients/js/dist/types/haveapi/local_response.d.ts  |   15 +
+ clients/js/dist/types/haveapi/parameters.d.ts      |   29 +
+ clients/js/dist/types/haveapi/protocol.d.ts        |    8 +
+ clients/js/dist/types/haveapi/resource.d.ts        |   23 +
+ .../js/dist/types/haveapi/resource_instance.d.ts   |   48 +
+ .../dist/types/haveapi/resource_instance_list.d.ts |   28 +
+ clients/js/dist/types/haveapi/response.d.ts        |   19 +
+ clients/js/dist/types/haveapi/transport.d.ts       |    4 +
+ clients/js/dist/types/haveapi/types.d.ts           |  125 +
+ clients/js/dist/types/haveapi/validator.d.ts       |   43 +
+ .../js/dist/types/haveapi/validators/accept.d.ts   |    1 +
+ .../js/dist/types/haveapi/validators/confirm.d.ts  |    1 +
+ .../js/dist/types/haveapi/validators/custom.d.ts   |    1 +
+ .../js/dist/types/haveapi/validators/exclude.d.ts  |    1 +
+ .../js/dist/types/haveapi/validators/format.d.ts   |    1 +
+ .../js/dist/types/haveapi/validators/include.d.ts  |    1 +
+ .../js/dist/types/haveapi/validators/length.d.ts   |    1 +
+ .../js/dist/types/haveapi/validators/number.d.ts   |    1 +
+ .../js/dist/types/haveapi/validators/present.d.ts  |    1 +
+ .../js/dist/types/haveapi/xml_http_request.d.ts    |    3 +
+ clients/js/doc-async-client.md                     |  183 +
+ clients/js/doc-async-resources.md                  |   69 +
+ clients/js/gulpfile.js                             |  118 +-
+ clients/js/package-lock.json                       | 3371 ++++++++++
+ clients/js/package.json                            |   22 +-
+ clients/js/src/haveapi.js                          |   39 -
+ clients/js/src/haveapi.ts                          |   55 +
+ clients/js/src/haveapi/{action.js => action.ts}    |  165 +-
+ .../haveapi/{action_state.js => action_state.ts}   |   57 +-
+ clients/js/src/haveapi/async/authentication.ts     |  147 +
+ clients/js/src/haveapi/async/client.ts             |  157 +
+ clients/js/src/haveapi/async/completion.ts         |   89 +
+ clients/js/src/haveapi/async/error.ts              |   30 +
+ clients/js/src/haveapi/async/request.ts            |  150 +
+ clients/js/src/haveapi/async/resource.ts           |  263 +
+ clients/js/src/haveapi/async/resource_instance.ts  |  182 +
+ clients/js/src/haveapi/async/resource_list.ts      |   41 +
+ clients/js/src/haveapi/async/types.ts              |   78 +
+ clients/js/src/haveapi/authentication.js           |   22 -
+ clients/js/src/haveapi/authentication.ts           |   63 +
+ .../haveapi/authentication/{base.js => base.ts}    |   26 +-
+ clients/js/src/haveapi/authentication/basic.js     |   31 -
+ clients/js/src/haveapi/authentication/basic.ts     |   47 +
+ .../authentication/{oauth2.js => oauth2.ts}        |   42 +-
+ .../haveapi/authentication/{token.js => token.ts}  |   88 +-
+ .../haveapi/{base_resource.js => base_resource.ts} |   37 +-
+ clients/js/src/haveapi/{client.js => client.ts}    |  285 +-
+ clients/js/src/haveapi/exceptions.js               |   31 -
+ clients/js/src/haveapi/exceptions.ts               |   32 +
+ clients/js/src/haveapi/{hooks.js => hooks.ts}      |   27 +-
+ clients/js/src/haveapi/{http.js => http.ts}        |   39 +-
+ clients/js/src/haveapi/{i18n.js => i18n.ts}        |   34 +-
+ clients/js/src/haveapi/legacy_globals.ts           |   20 +
+ clients/js/src/haveapi/local_response.js           |   15 -
+ clients/js/src/haveapi/local_response.ts           |   26 +
+ .../src/haveapi/{parameters.js => parameters.ts}   |   85 +-
+ clients/js/src/haveapi/protocol.ts                 |  120 +
+ clients/js/src/haveapi/resource.js                 |   50 -
+ clients/js/src/haveapi/resource.ts                 |   71 +
+ .../{resource_instance.js => resource_instance.ts} |  129 +-
+ ..._instance_list.js => resource_instance_list.ts} |   35 +-
+ .../js/src/haveapi/{response.js => response.ts}    |   29 +-
+ clients/js/src/haveapi/transport.ts                |   22 +
+ clients/js/src/haveapi/types.ts                    |  132 +
+ .../js/src/haveapi/{validator.js => validator.ts}  |   44 +-
+ .../haveapi/validators/{accept.js => accept.ts}    |    2 +
+ .../haveapi/validators/{confirm.js => confirm.ts}  |    4 +-
+ .../haveapi/validators/{custom.js => custom.ts}    |    2 +
+ .../haveapi/validators/{exclude.js => exclude.ts}  |    4 +-
+ .../haveapi/validators/{format.js => format.ts}    |    4 +-
+ .../haveapi/validators/{include.js => include.ts}  |    4 +-
+ .../haveapi/validators/{length.js => length.ts}    |    4 +-
+ .../haveapi/validators/{number.js => number.ts}    |    4 +-
+ .../haveapi/validators/{present.js => present.ts}  |    2 +
+ clients/js/src/haveapi/xml_http_request.ts         |   15 +
+ clients/js/test/README.md                          |   83 +
+ clients/js/test/async-resources.tsconfig.json      |   12 +
+ clients/js/test/async/core.spec.cjs                |  254 +
+ clients/js/test/async/request_receipt.spec.cjs     |   42 +
+ clients/js/test/async/resource_save.spec.cjs       |  142 +
+ clients/js/test/async/validation.spec.cjs          |  102 +
+ clients/js/test/async_resources/resource.spec.cjs  |  320 +
+ clients/js/test/compatibility/callback.spec.cjs    |  331 +
+ clients/js/test/compatibility/core.spec.cjs        |  157 +
+ .../js/test/compatibility/strict_context.spec.cjs  |  157 +
+ clients/js/test/contract/client_contract.spec.js   |   28 +-
+ clients/js/test/helpers/adapter_async.js           |   45 +
+ clients/js/test/helpers/async_bundle.cjs           |   37 +
+ clients/js/test/types/async.ts                     |   48 +
+ clients/js/test/types/async.tsconfig.json          |    4 +
+ clients/js/test/types/callback.ts                  |  103 +
+ clients/js/test/types/callback.tsconfig.json       |   12 +
+ clients/js/tsconfig.json                           |   23 +
+ doc/agent-instructions/releases.md                 |   30 +-
+ utils/release/artifacts.rb                         |   75 +-
+ utils/release/npm-consumer.ts                      |   16 +
+ utils/release/spec/release_spec.rb                 |  150 +
+ 127 files changed, 13124 insertions(+), 3530 deletions(-)
+ create mode 100644 clients/js/.gitignore
+ create mode 100644 clients/js/dist/types/haveapi.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/action.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/action_state.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/async/authentication.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/async/client.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/async/completion.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/async/error.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/async/request.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/async/resource.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/async/resource_instance.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/async/resource_list.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/async/types.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/authentication.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/authentication/base.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/authentication/basic.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/authentication/oauth2.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/authentication/token.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/base_resource.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/client.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/exceptions.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/hooks.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/http.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/i18n.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/legacy_globals.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/local_response.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/parameters.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/protocol.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/resource.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/resource_instance.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/resource_instance_list.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/response.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/transport.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/types.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/validator.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/validators/accept.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/validators/confirm.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/validators/custom.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/validators/exclude.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/validators/format.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/validators/include.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/validators/length.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/validators/number.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/validators/present.d.ts
+ create mode 100644 clients/js/dist/types/haveapi/xml_http_request.d.ts
+ create mode 100644 clients/js/doc-async-client.md
+ create mode 100644 clients/js/doc-async-resources.md
+ create mode 100644 clients/js/package-lock.json
+ delete mode 100644 clients/js/src/haveapi.js
+ create mode 100644 clients/js/src/haveapi.ts
+ rename clients/js/src/haveapi/{action.js => action.ts} (60%)
+ rename clients/js/src/haveapi/{action_state.js => action_state.ts} (62%)
+ create mode 100644 clients/js/src/haveapi/async/authentication.ts
+ create mode 100644 clients/js/src/haveapi/async/client.ts
+ create mode 100644 clients/js/src/haveapi/async/completion.ts
+ create mode 100644 clients/js/src/haveapi/async/error.ts
+ create mode 100644 clients/js/src/haveapi/async/request.ts
+ create mode 100644 clients/js/src/haveapi/async/resource.ts
+ create mode 100644 clients/js/src/haveapi/async/resource_instance.ts
+ create mode 100644 clients/js/src/haveapi/async/resource_list.ts
+ create mode 100644 clients/js/src/haveapi/async/types.ts
+ delete mode 100644 clients/js/src/haveapi/authentication.js
+ create mode 100644 clients/js/src/haveapi/authentication.ts
+ rename clients/js/src/haveapi/authentication/{base.js => base.ts} (53%)
+ delete mode 100644 clients/js/src/haveapi/authentication/basic.js
+ create mode 100644 clients/js/src/haveapi/authentication/basic.ts
+ rename clients/js/src/haveapi/authentication/{oauth2.js => oauth2.ts} (61%)
+ rename clients/js/src/haveapi/authentication/{token.js => token.ts} (62%)
+ rename clients/js/src/haveapi/{base_resource.js => base_resource.ts} (61%)
+ rename clients/js/src/haveapi/{client.js => client.ts} (70%)
+ delete mode 100644 clients/js/src/haveapi/exceptions.js
+ create mode 100644 clients/js/src/haveapi/exceptions.ts
+ rename clients/js/src/haveapi/{hooks.js => hooks.ts} (70%)
+ rename clients/js/src/haveapi/{http.js => http.ts} (60%)
+ rename clients/js/src/haveapi/{i18n.js => i18n.ts} (69%)
+ create mode 100644 clients/js/src/haveapi/legacy_globals.ts
+ delete mode 100644 clients/js/src/haveapi/local_response.js
+ create mode 100644 clients/js/src/haveapi/local_response.ts
+ rename clients/js/src/haveapi/{parameters.js => parameters.ts} (68%)
+ create mode 100644 clients/js/src/haveapi/protocol.ts
+ delete mode 100644 clients/js/src/haveapi/resource.js
+ create mode 100644 clients/js/src/haveapi/resource.ts
+ rename clients/js/src/haveapi/{resource_instance.js => resource_instance.ts} (57%)
+ rename clients/js/src/haveapi/{resource_instance_list.js => resource_instance_list.ts} (67%)
+ rename clients/js/src/haveapi/{response.js => response.ts} (59%)
+ create mode 100644 clients/js/src/haveapi/transport.ts
+ create mode 100644 clients/js/src/haveapi/types.ts
+ rename clients/js/src/haveapi/{validator.js => validator.ts} (52%)
+ rename clients/js/src/haveapi/validators/{accept.js => accept.ts} (67%)
+ rename clients/js/src/haveapi/validators/{confirm.js => confirm.ts} (52%)
+ rename clients/js/src/haveapi/validators/{custom.js => custom.ts} (58%)
+ rename clients/js/src/haveapi/validators/{exclude.js => exclude.ts} (58%)
+ rename clients/js/src/haveapi/validators/{format.js => format.ts} (73%)
+ rename clients/js/src/haveapi/validators/{include.js => include.ts} (59%)
+ rename clients/js/src/haveapi/validators/{length.js => length.ts} (81%)
+ rename clients/js/src/haveapi/validators/{number.js => number.ts} (82%)
+ rename clients/js/src/haveapi/validators/{present.js => present.ts} (82%)
+ create mode 100644 clients/js/src/haveapi/xml_http_request.ts
+ create mode 100644 clients/js/test/README.md
+ create mode 100644 clients/js/test/async-resources.tsconfig.json
+ create mode 100644 clients/js/test/async/core.spec.cjs
+ create mode 100644 clients/js/test/async/request_receipt.spec.cjs
+ create mode 100644 clients/js/test/async/resource_save.spec.cjs
+ create mode 100644 clients/js/test/async/validation.spec.cjs
+ create mode 100644 clients/js/test/async_resources/resource.spec.cjs
+ create mode 100644 clients/js/test/compatibility/callback.spec.cjs
+ create mode 100644 clients/js/test/compatibility/core.spec.cjs
+ create mode 100644 clients/js/test/compatibility/strict_context.spec.cjs
+ create mode 100644 clients/js/test/helpers/adapter_async.js
+ create mode 100644 clients/js/test/helpers/async_bundle.cjs
+ create mode 100644 clients/js/test/types/async.ts
+ create mode 100644 clients/js/test/types/async.tsconfig.json
+ create mode 100644 clients/js/test/types/callback.ts
+ create mode 100644 clients/js/test/types/callback.tsconfig.json
+ create mode 100644 clients/js/tsconfig.json
+ create mode 100644 utils/release/npm-consumer.ts
+Ignoring date-3.6.0 because its extensions are not built. Try: gem pristine date --version 3.6.0
+Ignoring io-console-0.9.4 because its extensions are not built. Try: gem pristine io-console --version 0.9.4

@@ -1,0 +1,50 @@
+{
+  "schema": 1,
+  "kind": "owner-premerge-lineage",
+  "final_base": "c58704a08451a231fdf6c6123437133422af46dc",
+  "final_head": "19c20c90cc957d4225ece50a92e190855f252710",
+  "final_tree": "0ef10a638118397c07f537b6a33159ec2ee21fe1",
+  "clean": true,
+  "conflicts": false,
+  "manual_resolution": false,
+  "clients_js_tree_equal": true,
+  "all_generated_artifacts_equal_reviewed": true,
+  "no_migrations": true,
+  "installed_certified_equivalent": false,
+  "quick_checks": {
+    "command": "nix develop -c bash -c 'set -e; cd clients/js; npm run typecheck; npm run build; npm run test:compatibility; npm run test:types; cd ../..; make release-check; make release-test'",
+    "exit": 0,
+    "strict_typecheck": "PASS",
+    "build": "PASS; committed artifacts unchanged",
+    "callback_compatibility": "26/26 PASS",
+    "type_consumers": "callback+async PASS",
+    "release_check": "PASS metadata0.29.0",
+    "release_test": "31 examples0failures",
+    "log": "/tmp/2026-10-19-haveapi-async-client-implementer0-review.CFkmQj/premerge/quick.log",
+    "unrelated_long_suites": false,
+    "release_fixture_scope": "PHP git/tag/push output belongs only to disposable local unit-test repos; no registry/remote release operation"
+  },
+  "artifact_equivalence": {
+    "previous_tar": "/tmp/2026-10-19-haveapi-async-client-implementer0-review.CFkmQj/callback-alias/package/haveapi-client-0.29.0.tgz",
+    "sha256": "23cad7163435c9d2cd51e83b9d6751db895ddbbfb3c586f1343f42f7070e9647",
+    "all_packed_files_equal_final_committed_bytes": true,
+    "new_pack_or_installed_proof_repeat": false,
+    "prior_proof_head": "f5320eae05cbf8256a40cb04358be876ea7bde75",
+    "proof_reuse_boundary": "entire clients/js subtree object and every packed file identical; prior run remains tied to original head"
+  },
+  "upstream_interaction": {
+    "changed_paths": [
+      "doc/agent-instructions/releases.md",
+      "utils/release/publish.rb",
+      "utils/release/spec/release_spec.rb"
+    ],
+    "feature_release_changes": [
+      "Makefile client.js->client.ts version path",
+      "utils/release/artifacts.rb authored version source path",
+      "utils/release/spec/release_spec.rb added mismatched authoredTS version example at lines50-54"
+    ],
+    "spec_interaction": "upstream adds separate GitHub release preparation describe block around172+, feature adds one version-check example around50; clean apply and31specpass, no semantic resolution",
+    "publisher_feature_changes": false
+  },
+  "recommended_next": "same retained reviewer affected final-range/upstream release interaction assessment; after acceptance publish rewritten feature with explicit --force-with-lease oldf532, monitor actual fixed-ID automatic CI batch; root alone coordinator default merge"
+}

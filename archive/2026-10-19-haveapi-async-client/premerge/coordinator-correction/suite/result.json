@@ -1,0 +1,57 @@
+{
+  "revision": "dce4784fe0069b061dd76cdf689e2099b4b0e66d",
+  "pre_revision": "dce4784fe0069b061dd76cdf689e2099b4b0e66d",
+  "pre_tree": "5dc33558cc877c26573b9489aab13eb2e4c1ac89",
+  "pre_status": "empty",
+  "post_tree": "5dc33558cc877c26573b9489aab13eb2e4c1ac89",
+  "post_status": "",
+  "start_utc": "2026-10-19T20:45:28Z",
+  "end_utc": "2026-10-19T20:48:11Z",
+  "elapsed_seconds": 163.0,
+  "commands": [
+    {
+      "command": "nix build --no-link --json --print-build-logs .#checks.x86_64-linux.ruby-workspace_coordination-0 .#checks.x86_64-linux.ruby-workspace_coordination-1",
+      "exit": 0,
+      "stdout": "build.json",
+      "stderr": "build.log"
+    },
+    {
+      "command": "nix develop --command python3 test/check_ruby_shards.py timings-0.json timings-1.json",
+      "exit": 0,
+      "output": "coverage.log"
+    },
+    {
+      "command": "nix derivation show /nix/store/58hfq858bcdp91i2vn7qqpbdi767xsml-dev-workspace-workspace_coordination-0-of-2.drv /nix/store/kb18kq7h1s8d61fzradc463c032srn1w-dev-workspace-workspace_coordination-1-of-2.drv",
+      "exit": 0,
+      "stdout": "derivations.json",
+      "stderr": "derivations.log"
+    },
+    {
+      "command": "nix path-info --json /nix/store/npfz88dz9x4s3m78d49qys8lqcs8z3vf-dev-workspace-workspace_coordination-0-of-2 /nix/store/m49p7wc0f0xi46dmkibnnfjk72jiwfhh-dev-workspace-workspace_coordination-1-of-2",
+      "exit": 0,
+      "stdout": "output-path-info.json",
+      "stderr": "output-path-info.log"
+    }
+  ],
+  "outputs": [
+    {
+      "shard": "0/2",
+      "path": "/nix/store/npfz88dz9x4s3m78d49qys8lqcs8z3vf-dev-workspace-workspace_coordination-0-of-2",
+      "drvPath": "/nix/store/58hfq858bcdp91i2vn7qqpbdi767xsml-dev-workspace-workspace_coordination-0-of-2.drv",
+      "tests": 30,
+      "passed": 30,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "shard": "1/2",
+      "path": "/nix/store/m49p7wc0f0xi46dmkibnnfjk72jiwfhh-dev-workspace-workspace_coordination-1-of-2",
+      "drvPath": "/nix/store/kb18kq7h1s8d61fzradc463c032srn1w-dev-workspace-workspace_coordination-1-of-2.drv",
+      "tests": 24,
+      "passed": 24,
+      "failed": 0,
+      "skipped": 0
+    }
+  ],
+  "flake_lock_sha256": "40752baf3e38f99a176623200bcc3daa1b336660b51b648a6c36d07d0a32004e"
+}

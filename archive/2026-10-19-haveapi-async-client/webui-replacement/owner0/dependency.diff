@@ -1,0 +1,2874 @@
+diff --git a/docs/design/HAVEAPI_CLIENT.md b/docs/design/HAVEAPI_CLIENT.md
+new file mode 100644
+index 00000000..7e9300b8
+--- /dev/null
++++ b/docs/design/HAVEAPI_CLIENT.md
+@@ -0,0 +1,82 @@
++# HaveAPI client dependency and provenance
++
++The frontend imports `AsyncClient` from the normal `haveapi-client` dependency.
++Authenticated and public API calls use this package through the WebUI request
++policy described in [API contracts](API_CONTRACTS.md). There is no separate pilot
++application or transport switch. BFF session and OAuth exchanges retain their
++existing implementation.
++
++## Source and archive
++
++The committed archive is
++`vendor/haveapi-client-f94e65e35166a0bf8048a27c9d57c7d36957d65b.tgz`,
++from [HaveAPI commit f94e65e35166a0bf8048a27c9d57c7d36957d65b](https://github.com/vpsfreecz/haveapi/commit/f94e65e35166a0bf8048a27c9d57c7d36957d65b),
++subdirectory `clients/js`. Its package name/version is `haveapi-client@0.29.0`.
++This is a source snapshot, not a new npm release. The source commit must remain
++published and reachable before this WebUI branch is ready for integration.
++
++The archive is 55,702 bytes and has SHA-256
++`41c3c3f16577dd7c8849f11615e3111302513af65a1e5640c9b121f772fb9975`.
++Its npm integrity is
++`sha512-aMx3ofhbRmF0JjfzUdgV3k4Oh1G/4U37uvmKvDLtX9J/5A/yy8a1GALHK6v54wJY0fU9mW2pX9kkfqBlMZOmJw==`.
++[The provenance manifest](../../vendor/haveapi-client-provenance.json) records
++all 51 packed files, their hashes, the source revision and toolchain. Every file
++was compared with its committed `clients/js` counterpart. The tarball has no
++`gitHead`; provenance comes from that comparison and the recorded build.
++The MIT license and original copyright notice are included as `LICENSE.txt`.
++
++HaveAPI's repository root is not an npm package; the package lives in `clients/js`.
++A relative, committed npm archive gives ordinary `npm ci`, CI and Nix the same
++bytes without a local checkout, registry publication or expiring CI download.
++`package-lock.json` pins the archive integrity and its `xmlhttprequest@1.8.0`
++transitive dependency. The package's `latest` constraint does not float during
++`npm ci`.
++
++## Regenerating an intentional update
++
++Use a clean checkout of the selected published HaveAPI revision and its locked
++Nix shell. The recorded build used Node 24.21.0, npm 11.19.0 and TypeScript 5.9.3;
++the tracked client lockfile had SHA-256
++`1c7f66cccadc6abf9474d3403db38ce524aa49d3352efb19596aa86ffeaaaec6`.
++From the HaveAPI repository root, create an empty output directory outside the
++checkout, export `OUT` with its absolute path, then run:
++
++```sh
++export OUT=/absolute/path/to/output
++nix develop .#client-js -c bash
++cd clients/js
++npm ci
++npm run build
++git diff --exit-code
++npm pack --json --pack-destination "$OUT"
++```
++
++Inspect the npm pack manifest, reconcile every packed file with the selected
++commit, and record source, tools, license, file hashes and archive integrity.
++Copy the resulting archive without changing its bytes to a filename containing
++the full source commit. Update the relative dependency using the pinned WebUI npm
++toolchain, preserving unrelated lock entries. The archive in this repository is
++the authoritative byte artifact; a later repack must be checked rather than
++assumed byte-identical.
++
++## Installation, Nix and verification
++
++Ordinary development and CI use `nix develop` and `npm ci --include=dev`.
++There is no extra package installer. The [package guide](PACKAGING.md) explains
++Nix's standard `importNpmLock` hook and the exact committed archive override.
++The frontend's source check verifies dependency/provenance agreement and archive
++SHA-256/npm integrity before installation. It rejects missing or altered bytes.
++The original root manifest and lockfile remain unchanged by the Nix build.
++
++Typechecking and API tests use the actual installed declarations and client.
++Controlled XHR fixtures exercise production request paths, session renewal,
++public calls, abort and rejection semantics. Ordinary application browser
++workflows provide browser coverage; there is no standalone candidate entry.
++After committed-deliverable review, run the normal full tests, production build
++and Nix frontend/source/package checks. Fixtures establish their stated scope;
++they do not certify live OAuth, backend permissions or a deployed application.
++
++The [dated pilot record](../work-log/2026-10-19-haveapi-package-pilot.md) preserves
++prior package-fit evidence and its original source/archive identities. That
++pilot is superseded by this production dependency; its historical checks are not
++fresh verification of this revision. Dependency changes do not deploy the WebUI.
+diff --git a/docs/design/HAVEAPI_PACKAGE_PILOT.md b/docs/design/HAVEAPI_PACKAGE_PILOT.md
+deleted file mode 100644
+index caf4e099..00000000
+--- a/docs/design/HAVEAPI_PACKAGE_PILOT.md
++++ /dev/null
+@@ -1,103 +0,0 @@
+-# Injectable HaveAPI request client and package pilot
+-
+-Requirements: REQ-007, REQ-011, REQ-012 and REQ-059. The production application
+-continues to use its fetch transport. The injectable adapter runs a candidate
+-`haveapi-client` package through the existing WebUI request policy before a
+-dependency update or transport rollout.
+-
+-## Request and session policy
+-
+-[haveapi.ts](../../src/lib/api/haveapi.ts) owns authentication headers, language,
+-BFF session recovery, one read retry, envelope unwrapping and WebUI errors.
+-[haveapiTransport.ts](../../src/lib/api/haveapiTransport.ts) prepares the existing
+-fetch query/body once so a retry retains the original request.
+-[haveapiRequestClient.ts](../../src/lib/api/haveapiRequestClient.ts) accepts a
+-structural request client and supplies a transport for that same policy. It has
+-no runtime import of the candidate package. Callers must configure the injected
+-client with the same versioned API base URL as the WebUI.
+-
+-The injected client owns serialization, HTTP and protocol validation. The adapter
+-maps its validated envelopes and structured failures into WebUI results and errors. The existing scalar-query guard applies to
+-both transports. Parameters without an input namespace remain omitted, matching
+-the default transport. HTTP 200 API rejection keeps `HaveApiError.httpStatus`
+-undefined. Transport loss, timeout, abort and malformed responses retain uncertain
+-mutation classification. A qualifying 401 can renew the same BFF session and
+-retry one read using the original language. A rejected write is never replayed;
+-its caller receives the existing resubmit error after successful renewal.
+-
+-Local request-client fixtures cover these mappings and the stable-session guard.
+-The normal application compilation and tests require no candidate package.
+-Candidate protocol validation can be stricter than the default fetch decoder;
+-the pilot does not establish parity for every malformed server response or
+-approve switching production transport.
+-
+-## Packed artifact proof
+-
+-Build and pack the HaveAPI candidate from a known committed source revision.
+-After reviewing the committed WebUI and HaveAPI deliverable, run in the locked
+-Node development shell:
+-
+-```sh
+-npm run test:haveapi-package -- --package /absolute/candidate.tgz --webui-ref HEAD --haveapi-ref FULL_HAVEAPI_COMMIT_SHA
+-```
+-
+-The script resolves `--webui-ref` to a commit and archives that committed source
+-into an owned temporary directory. Dirty source is excluded. It freezes the
+-candidate tarball bytes, runs `npm ci` in the snapshot and installs the candidate
+-there with `--ignore-scripts --no-save --package-lock=true`. The snapshot lock
+-lets npm retain existing dependency versions while adding the candidate.
+-The runner records manifest/lock hashes and each installed locked package's
+-name/version after `npm ci`. It rejects file changes and any changed or missing
+-baseline package before running consumer tools. Platform-optional packages
+-absent from that installation stay outside the baseline; new candidate dependency
+-paths are allowed. The real checkout's dependencies and lockfile are untouched.
+-The candidate is absent from normal application dependencies, lockfiles and
+-Nix hashes.
+-
+-The proof compiles a consumer against the package's actual generated declarations
+-and builds a dedicated Vite application with its actual `AsyncClient` import.
+-Its Chromium fixtures reuse WebUI bootstrap/HaveAPI HTTP fixtures to check query
+-and JSON requests, 401 read renewal, no write replay, changed-session rejection,
+-pre-dispatch/in-flight abort, and an action-state receipt without completion
+-polling. Separate Chromium, Firefox and WebKit projects load the exact installed
+-UMD main artifact with an ordinary script tag and native XHR. Each checks both
+-clients' setup and a dynamic GET, callback undefined returns, the global export
+-shape and async wrapper/metadata. AMD/CommonJS registration remains covered by
+-HaveAPI's VM compatibility fixtures. Missing browser engines are failures to
+-complete the proof; no project is silently skipped.
+-
+-Install the locked browser engines with the existing wrapper when needed:
+-
+-```sh
+-npm run e2e:install -- chromium firefox webkit
+-```
+-
+-The Chromium executable override applies only to Chromium projects. The pilot
+-uses its own loopback preview port 5189 and fails if it is already occupied.
+-Browser fixtures use synthetic responses and do not certify backend permissions,
+-a real OAuth provider, task completion or a deployed application.
+-
+-`result.json` records the frozen tar SHA-256, committed WebUI ref, HaveAPI source
+-claim, effective tool versions and result. The script prints its temporary
+-artifact directory, retained outside Nix's transient shell directory by default.
+-`HAVEAPI_PACKAGE_TMPDIR` can select an existing temporary parent directory.
+-Browser failure traces remain in that snapshot. Retained source/npm trees are
+-disposable after their evidence has been collected.
+-
+-If package metadata has no `gitHead`, `--haveapi-ref` is required as a pack-owner
+-assertion. Conflicting supplied and packaged refs fail. Neither ref proves the
+-tarball's source equivalence by itself: retain the pack owner's build/source
+-receipt alongside the hash. Interruptions propagate to owned subprocess groups;
+-failed runs retain their result and artifacts for diagnosis.
+-
+-Browser-free runner tests use disposable Git fixtures to verify committed-source
+-selection, frozen tar bytes, install isolation, locked graph/file drift rejection
+-and provenance conflicts. Run:
+-
+-```sh
+-node --test scripts/test-haveapi-package.test.mjs
+-```
+-
+-A passing pilot is package-fit evidence. A published package, dependency update,
+-production transport migration, PR approval and deployment each remain separate
+-steps.
+diff --git a/docs/design/PACKAGING.md b/docs/design/PACKAGING.md
+index c8219462..ae026f55 100644
+--- a/docs/design/PACKAGING.md
++++ b/docs/design/PACKAGING.md
+@@ -10,25 +10,35 @@ is disabled by default and site configuration remains separate.
+ ## Reproduce the dependencies
+ 
+ Enter `nix develop` for the locked Node 24 and `prefetch-npm-deps` tool. The
+-root and BFF are independent npm projects. Compute their hashes separately
+-from the repository root whenever either lockfile changes:
++root and BFF are independent npm projects. The frontend uses Nixpkgs'
++`importNpmLock` and its matching `npmConfigHook`, using the integrity hashes in
++the root lockfile. It has no aggregate `npmDepsHash`. The BFF retains the
++`fetchNpmDeps` cache and its separate hash. Recompute that hash when its lockfile
++changes:
+ 
+ ```sh
+-prefetch-npm-deps package-lock.json
+ prefetch-npm-deps bff/package-lock.json
+ ```
+ 
+-The recorded hashes for the current lockfiles are
+-`sha256-1AItkFu1tvJpKjFVbGC/IWky4JPfw+d+XU50egk+/TE=` and
+-`sha256-m6CayVcO1z+Xuy+XlAEqVLoRFRACSNjdcn4pae1T+Dc=`, respectively.
+-Each derivation uses its own hash. The root prefetch reported six bundled optional
+-dependencies nested under `@tailwindcss/oxide-wasm32-wasi` without separate
+-resolved URLs. Their WASI-only
+-placement and bundled metadata explain the warning, but only an actual x86_64
+-package build can establish whether the cached dependency set is sufficient.
+-Do not edit a lock or reuse the other project's hash to work around a fetch
++The BFF hash is `sha256-m6CayVcO1z+Xuy+XlAEqVLoRFRACSNjdcn4pae1T+Dc=`.
++Do not edit a lock or reuse another project's hash to work around a fetch
+ failure.
+ 
++The frontend's normal npm dependency points to the committed relative HaveAPI
++archive. Ordinary `npm ci` reads it directly and checks its locked integrity;
++CI needs no sibling checkout or package download step. The pinned prefetcher
++cannot fetch this `file:` URL, so the frontend uses the standard `importNpmLock`
++helper instead. Its `packageSourceOverrides` maps only
++`node_modules/haveapi-client` to that archive in the cleaned source; registry
++dependencies retain their lockfile integrity hashes. See
++[HaveAPI provenance](HAVEAPI_CLIENT.md) for the exact source and archive.
++
++The helper creates build-private package metadata with Nix store paths. Its
++matching hook installs dependencies offline, then restores the original source
++manifest and lockfile before the frontend build. It does not rewrite the
++repository lock or filter dependencies out of a cache. The BFF hash, source
++filter, Node version, provenance and installed output boundaries remain separate.
++
+ ## Source, contents and provenance
+ 
+ Both packages use one cleaned flake source. It retains the linked design
+diff --git a/package-lock.json b/package-lock.json
+index a0be50d4..74230974 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -12,6 +12,7 @@
+       "dependencies": {
+         "@tanstack/react-query": "^5.90.19",
+         "clsx": "^2.1.1",
++        "haveapi-client": "file:vendor/haveapi-client-f94e65e35166a0bf8048a27c9d57c7d36957d65b.tgz",
+         "lucide-react": "^0.562.0",
+         "react": "^19.2.3",
+         "react-dom": "^19.2.3",
+@@ -4388,6 +4389,15 @@
+         "node": ">= 0.4"
+       }
+     },
++    "node_modules/haveapi-client": {
++      "version": "0.29.0",
++      "resolved": "file:vendor/haveapi-client-f94e65e35166a0bf8048a27c9d57c7d36957d65b.tgz",
++      "integrity": "sha512-aMx3ofhbRmF0JjfzUdgV3k4Oh1G/4U37uvmKvDLtX9J/5A/yy8a1GALHK6v54wJY0fU9mW2pX9kkfqBlMZOmJw==",
++      "license": "MIT",
++      "dependencies": {
++        "xmlhttprequest": "latest"
++      }
++    },
+     "node_modules/hermes-estree": {
+       "version": "0.25.1",
+       "resolved": "https://registry.npmjs.org/hermes-estree/-/hermes-estree-0.25.1.tgz",
+@@ -7197,6 +7207,15 @@
+       "dev": true,
+       "license": "MIT"
+     },
++    "node_modules/xmlhttprequest": {
++      "version": "1.8.0",
++      "resolved": "https://registry.npmjs.org/xmlhttprequest/-/xmlhttprequest-1.8.0.tgz",
++      "integrity": "sha512-58Im/U0mlVBLM38NdZjHyhuMtCqa61469k2YP/AaPbvCoV9aQGUpbJBj1QRm2ytRiVQBD/fsw7L2bJGDVQswBA==",
++      "license": "MIT",
++      "engines": {
++        "node": ">=0.4.0"
++      }
++    },
+     "node_modules/yallist": {
+       "version": "3.1.1",
+       "resolved": "https://registry.npmjs.org/yallist/-/yallist-3.1.1.tgz",
+diff --git a/package.json b/package.json
+index f9b35df0..c09da963 100644
+--- a/package.json
++++ b/package.json
+@@ -68,8 +68,7 @@
+     "audit:i18n-structure": "node scripts/audit-i18n-structure.mjs",
+     "docs:inventory": "node scripts/design-inventory.mjs --write",
+     "audit:design-docs": "node scripts/audit-design-docs.mjs",
+-    "e2e:touch:webkit": "npm run env:check && E2E_START_SERVER=1 node scripts/playwright.mjs test --project=mobile-webkit",
+-    "test:haveapi-package": "node scripts/test-haveapi-package.mjs"
++    "e2e:touch:webkit": "npm run env:check && E2E_START_SERVER=1 node scripts/playwright.mjs test --project=mobile-webkit"
+   },
+   "keywords": [],
+   "author": "",
+@@ -81,7 +80,8 @@
+     "lucide-react": "^0.562.0",
+     "react": "^19.2.3",
+     "react-dom": "^19.2.3",
+-    "react-router-dom": "7.18.2"
++    "react-router-dom": "7.18.2",
++    "haveapi-client": "file:vendor/haveapi-client-f94e65e35166a0bf8048a27c9d57c7d36957d65b.tgz"
+   },
+   "devDependencies": {
+     "@playwright/test": "^1.61.0",
+diff --git a/packages/frontend.nix b/packages/frontend.nix
+index 1da040e0..ec50ff87 100644
+--- a/packages/frontend.nix
++++ b/packages/frontend.nix
+@@ -12,7 +12,12 @@ pkgs.buildNpmPackage {
+   version = "1.0.0";
+   src = source;
+   nodejs = pkgs.nodejs_24;
+-  npmDepsHash = "sha256-1AItkFu1tvJpKjFVbGC/IWky4JPfw+d+XU50egk+/TE=";
++  npmDeps = pkgs.importNpmLock {
++    npmRoot = source;
++    packageSourceOverrides."node_modules/haveapi-client" =
++      "${source}/vendor/haveapi-client-f94e65e35166a0bf8048a27c9d57c7d36957d65b.tgz";
++  };
++  npmConfigHook = pkgs.importNpmLock.npmConfigHook;
+ 
+   VITE_RUNTIME_MODE = "bff";
+   VITE_BUILD_SHA = provenance.commit;
+diff --git a/scripts/check-package-source.mjs b/scripts/check-package-source.mjs
+index b610cbff..ed4dd8b7 100644
+--- a/scripts/check-package-source.mjs
++++ b/scripts/check-package-source.mjs
+@@ -1,4 +1,5 @@
+ import fs from 'node:fs';
++import { createHash } from 'node:crypto';
+ import path from 'node:path';
+ import { fileURLToPath } from 'node:url';
+ 
+@@ -17,12 +18,36 @@ const requiredPaths = [
+   'src/routes/router.tsx',
+   'src/lib/api/haveapi.ts',
+   'UI_REDESIGN.md',
++  'vendor/haveapi-client-provenance.json',
+ ];
+ const excludedDirectories = new Set([
+   '.git', '.vite', 'artifacts', 'dist', 'node_modules', 'output',
+   'playwright-report', 'work',
+ ]);
+ 
++function checkHaveApiPackage(root) {
++  const provenance = JSON.parse(fs.readFileSync(path.join(root, 'vendor/haveapi-client-provenance.json'), 'utf8'));
++  const manifest = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
++  const lock = JSON.parse(fs.readFileSync(path.join(root, 'package-lock.json'), 'utf8'));
++  const filename = `haveapi-client-${provenance.source.commit}.tgz`;
++  if (!/^[a-f0-9]{40}$/.test(provenance.source.commit) || provenance.artifact.filename !== filename) {
++    throw new Error('HaveAPI archive filename must bind its full source commit');
++  }
++  const dependency = `file:vendor/${filename}`;
++  const locked = lock.packages['node_modules/haveapi-client'];
++  if (manifest.dependencies['haveapi-client'] !== dependency ||
++      lock.packages[''].dependencies['haveapi-client'] !== dependency || locked.resolved !== dependency ||
++      locked.version !== provenance.version || locked.integrity !== provenance.artifact.integrity) {
++    throw new Error('HaveAPI dependency, lock and provenance disagree');
++  }
++  const bytes = fs.readFileSync(path.join(root, 'vendor', filename));
++  if (bytes.length !== provenance.artifact.bytes ||
++      createHash('sha256').update(bytes).digest('hex') !== provenance.artifact.sha256 ||
++      `sha512-${createHash('sha512').update(bytes).digest('base64')}` !== locked.integrity) {
++    throw new Error('HaveAPI archive bytes do not match their locked integrity and provenance');
++  }
++}
++
+ export function checkPackageSource(root) {
+   const absoluteRoot = path.resolve(root);
+   const failures = [];
+@@ -52,6 +77,11 @@ export function checkPackageSource(root) {
+   }
+ 
+   walk(absoluteRoot);
++  try {
++    checkHaveApiPackage(absoluteRoot);
++  } catch (error) {
++    failures.push(error.message);
++  }
+   if (failures.length) throw new Error(failures.join('\n'));
+   return { requiredFiles: requiredPaths.length };
+ }
+diff --git a/scripts/check-package-source.test.mjs b/scripts/check-package-source.test.mjs
+index 31dd7253..927ee766 100644
+--- a/scripts/check-package-source.test.mjs
++++ b/scripts/check-package-source.test.mjs
+@@ -1,5 +1,6 @@
+ import assert from 'node:assert/strict';
+ import fs from 'node:fs';
++import { createHash } from 'node:crypto';
+ import os from 'node:os';
+ import path from 'node:path';
+ import { test } from 'node:test';
+@@ -12,6 +13,7 @@ const required = [
+   'docs/design/IMPLEMENTATION_INVENTORY.md', 'public/config.local.js.example',
+   'scripts/audit-design-docs.mjs', 'scripts/design-inventory.mjs',
+   'src/routes/router.tsx', 'src/lib/api/haveapi.ts', 'UI_REDESIGN.md',
++  'vendor/haveapi-client-provenance.json',
+ ];
+ 
+ function fixture(callback) {
+@@ -22,6 +24,22 @@ function fixture(callback) {
+       fs.mkdirSync(path.dirname(file), { recursive: true });
+       fs.writeFileSync(file, 'fixture\n');
+     }
++    const bytes = Buffer.from('packed HaveAPI fixture');
++    const commit = 'a'.repeat(40);
++    const filename = `haveapi-client-${commit}.tgz`;
++    const dependency = `file:vendor/${filename}`;
++    const integrity = `sha512-${createHash('sha512').update(bytes).digest('base64')}`;
++    fs.writeFileSync(path.join(root, 'vendor', filename), bytes);
++    fs.writeFileSync(path.join(root, 'vendor/haveapi-client-provenance.json'), JSON.stringify({
++      source: { commit }, version: '0.29.0', artifact: {
++        filename, integrity, bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex'),
++      },
++    }));
++    fs.writeFileSync(path.join(root, 'package.json'), JSON.stringify({ dependencies: { 'haveapi-client': dependency } }));
++    fs.writeFileSync(path.join(root, 'package-lock.json'), JSON.stringify({ packages: {
++      '': { dependencies: { 'haveapi-client': dependency } },
++      'node_modules/haveapi-client': { version: '0.29.0', resolved: dependency, integrity },
++    } }));
+     callback(root);
+   } finally {
+     fs.rmSync(root, { recursive: true, force: true });
+@@ -65,3 +83,23 @@ test('rejects an external source symlink before a build can follow it', () => {
+     }
+   });
+ });
++
++test('rejects a missing or changed vendored HaveAPI archive before dependency installation', () => {
++  fixture((root) => {
++    const archive = path.join(root, 'vendor', `haveapi-client-${'a'.repeat(40)}.tgz`);
++    fs.writeFileSync(archive, 'changed package');
++    assert.throws(() => checkPackageSource(root), /HaveAPI archive bytes do not match/);
++    fs.unlinkSync(archive);
++    assert.throws(() => checkPackageSource(root), /ENOENT/);
++  });
++});
++
++test('rejects a lockfile that selects different HaveAPI bytes', () => {
++  fixture((root) => {
++    const filename = path.join(root, 'package-lock.json');
++    const lock = JSON.parse(fs.readFileSync(filename, 'utf8'));
++    lock.packages['node_modules/haveapi-client'].integrity = 'sha512-changed';
++    fs.writeFileSync(filename, JSON.stringify(lock));
++    assert.throws(() => checkPackageSource(root), /HaveAPI dependency, lock and provenance disagree/);
++  });
++});
+diff --git a/scripts/haveapi-package/browser.spec.ts b/scripts/haveapi-package/browser.spec.ts
+deleted file mode 100644
+index ffc7e0fb..00000000
+--- a/scripts/haveapi-package/browser.spec.ts
++++ /dev/null
+@@ -1,185 +0,0 @@
+-import { test, expect } from '@playwright/test';
+-import { bootstrapVpsAdminWindow } from '../../e2e/fixtures/bootstrap';
+-import { installHaveApiMock, jsonFulfill, failEnvelope } from '../../e2e/fixtures/haveapi';
+-import type { pilot } from './browser';
+-
+-declare global {
+-  interface Window {
+-    haveapiPilot: typeof pilot;
+-  }
+-}
+-const key = 'a'.repeat(64);
+-test.beforeEach(async ({ page }) => {
+-  await bootstrapVpsAdminWindow(page, {
+-    apiUrl: '/api',
+-    webuiNext: { haveApi: { authHeader: 'X-Token', metaNamespace: '_meta' } },
+-  });
+-  await page.addInitScript(() => {
+-    window.vpsAdmin!.accessToken = 'old';
+-  });
+-});
+-async function ready(page: import('@playwright/test').Page) {
+-  await page.goto('/');
+-  await page.waitForFunction(() => Boolean(window.haveapiPilot));
+-  const session = await page.evaluate((key) => window.haveapiPilot.bindSyntheticBffSession(key, 'old'), key);
+-  expect(session).toEqual({
+-    auth: { kind: 'oauth2', accessToken: 'old' },
+-    boundKey: key,
+-    rememberedKey: key,
+-    sameRuntime: true,
+-  });
+-}
+-
+-test('actual package serializes reads and mutations and returns an action receipt before completion', async ({
+-  page,
+-}) => {
+-  const requests: { method: string; query: string; body: unknown }[] = [];
+-  await installHaveApiMock(page, {
+-    handlers: {
+-      'GET things': (ctx) => {
+-        requests.push({ method: ctx.method, query: ctx.url.search, body: ctx.reqJson });
+-        return { things: [{ id: 7 }], _meta: { total_count: 1 } };
+-      },
+-      'POST things': (ctx) => {
+-        requests.push({ method: ctx.method, query: ctx.url.search, body: ctx.reqJson });
+-        return { thing: { id: 8 } };
+-      },
+-      'POST blocking': () => ({ thing: { id: 8 }, _meta: { action_state_id: 91 } }),
+-      'GET action_states/91': () => {
+-        throw new Error('Receipt must not wait for task completion');
+-      },
+-    },
+-  });
+-  await ready(page);
+-  const read = await page.evaluate(() =>
+-    window.haveapiPilot.call({
+-      path: '/things',
+-      namespace: 'thing',
+-      params: { owner: 3, enabled: false },
+-      meta: { limit: 2 },
+-    })
+-  );
+-  expect(read.data).toEqual([{ id: 7 }]);
+-  expect(read.meta).toEqual({ total_count: 1 });
+-  expect(new URLSearchParams(requests[0]?.query).get('thing[owner]')).toBe('3');
+-  expect(new URLSearchParams(requests[0]?.query).get('thing[enabled]')).toBe('false');
+-  expect(new URLSearchParams(requests[0]?.query).get('_meta[limit]')).toBe('2');
+-  await page.evaluate(() =>
+-    window.haveapiPilot.call({
+-      method: 'POST',
+-      path: '/things',
+-      namespace: 'thing',
+-      params: { name: 'x' },
+-      meta: { note: 'y' },
+-    })
+-  );
+-  expect(requests[1]?.body).toEqual({ thing: { name: 'x' }, _meta: { note: 'y' } });
+-  const receipt = await page.evaluate(() => window.haveapiPilot.receipt());
+-  expect(receipt.meta).toEqual({ action_state_id: 91 });
+-});
+-
+-test('qualifying 401 read refreshes once and preserves language; writes never replay', async ({ page }) => {
+-  const reads: string[] = [];
+-  let writes = 0;
+-  let sessions = 0;
+-  await installHaveApiMock(page, {
+-    handlers: {
+-      'GET things': () => ({ things: [7] }),
+-      'POST things': () => {
+-        writes++;
+-        return jsonFulfill(failEnvelope('Unauthorized'), 401);
+-      },
+-    },
+-  });
+-  await page.route('**/api/v7.0/things', async (route) => {
+-    if (route.request().method() !== 'GET') return route.fallback();
+-    reads.push(route.request().headers()['x-token'] ?? '');
+-    expect(route.request().headers()['accept-language']).toBe('cs');
+-    return route.fulfill(
+-      jsonFulfill(
+-        reads.length === 1 ? failEnvelope('Unauthorized') : { status: true, response: { things: [7] } },
+-        reads.length === 1 ? 401 : 200
+-      )
+-    );
+-  });
+-  await page.route('**/session.json', (route) => {
+-    sessions++;
+-    return route.fulfill(jsonFulfill({ sessionKey: key, accessToken: sessions === 1 ? 'new' : 'newer' }));
+-  });
+-  await ready(page);
+-  await page.evaluate(() => {
+-    document.documentElement.lang = 'cs';
+-  });
+-  expect((await page.evaluate(() => window.haveapiPilot.call({ path: '/things' }))).data).toEqual([7]);
+-  expect(reads).toEqual(['old', 'new']);
+-  expect(sessions).toBe(1);
+-  const write = await page.evaluate(async () => {
+-    try {
+-      await window.haveapiPilot.call({ method: 'POST', path: '/things' });
+-      return 'unexpected';
+-    } catch (error) {
+-      return error instanceof Error ? error.name : 'unknown';
+-    }
+-  });
+-  expect(write).toBe('Error');
+-  expect(writes).toBe(1);
+-  expect(sessions).toBe(2);
+-});
+-
+-test('a changed BFF session cannot authorize a read retry', async ({ page }) => {
+-  let reads = 0;
+-  await installHaveApiMock(page, {
+-    handlers: {
+-      'GET things': () => {
+-        reads++;
+-        return jsonFulfill(failEnvelope('Unauthorized'), 401);
+-      },
+-    },
+-  });
+-  await page.route('**/session.json', (route) =>
+-    route.fulfill(jsonFulfill({ sessionKey: 'b'.repeat(64), accessToken: 'foreign' }))
+-  );
+-  await ready(page);
+-  const status = await page.evaluate(async () => {
+-    try {
+-      await window.haveapiPilot.call({ path: '/things' });
+-      return 0;
+-    } catch (error) {
+-      return (error as { httpStatus?: number }).httpStatus;
+-    }
+-  });
+-  expect(status).toBe(401);
+-  expect(reads).toBe(1);
+-});
+-
+-test('pre-abort sends nothing and in-flight abort rejects with AbortError', async ({ page }) => {
+-  let sends = 0;
+-  await installHaveApiMock(page, { handlers: {} });
+-  await page.route('**/api/v7.0/slow', async (route) => {
+-    sends++;
+-    await new Promise((resolve) => setTimeout(resolve, 500));
+-    await route.fulfill(jsonFulfill({ status: true, response: {} })).catch(() => {});
+-  });
+-  await ready(page);
+-  const pre = await page.evaluate(async () => {
+-    try {
+-      await window.haveapiPilot.abortable({ path: '/slow' }, true);
+-      return '';
+-    } catch (error) {
+-      return (error as Error).name;
+-    }
+-  });
+-  expect(pre).toBe('AbortError');
+-  expect(sends).toBe(0);
+-  const pending = page.evaluate(async () => {
+-    try {
+-      await window.haveapiPilot.abortable({ path: '/slow' });
+-      return '';
+-    } catch (error) {
+-      return (error as Error).name;
+-    }
+-  });
+-  await expect.poll(() => sends).toBe(1);
+-  await page.evaluate(() => window.haveapiPilot.abort());
+-  expect(await pending).toBe('AbortError');
+-});
+diff --git a/scripts/haveapi-package/browser.ts b/scripts/haveapi-package/browser.ts
+deleted file mode 100644
+index c88bd541..00000000
+--- a/scripts/haveapi-package/browser.ts
++++ /dev/null
+@@ -1,26 +0,0 @@
+-import { AsyncClient } from 'haveapi-client';
+-import { createRequestClientCall } from '../../src/lib/api/haveapiRequestClient';
+-import { requireActionStateResult, isAmbiguousMutationError, type CallOpts } from '../../src/lib/api/haveapi';
+-import { bindSyntheticBffSession } from './syntheticSession';
+-
+-const client = new AsyncClient(`${location.origin}/api/v7.0`);
+-const call = createRequestClientCall(client);
+-let controller: AbortController | undefined;
+-export const pilot = {
+-  call,
+-  receipt: async () => requireActionStateResult(await call({ method: 'POST', path: '/blocking' }), 'blocking'),
+-  abortable: (opts: CallOpts, alreadyAborted = false) => {
+-    controller = new AbortController();
+-    if (alreadyAborted) controller.abort();
+-    return call({ ...opts, signal: controller.signal });
+-  },
+-  abort: () => controller?.abort(),
+-  bindSyntheticBffSession,
+-  uncertain: isAmbiguousMutationError,
+-};
+-declare global {
+-  interface Window {
+-    haveapiPilot: typeof pilot;
+-  }
+-}
+-window.haveapiPilot = pilot;
+diff --git a/scripts/haveapi-package/consumer.ts b/scripts/haveapi-package/consumer.ts
+deleted file mode 100644
+index 8b3dfe3c..00000000
+--- a/scripts/haveapi-package/consumer.ts
++++ /dev/null
+@@ -1,9 +0,0 @@
+-import { AsyncClient } from 'haveapi-client';
+-import { createRequestClientCall, type HaveApiRequestClient } from '../../src/lib/api/haveapiRequestClient';
+-
+-const actual: HaveApiRequestClient = new AsyncClient('https://api.example.test/v7.0');
+-const call = createRequestClientCall(actual);
+-const result: Promise<{ data: { id: number } }> = call<{ id: number }>({ path: '/things/7' });
+-void result;
+-// @ts-expect-error The structural seam must reject unsupported callback-style calls.
+-actual.request({ method: 'GET', path: '/things' }, () => {});
+diff --git a/scripts/haveapi-package/index.html b/scripts/haveapi-package/index.html
+deleted file mode 100644
+index 95357ab8..00000000
+--- a/scripts/haveapi-package/index.html
++++ /dev/null
+@@ -1,10 +0,0 @@
+-<!doctype html>
+-<html lang="en">
+-  <head>
+-    <meta charset="utf-8" />
+-    <title>HaveAPI package fixture</title>
+-  </head>
+-  <body>
+-    <script type="module" src="./browser.ts"></script>
+-  </body>
+-</html>
+diff --git a/scripts/haveapi-package/playwright.config.ts b/scripts/haveapi-package/playwright.config.ts
+deleted file mode 100644
+index d5182f5f..00000000
+--- a/scripts/haveapi-package/playwright.config.ts
++++ /dev/null
+@@ -1,29 +0,0 @@
+-import { fileURLToPath } from 'node:url';
+-import { defineConfig } from '@playwright/test';
+-
+-const chromium = {
+-  browserName: 'chromium' as const,
+-  launchOptions: { executablePath: process.env['E2E_CHROMIUM_EXECUTABLE_PATH'] || undefined },
+-};
+-export default defineConfig({
+-  testDir: '.',
+-  workers: 1,
+-  retries: 0,
+-  timeout: 30_000,
+-  outputDir: 'test-results',
+-  reporter: 'list',
+-  use: { baseURL: 'http://127.0.0.1:5189', trace: 'retain-on-failure' },
+-  projects: [
+-    { name: 'adapter-chromium', testMatch: 'browser.spec.ts', use: chromium },
+-    { name: 'umd-chromium', testMatch: 'umd.spec.ts', use: chromium },
+-    { name: 'umd-firefox', testMatch: 'umd.spec.ts', use: { browserName: 'firefox' } },
+-    { name: 'umd-webkit', testMatch: 'umd.spec.ts', use: { browserName: 'webkit' } },
+-  ],
+-  webServer: {
+-    cwd: fileURLToPath(new URL('../..', import.meta.url)),
+-    command:
+-      'node node_modules/vite/bin/vite.js preview --config scripts/haveapi-package/vite.config.ts --host 127.0.0.1 --port 5189 --strictPort',
+-    url: 'http://127.0.0.1:5189',
+-    reuseExistingServer: false,
+-  },
+-});
+diff --git a/scripts/haveapi-package/syntheticSession.ts b/scripts/haveapi-package/syntheticSession.ts
+deleted file mode 100644
+index a57ed0e2..00000000
+--- a/scripts/haveapi-package/syntheticSession.ts
++++ /dev/null
+@@ -1,16 +0,0 @@
+-import { getRuntimeConfig } from '../../src/app/config';
+-import { getBffSessionKey, rememberBffSession } from '../../src/lib/auth/bffSession';
+-import { bindBffImpersonationToSession, getValidatedBffSessionKey } from '../../src/lib/auth/impersonation';
+-
+-/** The fixture supplies an already validated synthetic identity, without OAuth/bootstrap proof. */
+-export function bindSyntheticBffSession(key: string, token: string) {
+-  const runtime = window.vpsAdmin;
+-  bindBffImpersonationToSession(key, window.sessionStorage);
+-  rememberBffSession(new URL('/session.json', window.location.href).href, key, token);
+-  return {
+-    auth: getRuntimeConfig().auth,
+-    boundKey: getValidatedBffSessionKey(),
+-    rememberedKey: getBffSessionKey(),
+-    sameRuntime: window.vpsAdmin === runtime,
+-  };
+-}
+diff --git a/scripts/haveapi-package/tsconfig.json b/scripts/haveapi-package/tsconfig.json
+deleted file mode 100644
+index 2d4a78af..00000000
+--- a/scripts/haveapi-package/tsconfig.json
++++ /dev/null
+@@ -1,12 +0,0 @@
+-{
+-  "extends": "../../tsconfig.json",
+-  "include": [
+-    "consumer.ts",
+-    "browser.ts",
+-    "browser.spec.ts",
+-    "umd.spec.ts",
+-    "vite.config.ts",
+-    "playwright.config.ts",
+-    "../../src/types/vpsadmin.d.ts"
+-  ]
+-}
+diff --git a/scripts/haveapi-package/umd.spec.ts b/scripts/haveapi-package/umd.spec.ts
+deleted file mode 100644
+index ba5a2135..00000000
+--- a/scripts/haveapi-package/umd.spec.ts
++++ /dev/null
+@@ -1,134 +0,0 @@
+-import { readFileSync } from 'node:fs';
+-import { createRequire } from 'node:module';
+-import { test, expect } from '@playwright/test';
+-
+-// Read the package's unchanged main artifact; this page never imports it through Vite.
+-const description = {
+-  authentication: {},
+-  meta: { namespace: '_meta' },
+-  resources: {
+-    widgets: {
+-      resources: {},
+-      actions: {
+-        show: {
+-          aliases: ['get'],
+-          blocking: false,
+-          method: 'GET',
+-          path: '/v1/widgets/{widget_id}',
+-          input: null,
+-          output: {
+-            layout: 'object',
+-            namespace: 'widget',
+-            parameters: { id: { type: 'Integer' }, name: { type: 'String' } },
+-          },
+-        },
+-      },
+-    },
+-  },
+-};
+-const reply = { widget: { id: 7, name: 'seven' }, _meta: { path_params: [7] } };
+-const envelope = (response: unknown) => ({ version: '2.0', status: true, message: null, errors: null, response });
+-declare global {
+-  interface Window {
+-    HaveAPI: typeof import('haveapi-client');
+-  }
+-}
+-
+-test('ordinary UMD script supports callback and Promise clients through native XHR', async ({ page }) => {
+-  const bundle = readFileSync(createRequire(import.meta.url).resolve('haveapi-client'), 'utf8');
+-  const requests: string[] = [];
+-  const unexpected: string[] = [];
+-  const errors: string[] = [];
+-  page.on('pageerror', (error) => errors.push(error.message));
+-  await page.route('**/*', async (route) => {
+-    const request = route.request();
+-    const pathname = new URL(request.url()).pathname;
+-    if (pathname === '/umd-fixture') {
+-      return route.fulfill({
+-        contentType: 'text/html',
+-        body: '<!doctype html><link rel="icon" href="data:,"><script src="/umd-client.js"></script>',
+-      });
+-    }
+-    if (pathname === '/umd-client.js') return route.fulfill({ contentType: 'application/javascript', body: bundle });
+-    const key = `${request.method()} ${pathname}`;
+-    requests.push(key);
+-    if (key === 'OPTIONS /umd-api/v1/' || key === 'GET /umd-api/v1/widgets/7') {
+-      return route.fulfill({
+-        contentType: 'application/json',
+-        body: JSON.stringify(envelope(key.startsWith('OPTIONS') ? description : reply)),
+-      });
+-    }
+-    unexpected.push(key);
+-    await route.abort();
+-  });
+-  await page.goto('/umd-fixture');
+-  const result = await page.evaluate(async () => {
+-    const api = window.HaveAPI;
+-    const constructors = {
+-      callback: typeof api.Client,
+-      async: typeof api.AsyncClient,
+-      hasDefault: Object.hasOwn(api, 'default'),
+-    };
+-    type LegacyClient = InstanceType<typeof api.Client>;
+-    // This fixture supplies the schema for the legacy dynamic properties.
+-    type Widget = { id: number; name: string; apiResponse(): { isOk(): boolean } };
+-    const legacy = new api.Client(`${location.origin}/umd-api`, { version: 1 }) as LegacyClient & {
+-      widgets: { show(id: number, opts: { onReply(client: LegacyClient, value: Widget): void }): void };
+-    };
+-    let setupReturn: unknown;
+-    const setup = await new Promise<boolean>((resolve) => {
+-      setupReturn = legacy.setup((_client, ok) => resolve(ok));
+-    });
+-    if (!setup) throw new Error('Callback setup failed');
+-    let callReturn: unknown;
+-    const callback = await new Promise((resolve) => {
+-      callReturn = legacy.widgets.show(7, {
+-        onReply: (_client, value) =>
+-          resolve({
+-            id: value.id,
+-            name: value.name,
+-            ok: value.apiResponse().isOk(),
+-          }),
+-      });
+-    });
+-    const modern = new api.AsyncClient(`${location.origin}/umd-api`, { version: 1 });
+-    await modern.setup();
+-    const receipt = await modern.resource('widgets').action('show')<import('haveapi-client').AsyncResourceInstance>(7);
+-    return {
+-      constructors,
+-      setup,
+-      setupReturnsUndefined: setupReturn === undefined,
+-      callbackReturnsUndefined: callReturn === undefined,
+-      callback,
+-      async: {
+-        id: receipt.value.get('id'),
+-        name: receipt.value.get('name'),
+-        data: receipt.response.data,
+-        envelope: receipt.response.envelope,
+-        meta: receipt.response.meta,
+-        httpStatus: receipt.response.httpStatus,
+-      },
+-    };
+-  });
+-  expect(result.constructors).toEqual({ callback: 'function', async: 'function', hasDefault: false });
+-  expect(result.setup).toBe(true);
+-  expect(result.setupReturnsUndefined).toBe(true);
+-  expect(result.callbackReturnsUndefined).toBe(true);
+-  expect(result.callback).toEqual({ id: 7, name: 'seven', ok: true });
+-  expect(result.async).toEqual({
+-    id: 7,
+-    name: 'seven',
+-    data: reply.widget,
+-    envelope: envelope(reply),
+-    meta: { path_params: [7] },
+-    httpStatus: 200,
+-  });
+-  expect(requests).toEqual([
+-    'OPTIONS /umd-api/v1/',
+-    'GET /umd-api/v1/widgets/7',
+-    'OPTIONS /umd-api/v1/',
+-    'GET /umd-api/v1/widgets/7',
+-  ]);
+-  expect(unexpected).toEqual([]);
+-  expect(errors).toEqual([]);
+-});
+diff --git a/scripts/haveapi-package/vite.config.ts b/scripts/haveapi-package/vite.config.ts
+deleted file mode 100644
+index 5f842e12..00000000
+--- a/scripts/haveapi-package/vite.config.ts
++++ /dev/null
+@@ -1,8 +0,0 @@
+-import { fileURLToPath } from 'node:url';
+-import { defineConfig } from 'vite';
+-
+-export default defineConfig({
+-  root: fileURLToPath(new URL('.', import.meta.url)),
+-  define: { 'import.meta.env.VITE_RUNTIME_MODE': JSON.stringify('bff') },
+-  build: { outDir: 'dist', emptyOutDir: true },
+-});
+diff --git a/scripts/test-haveapi-package.mjs b/scripts/test-haveapi-package.mjs
+deleted file mode 100644
+index e55a4c4e..00000000
+--- a/scripts/test-haveapi-package.mjs
++++ /dev/null
+@@ -1,216 +0,0 @@
+-#!/usr/bin/env node
+-import { createHash } from 'node:crypto';
+-import { spawn, execFileSync } from 'node:child_process';
+-import { mkdtemp, mkdir, readFile, writeFile, stat } from 'node:fs/promises';
+-import path from 'node:path';
+-import { fileURLToPath, pathToFileURL } from 'node:url';
+-
+-export function parseOptions(args) {
+-  const options = { webuiRef: 'HEAD' };
+-  const seen = new Set();
+-  const keys = new Map([
+-    ['--package', 'packagePath'],
+-    ['--webui-ref', 'webuiRef'],
+-    ['--haveapi-ref', 'haveapiRef'],
+-  ]);
+-  for (let i = 0; i < args.length; i++) {
+-    const key = keys.get(args[i]);
+-    if (!key || !args[i + 1] || args[i + 1].startsWith('--') || seen.has(key)) {
+-      throw new Error(`Invalid or duplicate argument: ${args[i]}`);
+-    }
+-    seen.add(key);
+-    options[key] = args[++i];
+-  }
+-  if (!options.packagePath || !path.isAbsolute(options.packagePath) || !options.packagePath.endsWith('.tgz')) {
+-    throw new Error('--package must be an absolute .tgz path');
+-  }
+-  if (options.haveapiRef && !/^[a-f0-9]{40}$/.test(options.haveapiRef))
+-    throw new Error('--haveapi-ref must be a full commit SHA');
+-  return options;
+-}
+-
+-export function candidateProvenance(supplied, gitHead) {
+-  if (gitHead && !/^[a-f0-9]{40}$/.test(gitHead)) throw new Error('Candidate gitHead must be a full commit SHA');
+-  if (supplied && gitHead && supplied !== gitHead) throw new Error('--haveapi-ref disagrees with candidate gitHead');
+-  if (!supplied && !gitHead) throw new Error('Candidate has no gitHead; provide --haveapi-ref from the pack owner');
+-  return {
+-    haveapiRef: supplied || gitHead,
+-    provenance: supplied ? 'pack-owner assertion' : 'package gitHead metadata',
+-  };
+-}
+-
+-const sha256 = (value) => createHash('sha256').update(value).digest('hex');
+-const readJson = async (filename) => JSON.parse(await readFile(filename, 'utf8'));
+-
+-/** Capture only lock-listed packages installed on this platform after npm ci. */
+-async function captureInstallBaseline(directory) {
+-  const files = {};
+-  for (const filename of ['package.json', 'package-lock.json']) {
+-    files[filename] = sha256(await readFile(path.join(directory, filename)));
+-  }
+-  const lock = await readJson(path.join(directory, 'package-lock.json'));
+-  const packages = [];
+-  for (const [relative, expected] of Object.entries(lock.packages)) {
+-    if (!relative.startsWith('node_modules/')) continue;
+-    const installedPath = path.join(directory, relative);
+-    try {
+-      await stat(installedPath);
+-    } catch (error) {
+-      if (error.code === 'ENOENT') continue; // Platform-optional packages can be absent.
+-      throw error;
+-    }
+-    const installed = await readJson(path.join(installedPath, 'package.json'));
+-    if (
+-      typeof installed.name !== 'string' ||
+-      typeof installed.version !== 'string' ||
+-      installed.version !== expected.version
+-    ) {
+-      throw new Error(`Installed baseline disagrees with lock: ${relative}`);
+-    }
+-    packages.push({ path: relative, name: installed.name, version: installed.version });
+-  }
+-  return { files, packages };
+-}
+-
+-/** Candidate dependencies may add paths, while the existing locked graph stays fixed. */
+-async function verifyInstallBaseline(directory, baseline) {
+-  for (const [filename, expected] of Object.entries(baseline.files)) {
+-    if (sha256(await readFile(path.join(directory, filename))) !== expected) {
+-      throw new Error(`Candidate install changed ${filename}`);
+-    }
+-  }
+-  for (const expected of baseline.packages) {
+-    let installed;
+-    try {
+-      installed = await readJson(path.join(directory, expected.path, 'package.json'));
+-    } catch (error) {
+-      if (error.code === 'ENOENT') throw new Error(`Candidate install removed locked package: ${expected.path}`);
+-      throw error;
+-    }
+-    if (installed.name !== expected.name || installed.version !== expected.version) {
+-      throw new Error(`Candidate install changed locked package: ${expected.path}`);
+-    }
+-  }
+-}
+-
+-// Forward cancellation to the whole owned subprocess group, including a Vite child.
+-export async function run(command, args, cwd) {
+-  await new Promise((resolve, reject) => {
+-    const child = spawn(command, args, { cwd, stdio: 'inherit', detached: true });
+-    const stop = (signal) => {
+-      try {
+-        process.kill(-child.pid, signal);
+-      } catch {}
+-    };
+-    const interrupt = () => stop('SIGINT');
+-    const terminate = () => stop('SIGTERM');
+-    process.on('SIGINT', interrupt);
+-    process.on('SIGTERM', terminate);
+-    const cleanup = () => {
+-      process.off('SIGINT', interrupt);
+-      process.off('SIGTERM', terminate);
+-    };
+-    child.once('error', (error) => {
+-      cleanup();
+-      reject(error);
+-    });
+-    child.once('exit', (code, signal) => {
+-      cleanup();
+-      if (code === 0) resolve();
+-      else reject(new Error(`${command} exited ${code ?? signal}`));
+-    });
+-  });
+-}
+-
+-export async function runPilot(
+-  options,
+-  { cwd = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'), runCommand = run } = {}
+-) {
+-  if (!(await stat(options.packagePath)).isFile()) throw new Error('Candidate must be a regular file');
+-  const git = (args) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
+-  const webuiRef = git(['rev-parse', '--verify', '--end-of-options', `${options.webuiRef}^{commit}`]);
+-  const candidateBytes = await readFile(options.packagePath);
+-  const tarSha256 = sha256(candidateBytes);
+-  // Nix shells remove their TMPDIR on exit; retain pilot evidence outside it.
+-  const directory = await mkdtemp(path.join(process.env.HAVEAPI_PACKAGE_TMPDIR || '/tmp', 'webui-haveapi-package-'));
+-  const sourceDirectory = path.join(directory, 'source');
+-  await mkdir(sourceDirectory);
+-  const candidatePath = path.join(directory, 'candidate.tgz');
+-  await writeFile(candidatePath, candidateBytes);
+-  const report = {
+-    directory,
+-    sourceDirectory,
+-    webuiRef,
+-    tarSha256,
+-    packagePath: options.packagePath,
+-    node: process.version,
+-    status: 'incomplete',
+-  };
+-  const record = () => writeFile(path.join(directory, 'result.json'), JSON.stringify(report, null, 2) + '\n');
+-  console.log(`Package pilot artifacts: ${directory}`);
+-  try {
+-    // Read only committed objects. The caller's worktree, index and lockfile are untouched.
+-    await runCommand(
+-      'git',
+-      ['archive', '--format=tar', `--output=${path.join(directory, 'source.tar')}`, webuiRef],
+-      cwd
+-    );
+-    await runCommand('tar', ['-xf', path.join(directory, 'source.tar')], sourceDirectory);
+-    report.npm = execFileSync('npm', ['--version'], { cwd, encoding: 'utf8' }).trim();
+-    await runCommand('npm', ['ci'], sourceDirectory);
+-    const baseline = await captureInstallBaseline(sourceDirectory);
+-    await writeFile(path.join(directory, 'dependency-baseline.json'), JSON.stringify(baseline, null, 2) + '\n');
+-    report.lockedGraph = { packageCount: baseline.packages.length, files: baseline.files };
+-    await runCommand(
+-      'npm',
+-      ['install', '--ignore-scripts', '--no-save', '--package-lock=true', candidatePath],
+-      sourceDirectory
+-    );
+-    await verifyInstallBaseline(sourceDirectory, baseline);
+-    const pkg = JSON.parse(
+-      await readFile(path.join(sourceDirectory, 'node_modules/haveapi-client/package.json'), 'utf8')
+-    );
+-    if (pkg.name !== 'haveapi-client') throw new Error('Candidate is not haveapi-client');
+-    Object.assign(report, candidateProvenance(options.haveapiRef, pkg.gitHead), { packageVersion: pkg.version });
+-    for (const name of ['typescript', 'vite', '@playwright/test']) {
+-      const metadata = JSON.parse(
+-        await readFile(path.join(sourceDirectory, 'node_modules', name, 'package.json'), 'utf8')
+-      );
+-      (report.tools ??= {})[name] = metadata.version;
+-    }
+-    await record();
+-    await runCommand(
+-      'node',
+-      ['node_modules/typescript/bin/tsc', '-p', 'scripts/haveapi-package/tsconfig.json'],
+-      sourceDirectory
+-    );
+-    await runCommand(
+-      'node',
+-      ['node_modules/vite/bin/vite.js', 'build', '--config', 'scripts/haveapi-package/vite.config.ts'],
+-      sourceDirectory
+-    );
+-    await runCommand(
+-      'node',
+-      ['scripts/playwright.mjs', 'test', '--config', 'scripts/haveapi-package/playwright.config.ts'],
+-      sourceDirectory
+-    );
+-    report.status = 'passed';
+-  } catch (error) {
+-    report.status = 'failed';
+-    report.error = error.message;
+-    throw error;
+-  } finally {
+-    await record();
+-    console.log(`Package pilot result: ${path.join(directory, 'result.json')}`);
+-  }
+-  return report;
+-}
+-
+-if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
+-  try {
+-    await runPilot(parseOptions(process.argv.slice(2)));
+-  } catch (error) {
+-    console.error(error.message);
+-    process.exitCode = 1;
+-  }
+-}
+diff --git a/scripts/test-haveapi-package.test.mjs b/scripts/test-haveapi-package.test.mjs
+deleted file mode 100644
+index e5335b9a..00000000
+--- a/scripts/test-haveapi-package.test.mjs
++++ /dev/null
+@@ -1,249 +0,0 @@
+-import assert from 'node:assert/strict';
+-import { test } from 'node:test';
+-import { parseOptions, candidateProvenance } from './test-haveapi-package.mjs';
+-
+-test('package pilot requires an absolute tarball and a full optional source ref', () => {
+-  assert.deepEqual(parseOptions(['--package', '/tmp/candidate.tgz']), {
+-    packagePath: '/tmp/candidate.tgz',
+-    webuiRef: 'HEAD',
+-  });
+-  for (const args of [
+-    [],
+-    ['--package', 'relative.tgz'],
+-    ['--package', '/tmp/a'],
+-    ['--wat'],
+-    ['--package', '/tmp/a.tgz', '--haveapi-ref', 'abc'],
+-    ['--package', '/tmp/a.tgz', '--package', '/tmp/b.tgz'],
+-  ]) {
+-    assert.throws(() => parseOptions(args));
+-  }
+-});
+-
+-test('source provenance is explicit and conflicting claims fail closed', () => {
+-  const ref = 'a'.repeat(40);
+-  assert.deepEqual(candidateProvenance(ref), { haveapiRef: ref, provenance: 'pack-owner assertion' });
+-  assert.deepEqual(candidateProvenance(undefined, ref), { haveapiRef: ref, provenance: 'package gitHead metadata' });
+-  assert.throws(() => candidateProvenance());
+-  assert.throws(() => candidateProvenance(ref, 'b'.repeat(40)));
+-  assert.throws(() => candidateProvenance(undefined, 'bad'));
+-});
+-
+-import { mkdtemp, mkdir, writeFile, readFile, rm, stat } from 'node:fs/promises';
+-import { execFileSync } from 'node:child_process';
+-import os from 'node:os';
+-import path from 'node:path';
+-import { fileURLToPath } from 'node:url';
+-import { runPilot, run } from './test-haveapi-package.mjs';
+-
+-test('actual browser config starts its preview command from the snapshot root', async () => {
+-  const configUrl = new URL('./haveapi-package/playwright.config.ts', import.meta.url);
+-  const { default: config } = await import(configUrl.href);
+-  const server = config.webServer;
+-  const effectiveCwd = server.cwd ?? path.dirname(fileURLToPath(configUrl));
+-  const root = path.resolve(fileURLToPath(new URL('../', import.meta.url)));
+-  assert.equal(path.resolve(effectiveCwd), root);
+-  const args = server.command.split(/\s+/);
+-  assert.equal(args[0], 'node');
+-  assert.equal((await stat(path.resolve(effectiveCwd, args[1]))).isFile(), true);
+-  const configArgument = args.indexOf('--config');
+-  assert.notEqual(configArgument, -1);
+-  assert.equal((await stat(path.resolve(effectiveCwd, args[configArgument + 1]))).isFile(), true);
+-});
+-
+-test('actual package fixture config selects the required production BFF runtime mode', async () => {
+-  const { default: config } = await import('./haveapi-package/vite.config.ts');
+-  const { resolveRuntimeMode } = await import('../src/app/runtimeMode.ts');
+-  const mode = JSON.parse(config.define['import.meta.env.VITE_RUNTIME_MODE']);
+-  assert.equal(resolveRuntimeMode(mode, false), 'bff');
+-});
+-
+-test('synthetic fixture binding satisfies the real BFF auth guard without replacing runtime identity', async () => {
+-  const { createServer } = await import('vite');
+-  const { JSDOM } = await import('jsdom');
+-  const root = fileURLToPath(new URL('../', import.meta.url));
+-  const dom = new JSDOM('', { url: 'http://fixture.example.test' });
+-  const previousWindow = globalThis.window;
+-  globalThis.window = dom.window;
+-  let server;
+-  try {
+-    server = await createServer({
+-      configFile: path.join(root, 'scripts/haveapi-package/vite.config.ts'),
+-      server: { middlewareMode: true, hmr: false },
+-      // This gate loads only the session module, without the candidate HTML entry.
+-      optimizeDeps: { noDiscovery: true, include: [] },
+-    });
+-    const { getRuntimeConfig } = await server.ssrLoadModule(path.join(root, 'src/app/config.ts'));
+-    const { bindSyntheticBffSession } = await server.ssrLoadModule('/syntheticSession.ts');
+-    const runtime = { api: { url: '/api', version: '7.0' }, accessToken: 'old' };
+-    window.vpsAdmin = runtime;
+-    assert.deepEqual(getRuntimeConfig().auth, { kind: 'none' });
+-    const key = 'a'.repeat(64);
+-    assert.deepEqual(bindSyntheticBffSession(key, 'old'), {
+-      auth: { kind: 'oauth2', accessToken: 'old' },
+-      boundKey: key,
+-      rememberedKey: key,
+-      sameRuntime: true,
+-    });
+-    assert.equal(window.vpsAdmin, runtime);
+-  } finally {
+-    await server?.close();
+-    dom.window.close();
+-    if (previousWindow === undefined) delete globalThis.window;
+-    else globalThis.window = previousWindow;
+-  }
+-});
+-
+-const baselinePackages = ['typescript', 'vite', '@playwright/test', 'locked-dependency'];
+-const lockedVersion = '1.0.0';
+-async function writePackage(root, name, version = lockedVersion) {
+-  const directory = path.join(root, 'node_modules', name);
+-  await mkdir(directory, { recursive: true });
+-  await writeFile(path.join(directory, 'package.json'), JSON.stringify({ name, version }));
+-}
+-
+-async function withPilotFixture(check, { mutateInstall = async () => {}, mutateBaseline = async () => {} } = {}) {
+-  const repository = await mkdtemp(path.join(os.tmpdir(), 'webui-package-script-test-'));
+-  let artifact;
+-  try {
+-    const git = (args) => execFileSync('git', args, { cwd: repository, stdio: 'pipe' });
+-    git(['init']);
+-    const lock = {
+-      lockfileVersion: 3,
+-      packages: {
+-        '': { name: 'fixture' },
+-        ...Object.fromEntries(baselinePackages.map((name) => ['node_modules/' + name, { version: lockedVersion }])),
+-        'node_modules/platform-optional': { version: lockedVersion, optional: true },
+-      },
+-    };
+-    const lockBytes = JSON.stringify(lock);
+-    const manifestBytes = JSON.stringify({ name: 'fixture' });
+-    await writeFile(path.join(repository, 'package.json'), manifestBytes);
+-    await writeFile(path.join(repository, 'package-lock.json'), lockBytes);
+-    git(['add', 'package.json', 'package-lock.json']);
+-    git(['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.test', 'commit', '-m', 'fixture']);
+-    const sha = git(['rev-parse', 'HEAD']).toString().trim();
+-    await writeFile(path.join(repository, 'package-lock.json'), 'uncommitted lock\n');
+-    const candidate = path.join(repository, 'candidate.tgz');
+-    await writeFile(candidate, 'candidate bytes');
+-    const calls = [];
+-    const execute = () =>
+-      runPilot(
+-        { packagePath: candidate, webuiRef: 'HEAD', haveapiRef: 'a'.repeat(40) },
+-        {
+-          cwd: repository,
+-          async runCommand(command, args, cwd) {
+-            calls.push({ command, args, cwd });
+-            if (command === 'git' || command === 'tar') return run(command, args, cwd);
+-            assert.notEqual(cwd, repository);
+-            artifact = path.dirname(cwd);
+-            if (command === 'npm' && args[0] === 'ci') {
+-              assert.equal(await readFile(path.join(cwd, 'package-lock.json'), 'utf8'), lockBytes);
+-              for (const name of baselinePackages) await writePackage(cwd, name);
+-              await mutateBaseline(cwd);
+-              await writeFile(candidate, 'later replacement');
+-            }
+-            if (command === 'npm' && args[0] === 'install') {
+-              assert.deepEqual(args, [
+-                'install',
+-                '--ignore-scripts',
+-                '--no-save',
+-                '--package-lock=true',
+-                path.join(artifact, 'candidate.tgz'),
+-              ]);
+-              assert.equal(await readFile(args[4], 'utf8'), 'candidate bytes');
+-              await writePackage(cwd, 'haveapi-client');
+-              await writePackage(cwd, 'candidate-added-dependency');
+-              await mutateInstall(cwd);
+-            }
+-          },
+-        }
+-      );
+-    await check({ execute, calls, sha, directory: () => artifact });
+-    assert.equal(await readFile(path.join(repository, 'package-lock.json'), 'utf8'), 'uncommitted lock\n');
+-    assert.equal(await readFile(path.join(repository, 'package.json'), 'utf8'), manifestBytes);
+-  } finally {
+-    await rm(repository, { recursive: true, force: true });
+-    if (artifact) await rm(artifact, { recursive: true, force: true });
+-  }
+-}
+-
+-test('pilot snapshots committed source, freezes tar bytes and preserves the installed locked graph', async () => {
+-  await withPilotFixture(async ({ execute, calls, sha, directory }) => {
+-    const result = await execute();
+-    assert.equal(result.webuiRef, sha);
+-    assert.equal(result.status, 'passed');
+-    assert.equal(result.lockedGraph.packageCount, baselinePackages.length);
+-    assert.equal(calls.filter((call) => call.command === 'node').length, 3);
+-    const baseline = JSON.parse(await readFile(path.join(directory(), 'dependency-baseline.json'), 'utf8'));
+-    assert.equal(
+-      baseline.packages.some((entry) => entry.path.endsWith('platform-optional')),
+-      false
+-    );
+-    assert.equal(
+-      baseline.packages.some((entry) => entry.name === 'candidate-added-dependency'),
+-      false
+-    );
+-    assert.equal(
+-      JSON.parse(await readFile(path.join(directory(), 'result.json'), 'utf8')).provenance,
+-      'pack-owner assertion'
+-    );
+-  });
+-});
+-
+-for (const filename of ['package.json', 'package-lock.json']) {
+-  test(`candidate mutation of ${filename} fails before any consumer tool`, async () => {
+-    await withPilotFixture(
+-      async ({ execute, calls, directory }) => {
+-        await assert.rejects(execute(), new RegExp('Candidate install changed ' + filename.replaceAll('.', '\\.')));
+-        assert.equal(calls.filter((call) => call.command === 'node').length, 0);
+-        assert.equal(JSON.parse(await readFile(path.join(directory(), 'result.json'), 'utf8')).status, 'failed');
+-      },
+-      { mutateInstall: (cwd) => writeFile(path.join(cwd, filename), 'tampered') }
+-    );
+-  });
+-}
+-
+-for (const mode of ['version', 'name', 'removed']) {
+-  test(`candidate locked-package ${mode} drift fails before any consumer tool`, async () => {
+-    await withPilotFixture(
+-      async ({ execute, calls }) => {
+-        await assert.rejects(
+-          execute(),
+-          /Candidate install (changed|removed) locked package: node_modules\/locked-dependency/
+-        );
+-        assert.equal(calls.filter((call) => call.command === 'node').length, 0);
+-      },
+-      {
+-        mutateInstall: async (cwd) => {
+-          const directory = path.join(cwd, 'node_modules/locked-dependency');
+-          if (mode === 'removed') await rm(directory, { recursive: true });
+-          else
+-            await writeFile(
+-              path.join(directory, 'package.json'),
+-              JSON.stringify({
+-                name: mode === 'name' ? 'replacement' : 'locked-dependency',
+-                version: mode === 'version' ? '2.0.0' : lockedVersion,
+-              })
+-            );
+-        },
+-      }
+-    );
+-  });
+-}
+-
+-test('baseline disagreement with the lock fails before candidate install', async () => {
+-  await withPilotFixture(
+-    async ({ execute, calls }) => {
+-      await assert.rejects(execute(), /Installed baseline disagrees with lock/);
+-      assert.equal(
+-        calls.some((call) => call.command === 'npm' && call.args[0] === 'install'),
+-        false
+-      );
+-      assert.equal(
+-        calls.some((call) => call.command === 'node'),
+-        false
+-      );
+-    },
+-    { mutateBaseline: (cwd) => writePackage(cwd, 'locked-dependency', '2.0.0') }
+-  );
+-});
+diff --git a/vendor/README.md b/vendor/README.md
+new file mode 100644
+index 00000000..542b5fba
+--- /dev/null
++++ b/vendor/README.md
+@@ -0,0 +1,12 @@
++# HaveAPI client archive
++
++`haveapi-client-f94e65e35166a0bf8048a27c9d57c7d36957d65b.tgz` is the normal
++frontend dependency, copied unchanged from an npm pack of the committed HaveAPI
++JavaScript client. It is not an npm registry release.
++
++See [client provenance and updates](../docs/design/HAVEAPI_CLIENT.md) for the
++source revision, build commands and installation contract.
++[The manifest](haveapi-client-provenance.json) records the complete packed file
++inventory, source/toolchain, archive SHA-256 and npm integrity. The archive
++includes HaveAPI's MIT `LICENSE.txt` and copyright notice. Keep that license when
++redistributing the package.
+diff --git a/vendor/haveapi-client-f94e65e35166a0bf8048a27c9d57c7d36957d65b.tgz b/vendor/haveapi-client-f94e65e35166a0bf8048a27c9d57c7d36957d65b.tgz
+new file mode 100644
+index 0000000000000000000000000000000000000000..00e298f422d07cb922a4a1740b0c20d194171cdf
+GIT binary patch
+literal 55702
+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
+zN%0A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
+GSQr2_hHC!+
+
+literal 0
+HcmV?d00001
+
+diff --git a/vendor/haveapi-client-provenance.json b/vendor/haveapi-client-provenance.json
+new file mode 100644
+index 00000000..c67ba1b3
+--- /dev/null
++++ b/vendor/haveapi-client-provenance.json
+@@ -0,0 +1,290 @@
++{
++  "schema": 1,
++  "name": "haveapi-client",
++  "version": "0.29.0",
++  "source": {
++    "repository": "https://github.com/vpsfreecz/haveapi",
++    "commit": "f94e65e35166a0bf8048a27c9d57c7d36957d65b",
++    "directory": "clients/js",
++    "committedFilesReconciled": true,
++    "gitHeadInArchive": false
++  },
++  "artifact": {
++    "filename": "haveapi-client-f94e65e35166a0bf8048a27c9d57c7d36957d65b.tgz",
++    "sha256": "41c3c3f16577dd7c8849f11615e3111302513af65a1e5640c9b121f772fb9975",
++    "integrity": "sha512-aMx3ofhbRmF0JjfzUdgV3k4Oh1G/4U37uvmKvDLtX9J/5A/yy8a1GALHK6v54wJY0fU9mW2pX9kkfqBlMZOmJw==",
++    "bytes": 55702
++  },
++  "toolchain": {
++    "node": "24.21.0",
++    "npm": "11.19.0",
++    "typescript": "5.9.3",
++    "sourcePackageLockSha256": "1c7f66cccadc6abf9474d3403db38ce524aa49d3352efb19596aa86ffeaaaec6"
++  },
++  "commands": [
++    "nix develop .#client-js -c bash",
++    "cd clients/js",
++    "npm ci",
++    "npm run build",
++    "git diff --exit-code",
++    "npm pack --json --pack-destination OUT"
++  ],
++  "license": "MIT; original LICENSE.txt included in archive",
++  "files": [
++    {
++      "path": "dist/haveapi-client.js",
++      "bytes": 171701,
++      "sha256": "aab0a33a109714485e79e48a440bfd6c7bef644828d68212b7826754cf291b3e"
++    },
++    {
++      "path": "package.json",
++      "bytes": 1300,
++      "sha256": "3a39c0b607d79756aee34adaf67f98bfdca8bd35027398aea165515f7e34e71b"
++    },
++    {
++      "path": "doc-async-client.md",
++      "bytes": 9209,
++      "sha256": "5c66b9732412905e7112eee2e09b0aa9701a154e553f46c07e5ecf8fe173110a"
++    },
++    {
++      "path": "doc-async-resources.md",
++      "bytes": 4041,
++      "sha256": "b91136f323bc1e3b687e4bfd560250a137db9456f1b21b0f27312d68472e9905"
++    },
++    {
++      "path": "README.md",
++      "bytes": 7964,
++      "sha256": "ea662cbbc98b7149f9af3b3e743a1e045e4221fa3f6312b09936ed49bde30c29"
++    },
++    {
++      "path": "test/README.md",
++      "bytes": 4095,
++      "sha256": "b4ad0bc7f894b9133dee4e7fff04c1088647e0ab1fe8c7b1f6885e93d3cec8dc"
++    },
++    {
++      "path": "dist/types/haveapi/validators/accept.d.ts",
++      "bytes": 11,
++      "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881"
++    },
++    {
++      "path": "dist/types/haveapi/action_state.d.ts",
++      "bytes": 1334,
++      "sha256": "186e30d92a1dc89226a0d2c442da8309f660c8cda1d5715b5535d12f9bc949c4"
++    },
++    {
++      "path": "dist/types/haveapi/action.d.ts",
++      "bytes": 3023,
++      "sha256": "02f4620ef7fe12c8e0c321e82b6ff964f57e03953a960930f0aed60fe01f305f"
++    },
++    {
++      "path": "dist/types/haveapi/async/authentication.d.ts",
++      "bytes": 834,
++      "sha256": "85e3e0fdb81ee3ac6eee6260d14b4056aed5d54c17dd181828a038f03f2e9475"
++    },
++    {
++      "path": "dist/types/haveapi/authentication.d.ts",
++      "bytes": 1616,
++      "sha256": "cd1bd1e327f4ad0900576e388fe43eb64f07431413fb72873f16b4c38f82d9c3"
++    },
++    {
++      "path": "dist/types/haveapi/base_resource.d.ts",
++      "bytes": 1131,
++      "sha256": "8df0b917a678764c1ff2f8d4e3fd8e9379770b19847696326439cd8bdeb9c834"
++    },
++    {
++      "path": "dist/types/haveapi/authentication/base.d.ts",
++      "bytes": 645,
++      "sha256": "30bac52c780a6d794e8b407d856ce8371520f225aeb3785f5dc7f0e6f153f0c6"
++    },
++    {
++      "path": "dist/types/haveapi/authentication/basic.d.ts",
++      "bytes": 759,
++      "sha256": "d7abf7dd19b62574c55fb61a5531c58b506072d7f312432b71f3126ca9453bbe"
++    },
++    {
++      "path": "dist/types/haveapi/async/client.d.ts",
++      "bytes": 1421,
++      "sha256": "d905ab3964e44ddd1fd438260fca402062caec6452ea12e7fe63aabdb45a23a2"
++    },
++    {
++      "path": "dist/types/haveapi/client.d.ts",
++      "bytes": 4739,
++      "sha256": "aa4993319eb3aaa0c43899ed006fbf7716ecd5e1c4570958562f08740d7c2430"
++    },
++    {
++      "path": "dist/types/haveapi/async/completion.d.ts",
++      "bytes": 456,
++      "sha256": "b1d2dd875ba8d8c1223c18dbb323436f84dd046effa7164c18e1da99c855c902"
++    },
++    {
++      "path": "dist/types/haveapi/validators/confirm.d.ts",
++      "bytes": 11,
++      "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881"
++    },
++    {
++      "path": "dist/types/haveapi/validators/custom.d.ts",
++      "bytes": 11,
++      "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881"
++    },
++    {
++      "path": "dist/types/haveapi/async/error.d.ts",
++      "bytes": 651,
++      "sha256": "1978333ef4369d0dbbc9ecd99381e9d966d65fd0c9823a44a54d085fde3628da"
++    },
++    {
++      "path": "dist/types/haveapi/exceptions.d.ts",
++      "bytes": 570,
++      "sha256": "45478974963592aee14e84bd6744007396ad0693b322673b49bab050882e05c5"
++    },
++    {
++      "path": "dist/types/haveapi/validators/exclude.d.ts",
++      "bytes": 11,
++      "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881"
++    },
++    {
++      "path": "dist/types/haveapi/validators/format.d.ts",
++      "bytes": 11,
++      "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881"
++    },
++    {
++      "path": "dist/types/haveapi.d.ts",
++      "bytes": 1502,
++      "sha256": "f2acfbd926b36deccf26d22e650dd7d177263fb80fe66cd96a52e9b678e8c321"
++    },
++    {
++      "path": "dist/types/haveapi/hooks.d.ts",
++      "bytes": 588,
++      "sha256": "c1bfe2e3c8d8a75bf8a12c15dc0c429cc2a73fc27b824afc144b4f722422ff74"
++    },
++    {
++      "path": "dist/types/haveapi/http.d.ts",
++      "bytes": 312,
++      "sha256": "0a1fcbdd314ed3ceef7af8ef6717a30fd1ab05da942f622aa72976a69a347f81"
++    },
++    {
++      "path": "dist/types/haveapi/i18n.d.ts",
++      "bytes": 661,
++      "sha256": "9e2287679b1855ed70cdfb1c2450e7312fefce30eb1e6da64f85a3d6884667a1"
++    },
++    {
++      "path": "dist/types/haveapi/validators/include.d.ts",
++      "bytes": 11,
++      "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881"
++    },
++    {
++      "path": "dist/types/haveapi/legacy_globals.d.ts",
++      "bytes": 290,
++      "sha256": "a62b37cc9ff664c8e57a65c839cba81a8f90032754e555c5bba8546511034b53"
++    },
++    {
++      "path": "dist/types/haveapi/validators/length.d.ts",
++      "bytes": 11,
++      "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881"
++    },
++    {
++      "path": "dist/types/haveapi/local_response.d.ts",
++      "bytes": 516,
++      "sha256": "c62464ddb611c347fdb86ab4a7f84e551a55c9a96d1074fd7157befe3c6cdf78"
++    },
++    {
++      "path": "dist/types/haveapi/validators/number.d.ts",
++      "bytes": 11,
++      "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881"
++    },
++    {
++      "path": "dist/types/haveapi/authentication/oauth2.d.ts",
++      "bytes": 1052,
++      "sha256": "4c886a6c0167034aef8454eaae0849703bcfb819b6651f2bb9fd60e9890f7a00"
++    },
++    {
++      "path": "dist/types/haveapi/parameters.d.ts",
++      "bytes": 1040,
++      "sha256": "e9eb84e9bdb5dba517c990c0e0f3662edf8e382a75fb1a31c06abc14369e0bdd"
++    },
++    {
++      "path": "dist/types/haveapi/validators/present.d.ts",
++      "bytes": 11,
++      "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881"
++    },
++    {
++      "path": "dist/types/haveapi/protocol.d.ts",
++      "bytes": 594,
++      "sha256": "73bf0d1b2685e232d20f8bb99d4ccf03be049c1fe249d34d0b1f3772f8c0210b"
++    },
++    {
++      "path": "dist/types/haveapi/async/request.d.ts",
++      "bytes": 743,
++      "sha256": "6ee89d535ac5b1fce56f7ffde7088a2a6a6e87ad1bda32d9dd117dce2f291346"
++    },
++    {
++      "path": "dist/types/haveapi/resource_instance_list.d.ts",
++      "bytes": 1081,
++      "sha256": "bb635be4317f07396fa736e278bb9c95a0e238bfaeb119e957594e673ab88e4e"
++    },
++    {
++      "path": "dist/types/haveapi/async/resource_instance.d.ts",
++      "bytes": 1481,
++      "sha256": "12e50f28f09c4e35b8d608609ae32d7a8714b637bdaec3059083d158c0f44b6a"
++    },
++    {
++      "path": "dist/types/haveapi/resource_instance.d.ts",
++      "bytes": 2634,
++      "sha256": "9a1cdc78f2ab03815a1fb31e10723d8ba1fcb1218341d24a1d27cfd61305a5ef"
++    },
++    {
++      "path": "dist/types/haveapi/async/resource_list.d.ts",
++      "bytes": 898,
++      "sha256": "253fb51809ef64cec2de54de64bb59ca5814d60bc21ab5350b00beff7fbcf04d"
++    },
++    {
++      "path": "dist/types/haveapi/async/resource.d.ts",
++      "bytes": 2712,
++      "sha256": "20589f4c7bc0026efd9c33750041774c00afe8633a92808adf1088081aa2e473"
++    },
++    {
++      "path": "dist/types/haveapi/resource.d.ts",
++      "bytes": 923,
++      "sha256": "f287a1dbb7ce79f6b28b193250636b101aa9446107bd3d11879a1acf3cf10ca8"
++    },
++    {
++      "path": "dist/types/haveapi/response.d.ts",
++      "bytes": 552,
++      "sha256": "eec843f37669ef10e932d7ac2c5a92872fe7bb78a0a0fc57cfa25873b96c87af"
++    },
++    {
++      "path": "dist/types/haveapi/authentication/token.d.ts",
++      "bytes": 1453,
++      "sha256": "e5b9e02417c1469c6f50ba9680565e040b6c81a78671619a64bfd6a635ae45ac"
++    },
++    {
++      "path": "dist/types/haveapi/transport.d.ts",
++      "bytes": 313,
++      "sha256": "0f9038eb6bc6476b651e1bb8c91f6b872a59cb568194bfa19d3f5f976d6d981a"
++    },
++    {
++      "path": "dist/types/haveapi/async/types.d.ts",
++      "bytes": 2749,
++      "sha256": "73a6911ac9a581364502213a30cc17581101d95b7f05e49cfa97fd4aa66c03f5"
++    },
++    {
++      "path": "dist/types/haveapi/types.d.ts",
++      "bytes": 3873,
++      "sha256": "29da728b19e625cd869e724309a85406d5da6cf7a0ea7e54fe79cb6d236178c9"
++    },
++    {
++      "path": "dist/types/haveapi/validator.d.ts",
++      "bytes": 1356,
++      "sha256": "96477d41ebac343dbc898b965651b8d490801a009a69aa77d63e35deb234daed"
++    },
++    {
++      "path": "dist/types/haveapi/xml_http_request.d.ts",
++      "bytes": 152,
++      "sha256": "1625b4f7ac3dd70dd391a403c6b54cf6240245c207b2465231e52728e9b1ef0b"
++    },
++    {
++      "path": "LICENSE.txt",
++      "bytes": 1079,
++      "sha256": "971f13a4efb0e2f27ccf2bcf13001b4befc3e334b85b553ea7f8706e863b9b4b"
++    }
++  ]
++}

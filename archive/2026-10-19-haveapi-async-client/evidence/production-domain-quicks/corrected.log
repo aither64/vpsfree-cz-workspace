@@ -1,0 +1,37 @@
+
+ RUN  v4.1.11 /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-19-haveapi-async-client/vpsadmin-webui-async
+
+ ❯ src/lib/api/nodeHistory.test.ts (7 tests | 1 failed) 90ms
+     × scopes and paginates function fetchNodeKernelHistory(nodeId, options = {}) {
+  return list(`/nodes/${nodeId}/kernel_history`, "kernel_history", {}, options);
+} using its declared namespace 55ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/api/nodeHistory.test.ts > node history API contracts > scopes and paginates function fetchNodeKernelHistory(nodeId, options = {}) {
+  return list(`/nodes/${nodeId}/kernel_history`, "kernel_history", {}, options);
+} using its declared namespace
+AssertionError: expected [ ControlledHaveApiXhr{ …(13) }, …(1) ] to have a length of 1 but got 2
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ src/lib/api/nodeHistory.test.ts:28:30
+     26|     controller.abort();
+     27|     await expect(load(5, { signal: controller.signal })).rejects.toMat…
+     28|     expect(apiWire.requests).toHaveLength(1);
+       |                              ^
+     29|   });
+     30|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 34 passed (35)
+      Tests  1 failed | 219 passed (220)
+   Start at  12:53:48
+   Duration  9.38s (transform 168.49s, setup 7.69s, import 245.25s, tests 2.30s, environment 43.99s)
+

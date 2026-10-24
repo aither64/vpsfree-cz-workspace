@@ -1,0 +1,209 @@
+diff --git a/clients/js/README.md b/clients/js/README.md
+index fdfbe45..beb617f 100644
+--- a/clients/js/README.md
++++ b/clients/js/README.md
+@@ -22,17 +22,22 @@ With NodeJS:
+ var HaveAPI = require('haveapi-client');
+ ```
+ 
+-Create a client instance:
++Use `CallbackClient` for callbacks or `AsyncClient` for Promises. `Client`
++remains supported as an alias of `CallbackClient`: both names refer to the same
++constructor, prototype and static helpers. Its runtime constructor name remains
++`Client`.
++
++Create a callback client instance:
+ 
+ ```js
+-var api = new HaveAPI.Client("http://your.api.tld");
++var api = new HaveAPI.CallbackClient("http://your.api.tld");
+ ```
+ 
+ Request translated API messages and translate local client-side validation
+ errors by passing `language`:
+ 
+ ```js
+-var api = new HaveAPI.Client("http://your.api.tld", { language: "cs" });
++var api = new HaveAPI.CallbackClient("http://your.api.tld", { language: "cs" });
+ ```
+ 
+ The value is sent in `Accept-Language` by default. Use `language_header` when
+@@ -266,7 +271,8 @@ api.after('authenticated', function() {
+ ### AsyncClient
+ 
+ The same package also exports `HaveAPI.AsyncClient`, whose network methods
+-return Promises. Existing `HaveAPI.Client` methods retain their callback API.
++return Promises. `HaveAPI.CallbackClient` methods retain their callback API,
++also available through the supported `HaveAPI.Client` alias.
+ See [async requests and authentication](doc-async-client.md) for setup, typed
+ requests, errors and completion waiting, and [async resources and binding](doc-async-resources.md)
+ for action results, identity, save and explicit association loading.
+diff --git a/clients/js/dist/haveapi-client.js b/clients/js/dist/haveapi-client.js
+index f9a9143..5850b39 100644
+--- a/clients/js/dist/haveapi-client.js
++++ b/clients/js/dist/haveapi-client.js
+@@ -4084,6 +4084,7 @@ exports.AsyncClient = AsyncClient;
+ exports.AsyncError = AsyncError;
+ exports.AsyncResourceInstance = AsyncResourceInstance;
+ exports.AsyncResourceList = AsyncResourceList;
++exports.CallbackClient = Client;
+ exports.Client = Client;
+ 
+ return exports;
+diff --git a/clients/js/dist/types/haveapi.d.ts b/clients/js/dist/types/haveapi.d.ts
+index f41e7b0..d447d5b 100644
+--- a/clients/js/dist/types/haveapi.d.ts
++++ b/clients/js/dist/types/haveapi.d.ts
+@@ -9,7 +9,7 @@ import './haveapi/validators/include';
+ import './haveapi/validators/length';
+ import './haveapi/validators/number';
+ import './haveapi/validators/present';
+-export { Client };
++export { Client, Client as CallbackClient };
+ export type { ClientOptions, Description, ResourceDescription, ActionDescription, ParameterDescription, Envelope } from './haveapi/types';
+ export type { DoneCallback, VersionsCallback, CompatibleCallback } from './haveapi/client';
+ export type { AuthenticationOptions, Provider, ProviderConstructor } from './haveapi/authentication';
+diff --git a/clients/js/doc-async-client.md b/clients/js/doc-async-client.md
+index 72b6786..6dee17c 100644
+--- a/clients/js/doc-async-client.md
++++ b/clients/js/doc-async-client.md
+@@ -1,7 +1,10 @@
+ # Async client requests and authentication
+ 
+-`HaveAPI.AsyncClient` and the callback-based `HaveAPI.Client` are exported by
+-one package. The existing CommonJS entry and browser global remain available:
++`HaveAPI.AsyncClient` and `HaveAPI.CallbackClient` are exported by one package.
++`HaveAPI.Client` remains a supported alias of `CallbackClient`, including its
++constructor, prototype and static helpers. Both callback names are also usable
++as TypeScript instance types. The CommonJS entry and browser global remain
++available:
+ 
+ ```js
+ const HaveAPI = require('haveapi-client');
+diff --git a/clients/js/doc-async-resources.md b/clients/js/doc-async-resources.md
+index 5674fad..279826c 100644
+--- a/clients/js/doc-async-resources.md
++++ b/clients/js/doc-async-resources.md
+@@ -1,7 +1,8 @@
+ # Async resources and binding
+ 
+-The package exports `AsyncClient` for Promise-based calls and `Client` for
+-callbacks. Dynamic async calls return `{ value, response }`; `response`
++The package exports `AsyncClient` for Promise-based calls and `CallbackClient`
++for callbacks. `Client` remains a supported alias of `CallbackClient`.
++Dynamic async calls return `{ value, response }`; `response`
+ contains `data`, `meta`, the raw `envelope` and `httpStatus`. A successful reply
+ can be an acceptance receipt for a server job. Use `waitForCompletion` separately
+ when the application needs its final outcome.
+diff --git a/clients/js/src/haveapi.ts b/clients/js/src/haveapi.ts
+index dcd289b..d2b6e64 100644
+--- a/clients/js/src/haveapi.ts
++++ b/clients/js/src/haveapi.ts
+@@ -41,7 +41,7 @@ Client.ResourceInstanceList = ResourceInstanceList;
+ Client.Response = Response;
+ Client.LocalResponse = LocalResponse;
+ 
+-export { Client };
++export { Client, Client as CallbackClient };
+ export type { ClientOptions, Description, ResourceDescription, ActionDescription, ParameterDescription, Envelope } from './haveapi/types';
+ export type { DoneCallback, VersionsCallback, CompatibleCallback } from './haveapi/client';
+ export type { AuthenticationOptions, Provider, ProviderConstructor } from './haveapi/authentication';
+diff --git a/clients/js/test/compatibility/callback.spec.cjs b/clients/js/test/compatibility/callback.spec.cjs
+index 68d6485..1346f19 100644
+--- a/clients/js/test/compatibility/callback.spec.cjs
++++ b/clients/js/test/compatibility/callback.spec.cjs
+@@ -101,17 +101,43 @@ function reply(data = {}, meta = {}) {
+ }
+ 
+ for (const mode of ['commonjs', 'browser', 'amd']) {
+-  test(`${mode} retains Client export/static constructors without async runtime globals`, () => {
+-    const { HaveAPI, imports } = loadBundle(mode);
++  test(`${mode} retains Client/CallbackClient identity and callbacks without async runtime globals`, () => {
++    const { HaveAPI, imports, requests, context } = loadBundle(mode);
+     assert.equal(typeof HaveAPI.Client, 'function');
++    assert.equal(HaveAPI.CallbackClient, HaveAPI.Client);
++    assert.equal(HaveAPI.CallbackClient.name, 'Client');
++    assert.equal(HaveAPI.CallbackClient.prototype, HaveAPI.Client.prototype);
+     assert.equal(HaveAPI.default, undefined);
+     for (const name of ['Action', 'ActionState', 'BaseResource', 'Hooks', 'Http', 'Resource', 'ResourceInstance', 'ResourceInstanceList', 'Response', 'LocalResponse']) {
+       assert.equal(typeof HaveAPI.Client[name], 'function', name);
++      assert.equal(HaveAPI.CallbackClient[name], HaveAPI.Client[name], name);
+     }
+     assert.equal(typeof HaveAPI.Client.Authentication, 'object');
++    assert.equal(HaveAPI.CallbackClient.Authentication, HaveAPI.Client.Authentication);
+     assert.equal(typeof HaveAPI.Client.Exceptions.ProtocolError, 'function');
++    assert.equal(HaveAPI.CallbackClient.Exceptions, HaveAPI.Client.Exceptions);
+     assert.equal(typeof HaveAPI.Client.ActionState.Progress, 'function');
+     assert.deepEqual(imports, mode === 'commonjs' ? ['xmlhttprequest'] : []);
++    const callbackClient = new HaveAPI.CallbackClient('https://api.example', {});
++    const legacyClient = new HaveAPI.Client('https://api.example', {});
++    for (const instance of [callbackClient, legacyClient]) {
++      assert.equal(instance instanceof HaveAPI.Client, true);
++      assert.equal(instance instanceof HaveAPI.CallbackClient, true);
++      assert.equal(instance.constructor, HaveAPI.Client);
++      assert.equal(Object.getPrototypeOf(instance), HaveAPI.Client.prototype);
++    }
++    callbackClient.useDescription(description());
++    let received;
++    assert.equal(callbackClient.widgets.show(7, (owner, response) => {
++      received = [owner, response];
++    }), undefined);
++    assert.equal(received, undefined);
++    requests[0].respond(200, reply({ count: 2 }));
++    assert.equal(received[0], callbackClient);
++    assert.equal(received[1] instanceof HaveAPI.CallbackClient.Response, true);
++    assert.equal(received[1].response().count, 2);
++    assert.equal(context.Promise, undefined);
++    assert.equal(context.AbortController, undefined);
+     const { client } = prepared(mode);
+     assert.equal(client.widgets.show(3), undefined);
+   });
+diff --git a/clients/js/test/types/callback.ts b/clients/js/test/types/callback.ts
+index 58b6fe1..d4a86c8 100644
+--- a/clients/js/test/types/callback.ts
++++ b/clients/js/test/types/callback.ts
+@@ -1,5 +1,5 @@
+ // Compile against emitted package declarations, never the authored TS modules.
+-import { Client } from '../../dist/types/haveapi';
++import { CallbackClient, Client } from '../../dist/types/haveapi';
+ import type { Action, ActionReply } from '../../dist/types/haveapi/action';
+ import type { Resource } from '../../dist/types/haveapi/resource';
+ import type { ResourceInstance } from '../../dist/types/haveapi/resource_instance';
+@@ -7,6 +7,17 @@ import type { Response } from '../../dist/types/haveapi/response';
+ import type { ResourceDescription, ActionDescription } from '../../dist/types/haveapi/types';
+ 
+ const client = new Client('https://api.example', { language: 'cs', version: '1.0' });
++const callbackClient: CallbackClient = new CallbackClient('https://api.example', { language: 'en' });
++const callbackAsLegacy: Client = callbackClient;
++const legacyAsCallback: CallbackClient = client;
++const callbackConstructor: typeof Client = CallbackClient;
++const legacyConstructor: typeof CallbackClient = Client;
++const callbackSetupReturn: void = callbackClient.setup((owner, status) => {
++  const namedOwner: CallbackClient = owner;
++  const legacyOwner: Client = owner;
++  namedOwner.setLanguage(status ? 'en' : 'cs');
++  legacyOwner.setLanguage('cs');
++});
+ const actionDescription: ActionDescription = {
+   method: 'GET', path: '/v1/widgets/{widget_id}', aliases: ['get'],
+   input: { layout: 'hash', namespace: 'widget', parameters: {} },
+@@ -18,6 +29,11 @@ const resourceDescription: ResourceDescription = {
+ const resource = new Client.Resource(client, null, 'widgets', resourceDescription, []);
+ const bound: Resource = resource(7);
+ const action = new Client.Action(client, bound, 'show', actionDescription);
++const callbackAction = new CallbackClient.Action(callbackClient, bound, 'show', actionDescription);
++const callbackInvokeReturn: void = callbackAction(7, (owner, result) => {
++  const namedOwner: CallbackClient = owner;
++  namedOwner.setLanguage(result.isOk() ? 'en' : 'cs');
++});
+ 
+ const setupReturn: void = client.setup((owner, status) => {
+   const sameClient: Client = owner;
+@@ -82,4 +98,6 @@ resource.missingAction();
+ // @ts-expect-error directInvoke returns the raw Response wrapper.
+ action.directInvoke(7, (owner: Client, raw: ResourceInstance) => {});
+ 
+-void [setupReturn, noReply, oldParamsNoReply, oldCallback, oldParams, options];
++void [setupReturn, noReply, oldParamsNoReply, oldCallback, oldParams, options,
++  callbackAsLegacy, legacyAsCallback, callbackConstructor, legacyConstructor,
++  callbackSetupReturn, callbackInvokeReturn];

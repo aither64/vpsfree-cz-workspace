@@ -1,0 +1,80 @@
+1:  991101f = 1:  408ff01 clients/js: capture callback bundle compatibility
+2:  0d2111e ! 2:  301fb04 clients/js: author callback client in TypeScript
+    @@ utils/release/artifacts.rb: module HaveAPI
+                'clients/go/lib/haveapi/go_client/version.rb' => /\bVERSION = '([^']+)'/,
+     -          'clients/js/src/haveapi/client.js' => /Client\.Version = '([^']+)'/,
+     +          'clients/js/src/haveapi/client.ts' => /Client\.Version = '([^']+)'/,
+    -           'clients/php/src/Client.php' => /const VERSION = '([^']+)'/
+    +           'clients/php/src/Client.php' => /const VERSION = '([^']+)'/,
+    +           'clients/python/pyproject.toml' => /^version = "([^"]+)"/
+              }
+    -         paths.each do |path, pattern|
+     
+      ## utils/release/spec/release_spec.rb ##
+     @@ utils/release/spec/release_spec.rb: RSpec.describe HaveAPI::Release do
+3:  8f8e576 = 3:  63cda85 clients/js: add an independent typed Promise client
+4:  f3fcd33 = 4:  24366ea clients/js: document TypeScript source workflow
+5:  19c20c9 = 5:  5fff09b clients/js: expose the callback client as CallbackClient
+6:  f94e65e = 6:  a191d0f clients/js: preserve nested API rejection errors
+7:  3a79c8e ! 7:  57340f5 release: validate packaged JavaScript client interfaces
+    @@ Makefile: release-deps:
+     -	cd clients/js && npm install --no-audit --no-fund
+     +	cd clients/js && npm ci --no-audit --no-fund
+      	cd clients/php && composer install --no-interaction --prefer-dist
+    + 	cd clients/python && uv sync --locked
+      
+    - release-check:
+     @@ Makefile: version:
+      	@sed -ri "s/ VERSION = '[^']+'/ VERSION = '$(VERSION)'/" clients/ruby/lib/haveapi/client/version.rb
+      	@sed -ri "s/ VERSION = '[^']+'/ VERSION = '$(VERSION)'/" clients/go/lib/haveapi/go_client/version.rb
+    @@ utils/release/artifacts.rb: module HaveAPI
+     +
+     +        php = tar_files(File.join(directory, "haveapi-client-php-#{version}.tar"))
+     +        raise Error, 'Wrong Composer identity' unless JSON.parse(php.fetch('composer.json').first).values_at('name', 'version') == ['haveapi/client', version]
+    ++
+    ++        Release.capture('python', File.join(root, 'utils/release/python_artifacts.py'), directory, version)
+     +      end
+     +
+     +      def inspect_npm(directory)
+    @@ utils/release/artifacts.rb: module HaveAPI
+     -
+     -        php = tar_files(File.join(directory, "haveapi-client-php-#{version}.tar"))
+     -        raise Error, 'Wrong Composer identity' unless JSON.parse(php.fetch('composer.json').first).values_at('name', 'version') == ['haveapi/client', version]
+    +-
+    +-        Release.capture('python', File.join(root, 'utils/release/python_artifacts.py'), directory, version)
+            end
+      
+            def smoke_npm(directory)
+8:  40365b4 ! 8:  e16526d docs: explain JavaScript and TypeScript client usage
+    @@ Commit message
+     
+      ## README.md ##
+     @@ README.md: Available clients:
+    - 
+      - Ruby client library and CLI at [clients/ruby](clients/ruby)
+      - PHP client at [clients/php](clients/php)
+    + - Python synchronous and asynchronous client at [clients/python](clients/python)
+     -- JavaScript client at [clients/js](clients/js)
+     +- JavaScript and TypeScript client at [clients/js](clients/js)
+      - Go client generator at [clients/go](clients/go)
+    @@ doc/agent-instructions/releases.md: All maintained components use the shared ver
+     -| JavaScript client | npm `haveapi-client` and a browser bundle |
+     +| JavaScript and TypeScript client | One npm `haveapi-client` package with both clients and TypeScript declarations; a JavaScript browser bundle |
+      | PHP client | Composer `haveapi/client`, through `vpsfreecz/haveapi-client-php` |
+    + | Python client | PyPI `haveapi-client` |
+      
+     +`CallbackClient` (also available as `Client`) and `AsyncClient` share the same
+     +JavaScript package and version.
+    @@ doc/agent-instructions/releases.md: Run release commands from the top-level `nix
+     +   byte-identical.
+      5. Open the Actions run and inspect its test results, candidate summary and
+         artifacts. Click **Review deployments**, select `release`, then **Approve and
+    -    deploy**. This authorizes RubyGems/npm publication and synchronization into
+    -@@ doc/agent-instructions/releases.md: archives the tracked PHP subtree. It never uploads packages. Component gems use
+    - the local Ruby client, so a new shared version need not already exist on RubyGems.
+    +    deploy**. This authorizes RubyGems/npm/PyPI publication and synchronization into
+    +@@ doc/agent-instructions/releases.md: It never uploads packages. Component gems use the local Ruby client, so a new
+    + shared version need not already exist on RubyGems.
+      Do not commit generated server documentation or build artifacts.
+      
+     +The JavaScript packaging step runs gulp before `npm pack`. Gulp compiles the
