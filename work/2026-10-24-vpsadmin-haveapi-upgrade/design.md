@@ -6,6 +6,11 @@ commit: `b6001eb8`. No project source changes or external writes were made by th
 architect. The lead owns assignment, shared Git serialization, final prose,
 review and publication.
 
+Current revision: the [2026-10-25 registry addendum](#2026-10-25-addendum-rust-registry-adoption)
+supersedes the original Rust Git-source recommendations in packages B/D.
+Decision B1 remains historical design evidence; its performance remedy is now
+owned by the user in another session and R1 remains an external readiness gate.
+
 ## Scope and boundaries
 
 Adopt released HaveAPI 0.30.1 throughout `vpsadmin`, take over only the final
@@ -574,3 +579,126 @@ production approval for those concrete manifests. Do not publish production or
 mutate the existing staging owner's state. Recovery before publication is local
 candidate revision; after any separately approved publication, rollback uses
 captured original page content through the same guarded release workflow.
+
+## 2026-10-25 addendum: Rust registry adoption
+
+User direction: remove the Rust Git source pin now that the SDK is published.
+Keep the original Git observations, receipts and old source revision as history.
+This revision changes current installation guidance only. The user owns the
+HaveAPI performance fix in another session: do not investigate, patch or select
+a provider successor here. Blocking R1 remains open until that successor is
+explicitly adopted and verified with the authorization/locale/input-ownership
+acceptance already recorded in B1. This change does not remediate R1.
+
+### Release identity and compatibility
+
+Read-only verification on 2026-10-25 found the sole crates.io release
+`vpsadmin-client` **0.1.0**, non-yanked, published
+`2026-10-24T21:21:08.329377Z`. Its 178,978-byte archive has SHA256
+`2099d96e698e23912879cc15a32097c920f0db96976c2bee671a5ce2239777d0`, matching the
+registry metadata. The archive's `.cargo_vcs_info.json` names root-path source
+commit `b6f84679d33ff041388535dcf4dc060aeb0d1b9d` in
+`https://github.com/vpsfreecz/vpsadmin-rust-client`. The original Cargo manifest
+matches both that locally available commit and previous pin
+`ff876abe17e3301da62c1b6afbda055ec89db9d2` byte for byte.
+
+All packaged Rust source and examples are byte-identical to the previous pin:
+690 packaged files match; differing files are README, CHANGELOG, Cargo.lock,
+Cargo-normalized manifest and generator provenance, plus Cargo packaging
+metadata. The provenance now reports generator 0.30.1; runtime and schema hashes
+are unchanged. API target **7.0**, edition **2024**, declared Rust minimum
+**1.95**, `default = []`, and `blocking = ["reqwest/blocking"]` are unchanged.
+Async imports `vpsadmin_client::Client`; blocking imports
+`vpsadmin_client::blocking::Client` and retains its synchronous-runtime boundary.
+Reqwest/Serde/serde_json/url requirements are unchanged; Tokio remains a consumer
+dependency for the async examples. No new SDK source/API compatibility audit is
+needed solely for this source substitution.
+
+The packaged Cargo lock is not byte-identical to the former Git lock: both have
+159 packages, with 17 package-version replacements. Do not claim identical
+resolved dependency graphs or transfer an old compilation result to this new
+lock. Library consumers resolve with their own manifest/lock; these lock changes
+do not alter the verified SDK public-source identity. No fresh compilation or
+full-page request is required for this mechanical profile revision. Existing
+sample/coverage verification and its limitations remain valid only to their
+recorded scope. Evidence: `package-b/rust-crates-2026-10-25/{crates-io.json,
+comparison.json,release-comparison.json,vpsadmin-client-0.1.0.crate}`.
+
+### Package B2: implementer2, ready bounded brief
+
+Starting vpsAdmin head supplied by lead: `21872fe6`. Change only:
+
+- `api/lib/vpsadmin/api.rb`: remove the Rust `source` hash; retain
+  `rust: { crate_name: 'vpsadmin-client' }`. Keep Go, API 7.0 selection and
+  generator requirements unchanged. Do not add `crate_version`.
+- `api/spec/lib/vpsadmin/api/documentation_clients_spec.rb`: change old Git
+  installation expectations to registry async/blocking commands, reject the old
+  Git URL/revision in those initialization panels, and preserve authorization,
+  locale and action examples. Add a small separately selectable check using the
+  actual mounted Rust profile and upstream init renderer, with a minimal
+  in-memory documentation context; no HTTP full-version render is needed for
+  this check. Do not replace existing full-page coverage with the small check.
+- `tests/suite/services-up.nix`: expect registry installation hints in place of
+  the Git URL/revision and inverted cargo-add rejection. Retain existing tabs,
+  action examples and package integration assertions.
+- `docs/api-client-examples.md`: describe the published registry SDK and Cargo
+  selection semantics; remove the current claim that it is unpublished and the
+  source-pin installation guidance. Retain performance/authorization facts and
+  the distinct SDK/API/generator identities. No docs index change is needed.
+
+Exact HaveAPI **0.30.1** contract, confirmed in released
+`documentation_clients.rb`, Rust `model.rb`, `documentation.rb` and
+`clients/rust/docs/documentation.md`:
+
+- Supported Rust keys are `crate_name`, `crate_version`, `source`,
+  `snapshot_path`, `generator_config_path`, `generator_version`.
+- Omitted/nil `source` and omitted/nil `crate_version` render
+  `// cargo add vpsadmin-client` for async and
+  `// cargo add vpsadmin-client --features blocking` for blocking. There is no
+  emitted SDK version or server-side registry resolution. Cargo selects a
+  compatible release under its resolver, manifest, toolchain and lockfile.
+- An optional three-part `crate_version: '0.1.0'` instead emits a Cargo.toml
+  requirement `version = "0.1.0"`; this is Cargo's compatible requirement,
+  not exact `=0.1.0`. Literal `latest`, `0.1` and `=0.1.0` are not accepted by
+  the HaveAPI profile validator. Omitting it follows the existing design's
+  default-version policy and avoids introducing an arbitrary new pin.
+- `generator_version` defaults to `HaveAPI::VERSION` and must match the loaded
+  generator. It is independent of SDK 0.1.0 and API 7.0; leave it unchanged.
+
+Quick acceptance: run only the existing mount check and new bounded init-render
+check in the repository API shell, scoped Ruby lint/syntax, Nix syntax/evaluation
+appropriate to the edited assertion, and diff whitespace. Both upstream Rust
+renderer modes must produce the exact cargo-add hints and unchanged imports/
+execution modes, with no Git source or fabricated version. Prefer actual
+`HaveAPI::ClientExamples::RustAsyncClient`/`RustBlockingClient` initialization
+rendering with the mounted profile; direct public adapter `render(kind: :init,
+context:, mode:)` is also an actual renderer seam. Use short failures, never a
+diff of the whole page. Do not run the slow full HTML example or services VM for
+this mechanical revision. Long integration remains deferred by R1 and final
+review order; the original full-page/service gates remain part of overall
+acceptance after the external remedy is adopted.
+
+### Package D and recovery
+
+Lead owns final bilingual KB prose; implementer3 owns source guards, fact-sheet
+refresh, candidate checks and regenerated manifests. Use the released README's
+`vpsadmin-client = "0.1"` and blocking
+`vpsadmin-client = { version = "0.1", features = ["blocking"] }`. These are
+compatible 0.1-series requirements; do not call them exact pins. Plain
+`cargo add vpsadmin-client` agrees with API renderer output. A command using
+`@0.1.0` is also a version requirement, not an exact lock, but is unnecessary
+for the selected default guidance. Preserve API 7.0, Rust >=1.95, Tokio async
+setup, blocking runtime caveat and existing authentication examples. Link the
+crate registry/reference and repository as appropriate; remove Git-source
+installation only from current supported guidance. Preserve original sources,
+historical checksums and Git evidence. Recheck source-revision guards and rebuild
+candidate/manifests under ordinary ownership rules; no staging takeover or
+production write is authorized by this addendum.
+
+No server wire contract, persistent state, database migration, node coordination,
+generated SDK content or runtime dependency of vpsAdmin changes. Mixed workers
+may temporarily show Git versus registry install hints. Rollback restores this
+small configuration/docs/assertion delta together; it does not undo consumer
+Cargo changes. Consumer rollback uses the consumer's retained manifest/lock.
+Neither this revision nor its quick checks clear R1 or authorize integration,
+publication, deployment or session lifecycle changes.

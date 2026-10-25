@@ -175,3 +175,12 @@ This is the reviewer's requested narrow correction within the reviewed
 uncertainty boundary, so mandatory-review step9 direct verification closesR2;
 no automatic full rerun or unaffected-lane rerun. R1remains Blocking. No long
 integration/builds/publication/deployment were started.
+
+## 2026-10-25 registry adoption follow-up
+
+Same reviewer0 completed affectedall4lane review of vpsadmin57a53e700
+and KBdf1944a2: no new findings. Complete2commithistory/sourceprovenance/
+registryprofile/init semantics/KBguards independentlyaccepted, no migrations
+(316inventoryentriesunchanged). Detailedpacket/result in
+[rust-registry-review.md](rust-registry-review.md). R1staysBlocking,user
+ownsproviderremedy in another session; no readiness/integrationclaim.

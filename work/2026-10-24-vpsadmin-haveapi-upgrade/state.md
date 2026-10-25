@@ -2,9 +2,35 @@
 lifecycle: active
 ---
 
+# Current steering — 2026-10-25
+
+User will solve HaveAPI documentation performance in another session. Preserve
+R1 as an external readiness dependency; no provider investigation or fix here.
+User directs removing Rust Git source pin now that the SDK is on crates.io.
+Architect0 verified registry0.1.0/source identity and B2minimal profile
+change; implementer2 assigned API config/spec/docs and implementer3 owns KB
+release mechanics. Lead owns final bilingual prose. Existing independent
+reviewer0 receives the affected committed-range follow-up after quick checks.
+
+- [x] Exact session/environment and retained roster reverified.
+- [x] Registry0.1.0 artifact/source/API compatibility verified; designB2ready.
+- [x] API source/spec/docs and KB candidates/manifests updated; focused
+      quick checks pass (2APIexamples, no fullGET; KBparser/TOML/guards).
+- [x] API final57a53e700 and KBdf1944a2 committed; focused checks/hooks pass.
+- [x] Affected independent review by retained reviewer0 complete: no NEW
+      findings; registry adoption accepted, R1external remainsBlocking.
+- [ ] Overall readiness: external performance remedy and prior remaining
+      integration/publication/staging gates still outstanding.
+
+No merge, deployment, production KB write, old-session mutation or lifecycle
+action authorized. Keep HaveAPI server/client0.30.1 requirement unchanged for
+this bounded registry-adoption update.
+
+## Prior checkpoint and evidence
+
 # Status
 
-Phase: independent final review. The requested
+Phase: adopting newly published Rust crate; performance fix owned externally. The requested
 0.30.1 implementation is complete across dependencies, React WebUI and bilingual
 KB candidates; Go/Rust source committed21872fe6a and all ordinary hooks pass. Quick checks
 pass. A measured upstream documentation performance defect blocks readiness for
@@ -18,12 +44,12 @@ release. No integration, deployment, staging or production KB writes.
 - [x] Substantive initial plan/state committed b6001eb8.
 - [x] Architect investigation/design.md and all four package boundaries.
 - [x] A dependencies committed and quick checked.
-- [x] C React client adoption committed and quick checked; R2 narrow fix in progress.
+- [x] C React client adoption committed and quick checked; R2narrow fix closed.
 - [x] D final bilingual KB candidates/manifests committed and locally verified.
 - [x] B Go/Rust profiles committed21872fe6a; focused checks/hooks pass.
 - [x] Complete branch histories/diffs/migration inventories assembled.
 - [x] Mandatory independent final review complete (reviewer0, all4lanes);
-      changes requested: R1Blocking unresolved, R2Important narrow fix pending.
+      changes requested: R1Blocking unresolved, R2Important fixed/verified.
 - [ ] Postreview integration/build/browser/package/CI checks and feature publication.
 - [ ] KB staging/rendered checks when ownership available.
 - [ ] Explicit repository integration, deployment or exact KB publication, if requested.
@@ -34,7 +60,7 @@ release. No integration, deployment, staging or production KB writes.
 | --- | --- | --- |
 | architect0 | design.md complete; performance decision B1 recorded | No config-only remedy; no unauthorized upstream source/version change |
 | implementer0 | A committed ff44d95e | Own postreview dependency/package follow-ups; repo Git released to B |
-| implementer1 | C committed39f8fd7d | Own review fixes and postreview full suite/build/Nix/browser checks |
+| implementer1 | C committed014f7b9c (reviewed39f8fd7d +narrowR2fix) | Own review fixes and postreview full suite/build/Nix/browser checks |
 | implementer2 | B quick checks passed; committed21872fe6a | B handed Git back; owns assigned review follow-up fixes |
 | implementer3 | D mechanics complete | Own local manifest/check follow-ups; no staging while foreign-owned |
 | lead | Final KB prose applied; exact8 candidate/source/manifest files committed | Records, acceptance, independent review packet, user constraint choice |
@@ -142,8 +168,8 @@ injected root Bundler into nested API hook. Reconciled owned preflight then
 normal root-shell git commit -F path; source and actual specs unchanged, no
 bypass. implementer2 retains source/Git ownership.
 
-Collect reviewer0 final findings, reconcile with package owners, preserve
-measured performance blocker and await user version choice. All4lanes assigned
+Review complete; R2fixed/directlyverified, R1unresolved. Preserve measured
+performance blocker and await user version choice. All4lanes assigned
 using savedgpt-6.1-sol/xhigh/read_only; no fallback or setting overrides.
 Reconcile findings before longer integration/build checks and feature
 publication. Keep session open.
@@ -214,3 +240,37 @@ correction consolidated into owning production commit, no migrations/repeated
 stream/new design. No reviewer rerun needed under mandatory step9.
 R1still Blocking, user version-choice unanswered; no long tests/builds/push/
 PR rewrite/integration/deployment/staging/production writes.
+
+Checkpoint commit04f92aec saved design/review/handoff/records and setup lesson.
+Session remains open/active. Final local source heads21872fe6a and014f7b9c,
+not published; no claims or machine reservations held.
+
+Registry follow-up: crate0.1.0 non-yanked, SHA2099d96e...,
+sourceb6f84679,689Rust source/example files plusLICENSE unchanged fromff876abe. Archive lock
+17package version changes, no transitive compile-reuse claim. API source
+hash removed via crate_name-only default; KB normal0.1series requirement.
+Canonical crates.io web route404 observed despite registry API/download200;
+recorded link-check limitation. ProductionKBsource no drift,foreign staging
+owner/pending bundle unchanged. Old artifacts preserved before regeneration.
+
+2026-10-25 KB update committeddf1944a2: only5files (2candidates/2manifests/
+currentreceipt), parser/checksum/TOML/source-preservation quickchecks pass.
+Old8artifacts preserved before regeneration; no registryconsumer compilation
+claim. APIB2source/check/commit pending, then affected same-reviewer review.
+
+FinalAPI57a53e700132d43589f4e6bcf519f1c7ec3fd2ed, unchangedAff44d95e,
+old21872fe6preserved; clean/no active operations.2actual mount/initexamples
+pass plus scoped lint/syntax,Nix testScript eval,Ruby syntax and all hooks.
+Sourcepin removal folded into owning Bcommit, no migrations/pin stream.
+
+Affected reviewer0 identity/settings confirmed via exactcurrent/thread binding,
+retainedread_onlygpt-6.1-sol/xhigh,nooverrides/nestedagents. Source/package
+comparison independently verifies689.rsfiles+LICENSE(690total), manifest
+separately equal; same17lockversion changes. No new substantive finding so far.
+
+Finalaffectedreviewcompleted:reviewer0sameverifiedread_onlySol/xhigh,no
+overrides/fallback,nestedagents or edits. Acceptednew57a53e700/KBdf1944a2,
+all4affectedlanes and explicit fullhistory/norepeatedstreams/no migrations
+conclusion, noNEWfindings. Currentchange complete/coded/locallychecked/
+independentlyreviewed; not deployed/staged/published. R1userownedexternal
+remains unresolved; original overallintegration/build/publicationgates unchanged.

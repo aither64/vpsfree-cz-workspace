@@ -1,4 +1,26 @@
-# Handoff checkpoint
+# Current handoff — 2026-10-25
+
+User owns the documentation performance remedy in another session. This session
+keeps R1 external and leaves the exact HaveAPI0.30.1 dependencies unchanged.
+Rust crates.io0.1.0 publication verified; API profile and bilingual KB switch
+from Git source to normal Cargo registry installation. Focused checks pass,
+API amended57a53e700 with all hooks passing; affected independent review
+completed with no new findings by retained reviewer0. KB update committed
+df1944a2. No staging/production publication,merge,deployment or lifecycle action.
+CurrentAPI57a53e700 and KBdf1944a2 are review inputs, not overall
+readiness; WebUI014f7b9c is unchanged from prior corrected checkpoint.
+
+Crate checksum2099d96e698e23912879cc15a32097c920f0db96976c2bee671a5ce2239777d0,
+sourceb6f84679; runtime/examples unchanged from oldff876abe. Packaged lock differs,
+so old compiler receipt is historical rather than a new registry compile pass.
+Current canonical crates.io web route404 observed while API/downloads succeed;
+retained canonical link and documented that check limitation.
+
+See [registry review packet](rust-registry-review.md), [design addendum](design.md),
+[state](state.md), and [KB receipt](kb-validation.md). Session stays open.
+
+## Prior reviewed checkpoint
+
 
 Implementation is committed and quick checked; independent final review completed
 with one unresolved blocker. This is not ready for integration or deployment.

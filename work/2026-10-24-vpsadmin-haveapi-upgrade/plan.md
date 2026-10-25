@@ -69,3 +69,15 @@ The user additionally permits reusing existing vpsadmin-webui PRs; prefer
 matching PRs and record exact source/head ownership and history provenance.
 Do not alter unrelated old-session repositories or lifecycle/records.
 Do not archive or stop this session as part of completing the task.
+
+
+## User steering — 2026-10-25
+
+The user owns the performance remedy in another session. This session keeps
+its review evidence and external dependency without implementing a HaveAPI fix.
+The Rust SDK is now published on crates.io; verify release identity and replace
+the current API profile's Git source and KB installation guidance with registry
+installation, preserving exact old provenance in historical receipts. Run
+focused rendering/configuration checks, commit the change and send affected
+ranges to the same independent reviewer. No API runtime/version/SDK source
+changes outside this adoption are intended.
