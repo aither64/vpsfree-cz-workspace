@@ -1,0 +1,5 @@
+- **Result:** passed, exit status 0; duration 6.2 seconds.
+- **Artifact:** Actions run `40113594479`, artifact `12567144565`; bound to commit `1c3c98f0d77e0b23c8da1a8937f25c5799864a3b`, attempt 1.
+- **Raw evidence:** [watcher evidence directory](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-haveapi-release/release-0-30-1-successor-artifact-watcher), including `artifact-binding.json`, `artifact-command.log`, and `artifact-command-exit.json`.
+- **Downloaded artifact target:** `/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-haveapi-release/release-0-30-1-successor-artifact-download`
+- **Active operation:** none.

@@ -1,0 +1,3 @@
+**Incomplete; no verification was run.** The required workspace procedure file could not be read: `/home/aither/workspace/ai/vpsfree.cz/doc/agent-instructions/verification.md` does not exist. Per the repository instructions, I stopped before validating readiness or executing the batch.
+
+The skill, worktree `AGENTS.md`, and `doc/agent-instructions/development.md` were read. Tested head, elapsed time, and exit status are not applicable. No processes were started or cancellation taken.

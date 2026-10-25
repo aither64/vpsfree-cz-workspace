@@ -1,0 +1,6 @@
+- **Result:** Failed, exit status 1. The batch stopped at `make release-check`; `make release-test` was not run.
+- **Revision:** `8591394e13144431b27ecb366aae2b7b77a94e2c`; frozen source775 `e1af270d30ae6800c56556600b016a13dc67dcb49642b8401a5219614ae8baa7`.
+- **Duration:** 2.023 seconds.
+- **Evidence:** [result.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-haveapi-release/release-0-30-1-stage2-execution-20261024T121500Z/quick-batch-watcher/result.json), [first-failure.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-haveapi-release/release-0-30-1-stage2-execution-20261024T121500Z/quick-batch-watcher/first-failure.json). The failed command’s stdout was empty; stderr SHA-256 is recorded in `result.json`.
+- **Excerpt:** `AssertionError: release-check: STOP, preserve effects; no automatic retry or repair`
+- No active child remains. No retry or cancellation occurred.

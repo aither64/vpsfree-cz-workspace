@@ -1,0 +1,3 @@
+Setup failed with exit 1 after 6.52 seconds. It verified HaveAPI head `67fcd34ba506264a5c7ee2e8e18a88d221c6f469` and tree `80804b1c0c3ed33fc4b086673dbc3618a789cd4f`; the source, lock, documentation, and guard checks passed. Bundler 4.0.23 installed successfully, then the frozen local bundle install exited 16, producing `02-frozen-install failed`.
+
+I ran the assigned command once and did not diagnose or retry. The setup process is terminal. No separate log or result artifact path was included in the captured output.

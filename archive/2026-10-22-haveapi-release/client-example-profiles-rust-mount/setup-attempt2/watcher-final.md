@@ -1,0 +1,3 @@
+The single setup operation **failed** with exit status 1 after 164.6 seconds. It reached the frozen local install, which returned exit 16 after 152.5 seconds; the script reported `01-frozen-install failed`. Tested HaveAPI revision: `67fcd34ba506264a5c7ee2e8e18a88d221c6f469` (tree `80804b1c0c3ed33fc4b086673dbc3618a789cd4f`).
+
+The script’s terminal result is retained in its output and setup-attempt2 artifacts. I did not inspect failure logs, diagnose, or retry.

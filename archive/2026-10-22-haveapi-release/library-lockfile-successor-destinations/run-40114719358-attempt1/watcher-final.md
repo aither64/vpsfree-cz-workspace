@@ -1,0 +1,3 @@
+Result: **passed** (exit 0). The exact authorized command completed in 55.5 seconds; its collector reported 16.4 seconds and no remaining owned processes.
+
+Evidence directory: [run-40114719358-attempt1](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-haveapi-release/library-lockfile-successor-destinations/run-40114719358-attempt1). Terminal result paths provided in the instructions: `operation-result.json` and `evidence/collection-result.json`. No failure excerpt.

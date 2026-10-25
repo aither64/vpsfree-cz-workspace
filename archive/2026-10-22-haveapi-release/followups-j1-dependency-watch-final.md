@@ -1,0 +1,5 @@
+**Passed.** The single `npm ci` operation exited 0 in about 11.5 seconds on branch `2026-10-22-haveapi-release-followups`, HEAD `b64fb25bea8d8222fb3263b99956c0b61438a859`. It added 220 packages. Node is `v24.21.0`; npm is `11.19.0`.
+
+The package and lockfile hashes matched the specified values both before and after. `clients/js/node_modules` is present. The log records the Nix output, including an ignored busy eval-cache warning.
+
+Artifacts: [full log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-haveapi-release/followups-j1-dependency-setup.log), [exit status](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-haveapi-release/followups-j1-dependency-setup.log.exit), [result JSON](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-haveapi-release/followups-j1-dependency-setup.log.result.json). Tool operation `81501` completed; nothing remains running.

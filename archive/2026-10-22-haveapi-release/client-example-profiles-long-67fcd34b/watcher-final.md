@@ -1,0 +1,4 @@
+- **Result:** Failed, exit status 1. The driver recorded a `TypeError` after three successful phases; I did not diagnose or retry.
+- **Command:** Ran the assigned driver once from `/home/aither/workspace/ai/vpsfree.cz`, after session identity matched. It waited for the gate, then ran for 65.36 seconds.
+- **Completed phases:** `make test-documentation`, packaged-server `packaging_spec.rb` and `documentation_spec.rb`, and the Go observer phase each exited 0. No processes were reported still running.
+- **Evidence:** Driver result and runtime artifacts are under [client-example-profiles-long-67fcd34b-run1](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-haveapi-release/client-example-profiles-long-67fcd34b-run1). The later Rust phases did not run.

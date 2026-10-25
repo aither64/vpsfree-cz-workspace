@@ -1,0 +1,7 @@
+# 0.30.1 metadata preparation
+
+Stage1 waits for owner1's terminal exact metadata-tools/ownRust handoff. Then the maintained make version target runs once in its declared metadata environment, with offline uv/own cache/exact Python and root TOOL Bundler variables cleared. Accept only the specified18 tracked paths with unchanged external Rust52/Python26 graphs and JS dependency/declaration identities. Preserve partial effects on failure; no automatic retry.
+
+After successful semantic proof and the actual2026-10-24 date check, prepend the main-authored exact candidate bytes plus a blank-line separator to the entire unchanged old CHANGELOG suffix. Yield the stable uncommitted19path snapshot and source/lock/tool evidence to owner1+lead. Do not stage or commit during owner1's Python setup.
+
+Stage2 waits for its exact normal Python hook readiness, then required release-check/release-test and normal hooks. The root hook TOOL BUNDLE_LOCKFILE must not leak into the disposable fixture/Rust lock; exact NixRuff0.17.1, ownUVcache/exactUVPython/no download remain bound. Commit only19paths as Version0.30.1 with a message file. Export the complete b64-to-final12commit range, source mappings/history/no migrations and775mode/blob/SHA proof, exact19path metadata delta versus integrated67, preserved artifacts/refs and final comparison for lead's committed independent review. No long campaign or publication in this package.

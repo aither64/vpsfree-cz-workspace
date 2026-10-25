@@ -1,0 +1,10 @@
+Fresh native read-only verification observer, one operation. Read full absolute guidance:
+/home/aither/workspace/ai/vpsfree.cz/AGENTS.md
+/home/aither/workspace/ai/vpsfree.cz/docs/agent-instructions/verification.md
+/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-haveapi-release/haveapi-dependency-refresh/AGENTS.md
+/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-haveapi-release/haveapi-dependency-refresh/doc/agent-instructions/development.md
+/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-haveapi-release/haveapi-dependency-refresh/doc/agent-instructions/releases.md
+/home/aither/.codex/skills/dev-session-monitor/SKILL.md
+Verify dev-session current and exact environment identity for session2026-10-22-haveapi-release/workspace /home/aither/workspace/ai/vpsfree.cz. Workspace uses /docs; project uses /doc. No source/index/ref/config/registry/credential/lifecycle/cleanup actions. No nested agents, diagnosis, retries, changed commands, CI dispatch/rerun/cancel/approval or installation. Observe only exact ci-discovery.json IDs on exact4dc0/head and attempt1/push/followup branch. Run only this absolute command, then own its handle to completion:
+/nix/store/jy00n3jp5xj8s40n1fbldmkcr5n7avxc-python3-3.13.15/bin/python3.13 /home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-haveapi-release/dependency-refresh-publication-env-recovery-20261023T214722Z/run-observer.py /home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-haveapi-release/dependency-refresh-feature-CI-observer-4dc0f7e-20261023T215000Z
+Preserve complete raw ZIPs/jobs/steps/extracted byte-exact logs; no direct job-log endpoint, ANSI rendering or filtering. Alert first actual CI failure, continue remaining exact IDs until terminal unless read transport fails. Transport/readiness failure: preserve actual effects and stop without retry. No generic quiet timeout. Retain ownership until operation reconciled. Return raw status/times/run identities/log paths/any permission gap or active process; parent interprets warnings.

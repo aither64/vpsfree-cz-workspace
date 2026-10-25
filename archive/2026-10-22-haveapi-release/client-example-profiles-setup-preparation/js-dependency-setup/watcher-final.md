@@ -1,0 +1,5 @@
+- **Result:** Passed, exit status 0.
+- **Tested revision:** HaveAPI `4dc0f7e11c494d1a0dc852dabcc312411699fcab`.
+- **Operation:** Ran the authorized dependency setup once; script SHA matched `60d8b3e…fb2b1a`. Elapsed time: 12.78 seconds.
+- **Evidence:** The script reported `source_guard_passed: true` and `source_and_all47outputs_unchanged: true` across 775 source files.
+- **Active effects:** No operation remains running. The script’s output did not report additional active effects.

@@ -1,0 +1,4 @@
+- Result: **passed**, exit status 0. Tested revision: `b6f84679d33ff041388535dcf4dc060aeb0d1b9d`.
+- Command ran once from the canonical checkout; elapsed time was 168.97 seconds. The script reported no remaining processes.
+- Retained result: [result.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-haveapi-release/vpsadmin-sdk-native-candidate-b6f84679-run1/result.json).
+- Utility yield: complete.

@@ -1,0 +1,6 @@
+- **Result:** Observer operation completed successfully; `operation_exit` 0 and process exit status 0.
+- **Session identity:** `dev-session current` and environment both matched `2026-10-22-haveapi-release` at `/home/aither/workspace/ai/vpsfree.cz`.
+- **Run scope:** The single assigned invocation observed the specified CI IDs for revision `67fcd34ba506264a5c7ee2e8e18a88d221c6f469`, branch `2026-10-24-haveapi-client-example-profiles`, push event, attempt 1.
+- **Evidence:** `/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-haveapi-release/client-example-profiles-feature-CI-observer-67fcd34b-20261024T1000Z`
+- **Elapsed time:** About 4 minutes, 12 seconds from invocation to completion.
+- No active process or permission gap was reported. Raw per-run statuses, times, logs, and identities are retained at the evidence path for the parent to interpret.

@@ -1,0 +1,9 @@
+# Prepared source-version recovery attempt
+
+Preparation only. Owner1 exclusively prepares the one native online dry-run/offline shadow/cache proof under its separate grant. Owner0 makes no patch/source/Git/check/staging/changelog change before lead acceptance of the actual offline output and one explicit new-attempt grant. The launch-binding-disabled.json is intentionally false/unset; no live binding exists.
+
+The new attempt starts from the exact frozen775 stopped bytes (canonical6e2ea949), unchanged8591394e/tree8080, the twelve version-only changes and original locks/changelog/index/refs. It does not reset the first marker or repair/rewrite any lock. The original failed driver/effects/raw logs and entire old packet remain immutable.
+
+The live binding must include the exact accepted offline shadow lock bytes, qualified cache/input inventory, selected uv/Python/tool/native graph and a command-free owner1 handoff. A newly qualified partial12-aware launcher must retain normal declared metadata/Rust environment, offline uv/exact Python/no download, supported config controls and an existing own TMPDIR. It invokes ordinary make version VERSION=0.30.1 once. Its repeated first12 substitutions are intentionally idempotent.
+
+The recorder must compare the actual resulting Python lock byte-for-byte to the accepted native shadow, then prove the complete18 metadata paths/fields against the original preversion source, fixed Rust52 and Python26 external records and JS dependencies/declarations. Only after that proof and actualdate check may it mechanically apply exact approvedcandidate0c7b6a62 plus separator, preserving the old CHANGELOG suffix, and yield uncommitted stable19. All failure effects stop without automatic retry, alternate lock editing or source workaround. No staging/commit during later owner1 physical setup. No push/default/tag/publication/lifecycle scope.

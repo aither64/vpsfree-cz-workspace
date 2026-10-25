@@ -1,0 +1,6 @@
+- **Result:** Passed, exit status 0; install exit status 0.
+- **Elapsed:** 27.93 seconds.
+- **Command:** Ran exactly once from `/home/aither/workspace/ai/vpsfree.cz`.
+- **Revision:** `2026-10-22-haveapi-release` in the verified workspace.
+- **Evidence:** The command reported `source_unchanged: true` and completed its post-run guard hashes. The script retained `install.log` and `result.json` in the recovery evidence directory.
+- **Still active:** None.

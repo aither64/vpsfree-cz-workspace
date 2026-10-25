@@ -1,0 +1,11 @@
+# Stage2 boundaries
+
+This file records preparation, not a launch or expanded grant.
+
+The stable uncommitted19path snapshot goes to owner1 before its own Python setup. Owner0 performs no staging or source/Git mutation during that setup. The exact returned Python normal-hook receipt must bind selected Python, the owning patch venv/local0.30.1 identity, fixed26 external records/backend, own offline uv cache and Nix Ruff0.17.1. Root TOOL Bundler state remains separate from the Rust local-lock and disposable999.0.0 fixture contexts.
+
+After that handoff, the required release-check and release-test commands are permitted. No real version-sensitive profile, compiler, full model-equivalence or package campaign may run before the committed candidate review. Use established known-short invocation evidence or one fresh pinned Luna/low native watcher for uncertain-duration quick verification; the parent must verify its actual persisted startup context and exact payload before launch. The utility owns its run once and all monitoring, with no parallel parent polling, diagnosis, retries or source edits.
+
+Commit only the enumerated18 version paths and CHANGELOG.md, using Version0.30.1's maintained title style, a message file, normal signed hooks and<=80columns. Preserve the actual index and effects on hook failure. No automatic bypass/amend/reset. Normal Python hooks use their exact returned own environment and explicit HAVEAPI_RUFF; they do not authorize any dependency installation.
+
+The final packet must bind the complete b64-to-candidate12commit history, all11 genuine source mappings, retained090a downstream boundary and independent4dc0 dependency stream, whole-history/migration conclusion, exact775 mode/blob/SHA export, full binary diff, metadata-only19path delta versus integrated67, old CHANGELOG suffix/candidate fidelity, fixed Rust52/Python26/JS dependencies and declarations, actual quick/hooks/tool/lock evidence, preserved original artifacts and all refs except the owned patch feature head. Capture the final registered comparison. Lead owns final committed review assignment and later build-only/version-subset grants. No push/default/releasebranchmerge/tag/publication/deployment/cleanup/lifecycle occurs here.

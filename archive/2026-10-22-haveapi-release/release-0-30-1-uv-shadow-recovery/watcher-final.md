@@ -1,0 +1,6 @@
+Result: **failed**, exit 1. The single run took 4.18 seconds and finished; no operation remains running.
+
+- Tested source boundary: frozen `partial12` at `8591394e`, digest `6e2ea949…1076e`, explicitly not `clean859` or `stable19`.
+- Command: `/nix/store/bp3dz5ss8bbk5nwg03pvp39fngkydidv-python3-3.11.17/bin/python3 -B /home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-haveapi-release/release-0-30-1-uv-shadow-recovery/run.py`
+- The online dry-run step exited 0. The script then stopped with `AssertionError: Unexpected native request/diagnostic URL; inspect preserved provenance`. Its final live-source, input, lock, output, and tool guards passed. It reports `ready_for_owner0_resume: false`.
+- Retained result: [result.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-haveapi-release/release-0-30-1-uv-shadow-recovery/result.json); exit record: [exit](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-haveapi-release/release-0-30-1-uv-shadow-recovery/exit). Run logs and request provenance are beside them.

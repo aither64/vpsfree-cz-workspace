@@ -1,0 +1,1 @@
+**Verification did not run.** The required native turn-context check for the pinned revision is unavailable here, so the identity gate did not open. I did not read the listed files or invoke the command; there is no exit code, revision result, or active operation to report.

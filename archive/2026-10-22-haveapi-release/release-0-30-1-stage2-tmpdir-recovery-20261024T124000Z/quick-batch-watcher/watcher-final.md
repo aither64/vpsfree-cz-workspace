@@ -1,0 +1,4 @@
+- **Result:** Failed; batch exit status `1`. `release-check` passed (exit `0`); `release-test` stopped with exit `2`.
+- **Revision:** `8591394e13144431b27ecb366aae2b7b77a94e2c`; frozen source `e1af270d30ae6800c56556600b016a13dc67dcb49642b8401a5219614ae8baa7`.
+- **Duration:** 9.01 seconds. No active child remains.
+- **Evidence:** The launcher reported `AssertionError('release-test: STOP, preserve effects; no automatic retry or repair')`. It reports no retries. I did not investigate or rerun. Log/artifact paths were not included in the command’s terminal output.

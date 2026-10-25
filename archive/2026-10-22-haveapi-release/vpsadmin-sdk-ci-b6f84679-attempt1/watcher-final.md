@@ -1,0 +1,5 @@
+- **Result:** Observer completed with exit status 0. CI run `40128126409`, attempt 1, head `b6f84679d33ff041388535dcf4dc060aeb0d1b9d`.
+- **Elapsed:** About 3 minutes from launch to completion.
+- **Evidence:** Raw result at [result.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-haveapi-release/vpsadmin-sdk-ci-b6f84679-attempt1/result.json). The observer reported `gaps: []`.
+- **Retention and remote jobs:** The utility’s terminal output does not specify log or artifact paths, retention state, or remaining remote jobs. I did not perform additional discovery.
+- **Local utility:** Terminal; no longer running.

@@ -1,0 +1,5 @@
+**Result: failed**, exit 1 after 52.2 seconds. The assigned setup ran once against head `4dc0f7e11c494d1a0dc852dabcc312411699fcab`. Source guards passed before and after; the server lock hash remained `cec5e86c…`.
+
+Bundler installation, frozen install, and `bundle check` passed. Required-library activation failed because `File.realpath` could not resolve `enumerator.so` (`Errno::ENOENT`). The operation stopped there; I did not retry. No further commands remain for this watcher.
+
+Evidence is retained in [the gated evidence directory](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-haveapi-release/dependency-refresh-server-bundle-gated), including `gate-consumed.json`, `result.json`, `exit`, and the per-step JSON receipts and logs. The activation failure excerpt is in [04-required-library-activation.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-haveapi-release/dependency-refresh-server-bundle-gated/04-required-library-activation.log).

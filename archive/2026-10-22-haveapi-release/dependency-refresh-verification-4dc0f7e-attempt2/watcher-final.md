@@ -1,0 +1,3 @@
+Result: **passed**, exit status 0. The approved verification command ran once and took 104.5 seconds.
+
+Tested head: `4dc0f7e11c494d1a0dc852dabcc312411699fcab`. The script confirmed the tree, tracked-file count, source hash and both lockfiles were unchanged. The full result is retained under `work/2026-10-22-haveapi-release/dependency-refresh-verification-4dc0f7e-attempt2/`; gate verification is recorded in `gate-consumed.json`.

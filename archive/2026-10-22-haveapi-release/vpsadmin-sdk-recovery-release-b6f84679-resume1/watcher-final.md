@@ -1,0 +1,3 @@
+**Result:** Incomplete, `PROTECTED_PENDING`; local observer exit status 0. It observed release run `40129363150`, attempt 1, for tag `v0.1.0` at head `b6f84679d33ff041388535dcf4dc060aeb0d1b9d`. Elapsed time was about 4 minutes.
+
+The retained result is [result.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-haveapi-release/vpsadmin-sdk-recovery-release-b6f84679-resume1/result.json). The observer reports the exact remote run is still waiting. Whole-attempt logs were unavailable; it retained the raw provider failure and used available completed-job logs. No approval or other remote action was taken.

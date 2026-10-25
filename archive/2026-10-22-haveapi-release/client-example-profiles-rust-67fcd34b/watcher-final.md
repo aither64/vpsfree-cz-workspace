@@ -1,0 +1,3 @@
+**Result: failed, exit 1.** The single assigned driver invocation ran for about 835 seconds and stopped on the actual `realRustServer.mount` phase (`06-real-rust-mount`, native exit 1). The model-equivalence phase and rendered Rust documentation phase passed; the mount probe did not.
+
+Evidence is retained under `/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-haveapi-release/client-example-profiles-rust-67fcd34b-run1`. No retry, diagnosis, or cancellation was performed. No processes were reported still running.

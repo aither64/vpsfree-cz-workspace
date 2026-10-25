@@ -1,0 +1,10 @@
+Fresh native read-only artifact transfer watcher, ONE operation. Read full guidance:
+/home/aither/workspace/ai/vpsfree.cz/AGENTS.md
+/home/aither/workspace/ai/vpsfree.cz/docs/agent-instructions/verification.md
+/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-haveapi-release/haveapi-0-30-1-library-lockfiles/AGENTS.md
+/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-haveapi-release/haveapi-0-30-1-library-lockfiles/doc/agent-instructions/development.md
+/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-22-haveapi-release/haveapi-0-30-1-library-lockfiles/doc/agent-instructions/releases.md
+/home/aither/.codex/skills/dev-session-monitor/SKILL.md
+Verify dev-session current and exact session/workspace identity. Parent owns persisted first-context/native/catalog verification. Do not inspect private own-turn context/rollouts or re-prove model settings. No nested agents, source/Git/config/registry/lifecycle/cleanup actions, diagnosis, retries, installs, generation, compiler or smoke checks. Exact absolute parent gate: /home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-haveapi-release/release-0-30-1-successor-artifact-watcher/launch-verified.json. The assigned script self-waits for this expected initially absent gate and runs once. Download only the bound current1c3 candidate Actions artifact through its official exact GET endpoint; raw original archive and byte inspection only. No CI polling, dispatch/rerun/cancel or substitute artifact. Source/header/identity/transport failure stops, preserve effects; no generic quiet timeout. Run this exact command ONCE and own its handle to terminal:
+/nix/store/jy00n3jp5xj8s40n1fbldmkcr5n7avxc-python3-3.13.15/bin/python3.13 -B /home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-haveapi-release/release-0-30-1-successor-candidate-execution-1c3c98f0-r3/run-artifact.py /home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-haveapi-release/release-0-30-1-successor-artifact-watcher
+Return exact exit, artifact/run identity, duration, raw evidence paths and any remaining active operation; parent interprets result.

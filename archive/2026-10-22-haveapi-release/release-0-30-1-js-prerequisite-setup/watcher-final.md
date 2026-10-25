@@ -1,0 +1,4 @@
+- **Result:** Passed, exit 0; elapsed about 48 seconds.
+- **Operation:** One authorized offline npm prerequisite setup, launched from the required session directory.
+- **Evidence:** [/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-haveapi-release/release-0-30-1-js-prerequisite-setup/operation](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-haveapi-release/release-0-30-1-js-prerequisite-setup/operation)
+- **Raw completion record:** `{"exit": 0, "status": "passed", ...}`. No operation remains running.

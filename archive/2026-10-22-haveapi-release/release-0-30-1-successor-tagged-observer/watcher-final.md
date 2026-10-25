@@ -1,0 +1,5 @@
+- **Result:** Failed; observer exited with status 1 after about 110 seconds.
+- **Command/run:** The exact assigned command ran once on the verified session `2026-10-22-haveapi-release` (`/home/aither/workspace/ai/vpsfree.cz`). Process handle 39128 completed.
+- **Evidence path:** `/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-haveapi-release/release-0-30-1-successor-tagged-observer`
+- **Raw output:** `{"operation_exit": 1, "evidence": ".../release-0-30-1-successor-tagged-observer}`
+- No active process remains. The script did not provide further status details; I did not inspect evidence files or retry.

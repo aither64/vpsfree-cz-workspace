@@ -1,0 +1,3 @@
+The assigned operation completed: **exit 0** after 8.90 seconds. No owned process remains running.
+
+Evidence is retained in `/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-haveapi-release/vpsadmin-sdk-registry-reconciliation-40129363150-attempt1`, including `operation-result.json`, `evidence/result.json`, and the raw collector stdout/stderr. This reports the collector’s terminal status only; it does not change the previously reported workflow and publish-command failure.

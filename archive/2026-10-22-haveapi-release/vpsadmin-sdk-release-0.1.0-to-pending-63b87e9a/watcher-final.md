@@ -1,0 +1,4 @@
+- **Result:** Incomplete at the protected approval boundary. Observer exited `0`; release run `40123807556`, attempt 1, is still remotely waiting on head `63b87e9a1b92727a3e5c5513898e183ab0be898a`.
+- **Elapsed:** About 36 seconds. The sole authorized observer command ran once and ended.
+- **Evidence:** [result.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-haveapi-release/vpsadmin-sdk-release-0.1.0-to-pending-63b87e9a/result.json). The observer reports whole-attempt logs unavailable and lists six unavailable job logs; it retained raw provider failure evidence and exact completed-job logs where available.
+- **Still waiting:** The remote release run remains active. No approval was submitted.

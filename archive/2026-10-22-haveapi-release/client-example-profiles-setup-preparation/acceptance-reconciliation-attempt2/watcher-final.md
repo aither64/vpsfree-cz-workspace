@@ -1,0 +1,4 @@
+- **Result:** Failed, exit 1. The official `net-pop-0.1.2.gem` GET returned HTTP 200 with SHA-256 `848b4e982013c15b2f0382792268763b748cce91c9e91e36b0f27ed26420dff3`; the script stopped at `bundle check` (exit 16).
+- **Revision:** `ee0e373f8125f455e471b02b2a05baa779fdf55f`
+- **Elapsed:** 6.31 seconds. The script reported `protected166inputs_unchanged: true`.
+- **Evidence:** The command’s captured output contains the fetch response and failure details. No retry was made; no operation remains active.

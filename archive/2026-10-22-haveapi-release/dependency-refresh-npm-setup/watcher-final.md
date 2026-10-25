@@ -1,0 +1,5 @@
+- **Result:** Passed (exit 0); npm installed 214 packages.
+- **Revision:** `090a188cb4ef3477324718627f4ae3415d1c0975` on `2026-10-22-haveapi-release-dependency-refresh`.
+- **Elapsed:** 8.09 seconds. The package manifest and lockfile hashes matched before and after.
+- **Evidence:** [install.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-haveapi-release/dependency-refresh-npm-setup/install.log) and [result.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-haveapi-release/dependency-refresh-npm-setup/result.json). Log excerpt: Node `v24.21.0`, npm `11.19.0`, `added 214 packages in 5s`.
+- **Active handle:** None.

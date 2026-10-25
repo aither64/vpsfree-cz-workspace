@@ -1,0 +1,4 @@
+- **Result:** Passed, exit 0. The single authorized dependency verification finished in 339.5 seconds.
+- **Source:** `8591394e13144431b27ecb366aae2b7b77a94e2c`; source digest `e1af270d30ae6800c56556600b016a13dc67dcb49642b8401a5219614ae8baa7`.
+- **Evidence:** The script reported `dependency_ready`, Python hook, Go optional 55/3, combined 95/3, and final source/input/lock/output/artifact/tool guards all passing. No project implementation or functional checks ran; the existing Rust bundle was not rebuilt.
+- **Authoritative result:** `work/2026-10-22-haveapi-release/release-0-30-1-versioned-dependencies/result.json`. No operation remains active.

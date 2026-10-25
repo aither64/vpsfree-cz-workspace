@@ -1,0 +1,5 @@
+**Failed** — the exact reviewed head `090a188cb4ef3477324718627f4ae3415d1c0975` (tree `e9473d5453e014ff2b0da36d4bb21f0eab2eb7e2`) was verified once. The readiness gate passed; the authorized batch exited **1** after **9.53 seconds**. No retry or cancellation occurred, and `result.json` reports no remaining owned processes.
+
+Failure excerpt: `nix derivation show` rejected `/nix/store/bcabyba530xl9hlsj6c1q6i63m7y0nn6-rustfmt-1.99.0.drv` as invalid. The batch traceback is in the retained log; no verification phases completed.
+
+Evidence is retained under [the verification directory](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-haveapi-release/followups-verification-090a188c-20261023T162121Z), including [result.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-haveapi-release/followups-verification-090a188c-20261023T162121Z/result.json) and [root-shell-and-batch.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-haveapi-release/followups-verification-090a188c-20261023T162121Z/root-shell-and-batch.log). No further operation or cancellation is authorized. The session remains open.

@@ -1,0 +1,5 @@
+**Failed.** The sole assigned command exited 1 after 38.6 seconds on reviewed head `090a188cb4ef3477324718627f4ae3415d1c0975` (tree `e9473d5453e014ff2b0da36d4bb21f0eab2eb7e2`).
+
+The batch stopped at its initial tool-input guard, before verification steps. Bounded failure excerpt: `AssertionError: rustfmt 1.10.0`. No retry or cancellation was performed; `result.json` records no remaining owned processes.
+
+Evidence is retained in [the verification directory](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-haveapi-release/followups-verification-090a188c-20261023T161428Z), including [result.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-haveapi-release/followups-verification-090a188c-20261023T161428Z/result.json) and [root-shell-and-batch.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-haveapi-release/followups-verification-090a188c-20261023T161428Z/root-shell-and-batch.log). No planned verification phases completed. The session remains open.

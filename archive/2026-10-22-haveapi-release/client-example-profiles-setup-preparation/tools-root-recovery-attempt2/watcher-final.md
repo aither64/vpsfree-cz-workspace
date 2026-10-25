@@ -1,0 +1,6 @@
+- **Result:** Passed; exit status 0.
+- **Tested revision:** `4dc0f7e11c494d1a0dc852dabcc312411699fcab`.
+- **Command:** The exact assigned `run.py` command, executed once. Elapsed time: 38.19 seconds.
+- **Evidence:** The script reported `final_guard_passed`, unchanged source inputs (775 files), 5 locks, and 47 distribution files. It retained the profile and required tools.
+- **Profile:** `/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-haveapi-release/client-example-profiles-setup-preparation/tools-root-recovery-attempt2/declared-tools`
+- **Log:** `/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-haveapi-release/client-example-profiles-setup-preparation/tools-root-recovery-attempt2/realization.log`

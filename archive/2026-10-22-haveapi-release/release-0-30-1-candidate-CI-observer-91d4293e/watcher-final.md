@@ -1,0 +1,1 @@
+Observer operation completed with exit status 0. It retained evidence at [the observer directory](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-haveapi-release/release-0-30-1-candidate-CI-observer-91d4293e). The script emitted no CI statuses, run times, identities, or log paths to stdout; I did not inspect or interpret its retained evidence. No active process remains.

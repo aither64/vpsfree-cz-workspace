@@ -1,0 +1,3 @@
+**Result: failed (exit 1).** The one authorized invocation completed in 21.5 seconds and reported 19.1 seconds internally. It yielded locally with no active processes. The utility reported no dispatch, registry, or source build attempt; it recreated the environment-only derivation, then failed at `04-realise-environment-only` without retrying.
+
+Evidence retained in the command result. No separate log or restored paths were reported.

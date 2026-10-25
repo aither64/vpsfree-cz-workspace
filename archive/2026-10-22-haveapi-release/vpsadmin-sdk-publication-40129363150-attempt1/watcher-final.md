@@ -1,0 +1,5 @@
+- **Result:** Failed; observer exited `1`. It reported the authorized run `40129363150` as terminal with conclusion `failure`.
+- **Elapsed:** 13.455 seconds. The one authorized command was run from the specified SDK worktree.
+- **Retained result:** `/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-haveapi-release/vpsadmin-sdk-publication-40129363150-attempt1/result.json`
+- **Remote state:** The observer reported `remaining_remote: []`.
+- **Limit:** I did not inspect further or diagnose the failure. No retry or other operation was performed.

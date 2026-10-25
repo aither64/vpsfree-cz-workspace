@@ -1,0 +1,1 @@
+Actual same-run publication observation under grant 8ab49319-a1e9-4ddb-bb35-27ca56c6b0a7. Derived from disabled retry preparation; source/tag/approval bindings in payload.json. Only official GET observation and original evidence retention. No mutations or public registry queries.

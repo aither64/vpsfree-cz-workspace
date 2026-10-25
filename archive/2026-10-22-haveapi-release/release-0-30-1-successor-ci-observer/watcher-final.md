@@ -1,0 +1,3 @@
+The assigned observer command ran once and exited with status **1**. Its evidence is retained at [release-0-30-1-successor-ci-observer](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-haveapi-release/release-0-30-1-successor-ci-observer).
+
+I did not inspect the evidence or diagnose the result. The session check returned `2026-10-22-haveapi-release`. The observer emitted no raw status, run identities, times, or log paths before exiting; the process is no longer active.

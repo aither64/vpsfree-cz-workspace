@@ -1,0 +1,3 @@
+Stopped before setup. The rollout record for this thread contains launch settings (`gpt-6-luna`, low, never, workspace cwd) but no `turn_context` record with the required `sandbox_policy`. The instructions require the actual `turn_context` values and say to stop if unavailable, so I did not write `effective-launch.json` or run the setup command.
+
+The setup script SHA256 matches the supplied value. Session and environment identities also match. No setup operation ran; there is no setup exit status or operation log to report.
