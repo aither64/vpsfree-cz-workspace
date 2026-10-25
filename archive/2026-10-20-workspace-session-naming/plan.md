@@ -8,6 +8,20 @@ silently allocate a generic or heuristic fallback identity. User authorized
 implementation of the final plan and aitherdev deployment via
 vpsfree-cz-configuration. No default-branch integration is authorized.
 
+## Current limits, 2026-10-25
+
+The user has put deployment on hold. No deployment copy, machine acquisition or
+system/application activation is authorized until the hold is lifted. Source
+preparation, review and independently released non-deploy checks continue.
+Final sources are A801099/B529e075a and matching workspacecbf7864a/configa2ba6fe4.
+The exact creation VM failed at source-lock refusal, and its mandatory acceptance
+remains unresolved. Preserve strict assertions and fail-fast source ownership;
+no speculative retry, sleep, timeout or locking-policy correction is authorized.
+The separately released independent batch excludes the failed creation derivation
+and cannot establish full runtime flake success or complete readiness. See state.md
+and forward-review-20261025/creation-blocked-decision.json for current gates.
+Historical rollout directions below remain conditional on these current limits.
+
 ## Affected repositories
 
 - codex-web: retry notifications and safe terminal retry eligibility.
@@ -74,3 +88,27 @@ retry-then-success, settled-failure-then-fresh-success, shared30s exhaustion,
 cancellation, uncertainty, production adapter/manual recovery/replay, creation
 during collection and preparation/package exclusion. Real selected-provider
 naming and health/continuity smoke checks are required after deployment.
+
+## Forward deployment refresh, 2026-10-24
+
+Queued ownership was granted after the selected runtime advanced. Main verified
+claim held, captured the fresh baseline, and released the unused claim before
+preparation when architect established the old candidate would discard deployed
+failed-turn recovery and retry-state capabilities. No activation occurred.
+
+The saved architect brief in design.md:9–194 releases A/B refresh onto verified
+baselines containing deployed client11ec57d/runtimeb3a6eb2, preserving native,
+provider, naming catalog, extension and newer state readers/writers. Naming scope
+remains one30s deadline, bounded safe retries and manual recovery before identity
+reservation. This preserves deployed behavior; it grants no default merge or
+lifecycle authority. A and B source work are independent, final B depends on exact
+A publication, C composition depends on exact B. Reconcile the redundant attention
+fixture with preserved upstream synchronization, retain archive diagnostics.
+
+Main owns changed-prose pass and affected final review with complete final ranges,
+histories and no-migration conclusions, then fresh policy watchers. Verification
+reuse needs actual derivation/input receipts; previous exact-head PASS is retained
+as historical evidence. Refresh native/probe guards, preserve newer retry-policy
+refusal and recovery coverage, build/copy refreshed C before a new machine request.
+On grant recheck the selected baseline, both system paths and profile identity,
+then real-provider naming/health/conversation continuity.
