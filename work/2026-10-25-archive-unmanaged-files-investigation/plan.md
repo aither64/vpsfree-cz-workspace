@@ -2,44 +2,53 @@
 
 ## Goal
 
-Investigate the portal archive failure for `2026-10-22-haveapi-release` and
-recommend a durable solution. The requested deliverable is findings and a
-proposal; do not repair, retry or archive the affected session or deploy code.
+Implement the accepted archive preflight and lead-assisted cleanup plan. First
+repair and retry the original `2026-10-22-haveapi-release` archive, then add a
+read-only readiness command and durable portal preparation before agent shutdown.
+The user explicitly requested implementation after accepting preflight-only repair
+and progress-based retries (stop after three completed cycles without progress).
 
 ## Affected repositories
 
 - `dev-workspace`: archive discovery, journaled cleanup and portal feedback.
-- Coordination workspace: this investigation's tracking and evidence only.
+- Coordination workspace: this initiative's tracking and evidence.
 - `vpsfree-cz-configuration`: starting location; no configuration changes needed.
 
 ## Approach
 
-Inspect the selected package, systemd journal and blocking directory read-only.
-Trace the cleanup invariant and archive ordering. Reproduce the failure with the
-installed discovery class and a disposable Git repository. Compare a sibling
-cache with the same files inside a verified checkout. Record a bounded proposal.
+Preserve the investigation in findings.md. Move the verified hook cache inside
+its canonical checkout and retry the retained portal operation. Implement on the
+registered dev-workspace feature branch, with design in design.md. Complete quick
+checks and commits, independent review, then packaged integration tests. Preserve
+master branches; implementation does not authorize their integration.
 
 ## Decisions
 
-Keep the failed initiative untouched. Use a separate tracking-only session because
-this conversation has no existing session binding. Do not infer the command that
-created the cache from its name alone.
+The approved plan supersedes the earlier investigation-only scope. Repair is
+limited to the reported session and its original archive intent. No generic
+auxiliary-file deletion and no lead revival after partial destructive archival.
+The existing threadless initiative has no retained team; implementation stays
+with the lead, with catalog-resolved independent review and verification watchers.
 
 ## Compatibility and deployment
 
-Investigation makes no runtime, configuration, journal or manifest format change.
-Any future support for auxiliary cleanup must preserve old journals and package
-rollback rules, and retain strict automatic archive policy and repository checks.
+Keep archive journal formats and strict automatic archive policy unchanged.
+Preparation is private portal state, never a lifecycle reservation. Package
+transitions park preparation as retryable failure; supported packages must never
+leave an old portal receipt permanently running because of unknown preparation.
+Recheck generation, session target and native message identity at each boundary.
 
 ## Documentation
 
 Readers: the operator deciding on repair and developers implementing prevention.
-Keep incident evidence and the unimplemented proposal in [findings.md](findings.md).
-An implementation should update the owning runtime's archive and session guides.
+Keep the original incident findings and proposal in [findings.md](findings.md).
+Supported behavior is documented in the runtime's archive and session guides;
+its README describes the native lifecycle verification path.
 
 ## Testing plan
 
-Run a short disposable Ruby/Git reproduction using the installed Ruby and archive
-cleanup source. Verify sibling-file refusal, acceptance within a registered
-checkout, and continued refusal of a loose sibling symlink. Remove the fixture
-automatically. No live archive/revive, builds, CI or application changes.
+Cover structural blockers without agent shutdown or journals, lead repair
+progress and no progress, uncertain delivery, restart/browser closure,
+cancellation and stale identity. Verify unrelated operations remain available.
+Run focused checks before independent review and packaged lifecycle tests after
+review. Retain all live-recovery results in state.md and recovery.md.
