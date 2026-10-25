@@ -19,6 +19,15 @@
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs { inherit system; };
+      workspaceSource = pkgs.lib.cleanSourceWith {
+        src = self;
+        filter =
+          path: _type:
+          let
+            relative = pkgs.lib.removePrefix "${self}/" (toString path);
+          in
+          relative != "work" && relative != "archive";
+      };
       teamConfig = import ./config/agent-teams.nix;
       siteConfig = {
         kb = {
@@ -51,7 +60,7 @@
           (previous: {
             extensions = previous.extensions // {
               skills = previous.extensions.skills // {
-                update-codex = "${self}/skills/update-codex";
+                update-codex = "${workspaceSource}/skills/update-codex";
               };
             };
           });
@@ -67,13 +76,19 @@
         program = "${package}/bin/workspace-host";
       };
       checks.${system} = {
+        tracking-source = pkgs.runCommand "workspace-tracking-source-tests" { } ''
+          test ! -e ${workspaceSource}/work
+          test ! -e ${workspaceSource}/archive
+          test -f ${workspaceSource}/flake.nix
+          touch "$out"
+        '';
         deployment-contract =
           pkgs.runCommand "dev-workspace-deployment-contract-tests"
             {
               nativeBuildInputs = [ pkgs.ruby ];
             }
             ''
-              cp -R ${self} source
+              cp -R ${workspaceSource} source
               chmod -R u+w source
               patchShebangs source/bin
               ruby source/test/deployment_contract_test.rb
@@ -85,7 +100,7 @@
               nativeBuildInputs = [ pkgs.ruby ];
             }
             ''
-              ruby ${self}/test/agent_instructions_test.rb
+              ruby ${workspaceSource}/test/agent_instructions_test.rb
               touch "$out"
             '';
         agent-team-policy =
@@ -250,7 +265,7 @@
               nativeBuildInputs = [ pkgs.jq ];
             }
             ''
-              workspace=${self}/.dev-workspace.json
+              workspace=${workspaceSource}/.dev-workspace.json
               catalog=${package}/share/dev-workspace/extensions.json
               expected=$(${pkgs.jq}/bin/jq -c \
                 '.developmentClusterProviders | sort' "$workspace")
