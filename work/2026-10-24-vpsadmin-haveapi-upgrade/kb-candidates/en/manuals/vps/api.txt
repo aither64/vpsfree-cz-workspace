@@ -102,18 +102,18 @@ for browser usage and typed result handling.
 ===== Rust client =====
 
 The [[https://github.com/vpsfreecz/vpsadmin-rust-client|vpsAdmin Rust SDK]]
-is generated for API 7.0 and requires Rust 1.95 or newer. The crate
-''vpsadmin-client'' is available from Git; it is not published on crates.io.
-Add this dependency to ''Cargo.toml'':
+is generated for API 7.0 and requires Rust 1.95 or newer. Install the
+[[https://crates.io/crates/vpsadmin-client|vpsadmin-client]] crate by adding
+this dependency to ''Cargo.toml'':
 
 <code toml>
 [dependencies]
-vpsadmin-client = { git = "https://github.com/vpsfreecz/vpsadmin-rust-client", rev = "ff876abe17e3301da62c1b6afbda055ec89db9d2" }
+vpsadmin-client = "0.1"
 </code>
 
 Use ''vpsadmin_client::Client'' for asynchronous calls. For synchronous calls,
-enable ''features = ["blocking"]'' on the dependency and use
-''vpsadmin_client::blocking::Client''. The
+set the dependency to ''vpsadmin-client = { version = "0.1", features = ["blocking"] }''
+and use ''vpsadmin_client::blocking::Client''. The
 [[https://github.com/vpsfreecz/vpsadmin-rust-client#readme|SDK README]]
 contains token authentication and action examples. The SDK's version is
 independent of the HaveAPI framework version.

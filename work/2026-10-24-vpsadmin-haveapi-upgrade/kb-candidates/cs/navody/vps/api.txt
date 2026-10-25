@@ -106,18 +106,18 @@ Použití v prohlížeči a práci s typovanými výsledky popisuje
 ===== Klient pro Rust =====
 
 [[https://github.com/vpsfreecz/vpsadmin-rust-client|Rust SDK pro vpsAdmin]]
-je generované pro API 7.0 a vyžaduje Rust 1.95 nebo novější. Crate
-''vpsadmin-client'' je dostupný z Gitu, na crates.io zatím publikovaný není.
-Do ''Cargo.toml'' přidej:
+je generované pro API 7.0 a vyžaduje Rust 1.95 nebo novější. Balíček
+[[https://crates.io/crates/vpsadmin-client|vpsadmin-client]] nainstaluj přidáním
+závislosti do ''Cargo.toml'':
 
 <code toml>
 [dependencies]
-vpsadmin-client = { git = "https://github.com/vpsfreecz/vpsadmin-rust-client", rev = "ff876abe17e3301da62c1b6afbda055ec89db9d2" }
+vpsadmin-client = "0.1"
 </code>
 
 Pro asynchronní volání použij ''vpsadmin_client::Client''. Pro synchronní volání
-přidej k závislosti ''features = ["blocking"]'' a použij
-''vpsadmin_client::blocking::Client''. Ukázky autentizace tokenem a volání akcí
+nastav závislost na ''vpsadmin-client = { version = "0.1", features = ["blocking"] }''
+a použij ''vpsadmin_client::blocking::Client''. Ukázky autentizace tokenem a volání akcí
 najdeš v [[https://github.com/vpsfreecz/vpsadmin-rust-client#readme|README SDK]].
 Verze SDK je nezávislá na verzi frameworku HaveAPI.
 
