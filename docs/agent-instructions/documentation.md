@@ -64,3 +64,9 @@ or checked docs, or briefly explain why no update was useful. Follow existing
 layouts without requiring a fixed file bundle or a deployment heading on every
 feature page. Writing instructions remains distinct from authorization to
 execute them.
+
+Archive records retain Markdown explanations and portal.yml manifests. Keep raw
+logs, downloaded artifacts and build output untracked during active work; Archive
+deletes those files. Commit project changes before archiving, because checkout
+files and index state are not backed up. Shared tracking remains in the main
+workspace; feature workspace checkouts omit work/ and archive/.

@@ -46,9 +46,10 @@ Run `dev-session archive <slug> --as-is` for explicit archival. The command
 closes the session with neutral `lifecycle: archived`, including unfinished,
 unmerged, unpublished, detached or dirty work. It stops owned active agents,
 pauses active goals, keeps conversations and queued prompt records, releases
-clusters, captures local checkout files and index state in private recovery,
-forcefully removes owned worktrees, retains branches, moves tracking atomically
-to `archive/`, saves the local transition and retires runtime state. The installed
+clusters, retains committed Git heads and branches in compact recovery metadata,
+and removes owned worktrees, discarding staged, unstaged, untracked and ignored
+files. It moves tracking atomically to `archive/`, saves the local transition
+and retires runtime state. The installed
 workspace retries its tracking Git commit independently; network, hook or remote
 master failures leave tracking sync pending without reopening the session. It does
 not fetch or require merged feature heads. Preserve unrelated shared index and
@@ -69,10 +70,11 @@ retained prompts, target-specific merge proofs and interruption recovery.
 
 Run `dev-session revive <slug> --as-is` to reopen an archived initiative. Revival
 restores tracking under `work/`, restores active lifecycle and preserves the
-retained repository and conversation identities. Explicit archives recreate their
-saved worktrees with staged, unstaged, untracked and ignored files before starting
-the conversation. Queued prompts stay held. Revival can proceed before tracking
-sync succeeds and coalesces pending bookkeeping to its latest state. Older
+retained repository and conversation identities. Committed-only archives recreate
+clean worktrees at their retained Git heads before starting the conversation.
+Earlier file-snapshot archives retain their recorded recovery policy. Queued
+prompts stay held. Revival can proceed before tracking sync succeeds and coalesces
+pending bookkeeping to its latest state. Older
 journals retain their saved synchronous commit policy. Older complete/abandoned
 archives do not gain snapshots. The stronger abandoned warning and accepted confirmations
 remain journaled so retries do not ask again. New manifestless revival refuses;

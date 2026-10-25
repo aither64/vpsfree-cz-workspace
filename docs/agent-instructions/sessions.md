@@ -17,7 +17,7 @@ Use these paths consistently:
 - `notes/`: durable development notes, troubleshooting tips, and reusable
   lessons that should survive beyond one initiative. Store each lesson in its
   own file to reduce conflicts between concurrent Codex instances.
-- `archive/`: committed plan, state, and curated durable artifacts for
+- `archive/`: committed plan, state, Markdown explanations and portal.yml manifests for
   explicitly archived, completed or abandoned initiatives.
 
 The initiative slug must be descriptive and dated, for example

@@ -224,3 +224,11 @@ and SSH-based Git remotes.
 Never assume one repository's commands apply elsewhere. Use its AGENTS.md,
 README, flake, Gemfile, go.mod, Makefile, Rakefile, Composer configuration and
 existing CI definitions as sources of truth.
+
+## Storage retention
+
+Archive preserves committed Git heads and discards all uncommitted checkout
+contents. Keep tracking explanations in Markdown and portal.yml; raw supporting
+artifacts are untracked and disposable. Additional workspace checkouts omit
+work/ and archive/; use shared tracking for initiative records. See
+[storage retention](docs/operations/workspace-storage-retention.md).

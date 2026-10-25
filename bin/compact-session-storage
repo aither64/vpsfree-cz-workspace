@@ -1,0 +1,125 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'digest'
+require 'fileutils'
+require 'json'
+require 'open3'
+require 'optparse'
+require 'pathname'
+require 'time'
+require 'yaml'
+
+# Site maintenance, deliberately separate from automatic session lifecycle.
+# Run after deploying the committed-only archive reader. Never rewrites history.
+class SessionStorageCompactor
+  def initialize(options)
+    @options = options
+    @workspace = File.realpath(options.fetch(:workspace))
+    @state = File.expand_path(options.fetch(:state))
+    @workspace_id = "#{File.basename(@workspace)}-#{Digest::SHA256.hexdigest(@workspace)[0, 16]}"
+  end
+
+  def run
+    runtime = File.realpath(@options.fetch(:runtime))
+    entry = [File.join(runtime, 'libexec/workspace-portal/.dev-session-wrapped'), File.join(runtime, 'libexec/dev-session')].find { |path| File.file?(path) }
+    raise 'runtime has no dev-session reader' unless entry
+    load entry unless defined?(DevSession::RUNTIME_CONTRACT)
+    raise 'deploy archiveRecoveryPolicy 3 before compacting' unless DevSession::RUNTIME_CONTRACT.fetch('archiveRecoveryPolicy') == 3
+    transition = File.join(@state, 'transition.lock')
+    result = with_lock(transition, File::LOCK_SH) do
+      if @options[:apply] && File.realpath(File.join(@state, 'profile')) != runtime
+        raise 'apply requires the selected installed runtime'
+      end
+      Dir[File.join(@workspace, 'archive', '*')].sort.filter_map do |tracking|
+        next unless File.directory?(tracking) && !File.symlink?(tracking)
+        slug = File.basename(tracking)
+        next unless slug.match?(/\A[A-Za-z0-9][A-Za-z0-9_-]*\z/)
+        if File.exist?(File.join(@workspace, 'work', slug))
+          next({'slug' => slug, 'skipped' => 'active tracking exists'})
+        end
+        result = with_lock(File.join(@options.fetch(:authority), "#{slug}.creation.lock"), File::LOCK_EX) do
+          with_lock(File.join(@options.fetch(:authority), "#{slug}.lock"), File::LOCK_EX) do
+            compact(slug, tracking)
+          end
+        end
+        result || {'slug' => slug, 'skipped' => 'session is busy'}
+      end
+    end
+    result || raise('package transition is busy')
+  end
+
+  private
+
+  def with_lock(path, mode)
+    # Preview may inspect absent historical locks without creating filesystem data.
+    return yield if !@options[:apply] && !File.exist?(path)
+    FileUtils.mkdir_p(File.dirname(path), mode: 0o700) if @options[:apply]
+    flags = @options[:apply] ? File::RDWR | File::CREAT : File::RDONLY
+    File.open(path, flags, 0o600) do |file|
+      return nil unless file.flock(mode | File::LOCK_NB)
+      yield
+    end
+  end
+
+  def compact(slug, tracking)
+    journals = Dir[File.join(@workspace, 'worktrees', '.locks', "#{slug}.*.json")]
+    receipt = File.join(@state, 'tracking-sync', Digest::SHA256.hexdigest(@workspace), "#{slug}.json")
+    if !journals.empty? || File.file?(receipt) && JSON.parse(File.read(receipt))['state'] == 'pending'
+      return {'slug' => slug, 'skipped' => 'lifecycle or tracking sync is unfinished'}
+    end
+    header = File.read(File.join(tracking, 'state.md'), 256)
+    unless header.match?(/\A---\r?\nlifecycle: (?:archived|complete|abandoned)\r?\n---/)
+      return {'slug' => slug, 'skipped' => 'tracking is not terminal'}
+    end
+    row = {'slug' => slug, 'trackingFiles' => 0, 'recoveryBytes' => 0}
+    unless @options[:recovery_only]
+      # The same projection is used by fresh archives; preserve only summaries.
+      files = WorkspaceTrackingSummaries.prune(tracking)
+      row['trackingFiles'] = files.length
+      row['trackingBytes'] = files.sum { |path| File.lstat(path).blocks * 512 }
+      if @options[:apply]
+        common = Open3.capture2('git', '-C', @workspace, 'rev-parse', '--path-format=absolute', '--git-common-dir').first.strip
+        with_lock(File.join(common, 'dev-session-tracking.lock'), File::LOCK_EX) do
+          WorkspaceTrackingSummaries.prune(tracking, apply: true)
+        end || raise('shared tracking writer is busy')
+      end
+    end
+    unless @options[:tracking_only]
+      roots = Dir[File.join(@state, 'archived-worktrees', @workspace_id, slug, '*')].select { |path| File.file?(File.join(path, 'inventory.json')) && !File.symlink?(path) }
+      row['recoveryBytes'] = roots.sum { |root| allocated(root) }
+      if @options[:apply]
+        commands = DevSession::CommandRunner.new(out: $stderr, err: $stderr)
+        roots.each { |root| DevSession::ArchiveRecovery.new(root, File.join(@workspace, 'worktrees', slug), commands).compact! }
+        row['recoveryBytesRemaining'] = roots.sum { |root| allocated(root) }
+      end
+    end
+    row
+  end
+
+  def allocated(path)
+    stat = File.lstat(path)
+    stat.blocks * 512 + (stat.directory? && !stat.symlink? ? Dir.children(path).sum { |name| allocated(File.join(path, name)) } : 0)
+  end
+end
+
+if $PROGRAM_NAME == __FILE__
+  options = {apply: false, state: File.join(ENV.fetch('XDG_STATE_HOME', File.join(Dir.home, '.local/state')), 'dev-workspaces')}
+  OptionParser.new do |parser|
+    parser.banner = 'Usage: compact-session-storage --workspace ROOT --runtime PATH --authority DIR [--apply]'
+    parser.on('--workspace PATH') { |value| options[:workspace] = value }
+    parser.on('--runtime PATH') { |value| options[:runtime] = value }
+    parser.on('--authority PATH') { |value| options[:authority] = value }
+    parser.on('--state PATH') { |value| options[:state] = value }
+    parser.on('--apply') { options[:apply] = true }
+    parser.on('--tracking-only') { options[:tracking_only] = true }
+    parser.on('--recovery-only') { options[:recovery_only] = true }
+  end.parse!
+  abort 'select tracking-only or recovery-only, not both' if options[:tracking_only] && options[:recovery_only]
+  begin
+    puts JSON.pretty_generate('mode' => options[:apply] ? 'apply' : 'dry-run', 'sessions' => SessionStorageCompactor.new(options).run)
+  rescue StandardError => error
+    warn error.message
+    exit 1
+  end
+end

@@ -142,6 +142,6 @@ Aitherdev's configuration-managed cleanup retains recognized completed
 `/tmp/**/os-test-*` runs for seven inactive days. Active run locks, process
 references and `.keep` markers preserve them. Ad hoc campaigns and benchmark
 directories need explicit owner cleanup. New resource claims create no source/target snapshots. Its legacy
-collector retains its existing source, preparation and recovery rules; use `workspace-host coordination gc --dry-run --json` to inspect its
+collector uses 24-hour preparation retention and preserves live recovery dependencies; use `workspace-host coordination gc --dry-run --json` to inspect its
 reference decisions. See the configuration repository's
 `docs/operations/aitherdev-disk-retention.md` for host policy and recovery.
