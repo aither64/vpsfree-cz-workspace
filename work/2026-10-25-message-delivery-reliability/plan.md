@@ -7,8 +7,11 @@ and recover the blocked `Implement the plan.` attempt in
 
 The user initially requested no tracking. Initial implementation and feature
 publication used isolated worktrees without records. The user subsequently said
-“you can start tracking this session”; these records bind the existing native
-conversation, not a new conversation or team. No default-branch integration is
+“you can start tracking this session”; these records preserve the existing task scope. The portal requires a managed
+conversation rooted in the session directory, so its supported initializer will
+create a coordination-only backing conversation. The external investigation chat
+remains the implementation coordinator; the backing conversation performs no
+implementation and does not create a team. No default-branch integration is
 authorized. The accidental archive-storage suggestion is out of scope.
 
 ## Scope and approach

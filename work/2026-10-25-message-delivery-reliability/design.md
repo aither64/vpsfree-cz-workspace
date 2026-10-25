@@ -49,3 +49,25 @@ integrity and safe sending. Inspect the original attempt against current ledger
 and complete native history. A targeted state repair needs the original writer
 acquisition failure as pre-transmission proof; absence from history is insufficient.
 Keep recovery forward-only after migration and preserve all unrelated receipts.
+
+## Reboot recovery refinement before deployment
+
+The runtime's legacy predecessor path is socket-adjacent under `/run`. A reboot
+removes its fence and any source-adjacent backup. Keep checksum-named predecessor
+backups beside the persistent SQLite database, including when only the volatile
+fallback existed. After the import transaction commits, an absent source can be
+reconstructed only when its retained backup matches the journal digest. Present
+changed sources still fail closed.
+
+Once the database is ready, its committed journal and records are authoritative.
+Acquire the same ordered predecessor locks, validate every present fence and
+the exact configured source identities, then recreate absent fences atomically.
+Never overwrite an unexpected present file or reimport records after readiness.
+Extract the existing ordered lock handling for initialization and validation;
+avoid nested acquisition when initialization already holds those locks.
+
+This refines the initial undeployed schema-1 implementation. It does not upgrade
+an externally consumed branch schema. Add ready/imported restart tests with the
+volatile directory removed, retained receipt assertions, durable backup
+verification, and refusal of changed present sources or corrupted backups. Run
+the affected independent review lanes before accepting the refined candidate.
