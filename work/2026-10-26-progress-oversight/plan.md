@@ -18,6 +18,8 @@ of development work, or waiver of required checks belongs to the observer.
   portal controls, behavioral tests and runtime documentation.
 - workspace: team catalog/capacity, verification and lead instructions, matching
   policy checks and the final runtime input selection when needed.
+- vpsfree-cz-configuration: existing dev-workspace channel pin and ordinary
+  aitherdev system deployment; no application package in system configuration.
 
 This conversation created a tracking-only initiative through dev-session start
 --no-codex. It owns this initiative; no managed team/lead thread exists. The
@@ -30,10 +32,17 @@ The two example sessions are read-only investigation sources and remain untouche
 Use existing general-purpose roles and same-session delivery. Preserve roster,
 lifecycle, submission and Codex protocol formats. Keep progress-specific state
 separate and optional; missing observer/state leaves older sessions unchanged.
-No database migrations, API/client changes for developed projects, node updates,
-Codex upgrade, system configuration deployment or production change is needed.
-The user authorized implementation, not default-branch integration or live
-profile activation. Prepare reviewed feature branches and a disposable pilot.
+No database migrations, API/client changes for developed projects, coordinated
+node updates or Codex upgrade is needed. The authorized aitherdev deployment
+changes its existing runtime-channel selection and workspace user profile.
+The user initially authorized implementation; later explicitly authorized
+“you can deploy aitherdev using vpsfree-cz-configuration”. This adds the
+configuration repository's ordinary runtime-channel pin and aitherdev deployment,
+plus workspace user-profile activation after review/checks. Default-branch
+integration remains unapproved. Prepare outputs before machine ownership;
+retain the machine after deployment until verified effects and approved integrated
+lineage satisfy the installed retention rule. Preserve selected runtime/native
+behavior and assess the actual live baseline before activation.
 Runtime functionality must precede enabling the new catalog defaults. Existing
 package-generation and forward-recovery contracts remain authoritative.
 
