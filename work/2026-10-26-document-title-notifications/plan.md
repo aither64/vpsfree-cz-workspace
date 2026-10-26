@@ -9,34 +9,56 @@ seems to me that document title icons in the dev-workspace portal aren't working
 - `dev-workspace`: portal document title and session notification aggregation.
 - `codex-web`: Codex tab badge and conversation attention semantics (reference
   investigation until evidence establishes a change is needed).
+- workspace: nested runtime selection and composed application package.
+- `vpsfree-cz-configuration`: matching devWorkspace channel and aitherdev host.
 
 ## Approach
 
-Investigate only. Compare the two notification paths, their attention and focus
-rules, and the installed runtime with current source. Architect `architect0`
-owns source investigation and a concise evidence-backed design/findings brief.
-The lead owns acceptance inspection, tracking and the user report. No application
-changes, integration, deployment or other-session access are part of this request.
+Implement the accepted background attention correction described in `design.md`.
+Architect `architect0` owns the design; `implementer0` owns the controller, tests,
+documentation and follow-up fixes. `implementer1` owns matching workspace and
+configuration pins after the fixed runtime is published. The lead coordinates
+acceptance, independent review, verification, deployment, integration and release.
+
+Restore bounded five-second attention reads and title reconciliation while hidden;
+preserve focused-only acknowledgement/presence and pause heavier hidden reads.
+Retain identity, generation, pagehide and stale-result fences. Update existing
+synthetic/Firefox expectations and asset version, without adding infrastructure.
 
 ## Decisions
 
-- Keep investigation bounded to the missing browser title marker.
-- Do not infer a need for protocol changes or new notification infrastructure.
+- User approved the plan with "Implement the plan." The preceding instruction
+  directs aitherdev deployment via `vpsfree-cz-configuration`, then merging and
+  release after verification. Approved repository/target set: `dev-workspace`,
+  workspace and `vpsfree-cz-configuration`, each `refs/heads/master`.
+- Release means the exact aitherdev machine claim; no session lifecycle action.
+- No codex-web, native Codex, server protocol/store, schema or migration changes.
 
 ## Compatibility and deployment
 
-Investigation changes no persisted state, schema, API, protocol, configuration or
-runtime. Any proposed fix must identify mixed-version behavior and rollback
-implications before implementation; deployment would be a separate milestone.
+The browser fix preserves persisted state, schema and public interfaces. Old open
+pages retain their existing behavior until reloaded; mixed pages use the same
+attention endpoint/read IDs. Keep unrelated input graphs unchanged. Select the
+same exact runtime in workspace and configuration, run the deployment contract,
+prepare system/profile closures, then claim `vpsfree:aitherdev` for host activation
+followed by application user-profile switch. Verify effects and lineage before
+release; use compatible forward recovery on uncertainty.
 
 ## Documentation
 
-Readers: the user and a future implementer. Preserve findings and a minimal fix
-brief in `design.md`, with current phase and conclusions in `state.md`. Product
-documentation is unnecessary for an investigation without behavior changes.
+Readers: portal users, future maintainers and rollout operators. Keep supported
+behavior in runtime notification/portal documentation, design in `design.md`,
+current progress in `state.md` and this rollout's exact paths/heads/input evidence
+in `rollout.md`. Lead owns required user-facing copy.
 
 ## Testing plan
 
-Use source tracing and existing targeted tests first. A bounded disposable
-reproduction may establish the exact title/badge divergence. Avoid broad builds
-or integration suites; long or uncertain checks require the monitor skill.
+Run focused Node attention/syntax checks and Nix evaluation first. Commit all
+intended changes, consolidate branch history/pins, then obtain retained reviewer0
+final review of complete series/diffs and no-migration provenance. Afterwards run
+required packaged and creation/archive VM checks plus existing native Firefox
+visibility acceptance. Fresh monitor utilities own long checks/builds. Build
+configuration/profile and verify matching input contracts before reserving the
+machine. After deployment verify exact live system/profile/assets, portal health,
+conversation continuity, background markers and focused clearing. Merge approved
+targets with short per-repository claims, prove remote lineage, release aitherdev.
