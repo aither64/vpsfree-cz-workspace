@@ -49,17 +49,17 @@ uncertain delivery. `report_to_lead` remains dedicated to lead reports.
 | Preset | Persistent members | Design owner | Application edits | Specialist slots |
 | --- | --- | --- | --- | --- |
 | `solo` | lead (1 total) | lead | lead | 0 |
-| `lead_reviewed` (Lead and reviewer) | lead, reviewer (2 total) | lead | lead | 1 |
-| `lead_designed` | lead, implementer, reviewer (3 total) | lead | implementer | 2 |
-| `delegated` (Full team, 2 implementers, default) | lead, architect, 2 implementers, reviewer (5 total) | architect | implementers | 4 |
-| `delegated_3` (Full team, 3 implementers) | lead, architect, 3 implementers, reviewer (6 total) | architect | implementers | 5 |
-| `delegated_4` (Full team, 4 implementers) | lead, architect, 4 implementers, reviewer (7 total) | architect | implementers | 6 |
-| `delegated_5` (Full team, 5 implementers) | lead, architect, 5 implementers, reviewer (8 total) | architect | implementers | 7 |
-| `delegated_6` (Full team, 6 implementers) | lead, architect, 6 implementers, reviewer (9 total) | architect | implementers | 8 |
+| `lead_reviewed` (Lead and reviewer) | lead, reviewer, observer (3 total) | lead | lead | 2 |
+| `lead_designed` | lead, implementer, reviewer, observer (4 total) | lead | implementer | 3 |
+| `delegated` (Full team, 2 implementers, default) | lead, architect, 2 implementers, reviewer, observer (6 total) | architect | implementers | 5 |
+| `delegated_3` (Full team, 3 implementers) | lead, architect, 3 implementers, reviewer, observer (7 total) | architect | implementers | 6 |
+| `delegated_4` (Full team, 4 implementers) | lead, architect, 4 implementers, reviewer, observer (8 total) | architect | implementers | 7 |
+| `delegated_5` (Full team, 5 implementers) | lead, architect, 5 implementers, reviewer, observer (9 total) | architect | implementers | 8 |
+| `delegated_6` (Full team, 6 implementers) | lead, architect, 6 implementers, reviewer, observer (10 total) | architect | implementers | 9 |
 
-For N implementers, specialist slots are N + 2: the implementers, architect and
-reviewer. The lead adds one persistent thread. The catalog derives its capacity
-from the largest preset, currently 8, and package metadata publishes that value
+For N implementers, specialist slots are N + 3: the implementers, architect, reviewer and
+observer. The lead adds one persistent thread. The catalog derives its capacity
+from the largest preset, currently 9, and package metadata publishes that value
 for `agents.max_concurrent_threads_per_session`. Direct team registration still
 requests zero native child threads and adds no native role startup arguments;
 team members run as independent App Server threads. The capacity change does not
@@ -131,3 +131,27 @@ Shared workspace rules and installed skills change globally rather than being
 frozen with a session. They can conflict with older saved prompts. These defaults
 do not refresh those prompts, change existing rosters or add a policy-refresh
 mechanism.
+
+## Independent progress observation
+
+New multi-member teams include `observer0`, a read-only general-purpose member
+using GPT-6.1 Sol/xhigh. It is separate from final change review and the long-check
+utility. Existing teams and Solo opt in by explicitly adding the `observer` role;
+retained members and instructions stay unchanged. Removing the member stops
+observation. The Team tab can pause automatic checks without removing it.
+
+The runtime checks progress every 15 minutes only while the lead or another
+non-observer member is actively working. Fully idle sessions do not start checks,
+even after recent activity. Observer activity does not count as development.
+Checks use bounded goal/state/activity excerpts and have a three-minute limit.
+Healthy results stay quiet. A first actionable concern challenges the lead once;
+the same concern across two completed checks raises a portal warning.
+
+At the next safe boundary, the lead adjusts or briefly justifies continuing in
+its ordinary update: `Progress response <key>: <decision and reason>`. The portal
+shows that response; acknowledgment alone does not resolve the concern. The
+observer cannot reassign work, cancel development checks or waive requirements.
+Unavailable observations are visible and never block development. See the
+runtime session guide for scheduling and recovery details and the
+[verification procedure](agent-instructions/verification.md#keep-verification-proportional)
+for batch limits. Observations and responses add no review or approval gate.

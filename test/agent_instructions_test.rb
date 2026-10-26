@@ -127,7 +127,7 @@ class AgentInstructionsTest < Minitest::Test
     assert_includes(teams, 'New teams default to Full team with two implementers (`delegated`)')
     (2..6).each do |count|
       id = count == 2 ? 'delegated' : "delegated_#{count}"
-      assert_match(/`#{id}` .*#{count} implementers.*reviewer \(#{count + 3} total\).*\| #{count + 2} \|/, teams)
+      assert_match(/`#{id}` .*#{count} implementers.*reviewer, observer \(#{count + 4} total\).*\| #{count + 3} \|/, teams)
     end
     assert_includes(teams, 'Direct team registration still requests zero native child threads')
     assert_includes(teams, 'now delegated\'s Sol/xhigh reviewer')

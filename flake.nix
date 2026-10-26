@@ -122,11 +122,11 @@
                 .default_team == "delegated" and
                 .default_development_team == "delegated" and
                 (.teams | keys) == ["delegated", "delegated_3", "delegated_4", "delegated_5", "delegated_6", "lead_designed", "lead_reviewed", "solo"] and
-                .capacity.required_native_child_threads == 8 and
+                .capacity.required_native_child_threads == 9 and
                 .capacity.required_native_child_threads == ([.teams[].max_open_agents] | max) and
                 (all($variants[]; . as $variant | $catalog.teams[$variant.id] |
                   .initial_member_counts == {implementer: $variant.count} and
-                  .max_open_agents == ($variant.count + 2) and
+                  .max_open_agents == ($variant.count + 3) and
                   .design_owner == "designer" and
                   .roles == $catalog.teams.delegated.roles and
                   .routing == $catalog.teams.delegated.routing and
@@ -155,10 +155,10 @@
                 .teams.solo.roles.team_lead.purpose == "lead" and
                 (.teams.solo.roles.team_lead.instructions | contains("Investigate, design and edit application code yourself without automatic specialists")) and
                 (.teams.solo.roles.team_lead.instructions | contains("At the end of every turn")) and
-                .teams.delegated.max_open_agents == 4 and
+                .teams.delegated.max_open_agents == 5 and
                 .teams.delegated.initial_member_counts.implementer == 2 and
                 .teams.delegated.design_owner == "designer" and
-                (.teams.delegated.roles | keys | sort) == (["designer", "implementer", "reviewer", "team_lead"] | sort) and
+                (.teams.delegated.roles | keys | sort) == (["designer", "implementer", "observer", "reviewer", "team_lead"] | sort) and
                 .teams.delegated.roles.team_lead.access == "workspace_write" and
                 .teams.delegated.roles.team_lead.allowed_efforts == ["high", "xhigh"] and
                 .teams.delegated.roles.team_lead.model == "gpt-6.1-sol" and
@@ -193,8 +193,8 @@
                 .teams.lead_designed.roles.team_lead.model == "gpt-6.1-sol" and
                 .teams.lead_designed.roles.team_lead.effort == "xhigh" and
                 .teams.lead_designed.design_owner == "team_lead" and
-                .teams.lead_designed.max_open_agents == 2 and
-                (.teams.lead_designed.roles | keys | sort) == (["implementer", "reviewer", "team_lead"] | sort) and
+                .teams.lead_designed.max_open_agents == 3 and
+                (.teams.lead_designed.roles | keys | sort) == (["implementer", "observer", "reviewer", "team_lead"] | sort) and
                 .teams.lead_designed.roles.team_lead.access == "workspace_write" and
                 .teams.lead_designed.roles.team_lead.allowed_efforts == ["high", "xhigh"] and
                 (.teams.lead_designed.roles.team_lead.instructions | contains("Own substantive technical design and write work/<slug>/design.md")) and
@@ -202,8 +202,8 @@
                 .teams.lead_designed.roles.reviewer.model == "gpt-6.1-sol" and
                 .teams.lead_reviewed.mode == "development" and
                 .teams.lead_reviewed.design_owner == "team_lead" and
-                .teams.lead_reviewed.max_open_agents == 1 and
-                (.teams.lead_reviewed.roles | keys) == ["reviewer", "team_lead"] and
+                .teams.lead_reviewed.max_open_agents == 2 and
+                (.teams.lead_reviewed.roles | keys) == ["observer", "reviewer", "team_lead"] and
                 .teams.lead_reviewed.roles.team_lead.model == "gpt-6.1-sol" and
                 .teams.lead_reviewed.roles.team_lead.effort == "xhigh" and
                 .teams.lead_reviewed.roles.team_lead.allowed_efforts == ["high", "xhigh"] and
@@ -228,6 +228,12 @@
                 ([.teams[] | select(.roles.implementer)] | all(
                   .roles.implementer.instructions | contains("architect-owned or lead-owned design and verification brief for substantive work")
                 )) and
+                .teams.delegated.roles.observer.purpose == "general" and
+                .teams.delegated.roles.observer.access == "read_only" and
+                .teams.delegated.roles.observer.model == "gpt-6.1-sol" and
+                .teams.delegated.roles.observer.effort == "xhigh" and
+                .teams.lead_reviewed.roles.observer == .teams.delegated.roles.observer and
+                .teams.lead_designed.roles.observer == .teams.delegated.roles.observer and
                 .utilities.verification_watcher.model == "gpt-6-luna" and
                 .utilities.verification_watcher.effort == "low" and
                 .utilities.verification_watcher.behavior == "verification_watcher" and
@@ -244,7 +250,7 @@
                 .agent_teams.managed == true and
                 .agent_teams.catalog.schema_version == 6 and
                 .agent_teams.native_capacity.config_key == "agents.max_concurrent_threads_per_session" and
-                .agent_teams.native_capacity.required_value == 8
+                .agent_teams.native_capacity.required_value == 9
               ' "$metadata" >/dev/null
               ${pkgs.jq}/bin/jq -r '.agent_teams.native_role_configs[].path' "$metadata" |
                 while IFS= read -r path; do
