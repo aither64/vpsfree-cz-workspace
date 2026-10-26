@@ -138,11 +138,13 @@ New multi-member teams include `observer0`, a read-only general-purpose member
 using GPT-6.1 Sol/xhigh. It is separate from final change review and the long-check
 utility. Existing teams and Solo opt in by explicitly adding the `observer` role;
 retained members and instructions stay unchanged. Removing the member stops
-observation. The Team tab can pause automatic checks without removing it.
+observation. Settings can pause automatic checks, choose their interval, or request a check
+now without removing the observer.
 
-The runtime checks progress every 15 minutes only while the lead or another
-non-observer member is actively working. Fully idle sessions do not start checks,
-even after recent activity. Observer activity does not count as development.
+Automatic checks default to 15 minutes and run only while the lead or another
+non-observer member is actively working. Fully idle sessions do not start automatic checks,
+even after recent activity. Check now explicitly requests one check while idle
+or paused, without waking an idle lead. Observer activity does not count as development.
 Checks use bounded goal/state/activity excerpts and have a three-minute limit.
 Healthy results stay quiet. A first actionable concern challenges the lead once;
 the same concern across two completed checks raises a portal warning.
