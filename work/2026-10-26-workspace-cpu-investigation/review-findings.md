@@ -1,0 +1,73 @@
+# Independent review findings and disposition
+
+Review exact initialruntime7e6d7c9c..74df2ed3;retainedreviewer0Sol/xhigh.
+Finalreportpending;earlyfindingbelow.
+
+## Important: representative benchmark warm-up/reaction coalescing
+
+Reviewerfile cpu_benchmark_test.go98-107,391-422,commit69c45ad5.
+120conversationqueuediscovery2workers+2buffer1stick means10swarmupdoesnot
+provefullsettlement;5sroot000versionscanbecoalescedbeforeobservation,and
+expected6reactionsassertioncanfailcorrectbaseline/candidate. Thisinvalidates
+warmedrepresentativecomparison,notproductionoptimizationcorrectness.
+
+Accepted;routedimplementer3:observation-basedcompletewarmup,oneoutstanding
+syntheticreactionpacedbefore next,identicalbaseline/candidate,updatedduration
+limits/method/runbook. No newqueue/wire/harnesssubsystem. Focusedvalidate
+thencommit;leadinspectdirectfix+narrowcheck. Consolidateowningbenchmark
+commitbeforebranchreadiness;reviewerwholefinalhistoryconclusionrequired.
+No longcheck/deploylaunched.
+
+## Advisory: time-only deadline coverage — fixed
+
+Reviewer74df2ed3turn_retry_idle_test.go252-259 wroteDeadlineMSthuschangedtoken
+digest. Directtest-onlyfixdd2e11fc4ed1420e39f175d9a7d4e1ab17e96adc adds10lines:
+provefuturetokenmatches,keeppersistedstate/policy/observationunchanged,advance
+onlyprobeclockpastdeadline,andassertauthoritychecksresume. Leadinspecteddiff
+andconfirmedrequestednarrowfix;focusedTestSettledRetryFailureDeadlineAndAcceptedCheckpoint
+passes0.491s,gofmt/diffpass. No productionchange/newmechanism,no reviewer rerun
+required. Foldintoowningretrycommitduringserializedhistoryconsolidation.
+
+## Important benchmark finding — direct fix inspected
+
+Fix4201b61d8e31573f2be37149d290e5343c2401c2,2files96insert26delete.
+Lead inspected diff:per-thread passive coverage plus Store.Inspect after actual
+controller transaction and persistedClockMS/enrollment/no pending/uncertain proof
+before counters;measurement min10s;one outstanding native version,drain bounded
+by candidates*1s+15s,actual warm/conversation/update/interval fields. Method/runbook
+updated6m perrun,24-36minmatrix+drains,reassess45min. No appsource/newmechanism.
+Focused1root/1member validate pass4.576s proves2conversations+reaction+notice,0pending.
+Representativebaseline+candidate validation required before timed campaign. Direct
+fix qualifies requested narrow remediation,no fullreview rerun. Consolidation3assigned.
+
+User clarified long benchmarks must not be regular development checks. Lead
+confirmed this experiment is one-off opt-in,skipped ordinarytests/CI. Routine
+gates are deterministic callcounts/faketime/correctness;no recurring long gate.
+
+## Packaged verification failure — obsolete idle fixture, fixed
+
+FullNix+GitHub40397520343archive/creation/fastshareworkspace_hostENOENTsystemd-run.
+Rootcauseexistingmanagedcreationreceiptfixturestoppedscheduleronlywhenidleowner
+reacheddispatch_notifications;newintendedidle-skipbypassedstopeventandfellthrough
+unrelatedcollection. Missingtoolisfixturefallthrough,notpackageproductiondependency.
+Fix217e3e51dac86db9871fadfe59fae9d5185882ac testonlysinglepath+14/-2 seeds
+realdueevent,assertsactive+completedrecipient/unchangedreceipt,noordinaryclaims,
+explicitcollectionfallthroughguard. Focused2tests25assertions0.291spass. Lead
+inspecteddiff+logs,acceptsnarrowverificationfix(no newdesign/contract/source).
+Foldowningcoordinatorcommit;fullpackagedretestrequired,notautomaticgreenrerun.
+OriginalCIfailedlogretainedpackage-checks/github-40397520343-failed.log;
+allspecificjoberrorssamefixture. No othercauseinfaileddependencypackagesproven.
+
+
+## Exact-final archive acceptance fixture
+
+CI40406137477 failed900s before browser startup. Full7832line trace proves
+firstdirect thread require-idle selected legacyJSON while portalownedSQLite,
+rejecting migrationstoragefence. Owner2 committedfffbd0d59fffc09667cb39878d9f7da8bdcd3806
+with exact--user-state-root fixtureargument and52line regressionusingexisting
+RPCfixture+realSQLitewriter. Wrongrootrejectsfence; correctrootrefusesunresolved
+receipt; resolvingexactreceiptallowsidle. Focused2testsPASS0.182s,Nixparse/diff
+clean. Leadinspecteddiff; finalreviewerassignedonlyaffectedtest/historylane.
+No productionlogic/timeout/parser change. Earlier local0fdhydrationtimeoutremains
+separatelyunexplained. Longarchiveverificationpending; otherchecksreuseonlyvia
+exactderivation/fullinputidentity. No deployment/claim.

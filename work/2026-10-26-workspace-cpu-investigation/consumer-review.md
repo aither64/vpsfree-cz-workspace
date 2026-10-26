@@ -1,0 +1,83 @@
+# Independent final consumer review — PASS
+
+Retained reviewer0,gpt-6.1-sol/xhigh,read-only. Exact bound session/current;
+both environment markers absent, trusted thread binding matches. General lane
+plus applicable contract/risk/history. No runtime rereview,tests,builds,edits
+or nested agents. No Blocking/Important findings;initial tracking Advisory
+withdrawn after concurrent receipt update was confirmed. No findings remain.
+
+## Exact reviewed ranges
+
+- Workspace e3b44a8b59c656e0ecec0bd692ad7f72963f7e61..3ac31bcb8e384ee0d00d10c63a31ca78fa6020c6:
+  one runtime-pin commit,flake.nix+flake.lock5+/5-.
+- Configuration514e6a06ef72c3c2b4c50a592ff58b3d6fcd7cd2..f302aed89c14b6c000487cde57c406c588ab92c2:
+  one generated channel-pin commit,lock3+/3-. Generated changelog correctly
+  identifiesd2099c62..0fd31c1f andits4commits.
+
+Independently inspectedcomplete logs,diffs,mergebases,cleanindexes,channelmapping,
+nestedoverride/mkPackagecomposition,exactextensiondelegation,aitherdevhostmodule,
+checkerandold/newpinranges. FreshSSHls-remoteprovesfeatures/defaultsatstatedheads.
+
+## Graph and composition proof
+
+Committedworkspace35nodes/config64nodes,unchangedsets. Only respective runtime
+source node changes. All input/follows edges,root/versionfields,extensionand
+allothercomplete nodesunchanged. Extension767dfd587e346168e1443e65ccdb67ce748f3fe3,
+NARsha256-om/+qNfQw6y74gjdzXfVG5AbHOQGysMefFZiqR92KP4= retained;no extra
+rootruntime/incidental deduplication. Workspaceexactoriginalrevchanges;config
+channel-ownedoriginalremainsunpinnedperconfctl.
+
+Identicalruntime lockedrecords:aither64/dev-workspace,
+0fd31c1fa8858ef15d516e58c883f8dea9aa727e,
+NARsha256-I5oFxZtEVy8yGzjPjjDQuc0xxcdfYwS7sjYslqXcjxM=,
+lastModified1793047656. Effectivefullruntimegraphsresolvedthroughfollowsbothsides
+identicallockedsource/flake/inputstructure includingcodexweb/llmagents/nixpkgs.
+NormalizedprojectionSHA256aa2b1c96bce27a8190b69ae90200cd489241cec3efacee2fc5ed8d9d51bdb9d7.
+LockSHA256sindependentlymatch workspaceb9989094cc65da91534917e0801b4b6490cfda198e49498d31e0f6ec85d4e517
+andconfig92a7d397f4946b2284bbd0eaab40646b7c602602a151f0dcd4738441109bfbfc.
+
+## History, compatibility and verification limits
+
+**No obsoletehistory,supersededpins,transitionalbehavior,migrations/schema/state
+format changes. No repeatedstreams remain:**one finalruntime-selectioncommit
+perconsumer. Earlier31157headsretainedprovenanceonly,notdeployed,excludedfrom
+finalseries. Publicationdoesnotjustifyobsoletepinretention. Runtimeoriginal/
+equivalentrebaseassessmentretainedseparately.
+
+Samegenericruntime suppliesuserprofileapplicationandconfigurationhostmodule,
+matchedextension/hostcontract/effectivedependencies. No publicinterface or
+orderingchangefrompins;forwardrecovery/separatepreparedsystem+appactivation
+preserved. OwnercheckerPASS/workspaceNix4tests19assertionsPASSnotrerunbyreviewer.
+Exactbuilds/packagechecks/deploymentcontinuity/integratedlineageproofseparate;
+no readinessorpermissioninferredfromreview. No newprojectdocsneededforpins.
+
+Currentrollouttable/provenanceconfirmed0fd31/3ac31/f302withproperranges;initial
+stale-receiptAdvisorywithdrawn. No consumerfindingsremain.
+
+
+## Final fff runtime-selection refresh
+
+Reviewer0 retainedgpt-6.1-sol/xhigh/read_only PASS,no findings; sessionverified.
+General/history/affectedcompositionrisk; no CPU/testfixrereview/tests/builds/edits.
+Exactrangesworkspace83282a493a6961d352b8ad0e2dfa3b17624fd46c..718bbaa210a4b7912dd2aa4b1bd1e4dc33a78f4b,
+configurationcba1f93fcf2d0c2be35d4fb3dd868ba537c38656..530efc29e5a6e5579c304ec22d3a10062cd0ecc4.
+Onepincommiteach;workspaceflake.nix+lock5+/5-,configlock3+/3-, correctgenerated
+deed..fff5commitchangelog. Independentlycheckedlogs/diffs/mergebase/cleanexact
+HEADs+freshSSHfeature/defaultproof. Bothretainmerged/live deed ancestry.
+
+Independentfull35/64semanticnodegraphsunchangedexceptruntimeidentity/required
+workspaceoriginalrev;allinput/follows/root/version/sibling/extensionfieldsunchanged.
+Bothruntimefffbd0d59fffc09667cb39878d9f7da8bdcd3806,
+NARsha256-U6S6vktVX5exr2/cfo/EjoXM0Fo4JKsU188JeubOTzg=,lastModified1793053683.
+Fullfollowseffectiveprojectionmatchesacrossconsumers:
+SHA25614b9795ccfd1ce5babd266ed42ee74bdf7eb5ba17bfd91b5deb00fc50cef4e76.
+LockSHA256workspace8f4761f767e6528a930b134f4ca1864c30def21ca6a84794a5bc2ac57cde2d23;
+configf28a559829b98269fd4cbe59ef68fdc0fa0c728c2ec64075ae22a3660f16dc71.
+
+NOobsoletehistory/supersededpins/transitionalbehavior; NOmigrations/schema/
+persistentformatchanges; NOrepeatedstreams,eachonefinalpin. Supersededrefsare
+provenanceonly. No furtherconsolidation/runtime reviewrequired. Reviewerconfirmed
+oldartifactreceiptsselectf23/78fz/4zdhaandDONOTprovefffartifacts. Distinctfinal
+source/NAR/derivationidentitiesrecorded; freshbuildrequired. Checker/contracts
+4tests19assertions1.343s/hooksPASSownerreported. CIremainswithwatcher. No
+deploy/merge/claim/lifecyclepermissiongranted.
