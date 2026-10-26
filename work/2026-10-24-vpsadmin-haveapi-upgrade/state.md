@@ -2,275 +2,193 @@
 lifecycle: active
 ---
 
-# Current steering — 2026-10-25
+# Current status — 2026-10-26
 
-User will solve HaveAPI documentation performance in another session. Preserve
-R1 as an external readiness dependency; no provider investigation or fix here.
-User directs removing Rust Git source pin now that the SDK is on crates.io.
-Architect0 verified registry0.1.0/source identity and B2minimal profile
-change; implementer2 assigned API config/spec/docs and implementer3 owns KB
-release mechanics. Lead owns final bilingual prose. Existing independent
-reviewer0 receives the affected committed-range follow-up after quick checks.
+Phase: implementation, independent final review, affected local verification and
+feature publication complete. Both live interfaces are available for qualified
+manual testing. Refreshed vpsAdmin exact-head CI remains in progress; no default
+integration is approved. Provider fix F is ready, awaiting merge approval.
 
-- [x] Exact session/environment and retained roster reverified.
-- [x] Registry0.1.0 artifact/source/API compatibility verified; designB2ready.
-- [x] API source/spec/docs and KB candidates/manifests updated; focused
-      quick checks pass (2APIexamples, no fullGET; KBparser/TOML/guards).
-- [x] API final57a53e700 and KBdf1944a2 committed; focused checks/hooks pass.
-- [x] Affected independent review by retained reviewer0 complete: no NEW
-      findings; registry adoption accepted, R1external remainsBlocking.
-- [ ] Overall readiness: external performance remedy and prior remaining
-      integration/publication/staging gates still outstanding.
+This is the current entry point. The preceding detailed checkpoints are preserved
+byte-for-byte in [state history](history/state-before-consolidation-20261026.md)
+(SHA256 `365a4210d02779eceeb5f380877a1d0ea6d74d0ac594b96a73e9244b87aae7fe`).
+The session and development cluster remain open and running.
 
-No merge, deployment, production KB write, old-session mutation or lifecycle
-action authorized. Keep HaveAPI server/client0.30.1 requirement unchanged for
-this bounded registry-adoption update.
-
-## Prior checkpoint and evidence
-
-# Status
-
-Phase: adopting newly published Rust crate; performance fix owned externally. The requested
-0.30.1 implementation is complete across dependencies, React WebUI and bilingual
-KB candidates; Go/Rust source committed21872fe6a and all ordinary hooks pass. Quick checks
-pass. A measured upstream documentation performance defect blocks readiness for
-use: API documentation GETs take 50–139 seconds after startup. User choice is
-pending between exact published0.30.1 with blocker and upstream fix/follow-up
-release. No integration, deployment, staging or production KB writes.
+[Session portal](https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-24-vpsadmin-haveapi-upgrade/)
 
 ## Phase checklist
 
-- [x] Verified exact session/environment/thread binding and retained roster/access.
-- [x] Substantive initial plan/state committed b6001eb8.
-- [x] Architect investigation/design.md and all four package boundaries.
-- [x] A dependencies committed and quick checked.
-- [x] C React client adoption committed and quick checked; R2narrow fix closed.
-- [x] D final bilingual KB candidates/manifests committed and locally verified.
-- [x] B Go/Rust profiles committed21872fe6a; focused checks/hooks pass.
-- [x] Complete branch histories/diffs/migration inventories assembled.
-- [x] Mandatory independent final review complete (reviewer0, all4lanes);
-      changes requested: R1Blocking unresolved, R2Important fixed/verified.
-- [ ] Postreview integration/build/browser/package/CI checks and feature publication.
-- [ ] KB staging/rendered checks when ownership available.
-- [ ] Explicit repository integration, deployment or exact KB publication, if requested.
+- [x] HaveAPI 0.30.2 server/client upgrade, documentation profiles, React npm client
+      adoption and bilingual KB candidates committed; ordinary hooks/quick checks.
+- [x] Independent final reviews include complete histories, final diffs and explicit
+      no-migration conclusions. Refreshed vpsAdmin and provider F received separate
+      final four-lane reviews with no findings.
+- [x] Original consumer timing/auth/locale/output and representative SDK acceptance;
+      React units/builds and bounded browser investigation completed.
+- [x] Refreshed vpsAdmin affected services, core/full auth, PHP regression and browser
+      auth checks passed with actual new dependencies.
+- [x] Both PHP and React real OAuth login/logout, verified TLS, authenticated API reads
+      and independent current four-guest closure/root proof accepted.
+- [x] Provider F source fix, required local checks, feature publication and exact-head
+      automatic CI successful; not installed.
+- [x] Distinct refreshed vpsAdmin branch published/publicly registered; live original
+      checkout, sources, locks and four guests preserved.
+- [ ] Refreshed vpsAdmin CI: seven workflows successful; API and integration active.
+- [ ] React PR74 exact protected history rewrite approval/publication.
+- [ ] Legitimate KB staging/render/history checks and exact production approval.
+- [ ] Explicit repository/target integration approval and fresh integration gates.
 
-## Backlog and ownership
+## Owners and remaining work
 
-| Owner | Result/status | Acceptance and next dependency |
-| --- | --- | --- |
-| architect0 | design.md complete; performance decision B1 recorded | No config-only remedy; no unauthorized upstream source/version change |
-| implementer0 | A committed ff44d95e | Own postreview dependency/package follow-ups; repo Git released to B |
-| implementer1 | C committed014f7b9c (reviewed39f8fd7d +narrowR2fix) | Own review fixes and postreview full suite/build/Nix/browser checks |
-| implementer2 | B quick checks passed; committed21872fe6a | B handed Git back; owns assigned review follow-up fixes |
-| implementer3 | D mechanics complete | Own local manifest/check follow-ups; no staging while foreign-owned |
-| lead | Final KB prose applied; exact8 candidate/source/manifest files committed | Records, acceptance, independent review packet, user constraint choice |
-| reviewer0 | Mandatory all-lane final review assigned | All intended commits/quick checks and complete histories; saved Sol/xhigh |
+| Owner | Result / next action and acceptance |
+| --- | --- |
+| implementer2 | Sole exact-2c CI observer: nine runs, attempt 1. Final conclusions or explicit long-integration-only pending handoff; no retries/dispatch/cancel. |
+| implementer0 | Successor publication, public comparison and unchanged-live proof complete; no owned operation remains. |
+| implementer1 | F reviewed, checked, published, CI green; receipt reconciled. No installation/live repair. |
+| implementer3 | Live UI/guest receipt complete; probes stopped, cluster retained. |
+| architect0 / reviewer0 | Designs and separate final A/F reviews complete; no open source finding. |
+| lead | Acceptance, records, PR/KB/integration approval boundaries. |
 
-## Repositories and exact ranges
+Sole watcher slot belongs to owner2's fresh exact-2c CI utility, retained catalog
+`840de475…`, native `dw_b9dd4137…`, Luna/low, full access/never,
+thread `01a1799f-017f-73a3-b705-d356db141047`. No duplicate CI queries.
 
-- vpsadmin: branch2026-10-24-vpsadmin-haveapi-upgrade at
-  worktrees/2026-10-24-vpsadmin-haveapi-upgrade/vpsadmin; base
-  b82eeca50cd4dd7bd76728685c7de8aad66e7ba5. A commit
-  ff44d95ebe9794341185ba5c78250e130dde80fd, B final head21872fe6ad373e52f66f193ee432f4885376e5a5; tracked clean.
-- vpsadmin-webui: branchdev/vpsadmin-haveapi-upgrade at sibling WebUI
-  worktree; baseorigin/main5a2d2bdc3ad7a827038f877d75959916528db844;
-  commitscd3577a6365685273c1b39a724814f7d67931508 dependency and
-  39f8fd7d2bee0c4754f0f9921d97855da7fbdddf production adaptation; clean.
-- Shared workspace KB commit87c5e6f96 records only2 candidates,2 originals,
-  2schema5 manifests,release-changes.yml,kb-validation.md. Bulk191-page
-  mirror/index/raw evidence stays local. Shared index empty after commit.
-- No feature branches pushed yet. No migrations or persisted formats changed.
-  No feature merge/deployment/production publication/lifecycle approval.
+## Exact repositories and lineage
 
-## Evidence and documentation
+Worktrees are under `worktrees/2026-10-24-vpsadmin-haveapi-upgrade/`; canonical
+repositories remain under `repos/`. Exact published heads:
 
-- [Design](design.md), [plan](plan.md), [review packet](review-packet.md)
-  (preparing, not yet assigned).
-- [A receipt](package-a/receipt.md): exact20-file diff/history; Ruby server,
-  clients and Go/Rust generator gems all0.30.1; Composer only0.29.6->0.30.1;
-  both legacy JS files match verified npm distribution. No unrelated Ruby
-  upgrades, only required fiddle/tomlrb adds. Callback tests12per bundle,
-  PHP13tests/355assertions, metadata version/hash consistency, actual Ruby
-  loads and all declared commit hooks pass. Native shell fix adds libffi and
-  pkg-config to API devshell and existing non-Nix CI dependency lists;
-  packaged Fiddle already has libffi. No redundant package override.
-- [C review input](package-c/review-packet.md): full final diff/history/source
-  mapping, current-main7overlaps preserved, obsolete pilot/vendor history
-  consolidated. ci:quick,324API cases, overlapping62follow-up and6source
-  guards pass. Production audit0;409registry signatures/101attestations
-  verified;53packed files match attested HaveAPI source1c3c98f0. No live
-  OAuth/member action or deployment proof. Ordinary longer verification pending.
-- B actual mounted API/generators pass. Instrumented focused runexit0,
-  2examples/0failures; all17action samples captured across admin/en,member/cs,
-  anonymous/en.174panels:168code,6explicitGo limitations (token auth and
-  Vps.Index once per role); all Rust panels code. No missing emitted SDK
-  symbols/path/setter/output/auth methods against exactGo1d9240f and
-  Rustff876abe; static inspection, compilation remains postreview.
-- Lasting vpsadmin profile behavior in docs/api-client-examples.md linked from
-  docs/README.md; lead directly applied writing skill to final wording.
-  WebUI contracts/work log listed in C packet; no changed member UI prose.
-- [KB receipt](kb-validation.md): final Python/TS snippets extracted from
-  exact pages compile+execute with published packages/controlled transports;
-  Rust async/blocking exactGit consumer compiles. Link checks and schema5
-  parser/checksums pass.191pages,2changed,189unchanged. Both translation
-  markers correct; ordinary unmanaged candidates, no invented contract scope.
-  Existing production trailing spaces retained for exact source bytes; no new
-  original-to-candidate whitespace errors. Lead wrote final CS/EN prose with
-  writing skill and pinned humanizers.
+| Registration / target | Branch | Head | Reviewed base |
+| --- | --- | --- | --- |
+| vpsadmin-refresh / master | 2026-10-24-vpsadmin-haveapi-upgrade-refresh | `2c6542941fde72c0ea7bb2991274981e98c5781c` | `898e2881e8230d24fb06baee1c58737ae55e0009` |
+| vpsadmin / master | 2026-10-24-vpsadmin-haveapi-upgrade | `70a2ed54b98d0c2f359a9cc4484452a257a9807b` | `b82eeca50cd4dd7bd76728685c7de8aad66e7ba5` |
+| vpsadmin-webui / main | dev/vpsadmin-haveapi-upgrade | `f10d3d48c4f21cc39187c3667ffffd9952404c11` | `5a2d2bdc3ad7a827038f877d75959916528db844` |
+| vpsfree-dev-workspace / master | 2026-10-24-vpsadmin-haveapi-upgrade-boot-proof | `ab9346b0c4b942fccd0da6af760401fad3a55bd1` | `767dfd587e346168e1443e65ccdb67ce748f3fe3` |
 
-## Material risk and pending decisions
+Successor A `5cfe8b0f8d809fc0d5b40956f0e8f6a539ace00f` plus B/head `2c654294…`,
+tree `66fba1840081875860109ac208c9611ddc139a37`, is the preferred vpsAdmin
+integration candidate. Independent reconstruction of old70a plus the upstream
+four-file patch equals this tree. Only old-to-new delta: paired generated locks/
+metadata preserve upstream Faraday 2.15.1 and Guzzle 7.16.1. B's binary diff,
+authors/dates/messages retained; two logical commits, no migrations.
+Old70a is a retained published/live nonancestor, not literally merged into the
+successor. Do not edit/rebase/repoint its checkout/ref/config/ignored locks.
+Successor is published but not deployed. See [packet](package-a-integration-refresh/review-packet.md)
+and [publication](package-a-integration-refresh/publication/receipt.md).
 
-- B performance: admin/member/anonymous documentation GET wall102.376/49.716/
-  139.036seconds after startup/before CGI or matchers. Context#with calls
-  639/484/639 consume88.757/42.536/122.885seconds. No config-only remedy.
-  Architect decisionB1 describes upstream immutable-context structural sharing
-  and Rust authorized-subtree normalization; exact published0.30.1 cannot
-  honestly include a patch. User constraint choice asked asynchronously;
-  no source/dependency change authorized or implemented yet.
-- First uninstrumented B run gracefully interrupted for diagnosis:exit1,
-  3examples/0failures partial, not a pass; owned Ruby/MariaDB effects reconciled.
-  Fresh watcher completed instrumented replacement; no duplicate setup.
-- Generic Go SDK lacks23current resource files; no actual rendered sample
-  incompatibility found, so no SDK repo expansion/snapshot override added.
-- KB canonical all-page annotation check fails identically on unchanged
-  baseline IP-address articles. API article manually inspected: top-right
-  login belongs to HaveAPI docs, not vpsAdmin WebUI; no nav tag falsely added.
-- KB staging occupied by2026-09-13-auth-email with pendingENreview bundle;
-  no reset/start/stage/release/promote attempted. Rendered staging/translation
-  link/history checks and exact production approval remain unavailable.
-- Existing PR74 published head5dd2333b, old local production source8772bab
-  are untouched. User permits PR reuse; current WebUI instructions require
-  exact published-commit rewrite approval. See
-  [concrete old/new publication plan](package-c/pr74-publication-plan.md).
-  PR63, old local refs/worktree/records preserved.
+WebUI has two logical commits/no migrations. The sole postreview test-only delta
+corrects stale GET/raw-description to reviewed OPTIONS/envelope; lead accepted
+five focused cases and lint/format checks. See [review](haveapi-0.30.2-review.md).
+F has one functional commit/three files/144 additions and seven deletions, no
+migrations/schema/policy/dependency/CI changes. [F packet](package-f/review-packet.md).
 
-## Reusable setup lessons and coordination constraints
+## Accepted checks and practical limits
 
-- Workspace shared master has unrelated dirty files; stage owned paths only.
-  No declared workspace hook framework. Use tracking lock for own commits.
-- Normal Overcommit trust/install repaired failed post-checkout signature;
-  ordinary worktree registration retry passed, original exact base retained.
-- Old HaveAPI updater root lookup requires removed bundix_all.sh even with
-  skip flag. Direct4declarations +current scopedRake accepted. Plain Rake
-  inside rootNix avoids Bundler environment leak. See A receipt and new note
-  notes/vpsadmin/2026-10-24-haveapi-adoption-dependency-setup.md (local).
-- Same-session CLI mutations occasionally contend; retry same stable message
-  ID/text after rejected delivery. Retained settings unchanged; native team
-  reporting delivery failed for members, session-bound CLI fallback used.
-- Full actionlint reports only preexisting SC2016 embeddedRuby reproduced on
-  baseline; scoped/YAML checks and declared hooks pass. No unrelated workflow
-  action refs or matrices changed.
+Original-input evidence remains valid for its recorded scope:
 
-## Next action
+- [R1 consumer](package-b/b3/performance-run-1/receipt.md): warm role/locale requests
+  4.936/2.533/4.231 seconds; auth/locale/output isolation and 174 panels/168 programs/
+  six limitations parity. R1 closed.
+- [SDK](package-b/b3/sdk-run-1/receipt.md): 26 complete programs compiled, 20 actual
+  plus six labelled synthetic fixtures; 148 actual programs uncompiled, six Go
+  limitations remain explicit.
+- [React](package-c/0.30.2/postreview-results.md): scripts 228, BFF 57, Vitest 1,899
+  cases/303 files, production/Nix checks pass. Browser 60/62; both mobile expansion
+  failures reproduce on independent exact base. Specific existing residual accepted;
+  no clean-browser or CSS-cause claim.
+- Original services 32/32; core/full foundation/auth/platform-config 4,248 examples,
+  zero failures/74 expected pending; console 1/1, PHP auth 24/24, VPS operations 2/2.
+  VPS native exit 0 proven; original Python wrapper exit unknown.
+- Original automatic API CI all26 topics plus coverage: each mode 4,725 examples,
+  zero failures, full eight/core404 pending. Original integration40336542935 was
+  still active at final handoff; its observation assignment has ended.
 
-B preflight environment issue diagnosed: outer bundle exec overcommit
-injected root Bundler into nested API hook. Reconciled owned preflight then
-normal root-shell git commit -F path; source and actual specs unchanged, no
-bypass. implementer2 retains source/Git ownership.
+[Successor affected checks](package-a-integration-refresh/postreview/receipt.md):
+services32/32; actual fourHaveAPI0.30.2/Faraday2.15.1/Fiddle1.1.8/libffi3.8.0/assets;
+core/full auth220each, zero failure/pending; PHPHaveAPI0.30.2/Guzzle7.16.1 load,
+PHPUnit13tests/355assertions; webui auth native1/1 and24Playwright passes. Strict
+actual/prepared package/config guards and same immutable source
+`/nix/store/wv51bcflfw1hjjrg5ig44abq67ksqwya-source` throughout. Original full API
+ignored lock restored exactly to `535137acb35136154ca615a8f5648a62fd1826136f2c8a82664a6f1983b4f544`.
+PHP wrapper exit1 AFTER all15 steps passed: generated untracked PHPUnit cache
+tripped final snapshot guard. Cache retained in receipts; final source/lock/status
+proof passes. Preserve wrapper failure separately; no test repeat or invented0.
+All test guests/processes reconciled, roots retained, live cluster unchanged.
 
-Review complete; R2fixed/directlyverified, R1unresolved. Preserve measured
-performance blocker and await user version choice. All4lanes assigned
-using savedgpt-6.1-sol/xhigh/read_only; no fallback or setting overrides.
-Reconcile findings before longer integration/build checks and feature
-publication. Keep session open.
+[F checks](package-f/postreview-receipt.md): focused84cases/957assertions pass;
+required flake check all9 passed (own371cases/3415assertions, one existing skip).
+First smoke failed when pressureGC deleted app/tools; journal and partial result
+preserved. Same input graph/source restored under normal owned roots; fresh full
+declared smoke passed444s, complete202path closure/NAR/reference afterchecks.
+Original flake outputs were later GCed; their successful evidence is historical.
+No original app/tools NAR existed, so no unsupported byte-equivalence claim.
+Exactab934 Check[40379808743](https://github.com/vpsfreecz/dev-workspace/actions/runs/40379808743),
+attempt1, sole job121772673835: SUCCESS. F unmerged/uninstalled, no live repair.
 
-Portal: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-24-vpsadmin-haveapi-upgrade/
+## Current exact-head CI
 
-B ownership handoff complete: implementer2 reports no active commands, clean
-worktree/index, source/Git released after commit. Initial panel-count arithmetic
-was corrected from JSON to174total/168code/6limitations; source/tests/timings
-unchanged. Reviewer received correction for independent verification.
+Owner2 initial verified snapshot: all nine runs attempt1/head2c.
+Seven SUCCESS: PHP40383178588, Migration40383178589, Client40383178603,
+RuboCop40383178625, Console40383178633, Mounter40383178641, i18n40383178823.
+API[40383178617](https://github.com/vpsfreecz/vpsadmin/actions/runs/40383178617)
+queued with topics running; integration
+[40383178746](https://github.com/vpsfreecz/vpsadmin/actions/runs/40383178746)
+in progress. No overall CI-pass claim. Evidence in
+`package-a-integration-refresh/ci-observation-1/initial-summary.json`.
+Stop with explicit pending handoff if only long integration remains (native test/
+workflow limits720/780min); do not wait12hours or resume old polling.
 
-Reviewer identity verified by returned report: reviewer0/thread
-01a16f67-b886-7573-a065-dcf2f4b7c262, savedgpt-6.1-sol/xhigh/read_only.
-Tool shell has both identity variables absent; exact current result plus trusted
-thread binding accepted. Skill/all4lane references read; no nested agents.
+## Running interfaces and old boot-record limitation
 
-## Independent review interim findings
+PHP <https://webui.aitherdev.int.vpsfree.cz/>, React
+<https://newadmin.aitherdev.int.vpsfree.cz/>, API
+<https://api.aitherdev.int.vpsfree.cz/>, OAuth
+<https://auth.aitherdev.int.vpsfree.cz/>.
 
-- R1 Blocking (risk/general): released0.30.1 full-description context copies
-  amplify ordinary anonymous HTML request CPU (139s measured), creating
-  worker-exhaustion exposure. Reviewer independently verified upstream path.
-  Remediation/version choice required before long integration; no readiness
-  acceptance inferred from candid documentation. User choice still pending.
-- Reviewer independently recounted174panels/168programs/6limitations,
-  17sample identities; static symbol0issues and compilation=false.
-- Review ongoing; final findings/history conclusions pending.
+[Runtime receipt](devcluster/runtime-verification/receipt.md) records actual
+OAuth login2/2 and logout2/2 with TLS verified, PHP EN/CS selections and React
+API7 authenticated reads200. Session response has token/session keys; values not
+emitted. Missing optional authenticated boolean is not login failure. Internal
+DNS/network, cluster CA trust and privately provided seeded credentials required.
+Receipt includes public CA path/fingerprint and packaged HaveAPI identities;
+no per-process gem introspection or React locale-switch claim.
 
-Version decision has no user answer yet; preserve exact published0.30.1.
-No HaveAPI patch/release/SDK expansion may start under an assumed response.
-Default feature publication/postreview long checks are deferred while R1
-Blocking remains unresolved; no repository claim or machine reservation held.
+Attempt `devcluster/activation/20261026T153200Z` completed nativeexit0, canonical
+running/ready; runner2882335 and four QEMUs remain in
+`vpsadmin-haveapi-upgrade-e-20261026T153200Z.scope`, 32GiB/12CPU/zeroOOM.
+Global Nix daemon accounted separately. Runtimew6j9bzb/providerq19s1vj selected
+at launch; fresh selected package/guide checks precede later operational work.
+Live sources remain original70a/Reactf10, not refreshed2c.
 
-- R2 Important (risk/general, existing weakness carried through C):
-  non2xx+status:true receipt classified ordinary4xx rejection, permitting
-  shared mutation guards to clear pending protection despite possible success.
-  Lead inspected seam and accepted narrow fix; implementer1 assigned
-  fail-closed ambiguity+receipt preservation+401/403/422/guard regressions,
-  no auth renewal/replay. Consolidate into owning unmerged C commit, then
-  lead focused verification per review narrow-fix policy. Final head pending.
+The old launcher's saved full-boot record claims all guests were checked, but SSH
+could consume the remaining names in its input loop. Its extra provider root is
+present only on dns-primary. Independent checks proved all four exact current/
+booted systems, valid closures and standard system-1-link roots. This supports
+CURRENT manual testing; it does not validate the old certificate for future
+pruning/update/cold recovery. F fixes future source behavior, has not been installed
+or used to repair that old record. No immediate missing-system/root evidence;
+leave cluster running. Six kernel alerts were broad-regex false positives:
+three modules-closure and three initrd/cpio builders; actual kernels registered
+before startup, buffered timestamps do not establish exact build timing.
+No further guest/browser/network probes assigned; effects reconciled.
 
-R2 narrow correction: lead inspected shared classifier change, accepted
-one early status:true ambiguity check preserving original error receipt and
-existing renewal gating. Actual-package401/403/422 plus shared pending-guard
-retain/no-duplicate and authoritative status:false release regressions pass:
-4focused files/67cases (overlaps prior runs). Owner finishing scoped type/lint/
-docs and consolidating owning production commit; final head pending.
+## Approval boundaries and next action
 
-## Final independent review outcome
+- No default integration approved. Readiness question is not merge direction.
+  Short repository claims only after explicit repository/target approval and
+  fresh preparation, never while awaiting CI/review/approval.
+- PR74 reuse permitted, but exact protected force-with-lease rewrite unapproved.
+  See [plan](package-c/pr74-publication-plan.md). Preserve PR63/oldrefs; no duplicate
+  PR. Own React branch published; its triggers did not run CI, no CI-pass claim.
+- KB candidates reviewed at workspace7d5ac686; three version substitutions/language.
+  Foreign staging ownership preserved. Legitimate staging/render/history checks and
+  exact production approval pending; no production write.
+- No runtime installation, live root/envelope repair, cluster update/reset/stop,
+  host deployment, foreign claim transfer, cleanup or session lifecycle action.
 
-[review.md](review.md) records retained reviewer0 final all-lane report:
-R1 Blocking framework request CPU/anonymous worker exhaustion unresolved;
-R2 Important contradictory receipt mutation ambiguity accepted for narrow
-correction. No other findings. Explicit whole-history/update-stream
-consolidation accepted, current-main/takeover authorship preserved, no migrations
-(316vpsadmin migration/schema entries unchanged, WebUI0). Exact reviewed
-ranges21872fe6a/39f8fd7d and KB87c5e6f96; R2future head not independently
-reviewed and will receive direct narrow-fix inspection.
-
-## Reconciliation checkpoint
-
-R2 CLOSED by lead direct narrow-fix inspection: final WebUI head
-014f7b9c9f451d6275af73c4af30a24668b77b7b (replaces reviewed39f8fd7d),
-dependencycd3577a6/base5a2d2bdc unchanged. Complete5path delta/range-diff
-checked; one early status:true ambiguity guard with actual-library/shared-guard
-regressions and matching docs.67focused tests plus final type/lint/format/
-design/structural checks pass, worktree clean. Original author/date preserved;
-correction consolidated into owning production commit, no migrations/repeated
-stream/new design. No reviewer rerun needed under mandatory step9.
-R1still Blocking, user version-choice unanswered; no long tests/builds/push/
-PR rewrite/integration/deployment/staging/production writes.
-
-Checkpoint commit04f92aec saved design/review/handoff/records and setup lesson.
-Session remains open/active. Final local source heads21872fe6a and014f7b9c,
-not published; no claims or machine reservations held.
-
-Registry follow-up: crate0.1.0 non-yanked, SHA2099d96e...,
-sourceb6f84679,689Rust source/example files plusLICENSE unchanged fromff876abe. Archive lock
-17package version changes, no transitive compile-reuse claim. API source
-hash removed via crate_name-only default; KB normal0.1series requirement.
-Canonical crates.io web route404 observed despite registry API/download200;
-recorded link-check limitation. ProductionKBsource no drift,foreign staging
-owner/pending bundle unchanged. Old artifacts preserved before regeneration.
-
-2026-10-25 KB update committeddf1944a2: only5files (2candidates/2manifests/
-currentreceipt), parser/checksum/TOML/source-preservation quickchecks pass.
-Old8artifacts preserved before regeneration; no registryconsumer compilation
-claim. APIB2source/check/commit pending, then affected same-reviewer review.
-
-FinalAPI57a53e700132d43589f4e6bcf519f1c7ec3fd2ed, unchangedAff44d95e,
-old21872fe6preserved; clean/no active operations.2actual mount/initexamples
-pass plus scoped lint/syntax,Nix testScript eval,Ruby syntax and all hooks.
-Sourcepin removal folded into owning Bcommit, no migrations/pin stream.
-
-Affected reviewer0 identity/settings confirmed via exactcurrent/thread binding,
-retainedread_onlygpt-6.1-sol/xhigh,nooverrides/nestedagents. Source/package
-comparison independently verifies689.rsfiles+LICENSE(690total), manifest
-separately equal; same17lockversion changes. No new substantive finding so far.
-
-Finalaffectedreviewcompleted:reviewer0sameverifiedread_onlySol/xhigh,no
-overrides/fallback,nestedagents or edits. Acceptednew57a53e700/KBdf1944a2,
-all4affectedlanes and explicit fullhistory/norepeatedstreams/no migrations
-conclusion, noNEWfindings. Currentchange complete/coded/locallychecked/
-independentlyreviewed; not deployed/staged/published. R1userownedexternal
-remains unresolved; original overallintegration/build/publicationgates unchanged.
+Component documentation stays with committed profiles/adapter/provider README;
+execution evidence in linked receipts; [design](design.md) retains decisions.
+Portal preserves original live registration and distinct successor alias.
+Next: accept owner2's exact2c CI conclusion or final pending handoff, then present
+concrete repository/target integration and PR decisions with remaining limits.
+No broad rerun, source change or default integration is authorized meanwhile.
