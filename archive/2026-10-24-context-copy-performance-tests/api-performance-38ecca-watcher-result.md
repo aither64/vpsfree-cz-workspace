@@ -1,0 +1,5 @@
+- **Result:** Passed, exit status 0; elapsed 68.97 seconds.
+- **Revision:** `38ecca75edaf797d048fb36c6a50ea7e05eb50a9` (tree `c6cf3c6809ab52b3b2fba57c117139c7bcff6a37`).
+- **Command:** The single authorized capture operation completed. The batch passed: RSpec 541 examples (seed 20713), Rust unit specs 147 examples (seed 26861), and documentation asset checks.
+- **Artifacts:** [full log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-context-copy-performance-tests/api-performance-38ecca.log), [exit status](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-context-copy-performance-tests/api-performance-38ecca.exit), [metrics](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-context-copy-performance-tests/api-performance-38ecca.metrics.json).
+- **Running process:** None.

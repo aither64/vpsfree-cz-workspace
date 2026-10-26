@@ -1,0 +1,3 @@
+Incomplete — the authorized batch did not run. The capture wrapper failed before starting it because `/bin/bash` is absent. I did not retry.
+
+The exit file and metrics file were not successfully written; the follow-up wrapper also failed before recording them. The batch log path is `/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-context-copy-performance-tests/api-performance-ae60-deterministic.log`. Tested HEAD was intended to be `ae60e0fdbc892d248c1cd4bff9a52ee74a0cfc43`; elapsed batch time, test totals, and asset completion are unavailable.

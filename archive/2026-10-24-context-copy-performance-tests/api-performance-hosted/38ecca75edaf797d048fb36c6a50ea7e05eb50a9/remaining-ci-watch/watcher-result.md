@@ -1,0 +1,3 @@
+Result: **passed**. The single observation command exited 0 after 620 seconds. All seven specified runs completed successfully on head `38ecca75edaf797d048fb36c6a50ea7e05eb50a9`, attempt 1.
+
+Evidence is retained under [`remaining-ci-watch`]( /home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-context-copy-performance-tests/api-performance-hosted/38ecca75edaf797d048fb36c6a50ea7e05eb50a9/remaining-ci-watch ). Per run evidence is in its run ID subdirectory, including `40187949233`. No operation remains running; no IDs from this assigned set are unobserved.

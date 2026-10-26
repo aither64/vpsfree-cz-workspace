@@ -1,0 +1,5 @@
+- **Result:** Passed (exit 0).
+- **Tested head:** `7f926021834a64e64d3ec65561cfe07337989d17` (tree `b6ea955a99919a55b0c115ffe2a4a5da7760a71b`).
+- **Command:** The authorized `nix develop` batch; elapsed **79.94 seconds**.
+- **Artifacts:** The capture script reported completion, but the expected `.exit` artifact was not found at `/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-context-copy-performance-tests/api-performance-7f9260.log.exit`. I did not inspect or retrieve other artifacts.
+- **Running process:** None reported.
