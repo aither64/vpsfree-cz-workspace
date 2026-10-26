@@ -10,6 +10,7 @@ let
     Coordinate verification and deployment and maintain session records. At the end of every turn, give a compact progress checklist with the current phase, completed work, remaining work, blockers or material risks, and next action. Report material milestones during long turns; distinguish coded, locally checked, independently reviewed, deployed, and ready for use. Update the durable phase checklist when its state changes.
     Run mandatory independent final review after the intended substantive deliverable is complete, all intended changes are committed, and quick checks pass, before long integration tests. Completed substantive documentation and configuration deliverables are included. Routine planning, investigation, findings, session tracking and evidence alone never trigger automatic review. Earlier review requires an explicit user request, is advisory, and does not replace final review. Merely having a reviewer in the preset creates no assignment.
     Before declaring an unmerged branch ready, inventory its complete base-to-head commit series, final diff, and migration provenance; consolidate obsolete unapplied history, preserve supported paths, and give the inventory to an independent reviewer for explicit history and migration conclusions. Earlier incremental reviews do not complete this gate. Preserve the mandatory review workflow's narrow-fix policy. Use a fresh Luna/low utility watcher for long or uncertain verification. Temporary review and verification agents do not join the roster.
+    Bound verification batches by delivery risk, expected duration and stopping condition. Reassess overruns; avoid redundant evidence scaffolding. At the next safe boundary, answer observer concerns in your normal update: Progress response <key>: <decision and reason>. Advice cannot waive required checks.
     Adding, replacing or reconfiguring team members requires explicit user direction. Respect the user's directions, retained session instructions and current collaboration mode; never invent members or address another session's team.
   '';
   defaultInstructions = {
@@ -103,6 +104,16 @@ let
     fresh_context = true;
   };
 
+  observer = mkRole {
+    model = "gpt-6.1-sol";
+    effort = "xhigh";
+    behavior = "general";
+    lifetime = "session";
+    instructions = ''
+      Observe progress toward the accepted user goal independently of the lead. Read only the bounded evidence supplied for each scheduled check; do not run tools, edit files, inspect other sessions, assign work, cancel checks or waive requirements. Return the requested JSON result without calling report_to_lead. Healthy work stays quiet. Challenge repeated verification, evidence bookkeeping, or open-ended investigation only when concrete activity shows waste and you can recommend a shorter valid delivery path with a stopping condition. Respect user-authorized scope and required safety checks. A justified long check, waiting for a user, or lack of commits alone is not drift. Keep concern keys stable across checks. Acknowledgment alone does not resolve a concern; changed activity can. This is progress advice, not independent final change review or an approval gate.
+    '';
+  };
+
   commonDevelopment = {
     mode = "development";
     service_policy = "non_priority";
@@ -113,16 +124,16 @@ let
       reviewer_reuse = "same_change";
     };
     roles = {
-      inherit implementer reviewer;
+      inherit implementer reviewer observer;
     };
   };
   mkFullTeam =
     count:
     commonDevelopment
     // {
-      description = "Sol coordinates; Astra designs; ${toString count} Sol implementers execute; Sol reviews";
+      description = "Sol coordinates; Astra designs; ${toString count} Sol implementers execute; Sol reviews and observes progress";
       initial_member_counts.implementer = count;
-      max_open_agents = count + 2;
+      max_open_agents = count + 3;
       design_owner = "designer";
       routing = {
         design_simple_effort = "high";
@@ -183,14 +194,15 @@ rec {
 
   teams = {
     lead_reviewed = commonDevelopment // {
-      description = "Sol lead investigates, designs and implements; Astra reviews";
+      description = "Sol lead investigates, designs and implements; Astra reviews; Sol observes progress";
       design_owner = "team_lead";
-      max_open_agents = 1;
+      max_open_agents = 2;
       routing = {
         design_simple_effort = "high";
         implementer_simple_effort = "high";
       };
       roles = {
+        inherit observer;
         team_lead = solLead // {
           effort = "xhigh";
           instructions = defaultInstructions.lead_reviewed_lead;
@@ -219,9 +231,9 @@ rec {
     };
 
     lead_designed = commonDevelopment // {
-      description = "Sol lead designs; Sol implements and reviews";
+      description = "Sol lead designs; Sol implements, reviews and observes progress";
       design_owner = "team_lead";
-      max_open_agents = 2;
+      max_open_agents = 3;
       routing = {
         design_simple_effort = "high";
         implementer_simple_effort = "high";
