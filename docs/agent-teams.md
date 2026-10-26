@@ -129,9 +129,9 @@ reconfigure an existing roster to apply new defaults.
 
 Shared workspace rules and installed skills change globally rather than being
 frozen with a session. They can conflict with older saved prompts. These defaults do not refresh retained lead or reviewer prompts or change
-existing rosters. Scheduled progress checks recognize the exact original stock
-observer instructions and apply the current read-only inspection policy for
-that turn. Custom observer instructions and saved settings remain unchanged.
+existing rosters. Before a new progress check, recognized stock observer instructions are refreshed
+on the same idle native thread, preserving history, model and effort. Manual work
+or uncertain submissions defer the refresh. Custom instructions remain unchanged.
 
 ## Independent progress observation
 
@@ -146,10 +146,12 @@ Automatic checks default to 15 minutes and run only while the lead or another
 non-observer member is actively working. Fully idle sessions do not start automatic checks,
 even after recent activity. Check now explicitly requests one check while idle
 or paused, without waking an idle lead. Observer activity does not count as development.
-Checks start from actual user steering, committed/current diffstats and recorded
-working time, with read-only access to same-session files and full conversations.
-Category hints distinguish documentation, locks and possible generated files.
-Member clocks overlap and are never summed; gaps in timing coverage are explicit.
+Checks supply session/worktree locations, conversation paths, working-time totals
+and the open concern. The observer reads the actual user request and uses Git
+status/diffstats to assess scope and progress. It inspects selected files,
+conversations and existing check output as needed, without performing a full
+code review or copying large records into each assignment. Member clocks overlap
+and are never summed; gaps in timing coverage are explicit.
 Small tasks without delivery are reassessed after 30 working minutes. Checks
 retain their three-minute limit. Healthy results stay quiet. A first actionable
 concern appears immediately and challenges the active lead; an unresolved concern
@@ -158,8 +160,8 @@ challenges again at the next check. Idle sessions remain idle.
 At the next safe boundary, the lead adjusts or briefly justifies continuing in
 its ordinary update: `Progress response <key>: <decision and reason>`. The portal
 shows that response; resolution requires the concern key and concrete evidence
-of simplification, delivery or independently checked necessity. Missing evidence
-is unavailable and cannot clear a concern. The
+of simplification, delivery or independently checked necessity. An assessment is unavailable when essential information cannot be obtained;
+missing optional context does not invalidate independently inspected evidence. The
 observer cannot reassign work, cancel development checks or waive requirements.
 Unavailable observations are visible and never block development. See the
 runtime session guide for scheduling and recovery details and the
