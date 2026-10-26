@@ -28,3 +28,12 @@ sessions or reconfigure their rosters.
 
 Docs: update the generic session guide for operators and the workspace team,
 verification and review instructions for agents. Keep rollout specifics here.
+
+User subsequently authorized deployment to aitherdev. Add the matching mechanical
+vpsfree-cz-configuration dev-workspace/devWorkspace channel pin. This rollout is
+application-only: no host module, system generation or native Codex changes.
+Keep all feature branches unmerged pending explicit integration direction.
+
+User then directed “ok, merge and release”. All three final feature heads are
+now integrated into remote master, with independently reviewed equivalent
+workspace lineage. Deployment and ownership release are complete.
