@@ -1,0 +1,5 @@
+- **Result:** Failed, exit status 1; elapsed 17.46 seconds.
+- **Tested base:** `40b514b92132c07f83a51752443448e42ec88a17`. No operation remains running.
+- **Log:** [/home/aither/workspace/ai/vpsfree.cz/work/2026-10-25-haveapi-backport-release/validation-reuse-evidence.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-25-haveapi-backport-release/validation-reuse-evidence.log)
+- **Result JSON:** [/home/aither/workspace/ai/vpsfree.cz/work/2026-10-25-haveapi-backport-release/validation-reuse-evidence-result.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-25-haveapi-backport-release/validation-reuse-evidence-result.json)
+- **Failure excerpt:** `Accepted corruption: status` from `validation-reuse-subset.rb:43`. The result records `source_unchanged_during_operation: true`.

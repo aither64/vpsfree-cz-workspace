@@ -1,0 +1,392 @@
+# Sat Oct 24 2026 - version 0.30.1
+## Ruby server
+- Simplify Go and Rust documentation profiles: configure the SDK import path or
+  crate name, with optional SDK versions. The generator version defaults to the
+  server version.
+- Build example naming models from the complete mounted API declaration while
+  keeping displayed actions, fields and samples filtered for the current user.
+  Retain saved-schema profiles for older or restricted SDKs.
+
+## Go client generator
+- Show `go get IMPORT@latest` when no SDK module version is configured, leaving
+  version resolution to Go when the user installs the SDK.
+- Match resource association field identities across live Ruby descriptions and
+  saved JSON descriptions.
+
+## Rust client generator
+- Allow documentation examples without a crate version or packaging TOML, and
+  support an explicit HTTPS Git source with a full commit revision.
+- Declare the Fiddle dependency needed by the generator and limit generated
+  naming-lint allowances to the affected resource members.
+
+## JavaScript and TypeScript clients
+- Update TypeScript and Rollup build dependencies while preserving ES5 output
+  and the public declarations.
+- Fix build helper resolution and internal import cycles.
+- Replace the obsolete JSDoc wrapper and template tools with direct JSDoc,
+  preserve the documented Action anchor, and update its Markdown dependencies.
+
+## Release tooling
+- Confirm published package metadata and checksums with bounded reads, including
+  delayed registry visibility. Preserve uploaded artifact identities during
+  partial-publication recovery.
+- Stop tracking JavaScript, Python and Rust generator library lockfiles. Resolve
+  dependencies during setup and retain each release's resolved locks in its
+  manifest.
+
+# Thu Oct 22 2026 - version 0.30.0
+## Ruby server
+- Add API documentation examples for JavaScript and TypeScript callback and
+  async clients, Python sync and async clients, Go, and Rust async and blocking
+  clients. Go and Rust examples require a configured generated SDK profile;
+  clients without a profile stay hidden.
+- Remove File system examples from the generated API documentation.
+
+## JavaScript and TypeScript clients
+- Rewrite the callback client in TypeScript. Ship both clients in the existing
+  `haveapi-client` npm package and browser bundle, with type declarations in
+  the npm package.
+- Expose `CallbackClient` explicitly and retain `Client` as an alias of the
+  same constructor.
+- Add `AsyncClient` with Promise-based requests, authentication, resource
+  actions and action-completion waiting. See the async client guides for its
+  interface and resource binding.
+- Fix action, authentication and operation-state URLs for APIs mounted below
+  `/`. Raw `AsyncClient.request` paths remain relative to the configured API base.
+
+## Rust client generator
+- Add the `haveapi-rust-client` Ruby gem to generate typed Rust clients from a
+  saved HaveAPI protocol 2 description and an explicit API version.
+- Generate async clients with an optional blocking interface. Each generated
+  crate includes its runtime source and does not depend on Ruby or HaveAPI at
+  runtime.
+- Generated clients require Rust 1.95 or newer and edition 2024. Generation
+  requires the formatter version recorded in the client configuration.
+
+## Python client
+- Add the `haveapi-client` Python package for Python 3.11 or newer, with
+  synchronous and asynchronous clients that discover resources and actions
+  from HaveAPI protocol 2.x APIs.
+- Support typed input validation, authentication, response objects,
+  associations, localization and action-state waiting. Async clients support
+  asyncio and Trio.
+- Honor server-advertised mounted action, authentication and operation-state
+  paths while retaining destination checks.
+
+# Fri Jul 3 2026 - version 0.29.0
+## Ruby server
+- Add localization support for framework-owned response messages, validation
+  errors, validator descriptions and self-description strings without changing
+  the response envelope.
+- Add request locale negotiation from `Accept-Language` and optional
+  application locale resolvers for user language preferences.
+- Add scoped action parameter metadata translations with exact, shared
+  resource, attribute and metadata fallback keys for application catalogs.
+- Bundle English and Czech framework translations.
+
+## Ruby client
+- Send language request headers, translate local validation/authentication
+  messages and expose `--language` in the CLI.
+
+## JavaScript client
+- Send language request headers and translate local validation/authentication
+  messages.
+
+## PHP client
+- Send language request headers and translate local validation/authentication
+  messages.
+
+## Go client generator
+- Generate language/header controls and bundled client translations.
+
+## Localization maintenance
+- Add a shared `i18n/haveapi.yml` catalog, generated package-local translation
+  artifacts, i18n update/health tasks, pre-commit checks and GitHub Actions
+  coverage for translation freshness.
+
+# Sat May 23 2026 - version 0.28.0
+## Ruby server
+- Harden authentication and authorization handling across token, OAuth2,
+  action-state, resource input, metadata, documentation and ActiveRecord
+  association paths.
+- Escape generated documentation HTML in host/current-user/client examples and
+  filter documented examples through their authorization blocks.
+- Treat malformed authentication headers, structured OAuth2/token parameters and
+  authentication backend errors as authentication or validation failures instead
+  of uncaught server errors.
+- Backward incompatible: version-specific authentication routes are now mounted
+  under `/vN/_auth/...`; unversioned `/_auth/...` routes are kept only for
+  global authentication providers.
+- Backward incompatible: token renew/revoke actions require token-provider
+  authentication and reject cross-provider authentication.
+- Backward incompatible: OAuth2 revoke now requires client authentication, PKCE
+  challenges are preserved when the challenge method is omitted and omitted PKCE
+  method is interpreted as `plain`.
+- Backward incompatible: non-GET JSON actions read input only from JSON request
+  bodies; query strings, form bodies and text bodies no longer feed mutating
+  action input.
+- Backward incompatible: denied ActiveRecord associations and denied metadata no
+  longer expose identifying path parameters; resource input parameters can reject
+  records the caller cannot `Show`.
+- Backward incompatible: invalid nested includes are dropped, malformed route
+  arguments return `400`, pagination `limit` is capped at `1000`, action-state
+  polling timeout is capped at `30` seconds and token request interval must be
+  between `1` and `86400` seconds.
+
+## Ruby client
+- Encode action path arguments, reject unsafe token-auth header names, avoid
+  defining methods from unsafe description names and save CLI credentials with
+  restrictive file permissions.
+- Backward incompatible: path arguments are encoded as path components, so
+  callers must pass raw values instead of pre-encoded URL fragments. Unsafe
+  resource/action names are available through hash lookups instead of generated
+  Ruby methods.
+
+## JavaScript client
+- Encode query and action path parameters, encode OAuth2 revoke token values,
+  keep credentialed URLs on the API origin and prevent description names from
+  clobbering client object internals.
+- Backward incompatible: path/query values are encoded by the client; callers
+  should pass raw values, not pre-encoded URL fragments. Unsafe description
+  names are not exposed as direct object properties.
+
+## PHP client
+- Encode query names, action path arguments and OAuth2 revoke form fields,
+  validate credentialed URLs against the API origin, validate token-auth header
+  names and validate forwarded client IP header values.
+- Harden OAuth2 callbacks with state and PKCE checks.
+- Backward incompatible: OAuth2 callbacks must match the stored state/PKCE
+  exchange and credentialed URLs must be same-origin with the API. Path and query
+  values are encoded by the client and token header names are validated.
+
+## Go client generator
+- Escape generated API description code, encode action path and OAuth2 revoke
+  parameters and keep generated credentialed URLs on the API origin.
+- Backward incompatible: generated clients encode path arguments as path
+  components, so callers must pass raw values instead of pre-encoded URL
+  fragments.
+
+# Tue Feb 17 2026 - version 0.27.0
+## Ruby server
+- Enforce strict typed input coercion and ActiveRecord ID validation (invalid values now return validation errors)
+- Reject requests that include multiple authentication tokens and fix token auth parameter extraction
+- Fix default superclass handling in `define_action()`/`define_resource()` and singularize non-list input/output namespaces
+- Switch documentation rendering to `redcarpet` and fix ActiveRecord numericality `equal_to` translation
+
+## Ruby client
+- Enforce strict typed input validation with clearer per-parameter errors
+- CLI: fix boolean parameter handling, apply `--raw` only to output formatting, move progress bar to stderr, and fall back to system config
+
+## JavaScript client
+- Enforce strict typed input validation
+
+## PHP client
+- Enforce strict typed input validation and add a validation error for invalid inputs
+
+## Go client generator
+- Generated clients validate typed input parameters
+
+## Documentation
+- Add typed input validation rules, update protocol/create-client docs, and add PHP client test instructions
+
+## Examples/Templates
+- Update dependencies and set ActiveRecord migration version in Ruby examples
+
+# Web Mar 12 2025 - version 0.26.0
+## Ruby server
+- Removed unused code
+
+## Ruby CLI
+- Add option `--[no-]verify-ssl`
+- Ability to read action parameters from files when the value starts with `@`
+- New option `--raw-values` to disable the detection of file paths above
+
+## PHP client
+- `ResourceInstanceLis`t implements `Countable`
+- Option to disable SSL verification
+
+# Wed Nov 06 2024 - version 0.25.0
+## Ruby server
+- Replaced `HaveAPI::Action#ok` and `#error` with `#ok!` and `#error!`
+- Pagination is now done by `from_id` parameter, or using a custom parameter. Parameter
+  `offset` was removed.
+- Action input/output DSL now includes method `remove` that removes previously
+  configured parameter
+- Escape HTML in parameter description in API documentation
+- Removed JSON self-description samples from API documentation
+
+## PHP client
+- `\HaveAPI\Client\Response` and `ResourceInstanceList` have new method
+  `getAction()` that returns the `Action` that created it
+
+# Sun Nov 03 2024 - version 0.24.0
+## Ruby server
+- Fix token auth renewal
+- Add validator to offset/limit pagination parameters
+- Updated to Sinatra 4.0 and Rack 3
+
+## Ruby client
+- Fix boolean input parameter conversion on Ruby 3.2
+- Fix token auth save and load from config used by the CLI
+- Remove requirement on Ruby 3.2, ensure compabitility with Ruby >=3.0
+
+# Fri Apr 19 2024 - version 0.23.0
+## Ruby server
+- Add mount hooks to `HaveAPI::Server`, allowing the developer to register custom Sinatra endpoints
+- Fix Ruby client example generation
+
+# Thu Mar 14 2024 - version 0.22.0
+## PHP client
+- Add option to send custom query parameters to the OAuth2 authorization
+  request and token revocation endpoint
+
+# Fri Feb 16 2024 - version 0.21.0
+## Ruby server, Ruby client and Golang client generator
+- Introduce RuboCop and fix offenses
+- Require Ruby 3.2
+
+## PHP client
+- Introduce PHP CS Fixer and apply fixes
+
+## PHP client
+
+# Sun Jan 21 2023 - version 0.20.0
+## Ruby server
+- Require ActiveSupport and ActiveRecord >= 7.1
+- Fix boolean input parameter conversion on Ruby 3.2
+
+## All clients
+- Path parameters can contain numbers
+
+## PHP client
+- Set Client-IP HTTP header on OAuth2 requests
+
+## Golang client generator
+- Fix ERB deprecation warnings
+- Support for OAuth2 access tokens
+
+# Wed Dec 27 2023 - version 0.19.0
+## Ruby server
+- Fix OAuth2 token grant check
+- Support for OAuth2 code challenge verification
+- Support for OAuth2 token revocation
+- Improve OAuth2 documentation by adding client examples
+- Configurable OAuth2 URL in case it should differ from API URL
+- Replace OAuth2 `render_authorize_page` with `handle_get_authorize` to allow the GET endpoint to authorize the client
+- Global action pre-authorization hook
+- Authorization blocks have access to path parameters
+- Define scopes for all actions based on resource and action name
+- Add scope to default input parameters for token authentication
+- Support for custom OAuth2 HTTP header with access token
+- Setup output formatter only on JSON endpoints
+
+## Ruby client
+- Do not prompt for optional authentication parameters on standard input
+- Improved exception output by hiding long instance variables from `#inspect`
+
+## PHP client
+- Support for OAuth2
+
+## JavaScript client
+- Support for accessing API with OAuth2 access token
+
+# Sat Dec 02 2023 - version 0.18.0
+## Ruby server
+- Support for OAuth2 authorization provider
+
+# Sun Sep 24 2023 - version 0.17.0
+## Ruby server
+- Pass exceptions from Action.safe\_output to exec\_exception hook
+- Sinatra 3.0
+- Improve compatibility with Ruby 3.0
+- Use correct credentials for token auth examples in online documentation
+- Use option `user` instead of `username` in HTTP basic authentication examples
+- Updated dependencies
+
+## Ruby client
+- Updated dependencies
+- Use CLI option `--user` instead of `--username` for HTTP basic authentication
+
+## PHP client
+- Compatibility with PHP 8.1
+- Switch to vpsfreecz/httpful
+- Use option `user` instead of `username` for HTTP basic authentication
+
+## JavaScript client
+- Use option `user` instead of `username` for HTTP basic authentication
+
+# Thu May 5 2022 - version 0.16.0
+## Ruby server
+- Sinatra 2.2.0, ActiveRecord >= 6.0
+
+## Ruby client
+- Fix action invocations in CLI
+- Sort resources, actions and parameters by name
+
+## Go client
+- Sort resources, actions and parameters by name
+- Use go fmt on the generated code
+- Support for sending resource parameters as nil
+
+# Mon Dec 27 2021 - version 0.15.0
+## Ruby server
+- Improved compabitility with Ruby >= 3.0
+- Input parameter options are given as keyword arguments
+- Input parameter restrictions (`restrict() and ``with_restricted()`) accept
+  only keyword arguments
+- `HaveAPI::Hooks` supports keyword arguments
+
+## Ruby client
+- Action input parameters can be given either as a hash using a positional
+  argument, or keyword arguments, but not both
+- `HaveAPI::Response#wait_for_completion` now accepts keyword arguments
+- `HaveAPI::Client#authenticate` now accepts keyword arguments
+
+## PHP client
+- Requires PHP >= 7.4
+- Updated dependencies
+
+# Thu Aug 26 2021 - version 0.14.0
+## Ruby server
+- Updated dependencies
+- Do not coerce types of nil output parameters
+
+## Ruby client
+- Updated dependencies
+- Parse error message when the server returns bad request
+- Do not fail prematurely if the token expired, try it
+- Fix Action#unresolved\_args? to check for path parameters using curly brackets
+
+## PHP client
+- Token authentication
+  - Add methods `isComplete()` and `getResource()`
+  - Fix `checkValidity()` to check for custom action credentials
+  - Authentication callbacks get description of action credential parameters
+    in addition to their names
+
+# Thu May 16 2019 - version 0.13.0
+- Protocol version set to 2.0, making it incompatible with previous versions
+- Redesigned token authentication now supports multi-step authentication
+  processes and custom credentials
+- Action `url` and `url_params` in API description were renamed to `path`
+  and `path_params`
+- Action path parameter variables use curly brackets instead of colons
+- New client generator for Go
+
+## Ruby server
+- Added support for fully dynamic resources and actions
+- New exception `HaveAPI::AuthenticationError`
+- Proper coercion of typed output parameters
+
+# Thu Mar 07 2019 - version 0.12.0
+## All
+- Unified changelog file
+
+## Ruby server
+- Authorization and parameter filtering for action examples
+- Update sinatra to v2.0, tilt to v2.0 and require\_all to v2.0
+
+## Ruby client
+- Update require\_all to v2.0
+
+# See changelogs of previous versions in respective client/server directories

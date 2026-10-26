@@ -1,0 +1,5 @@
+- **Result:** Passed, exit status 0; elapsed 225.26 seconds. No running handles remain.
+- **Tested base:** `40b514b92132c07f83a51752443448e42ec88a17`; source files were unchanged during the operation.
+- **Command:** `python3 /home/aither/workspace/ai/vpsfree.cz/work/2026-10-25-haveapi-backport-release/validation-reuse-evidence-reconciled-run.py` (run once).
+- **Artifacts:** [result JSON](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-25-haveapi-backport-release/validation-reuse-evidence-reconciled-result.json) and [complete log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-25-haveapi-backport-release/validation-reuse-evidence-reconciled.log).
+- **Bounded excerpt:** Old and new retained subsets each accepted 16 samples. The log includes a dirty Git tree warning; no failure excerpt was present.

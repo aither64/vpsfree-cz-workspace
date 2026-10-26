@@ -1,0 +1,6 @@
+- Result: passed; exit status `0` after 58.4 seconds.
+- Tested revision: `321ce8256ad4704efaed04f4f2aa1ea4c2a3b4b8`; current session slug matched `2026-10-25-haveapi-backport-release`.
+- Command: `python3 /home/aither/workspace/ai/vpsfree.cz/work/2026-10-25-haveapi-backport-release/final-maintenance-remaining-run.py`
+- Logs: [final-maintenance-remaining.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-25-haveapi-backport-release/final-maintenance-remaining.log) and [final-maintenance-remaining-result.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-25-haveapi-backport-release/final-maintenance-remaining-result.json).
+- Evidence: 49 examples, 0 failures; 31 files inspected, no offenses; all listed pre-commit hooks passed. No bounded failure excerpt applies.
+- Still-running handles: none.

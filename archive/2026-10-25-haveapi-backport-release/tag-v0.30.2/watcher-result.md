@@ -1,0 +1,3 @@
+Result: **passed**. Original tag run `40238928168`, attempt 1, completed successfully at source SHA `321ce8256ad4704efaed04f4f2aa1ea4c2a3b4b8`. The watcher reports the original artifact retained and the run stopped at protected approval hold; no approval or publication was performed.
+
+The specified command was run once and exited `0`. Its reported output is preserved in the tool record; the requested `watcher-command.log` and `watcher-result.json` were **not created**. Elapsed command time was approximately 5 minutes 22 seconds.

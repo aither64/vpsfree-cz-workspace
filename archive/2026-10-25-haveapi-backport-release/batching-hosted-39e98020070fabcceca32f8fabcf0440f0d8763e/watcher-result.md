@@ -1,0 +1,8 @@
+The single authorized watch command completed with exit status `0` after **36m 59s**, covering 12 runs for head `39e98020070fabcceca32f8fabcf0440f0d8763e`. Its output and result metadata are retained in [watcher-command.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-25-haveapi-backport-release/batching-hosted-39e98020070fabcceca32f8fabcf0440f0d8763e/watcher-command.log) and [watcher-result.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-25-haveapi-backport-release/batching-hosted-39e98020070fabcceca32f8fabcf0440f0d8763e/watcher-result.json).
+
+- **Quick performance** `40232729328`: workflow succeeded; format 2 reports **14/14 cases pass and adequate**.
+- **Weekly performance** `40232732197`: workflow succeeded; format 2 reports **33 pass, 1 inconclusive out of 34**, with 34 adequate cases. Classification remains inconclusive.
+- Other discovered runs: Rust `40232729355`, JS `40232729362`, i18n `40232729349`, Ruby RSpec `40232729415`, Go RSpec `40232729395`, clients/Python `40232729373`, Ruby RSpec `40232729485`, PHP PHPUnit `40232729319`, and RuboCop `40232729350` reported success.
+- **Release** `40232729442`: the watcher emitted a terminal failure milestone and escalation. The final `status.json` receipt lists this run as completed successfully. I’m reporting both recorded results without resolving the discrepancy.
+
+The watcher reported all 12 runs terminal. No retry or cancellation was performed; parent acceptance remains pending.
