@@ -19,6 +19,33 @@ An integration driver that also approves/submits/activates operations is launche
 by the lead. A verification utility may observe its independent logs/status; it
 must not launch or resume that mutation driver itself.
 
+## Delivery and scope checkpoints
+
+Before detailed implementation or review, compare the actual user request and
+subsequent scope decisions with the diffstat, working time and delivered result.
+An internal plan or lead-approved design does not expand user authorization.
+Inspect large handwritten growth or new subsystems early; generated output and
+locks need context rather than a universal line-count limit.
+
+For small documentation changes and bounded fixes, reassess after 30 working
+minutes without a delivered milestone, excluding idle time and human waits.
+Name the remaining deliverable, necessary checks and shortest valid completion
+path. Stop optional expansion and simplify automatically; ask only for genuine
+product decisions or required approvals. Necessary long checks may continue
+with a concrete risk and stopping condition. Treat later user additions as
+separate milestones instead of holding completed work behind them.
+
+Use one implementer for narrow work unless independent execution packages justify
+more. Give complete packages with acceptance criteria; avoid per-command releases
+and repeated status documents. Keep the existing team and ownership rules.
+
+Independent review starts with scope and proportionality before detailed
+hardening, even when an internal design already approved the mechanism. Prefer
+conventional tools and smaller solutions; optional hardening is follow-up work.
+Do not excuse defects inside the supported contract. Resolve observer concerns
+with observed simplification, delivery or independently checked necessity;
+acknowledgment and reassuring summaries alone are insufficient.
+
 ## Keep verification proportional
 
 Plan a related batch around the delivery risk it resolves, its expected duration

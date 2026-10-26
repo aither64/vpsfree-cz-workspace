@@ -21,7 +21,7 @@ changes. If guidance cannot be read, stop the affected action and report it.
 | Cloning repositories; updating downstream configuration pins; creating/reusing worktrees or branches; fetching, pushing, rebasing, merging or cleaning them; committing coordination records; declaring an unmerged branch ready | [Git and worktrees](docs/agent-instructions/git.md) |
 | Any session mutation; archiving, deleting, reviving, enabling auto-archive or changing its hold; creating/accessing/resetting development clusters; implementing/reviewing session, cluster or package-transition behavior; switching/rolling back workspace packages; suspending/unregistering workspaces or reconciling Codex | [Lifecycle and package transitions](docs/agent-instructions/lifecycle.md) |
 | Planning substantive development, investigation or operations; writing/reorganizing docs; preparing review or handoff | [Development documentation](docs/agent-instructions/documentation.md) |
-| Pushing branches (including force-pushes and follow-up fixes); selecting/running builds, tests or CI; editing test runners, image verification or GitHub workflows; handling failed checks | [Environment and verification](docs/agent-instructions/verification.md) |
+| Planning delivery or reviewing scope; pushing branches (including force-pushes and follow-up fixes); selecting/running builds, tests or CI; editing test runners, image verification or GitHub workflows; handling failed checks | [Environment and verification](docs/agent-instructions/verification.md) |
 | Changing configuration inputs, building/deploying configurations, deploying the workspace application or integrating configuration changes | [Deployment](docs/agent-instructions/deployment.md) |
 | Authoring/reviewing user-facing prose, translations, examples, KB pages or media; changing visible WebUI behavior that can affect KB text/screenshots; using KB staging/publication tools | [Knowledge base and writing](docs/agent-instructions/knowledge-base.md) |
 | Creating or amending any commit, installing hooks, or preparing commit messages | [Commits and hooks](docs/agent-instructions/commits.md) |
@@ -139,7 +139,7 @@ scope and accepting results.
 At the end of every lead turn, give a compact checklist: current phase,
 completed work, remaining work, blockers or material risks, and next action.
 Report material milestones in long turns. Follow the verification procedure's
-batch limits and respond to progress-observer concerns at the next safe boundary.
+delivery checkpoints and batch limits and respond to progress-observer concerns at the next safe boundary.
 Distinguish implementation, local checks, independent review,
 deployment and readiness for use. Update the durable `state.md` phase checklist
 when phases change, under the normal tracking-commit cadence. Integrate member

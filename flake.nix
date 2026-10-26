@@ -119,6 +119,7 @@
                  {id: "delegated_6", count: 6}] as $variants |
                 .schema_version == 6 and
                 .execution_access == "full_access" and
+                ([.teams[].roles[].instructions] | all(utf8bytelength > 0 and utf8bytelength <= 4096)) and
                 .default_team == "delegated" and
                 .default_development_team == "delegated" and
                 (.teams | keys) == ["delegated", "delegated_3", "delegated_4", "delegated_5", "delegated_6", "lead_designed", "lead_reviewed", "solo"] and
@@ -154,7 +155,7 @@
                 .teams.solo.roles.team_lead.model == "gpt-6.1-sol" and
                 .teams.solo.roles.team_lead.purpose == "lead" and
                 (.teams.solo.roles.team_lead.instructions | contains("Investigate, design and edit application code yourself without automatic specialists")) and
-                (.teams.solo.roles.team_lead.instructions | contains("At the end of every turn")) and
+                (.teams.solo.roles.team_lead.instructions | contains("End each turn with a compact checklist")) and
                 .teams.delegated.max_open_agents == 5 and
                 .teams.delegated.initial_member_counts.implementer == 2 and
                 .teams.delegated.design_owner == "designer" and
@@ -163,10 +164,10 @@
                 .teams.delegated.roles.team_lead.allowed_efforts == ["high", "xhigh"] and
                 .teams.delegated.roles.team_lead.model == "gpt-6.1-sol" and
                 .teams.delegated.roles.team_lead.effort == "high" and
-                (.teams.delegated.roles.team_lead.instructions | contains("At the end of every turn")) and
+                (.teams.delegated.roles.team_lead.instructions | contains("End each turn with a compact checklist")) and
                 (.teams.delegated.roles.team_lead.instructions | contains("Use available implementers for independent work")) and
                 (.teams.delegated.roles.team_lead.instructions | contains("do not take over delegated application edits")) and
-                (.teams.delegated.roles.team_lead.instructions | contains("complete base-to-head commit series")) and
+                (.teams.delegated.roles.team_lead.instructions | contains("full base-to-head series")) and
                 .teams.delegated.roles.designer.model == "gpt-6-astra" and
                 .teams.delegated.roles.designer.purpose == "design" and
                 .teams.delegated.roles.designer.access == "workspace_write" and

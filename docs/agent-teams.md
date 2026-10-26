@@ -128,9 +128,10 @@ including an older Lead-designed lineup containing an architect. Do not
 reconfigure an existing roster to apply new defaults.
 
 Shared workspace rules and installed skills change globally rather than being
-frozen with a session. They can conflict with older saved prompts. These defaults
-do not refresh those prompts, change existing rosters or add a policy-refresh
-mechanism.
+frozen with a session. They can conflict with older saved prompts. These defaults do not refresh retained lead or reviewer prompts or change
+existing rosters. Scheduled progress checks recognize the exact original stock
+observer instructions and apply the current read-only inspection policy for
+that turn. Custom observer instructions and saved settings remain unchanged.
 
 ## Independent progress observation
 
@@ -145,13 +146,20 @@ Automatic checks default to 15 minutes and run only while the lead or another
 non-observer member is actively working. Fully idle sessions do not start automatic checks,
 even after recent activity. Check now explicitly requests one check while idle
 or paused, without waking an idle lead. Observer activity does not count as development.
-Checks use bounded goal/state/activity excerpts and have a three-minute limit.
-Healthy results stay quiet. A first actionable concern challenges the lead once;
-the same concern across two completed checks raises a portal warning.
+Checks start from actual user steering, committed/current diffstats and recorded
+working time, with read-only access to same-session files and full conversations.
+Category hints distinguish documentation, locks and possible generated files.
+Member clocks overlap and are never summed; gaps in timing coverage are explicit.
+Small tasks without delivery are reassessed after 30 working minutes. Checks
+retain their three-minute limit. Healthy results stay quiet. A first actionable
+concern appears immediately and challenges the active lead; an unresolved concern
+challenges again at the next check. Idle sessions remain idle.
 
 At the next safe boundary, the lead adjusts or briefly justifies continuing in
 its ordinary update: `Progress response <key>: <decision and reason>`. The portal
-shows that response; acknowledgment alone does not resolve the concern. The
+shows that response; resolution requires the concern key and concrete evidence
+of simplification, delivery or independently checked necessity. Missing evidence
+is unavailable and cannot clear a concern. The
 observer cannot reassign work, cancel development checks or waive requirements.
 Unavailable observations are visible and never block development. See the
 runtime session guide for scheduling and recovery details and the
