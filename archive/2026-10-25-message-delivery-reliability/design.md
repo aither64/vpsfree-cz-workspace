@@ -71,3 +71,39 @@ an externally consumed branch schema. Add ready/imported restart tests with the
 volatile directory removed, retained receipt assertions, durable backup
 verification, and refusal of changed present sources or corrupted backups. Run
 the affected independent review lanes before accepting the refined candidate.
+
+
+## Accepted fork source admission refinement
+
+Repeated creation CI failed before native fork at the Ruby source EX lock.
+The accepted asynchronous worker has a four-minute process-group deadline,
+but its two source EX acquisitions are nonblocking. Shared browser mutations
+(including automatic queue reconciliation) use that same runtime lock. Existing
+controlled tests prove refusal against an exact SH holder and same-receipt
+recovery; old CI logs cannot name their historical holder.
+
+For a source-bound accepted fork receipt only, wait for each source EX lock
+without holding destination creation/runtime locks. Recheck lifecycle, manifest,
+thread and source identity after acquisition. Keep direct CLI calls nonblocking,
+parent worker cancellation and journal-bound recovery unchanged. No persisted
+schema, API or rollback contract changes. Tests cover both acquisition stages,
+unchanged/replaced source, absence of native effects while waiting and one fork
+after release. The newly deployed runtime baseline is exact ec53874b6eea73bf65099cf19aa1a4bc5a3336aa; preserve archive recovery policy 3.
+
+Affected review found that the shared verifier is also called inside plan-start
+destination/provider admission. Keep that caller nonblocking; only fork opts
+into waiting before those locks. This removes unintended scope rather than
+redesigning plan creation. Existing plan message dispatch reliability is separate.
+
+
+## Retirement CLI receipt-store integration
+
+CI 40189655484 progressed through forks/plans and failed ordinary deletion:
+thread retirement read the schema-4 fence as JSON schema 3 (unknown storage field).
+The Ruby retirement command omitted --user-state-root while the Go thread command
+passes its empty flag explicitly, selecting socket-adjacent legacy storage. Pass
+the exact runner-owned persistent state root and workspace, matching other lifecycle
+helpers. Preserve retirement proof and ordering. No library/schema/API changes.
+Strengthen the existing Ruby/Go deletion bridge to require the exact owner arguments;
+verify failure before/pass after. The final packaged creation VM covers actual
+receipt cleanup. Audit other shared-client constructors/callers for this omission.

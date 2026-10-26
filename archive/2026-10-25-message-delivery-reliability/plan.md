@@ -11,8 +11,9 @@ publication used isolated worktrees without records. The user subsequently said
 conversation rooted in the session directory, so its supported initializer will
 create a coordination-only backing conversation. The external investigation chat
 remains the implementation coordinator; the backing conversation performs no
-implementation and does not create a team. No default-branch integration is
-authorized. The accidental archive-storage suggestion is out of scope.
+implementation and does not create a team. The later user instruction "merge and release" authorizes the four affected
+repository master integrations and release of our own aitherdev claim; see
+merge-approval.json. The accidental archive-storage suggestion is out of scope.
 
 ## Scope and approach
 

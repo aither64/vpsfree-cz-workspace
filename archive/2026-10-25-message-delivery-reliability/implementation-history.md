@@ -4,10 +4,12 @@ lifecycle: active
 
 # Message delivery reliability
 
-Reboot recovery refinement is committed and quick checks pass. Affected
-independent review is running; final package/native acceptance and deployment
-remain. No merge approval exists, no machine is claimed and no live migration
-or original-attempt repair has occurred.
+Delivery fixes and the orphan-backup review correction are committed and checked.
+The runtime has been refreshed onto the exact newly deployed archive-policy-3
+baseline ec53874b. A separate creation admission race is corrected and its focused
+Go/Ruby tests pass, including source replacement and worker cancellation. Affected
+review, final candidate checks and activation remain. No live migration, machine
+claim or original-attempt repair has occurred. No default-branch merge is authorized.
 
 - [x] Reproduce the deadline race and establish the pre-transmission boundary.
 - [x] Implement transactional storage, recovery, browser retries and plan lifetime.
@@ -234,3 +236,34 @@ coordination-only conversation under the correct session directory. It must not
 edit or implement work. This is a genuine authority handoff needed by deployment,
 not adoption of another initiative or a fabricated ownership record. Preserve
 all existing feature worktrees, branches, native conversations and team settings.
+
+
+## Current baseline refresh
+
+Managed owner is now initialized successfully at native thread
+01a172c4-ca9f-7c70-b3e5-b1290a0568eb. Portal conversation lookup works; live
+roster is null, so lead retains design/implementation and independent review
+uses the retained standalone reviewer. The prior manual root-CWD binding was
+never used for a claim or deployment.
+
+Exact selected runtime source matches ec53874b6eea73bf65099cf19aa1a4bc5a3336aa
+by Git blob identity against /nix/store/61cgny1cyg3mrpi2g75yfdvhklxjbm7a-source.
+Runtime feature now 101a1850253e7cb17f89c8e01f7d11a1b0860948, four focused commits
+above ec53874b. Rebase was conflict-free. Configuration refresh uses the matching
+deployed 2d33a9ca baseline. Workspace refresh preserves the already deployed
+compact tracking/storage behavior through exact cherry-picks of 7f94bfa79 and
+eda0d9944 onto shared master, replacing the superseded runtime pin with one final
+update. These inherited changes were not designed by this initiative.
+
+Creation CI failed twice at nonblocking source EX acquisition, before native fork.
+The exact historical holder is unknown. Shared browser queue reconciliation uses
+this lock; controlled real Go/Ruby tests identify an external SH holder and prove
+the same refusal. Accepted source-bound workers now wait at both source stages
+without destination locks, recheck identity, retain the existing deadline and
+process-group cancellation, and keep ordinary CLI admission nonblocking. Focused
+test passes (~4.7s) for both stages, unchanged/replaced source, cancellation and
+journal recovery. No schema or API change. See design.md for the bounded brief.
+
+An initial workspace lock update matched no URL and remained running. A corrected update overlapped it, causing the first to fail at Git index.lock.
+Both processes are finished; the successful final update changed only the intended
+runtime/library nodes. Composed-lock validation passes. No lock was manually removed.
