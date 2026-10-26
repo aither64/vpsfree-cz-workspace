@@ -19,6 +19,32 @@ An integration driver that also approves/submits/activates operations is launche
 by the lead. A verification utility may observe its independent logs/status; it
 must not launch or resume that mutation driver itself.
 
+## Keep verification proportional
+
+Plan a related batch around the delivery risk it resolves, its expected duration
+and a stopping condition. Prefer established commands and compact evidence:
+tested revision, command, result and log location. Add custom launchers,
+manifests or approval chains only when a concrete operation needs them.
+
+Repeat checks when relevant inputs change, an earlier failure remains unresolved,
+or a required check has not run. Preserve successful evidence for its actual
+scope, including required derivation/input receipts when reusing Nix results.
+Ordinary Git index metadata changes are not source changes when logical staged
+entries and flags are unchanged; investigate raw bytes only when their format
+matters to the correctness question. Continue to protect owned paths, actual
+source/input identity, concurrent edits and uncertain mutations.
+
+When a batch exceeds its expected effort, reassess the shortest valid delivery
+path before adding more verification. Time alone proves neither success nor
+failure and does not waive required checks. Distinguish a product defect from a
+verification-environment problem; fix the latter once and continue affected work.
+Do not turn an incidental environment problem into a new development project.
+
+A progress observer may challenge waste caused by mandatory rules. Name the
+conflicting requirement and propose a correction rather than silently bypassing
+it. Routine observations, evidence and lead responses are operational analysis;
+they do not trigger independent change review or add an approval gate.
+
 ## Workspace runtime availability
 
 Runtime development must keep the selected workspace usable. Run lifecycle,

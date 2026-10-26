@@ -138,7 +138,9 @@ scope and accepting results.
 
 At the end of every lead turn, give a compact checklist: current phase,
 completed work, remaining work, blockers or material risks, and next action.
-Report material milestones in long turns. Distinguish implementation, local checks, independent review,
+Report material milestones in long turns. Follow the verification procedure's
+batch limits and respond to progress-observer concerns at the next safe boundary.
+Distinguish implementation, local checks, independent review,
 deployment and readiness for use. Update the durable `state.md` phase checklist
 when phases change, under the normal tracking-commit cadence. Integrate member
 reports into the lead's account.
