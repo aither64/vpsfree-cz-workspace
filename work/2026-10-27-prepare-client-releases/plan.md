@@ -6,10 +6,15 @@ I'd like to release haveapi 0.31.0 and vpsadmin-typescript-client. haveapi-types
 
 ## Affected repositories
 
-- `haveapi`: prepare the 0.31.0 release and its component gems, including the
-  first `haveapi-typescript-client` gem publication.
-- `vpsadmin`: inspect the owning client-generation/release package for
-  `vpsadmin-typescript-client`; confirm its location and version in design.
+- `haveapi`: coordinated 0.31.0 release of every maintained component: Ruby
+  server/client, Go/Rust/TypeScript generator gems, npm client and browser bundle,
+  Python, and PHP/Composer. Includes first haveapi-typescript-client publication.
+  User explicitly reconfirmed this full scope; Elixir is unmaintained/excluded.
+- `vpsadmin-typescript-client`: independent repository, default `main`; prepare
+  its first public npm release as 0.1.0 with the MIT license.
+- `haveapi-client-php`: existing coordinated HaveAPI PHP mirror destination,
+  default `master`; prepare exact retained snapshot/provenance for approved
+  atomic master/tag synchronization under a short repository claim.
 
 ## Approach
 
@@ -30,6 +35,24 @@ I'd like to release haveapi 0.31.0 and vpsadmin-typescript-client. haveapi-types
 - The user owns manual vpsAdmin TypeScript client publication and account-only
   authentication steps. Never record registry credentials.
 - Release authorization does not imply default-branch integration approval.
+- User explicitly selected MIT license and version 0.1.0 for the SDK and
+  confirmed that the pending RubyGems publisher has been saved.
+- Retain SDK generator/schema inputs and exact haveapi-client@0.30.2 runtime;
+  regeneration and runtime upgrades are outside this release milestone.
+- The first HaveAPI tag run failed before retaining artifacts or publishing
+  packages because maintenance-lineage tests used the checkout's current minor
+  version while constructing synthetic 0.30 fixtures. Correct fixture isolation
+  and retain a synthetic future-minor regression; preserve production guards.
+- Latest user direction keeps 0.31.0 and authorizes fixing/retrying the failed
+  unaccepted tag, superseding an interim 0.31.1 decision. Preserve the original
+  tag identity/source in a recovery ref and records; replace only that exact
+  failed tag with an old-object lease after checks and affected final review.
+- Completed milestone: HaveAPI 0.31.0 published/verified at every maintained
+  destination; SDK 0.1.0 published by user and exact integrity verified.
+- New user milestone: release SDK 0.1.1 through trusted publishing to verify its
+  configuration. Limit changes to standard version/lock/provenance metadata;
+  keep the genuinely published 0.1.0 source boundary. Automation requires source
+  on main, so explicit SDK/main integration approval remains a separate gate.
 
 ## Compatibility and deployment
 
