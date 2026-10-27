@@ -1,6 +1,7 @@
 # KB local preparation receipt
 
-Current 0.31.0 preparation: [focused checks and guarded outputs](package-0.31/kb-checks.md).
+Current 0.31.1 preparation: [focused checks and guarded outputs](package-0.31.1/kb-checks.md).
+The reviewed 0.31.0 preparation remains [historical evidence](package-0.31/kb-checks.md).
 The text below is the historical 0.30.2 receipt. Its exact prior bytes and
 eight-file bundle are preserved in `package-0.31/kb/prior-0.30.2/` at the hashes
 recorded there; the old candidate/manifests hashes are not current outputs.
