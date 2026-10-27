@@ -1,0 +1,21 @@
+# Retained-open recovery workspace package
+
+**Dependent rollout held by lead:** an inherited recovery product failure was confirmed after source preparation. Owner1's system46d7/gen21-06-51/lwpw build and assessment passed and settled, releasing the profile prerequisite before the stop arrived. The one profile build had already started under the fresh retained Luna/low watcher, original exec handle35544. It stays owned through true settlement without cancellation/retry, but no result releases deployment. No new build, pin, copy or live action may start until lead rebinds a corrected target.
+
+The watcher returned FINAL prematurely while its original Python wrapper3797627/Nix3797630 remained running (Nix start20:09:53Z). Agent-local handle35544 was not transferable to the parent. The premature FINAL was not command settlement or slot-free evidence. With no callable continuation available, implementer2 visibly retained parent-fallback observation of the same original durable completion capture and processes. No watcher/build was relaunched.
+
+**Original build actually settled:** exit0 after656.688865s, 2026-10-27T20:09:53.906441Z–20:20:50.595240Z. Original `profile-retained-open-f624-build.meta.json` and `.exit` agree; full `.log` is retained. Nix3797630 and wrapper3797627 both exited. Output `/nix/store/lds1szqshvv35r07j59v0g0y04g5z73z-dev-workspace-0.2.0` is retained by `workspace-profile-retained-open-f624`; original log names planned producery38rpkjjkw54wnq648nph317hw7x60a5. No post-stop producer/package/checkPhase assessment was run, and build success does not close the known inherited product failure. Sole utility is physically free only; downstream rollout remains held until lead's exact corrected rebind. Lead and owner1 received the actual settlement/free-but-held facts. Actual deployed46rpb and all previous refs/roots/evidence remain preserved.
+
+- Clean workspace `f2aba5cf2268b45d29a03845cd6916e6e57ed628`, tree `64f219ba523d078c5ade33f48209ec1011040c89`, based on merged master `447ac0b0df2d10e4ec5b6bda3f7879a802c30056`.
+- Runtime `f624e21f923d5bda0bda38d6b6a4101f69394a76`, tree `1fd3ecc6778076d04af6ef719a6b8569f3a1677c`, lock NAR `sha256-3WcL/jlBlEGQiQmKsCBNbdi5FtYtb37GRRcrtW6GInA=`.
+- Matched configuration `46d7f1c2259de1b7f90e421ab05b555569cbfdc4`, tree `3dbfd2ca5a8711a6f6f5dd9783891eff18991bd6`.
+
+Owner0 directly confirmed exact runtime publication, clean source, reviewer0 all-four-lane acceptance/no findings and the single affected mounted test's four actual passes (Go28.957s, original32587 settled; disclosed authorized parent-monitor fallback, no watcher). No mounted/native/provider/VM/corpus campaign is repeated here.
+
+Normal scoped nested lock generation produced one new runtime pin after merged history, two files5+/5-. Only runtime identity/NAR/time/directURL changed; full node set, every edge/follows, extension767, siblings, client583/vendor1lWqq, native164 and catalogs remain unchanged. Graph evidence: `workspace-refresh-f624-graph.json`; full series/diff: `workspace-refresh-f624-series.txt` and `workspace-refresh-f624.diff`. No migrations, conflict, baseline drift or merged history rewrite. No hook framework is declared; normal commit bypassed none. Diff/semantic quicks passed.
+
+The one matched deployment checker passed against both exact clean heads. Ordinary nonforce SSH feature push exited0 and fresh proof returned featuref2aba/master447ac. `workspace-refresh-f624-{lock.log,checker.log,push.log,ssh-after.txt}` retain original output. Owner1 received direct system-first release; all source/check/push commands settled.
+
+Merged447ac is additionally retained at `2026-10-26-codex-upgrade-naming-integrated-before-retained-open-fix`. Deployed2d8/actual46rpb, accepted447ac metadata-only lineage mapping, prior feature refs/output roots/failures and receipts remain retained. Old machine2ecc is released and must never be reused; later activation requires fresh lead-owned machine reservation. No default integration, source mutation outside the two pin files, live operation, claim, lifecycle change or cleanup was performed.
+
+Session: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-26-codex-upgrade-naming/
