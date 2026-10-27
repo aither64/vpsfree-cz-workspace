@@ -1,5 +1,12 @@
 # KB local preparation receipt
 
+Current 0.31.0 preparation: [focused checks and guarded outputs](package-0.31/kb-checks.md).
+The text below is the historical 0.30.2 receipt. Its exact prior bytes and
+eight-file bundle are preserved in `package-0.31/kb/prior-0.30.2/` at the hashes
+recorded there; the old candidate/manifests hashes are not current outputs.
+
+## Historical 0.30.2 receipt
+
 Package D, implementer3, updated 2026-10-26 for published HaveAPI 0.30.2.
 Focused local checks complete; affected independent final review and
 staging/rendered verification remain with the lead.

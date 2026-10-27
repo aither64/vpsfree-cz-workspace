@@ -19,7 +19,7 @@ the user who is currently logged in can work with.
 The API uses the [[https://github.com/vpsfreecz/haveapi|HaveAPI]] framework.
 Its [[https://github.com/vpsfreecz/haveapi#what-is-a-self-describing-api|self-description]]
 lets generic HaveAPI clients discover available resources, actions and parameters.
-Generated Go and Rust SDKs provide types for a specific vpsAdmin API version.
+Generated Go, Rust and TypeScript SDKs provide types for a specific vpsAdmin API version.
 
   * Ruby and CLI - https://github.com/vpsfreecz/vpsfree-client
   * PHP - https://github.com/vpsfreecz/haveapi/tree/master/clients/php
@@ -27,6 +27,7 @@ Generated Go and Rust SDKs provide types for a specific vpsAdmin API version.
   * Python - https://github.com/vpsfreecz/haveapi/tree/master/clients/python
   * Go SDK - https://github.com/vpsfreecz/vpsadmin-go-client
   * Rust SDK - https://github.com/vpsfreecz/vpsadmin-rust-client
+  * TypeScript SDK - https://github.com/vpsfreecz/vpsadmin-typescript-client
   * The HaveAPI web interface - https://github.com/vpsfreecz/haveapi-webui (outdated)
   * A file system based on FUSE - https://github.com/vpsfreecz/haveapi-fs (outdated)
 
@@ -41,11 +42,11 @@ that HaveAPI clients abstract can be found in
 
 ===== Python client =====
 
-The [[https://pypi.org/project/haveapi-client/0.30.2/|haveapi-client]] package
+The [[https://pypi.org/project/haveapi-client/0.31.0/|haveapi-client]] package
 requires Python 3.11 or newer:
 
 <code bash>
-python -m pip install haveapi-client==0.30.2
+python -m pip install haveapi-client==0.31.0
 </code>
 
 Import ''Client'' for synchronous calls or ''AsyncClient'' for asynchronous
@@ -72,7 +73,7 @@ for authentication and asynchronous examples.
 Both languages use the same npm package, which includes TypeScript declarations:
 
 <code bash>
-npm install haveapi-client@0.30.2
+npm install haveapi-client@0.31.0
 </code>
 
 ''AsyncClient'' provides a Promise-based interface. This Node.js example uses
@@ -98,6 +99,24 @@ main().catch(console.error);
 The package also provides the callback-based ''Client'' and ''CallbackClient''.
 See the [[https://github.com/vpsfreecz/haveapi/tree/master/clients/js|client README]]
 for browser usage and typed result handling.
+
+===== Generated TypeScript client =====
+
+The [[https://github.com/vpsfreecz/vpsadmin-typescript-client|vpsAdmin TypeScript SDK]]
+provides methods for API 7.0 resources and actions, with types for their parameters
+and results. These types come from the API description used to generate the SDK.
+The generic ''haveapi-client'' discovers the API at runtime and provides the
+Promise and callback interfaces described above.
+
+SDK version 0.1.1 requires ''haveapi-client'' 0.30.2. Install this compatible pair:
+
+<code bash>
+npm install vpsadmin-typescript-client@0.1.1 haveapi-client@0.30.2
+</code>
+
+The [[https://github.com/vpsfreecz/vpsadmin-typescript-client#readme|SDK README]]
+describes ''createClient'', authentication and action calls. The SDK's version
+is independent of the HaveAPI framework version.
 
 ===== Rust client =====
 
