@@ -1,5 +1,5 @@
 ---
-lifecycle: active
+lifecycle: archived
 ---
 
 # HaveAPI and vpsAdmin TypeScript releases
