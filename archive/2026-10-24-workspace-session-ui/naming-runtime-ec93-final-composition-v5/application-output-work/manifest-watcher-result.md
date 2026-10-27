@@ -1,0 +1,5 @@
+Manifest build and post-build guards passed in 278 seconds. The run reused the already-valid package and fixture, and completed required output validity, manifest contract, native runtime, embedded asset, NAR hash, runtime closure, and final identity/file guards.
+
+The selected manifest is `/nix/store/m9fsh5ckzrbr6d3x8q6nh4nks415i070-dev-workspace-naming-runtime-manifest/manifest.json` (SHA-256 `f3bac0df…a3821ff`). Evidence is in [outcome.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-workspace-session-ui/naming-runtime-ec93-final-composition-v5/application-output-work/manifest-finish/outcome.json) and [actual-output-contracts.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-workspace-session-ui/naming-runtime-ec93-final-composition-v5/application-output-work/manifest-finish/actual-output-contracts.json).
+
+No native invocation was performed. This reports the build and guards only; it makes no acceptance claim.

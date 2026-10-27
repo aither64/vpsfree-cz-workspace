@@ -1,0 +1,3 @@
+Result: **incomplete**. The frozen runner did not start: the executor rejected process creation because its specified working directory could not be found. I did not retry.
+
+I recorded the launch failure and outcome in [result.md](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-workspace-session-ui/runtime-second-default-final/20261025-final/runtime-clean-published-source-v1/source-watcher-v1/result.md) and [command-outcome.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-workspace-session-ui/runtime-second-default-final/20261025-final/runtime-clean-published-source-v1/source-watcher-v1/command-outcome.json). No runner operation remains running.

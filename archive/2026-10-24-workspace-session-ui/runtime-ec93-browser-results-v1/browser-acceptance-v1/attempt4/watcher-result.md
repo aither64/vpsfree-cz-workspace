@@ -1,0 +1,4 @@
+- **Result:** Passed (exit 0); completed in about 4 minutes.
+- **Operation:** The supplied browser acceptance command, run from the specified workspace directory.
+- **Result artifacts:** `/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-workspace-session-ui/runtime-ec93-browser-results-v1/browser-acceptance-v1/attempt4`
+- **Evidence:** `{"success": true, "failure": null, ...}`. No process remains running.

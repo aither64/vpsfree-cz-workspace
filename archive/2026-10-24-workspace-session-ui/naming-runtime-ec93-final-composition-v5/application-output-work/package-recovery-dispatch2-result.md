@@ -1,0 +1,3 @@
+The exact command launched once and exited with status **1** after printing `capture-pid=4097663`. It failed at `evaluate.py:22` with `AssertionError`; no further diagnosis or retry was performed.
+
+The execution tool returned immediately, so there was no running process handle to retain or blocking wait to perform. I did not inspect logs, root/NAR data, contract, closure, final guards, or group results.

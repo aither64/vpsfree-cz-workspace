@@ -1,0 +1,459 @@
+# dev-workspace
+
+`dev-workspace` manages persistent Codex development sessions. It provides the
+session CLI, browser portal, user-profile runtime, workspace registry and an
+extension interface for development-cluster helpers. The package pins
+its own Codex build, so one profile generation always contains a tested portal
+and App Server pair.
+The [Codex package contract](docs/codex-package.md) describes its runtime layout,
+native daemon copies and dependency retention.
+
+The repository was extracted from a larger development-workspace application.
+Session records and local worktrees remain in each configured workspace.
+
+## Documentation
+
+Start with [development sessions](docs/dev-sessions.md) for lifecycle commands
+and [documentation during development](docs/dev-sessions.md#documentation-during-development)
+for plans, decision rationale, project docs, and handoffs. The
+[portal guide](docs/workspace-portal.md) covers file links, extensions, and host
+deployment responsibilities. The package includes the automatically discoverable
+`dev-session-documentation` skill and the
+[`dev-session-monitor` skill](docs/dev-sessions.md#monitor-long-verification).
+
+Repair unresolved older tracking offline before enabling session writers or
+automatic archival.
+The [archive recovery guide](docs/session-archive-recovery.md) owns retry and
+compatibility removal procedures.
+The [Codex provider guide](docs/codex-providers.md) covers limits previews,
+session selection, automatic pause/resume, workspace defaults, catalog
+configuration and interrupted-switch recovery.
+The [automatic retry recovery guide](docs/turn-retry-recovery.md) describes
+failed-turn enrollment, settings proof, durable retry state and forward recovery.
+The [coordination guide](docs/coordination.md) covers short merge locks, machine reservations, waiting-session
+notifications and [operations/recovery](docs/coordination-operations.md).
+The [integration guide](docs/integration.md) covers retained resumable operation batches,
+mechanical refresh certificates and cached verification.
+The [team reporting upgrade guide](docs/team-reporting-upgrade.md) covers daemon-start
+MCP reporting, retained-member acceptance and first-upgrade recovery.
+
+## Nix interfaces
+
+The flake exports these packages on `x86_64-linux`:
+
+- `dev-workspace` contains the portal, lifecycle commands, user units and Codex
+  runtime.
+- `workspace-portal` and `workspace-host` are compatibility aliases for
+  `dev-workspace`.
+
+`nixosModules.host` configures a host-side nginx proxy, generated basic
+authentication and a local certificate authority. It does not install or run
+the user application. The firewall remains closed unless
+`services.dev-workspaces.firewall.sourceRanges` contains an allowed network.
+
+The local operator is trusted to administer the development host. Root owns
+nginx credentials, TLS keys and activation state for their system lifecycle.
+The application, sessions and repositories belong to the operator. This split
+does not provide a security boundary against that operator; remote clients
+remain untrusted.
+
+Persistent state paths remain below `/var/lib`, the router socket below `/run`,
+and the reconciliation lock directly below `/run/lock`. Configured output
+directories must be distinct and mutually non-nested. Reconciliation checks
+final output types, expected ownership and modes, preserves the CA and shared
+password, and replaces generated files and TLS pairs atomically under one lock.
+It validates leaf certificates against the local CA and configured names.
+Weekly renewal keeps the nginx endpoint usable between deployments. Existing
+PKI state, certificate generations and migration markers remain available for
+rollback.
+See `nixosConfigurations.example` for a minimal configuration.
+
+Install the user-profile application from a checked-out source:
+
+```sh
+nix run .#workspace-host -- switch --source "$PWD"
+```
+
+After the first installation, run updates through the stable command from the
+selected profile:
+
+```sh
+workspace-host switch --source "$PWD"
+```
+
+Workspace package switches are forward-only. `workspace-host rollback` refuses
+to select an earlier profile; recover by repeating the same switch or selecting
+a newer package.
+
+## Workspace configuration
+
+The package can be extended through `lib.mkPackage`. Extensions supply immutable
+command, skill and cluster-provider catalogs. Workspace configuration selects
+provider IDs; it cannot supply executable paths. A downstream can also pass an
+explicit `teamConfig` to generate an immutable agent-team catalog; see the
+[portal guide](docs/workspace-portal.md#installed-team-policy) for its package-time
+contract.
+
+`lib.mkCodexPackage { pkgs; codex; }` assembles the selected upstream Codex
+output into a complete runtime package. `lib.mkPackage` uses it for the bundled
+Codex; other consumers can use the same helper for their system command.
+
+A workspace declares its portal identity and optional providers in
+`.dev-workspace.json`:
+
+```json
+{
+  "schema": 2,
+  "displayLabel": "Example development",
+  "hostLabel": "build-host",
+  "sshHost": "build-host.example.test",
+  "portal": {
+    "hostname": "workspace.example.test",
+    "aliases": ["old-workspace.example.test"]
+  },
+  "developmentClusterProviders": ["service"]
+}
+```
+
+Without this file, the portal uses generic labels, hides the SSH attach command
+and enables no development-cluster providers. Registration flags can override
+the configured hostname and aliases; the registry stores the resolved values.
+
+## Codex limits
+
+The portal sidebar shows the main Codex allowance, with percentage remaining
+and reset times in the browser's local timezone. The weekly and 5-hour windows
+appear only when Codex reports them. Model-specific allowances are excluded.
+Reported credits and banked reset counts appear below the allowance. Numeric
+credit balances round to whole credits in both the sidebar and account dialog.
+Select the information icon beside **Codex limits** or the compact limit indicator
+to see reset details and expiration times. Expired or unsupported reset rows
+cannot be used. If Codex reports only a count or partial details, **Use next
+available reset** lets Codex choose. Every use asks for confirmation.
+
+The session-independent `GET /api/codex-limits` endpoint reads the configured
+App Server account and returns `windows` plus an `updatedAt` snapshot time.
+Each window contains `usedPercent`, `windowDurationMins` and nullable `resetsAt`
+(Unix seconds). Reads share a 30-second server cache. Open pages refresh every
+minute while visible; focus skips reads while the snapshot is still fresh.
+Background reads retain prior values. Failures show a warning after 30 continuous
+visible seconds, with the last update time. Browser timing defaults live in
+codex-web's `conversation/assets/refresh.js`.
+
+`POST /api/codex-limits/reset` requires the portal's exact origin, a UUID
+`idempotencyKey`, optional `creditId` and the snapshot's opaque `accountScope`.
+The server checks the current account before every attempt, serializes reset
+operations and invalidates its cache even when the RPC response is lost. Reads
+started before that mutation cannot repopulate the cache. Raw account IDs are
+not exposed. Reset actions are unavailable when Codex cannot report account
+identity or the browser cannot verify storage writes and coordinate tabs.
+
+An origin-scoped Web Lock protects saving, sending and clearing each attempt
+across tabs. The browser reloads the saved attempt inside the lock and saves
+one attempt before sending it. Browsers without Web Locks cannot redeem resets. A lost acknowledgement keeps
+that attempt across reloads and blocks another reset until **Retry saved
+attempt** resolves it with the same key. A different account cannot retry it.
+Confirmed outcomes trigger a fresh account read; the browser never estimates
+remaining counts. Opening details and refreshing limits never consume a reset.
+
+## Session creation
+
+Creating a session, forking a conversation, or implementing a plan in a new
+session opens the destination page immediately. That page shows initialization
+progress and elapsed time. Initialization continues when the page is closed.
+After an interrupted attempt, use its retry button to continue the recorded
+request. A plan session keeps the exact accepted plan and model settings.
+Conversation controls become available when initialization is complete.
+
+Completed creation receipts are kept in a bounded retry cache. When the cache
+fills, the oldest completed receipts retire; unfinished attempts remain available
+for recovery. An existing destination still prevents a later request from
+replacing that session.
+
+## Repository review
+
+The Repositories tab shows one full-width card per repository. **Compare**,
+**Staged changes**, **Unstaged changes**, and **Refresh commits** stay visible
+above **Local commits**, which starts closed while history loads in the
+background. Its summary shows the complete base-to-head commit count and net
+diffstat, including unpushed commits. It shows **Loading totals…** until the
+totals arrive, or **Totals unavailable** if they cannot be loaded. If only the
+totals fail, the commit list and **Compare** remain usable. The disclosure stays
+open during status refreshes for the same card; a full page reload closes it.
+Use the ellipsis after a subject to expand its message, select the subject to
+review the commit and full message, or choose **Compare** for the whole branch.
+Copy icons copy full commit hashes. The external arrow opens the commit on
+GitHub. A compact toolbar keeps navigation and layout controls visible.
+The full commit message, metadata, parent links and comparison totals scroll with
+the diffs. Opening a commit starts at its message; a file or line link jumps to
+that target.
+
+The totals cover the full comparison, using the same revisions as the commit
+list and **Compare**. Binary files contribute to the changed-file count without
+a line count. **Refresh commits** updates the list and totals together.
+Pagination appears only when there is another page to visit.
+
+When a repository with an origin has workflow runs, its card shows a closed
+**Workflows** disclosure. Its counters read Total, Queued, Running, Successful
+and Failed. Total counts
+the runs returned for the exact selected revision, up to 100, including skipped
+and neutral results. Queued includes requested, waiting and pending runs; Failed
+includes cancelled and other unsuccessful terminal results. Skipped and neutral
+runs appear only in Total, so the other counters need not add up to Total.
+Expanding the disclosure shows each run's original status, conclusion, workflow
+name and link. Its open state survives a same-card refresh and resets on a full
+page reload. A successful lookup with no runs shows **Workflows · 0 total** in
+place of the disclosure. A pending or failed lookup shows **Workflows ·
+unavailable**, with any origin error shown on the card. When runs return after
+either compact state, the disclosure starts closed again.
+
+Parent hashes open the parent's full commit page. Merge commits link each parent
+and show their diff against the first parent. Parent navigation can continue
+before the feature branch's base; the feature commit list keeps its original range.
+
+The file tree scrolls to each file's diff. Directories start expanded and can be
+collapsed individually; folder icons show their open or closed state. Each file
+occupies one row with its name and a colored change-status letter. Copy icons in
+the diff headers copy repository-relative paths.
+Branch and commit comparisons show changed-file totals and line counts, with
+green additions and red deletions for each file. Binary changes have no line
+counts. Split view is the default; the portal remembers the selected layout.
+Both split and unified
+views link their Before and After line numbers. Unchanged sections can be
+expanded. Syntax highlighting uses each version's filename and complete source.
+
+Choose **View file** to read a complete file without diff markers, then switch
+between **Before** and **After**. The arrow before the filename returns to its
+diff. After is the default; deleted files open Before. Binary files, submodules,
+symlinks, mode changes, and
+missing final newlines retain their metadata. Text previews are limited to
+512 KiB and 12,000 lines per version.
+
+The address bar follows repository, commit, file, layout and file-version
+navigation. Copy the address or use the comparison's copy-link icon to share
+exact revisions. Line numbers are links, including lines inside unchanged
+context. Opening a link expands its target context and scrolls to that line;
+Back and Forward restore previous views. Links survive portal restarts and
+branch movement, while the session, repository and required Git objects remain
+available. They do not fetch or retain Git objects.
+
+Active comparisons use the merge base with the locally available default branch.
+Repository status refreshes and history views save the exact base and head.
+Before merging, capture the final comparison explicitly with
+`dev-session worktree capture-comparison <slug> <repository> --as-is`. After
+integration or archival, the portal reuses the saved comparison for that exact
+head. When no saved comparison exists, the original recorded base is labelled
+as a fallback; it can include upstream commits after a rebase. An open review
+keeps its revisions until explicitly refreshed.
+
+Git supplies immutable objects through a bounded local reader. Batched reads
+and shared caches avoid repeated workspace scans and file requests. CodeMirror
+renders the read-only views; Shiki highlights source in a browser worker. All
+assets load from the portal. The dependency graph is locked in
+`portal/review-ui/package-lock.json`; Nix packages versions and license notices.
+
+## Transcript controls
+
+Messages is the initial view. Activity and All remain available. Web searches
+show queries and source links; subagent interactions show their action, status,
+and expandable results.
+
+Accepted steers stay above the composer with their text and a `Sent to Codex`
+status until the matching transcript message appears. They survive reloads
+in the same browser tab. Queued messages retain their separate delete control.
+
+Every message and activity entry has a copy icon beside its timestamp in
+the bottom-right footer. Messages copy their original Markdown; commands copy
+the command and full available output. File changes include paths and patches.
+Collapsed entries copy all loaded content, and streaming entries copy the
+content available when selected.
+
+## Prompt attachments
+
+Drag files into the prompt area or choose **Attach files**. Ctrl+V or Cmd+V
+attaches binary clipboard files or images in both the New session initial request
+and conversation inputs. Pasted files are numbered from the first occurrence,
+for example `image-1.png` and `image-2.png`. Each original filename has its own
+sequence within the session, continuing after sending, removal and reload.
+New sessions start fresh. Selected and dropped filenames stay unchanged.
+Text paste keeps its native behavior, including
+clipboard data that contains both text and files. File cards show
+transfer progress and let you retry or remove a file. Above the cards, a summary
+shows the selected count and full total size, with the completed count while
+uploads remain unfinished. Files stay in the summary until removed. The New
+session form shows every card in page flow; conversation upload lists scroll
+within their existing height limit. Wait for all selected
+files to become ready before creating a session, sending, steering or queuing
+a prompt. A prompt can contain files without text. Codex receives their local
+paths, including for images.
+
+The limits are 1 GiB per file, 50 files and 2 GiB per prompt, 10 GiB per session,
+and 100 GiB per workspace. Uploads use 4 MiB chunks with SHA-256 checksums. The
+browser transfers two files at once; the server admits eight concurrent chunks.
+Reservations account for unfinished transfers and retain 1 GiB of free disk
+space. Metadata is limited to 16 MiB and 10,000 records per catalog category, with
+1 MiB reserved for recovery updates. Expired empty drafts and obsolete records
+are reclaimed. Sent history remains until its session and fork references are
+deleted.
+
+The prompt text and generated file references must together fit within 20,000
+UTF-8 bytes. Long filenames, JSON escaping and storage paths consume that bound,
+so some selections of 50 files need a shorter prompt or fewer files. The encoded
+creation form also retains its 61,024-byte request limit. These limits do not
+truncate references or omit selected files.
+
+A reload keeps selected files. To resume an unfinished upload, choose the same
+file; the browser verifies its uploaded prefix before continuing. Unsubmitted
+files expire after seven days without upload activity. Accepted initial prompts,
+queued inputs and submissions with an unknown outcome retain their files.
+
+Use **Remove** to discard a rejected or expired selection, including after a
+reload. Rejected files do not need to be selected again for removal. If an
+upload's creation response was lost, removal first recovers its server identity
+so it can delete the unfinished upload. A connection or permission error leaves
+the card available for another removal attempt.
+
+Filenames may contain Unicode and punctuation, including quotes and backslashes.
+Names must be nonempty, valid UTF-8, at most 255 UTF-8 bytes, and contain no control
+characters. Validation errors identify the rule that failed. The original name
+is display metadata: storage uses a generated UUID directory and a fixed basename
+with an optional restricted extension. Names are rendered as text, serialized in
+JSON prompt references and encoded in download headers.
+
+Files are stored under the selected user state root at
+`portal/<workspace-id>/uploads/`, outside the workspace and its Git worktrees.
+Completed files are read-only. The transcript and queue show their names and
+download links. Sent files can be deleted after confirmation while every
+referencing session is idle and has no queued or unresolved input. Deletion
+cannot erase content Codex has already read. Browser mutations are serialized
+with deletion; a separately attached native client must remain idle during it.
+
+Archive and revive retain sent files. Forks share the original files and appear
+in deletion confirmations. Explicit session deletion removes the session's
+owned files, including those referenced by forks; those references then show
+**File removed**. Cleanup is retryable through the existing deletion journal.
+
+Upload metadata uses a separate private catalog. Earlier package generations
+ignore it and retain the files; path references remain ordinary prompt text.
+Restore a package with upload support to resume transfers or manage attachments.
+Finish pending queue deletions before rolling back: an older package may clear
+its deletion receipt without updating attachment metadata. In that case the
+file remains retained after rolling forward, until its owning session is deleted.
+On upgrade, cleanup reconciles completed deletion records before expiring drafts.
+No session manifest, lifecycle journal or Codex receipt migration is required.
+
+## Working and waiting time
+
+The conversation and Team tab show separate working, waiting, and idle totals.
+Waiting includes blocking questions, approvals, permission requests, and automatic
+sleep or team waits. Overlapping waits count once; nonblocking questions do not
+pause work. Idle includes gaps between turns. Automatic waits say that Codex will
+resume automatically. An amber sidebar dot marks idle or a blocking request that
+needs your attention.
+
+The Team tab shows the lead and every retained member, with distinct incoming
+prompts, outgoing assistant or plan messages, and tool calls across their own
+conversation history. Forked conversations count their own turns. The conversation
+also retains counts for the current turn. Missing history or timing is marked as
+partial. A connection begun during sleep leaves time unclassified until fresh
+native activity establishes that work has resumed. That observation starts new
+coverage; earlier unknown intervals remain unclassified.
+
+Each Team metric has its own column. Member details include an abbreviated thread
+ID with its complete value on hover and a copy icon. Model and reasoning values
+open a settings popup through the edit icon. Editing a member targets its own
+thread independently of the conversation selected in the Codex tab.
+
+The portal service observes activity without answering requests, even when no
+browser is open. Timing records contain identities, interval boundaries, and
+coverage, without prompt or answer text. Observation times are approximate.
+Unobserved time, including historical intervals that Codex cannot reconstruct,
+is shown as unclassified. Restart and connection gaps are not assumed to be work.
+The observer limits reads and subscription requests to four concurrent RPCs,
+including reconnects. Reads of one thread queue before taking a portal slot,
+leaving capacity for other conversations. Noninteractive pages keep one
+successful timing snapshot.
+The portal keeps these records, creation receipts, and saved comparisons in
+separate private files; existing session manifests and lifecycle journals retain
+their formats for recovery.
+
+## Automatic archival
+
+The user package includes optional hourly session archival. Enable it per
+workspace with `dev-session auto-archive enable`; use the portal's **Keep open**
+control to retain an individual session. See [session archival](docs/dev-sessions.md#automatic-archival)
+for the 1-, 7-, and 14-day rules and recovery behavior.
+
+## Development
+
+Run the package checks and host smoke test with:
+
+```sh
+nix flake check --print-build-logs
+```
+
+The package uses a Go portal, Ruby lifecycle helpers and shell-based cluster
+launchers. The flake supplies their build and test dependencies.
+
+For a focused Go package check from the source checkout, use:
+
+```sh
+nix develop --command go -C portal test -mod=readonly ./internal/teamruntime
+```
+
+The explicit `-mod=readonly` uses the pinned module files. The Nix package sets
+`GOFLAGS` to vendor mode, while the source checkout has no `portal/vendor`.
+
+On a configured workspace host, focused portal WebUI tests must use an absent
+test catalog through `DEV_WORKSPACES_CODEX_PROVIDERS`. Otherwise their disposable,
+unregistered workspaces read the host's provider catalog. Package checks run in
+the isolated Nix build environment.
+
+The ordinary Go/Node check `TestSessionPreparationShippedBrowserHTTP` sends the
+shipped preparation serializer's requests through the real `/sessions` handler,
+including durable acceptance and replay. The optional Playwright creation test
+also submits real forms to that handler. Mocked POST responses test browser
+error handling; they do not establish that the server accepts a request.
+
+The mandatory `session-creation` NixOS VM check exercises the installed portal,
+authenticated Chromium, Ruby initializer and stock native App Server through a
+usable conversation and a follow-up exchange. It runs on every push and pull
+request in a separate KVM job. Run it after independent review with:
+
+```sh
+nix build --no-link --print-build-logs .#checks.x86_64-linux.session-creation
+```
+
+Only the external Responses service is synthetic. The scenarios cover automatic
+and custom names, inherited and explicit default/alternate providers, solo and
+retained teams, captured settings/instructions, sensitive records, notification
+preferences, attachments, forks and approved-plan destinations. Recovery checks
+interrupt creation before native root creation and after native initial-send
+acceptance, restart the portal, and retry the original request. The suite also
+checks error selection/copy and stale retry after ordinary fixture deletion.
+Native reads and durable records check the final identities and initial turn.
+Root reasoning effort differs from the host default so terminal startup cannot
+silently reset the submitted setting.
+The suite also changes a loaded fork's effort through the browser and verifies
+restoration through the host helper while the terminal remains subscribed.
+The VM retains fixture evidence with its test output. After deployment, create
+dedicated live sessions and complete follow-up exchanges too; package acceptance
+does not establish that the deployed configuration works.
+
+CI runs package and focused checks on every push and pull request. On `master`
+and manual dispatch, it also runs a small NixOS VM test for activation,
+idempotency, nginx authentication, renewal, recovery and rollback. Dispatch
+feature-branch VM tests after mandatory review. The VM job requires KVM
+acceleration. Review cold-run timings when changing these checks; the target for
+a normal dependency update is under 20 minutes.
+
+The separate `session-archive-lifecycle` VM check runs on every push and pull
+request. It uses the shipped browser, portal, systemd worker, CLI and native App
+Server to archive and revive disposable sessions. A synthetic Responses service
+drives a native lead through shell-tool cleanup before shutdown, including portal
+restart and unrelated session creation during repair. The suite also checks
+committed-content restoration, preflight permissions, worker interruption, recovery
+after checkout removal and deferred tracking synchronization. Run it after independent
+review and require it before deployment. Component tests with fake commands do
+not establish that the packaged archive workflow works. Verify a disposable
+archive/revive against the selected package after deployment as well.

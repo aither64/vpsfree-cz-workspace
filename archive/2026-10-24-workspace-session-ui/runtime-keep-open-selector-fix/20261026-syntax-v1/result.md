@@ -1,0 +1,3 @@
+Syntax verification passed (exit 0) in 6.98 seconds for target SHA256 `d1df195e84aaa52502300a3cdd37525319c4d5111b59537d9fd905174f9221f6`.
+
+The driver retained [command.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-workspace-session-ui/runtime-keep-open-selector-fix/20261026-syntax-v1/command.log) and [command-outcome.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-workspace-session-ui/runtime-keep-open-selector-fix/20261026-syntax-v1/command-outcome.json). I recorded the result in [result.md](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-workspace-session-ui/runtime-keep-open-selector-fix/20261026-syntax-v1/result.md). The log contains dirty-tree and Nix option rename warnings. No operation remains running. This verifies syntax only.

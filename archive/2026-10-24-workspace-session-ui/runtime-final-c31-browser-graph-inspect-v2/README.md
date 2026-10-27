@@ -1,0 +1,37 @@
+# Separately released read-only recursive inspection
+
+STATIC PREPARATION ONLY. This new packet follows accepted additive reconciliation `f2912fc5…`. No launcher/helper import, operational guard, Nix/query, source/tool/store scan, build/root, browser/provider/native or peer operation ran during preparation. Mandatory session identity/environment/roster checks were performed. An independent system utility retains the operation slot. Parent owns release to a fresh policy-selected utility/max1, actual graph assessment and every later build gate.
+
+This driver has one `inspect ACTUAL_RELEASE_SHA256` mode and an optional separately released `--guard-only` preflight. There is no build mode. The utility executes only the literal pinned Python `-I` argv/cwd in ready; it must not author guard/capture code, install tools, reinterpret instructions, retry or continue. The driver owns all inspection receipts and raw stdout/stderr.
+
+## Immutable inputs and admission
+
+The original `d396a89d…` proposal supplies unchanged complete public environment, source/tool/identity expectations and private bindings. Nix/current cwd remains the accepted source-preparation directory. Only this phase's launcher/results/release paths are new. Unexpected incoming NIX_/GIT_ overrides refuse; unrelated secrets stay inherited in memory and unlogged. The safe nested relative inventory parser from materialization-v2 is retained.
+
+Both actual materialization command0 receipts, byte-exact ad06/all9+2, top-level raw v4 metadata, captured root files, original aggregate failure and the delayed temporal comparison remain hash-bound. The accepted reconciliation does not prove fresh DB validity. Before any recursive command the driver must:
+
+1. Pass all4583/original3937/source609 byte/mode, six selected alias/resolved tools, seven private bindings, pinned Python/current and frozen evidence/inventory checks.
+2. Observe only the exact za8/d0jj/8q2 drv files as regular/non-symlink, bounded no-follow reads, matching captured mode/length/raw SHA256 `29f33a38…` / `95cc590b…` / `17e5058c…`. Missing/different/unreadable roots are recorded and refuse admission.
+3. Execute the fixed selected `nix-store --check-validity` on exactly those three roots. Actual exit0 and empty strict-query stdout are required. Its explicit substitute=false/IFD=false/empty builders/config=false/empty registry options are inherited; there is no unsupported legacy `--offline` flag and no realise/import/fetch/repair primitive.
+
+The parent writes the exact new `parent-inspect-release-v1.json`, binding actual ready/inventory/reconciliation hashes, fixed argv/cwd/environment, three roots/raw expected files, caps, results and read-only permission. Build/roots/fetch/repair/evaluation permissions must be false. The immutable template's null hashes/false permission cannot pass. Guard-only success supplies no inspect permission. Guard-only imports no helper, creates no results and runs no Nix; it checks the declared files/roots and bounded exact current calls only. It remains unexecuted here.
+
+## Recursive metadata and selected validity
+
+The second Nix command is the inherited exact `nix derivation show --recursive` with only the three actual roots and its unchanged offline/no-build options. Root raw file identities repeat immediately after the query. Complete raw JSON remains untouched. The v4 adapter requires canonical basename keys and input/source/output references under literal `/nix/store`, supported version4 and the accepted single root `out` identities. It never computes an output path or producer from a hash.
+
+For selected static output variants, input-addressed `{path: basename}` must agree with the full declared env output. Documented fixed content-addressed `{method, hash}` uses only the actual full env output path, retaining its method/hash as metadata. Floating/deferred/impure/unknown selected variants refuse. Input edges accept documented output-name arrays or static objects containing output names and an empty dynamic-output map; dynamic/nonempty/unknown selections refuse. Full raw fields remain available for parent inspection. Unreachable/extraneous derivation records, missing declared records, unknown schema and changed root outputs fail; nothing is trimmed or synthesized.
+
+Only after the finite graph is validated does the third Nix command inventory the exact sorted selected derivation/source/output path union using selected `nix-store --check-validity --print-invalid`. Actual exit0 is required; printed invalid paths are observations, not hidden query failures. A finite filesystem-presence observation of that same declared set distinguishes DB invalidity and absence. `availability.json` separately records missing selected DRVs, sources and outputs, including DB/file disagreement. Any lost root or DB-valid-but-absent file fails after retaining evidence. Other missing dependencies remain inventory facts for parent assessment. Missing paths are never hashed; cache availability stays UNKNOWN, with no cache probe/restoration.
+
+Caps remain8192 derivations/65536 edges/16384 exact paths/128MiB raw metadata/16MiB stderr/1MiB argv/max12 owned commands, including current guards. Raw caps are checked while the client runs and before parsing. Any cap overrun refuses without trimming, chunking, guessing or expansion. The intended operation has three Nix commands plus two current guards. Root/selected validity upper limits60s each, recursive query180s, work345s/driver360s/watcher420s. Commands reserve15s for mandatory postflight. Optional guard-only work45s/outer60s. All actual argv/cwd/tool/PID/startticks/process-group/exe/cmdline/exit/time/raw output/stop/join facts are retained with exclusive filenames.
+
+The retained same-origin INT5/TERM5/KILL2 join and3s receipt margin remain finite. Normal child exit is immediately reaped/group-checked. Descendants, cap/deadline/failure/interrupt trigger bounded escalation only for that recorded group; no further command is admitted while unsettled. Postflight file guards are attempted after failure, and current cannot run while unsettled. Missing/incomplete postflight cannot pass. Unexpected builder diagnostics stop even though only read-only command interfaces are present. Client/group settlement makes no claim about another daemon operation.
+
+## Parent assessment and later gates
+
+Fresh no-clobber results belong only to this packet; all original packets, failures and missing receipts remain unchanged. Creating this new static directory discharges only the previously held graph-packet absence after accepted reconciliation. No prior materialization or failed inspect is replayed.
+
+Actual full graph/source/compiler/pinned dependencies/review-assets builder and filtered source/browser-engine identities need independent parent assessment. Learned dependency paths remain observations; their expected hashes and cache availability are not invented. No output/compiler/tool/asset realization follows from this inspection. Build and output retention require a separate later package/release; inspect creates no GC roots and never passes a drv to an output-only primitive. Four generated review assets must still precede Go embedding, and semantic archive/all five question cases/both engines, assembled naming/provider/native/consumer/deployment gates remain separate.
+
+Session remains open: <https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-24-workspace-session-ui/>.

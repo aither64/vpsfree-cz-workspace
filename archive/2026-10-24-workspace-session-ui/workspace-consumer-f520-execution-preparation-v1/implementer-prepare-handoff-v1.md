@@ -1,0 +1,9 @@
+Actual PREPARE settled exit0 in 20.890s, outer tool12919 exit0. The exact ready PREPARE argv ran once through the frozen explicit-environment launcher. No separate guard or UPDATE was invoked.
+
+All58 commands have accepted logical exit0;54 actual exit0 and four declared actual1 absence/config queries. Every direct child is reaped and every recorded group observed empty/joined, no signals or uncertainty. Both fresh SSH gates show default3e72 and ownfeature0c. Own exact0c preservation ref and verified range bundle66f998d0 retained. Mandatory postflight0 records620 expected source bytes/modes/blobs,57420 tree metadata/index entries+flags, raw index7b2e exactly byte-equal before/after, and no errors.
+
+Only flake.nix is dirty: exact nested URL c31->f520, SHA57a0812ae8c29a21bd772b0e1752f2a39cd7d1577b77a6fc90b6443d61676c3e. flake.lock remains a6fa1f92; HEAD0c95082f/tree898b7215/base3e72 unchanged. No staged delta. All frozen packet files and50 original recipe/saved bindings remain unchanged. New snapshots/receipts and preservation ref/bundle are the other authorized effects. No Nix/fetch/UPDATE/commit/push/build/eval/provider/native/VM/deploy/integration/claim/lifecycle/cleanup/retry.
+
+Actual summary SHA dcc41fc39ba901d406937745824f1e618964cc8d52f8f5ab85927330ecb172c2;367-file evidence manifest SHA 585cfbafab243d3970e90638c1920c862f6a0a6d0c64c9ffe60ec35ab30e227e; postflight SHA 272a4123594156911b82baa3557eacb7d37ac7da4a644bfcbc9b947864b48aca. implementer-prepare-result-v1.json binds exact release/assessment/argv/actual effects. Original failures and expectations remain historical. Git/source window is returned frozen; no own active or uncertain group according to settled complete receipts. Parent actual PREPARE assessment and fresh Luna UPDATE release remain pending. Session open.
+
+https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-24-workspace-session-ui/

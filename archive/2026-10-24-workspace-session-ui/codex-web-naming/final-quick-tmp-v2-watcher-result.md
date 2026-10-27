@@ -1,0 +1,5 @@
+**Result: passed.** The authorized non-native Go quick batch ran once and exited 0. Its receipts report 29 seconds for untagged tests and 8 seconds for tagged helper tests; all 136 frozen source inputs and both flakes matched.
+
+The watcher report is at [final-quick-tmp-v2-watcher-result.md](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-workspace-session-ui/codex-web-naming/final-quick-tmp-v2-watcher-result.md). The outer log and exit receipt are [final-quick-tmp-v2.outer.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-workspace-session-ui/codex-web-naming/final-quick-tmp-v2.outer.log) and [outer-tmp-v2.exit](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-workspace-session-ui/codex-web-naming/outer-tmp-v2.exit).
+
+This verifies only the requested non-native batch and helpers; it provides no native suite acceptance.

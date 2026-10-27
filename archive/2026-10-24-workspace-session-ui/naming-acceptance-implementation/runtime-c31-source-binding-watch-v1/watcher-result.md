@@ -1,0 +1,3 @@
+**Result: incomplete.** The session identity matched the trusted binding, and the ready file, launcher, and manifest hashes matched. The required runner hash could not be verified: `acceptance-runner.py` was missing at the specified path.
+
+I did **not** launch the operation. There is no runner exit, elapsed time, or result evidence to report. No authorized operation ran and no operation effects are pending. I made no changes.

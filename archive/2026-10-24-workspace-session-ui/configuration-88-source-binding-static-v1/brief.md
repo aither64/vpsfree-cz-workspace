@@ -1,0 +1,11 @@
+# Configuration88 source-binding brief — static only
+
+Feature publication actually settled: exact old063 lease push exited0 in3.064s; fresh SSH feature88b59c01fea36adb417984c2a199178731441f24, default270d348a29a832e552a798ba8bb467152a2d36d6 unchanged. Local tree90b4d11f3ac110b92b2b7fff1d6e75df3a25555f and raw index44d614f9219afc4f3d58d94ef1a56276015e6516253c22c8d6b5248bf246606b remain clean. All472 committed blobs/working/saved bytes and modes, sole generated lock unit/message0f86, preserved refs/bundles and1550 retained evidence files are exact. Only the ordinary ownfeature remote-tracking ref advanced. One gh metadata observation exited0 with no exact88 run and no superseded active run; no CI result inferred.
+
+The attached structured argv is preparation, not an executable runner or a release. Parent owns a separately inspected fresh Luna utility and future Nix/source/root effects. Actual consumer NAR/path/Original/Resolved/Locked/Origin/epoch and assembled outputs remain null. The immutable Git commit epoch1792986681 is already learned locally and is the future metadata comparison value. Runtimec31/5dg/30k and vendor3086 establish only their accepted runtime scope, not this consumer's source identity.
+
+Future work first learns exact published GitHub88 metadata, validates it and promptly roots only its already-valid learned source. Independently compare all472 source bytes/Git executable modes and exact full lock graph to the frozen publication snapshot. Old source/store/root/guard evidence stays historical and unchanged. Unknown tool bindings must be resolved and guarded at the later parent preflight; this brief does not certify their present availability. No helper, framework, new project documentation, Nix execution, system output selection/build/copy/activation, provider/native/VM test or claim was performed.
+
+The retained configuration-c31-system-output-static-v1 stays unexecuted and unchanged; source identity must settle before its separate evaluation/build release. Application deployment remains a distinct workspace user-profile operation. No machine is acquired. No default integration or lifecycle action is authorized. Session stays open.
+
+Session: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-24-workspace-session-ui/

@@ -1,0 +1,1 @@
+**Operation not run.** The required ready and inputs digests could not be verified: the specified `ready` and `inputs` files are absent at the given paths. Per the run-once instructions, I stopped before invocation; there is no operation result or new result roots to report.

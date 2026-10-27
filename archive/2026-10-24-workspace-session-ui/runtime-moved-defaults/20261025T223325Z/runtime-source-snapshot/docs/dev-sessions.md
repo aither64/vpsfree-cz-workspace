@@ -1,0 +1,1099 @@
+# Development Tmux Sessions
+
+The user-profile `dev-session` command manages one tmux session per development
+initiative. It selects a registered workspace from the current directory; use
+`--workspace NAME` before the subcommand to select one explicitly. The session
+name is the resolved slug, and the tool follows the workspace layout from
+`AGENTS.md`.
+
+## Starting a session
+
+Pass a short name by default:
+
+```sh
+dev-session start api-token-rotation
+```
+
+This works anywhere under the registered root, including `work/` and
+`worktrees/`. From another directory, or whenever you want to be explicit,
+name the workspace before the subcommand:
+
+```sh
+dev-session --workspace example-workspace start api-token-rotation
+```
+
+If only one workspace is registered, it is the fallback outside its root. Once
+two or more are registered, an outside call requires `--workspace`.
+
+For a new Codex session, the command asks for the first request before it
+creates tracking files or tmux panes. In a script or another noninteractive
+shell, put that request in a file:
+
+```sh
+dev-session start api-token-rotation --goal-file request.txt --no-attach
+```
+
+The request file is required only while creating a shared conversation. An
+existing session resumes without asking for the request again.
+
+A valid ordinary manifest can retain an exact conversation without a `creation`
+block. `start` resumes that root through the selected socket after verifying its
+native identity, receipts, team roster and runtime authority. It preserves tracking
+and repository scope, leaves creation and goal metadata absent, and sends no new
+initial request. An empty, malformed or unfinished creation block stops the
+operation.
+Known busy activity permits ordinary attachment; unknown identity or submission
+state refuses it. Archive separately requires the complete idle proof.
+
+Existing tracking needs a manifest before a new restart or adoption. Repair its
+complete repository and retained conversation scope offline before enabling runtime
+writers or automatic archival. Committing plan and state, removing old processes,
+or finding no current checkout does not establish that scope. An already accepted
+creation or start journal keeps its existing recovery path.
+
+A session created only for tracking and worktrees has explicit repository and artifact lists
+and no Codex or creation placeholders. A later explicit start with an initial
+request creates a real conversation under normal creation recovery, after fresh
+conversation/receipt absence proof. It preserves the existing plan and state.
+
+If a unique existing slug already matches that name, `start` resumes it. If no
+existing slug matches, it creates today's slug. On June 6, 2026, a new
+`api-token-rotation` session resolves to `2026-06-06-api-token-rotation`.
+
+Use `--new` to force today's slug even when older matching sessions exist:
+
+```sh
+dev-session start api-token-rotation --new
+```
+
+Use `--as-is` when the argument is already the slug:
+
+```sh
+dev-session start 2026-06-06-api-token-rotation --as-is
+```
+
+When the workspace portal is available, `--model` and `--effort` select the
+initial Codex settings. The browser offers the same choices from the App Server
+model catalog.
+
+Use `--provider ID` to select a provider for a new session, or choose it in the
+browser's **Options** or plan creation dialog. The selection applies to the root and team members and
+survives creation retries. Omit it to inherit the workspace default. Existing
+sessions switch providers through the limits dialog; see
+[provider switching](codex-providers.md) for automatic pause/resume and recovery.
+
+The first window is named `dev` and contains three panes:
+
+- left: login shell with cwd set to the workspace repository root; the helper
+  launches `codex` in this shell, so exiting Codex returns to the shell prompt;
+- right top: shell, with cwd set to `work/<slug>`;
+- right bottom: shell, with cwd set to `worktrees/<slug>`.
+
+Managed tmux panes and worktree windows receive these environment variables:
+
+- `DEV_SESSION_SLUG`;
+- `DEV_SESSION_WORKSPACE`;
+- `DEV_SESSION_WORK_DIR`;
+- `DEV_SESSION_WORKTREES_DIR`;
+- `DEV_SESSION_PORTAL_BASE_URL`, the reusable portal origin;
+- `DEV_SESSION_URL`, the resolved link for this session.
+
+Do not use `DEV_SESSION_URL` as the input for another session. Its
+value already contains the current slug. The registry-backed dispatcher passes
+the base URL explicitly and exports both values into each managed pane.
+
+`start` creates `work/<slug>/plan.md`, `work/<slug>/state.md`,
+`work/<slug>/portal.yml`, and `worktrees/<slug>/` when missing. When
+`workspace-portal` is installed, it also creates a Codex App Server thread,
+records its ID, assigns the session name, and sends the initial request. It
+waits until the App Server has persisted the rollout and verifies the exact
+first user message before it opens the terminal Codex client. Once that check
+passes, the thread ID is authoritative and the helper resumes that exact
+thread while refreshing its working directory and runtime environment. When an
+exclusive creation journal is still `creating` and its initial goal is unsent, a
+retry reconciles the unique working directory instead. After complete discovery,
+it adopts a sole validated unmaterialized root with the policy and environment
+installed by its original `thread/start`. It does not resume that root: selected
+Codex requires a persisted rollout even when the thread is still loaded. The
+first allowed initial request materializes it. A materialized retained root
+resumes with refreshed policy and environment, preserving its saved model and
+reasoning effort. Recovery can replace a recorded memory-only thread whose
+disappearance is proved after an App Server restart. It refuses multiple
+candidates and never replaces a ready thread. Before the one allowed initial
+`turn/start`, it records a durable attempt marker. A retry of the same
+unmaterialized thread fails closed until exact matching history appears or an
+App Server restart permits a fresh creation replacement. Existing plan
+and state files are never overwritten. New state files begin with exact YAML
+front matter containing `lifecycle: active`; that
+anchored field is the only lifecycle authority. An
+exact slug that is present under `archive/` or active workspace state cannot be
+reused. The helper also checks the top-level Git index and history, so removing
+an archive from a later checkout does not remove its slug tombstone. It disables
+repository-configured process hooks for these read-only checks and fails closed
+when the archive history cannot be read.
+If a running session was created without a shared portal thread, stop it before
+starting the same active slug with portal interaction; the helper refuses to
+attach a new browser thread to an old terminal conversation.
+
+```yaml
+---
+lifecycle: active
+---
+```
+
+For ordinary sessions, fill in a substantive plan and initial state and commit them in the workspace
+repository before the first project-code commit or external mutation. Keep
+active tracking current in the working tree, but do not commit each plan,
+review, test/CI, deployment, or status update separately.
+
+Short initiatives normally have only the initial active tracking commit and the
+final archive commit. For an initiative that remains unfinished at the end of
+an active working day, at most one consolidated tracking-only checkpoint may be
+committed for that day when material progress is worth preserving. This is a
+ceiling, not a requirement, and inactive calendar days do not count. An
+additional same-day checkpoint is reserved for a genuine ownership handoff or
+an explicit user request. A pause until a future working day can justify that
+day's consolidated checkpoint, but not a second one. Ordinary functional
+commits are not tracking-only checkpoints.
+
+## Sensitive sessions
+
+Choose sensitivity when creating a session:
+
+```sh
+dev-session start private-investigation --sensitive
+```
+
+The portal offers **Sensitive session** on the creation form. Sensitive sessions
+appear in the usual lists with a **Sensitive** badge. This choice stays fixed;
+existing ordinary sessions cannot be converted. Forks and sessions created from
+a sensitive plan inherit it. An ordinary source can create a sensitive destination.
+
+Plans, state, manifests and session artifacts keep their usual `work/<slug>/`
+and `archive/<slug>/` paths. Before writing them, the CLI records the choice in
+private user state and adds local exclusions to Git's `info/exclude`, including
+the session's worktree group and lifecycle/creation journals. No session
+name is added to the tracked `.gitignore`. Ordinary `git add -A` skips these
+records. A conflicting tracked/staged path or effective ignore rule stops creation;
+the command does not unstage or remove operator data. Deliberately force-adding
+ignored records bypasses this protection and is not supported.
+
+Maintain substantive plans, state, review evidence and handoffs locally. Keep
+session-specific notes under that same directory instead of tracked `notes/` or
+another session. Sensitive sessions have no initial, daily, archive or revive
+tracking commits. Their project repositories retain normal commits, publication,
+review and merge requirements. Portal access and Codex processing use the existing
+configuration; sensitivity does not introduce encryption or a new access policy.
+
+Archive and revive move local records without a Git commit and retain existing
+ownership, content checks, recovery snapshots and automatic archival rules.
+Private sensitivity metadata and local exclusions remain through runtime
+retirement. Archive tombstones remain local, so missing archived files do not
+make their slug reusable. Retain the workspace's private user state with local
+session backups. Git clones do not contain these records or their exclusions.
+
+Coordinated merges and deployments accept checksummed evidence from the excluded
+session directory. Approval, machine reservation and final integration proofs
+remain required. Archive and deletion do not release deployed ownership; revival
+preserves it. Package candidates must support sensitive sessions and the retained
+coordination contract. Finish pending lifecycle operations before updating; an
+older reader refuses sensitive metadata. Recover with a capable matching CLI and
+portal package rather than removing the marker or private state.
+
+## Monitor long verification
+
+The built-in `dev-session-monitor` skill delegates long tests, CI checks and
+builds to a fresh operation-only watcher. The installed policy defines that
+watcher separately from the persistent team roster; at this site it uses
+GPT-6 Luna with low reasoning effort. The parent keeps its model, reasoning
+effort and development context, then continues when the watcher returns.
+Planning, diagnosis, code changes, review and acceptance remain with the parent.
+The skill does not initiate deployments or unwanted CI waits.
+
+Automatic skill selection is enabled. To require this workflow, add a brief rule
+to the consuming workspace's instructions:
+
+> Use `dev-session-monitor` and its monitoring subagent for authorized tests,
+> CI checks and builds expected to exceed one minute. Delegate uncertain-duration
+> integration tests and builds before launching them; keep known quick checks
+> inline. Preserve the parent model and reasoning effort.
+
+It can also be requested explicitly with `$dev-session-monitor`. The
+[skill](../skills/dev-session-monitor/SKILL.md) defines the brief, watcher
+boundaries, result format and visible fallback when delegation is unavailable.
+Callers supply any project-specific deadlines and escalation rules. An unmanaged
+session uses an explicit applicable caller or site policy; if none is supplied,
+the parent visibly performs the monitoring rather than inventing a watcher
+lineup. A watcher owns newly launched commands; an existing run needs
+independently accessible status and logs rather than an assumed transferable
+parent tool handle.
+
+This is agent-directed delegation, not a persistent job supervisor or a model
+change inside an executing turn. Parent waiting still has tool/runtime overhead.
+Fresh briefs, blocking waits and compact results reduce repeated model work;
+actual allowance savings depend on the workload and must be measured. Full logs
+remain available for the parent to investigate failures.
+
+Profile activation installs the skill. No conversation, manifest or process-state
+migration is needed for the watcher.
+Verify discovery in a fresh turn after activation; already-running turns may
+retain their earlier instructions. When the skill is absent, perform the same
+operation with minimal-output parent monitoring and report that fallback once.
+
+## Documentation during development
+
+The package includes the `dev-session-documentation` skill. It is available for
+normal automatic skill selection and can be requested explicitly with
+`$dev-session-documentation`. Workspace instructions can require it for
+substantive development and operational work. The agent performing the task owns
+the documentation while it has the relevant context.
+
+Read the project's documentation entry point and the relevant subsystem pages
+at the start. Add or update useful explanations as decisions are made and the
+implementation settles. Choose the smallest useful form: a comment or paragraph
+may explain a local fix; a consequential choice may need a decision record; an
+ordered migration needs deployment and recovery guidance. Routine authoring is
+part of development and follows the task's existing scope and permissions.
+
+### Where information belongs
+
+The [authoring skill](../skills/dev-session-documentation/SKILL.md) chooses
+destinations by applicability, useful lifetime and owner. Feature explanations
+describe the system at the documented revision. A rollout record describes one
+deployment and becomes historical evidence when that deployment finishes.
+
+| Information | Location |
+| --- | --- |
+| Current goal, approach, unresolved choices | Session `plan.md` |
+| Current status, next actions, verification evidence | Session `state.md` and linked artifacts |
+| Supported behavior, accepted rationale, invariants, failure semantics | Owning project's documentation |
+| Repeatable deployment, operation, diagnosis, recovery | Separate project operations documentation, or the site configuration repository for site-specific steps |
+| Instructions for a supported upgrade path | Project upgrade guide with source and target versions or schema boundaries |
+| An individual rollout's plan, revisions, results and rollback preparation | Session rollout record or a dated record in the deployment repository |
+| Temporary branch state, review fixtures, disposable database resets | Session records |
+| Reusable development-environment lessons | Workspace notes under local conventions |
+
+These categories do not prescribe a directory tree, a file per category or a
+deployment section for every feature. Use the smallest useful explanation in
+the project's existing layout. A one-time checklist remains rollout material
+even without dates or commit hashes.
+
+Keep lasting compatibility constraints with the component and reference them
+from operational procedures. Separate mixed passages by meaning. For example:
+
+- A transaction's promise to retain ownership on rollback belongs with its
+  feature behavior. Steps for reverting deployed software belong in operations
+  or upgrade guidance.
+- A recovery procedure that operators can repeat belongs in operations docs.
+  A particular recovery's commands, affected machines and observed results
+  belong in its operational record.
+- A supported schema transition needs an upgrade guide that other upgraders
+  can find. Resetting a disposable database from an earlier unmerged branch
+  revision belongs in that session's records.
+
+Maintain reusable procedures as supported operations change. Keep upgrade
+guidance while the upgrade path needs support, and identify its applicability
+without inventing release versions. Historical deployment records retain what
+happened; they do not serve as the current operating procedure. Preserve any
+still-needed upgrade or recovery instructions when reorganizing older material.
+
+Give each cross-project contract one authoritative home and link its consumers
+to it. Project documentation should make sense without access to a private
+session archive. Follow the project's existing layout, including its generated
+manuals or external documentation contracts, and link new pages from its README
+or documentation index.
+
+A decision record explains the context, choice, actual alternatives considered,
+consequences, and conditions for reconsideration. Capture the reasons while they
+are known; source code alone cannot establish a past author's intent. Identify
+inferred explanations and unresolved questions. Mark proposed and superseded
+decisions, and link to the accepted replacement when there is one.
+
+Session state distinguishes a prepared rollout from an executed and verified
+deployment. Operational instructions include prerequisites, ordering, expected
+results, and recovery limits, with unverified steps identified.
+
+### Plans, state, and handoff
+
+New plans include Decisions and Documentation sections. New state files start
+with Status, Next actions, and Documentation before repository and verification
+information. These prompts guide authoring; they do not impose a document count,
+line limit, or new completion gate. Existing required lifecycle front matter and
+creation markers retain their meaning.
+
+Keep the current summary easy to scan. Summarize superseded checkpoints and link
+detailed commands, failures, and review evidence. Link project documentation
+from the session instead of copying it. Save session files beneath `work/<slug>/`
+and link them from the plan or state. Regular files appear automatically in
+Files, including Git-ignored and unregistered files. Archived sessions use their
+preserved `archive/<slug>/` root with the same session-relative URLs. Repository
+documents stay in their repositories and can be linked from the plan or state.
+
+`dev-session artifact add` is deprecated. It accepts the old arguments and
+options, prints a notice and exits successfully without changing a manifest,
+label, receipt or session file. It does not require `--label` or a running
+conversation. Existing artifact declarations remain readable.
+
+Before review, reconcile the documentation with the final code, tests, and
+observed deployment behavior. Include relevant documentation paths in the review
+packet and check placement as well as completeness. Feature docs should remain
+understandable without knowing a branch's rollout status. At handoff, summarize
+the documentation changes or briefly explain why none were useful. Preserve the
+workspace's tracking commit cadence and finish
+this work before archival. Improve older documentation when related work touches
+it; historical backfills are separate tasks.
+
+### Design and package compatibility
+
+Documentation depends on task context and judgment, so its quality is assessed
+through the normal development review. A required collection of empty files
+would not demonstrate that a design or deployment is explained. Ordinary
+Markdown and the existing artifact catalog keep the documents readable by
+projects and sessions using earlier package generations.
+
+The built-in skill travels in the existing schema-1 skill catalog. Extensions
+can add other skills but cannot replace `dev-session-documentation`. Activation
+installs the selected catalog's links; rolling back to a preceding package
+removes this managed skill link while preserving authored documents and other
+unrelated files.
+
+Session restart and revival preserve existing plan and state content. Creation
+recovery accepts the current generated templates and the immediately preceding
+ones, including already seeded requests, without converting old records to the
+new layout. It continues to reject modified partial drafts. Unfinished forks
+and current creation operations retain their existing package-transition gate;
+complete them with their originating generation before switching packages.
+
+## Team members
+
+Members explicitly return results and blocking questions through `report_to_lead`.
+The workspace daemon installs that host-side tool at startup and routes native
+caller metadata to the member's own current lead. Use one stable message ID per
+report and keep it unchanged for delivery retries. The tool returns a native
+submission receipt; the lead still checks actual work completion separately.
+Do not invoke the host locking CLI inside a member sandbox or change access to
+work around a missing tool. See the [portal reporting contract](workspace-portal.md#installed-team-policy)
+and [upgrade/recovery guide](team-reporting-upgrade.md).
+
+
+`dev-session attach` continues to attach the root `lead` conversation in tmux.
+Team members are independent persistent Codex threads and do not create extra
+tmux panes. Choose an installed team when starting a session, or manage members
+later from the portal's Team tab or CLI:
+
+```sh
+dev-session start api-token-rotation --team delegated --goal-file request.txt
+dev-session team list api-token-rotation
+dev-session team preset api-token-rotation delegated
+dev-session team add api-token-rotation implementer --model gpt-6-sol --effort xhigh
+dev-session team assign api-token-rotation --to implementer0 --message 'Implement the approved plan.'
+```
+
+The member roster is isolated to the session. Its compact addresses are stable,
+for example `architect0`, `implementer0`, and `reviewer0`; members from another
+session cannot be addressed. A site can configure another role, such as
+`analyst`, whose members are addressed as `analyst0`, `analyst1`, and so on.
+The installed catalog supplies each role's purpose and instructions. A new
+session retains the selected team's exact lead and member instructions; adding
+a member later uses the currently installed role policy. A fork copies the
+source instructions and binds them to the destination session. The instructions
+are available on each member's first assignment without sending an earlier
+model turn. The Team tab shows member messages and keeps removed members in a
+collapsed history section. In the Codex tab, select any ready member to read
+its full conversation or message it directly. Its role policy and saved model
+settings still apply. Fork, archive, delete, and revive
+apply the corresponding Codex operation to all roster members with the root
+session.
+
+The root conversation is the lead in both the portal and tmux. The selected
+catalog prompt and retained instructions determine design and application
+ownership. A Solo lead can investigate, design and edit application code without
+automatic specialists. A Lead and reviewer lead also owns design and application
+edits and uses its retained reviewer for independent final review.
+A Lead-designed lead owns the design brief and assigns
+application work to an implementer; a Full-team lead assigns nontrivial design
+to its design-purpose member and complete execution packages to its implementation-purpose
+members. The design owner writes the design and verification brief before
+substantive implementation. Implementers accept either an architect-owned or
+lead-owned brief; bounded small edits can use a direct lead brief.
+
+For each new substantive team work item, the lead checks the current roster,
+uses ready members with saved settings and suitable access, then integrates
+their reports. The lead keeps brief scoping, acceptance inspection, session tracking,
+approval-bound coordination and user communication, including required
+context-dependent writing. Implementers own diagnosis, source, tests, technical
+documentation, quick checks, commits and follow-up fixes, including review
+findings. Dependent implementation stays delegated. The lead tracks owners,
+acceptance criteria, dependencies and checks, assigns independent packages to
+available implementers, and serializes overlapping edits and Git operations.
+It waits for reports without duplicating specialist investigation. If the live
+roster has no implementer, the lead implements; busy or inaccessible members
+require resolving the condition rather than taking their work. Adding,
+replacing or reconfiguring members requires explicit user direction. Manual
+team controls remain available, and user-directed team changes apply without
+restarting the lead. Selecting a team creates no automatic work assignments.
+
+The applicable mandatory-review workflow runs final independent review after
+the intended substantive deliverable is complete, all intended changes are
+committed and quick checks pass, before long integration tests. Completed
+substantive documentation and configuration deliverables remain in scope.
+Routine planning, investigation, findings, session tracking and evidence alone
+never trigger automatic review. Earlier review requires an explicit user
+request, is advisory, and does not replace final review. Having a reviewer in
+the preset creates no assignment. Solo uses a temporary standalone final
+reviewer without adding a persistent member. The workflow retains whole-branch
+history and migration gates and its narrow-fix policy.
+
+The portal binds the lead conversation to its exact workspace and session
+before the first user request, with no extra model turn. Reconciliation retains
+the saved lead prompt, including an older preset's instructions; active turns
+are left alone until they finish. Catalog updates change new-session defaults.
+Retries and forks keep the saved lineup, prompts, models, efforts and access.
+Shared workspace instructions and installed skills change globally and can
+conflict with older saved prompts; updating them does not refresh those prompts
+or mutate existing rosters.
+
+Long builds, tests, and workflows use a fresh GPT-6 Luna/low watcher instead of a
+team member. That watcher has no persistent roster identity.
+
+### Team execution access
+
+Schema-6 team catalogs set `execution_access = "full_access"` for all retained
+and new members and verification utilities. This includes Nix daemon and network
+access. Assigned role instructions still govern editing and review work. See the
+[installed team policy](workspace-portal.md#installed-team-policy) for retained
+state, peer messaging and package compatibility.
+
+## Attaching and syncing
+
+```sh
+dev-session attach api-token-rotation
+dev-session resume api-token-rotation
+dev-session fork api-token-rotation alternate-approach
+dev-session sync api-token-rotation
+dev-session stop api-token-rotation
+dev-session archive-check api-token-rotation --json
+dev-session archive api-token-rotation
+dev-session archive api-token-rotation --abandoned
+dev-session revive api-token-rotation
+dev-session delete api-token-rotation
+dev-session list
+dev-session current
+dev-session url
+```
+
+Lookup commands accept a short name when it resolves to exactly one known slug
+from `work/`, `worktrees/`, or managed tmux sessions. If multiple slugs match,
+the command fails and prints the candidates. Use the full dated slug directly
+to avoid ambiguity. The `--as-is` option is only needed when a command must
+treat an input as a literal slug before that slug is known to the workspace.
+
+`fork` creates a new dated session with a native copy of the source Codex
+conversation. It copies no worktrees, tracking content, artifacts, or
+development clusters. Use `--model` and `--effort` to override the inherited
+Codex settings. Use `--provider` to pin the destination provider; omitting it
+follows the workspace default independently of the source session.
+
+`sync` creates one managed tmux window for every git worktree under
+`worktrees/<slug>/*`. It removes only managed windows whose worktree path no
+longer exists, and it leaves user-created windows untouched.
+
+`resume` restores terminal authority and portal access for the exact retained
+Codex conversation. It reads saved history without loading the thread or
+starting work. A ready creation or an ordinary retained manifest, positive
+native identity and submission evidence, and the selected runtime provenance
+are required. An interrupted terminal recovery reuses its start journal and
+tmux identity. Conflicting lifecycle work must finish first.
+
+After a host or App Server restart, the portal automatically restores sessions
+whose durable recovery intent was enabled while they were running. Saved
+messages, queues and active goals wait for user action. **Continue** activates
+the existing queue or active goal; when neither exists it queues one visible
+continuation prompt. **Send** queues the new message before activation, behind
+older queued messages. Retained team members stay on hold until addressed or
+assigned. **Resume session** restores a stopped session; **Retry recovery**
+retries a failed restoration. The composer keeps its draft during these status
+updates. A portal-only restart preserves work on the same App Server.
+
+The restored-session banner's X hides the notice without continuing work. The
+server remembers this choice across reloads and browser visits; a later runtime
+restoration shows the notice again. Saved queues and goals remain paused until
+you explicitly activate work. Dismissing the notice sends no continuation message.
+
+`stop` only kills the exact managed tmux session and leaves all files and
+worktrees in place. It asks you to type the exact session slug before making
+the change. Use it when you want to pause terminal access without archiving the
+initiative.
+
+`stop` also disables automatic restoration. Archive disables restoration and
+execution permission; delete removes the matching private recovery record.
+Explicit `start` or `attach` permits the retained root to run. `sync` leaves a
+recovered conversation on hold.
+
+`current` prints the active slug and nothing else. It resolves the slug from the
+managed tmux session environment, the caller's exact managed tmux pane, or a
+cwd under `work/<slug>` / `worktrees/<slug>`. It never falls back to tmux's
+server-current session when called outside a tmux pane. It exits with an error
+when no active session can be found or when those sources disagree. Codex
+instances should run it before creating a new initiative slug. The helper
+accepts session identity only when both `DEV_SESSION_SLUG` and the
+canonical `DEV_SESSION_WORKSPACE` match. It filters managed sessions
+owned by other workspaces from listing and short-name lookup.
+
+Managed sessions created before workspace identity metadata was introduced are
+not adopted automatically. Inspect and stop such a session manually after its
+writers are quiet, commit its active tracking, then restart the same slug with
+`start --as-is` and a new initial request. Existing symlinked workspace paths
+are recognized and normalized automatically.
+
+`url` prints the permanent portal page for the selected initiative. It accepts
+the same short-name and `--as-is` forms as the other lookup commands. The page
+continues to work after archival because the portal scans both `work/` and
+`archive/`.
+
+`delete` discards a development session after explicit confirmation:
+
+```sh
+dev-session delete api-token-rotation
+```
+
+The command requires an interactive terminal and asks for one `y/N`
+confirmation. There is no noninteractive confirmation flag. The command
+independently inventories each canonical worktree owned by the exact session,
+including its repository identity, branch, head, and dirty state, then retires
+the matching Codex thread, releases configured development clusters, removes
+the worktrees, stops the managed tmux session, removes runtime authority, and
+moves the tracking directory and creation journal to private recovery storage.
+It records each completed phase in a private journal, so rerunning the same
+command safely continues an interrupted deletion instead of repeating
+irreversible work.
+Each persisted phase is printed in plain language. The browser uses the same
+journal to show progress and elapsed time while the command continues in the
+background.
+The journal is also a slug tombstone: starting, reviving, attaching, changing
+worktrees, or starting new cluster work for that slug is refused until the
+original `delete` command finishes. Thread retirement records its intent before
+contacting Codex, durably records a unique cwd-bound thread before archiving it
+when creation lost its ID, and recognizes that exact thread when it is already
+archived. A known thread
+must remain reachable; an unavailable portal or App Server stops deletion for a
+later retry instead of orphaning the conversation. Successful retirement prunes
+that thread's durable send and queue attempts.
+Recovery state is stored under:
+
+```text
+$XDG_STATE_HOME/dev-workspaces/removed/<workspace-id>/
+```
+
+The session disappears from active and archived discovery. Git branches are
+retained. The recovery directory is private to the user and contains metadata
+that identifies the original workspace and slug. It must be outside the
+tracking directory, creation journal, initiative worktrees, and cluster state
+or socket directories; deletion refuses an `XDG_STATE_HOME` that would place
+recovery data inside state it will destroy.
+If the tracking directory was
+already committed, `delete` fetches `origin/master`, requires the shared
+checkout to be a compatible `master`, rechecks the fetched remote immediately
+before the commit, and commits only the exact tracking deletion. It preserves
+unrelated staged and unstaged changes and does not push.
+This prevents a fresh checkout from rediscovering a successfully deleted
+session.
+
+Worktrees with changes reported by ordinary `git status --porcelain` are
+refused unless `--force` is passed. Detached worktrees and paths outside the
+exact initiative group are always refused. Cleanup delegates removal to
+`git worktree remove`; if Git refuses a worktree, resolve the reason and retry.
+Missing or stale `portal.yml` repository entries do not block deletion when the
+actual worktrees can be proven to belong to canonical workspace repositories.
+Symlinks, unmanaged entries, foreign repositories, path escapes, and ambiguous
+ownership are always refused. `--force` permits dirty worktrees and interrupts
+active lead and independent team-member turns, waits for each turn to stop, then
+archives their threads. The wait is bounded; a member that does not stop leaves
+the deletion journal retryable. Non-forced deletion and strict completion archival
+require every member to be idle. A forced deletion can also retire a member
+whose thread was confirmed while member creation remained unfinished; a missing
+thread identity normally blocks deletion. During an unfinished direct-team
+creation, deletion can mark an unconfirmed, unbootstrapped member reservation as
+`removed` if its native start was attempted and both initial-request flags
+explicitly record that the request was neither attempted nor sent. The private
+recovery file `team.json` retains the project identity, start attempt, settings
+and removal time. The native outcome remains unknown: a thread may still appear.
+Deletion preserves the project and neither adopts nor initializes that thread.
+The deletion journal must durably reach `thread_retiring` before saving the
+removed record. An interrupted deletion resumes the same journal and preserves
+the removal time. Other missing identities still require resolution before
+deletion. If a non-forced attempt stops at an
+active turn, rerunning it with `--force` records a one-way upgrade and resumes
+the same journal. Forced deletion still requires the interactive `y/N`
+confirmation:
+
+```sh
+dev-session delete api-token-rotation --force
+```
+
+Use `delete` only when you mean to discard the whole session. Completed and
+abandoned initiatives normally use `archive`, which preserves their durable
+record in the portal.
+
+## Archiving and reviving an initiative
+
+### Automatic archival
+
+Automatic archival is disabled by default for each workspace. Enable it with
+`dev-session auto-archive enable`. The hourly user timer applies these rules in
+order:
+
+| Session | Inactivity | Outcome |
+| --- | --- | --- |
+| Explicit `lifecycle: complete` | 1 day | Complete |
+| Active, with all registered and additional feature branches merged | 7 days | Complete |
+| Active, with no registered repositories or owned worktrees | 14 days | Abandoned |
+
+The completed outcomes require the same exact local/remote merge proofs as
+manual archival. Removing a worktree does not remove its registered branch or
+qualify the session for the 14-day rule. Already abandoned sessions require
+manual archival. Auxiliary-only checkouts do not qualify an active session for
+the empty rule. The archive retains the conversation, tracking and branches.
+
+New conversation activity, content changes to plan/state or declared artifacts,
+repository registrations and feature-head changes restart inactivity. Dirty
+worktrees block archival; returning to clean starts a fresh period. Portal
+visits, polling, file touches and routine runtime metadata updates do not count.
+Conversation activity comes from the latest actual turn's ID, status and recorded
+start/completion times, together with observed requests and queued message
+identities. Model, effort, name and `updatedAt` changes are administrative data.
+The session observation includes the exact root and every nonremoved retained
+member. A missing historical timestamp is reported as unknown rather than
+invented; a verified turn identity can still start observation-based grace.
+Unknown conversation activity, active turns, pending requests, queued messages
+and incomplete lifecycle operations prevent a new automatic archive.
+The passive scan holds shared transition and session locks, so portal access can
+continue during observation. It asks Codex for one combined root/team activity
+and idle result, then releases those locks. A candidate archive acquires exclusive locks
+and checks current policy, conversation, team members, worktrees and branch
+proofs again before starting the archive journal. Missing or inconsistent Codex
+data defers archival and loses activity continuity. The next trustworthy sample
+starts fresh grace, even when its activity token matches the earlier sample.
+That loss survives restarts. An unchanged merge, network, inventory or tracking
+proof failure blocks archival while preserving known grace. An unreadable proof
+dimension cannot establish eligibility; once readable, a real change restarts
+grace. Error messages and fetched default-branch advancement do not count as
+session activity.
+
+A normalized tracking-only session has an explicit schema-1 manifest with
+repository and artifact lists and no fabricated conversation or creation record.
+Every observation freshly proves the absence of runtime authority, tmux, retained
+team, creation and conflicting operation state, directory submission binding,
+and saved active/archived or loaded conversations at its exact original work CWD.
+Loaded-only threads count even before their first turn or persisted history;
+unreadable discovery is unknown. Missing `portal.yml` alone proves no absence.
+Automatic archival repeats this proof and never adopts a conversation during
+retirement. Archived members retain the bounded unloaded proof described in
+[archive recovery](session-archive-recovery.md#retained-conversations-and-selected-executor-recovery).
+
+The first scan after enabling starts a fresh period for existing sessions.
+Observations survive service restarts. Re-enabling, reviving a session or
+releasing a hold also starts a fresh period. Changes made and reverted entirely
+between scans cannot be observed.
+
+The session's **Settings** tab shows its archival status and any concrete failure.
+Policy, eligibility, activity and the full saved error are under **Technical
+details**. **Keep open** prevents automatic archival
+while leaving manual archival available. The equivalent commands are:
+
+```sh
+dev-session auto-archive hold api-token-rotation
+dev-session auto-archive release api-token-rotation
+dev-session auto-archive status api-token-rotation --json
+dev-session auto-archive status --json
+dev-session auto-archive scan --dry-run --json
+dev-session auto-archive disable
+```
+
+Status reads cached observations without contacting Codex, fetching refs,
+advancing grace or scanning sessions. The workspace form returns policy/epoch,
+last scan, counts and sorted rows, including malformed legacy records and pending
+automatic operations whose tracking has moved. Rows distinguish unknown activity,
+proof blockers, holds, stale observations, journal progress and last worker
+attempt. One invalid record does not hide other sessions. The workspace page
+shows the same overview with links to each session's existing controls.
+
+A dry run reports current eligibility without updating observations or starting
+an archive. It may fetch Git refs to verify merge status. Disabling prevents new
+automatic archives; an archive already recorded in its lifecycle journal can
+still finish through the normal recovery workflow. The worker resumes only its
+own recorded operation IDs and leaves manual operations for their existing
+retry actions.
+
+The service is `workspace-auto-archive@WORKSPACE.service`; its timer runs hourly.
+Inspect results with `journalctl --user -u workspace-auto-archive@WORKSPACE.service`.
+Policy, holds and observations live beneath the user state directory in
+`auto-archive/`, separately from session manifests. Package rollback stops the
+worker and removes its timer when the target generation lacks this feature.
+
+### Manual archival
+
+Use Archive when you want to close a session, including unfinished work:
+
+```sh
+dev-session archive api-token-rotation
+```
+
+The CLI asks for one yes/no confirmation; the browser has one Archive action.
+Explicit archival writes `lifecycle: archived`. It stops active owned agents,
+pauses active goals, saves queued prompt records, releases development clusters,
+retains committed Git heads, deletes local checkout contents, moves tracking
+into `archive/`, and retires the session runtime. It preserves conversations and
+Git branches. Unmerged, unpublished, detached and dirty work do not prevent
+explicit closure. Staged, unstaged, untracked and ignored files are deleted.
+Commit any work that must survive before confirming Archive. Tracking retains
+Markdown explanations and portal.yml manifests; raw supporting artifacts are removed.
+
+Plan and state need an earlier tracking commit. Stop external editors and builds
+that can still write into a worktree. In an installed workspace, archival finishes
+locally and queues its tracking commit. The retry service preserves unrelated
+workspace changes and runs ordinary Git hooks. Missing registered refs
+stay recorded without a fabricated final head.
+
+The portal shows **Tracking sync pending** when Git bookkeeping needs another
+attempt. A network failure, a failing hook or an advanced workspace master does
+not reopen the session. Inspect the saved result without changing it:
+
+```sh
+dev-session tracking-sync --status --slug FULL-SLUG --json
+```
+
+The workspace retries pending commits every minute, with backoff after errors.
+To retry immediately, use `dev-session tracking-sync --slug FULL-SLUG --force`.
+If you revive before the archive commit succeeds, the pending job saves the
+latest tracking state. Revival can proceed while the remote is unavailable.
+
+Browser archival runs in a separate systemd user service and continues when the
+portal restarts or the browser disconnects. Its progress identifies the checkout
+being captured, verified or removed. Local file work has no total wall-clock
+deadline; external calls keep their own timeouts.
+
+Source-only executors without an installed tracking worker keep synchronous Git
+bookkeeping. Existing operation journals retain their saved policy on retry.
+
+Automatic archival keeps its merge, publication, cleanliness and idle checks.
+`dev-session archive api-token-rotation --require-merged` explicitly requests the
+same completion policy. `--abandoned` retains the older discard policy. Pending
+operations resume the policy sealed in their journal, including operations
+started by an older package. They do not silently change policy on retry.
+
+Agents must not infer archive authorization from a completed response, a handoff,
+"finish the work" or "implement the plan". Explicit user direction or the enabled
+automatic worker owns closure. See [archive cleanup and recovery](session-archive-recovery.md)
+for private snapshots, retained prompts, operation formats and legacy recovery.
+
+Each irreversible phase is journaled in private runtime state. If a command or
+deployment interruption stops the operation, run the same `archive` command
+again with the same mode. It resumes completed phases without repeating them.
+The CLI prints phases as they are persisted. The browser exposes the same phase
+and offers Retry when an archive, delete, or revive operation fails or pauses.
+For an automatic archive, the session banner shows the saved failure and its
+timestamp. Settings shows the same reason while the banner is hidden there.
+The worker retains its actual bounded exception alongside the public diagnostic;
+pending-operation and stale-observation metadata do not replace the failure.
+Technical details remain collapsed in Settings. A pending archive keeps the
+conversation read-only; completion retains the conversation in archived history.
+
+Ordinary commands in the automatic worker have a 60-second timeout. Conversation
+retirement has a 210-second subprocess timeout around the App Server client's
+180-second deadline. Directory-filtered history discovery can take longer than
+a minute on a large history. Keep the outer retirement limit longer than the
+client deadline so errors can return before the process is killed. These limits
+apply on the first attempt and when resuming a journal.
+
+If an automatic archive stops after committing tracking, retry the same archive
+with the installed `dev-session archive <slug> --as-is` command. Add `--abandoned`
+when retrying an empty-session archive, matching its recorded abandoned mode.
+Manual retries use the same journal checks and retirement deadline. Finish pending
+operations before switching packages; do not remove their journals to unblock activation.
+
+If the selected package cannot complete that retry because it cannot prove an
+archived retained thread, or because only part of a retained team reached
+archived state, use a newer candidate package's narrow host recovery entry:
+
+```sh
+nix run .#workspace-host -- recover-archive \
+  --source "$PWD" --workspace NAME --session SLUG
+```
+
+The candidate must match `--source` and the selected runtime contract. It checks
+the selected Codex executable's version and generated protocol contract,
+including compatible 0.160.0 installations, without changing that executable.
+Legacy recovery accepts an existing `tracking_committed` archive journal without
+a cleanup sidecar and keeps the selected profile unchanged. Under the journal's
+normal locks, it verifies the committed tracking, an active idle or already
+archived retained root, and the exact retained set. It reconciles the retained
+team and archives only materialized active members that pass the ordinary idle
+and submission checks, then proves every member archived before the selected
+package's lifecycle executor finishes the journal. It cannot force an archive,
+replace or recreate a member, change the recorded mode, or recover another
+lifecycle operation. A retry rechecks work completed before an interruption.
+
+For a schema-4 journal with a schema-3 cleanup sidecar, candidate recovery also
+supports tracking that has already moved to `archive/`, with every checkout and
+container removal recorded. It verifies the sealed cleanup and tracking before
+running the candidate's ordinary archive executor against the saved operation.
+The selected profile, Codex and generation authority stay unchanged. This allows
+recovery from Git administration-name reuse without disturbing the newer
+worktree that owns that internal name. See the
+[cleanup identity rules](session-archive-recovery.md#retrying-an-interrupted-operation).
+The same command retries a completed schema-3 receipt left after journal removal;
+it refuses an incomplete receipt whose journal is missing.
+
+The journal binds the exact projected archive tree and retained Codex thread;
+retry refuses changed lifecycle, manifest, artifacts, or conversation identity
+before it commits tracking or retires the runtime.
+The durable journal also blocks workspace package changes, unregister,
+suspension, Codex reconciliation, and cluster mutations outside the exact
+lifecycle-owned cleanup. The per-slug lock serializes helper commands, not
+external writers, so all worktree writers must be stopped first.
+
+If an initiative needs more work after archival, revive it:
+
+```sh
+dev-session revive 2026-06-06-api-token-rotation --as-is
+```
+
+`revive` asks for one confirmation, with a stronger warning for an abandoned
+initiative. That confirmation becomes part of the transaction, so a retry
+after tracking has moved does not ask again or consult the obsolete archive
+location. The archive move and terminal tracking must already be committed.
+Revive refuses a conflicting
+active directory, worktree group, live session, dirty tracking transition, or
+ambiguous identity. It atomically moves `archive/<slug>` back to `work/<slug>`,
+changes the lifecycle to `active`, removes `finalized_at` and stale
+`final_head_sha` values, verifies the full restored tracking tree before the
+commit, commits only that transition, and preserves branch, base, repository,
+and Codex identity.
+
+When the archive retains a Codex thread, revive restores and starts that exact
+conversation without forking it or resending the initial request. Explicit
+archives recreate clean worktrees at their retained committed heads before
+starting it. Earlier file-snapshot archives retain their recorded restoration policy.
+Older complete/abandoned archives do not recreate worktrees. Creation-less ordinary archives preserve the same root and do
+not gain invented creation/goal evidence. Verified threadless archives revive
+without creating a conversation. Unknown historical bases remain omitted;
+`--base` cannot establish them from today's refs.
+
+A new manifestless archive revival refuses before publishing a journal, moving
+tracking or starting runtime. Repair its reviewed complete scope offline first.
+An already accepted older schema-3 revive journal retains its exact recovery,
+including its saved projection. Losing that journal and its owning success result
+cannot be repaired by inferring browser-operation success from restored tracking.
+
+## Worktree helpers
+
+Create a project worktree through the canonical bare repository:
+
+```sh
+dev-session worktree add api-token-rotation api-service
+```
+
+This uses:
+
+- bare repo: `repos/api-service.git`;
+- branch: `<slug>`;
+- worktree path: `worktrees/<slug>/api-service`;
+- base ref: `origin/HEAD`, falling back to `origin/master`;
+- `git fetch origin` before creation.
+
+The helper also records the canonical project identity, GitHub repository,
+feature branch and default branch in `portal.yml`. A genuinely new branch also
+records its starting base. Reattaching an existing unknown-base branch preserves
+that omission; a missing registered branch refuses instead of creating one.
+Registration and sync never infer a historical base from present ancestry.
+Removing an individual worktree or using bulk cleanup records its last commit
+before cleanup. Archival verifies the project identity and records the last
+commit of every remaining worktree, so archived pages retain trustworthy
+immutable comparison links.
+
+Before fetching or creating a branch, the helper resolves the repository and
+requires it to be a bare clone directly under the canonical `repos/` root.
+An in-root alias to another canonical bare clone is accepted; a symlink to an
+external repository is refused.
+
+Workspace implementation work uses the top-level repository through its
+reserved project and worktree name:
+
+```sh
+dev-session worktree add api-token-rotation workspace
+```
+
+This creates `worktrees/<slug>/workspace` from the top-level repository. The
+helper verifies that the worktree belongs to that exact repository and applies
+the same cleanliness, attached-branch, final-commit, and non-force removal
+checks used for project worktrees. The name `workspace` is reserved for this
+repository, so an independent project cannot use it as a worktree alias. Other
+non-bare repositories remain refused.
+
+Useful options:
+
+```sh
+dev-session worktree add api-token-rotation api-service --base origin/main
+dev-session worktree add api-token-rotation api-service --name api-service-master --branch master
+dev-session worktree add api-token-rotation api-service --no-fetch
+```
+
+Remove a worktree without deleting its branch:
+
+```sh
+dev-session worktree remove api-token-rotation api-service
+```
+
+Worktrees with changes reported by ordinary `git status --porcelain` are
+refused unless `--force` is used. Detached worktrees are always refused. Git
+remains the authority for whether its non-force worktree removal can proceed;
+resolve any refusal and retry, or use the explicit force option when discarding
+the worktree is intentional.
+
+## Runtime ownership
+
+The workspace flake installs the public commands and user systemd units in a
+dedicated user Nix profile. A private registry maps workspace names to roots
+and hostnames. Per-workspace portal, App Server, authority, and tmux state lives
+below `$XDG_RUNTIME_DIR/dev-workspaces/`; the public command derives those
+paths and does not require callers to repeat them. Run
+`dev-session validate` to validate every persisted portal entry, including its
+plan, anchored lifecycle, active/archive placement, and manifest, before
+deployment.
+
+Host-specific runtime options are private implementation details fixed by the
+dispatcher. Callers can select only a registered workspace, not replace its
+runtime paths. The App Server uses the Codex package bundled with the current
+application profile. `workspace-host` checks its protocol and transient App
+Server startup before activation and retains the tested Codex store path with
+each profile generation. Profile switches and rollbacks gate new mutations, quiesce native
+terminal clients, verify the lead and ready team members are idle, restart App Server and portal
+pairs, and restore the clients. A compatible profile update that finds an
+active turn is retried every five minutes. Use `--no-codex` to start a shell in
+the left pane instead.
+
+The [Codex package contract](codex-package.md) describes the assembled runtime
+and the GC roots that retain dependencies needed by native daemon copies.
+
+For sessions started with `--team`, the installed team policy supplies the
+lead and member model and reasoning effort. The lead can override both settings
+together; member settings remain those of the selected team. The same
+selection is used when the portal starts a session. Without a selected team,
+omitted settings are passed unchanged to `thread/start`, so the App Server's
+live configuration resolves them. Explicit model and effort choices are
+validated against the live model catalog. The retired virtual-team creation
+flags are not public options.
+
+Before `fork`, `archive`, `revive`, `delete`, or automatic archive changes a
+session, `dev-session` validates the normal root thread and lifecycle journal.
+If a direct team roster exists, the same operation is applied to its member
+threads while the root lifecycle lock is held. Archived members revive with the
+session; explicitly removed members remain removed. Old virtual-team metadata
+is ignored during the forward-only cutover, so it cannot deny access to a
+retained root conversation or its ordinary lifecycle.
+If App Server archives a member before the roster update is saved, an archive
+or deletion retry uses exact thread metadata and the bounded first record of
+the archived rollout to check the thread ID, session directory, and recorded
+project identity. It does not enumerate archived history. The retry then saves
+the roster state without sending another archive request.
+
+`--goal-file FILE` provides the initial Codex request and seeds the Goal
+section in a new plan. It is required when a noninteractive caller creates a
+shared conversation. `--json` prints the resolved slug, portal URL, Codex
+thread ID, and identity-bound tmux attach command. `--exclusive` requires a
+goal file and records its digest in a workspace-local creation journal before
+creating initiative state. It may resume a manifest
+whose creation state is `creating` or `ready` only when the complete request
+identity matches. The unique `work/<slug>` directory is used to reconcile one
+matching App Server thread, but App Server does not offer an exactly-once
+creation key. A pending retry resumes the sole candidate, creates a replacement
+when an App Server restart provably left none, and refuses multiple candidates.
+It sends the initial goal directly only when metadata identifies the expected
+fresh, idle, turnless thread; accepted or ambiguous active turns fail closed.
+An incomplete tmux session is replaced only when its creation environment
+identifies the exact workspace and slug and its creation identity matches the
+nonce durably recorded before tmux was started. The nonce is removed from the
+journal after the managed runtime authority is published and creation becomes
+ready. The journal remains in
+the lock directory after the manifest reaches `ready`, allowing the
+HTTP result to be replayed without repeating a known initial turn. The portal
+passes a full dated slug with `--as-is`, preserving request identity across
+midnight.
+
+A first start, approved-plan session or fork can submit its root request directly
+when the destination is proven empty under the existing creation and slug locks.
+The proof excludes tracking, worktrees, creation/fork/start journals, tmux,
+runtime authority and a retained team roster, and the invocation must publish
+its create-only journal before submitting the request. This decision exists
+only in that process. A retry always returns to conservative discovery, even
+when the earlier process stopped before its first App Server request.
+
+Recovery checks loaded threads and a bounded database-only index, then completes
+the filesystem-backed discovery before adopting a root or creating a replacement.
+An empty or nonempty index cannot prove completeness. Confirmed duplicate roots
+refuse early; failures, stale rows or index pagination limits fall back to the
+complete scan. A failed or incomplete scan never authorizes replacement. Only
+exact thread IDs from the validated retained roster are excluded, with matching
+cwd and retained project identity. The roster is checked against the independently
+recorded root while its operation lock is held. A retained roster prevents
+replacement of its missing root. Unknown same-directory project threads remain
+root candidates. Existing roots retain their captured settings and the durable
+initial-goal attempt marker; only a proven different replacement resets it.
+
+Accepted browser forks and plan sessions wait for source readers before checking
+the exact source identity. These checks run before destination/provider admission;
+the portal's worker deadline and process-group cancellation bound the wait.
+Fork's later source check also runs without destination locks. A source changed
+during the wait is rejected before native creation. Existing journals retain
+their source-independent recovery path. Direct CLI forks retain nonblocking
+source admission.
+
+Fork creation uses the same identity rule through a short-lived fork journal.
+It records the validated source thread before creating destination tracking, so
+an interrupted fork can resume without source tracking and can adopt or remove
+only the tmux session carrying the recorded identity. Explicit overrides are
+resolved against the source thread's inherited settings before the journal is
+published; both the request and its complete resolved model/reasoning pair are
+recorded. Retrying a short destination name reuses the journaled dated slug even
+after midnight, and package transitions wait until the fork finishes.
+Journal-owned destination tracking and writer temporary files are reconciled
+idempotently after an interruption, but retry refuses modified tracking or
+unexpected files.
+Starting tmux for an existing session uses a corresponding short-lived start
+journal. This makes stopped-session restarts retryable without authorizing a
+same-name tmux session created by another process.
+
+The private package implementation requires the authority directory, tmux
+socket, Codex command and socket, client version, and portal command to be
+present as absolute paths. The registry-backed dispatcher supplies them to
+both terminal users and the portal, so they share one command and one session
+model.
+
+See [Workspace portal](workspace-portal.md) for the browser interface, manifest
+format, security model, private CA, and deployment responsibilities.
+
+## Preserve the final repository comparison
+
+After the final rebase and commit, and before integrating a feature branch, run:
+
+```sh
+dev-session worktree capture-comparison <slug> <repository> --as-is
+```
+
+The command validates the registered repository and saves its current head and
+merge base in private portal state. It does not change Git refs or existing
+shared review links. Capture each repository separately after its final head is
+ready. Status refreshes also capture unmerged heads, but an explicit capture
+ensures that the final comparison exists even if no browser is open.
+
+For an already merged head, supply the exact pre-merge base and feature head:
+
+```sh
+dev-session worktree capture-comparison <slug> <repository> --as-is \
+  --base <full-base-commit> --head <full-feature-commit>
+```
+
+Use recorded integration revisions for this recovery. Both commits must exist
+locally, the base must be an ancestor of the head, and the head must match the
+registered repository. The command refuses to guess a historical base.

@@ -1,0 +1,3 @@
+**Result: failed.** The single authorized quick batch exited 1 after the untagged Go suite failed in 32 seconds. `TestQueueDeletionResponseLossReconcilesAfterClientRestart` reported a Unix socket bind error; the runner stopped, so the tagged helper stage did not run.
+
+The manifest and all 136 frozen inputs matched before testing. No retry was performed. The final report and execution receipts are in [codex-web-naming](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-workspace-session-ui/codex-web-naming/final-quick-watcher-result.md).

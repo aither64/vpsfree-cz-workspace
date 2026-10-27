@@ -1,0 +1,7 @@
+**Result: completed**, exit 0 in 7.70 seconds. The runner recorded `PASS_AVAILABILITY_RETENTION_ONLY`; this does not establish final vendor acceptance.
+
+- Command: the exact authorized runner invocation, once, from `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-24-workspace-session-ui/dev-workspace`.
+- Log and invocation record: [command log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-workspace-session-ui/runtime-second-default-final/20261025-final/vendor-input-retention-v1/retention-watcher-v1/retention-watcher-v1-command.log) · [outcome record](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-workspace-session-ui/runtime-second-default-final/20261025-final/vendor-input-retention-v1/retention-watcher-v1/retention-watcher-v1-command-outcome.json)
+- Runner receipts: [exit status](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-workspace-session-ui/runtime-second-default-final/20261025-final/vendor-input-retention-v1/retention-results-v1/retention.exit) · [outcome](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-workspace-session-ui/runtime-second-default-final/20261025-final/vendor-input-retention-v1/retention-results-v1/retention-outcome.json)
+
+The outcome records exact Git availability evidence, a copy from `https://cache.numtide.com`, and `gitValidImmediatelyBeforeCommand: false`. It contains per-root operation receipts; see the outcome file for each exit and link. No runner failure receipt was present. No operation remains running.

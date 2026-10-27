@@ -1,0 +1,3 @@
+The assigned command completed once in 2.8 seconds and exited with status **1**. Its output reports `browser stage failed: archive-semantic`.
+
+Results directory: `/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-workspace-session-ui/runtime-ec93-browser-results-v1/browser-acceptance-v1/attempt2`. The driver-specified outcome file is `outcome.json`. The command completed, so no operation remains running.

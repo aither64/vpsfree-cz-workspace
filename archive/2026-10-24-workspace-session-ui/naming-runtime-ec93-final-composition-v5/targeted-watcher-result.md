@@ -1,0 +1,5 @@
+Result: `PASS_REMAINING_METADATA_ONLY`; command exit 0, elapsed 35.91 seconds. No owned process groups were uncertain.
+
+All stages exited 0: current identity, retention, root metadata, validity, recursive metadata, and verification. Finalization’s before/after file guards and identity check also exited 0. The five registered roots resolve to the package, fixture, manifest, managed-driver, and real-canary derivations. The retained recursive graph passed the supplied verifier, and raw-root observations remained unchanged through finalization.
+
+Artifacts are in [targeted-metadata](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-workspace-session-ui/naming-runtime-ec93-final-composition-v5/targeted-metadata). This reports only the assigned metadata batch; it is not an overall acceptance decision.

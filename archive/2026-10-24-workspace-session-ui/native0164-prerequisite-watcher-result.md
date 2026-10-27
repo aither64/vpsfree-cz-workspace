@@ -1,0 +1,3 @@
+Passed. The exact revision produced the expected `/nix/store/16f481b2zzvyvr2ycw51sm51b3f0508f-codex-0.164.0`; build exit status was 0 and the executable reports `codex-cli 0.164.0`. Its SHA256 is `d2af1cd0ea4187d413c237e80204e94ffcd5c7d8142840a662156b89750f54ae`. Elapsed build time was approximately 10 seconds. No operation remains running.
+
+The full log, exit status, output path, deriver, recursive derivation graph, path info, version, and hash are saved under [native0164-prerequisite](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-workspace-session-ui/native0164-prerequisite/). The requested report is [native0164-prerequisite-watcher-result.md](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-workspace-session-ui/native0164-prerequisite-watcher-result.md).

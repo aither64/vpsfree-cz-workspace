@@ -1,0 +1,15 @@
+# Narrow v2 manifest-path correction
+
+Assignment `d8159135-e6d6-4c42-9e3e-f1fbe0a5a76e`. V1's guard refused before Nix/results because its inventory parser allowed only basenames; the accepted original36-file packet contains nested `ci-c31/...` names. V1's nine files and its actual guard/failure records remain byte-exact and are hash-bound by this successor. No cause is assigned to the earlier absent derivations.
+
+The only logic correction permits safe relative components. Absolute paths and empty, `.` or `..` components refuse. Every existing entry, hash, inventory count and target expectation remains unchanged. The other driver functions, process identity/cancellation/deadline behavior, two-stage semantics and source/tool guards are retained.
+
+V2 has an explicit exact original-prefix-to-new-own-prefix mapping in `policy.json`/`binding-delta.json`. It projects only17 enumerated proposal locations: this packet, its result paths and the two commands' stdout/stderr/receipt paths. The runtime rejects any other projected field or prefix. It compares all remaining command fields unchanged, including literal two Nix argv, original cwd/expression and complete public environment. The frozen `d396a89d…` proposal itself is never edited. V2 also projects its own executable/release/started/result/ready paths. Historical inputs and the future recursive-inspect packet retain their original paths.
+
+`ready.json` contains the literal pinned Python `-I` argv/cwd. One owner guard-only invocation is authorized by this assignment after static checks. The driver imports no helper, runs no Nix and creates no materialization results; it only parses/checks the same accepted guards and executes the bounded read-only current calls. Owner capture is separate under the exact `guard-only-check-v1` directory. Any further refusal stops without retry or expectation normalization. Actual stdout/stderr/exit/argv/timing are retained separately from this frozen static inventory.
+
+Materialization remains unreleased. Parent must inspect the narrow diff and actual guard evidence, write the new exact v2 `parent-materialization-release-v1.json` with actual ready/inventory hashes and explicit metadata/source permissions, and give a fresh utility the complete literal materialization argv. The template's null/false fields cannot pass. The phase release binds projected v2 command receipt paths and all unchanged Nix fields. No results can be redirected into frozen v1 through a CLI argument.
+
+All existing4583/original3937/source609/six selected tools/seven private bindings, immutable evidence and current-session checks remain mandatory before/after materialization. Accepted legacy cache/metadata/frozen-lock source retrieval scope remains unchanged; it is not network denial. No metadata execution, build/root/recursive inspect/repair/retry/provider/native/browser/consumer/Git/lifecycle action is authorized here. See the frozen v1 README and complete v1-to-v2 `source-diff.patch` for the retained operational controls.
+
+Session remains open: <https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-24-workspace-session-ui/>.

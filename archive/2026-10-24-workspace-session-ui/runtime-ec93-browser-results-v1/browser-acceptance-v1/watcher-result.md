@@ -1,0 +1,3 @@
+Result: **failed**, exit status 1, elapsed about 0.14 seconds. The one-time driver stopped at an assertion before either browser stage ran; its postflight assertion also failed. I did not retry or investigate.
+
+The driver reports results under `/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-workspace-session-ui/runtime-ec93-browser-results-v1/browser-acceptance-v1`. No browser stage remains running.

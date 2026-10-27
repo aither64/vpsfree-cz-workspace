@@ -1,0 +1,3 @@
+Validation passed: exit 0 in 14.62 seconds. The generated guard compared all 57,420 index entries and preserved their flags; semantic preservation and the remote continuation, generated diff, and whitespace checks all passed. The actual effects show only `flake.lock` and `flake.nix` modified, with no staged paths.
+
+No Nix command was run, no publication occurred, and no operation remains running. This validates the continuation receipts only; source and commit acceptance remain separate.
