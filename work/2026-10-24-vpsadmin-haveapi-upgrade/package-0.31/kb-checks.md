@@ -1,5 +1,41 @@
 # KB 0.31.0 focused verification — 2026-10-27
 
+## Current D4-A1 advisory correction
+
+Reviewer D4-A1 identified that the linked SDK README demonstrates
+`createVpsAdminClient`, while `createClient` is a real export absent from that
+README. Lead changed only that prose pointer in both candidates. Each current
+page equals its reviewed predecessor with one `createClient` →
+`createVpsAdminClient` prose substitution; executable snippets are unchanged.
+
+| Current file | SHA-256 |
+| --- | --- |
+| `kb-candidates/cs/navody/vps/api.txt` | `f7c86a960d674a92f9d9da87e7fc9516f323b851c795aa119c7c70e142c8ff48` |
+| `kb-candidates/en/manuals/vps/api.txt` | `03e26d721d92ddb5d3158fb39e9964bc68a36568aaf462ecb170926dadf26480` |
+| `kb-release-cs.yml` | `70b1628f7ca6e89aec52404a3aa3dab4d5d143d58a3790df31c107c7ca13671a` |
+| `kb-release-en.yml` | `3d9f5b61436b0c5b76a06cec89f33a09b1fd2a0211e8954177c912693f414b97` |
+
+Canonical candidate regeneration and installed schema-5 parser/checksum reads
+pass: 191 pages, two changed, 189 unrelated pages preserved. Source index,
+original production revision/content guards and release summaries are unchanged.
+Current final inputs: `kb/d4-a1-{cs,en}.txt`; evidence:
+[build](kb/d4-a1-build.log), [parser](kb/d4-a1-parser.json).
+The exact seven-file reviewed bundle at
+`7b9a1d4bbc1e17f36ad0b7b1ad663f25f58714f2` and previous local output metadata
+were preserved before regeneration in
+[history](kb/reviewed-7b9a1d4b/receipt.json). Previous consumer logs remain intact;
+both factories were already covered by the successful import/typecheck smoke.
+No installation, consumer-test repeat, production/staging read or write, native
+cluster action, source/ref change, commit or shared-index operation was run.
+Lead owns the narrow follow-up commit/direct inspection; no full review rerun
+was requested. E preparation still awaits its separate brief/final heads.
+
+## Historical D4 verification at reviewed commit 7b9a1d4b
+
+The original 0.31.0 verification below remains historical evidence. Its candidate
+and manifest hashes describe the reviewed predecessor, not the corrected files
+in the current table above.
+
 **PASS: local mechanics and focused consumer checks.** Lead owns final prose,
 commit and independent review. Production/staging writes were not performed.
 No project, cluster, provider, source/ref/lock or shared-index mutation occurred.
@@ -13,7 +49,7 @@ routed procedures, canonical KB workflow, installed tool help and previous
 this bounded batch used the monitor skill's visible parent fallback, without a
 competing utility or a wait longer than 50 seconds.
 
-## Exact deliverables
+### Historical reviewed deliverables
 
 | File | SHA-256 |
 | --- | --- |
