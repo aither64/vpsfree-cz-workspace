@@ -172,3 +172,83 @@ User decisions still required: repository/target default integration, protected
 PR74 exact history rewrite, and exact staged KB production publication. No
 default merge, runtime installation/live evidence repair or lifecycle action
 is authorized. See state.md for exact heads, owners, receipts and acceptance limits.
+
+
+## User replacement milestone — 2026-10-27
+
+Adopt released HaveAPI0.31.0 in place of the pending0.30 upgrade stream. Add
+TypeScript examples in the servers/ruby documentation configuration using
+vpsadmin-typescript-client analogously to existing Go/Rust SDK profiles; verify
+the owning repository/config interface before implementation. Update both API KB
+candidates with the generated TypeScript SDK and a short factual distinction
+from generic callback/Promise JS/TS clients. Retain unaffected client guidance.
+
+Architect0 owns bounded design and file/package boundaries; implementer2 verifies
+release/client facts; implementers own separate source packages after design.
+Lead owns final bilingual KB wording. Consolidate superseded unapplied upgrade
+history while preserving exact consumed70a/f10 refs and live checkout/config/lock
+bytes. Commit and quickcheck intended deliverables, independently review full
+final histories and migration provenance, then run proportionate affected checks
+with fresh utility monitoring. Prior0.30 results are not0.31 proof. No live cluster
+update, provider installation, default merge or production KB write authorized.
+
+
+## Explicit postcheck redeployment and KB staging — 2026-10-27
+
+User requests redeploying this session's devcluster when sourcework is done and
+permits cluster reset; also requests seeing KB articles in staging. Architect0
+prepares currentselectedpublicruntime/sourcebinding plan; E3 executionprep and
+verification, lead mutatinglaunch. Apply finalreview/checks first, then exactnew
+sources/completeinputgraph/capacity/cachedkernel/ownershippreflight. Bridge; small
+TLS/memberlogin/TypeScriptdoc verification, no new broadcampaign. No session
+lifecycle/defaultintegration/production/hostprofileswitch authorized. Foreign KB
+stage owner2026-09-13-auth-email with pendingrelease must be preserved until
+supportedhandoff or explicit disposition; no privatebypass/queue assumed.
+
+
+## A31-R1 measured upstream issue — 2026-10-27
+
+Final consumer review found repeated full-description normalization in the newly
+enabled TypeScript generator. Qualified anonymous full GET with explicit nil
+user/session, no Authorization/cookie, correct full-help/EN contract returned200
+in15.23135s wall/15.21839s CPU. Historical0.30.2 anonymous4.23s has separately
+recorded conditions; no identical-benchmark/SLA claim. BroadAintegration and
+redeployment held; no member/admin/warms repeated. Wrong new anonymous absence
+assertion is a narrow Btestfix; member privacy remains required.
+
+Prepare a concrete minimal upstream HaveAPI fix in a fresh own worktree: select
+only relevant action/provider/metadata before recursive normalization, preserve
+existing auth/alias/collision/frozen/context behavior, add meaningful regression
+tests in existing documentation suite. Architect owns brief; implementer2 source/
+tests/quick/hooks/commit/packet; independent review before longer checks. No new
+cache/framework/consumerfork/Nixoverlay, no altered0.31 archive/tag/release/default
+merge. User was asked asynchronously whether another HaveAPI session already owns
+the fix; incorporate answer and avoid duplicate source work if so. New released
+artifact or exact dependency exception needs disposition before consumer adoption.
+
+
+## User takes upstream fix ownership — 2026-10-27
+
+User will fix HaveAPI in another session and requests a link to any existing
+patch. Stop this session's upstream implementation/check/review/publication;
+export current completed patch and honest verification state only. Preserve
+source/refs/roots, no cleanup or other-session contact. Consumer031 adoption and
+authorizedredeploy stay pending corrected release and remaining affectedgates;
+Cpublished/KBreviewed candidates remain accepted for their exactinputs.
+
+
+## 0.31.1 availability and automatic adoption — 2026-10-27
+
+User says0.31.1 release is in progress and may take hours: check about every
+10minutes and upgrade when available; also watch for legitimate KB staging
+release by user. E2 owns a fresh pinned-policy availability utility first check
+now/600s cadence, public package registries+ordinarykb-stage status only. Return
+first actionable transition and retain all partial availability facts; no mutable
+latest assumption, forced staging ownership or duplicated polling. Normal source
+owners then adopt exact published0.31.1, consolidate pending upgrade history,
+verify fix/source/config and affected final review/checks. Repeat qualified
+documentation role/locale measurement on actually adopted artifact to close
+A31-R1; prior0.31.0 raw/qualified timing remains historical. KBlead updates final
+wording/versions/manifests; E3 stages when legitimatelyfree and redeploys only
+after accepted finalsourcegates with parentnative reset/start. No new upstream
+source work, release/tag/defaultmerge/PR74force or productionKB permission.

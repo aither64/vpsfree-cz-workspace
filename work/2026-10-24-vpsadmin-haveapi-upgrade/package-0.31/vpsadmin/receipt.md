@@ -1,0 +1,11 @@
+# HaveAPI 0.31 vpsAdmin A4+B4
+
+Phase: final4lane source review completed with Important A31-R1 OPEN; broader verification/publication/deployment HELD. Narrow anonymous-test contract fix committed under direct lead inspection policy. No active operation; sole watcher slot RELEASED.
+
+Base `08c3bd7e3cb4dc324a0381df6a1eec190daab1a7`; A `3f113098e8cdb90ad90426144f37594265b4a571`; amended B `9c1b3f773555faa1b4af2ee6b8e26f04a7a012f1`; tree `7b79f8672b103c0829cac9324980335c6df3b795`, clean. Exactly2consolidatedcommits/29ownedpaths, NO MIGRATIONS. Original reviewed08c3..d258 and old70a/2c refs retained. Only new-vs-reviewed delta: one spec assertion (1insert/1delete), [patch](B-anonymous-contract-fix.patch), SHA256 `ff5bac864e3b2db67596ac73b32253c964af91d0f51c5b027cfbbff4ff01e8b0`. Positive anonymousfullAPIhelp expectation replaces an invented restriction; existing member/privateIP/internalpath checks remain. Normal B amendment hooks/lint passed73.789s; no request or core/full quickcase repeated for it.
+
+Existing quick evidence remains labelled: metadata122/29/33, five0.31 Ruby hashes/load, PHP0.31/Guzzle7.16.1/PHPUnit13.4.5, both verified browser artifacts; offlineexporter14; core3/full4 and4actualTSprogram strictNodeNext/ES2022 compile against SDK0.1.1/runtime0.30.2. Original recorder/camelCase failures retained. No actualexport/SDKregen.
+
+[Qualified diagnostic](A31-R1-qualified-anonymous/receipt.md): one actual anonymous/en GET200/2,806,144bytes,15.23135swall/15.21839sCPU, all nilstate/noAuth/emptyCookie/locale/full-help checks pass, body saved before assertions. Native1example0failure/exit0 in55.630s; ownedDB/processes empty and exact60f0…4bc3 full lock/source unchanged. Original15.0459s request has wrongoracle plus role/body-proof gap and is not retrospectively qualified. Historical0.30.2anon4.23s remains separately conditioned context. No more roles/warms/broadsuites after qualified regression.
+
+Current source has no providerfix, repackaged0.31 artifact, dependency repin, source-path rebind, livecluster/native/default/push change. Owner2/architect/lead handle upstream fix/release disposition. Await that direction; [complete packet](review-packet.md) binds oldreview/newhead/narrowpatch. [Session](https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-24-vpsadmin-haveapi-upgrade/).

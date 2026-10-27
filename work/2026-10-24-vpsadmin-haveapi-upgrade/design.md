@@ -1817,3 +1817,592 @@ known bug, so rollback is not a validation strategy; preserve prior evidence and
 do not use a predecessor package to evade refusal. Selecting a fixed installed
 package and deciding how to reconcile existing certificates remain separate
 explicit operations, never automatic consequences of this source fix.
+
+## 2026-10-27: HaveAPI 0.31.0 and generated TypeScript examples
+
+This is a new user milestone replacing the pending 0.30 upgrade stream.
+Packages A4+B4 and C4 below are ready for implementation by their assigned
+owners. F remains a separate completed source fix. Preserve the original LIVE
+70a/f10 worktrees, refs, ignored configuration/locks and running cluster, and
+published vpsAdmin successor `2c6542941fde72c0ea7bb2991274981e98c5781c`.
+Use isolated 0.31 successor worktrees; no live update, package switch, default
+integration, protected PR74 rewrite or KB production write is authorized.
+
+### Released contract and scope decision
+
+HaveAPI tag `v0.31.0` peels to
+`c9124da141adc258fbbaf67d4ec19ee3f8580849`. All five Ruby packages (`haveapi`,
+`haveapi-client`, `haveapi-go-client`, `haveapi-rust-client`, new
+`haveapi-typescript-client`) and generic npm/PHP/Python clients are published at
+0.31.0. Implementer2 supplies compact registry/artifact receipts. Source inspection
+confirms `servers/ruby` means the HaveAPI framework: its released
+`TsGeneratedClient` already supplies `typescript-generated` panels. Therefore
+configure the vpsAdmin consumer; no HaveAPI source change or new release is needed.
+
+Register alongside existing API 7.0 Go/Rust profiles:
+`typescript: { package_name: 'vpsadmin-typescript-client' }`.
+Allowed additional keys are `package_version` (concrete SemVer), `snapshot_path`
+(absolute saved snapshot), and `generator_version`. Omit these by default:
+SDK version is selected by the user's package manager, the mounted structural
+model supplies names, and generator version defaults to exact server version.
+Registration loads `haveapi/typescript_client/documentation`; the matching gem
+must be in the API bundle. Models remain private, built at mount, and samples
+come from the current user's authorized description. No schema fetch, SDK
+generation, compiler or registry call belongs in a documentation request.
+
+The published generated SDK is **0.1.1**, API 7.0/protocol 2.0, source
+`60a1b5d1b911c610bd993d93ae2b28d1932a0ccc`, tarball SHA256
+`9d262825d1dffb695eaace8029e3e7eb03a44338131602822907632945f566e8`.
+It is ESM/ES2022 and re-exports `createClient`, as required by the renderer;
+its documented convenience exports are `createVpsAdminClient` and
+`createHaveApiExecutor`. It was generated with recorded 0.30.0-era sources,
+not 0.31.0. The SDK's exact peer is `haveapi-client@0.30.2`; HaveAPI 0.31.0's
+released TypeScript renderer explicitly emits that runtime version and offers
+no runtime-version override. Lead accepts this supported pairing. All actual
+vpsAdmin/React HaveAPI dependencies become 0.31.0; generated-SDK example
+consumers use 0.30.2. Do not force incompatible peers, patch the renderer,
+change the SDK or claim every example dependency is 0.31.0.
+
+The generated SDK exposes vpsAdmin-specific resource/action/input/result types
+from a saved API schema. Generic `haveapi-client` callback and async clients
+discover resources dynamically; their TypeScript declarations describe that
+generic API. Generated calls still delegate transport/authentication to the
+generic async runtime. Use a versioned runtime base ending `/v7.0`, without
+adding its constructor version option, for generated raw requests. Authentication
+and server authorization remain the runtime/server's responsibility.
+
+### A4+B4: one vpsAdmin execution owner, implementer0
+
+Use new `vpsadmin-031` linked checkout/branch; retain 2c as the exact reconstruction
+input. Fresh read-only remote master is `08c3bd7e3cb4dc324a0381df6a1eec190daab1a7`:
+since reviewed base 898e it adds `f3794d5fa` PHP dependency updates and `08c3bd7e3`
+controlled schema-export tooling/docs. Recheck before setup and inspect this
+small advance; preserve those upstream changes, do not execute/export schemas or
+port tooling into this task. Reconstruct the two logical feature commits on the
+fresh target: consolidated A dependency update directly to 0.31.0, then B Go/Rust/
+generated-TypeScript documentation configuration. Preserve authorship and old/new
+base/head mappings; no intermediate 0.30 pin commits in the new series. Protected
+live/published original refs stay unchanged. Lead coordinates registration/push.
+
+A files: `api/Gemfile`, `client/vpsadmin-client.gemspec`,
+`download_mounter/Gemfile`, `plugins/outage_reports/utils/Gemfile`, generated
+`packages/{api,client,download-mounter}/{Gemfile,Gemfile.lock,gemset.nix}` where
+present, `webui/{composer.json,composer.lock,php-packages.nix}`, and both existing
+`webui/public/js/haveapi-client.js` / `console_router/public/haveapi-client.js`.
+Use the existing declaration convention `~> 0.31.0` plus exact generated 0.31.0
+resolutions, PHP exact 0.31.0, and verified npm release bytes for both bundles.
+Add `haveapi-typescript-client` beside Go/Rust in source/generated API Gemfiles.
+Its only declared runtime dependency is Ruby `haveapi-client ~> 0.31.0`;
+Go/Rust now require the same shared schema library. Keep libffi/pkg-config support
+and unrelated upstream pins; use existing scoped metadata generation, not a new
+generator/update framework. Report unavoidable transitive changes.
+
+B files: `api/lib/vpsadmin/api.rb`, existing
+`api/spec/lib/vpsadmin/api/documentation_clients_spec.rb`,
+`docs/{README,api-client-examples}.md`, and `tests/suite/services-up.nix`.
+Extend existing profile membership, generator version and initialization checks
+to TypeScript; preserve Go/Rust and existing dynamic JS/TS panels. Keep API 6.0
+unconfigured. Assert `createClient`, correct package/runtime/base URL and emitted
+action calls; keep bounded string diagnostics. Extend existing member/anonymous
+visibility and locale assertions to generated panels, with no private schema
+diagnostics or privileged sample leakage. Update docs to distinguish generated
+from dynamic TypeScript and explain the separate supported SDK/runtime pairing.
+The existing spec remains in platform-config; no new CI partition is needed.
+
+Quick batch: syntax/lint/hooks, exact dependency/metadata agreement and artifact
+hashes, loaded server/client/all three generator identities, PHP load and equal
+legacy bundles, focused `:documentation_profile` examples in core/full modes.
+Add one small actual-renderer generated TypeScript initialization/action seam
+using the mounted profile and authorized fixture description, not a second full
+page campaign. Capture a few complete emitted programs (init, supported auth,
+public action, one nested/path or nullable input if emitted) and compile against
+the published SDK 0.1.1 + its supported npm runtime, strict NodeNext/ES2022.
+Use existing sample-capture mechanisms. Do not replace programs with hand-written
+equivalents or regenerate the SDK. If a real sample mismatches, report it before
+adding snapshot overrides or upstream work.
+
+After commits and independent final review, run the affected existing full/core
+documentation spec and `services-up` with all three generators packaged. Reuse
+the established admin/member/anonymous GET timing seam once against final 0.31
+inputs to catch a TypeScript rendering regression; retain prior R1 evidence and
+do not reopen its closed fix or invent new instrumentation. Authorization/locale
+and completed role coverage must pass. Measure actual request cost before large
+string diagnostics; an unexplained return to the previous tens-of-seconds cost
+is a defect to report. Run affected API/auth/client/PHP checks required by the
+final dependency delta and existing CI. No blanket 26-program SDK recompilation,
+provider tests or new exhaustive browser/performance campaign is justified.
+
+### C4: independent React successor, implementer1
+
+Create a distinct session-owned `dev/` branch/worktree from preserved f10 content
+on fresh main (currently still `5a2d2bdc3ad7a827038f877d75959916528db844`).
+Consolidate the npm update stream directly to 0.31.0 while carrying the reviewed
+adapter/takeover authorship and source mapping. Do not edit or repoint live f10,
+the old pilot, PR74 head or unrelated refs. Keep protected publication decisions
+with lead; final source review uses complete successor history and diff.
+
+Own only root `package.json`, `package-lock.json`, `packages/frontend.nix`,
+`packages/haveapi-client-provenance.json`, current HaveAPI/packaging design docs
+and the dated work-log entry/index. Exact dependency `haveapi-client: "0.31.0"`;
+regenerate lock/hash with pinned tooling, retaining unrelated/BFF/XHR versions.
+The released JS source delta from 0.30.2 is the Client.Version constant; imports,
+AsyncClient transport/auth and declaration source are unchanged. Verify release
+artifact/provenance separately, without assuming identical build bytes.
+No generated vpsAdmin SDK adoption or adapter rewrite belongs to React.
+
+Quick batch: registry/package source checks, typecheck, focused actual-package
+transport/public isolation/auth/error/abort tests, scoped lint/docs audit and
+hooks. After committed independent review: required unit/build/Nix package
+checks and a bounded existing authentication/browser smoke if packaging inputs
+affect it. Preserve the proven two preexisting mobile expansion failures; no
+layout fix or automatic repeat of all 62 browser cases. Stop when the changed
+dependency and carried adapter are verified under the repository's required checks.
+
+### D4, compatibility and stopping condition
+
+Lead owns final EN/CS KB prose: replace current generic npm/Python 0.30.2 references
+with 0.31.0, add the generated TypeScript SDK link and a short distinction above,
+and document its actual 0.1.1/0.30.2 supported install pair if giving an install
+command. Rust remains crates.io `vpsadmin-client` version `0.1`; no SDK 0.31 claim.
+Keep original source/history and use existing guarded candidate/manifest tools;
+foreign staging and exact production approval boundaries remain. No new evidence
+framework or compiler suite is needed for this small addition.
+
+No database migration, persisted application format, node protocol or service
+ordering change is introduced. Shared schema validation now rejects unsafe
+nested saved endpoint metadata, but this consumer uses mounted profiles; no
+stored snapshot migration is assigned. Ship server, generator gems and profile
+configuration together; rollback that complete set, with matching generated
+metadata/assets. Mixed workers may expose different documentation tabs while
+wire API/authorization stays unchanged. Source diff retains the 0.30.2 context
+and Rust rendering fixes; the newly added TypeScript adapter still needs its
+bounded consumer check. This is not permission to modify the live cluster.
+
+Delivery stops at committed, independently reviewed successors with exact
+dependency/generated-SDK checks and affected required verification, plus reviewed
+KB candidates. Report actual remaining approvals/CI conclusions. No unrelated
+SDK regeneration, HaveAPI/provider redesign, live deployment or default merge.
+
+### A4 fresh-base compatibility amendment: schema-export tooling
+
+Lead accepts this necessary bounded addition. Actual upstream 08c3 introduces a
+tooling Gemfile that requires the API's exact declaration text `~> 0.29.9`, then
+substitutes `= 0.30.2`; its runner rejects any loaded server except 0.30.2.
+Leaving these files unchanged would break the upstream tool after our API bump.
+This supersedes the earlier no-tooling-edit assumption, not its no-export rule.
+
+Implementer0 additionally owns `tools/api-schema-export/{Gemfile,runner.rb,cli.rb}`
+and `docs/api-schema-export.md`. Preserve the existing checked substitution:
+expect exactly one `gem 'haveapi', '~> 0.31.0'`, replace it with exact `= 0.31.0`
+for the separate tooling bundle, and update the runner's exact loaded-version
+guard/error and CLI help. Docs should say the isolated bundle pins the same
+release used by the API; preserve its separate local lock/store and all existing
+environment, clean-checkout, destination, plugin, fixture and provenance rules.
+Do not broaden accepted versions, remove the guard or rewrite bootstrap/snapshot
+logic. This is a few version/reference edits, not a generator/tooling project.
+
+Checks: syntax/scoped lint; evaluate the real tooling Gemfile through existing
+Bundler DSL under the prepared repository environment and confirm server exact
+0.31.0 plus all profile generator dependencies without launching the exporter.
+Run existing database-free `safety_spec.rb` and `snapshot_spec.rb` with the docs'
+explicit `--options /dev/null` and isolated API bundle. Existing B mount checks
+cover the shared API/profile load. No actual export, temporary-database campaign,
+SDK regeneration or new regression framework is required for literal version
+refreshes. If installed bundle/source cannot meet the guard, report the mismatch.
+Fresh-base PHP delta f379 changes only PHPUnit 13.4.3 to 13.4.5 and its metadata;
+retain it. It does not add another deployed Guzzle update.
+
+Public release identity and inspected SDK exports are summarized in
+[the compact fact receipt](package-0.31/release-client-facts.md). Its hashes match
+registry metadata where supplied; it does not claim signature verification or
+complete source/archive equality. Owners' package/source checks retain those
+distinct limits.
+
+## 2026-10-27 E4: authorized development redeploy and KB staging
+
+User now requests redeployment after the source work and permits resetting this
+session's disposable cluster. Lead accepts **reset/recreate**, because the native
+source selection and live PHP mount prevent a safe alias-only services update.
+This authorization does not select a new workspace/provider package, integrate
+defaults, change the physical host, stop/archive the session, or touch another
+session. Implementer3 owns bounded preparation and the released Git moves; lead
+owns native reset/start and ordinary tracking registration edits. No mutation
+was performed by this investigation.
+
+Current public wrapper selects runtime
+`/nix/store/46rpb1jcjaclc01vrj0r9m8v0xvp8341-dev-workspace-0.2.0` and provider
+`/nix/store/cscrk1qkydsvzlkxjv272nq7xq25bg30-vpsfree-dev-workspace-tools-0.1.0`.
+Its installed native README, source, contract and selected coordination guide
+were read. Cluster schema 1 / transition policy 3 remain. Recheck this selection
+before action; old w6/q19 launch receipts do not identify today's commands.
+The installed proof SSH still reads caller stdin and full-boot enumeration uses
+a here-string. F is not installed. Native exit0/applied completeness alone is
+therefore insufficient; do not claim this redeploy fixes the certificate bug.
+
+### Source binding and exact gates
+
+The provider selects literal `worktrees/<slug>/vpsadmin` and
+`worktrees/<slug>/vpsadmin-webui`; it ignores registration aliases and overwrites
+source environment variables. There is no public alias selector, move/rebind or
+native build-only/prepare command. `dev-session worktree add` refuses a different
+branch for an existing registration. Symlinks are rejected by normal registration.
+PHP is served through a virtiofs-backed source directory. Replacing its host
+directory while QEMU remains active cannot prove that the guest leaves the old
+directory inode. Reset first avoids that ambiguity and makes both source mounts
+fresh without changing provider code.
+
+Before disruption, A and C must each have their exact final 0.31 head committed,
+quick checks passed, independent final history/source review accepted, and
+affected required package/postreview checks complete. D's local candidates must
+be final/reviewed before staging. Bind these final heads, effective dependency
+locks and built artifacts; never infer them from a mutable branch name. Retain
+old 70a/f10/2c refs and previous runtime evidence. Recheck selected generation,
+own native pending/runner tuple, native OS `origin/staging` and complete effective
+input graph, source cleanliness, bridge/KVM, actual capacity and kernel cache
+availability. Do not run new guest probes before the execution release.
+
+Native OS selection overrides both `vpsadminos` and `vpsadmin/vpsadminos`; its
+nixpkgs also supplies the React build graph. Compare with source-check graphs
+and report material differences. Finish already required application/package
+builds before reset. No optional prebuild framework is needed. Native `start`
+prepares credentials and builds final `cluster-config`/runner before boot; record
+those final outputs and graph when available. There is no separate public native
+prepare stage to invent or a reason to invoke private `build_config`.
+
+### Bounded ordered execution package
+
+1. E3 prepares four Git moves and a before/after inventory, without executing them.
+   Coordinate with A/C owners so no checkout command/process is still writing.
+   Preserve exact branches/heads/common Git directories and the existing ignored
+   locks/private configuration. Save the current editable cluster `config.json`
+   privately outside the reset tree, mode0600 in an owned mode0700 directory;
+   retain a digest/compact old source/selection receipt, never secret contents in
+   Git or output. No broad copy of private runtime journals is required.
+2. After source gates and fresh native ownership/pending checks, lead runs public
+   `vpsadmin-devcluster reset 2026-10-24-vpsadmin-haveapi-upgrade`. The native reset
+   owns stopping the exact runner and removing its cluster state/disks/socket.
+   Require actual completion and no remaining owned VM/socket processes before
+   any path moves. A refusal or uncertain result returns to reconciliation, not
+   a forced cleanup or new command around the native checks.
+3. After lead's reset-complete release, E3 uses ordinary `git worktree move`
+   (from the respective canonical bare clone) in this order per repository:
+
+   | Existing basename | New basename |
+   | --- | --- |
+   | `vpsadmin` | `vpsadmin-live030` |
+   | `vpsadmin-031` | `vpsadmin` |
+   | `vpsadmin-webui` | `vpsadmin-webui-live030` |
+   | `vpsadmin-webui-031` | `vpsadmin-webui` |
+
+   All paths remain in this exact session's worktree group. No branch change,
+   ref rewrite, deletion, symlink or source checkout/reset occurs. Stop after a
+   failed move and reconcile actual Git paths before retry. Lead renames only
+   these four ordinary `portal.yml` registration `name` values, carrying each
+   whole entry (project/branch/default/initial base/comparison) with its worktree.
+   Preserve the refresh/F and all other entries. Public `dev-session sync
+   <slug> --as-is` validates the resulting attached-worktree identities. Check
+   that canonical paths now contain exact final031 heads and retained paths
+   contain old70a/f10 with original ignored/private bytes. The permitted ordinary
+   tracking change is not a private runtime-state override.
+4. Initialize the same session through public `vpsadmin-devcluster config <slug>`
+   with secret-bearing output suppressed. Restore only the saved **documented
+   editable config.json** at that initialized owned location, preserving mode and
+   validating its digest. Do not restore applied envelopes, sockets, journals,
+   disks or credential directories. Reset intentionally creates fresh disposable
+   application/BFF state; native start generates its new credential bundle.
+   Preserve workspace CA/SSH state; no certificate import/rotation is requested.
+5. Lead launches public `vpsadmin-devcluster start <slug> --topology single
+   --network bridge` under the existing bounded execution approach, nominal
+   32GiB/12CPU and requested Nix max-jobs1/cores2. Detached runner/QEMUs must retain
+   limits after the command exits; account for the global Nix daemon separately.
+   Do not overlap another heavy batch or launch another cluster. A fresh permitted
+   watcher observes this exact parent-owned command/log; it does not launch,
+   retry or diagnose reset/start. If utility capacity is busy, use the documented
+   visible parent fallback. Unexpected actual local kernel compilation stops the
+   owned build for the existing cache-policy investigation. No `--force`, local
+   network fallback, maintenance mode or host/profile change is part of E4.
+
+### Runtime acceptance and recovery
+
+Require successful native build/boot/seed/refresh, ready state and exact selected
+source labels. Save compact source/input graph and four selected toplevels plus
+normal host GC-root proof; do not rely on JSON as a root. Then use four separate
+public `vpsadmin-devcluster ssh <slug> MACHINE -n -- ...` reads, one for each
+dns-primary/dns-secondary/node1/services, to check selected current-system,
+closure validity and existing standard/profile/provider root registrations.
+Do not put SSH inside an input-fed names loop. No manual root creation or
+applied-envelope rewrite is authorized. If the old provider again leaves three
+extra roots absent, record that certificate/recovery limitation explicitly;
+independent valid closures plus retained system roots can support current manual
+testing as previously accepted, but cannot certify the native full-boot record.
+Missing real system/residency/retention proof is a runtime blocker to report.
+
+Check actual packaged HaveAPI 0.31.0 and generator identities, matching final
+React frontend/BFF build-info, legacy PHP from the new canonical checkout, TLS
+through the cluster CA and one real seeded-member login/read/logout through
+each UI. Confirm generated TypeScript documentation alongside retained Go/Rust
+panels. Use existing bounded access checks, not a broad browser/SDK campaign.
+Keep passwords/tokens/cookies out of logs and screenshots. Handoff both actual
+URLs, internal DNS/VPN and CA requirements, and private credential access.
+Leave the cluster running and session open.
+
+An interrupted operation retains its native pending state and selected roots;
+inspect that exact outcome before retry. Source/config rollback requires the
+same supported Git mapping and public native operations, not copying old proof
+records. Recreated disks deliberately have no retained-data rollback obligation;
+old source refs and previous verification remain intact. New package generation,
+ownership or layout refusals are blockers, not permission to bypass checks.
+The selected physical-host coordination policy reserves host deployment/profile
+changes, not ordinary session QEMU execution. No host mutation is needed here;
+do not take over a foreign host reservation. A real address/runner conflict still
+blocks startup.
+
+### KB staging ownership boundary
+
+Public `kb-stage status` still reports owner `2026-09-13-auth-email`, container up
+and a pending EN release. Public help exposes start/stop/status/reset/release,
+with no queue or transfer command. Our user's request authorizes showing this
+session's final articles in staging once legitimately available; it does not
+authorize discarding another session's review bundle or releasing its claim.
+Lead reports the blocker; no foreign records, messages or mutations are assigned.
+The existing owner must settle/discard its own pending bundle and release staging,
+or the user must supply separately scoped direction for that ownership issue.
+Do not poll indefinitely or invent a staging queue.
+
+Once availability is confirmed, E3/D owner uses existing public `kb-stage start`,
+then `kb-release stage --manifest FILE --yes` and `kb-release verify --manifest
+FILE` for the final EN/CS manifests after fresh production-source guards. Present
+both real staging page URLs and verified localized revision-history links. No
+production promotion, staging reset or post-handoff release is implied.
+
+## 2026-10-27: bounded A31-R1 measurement and C4 expiry decision
+
+This addendum releases design preparation only; execution remains with A0/C1
+under the lead's existing check/utility allocation. Exact session identity was
+reconfirmed from tracking CWD; both session environment variables are absent
+and the trusted binding matches. No application/provider source, refs, live
+cluster or staging change is part of this design step.
+
+**A31-R1 (A0): measure the real page before broader suites.** At committed
+vpsAdmin `d258591f81e49365b02206dd184296f5f5e7d045`, reuse the existing B3
+mounted full-plugin RSpec/disposable-database setup and unwrapped warm-GET seam
+in `package-b/b3/postreview/capture.rb`. Do not execute that historical harness
+unchanged: its head, role order, versions and sample extraction identify 70a.
+A short session-only adaptation is sufficient; no new framework or application
+spec change. Bind the actual current full-mode lock and loaded HaveAPI/generator
+versions/source paths, retain response status/bytes and time `GET /v7.0/` using
+monotonic wall and process CPU immediately around the real request, before CGI
+or matcher work. First request: anonymous/en. If it again consumes tens of
+seconds of CPU, record the result and stop the broader batch for lead disposition;
+there is no value in repeating the expensive member/admin requests to establish
+that public-page regression. An interrupted request is incomplete lower-bound
+evidence, never a pass. If no gross regression appears, run the existing member/cs
+and admin/en requests and bounded role/locale/isolation assertions. No new numeric
+SLA, repeated warm campaign or speculative deadline is introduced. Retain the
+0.30.2 reference of approximately 4.23s anonymous, 2.53s member and 4.94s admin
+unwrapped requests with its original conditions; it is context, not a new gate.
+
+Read-only source at HaveAPI v0.31.0 (`c9124da...`) confirms repeated recursive
+`normalize(context.description)` in TypeScript `Documentation#authentication`,
+`#action_authentication`, `#authorized_action` and `#compatible_action!`. The
+last is invoked for both authorized/live and current actions. Tiny init/action
+checks cannot establish full-page cost. If measurement confirms the regression,
+the minimum proposed remedy belongs to upstream
+`clients/typescript/lib/haveapi/typescript_client/documentation.rb` and its
+existing documentation tests: shallow string-key selection along the resource
+path, selected action/alias/provider and metadata, recursively normalize only
+selected values. Follow the existing Rust adapter's last-insertion key semantics;
+retain ambiguous-alias rejection, request-local authorization/locale, detached
+frozen model ownership and unchanged limitation/error behavior. Test mixed
+symbol/string keys, selected aliases and rejection, nontraversal of unrelated
+subtrees, frozen inputs and different request contexts. No shared privileged
+rendered cache, consumer monkeypatch or copied renderer. A patched generator is
+not an unmodified published 0.31.0 artifact: any upstream source/new-release or
+dependency exception needs lead/user disposition before implementation. No
+migration, deployment or recovery contract changes are proposed here.
+
+**C4 (C1): one controlled desktop comparison, not a browser campaign.** The
+ordinary preview seam exists (`npm run preview -- --host 127.0.0.1 --port PORT
+--strictPort`, `E2E_BASE_URL`, with `E2E_START_SERVER` unset). It is **not eligible
+for the already built normal frontend with this unchanged fixture**: normal
+`npm run build` compiles `VITE_RUNTIME_MODE=bff`; required BFF bootstrap validates
+HTTPS and fetches `/config.json` and `/session.json`. The fixture only injects
+`window.vpsAdmin` legacy configuration and intercepts `/api`, while ordinary
+Vite development defaults to legacy. Serving that BFF artifact would test a
+missing bootstrap rather than the reported expiry behavior. The existing
+`build:legacy` could make a separate artifact, but doing so is an additional
+build and is not proof of the already built BFF artifact; it is not the selected
+shortcut. No fixture, proxy, runtime-mode override or bootstrap weakening.
+
+Use only `e2e/specs/app/session_expiry_redirect.spec.ts`, project `chromium`,
+zero retries, unchanged 15s URL/30s overview assertions and normal notice check.
+Compare exact f10d3d48c4f21cc39187c3667ffffd9952404c11 against current
+baf00acc31d34ab37720643c5833b4476a341f3b using the same retained FHS/browser,
+CPU60-63/nice5, fresh owned Vite server/free port for each side, identical normal
+development mode and selected fixture. C1 owns one isolated scratch source at
+f10 with its original lock/fixtures; preserve the live checkout, refs and source.
+Reuse existing verified runtime/dependency material only if its actual input
+identity matches, otherwise ordinary isolated installation; no broad baseline
+archive campaign or full-suite rerun. Record both outcomes and the 401 → public
+navigation → Overview mount/URL cleanup → notice boundary from existing artifacts.
+The user contract is expired authenticated state leaving the app and reaching a
+usable public overview with the fresh notice. A trace showing a prompt 401 and
+redirect alone does not prove completion; a green artifact must exercise all
+unchanged assertions. If both fail similarly, classify only this fixture/runtime
+limitation, not all browser behavior; if both pass, record paired passes and the
+original cold-server failure without claiming its exact cause; if current alone
+fails, retain the unresolved upgrade boundary. Stop after the pair and report to
+lead; no timeout increase, force-click, layout fix or blind retry. Mocked browser
+proof does not replace later actual TLS/BFF login checks for the authorized
+cluster redeployment. Old 60/62 mobile-expansion disposition remains separate.
+
+## 2026-10-27: A31-R1 upstream source fix (implementer2 ready)
+
+The qualified anonymous GET at consumer d258 measured 15.23135s wall/15.21839s
+CPU, HTTP 200 and about 2.8 MB, with no Authorization, empty Cookie and nil
+user/session before and after; full English help/panels were verified. This
+supports the Important performance finding. Anonymous help intentionally lists
+all actions: only authenticated-member help is permission-filtered. A0 owns the
+separate mistaken anonymous test assertion correction. C4's paired f10/baf expiry
+case passed on both sides under the same cold runtime and assertions; lead
+accepted that bounded evidence, without converting the earlier six-case run to
+6/6 or claiming a proven preexisting cause. No more C work is required here.
+
+**Source and ownership.** Implementer2 owns exactly
+`clients/typescript/lib/haveapi/typescript_client/documentation.rb` and
+`clients/typescript/spec/unit/documentation_spec.rb` in a new ordinary
+session-owned `haveapi` worktree, branch
+`2026-10-24-vpsadmin-haveapi-upgrade-typescript-docs`. Use fresh canonical master
+`4d36efcfb2a9f677b5dfe0e632d8353eefe9a79c` as the source baseline (SSH remote
+and remote HEAD verified). Both files are byte-identical to released v0.31.0
+`c9124da141adc258fbbaf67d4ec19ee3f8580849`, also current `haveapi-0.31`.
+Read current local AGENTS and development/release procedures; ordinary public
+worktree registration preserves other sessions' refs/checkouts. Recheck base on
+creation; report substantive intervening changes. No release branch mutation,
+version bump, tag, registry publication, default merge, generated artifact or
+consumer dependency edit. A later authorized patch release belongs on the
+supported release branch with `cherry-pick -x` per HaveAPI's release procedure;
+that later operation is not included in this source package.
+
+**Implementation.** Adopt the released Rust adapter's small `normalized_members`
+pattern (stringify one map level, last-inserted colliding key wins). Select the
+resource path and selected action before recursive normalization. Keep exact
+canonical-name precedence and alias fallback: inspect sibling alias metadata
+shallowly, normalize alias values as needed, reject ambiguous aliases, and
+normalize only the selected action. Authentication selection visits only the
+authentication map and selected provider, preserving Basic/token preference,
+header matching and explicit-description checks. Metadata compatibility selects
+only `meta.namespace`; existing selected `context.action`/sample normalization
+and validation stay. Never recursively normalize the complete request description
+in a render path. Keep mount-time snapshot detachment/freezing unchanged; no
+cross-request memo/cache, broad new helper abstraction, consumer patch or copied
+renderer. A short nearby comment explains shallow lookup/key-collision semantics;
+no separate documentation expansion is needed for unchanged public behavior.
+
+**Acceptance and checks.** Extend the existing spec/fixtures locally in the same
+spec file with a small deterministic unrelated-subtree traversal regression
+that fails before the fix; exercise selected example and auth paths without
+wall-clock thresholds or an oversized synthetic tree. Reuse existing fixture
+helpers to prove string/symbol/mixed keys and last-insertion collision order,
+canonical/unique/ambiguous aliases, Basic/token/header rejection, frozen caller
+input/model nonmutation and sequential distinct authorized contexts without
+retained decisions. Preserve current exact program/result/limitation contracts
+and anonymous-versus-member semantics; the adapter consumes the description
+provided by the server and does not invent a new visibility policy. Existing
+specs already cover sample validation, stale contracts and protected fields;
+extend them proportionately rather than duplicating an exhaustive matrix.
+
+Quick check from the normal root Nix shell: existing `make test-typescript`
+command narrowed to `bundle exec ruby -Iclients/ruby/lib
+-Iclients/typescript/lib -S rspec
+clients/typescript/spec/unit/documentation_spec.rb`, plus scoped RuboCop and
+mandatory Overcommit hooks. Keep prepared library locks untracked. Commit one
+focused source/regression change, then independent final review of the exact
+base/head and two-file diff (no migrations). After review, run the existing full
+`make test-typescript` and `make test-documentation-generated` with ordinary
+prepared JS/server dependencies and `make doc` prerequisite; these exercise
+compiled emitted programs and mounted profile/server integration. Use the
+required watcher for uncertain/long checks; stop on relevant failure, do not add
+a new performance runner, full release build or unrelated all-language campaign.
+Publish the reviewed feature branch normally after the required checks; return
+its patch/quick/long evidence to lead for user review and release disposition.
+
+**Consumer and recovery boundary.** Published vpsAdmin 0.31 dependencies remain
+unchanged except A0's known test correction. A source fix with the same VERSION
+is not the published artifact. After explicit adoption of a released successor
+or separately approved dependency source, A0 repeats the same qualified full
+consumer GET first, retaining original role/locale/input conditions and comparing
+measured CPU/wall/response semantics; then member/cs and admin/en plus existing
+visibility/isolation checks. R1 closes only on actual adopted-source and measured
+consumer proof. Source fix alone is not that proof. No protocol, schema, SDK
+package identity/runtime pair, persistence or cluster change is proposed;
+rollback of a later release is ordinary dependency reversion, with no data
+migration. Current live cluster and E4 reset gates remain unchanged.
+
+## 2026-10-27: authorized 0.31.1 adoption gates
+
+The user directs watching for 0.31.1 about every ten minutes and upgrading when
+available; no repeated approval is needed on availability. E2's read-only watcher
+owns registry and public KB-staging status checks. Architect/implementers do not
+add polling. The preceding upstream-source package is superseded by the user's
+external ownership: retain its exported partial patch/evidence, but perform no
+further upstream source, test, review, release or foreign-session work here.
+
+**Availability/source gate (E2 facts, architect assessment).** Once available,
+retain exact public identities/digests for the five Ruby 0.31.1 gems, generic npm
+package/browser bundle, Python wheel/sdist and PHP mirror tag/Packagist commit.
+Distinguish registry-published integrity from locally computed hashes. Bind the
+release tag/source and compare 0.31.0 to that released source, especially the
+TypeScript Documentation selection/normalization fix, key/alias/auth semantics,
+request-local ownership and unchanged profile contract. Verify artifacts actually
+contain the remedy; a new version alone does not close A31-R1. Inspect only the
+relevant released SDK/runtime requirements: retain generated SDK0.1.1 with its
+0.30.2 runtime unless the new renderer/SDK's published contract supports a changed
+pair. Never infer an SDK0.31.1 release or force all SDK runtimes to the application
+version. Do not read the user's other-session records for this assessment.
+
+**Independent consumer packages.** A0 owns the existing vpsAdmin dependency and
+profile stream: exact runtime0.31.1 declarations plus generated Ruby/Nix locks,
+PHP Composer lock, legacy JS source/provenance, schema-exporter declaration and
+exact-version guard/help/docs, and version assertions. Keep the corrected
+anonymous full-help expectation and authenticated-member visibility checks.
+C1 owns React's npm manifest/lock, vendored released source/provenance and affected
+Nix/package metadata/docs. Use ordinary session-owned successors/history
+consolidation to replace the pending0.31.0 pin stream with final0.31.1; preserve
+published C31baf and all old LIVE70a/f10/2c refs and checkouts. Keep the carried
+adapter/profile change coherent and record old/new range equivalence. No PR74
+rewrite, default merge or live-source switch during preparation. Do not append
+multiple obsolete dependency commits just to retain earlier test provenance.
+Lead owns the small EN/CS KB version/pair wording update; E3 owns existing checks
+and final manifests. Reuse prior prose/snippet evidence for genuinely unchanged
+content, refresh guards against final candidates, and stage only after public
+status proves this session can ordinarily acquire staging. User's planned release
+of staging is not evidence that foreign ownership has already ended.
+
+**Verification and stopping condition.** Owners compare the actual released diff
+and select affected checks, preserving prior exact-input evidence for unchanged
+code. Quick generated-pin/provenance checks, exporter guards and relevant focused
+profile/adapter tests precede commits; obtain the necessary final affected review
+and whole-history/no-migration conclusion before longer checks. No automatic
+repeat of full browser/SDK campaigns. For A31-R1, first repeat the same qualified
+anonymous full-plugin GET after actual0.31.1 loading: explicit no auth, nil
+user/session, expected all-action English help, save body before assertions and
+measure wall/processCPU before CGI/matchers. Compare with qualified0.31.0
+15.23135s/15.21839s and the retained0.30.2 conditions; report any condition/response
+change. If severe cost persists, stop broader suites and return the concrete
+release defect to lead. If remedied, complete existing member/cs and admin/en
+visibility, locale and isolation checks, then only affected packaged/services
+and consumer acceptance checks. R1 closes on measured adopted artifact plus
+preserved semantics, not the tag or unrelated unit passes. Any material new
+release behavior changes this brief through lead; no consumer workaround.
+
+No migrations or persistent-format change is expected; verify this against the
+release diff. Ordinary dependency reversion retains the previous software/data
+contract, while E4's explicitly authorized devcluster reset discards disposable
+cluster data. After final source/review/check gates, lead/E3 execute the already
+accepted E4 supported reset/rebind/start and access checks against final0.31.1
+sources, and show both reviewed KB staging pages once available. Existing native
+ownership/generation/provider-certificate limits and rollback preparation stay;
+no provider install, release publication, production KB write or default merge is
+added. Adoption source work is ready at the availability gate; operational
+activation remains behind its established verification gates.

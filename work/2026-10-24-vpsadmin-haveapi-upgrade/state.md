@@ -2,12 +2,111 @@
 lifecycle: active
 ---
 
-# Current status — 2026-10-26
+# Current status — 2026-10-27
 
-Phase: implementation, independent final review, affected local verification and
-feature publication complete. Both live interfaces are available for qualified
-manual testing. Refreshed vpsAdmin exact-head CI remains in progress; no default
-integration is approved. Provider fix F is ready, awaiting merge approval.
+Phase: awaiting released HaveAPI0.31.1 and legitimate KB staging availability.
+User explicitly authorizes polling about every10minutes (possibly hours) and
+upgrading as soon as published. Prior0.31.0 code/review/test/publishedC evidence
+remains exact-input history; A31-R1 measured15.23CPU is open until fixed released
+artifact adoption and consumer proof. The user owns upstream fixing in another
+session; our patch was handed off and all local upstream work stopped.
+
+## Active availability and continuation owners
+
+| Owner | Result / next step |
+| --- | --- |
+| implementer2 | Availabilityfirstsnapshot21:06:18UTC: all5Ruby/npm/Python0311exactendpoints404; PHPUNKNOWNparserAttributeError. Stageforeignauth-email/pendingstillnotusable. FreshLunaendedprematurely/identitynotindependentlybound, no processremains; E2VISIBLEPARENTfallbackowns600scadence(next>=21:16:18), no moreutilitylaunch. [status](package-0.31.1/availability/latest.json). No installs/mutations; returnfirstactionablecondition. |
+| architect0 | Compact0.31.1 adoption scope/review-reuse/affectedcheck brief, verify releasedfix/SDKpair once available; no duplicate registry polling or upstream source work. |
+| implementer0 / implementer1 | Retain current A9c1b3f and publishedCbaf sources/roots; ready for0.31.1 dependency update packages after availability, preserve oldrefs and coherent history. |
+| lead / implementer3 | KB candidate wording/version/manifests then legitimate publicstage/verify when free (canstagecurrentreviewed0019generic0310before0311ifstagefreesfirst); exactsessionreset/redeploy remains authorized after finalsource/review/check gates. |
+
+Do not release/reset/stop another session's staging. User will resolve the bugged
+owner; observed availability is required before our claim/write. No merge,
+PR74force, productionKB, release/tag or session lifecycle action is authorized.
+
+## Active0.31 backlog
+
+| Owner | Deliverable / acceptance / dependency |
+| --- | --- |
+| architect0 | Design1821+ accepted: released servers/ruby renderer already exists; configure vpsAdmin consumer, preserve supported SDK/runtime pair. |
+| implementer2 | Release/client facts complete; nextboundedupstreamA31-R1sourcefixassignedafterarchitectbrief, freshownHaveAPIworktreeonly; useraskedifalreadyfixingelsewhere. Usernowownsfixelsewhere; E2STOPPEDnewupstreamwork/exportingpreexistingpatch7230373+honestquickstatus, no furthercommit/tests/review/push. No release/tag/default action. [receipt](package-0.31/release-client-facts.md) verifies all0.31 releases and SDK0.1.1 runtime0.30.2 requirement. |
+| implementer0 | A4dependencycommit3f113098e8cdb90ad90426144f37594265b4a571 atop08c3; scopedgeneration/API5gems/PHP/exporter14checks+normalhooksPASS, no unrelatedversiondrift. B4fivefilescomplete; scopedRuby/RuboCop/NixformatPASS, focusedcore3/full4 allPASS plus4actualemittedTSprogramstrictNodeNextcompilePASS100s; originalrecorderenv/testcamelCasefailuresretaineddiagnosed, full60f0lockexactrestored/packagedequal. NormalBhooksPASS73.920s; finalcleanhead d258591f81e49365b02206dd184296f5f5e7d045/treec1b1b533ba286661cd41b97dab2ec3f40e4266b4; exactly2commits29paths/noMIGRATIONS; [packet](package-0.31/vpsadmin/review-packet.md) reviewer0all4finalreviewCOMPLETE; ImportantTSrenderer3-5fullauthorizedtreecopies/action. Broadlongchecks/deploymentHELD; explicitdecisionpermitsONLYexistingboundedrealrole/localeGETmeasurement toassessimpact, architectupstreamboundary/A0execution, no consumerpatch. SoleutilityslotRELEASED. Old2c/LIVE70a preserved. |
+| implementer1 | C4 sourcecompletecleanbaf00acc/dep4d040e03/base5a2d, two coherentcommits;123focused+6guards+ciquick+filteredguardPASS, allruntime/sourcef10equal. [packet](package-c/0.31.0/review-packet.md), reviewer0all4lanesnoFindings/history+noMIGRATIONSaccepted. Script228/BFF57/fullunit303files1899cases+productionbuildPASS0/774s; rootedNix5outputsPASS0/77s frontend729jj/BFFl93gg matchingbafdirtyfalse; sixauth/expirybrowsercasesFAILED3pass/3fail (desktopauthenticatednavigation+expiryredirectdesktop/mobile), originaltraces/effectsretained; diagnosisactual401+hardredirect+lazyimports pending/timeouts under2CPUvsprior4CPU, no page/codecerror; ONEsame6case4CPU60-63/nice5recovery5/6FAILdesktopExpiryonly, genuine401/redirect/publiclazyLoadingnear15sdeadline, effectsreconciled. Pairedcoldisolatedf10/bafsoledesktopExpiryBOTHactualPASSunchangedrootURL/Overview/notice/caps/runtime/source/lockproof; leadCgateACCEPTEDwithoutsynthetic6/6orpreexistingcauseclaim. OrdinaryownnewbranchpublicationPASS0 exactbaf/dev/vpsadmin-haveapi-031 remoteproof/main5a/PR74head5ddunchanged; publiccomparisoncaptured; CI0runs/checks/statuses (triggersPR/main/manual), noCIpassclaim. [receipt](package-c/0.31.0/publication/receipt.md); noCwriter/operation, deploymentstillholdsA31-R1. Allpriorfailuresseparate; ordinarynewownrefpublicationafterPASS, noPR74/defaultrewrite. |
+| implementer3 | D4 mechanics complete:191pages/2changed189preserved;10consumerstepsPASS; exact0.31Python/genericTS plusSDK0.1.1/runtime0.30.2 checked. Allownedhandlescomplete/no utility. [receipt](package-0.31/kb-checks.md). |
+| lead | D4 KB committed7b9a1d4bbc1e17f36ad0b7b1ad663f25f58714f2, allquickchecks accepted; [packet](package-0.31/kb-review-packet.md) assignedreviewer0 generalfinalreview. D4finalreviewaccepted/factorypointercorrected0019dd4; foreignstaging blocksrenderedreview, no productionwrite. |
+| reviewer0 | D4finalreviewnoBlocking/Important, advisoryD4-A1fixedanddirectlyverified at0019dd4e5e96afef4de0e0d2e1b573ad461e13fc; noreviewrerun. C4all4finalreviewCOMPLETE5a2d..baf00acc nofindings+history/noMIGRATIONS; A4+B4all4finalreviewCOMPLETE08c3..d258591: ONLYImportantA31-R1(fullauthorizedtreecopies/renderedTSaction), noadditionalfinding; completehistory/noMIGRATIONSaccepted. LimitedrealGETmeasurementACTIVE freshLuna01a17f0a-b665-7923-bb5a-df642fbc6782/parent41334 exactd258/full60f0/ownDB8GiB2CPU, anonymousfirstthenconditionalmembercs/adminenonce; first15.0459swall15.026CPU2002.8MB failedWRONGnewanonprivacyassertion. Architectconfirmedanonfullhelpcontract(actionfiltersiffendpoint/current_user); old70a..2cspecunchanged,newd258line112incorrect. A0narrowtestcorrectionreleased/membercsprivacykept, qualifiednil/noAuth/bodybeforeassertionsanonGETPASS15.23135wall15.21839CPU2002.8MB. A31-R1OPEN; upstreamminimalfixdesign/implementer2assigned, userownershipquestionpending. Qualifiednative1example0fail/exit0/55.63s,effectsreconciled PID48651absent/lockunchanged; A0narrowBtestamendnormalhooksPASS0/73.789s newhead9c1b3f773555faa1b4af2ee6b8e26f04a7a012f1; leaddirectdiff1file1+/1-verified d258->9c onlyanonoracle, memberprivacyunchanged. Oldd258retainedref; qualifiedmeasurementnative0/DBprocessreconciled. SlotRELEASED, no activeAoperation; E2nextfreshwatchereligible. Architectdesign2259+two-fileHaveAPIfixREADYaccepted/E2implementingnewownmaster4d36efcbranch, no tag/release/pin/default action; broadlongchecks/deploymentheld. |
+
+User direction: "i've released haveapi 0.31.0. upgrade to it. add typescript
+examples to servers/ruby using vpsadmin-typescript-client. it configures like
+go/rust sdks. the upgrade to0.30 can be replaced with0.31. add the generated
+typescript client to the KB article (shortly explain the difference from the
+other js/ts clients)." This replaces the pending version target and authorizes
+consolidation of its unapplied upgrade history, not default integration or KB
+production publication. Later user direction explicitly authorizes this cluster
+redeployment/reset AFTER sourcework/checks; no mutation has occurred yet. Keep original
+LIVE70a/f10 checkout/ref/config/locks and running guests untouched during source
+preparation; change livebinding only through accepted supported redeploy boundary. F is a separate completed source fix, unchanged.
+
+Released SDK0.1.1 and upstream0.31 renderer require generic npm runtime0.30.2;
+this supported generated-example pairing remains explicit while application and
+React dependencies become0.31.0. Profile `typescript: { package_name: 'vpsadmin-typescript-client' }`;
+no snapshot, SDK regeneration, upstream framework edit or runtime override.
+Freshmaster schema-exporttool hardcodes0.30.2: accepted necessary four-file
+compatibility amendment in design updates exactGemfile/runnerguard/help/docs to0.31,
+using existingdatabase-free checks, no actualexport/bootstrapredesign.
+A0quick/hooksoperationreconciledandsolefreshLunaslotRELEASED. C1retainsvisible
+parentfallbackforbrowserrecovery; nextfreshrelatedbatchcanreserveutility. No
+competingwatcher or unaccountedownedoperation.
+[Design](design.md#2026-10-27-haveapi-0310-and-generated-typescript-examples) and
+[release facts](package-0.31/release-client-facts.md) bind exact versions and API.
+
+## Upstream handoff steering — 2026-10-27
+
+User: "i'll fix the haveapi problem in another session, but you can give me a
+patch(link it) if you already have itdone". Stop local upstream source/check/
+review/publication work; E2 exports already-completed two-file patch and actual
+verification status. Existing commit7230373933180e0fe2a69623d2290b099018abea atop
+4d36efcfb2a9f677b5dfe0e632d8353eefe9a79c was created before this stop direction.
+[Patch](package-0.31/upstream-fix-1/haveapi-typescript-documentation.patch)
+SHAafb8d337cc2fa3ea74c925c6331b77deb75f0717f0f6efd072dc3fd1d7b1d205
+(twofiles114+/12-,9609bytes), [status](package-0.31/upstream-fix-1/README.md):
+11focusedspecs0fail/scopedRuboCop/hooksPASS; predecessorfails1/1. No independent
+review/fullTS/generateddocs/consumerpostfixmeasurement orpush/release. Allowned
+upstreamhandlesreconciled/no activeprocess; E2stopped.
+No tag/release/defaultmerge/sourceadoption. User's other session owns final fix;
+consumer deployment waits corrected release and affected actual validation.
+Do not contact/read/mutate the other session. Keepthissession/clusteropen.
+
+## Newly authorized postcheck deployment — 2026-10-27
+
+User: "when you're done, redeploy the dev cluster (it can be reset, i don't care)
+and show me the kb articles in kb staging". Scope exactTHISsessiondevelopment
+cluster, new0.31 sources, resetallowed; not sessionstop/archive/delete, production,
+defaultmerge or physicalhostprofileinstallation. Accepted [E4design](design.md#2026-10-27-e4-authorized-development-redeploy-and-kb-staging)
+at2021+ is complete; E3 prepares/validates exactsourcegates+Gitmoveinventory; parentlead
+launches mutatingnativeoperation after source/review/check/preflightgates.
+Fresh selectedpackage is46rpb1.../providercscrk1..., schema1/policy3; Fstilluninstalled.
+Acceptedroute reset/recreate aftercheckedsource: publicresetexactslug, fourordinary
+Gitworktreemoves retainoldcanonicalcheckoutsunder*-live030 and put031atcanonical
+vpsadmin/vpsadmin-webui, preservewholeregistrationentriesrename+publicsync, ordinary
+editableconfiginit/restoreprivately, parentpublicstartsingle/bridge. No sourcealias
+override/publicnativeprepare exists; nativepublicstartbuildsfinalgraphitself.
+Services-onlyupdateafterpathswapdoesnotprovePHPvirtiofsinode, soresetroutechosen.
+Oldw6/q19launchidentity is historicalonly. No actualmutationyet.
+
+E3 [preparation receipt](devcluster/e4-preparation.md) accepted: exactfourGitmoves,
+wholeentrynamemap/publicsync/privateeditableconfigonly, sourcegates/parentresetstart
+remainunreleased. No configcopiedormoved/guestprobe/nativeoperation.
+
+KBstage status read confirms foreign2026-09-13-auth-email owner, pendingENrelease;
+publicCLI has start/stop/status/reset/release but no waitqueue. User was told
+ownername. No foreignrecords/contact/action. Prepare reviewed exactcandidates;
+supported ownerhandoff/explicit foreigndisposition needed before our stagingwrite.
+Asyncrequestsentuser to releasefromowningsessionwhileupgradecontinues. Noelapsedtime
+oridleassumption authorizesforeignrelease.
+
+The remaining sections describe accepted0.30.2 evidence and boundaries until
+superseded by exact0.31 results.
 
 This is the current entry point. The preceding detailed checkpoints are preserved
 byte-for-byte in [state history](history/state-before-consolidation-20261026.md)
@@ -33,7 +132,9 @@ The session and development cluster remain open and running.
       automatic CI successful; not installed.
 - [x] Distinct refreshed vpsAdmin branch published/publicly registered; live original
       checkout, sources, locks and four guests preserved.
-- [ ] Refreshed vpsAdmin CI: seven workflows successful; API and integration active.
+- [x] Refreshed vpsAdmin: all eight non-integration workflows successful, including API.
+- [x] Complete API CI artifacts reconciled: 26 result/environment pairs, 9,450 examples/zero failures.
+- [ ] Integration CI still active at final bounded read; overall CI pending.
 - [ ] React PR74 exact protected history rewrite approval/publication.
 - [ ] Legitimate KB staging/render/history checks and exact production approval.
 - [ ] Explicit repository/target integration approval and fresh integration gates.
@@ -42,16 +143,16 @@ The session and development cluster remain open and running.
 
 | Owner | Result / next action and acceptance |
 | --- | --- |
-| implementer2 | Sole exact-2c CI observer: nine runs, attempt 1. Final conclusions or explicit long-integration-only pending handoff; no retries/dispatch/cancel. |
+| implementer2 | Exact-2c observation and artifact reconciliation complete: eight successes, all26 API pairs; integration pending. No active operation or renewed polling. |
 | implementer0 | Successor publication, public comparison and unchanged-live proof complete; no owned operation remains. |
 | implementer1 | F reviewed, checked, published, CI green; receipt reconciled. No installation/live repair. |
 | implementer3 | Live UI/guest receipt complete; probes stopped, cluster retained. |
 | architect0 / reviewer0 | Designs and separate final A/F reviews complete; no open source finding. |
 | lead | Acceptance, records, PR/KB/integration approval boundaries. |
 
-Sole watcher slot belongs to owner2's fresh exact-2c CI utility, retained catalog
-`840de475…`, native `dw_b9dd4137…`, Luna/low, full access/never,
-thread `01a1799f-017f-73a3-b705-d356db141047`. No duplicate CI queries.
+CI watcher completed and sole utility slot released. Retained catalog `840de475…`,
+native `dw_b9dd4137…`, Luna/low/full access/never, thread
+`01a1799f-017f-73a3-b705-d356db141047`. No active observation or duplicate CI queries.
 
 ## Exact repositories and lineage
 
@@ -127,16 +228,33 @@ attempt1, sole job121772673835: SUCCESS. F unmerged/uninstalled, no live repair.
 
 ## Current exact-head CI
 
-Owner2 initial verified snapshot: all nine runs attempt1/head2c.
-Seven SUCCESS: PHP40383178588, Migration40383178589, Client40383178603,
-RuboCop40383178625, Console40383178633, Mounter40383178641, i18n40383178823.
-API[40383178617](https://github.com/vpsfreecz/vpsadmin/actions/runs/40383178617)
-queued with topics running; integration
+Owner2's final bounded milestone: all nine runs attempt1/head2c.
+Eight SUCCESS: PHP40383178588, API40383178617, Migration40383178589,
+Client40383178603, RuboCop40383178625, Console40383178633,
+Mounter40383178641, i18n40383178823. Integration
 [40383178746](https://github.com/vpsfreecz/vpsadmin/actions/runs/40383178746)
-in progress. No overall CI-pass claim. Evidence in
-`package-a-integration-refresh/ci-observation-1/initial-summary.json`.
-Stop with explicit pending handoff if only long integration remains (native test/
-workflow limits720/780min); do not wait12hours or resume old polling.
+remains in progress with no conclusion (native test/workflow limits720/780min).
+Observation has stopped as assigned; watcher complete/slot released. No overall
+CI-pass claim and no renewed integration polling.
+
+The API workflow conclusion is SUCCESS, including26 topic jobs and coverage.
+All26 result/environment pairs are reconciled (13 topics/mode): core4,725 examples,
+zero failures/404pending; full4,725, zero failures/eight pending; total9,450,
+zero failures/412pending/zero errors outside examples. Initial22-pair totals
+were incomplete because the default artifact listing returned30 of52 entries.
+One complete listing plus four missing downloads resolved the gap; original
+partial receipts retained and superseded by the complete summary.
+
+Native Ruby3.4.12/Bundler2.6.9/RSpec3.13.6. Effective API lock SHA256:
+core `82ef7568786da20099a700f9c2bcdc6bac14cfd4d57cfa4258f228154335fe58`,
+full `b84937ac47bad0e42a176ec8538b2e320c6ad378e294cf71461ef06a4044dbe5`.
+Artifacts lack lock contents/version inventories; no CI dependency-version or
+local-lock equivalence claim. [Final handoff](package-a-integration-refresh/ci-observation-1/final-handoff.json)
+and [complete API summary](package-a-integration-refresh/ci-observation-1/complete-api-summary.json)
+bind exact2c/attempt1. Integration final snapshot was2026-10-26T19:32:06Z,
+in_progress/no conclusion. Observation ended; no unfinished operation remains.
+Watcher snapshots after19:22 were approximately20seconds apart, more frequent
+than requested sparse observation; deviation retained, polling now stopped.
 
 ## Running interfaces and old boot-record limitation
 
@@ -189,6 +307,6 @@ No further guest/browser/network probes assigned; effects reconciled.
 Component documentation stays with committed profiles/adapter/provider README;
 execution evidence in linked receipts; [design](design.md) retains decisions.
 Portal preserves original live registration and distinct successor alias.
-Next: accept owner2's exact2c CI conclusion or final pending handoff, then present
-concrete repository/target integration and PR decisions with remaining limits.
+Next: repository/target integration and PR decisions remain approval-bound;
+integration CI still pending at the final snapshot. No new polling assigned.
 No broad rerun, source change or default integration is authorized meanwhile.
