@@ -1,6 +1,6 @@
 # KB local preparation receipt
 
-Current client terminology followup: [mechanics and guarded outputs](kb-terminology/checks.md).
+Current 0.31.2 version refresh: [mechanics and guarded outputs](package-0.31.2/kb-checks.md).
 Previous 0.31.1 [package checks](package-0.31.1/kb-checks.md) retain their unchanged
 executable-example and version scope.
 The reviewed 0.31.0 preparation remains [historical evidence](package-0.31/kb-checks.md).
