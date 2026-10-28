@@ -64,7 +64,8 @@ stay on release branches. Validate master patch == 0 and compare only numeric
 major/minor pairs against the release candidate. Preserve a higher major/minor
 master version and original published tags, artifacts and recovery tooling.
 The earlier full-version floor/catch-up proposal is superseded. Historical
-operator intent is unknown. No implementation or publication was performed.
+operator intent is unknown. Implementation now follows this accepted policy; no package publication is
+authorized. See state.md for exact committed/check/review status.
 
 ## Authorization and delivery
 
@@ -72,3 +73,11 @@ User instruction: "implement it" after the major/minor-only proposal. Implement
 the accepted design.md package on the session feature branch. No merge, release,
 deployment, session archival or deletion is requested. Keep one implementation
 owner because metadata, validation, fixtures and workflow checks are coupled.
+
+## Approved integration
+
+After successful review/checks/feature CI, user said "all right, merge it". This
+authorized HaveAPI/master integration. The exact reviewed final head f6e5c375 was
+fast-forwarded and pushed to remote master; merge claim released before CI.
+See integration.md/state.md for exact proof and post-merge verification. No
+package publication, deployment or session lifecycle action was requested.

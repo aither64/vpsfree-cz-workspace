@@ -1,10 +1,12 @@
 # HaveAPI release versioning: findings and proposed correction
 
-Status: investigation complete; all implementation below is **proposed and
-unimplemented**. Scope is HaveAPI only. No project checkout, branch, commit,
-tag, release, push, merge or deployment was created or changed. The only Git
-mutation was the authorized fetch of upstream master and tags into the canonical
-bare clone. Architect owns this brief; lead owns acceptance and session records.
+Status: accepted design implemented and integrated into HaveAPI master at
+`f6e5c3750c747b33ec869c54ca220bf6f1d9d2d0`; local checks, final independent
+review and all feature/master CI workflows pass. See [state.md](state.md) and [implementation-evidence.md](implementation-evidence.md)
+for verification and integration status. The investigation record and original
+proposal below describe the rationale and package boundary. Scope is HaveAPI only. During the initial investigation, the only Git
+mutation was fetching upstream master and tags into the canonical bare clone;
+subsequent implementation is recorded in the linked evidence. Architect owns this brief; lead owns acceptance and session records.
 
 ## Evidence at 2026-10-28
 
