@@ -1,0 +1,113 @@
+--- en/previous
++++ en/02-main-ruby
+@@ -1,3 +1,4 @@
++<page>manuals:vps:api</page>
+ ====== API ======
+ 
+ Our API is running at https://api.vpsfree.cz. The API can be used to perform
+@@ -15,20 +16,9 @@
+ the user who is currently logged in can work with.
+ 
+ ===== Working with the API =====
+-The API is built on the [[https://github.com/vpsfreecz/haveapi|HaveAPI]] framework
+-which we have developed. The framework creates
+-a [[https://github.com/vpsfreecz/haveapi#what-is-a-self-describing-api|self-describing]]
+-API, which means that premade generic clients can be
+-used:
+-
+-  * Ruby - https://github.com/vpsfreecz/vpsfree-client
+-  * PHP - https://github.com/vpsfreecz/haveapi/tree/master/clients/php
+-  * JavaScript - https://github.com/vpsfreecz/haveapi/tree/master/clients/js
+-  * Go - https://github.com/vpsfreecz/haveapi/tree/master/clients/go
+-  * The HaveAPI web interface - https://github.com/vpsfreecz/haveapi-webui (outdated)
+-
+-Usage examples can always be found in the ''README.md'' of each client. In general, the client
+-receives the API URL, then the client downloads the documentation and uses it for setup.
++The API uses the [[https://github.com/vpsfreecz/haveapi|HaveAPI]] framework.
++Its [[https://github.com/vpsfreecz/haveapi#what-is-a-self-describing-api|self-description]]
++lists the available resources, actions and parameters.
+ 
+ The API is [[wp>Representational state transfer|RESTful]], so any REST client
+ can be used for simple actions. A description of the custom data transfer protocol
+@@ -82,7 +72,9 @@
+ Scopes can contain globs for resource and action names. Action name is separated from resource name by a hash (''#''). Optional object IDs are separated from action name by a colon ('':'') and cannot contain globs. You can find a list of available scopes and their parameters in the [[https://api.vpsfree.cz/|documentation]]. Each token can have multiple scopes separated by spaces. At least one scope must match the called action in order for access to be granted.
+ 
+ ===== Installing vpsfree-client =====
+-[[https://github.com/vpsfreecz/vpsfree-client|The Ruby client]] also includes a CLI.
++The main client is [[https://github.com/vpsfreecz/vpsfree-client|vpsfree-client]]
++for Ruby. It includes the ''vpsfreectl'' command-line tool and a library for Ruby
++scripts, both installed from the same package.
+ In order for it to work properly, you need Ruby >= 2.7, Ruby header files and ncurses (mostly packages with the ''-dev'' or ''-devel'' suffix).
+ 
+ <code bash>
+@@ -108,7 +100,7 @@
+ $ PATH="$PATH:/home/user/.gem/ruby/3.0.0/bin"
+ </code>
+ 
+-==== Using CLI ====
++===== Using CLI =====
+ 
+ <code>
+ $ vpsfreectl --help
+@@ -489,7 +481,26 @@
+ $ gem cleanup  # deletes the gems
+ </code>
+ 
+-===== Usage Examples =====
++===== Ruby client =====
++
++Use the library from the same ''vpsfree-client'' package in your own scripts.
++With an existing token in ''VPSADMIN_TOKEN'', you can list VPSes as follows:
++
++<code ruby>
++require 'vpsfree/client'
++
++api = VpsFree::Client.new
++api.authenticate(:token, token: ENV.fetch('VPSADMIN_TOKEN'))
++
++api.vps.list.each do |vps|
++  puts "#{vps.id}: #{vps.hostname}"
++end
++</code>
++
++See the [[https://github.com/vpsfreecz/vpsfree-client#client-library|client README]]
++for more library examples.
++
++==== Usage Examples ====
+ The following scripts demonstrate ways you can use the API. These scripts can be
+ run from anywhere – manually, from cron, etc.
+ 
+@@ -499,7 +510,7 @@
+ even easier.
+ </note>
+ 
+-==== Daily Downloads of VPS Backups ====
++=== Daily Downloads of VPS Backups ===
+ <code>
+ #!/usr/bin/env ruby
+ # Downloading the last (most recent) backup of all VPSs.
+@@ -530,7 +541,7 @@
+ puts "Done"
+ </code>
+ 
+-==== Daily NAS Backups with a Weekly History ====
++=== Daily NAS Backups with a Weekly History ===
+ <code>
+ #!/usr/bin/env ruby
+ # Daily NAS snapshotting with a 7-day history
+@@ -561,3 +572,15 @@
+   end
+ end
+ </code>
++
++===== Other clients =====
++
++These clients are also available alongside the main Ruby client:
++
++  * PHP - https://github.com/vpsfreecz/haveapi/tree/master/clients/php
++  * JavaScript - https://github.com/vpsfreecz/haveapi/tree/master/clients/js
++  * Go - https://github.com/vpsfreecz/haveapi/tree/master/clients/go
++  * The HaveAPI web interface - https://github.com/vpsfreecz/haveapi-webui (outdated)
++
++See each client's README for usage examples.
++

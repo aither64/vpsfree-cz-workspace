@@ -1,0 +1,111 @@
+--- cs/previous
++++ cs/02-main-ruby
+@@ -15,20 +15,9 @@
+ kterými může aktuálně přihlášený uživatel pracovat.
+ 
+ ===== Práce s API =====
+-API je postaveno na námi vyvinutém frameworku
+-[[https://github.com/vpsfreecz/haveapi|HaveAPI]], které vytváří
+-[[https://github.com/vpsfreecz/haveapi#what-is-a-self-describing-api|samodokumentující]]
+-se API, což znamená, že lze využít předpřipravené generické
+-klienty:
+-
+-  * Ruby - https://github.com/vpsfreecz/vpsfree-client
+-  * PHP - https://github.com/vpsfreecz/haveapi/tree/master/clients/php
+-  * JavaScript - https://github.com/vpsfreecz/haveapi/tree/master/clients/js
+-  * Go - https://github.com/vpsfreecz/haveapi/tree/master/clients/go
+-  * Webové rozhraní z HaveAPI - https://github.com/vpsfreecz/haveapi-webui (zastaralé)
+-
+-Ukázka použití je vždy v ''README.md'' každého klienta. Obecně se klientovi
+-předá URL k API, poté si sám stáhne dokumentaci a podle ní se nastaví.
++API používá framework [[https://github.com/vpsfreecz/haveapi|HaveAPI]].
++Jeho [[https://github.com/vpsfreecz/haveapi#what-is-a-self-describing-api|popis]]
++obsahuje dostupné zdroje, akce a parametry.
+ 
+ API je [[wp>Representational state transfer|RESTful]], takže pro jednoduché
+ úkony lze využít i libovolný REST klient. Popis vlastního protokolu pro přenos
+@@ -36,8 +25,6 @@
+ [[https://api.vpsfree.cz/doc/protocol.md|dokumentaci]].
+ 
+ **poznámka** Pokud API vpsfree vrací http kód 500, ujistěte se, že váš REST klient posílá http hlavičku `User-Agent: x"`, která nesmí být prázdným řetězcem. Nejspíš jsou povinné i hlavičky `Accept: application/json` a `"Content-Type: application/json`. Většina http rest knihoven hlavičku `User-Agent` přidá automaticky, ale některé to nedělají.
+-
+-
+ 
+ ===== Autentizace =====
+ API podporuje dva způsoby autentizace:
+@@ -87,8 +74,9 @@
+ Scope může obsahovat globy pro název resource a akce. Akce je od resource oddělena křížkem (''#''). Volitelné ID objektů se píšou za dvojtečkou ('':'') a nemohou obsahovat globy, musí být přesně. Každý token může mít více nastavených scopes, oddělují se mezerou. Pro udělení přístupu musí aspoň jedno nastavené scope platit pro volanou akci v API.
+ 
+ ===== Instalace klienta =====
+-[[https://github.com/vpsfreecz/vpsfree-client|Klient pro Ruby]] obsahuje CLI
+-(rozhraní pro příkazovou řádku) a knihovnu pro použití v Ruby skriptech.
++Hlavním klientem je [[https://github.com/vpsfreecz/vpsfree-client|vpsfree-client]]
++pro Ruby. Obsahuje příkaz ''vpsfreectl'' pro práci z příkazové řádky i knihovnu
++pro Ruby skripty. Obojí nainstaluješ jedním balíčkem.
+ Pro správnou funkci vyžaduje Ruby >= 2.7, nainstalované hlavičkové soubory
+ Ruby a ncurses (většinou balíčky s příponou ''-dev'' či ''-devel'').
+ Poté klienta nainstalujeme pomocí Ruby gems:
+@@ -548,7 +536,26 @@
+ $ gem cleanup  # smaže gemy
+ </code>
+ 
+-===== Ukázky použití =====
++===== Klient pro Ruby =====
++
++Knihovnu ze stejného balíčku ''vpsfree-client'' můžeš použít ve vlastních skriptech.
++S existujícím tokenem v proměnné ''VPSADMIN_TOKEN'' vypíšeš VPS takto:
++
++<code ruby>
++require 'vpsfree/client'
++
++api = VpsFree::Client.new
++api.authenticate(:token, token: ENV.fetch('VPSADMIN_TOKEN'))
++
++api.vps.list.each do |vps|
++  puts "#{vps.id}: #{vps.hostname}"
++end
++</code>
++
++Další možnosti knihovny popisuje
++[[https://github.com/vpsfreecz/vpsfree-client#client-library|README klienta]].
++
++==== Ukázky použití ====
+ Následují skripty demonstrují možnosti využití API. Tyto skripty lze
+ spouštět odkudkoli -- manuálně, z cronu, apod.
+ 
+@@ -558,7 +565,7 @@
+ ještě jednodušší.
+ </note>
+ 
+-==== Každodenní stahování záloh VPS ====
++=== Každodenní stahování záloh VPS ===
+ <code ruby>
+ #!/usr/bin/env ruby
+ # Stažení poslední (nejnovější) zálohy všech VPS.
+@@ -589,7 +596,7 @@
+ puts "Done"
+ </code>
+ 
+-==== Denní zálohování NASu s týdenní historií ====
++=== Denní zálohování NASu s týdenní historií ===
+ <code ruby>
+ #!/usr/bin/env ruby
+ # Denní snapshotovaní NASu se 7 denní historií
+@@ -621,6 +628,17 @@
+ end
+ </code>
+ 
++===== Další klienti =====
++
++Kromě hlavního klienta pro Ruby jsou k dispozici také:
++
++  * PHP - https://github.com/vpsfreecz/haveapi/tree/master/clients/php
++  * JavaScript - https://github.com/vpsfreecz/haveapi/tree/master/clients/js
++  * Go - https://github.com/vpsfreecz/haveapi/tree/master/clients/go
++  * Webové rozhraní z HaveAPI - https://github.com/vpsfreecz/haveapi-webui (zastaralé)
++
++Ukázky použití najdeš v README každého klienta.
++
+ <maintainers hidden>
+ aither
+ </maintainers>

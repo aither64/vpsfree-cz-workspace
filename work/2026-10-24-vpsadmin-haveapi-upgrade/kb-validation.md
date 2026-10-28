@@ -1,12 +1,12 @@
 # KB local preparation receipt
 
-Current restructuring editorial snapshot **1/3: remove haveapi-fs** is prepared
+Current restructuring editorial snapshot **2/3: authentication, CLI and the main Ruby client** is prepared
 locally. Canonical schema-5 manifests preserve the recorded production guards;
 191 pages remain inventoried, exactly2 change and189 remain unchanged. Installed
 manifest parsing and candidate checksum reads pass. No fresh production query,
 staging write or publication is claimed. The matching intended publication
-revision starts at `kb-original` and is saved under
-`kb-restructure/publication/01-remove-fs/`.
+sequence starts at `kb-original`; this second revision follows the first and is saved under
+`kb-restructure/publication/02-main-ruby/`.
 
 Previous [0.31.2 checks](package-0.31.2/kb-checks.md) and
 [staging receipt](package-0.31.2/staging/receipt.md) remain historical evidence.

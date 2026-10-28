@@ -17,21 +17,7 @@ kterými může aktuálně přihlášený uživatel pracovat.
 ===== Práce s API =====
 API používá framework [[https://github.com/vpsfreecz/haveapi|HaveAPI]].
 Jeho [[https://github.com/vpsfreecz/haveapi#what-is-a-self-describing-api|popis]]
-umožňuje generickým klientům zjistit dostupné zdroje, akce a parametry.
-Klienti pro Go, Rust a TypeScript poskytují typy pro konkrétní verzi API vpsAdminu.
-
-  * Ruby a CLI - https://github.com/vpsfreecz/vpsfree-client
-  * PHP - https://github.com/vpsfreecz/haveapi/tree/master/clients/php
-  * JavaScript a TypeScript - https://github.com/vpsfreecz/haveapi/tree/master/clients/js
-  * Python - https://github.com/vpsfreecz/haveapi/tree/master/clients/python
-  * Klient pro Go - https://github.com/vpsfreecz/vpsadmin-go-client
-  * Klient pro Rust - https://github.com/vpsfreecz/vpsadmin-rust-client
-  * Klient pro vpsAdmin v TypeScriptu - https://github.com/vpsfreecz/vpsadmin-typescript-client
-  * Webové rozhraní z HaveAPI - https://github.com/vpsfreecz/haveapi-webui (zastaralé)
-
-Instalaci, autentizaci a použití popisuje ''README.md'' každého klienta.
-Generičtí klienti si stáhnou popis API ze zadané adresy. Klienti pro vpsAdmin
-obsahují metody a typy pro zdroje a akce podporované verze API.
+obsahuje dostupné zdroje, akce a parametry.
 
 API je [[wp>Representational state transfer|RESTful]], takže pro jednoduché
 úkony lze využít i libovolný REST klient. Popis vlastního protokolu pro přenos
@@ -39,105 +25,6 @@ dat, který HaveAPI klienti abstrahují, je k nahlédnutí v
 [[https://api.vpsfree.cz/doc/protocol.md|dokumentaci]].
 
 **poznámka** Pokud API vpsfree vrací http kód 500, ujistěte se, že váš REST klient posílá http hlavičku `User-Agent: x"`, která nesmí být prázdným řetězcem. Nejspíš jsou povinné i hlavičky `Accept: application/json` a `"Content-Type: application/json`. Většina http rest knihoven hlavičku `User-Agent` přidá automaticky, ale některé to nedělají.
-
-
-
-===== Klient pro Python =====
-
-Balíček [[https://pypi.org/project/haveapi-client/0.31.2/|haveapi-client]]
-vyžaduje Python 3.11 nebo novější:
-
-<code bash>
-python -m pip install haveapi-client==0.31.2
-</code>
-
-Z modulu ''haveapi_client'' importuj ''Client'' pro synchronní volání nebo
-''AsyncClient'' pro asynchronní volání. Oba podporují ''TokenAuth'',
-''BasicAuth'' a ''OAuth2Auth''. S existujícím tokenem v proměnné
-''VPSADMIN_TOKEN'' můžeš například vypsat VPS:
-
-<code python>
-import os
-from haveapi_client import Client, TokenAuth
-
-with Client("https://api.vpsfree.cz", version="7.0",
-            auth=TokenAuth(os.environ["VPSADMIN_TOKEN"])) as api:
-    result = api.vps.list.call(params={"limit": 10})
-    for vps in result.data:
-        print(vps["id"], vps["hostname"])
-</code>
-
-S ''AsyncClient'' použij ''async with'' a před volání akce přidej ''await''.
-Ukázky autentizace a asynchronního volání najdeš v
-[[https://github.com/vpsfreecz/haveapi/tree/master/clients/python|README klienta]].
-
-===== Klient HaveAPI pro JavaScript a TypeScript =====
-
-Oba jazyky používají stejný balíček z npm, který obsahuje i deklarace typů pro TypeScript:
-
-<code bash>
-npm install haveapi-client@0.31.2
-</code>
-
-''AsyncClient'' používá Promise. Následující ukázka pro Node.js používá existující
-token z proměnné ''VPSADMIN_TOKEN'':
-
-<code typescript>
-import { AsyncClient } from "haveapi-client";
-
-async function main() {
-  const token = process.env.VPSADMIN_TOKEN;
-  if (!token) throw new Error("Set VPSADMIN_TOKEN");
-  const api = new AsyncClient("https://api.vpsfree.cz", { version: "7.0" });
-  await api.authenticate("token", { token });
-  const result = await api.resource("vps").action("list")({
-    params: { limit: 10 },
-  });
-  console.log(result.value);
-}
-
-main().catch(console.error);
-</code>
-
-Balíček poskytuje také ''Client'' a ''CallbackClient'' s callbackovým rozhraním.
-Použití v prohlížeči a práci s typovanými výsledky popisuje
-[[https://github.com/vpsfreecz/haveapi/tree/master/clients/js|README klienta]].
-
-===== Klient pro vpsAdmin v TypeScriptu =====
-
-[[https://github.com/vpsfreecz/vpsadmin-typescript-client|Klient pro vpsAdmin v TypeScriptu]]
-poskytuje metody pro zdroje a akce API 7.0 včetně typů jejich parametrů a výsledků.
-Editor ti díky těmto typům může při psaní kódu napovídat názvy zdrojů, akcí
-a parametrů. Generický ''haveapi-client'' zjišťuje podobu API za běhu a poskytuje
-výše popsaná rozhraní s Promise a callbacky.
-
-Klient ve verzi 0.1.1 vyžaduje ''haveapi-client'' 0.30.2. Nainstaluj tuto dvojici:
-
-<code bash>
-npm install vpsadmin-typescript-client@0.1.1 haveapi-client@0.30.2
-</code>
-
-Použití ''createVpsAdminClient'', autentizaci a volání akcí najdeš v
-[[https://github.com/vpsfreecz/vpsadmin-typescript-client#readme|README klienta]].
-Verze klienta je nezávislá na verzi frameworku HaveAPI.
-
-===== Klient pro Rust =====
-
-[[https://github.com/vpsfreecz/vpsadmin-rust-client|Klient pro vpsAdmin v Rustu]]
-podporuje API 7.0 a vyžaduje Rust 1.95 nebo novější. Balíček
-[[https://crates.io/crates/vpsadmin-client|vpsadmin-client]] nainstaluj přidáním
-závislosti do ''Cargo.toml'':
-
-<code toml>
-[dependencies]
-vpsadmin-client = "0.1"
-</code>
-
-Pro asynchronní volání použij ''vpsadmin_client::Client''. Pro synchronní volání
-nastav závislost na ''vpsadmin-client = { version = "0.1", features = ["blocking"] }''
-a použij ''vpsadmin_client::blocking::Client''. Ukázky autentizace tokenem a volání akcí
-najdeš v [[https://github.com/vpsfreecz/vpsadmin-rust-client#readme|README klienta]].
-Verze klienta je nezávislá na verzi frameworku HaveAPI.
 
 ===== Autentizace =====
 API podporuje dva způsoby autentizace:
@@ -187,8 +74,9 @@ Ukázky možných scopes:
 Scope může obsahovat globy pro název resource a akce. Akce je od resource oddělena křížkem (''#''). Volitelné ID objektů se píšou za dvojtečkou ('':'') a nemohou obsahovat globy, musí být přesně. Každý token může mít více nastavených scopes, oddělují se mezerou. Pro udělení přístupu musí aspoň jedno nastavené scope platit pro volanou akci v API.
 
 ===== Instalace klienta =====
-[[https://github.com/vpsfreecz/vpsfree-client|Klient pro Ruby]] obsahuje CLI
-(rozhraní pro příkazovou řádku) a knihovnu pro použití v Ruby skriptech.
+Hlavním klientem je [[https://github.com/vpsfreecz/vpsfree-client|vpsfree-client]]
+pro Ruby. Obsahuje příkaz ''vpsfreectl'' pro práci z příkazové řádky i knihovnu
+pro Ruby skripty. Obojí nainstaluješ jedním balíčkem.
 Pro správnou funkci vyžaduje Ruby >= 2.7, nainstalované hlavičkové soubory
 Ruby a ncurses (většinou balíčky s příponou ''-dev'' či ''-devel'').
 Poté klienta nainstalujeme pomocí Ruby gems:
@@ -648,7 +536,26 @@ $ gem cleanup -n  # vypíše, které gemy by smazal
 $ gem cleanup  # smaže gemy
 </code>
 
-===== Ukázky použití =====
+===== Klient pro Ruby =====
+
+Knihovnu ze stejného balíčku ''vpsfree-client'' můžeš použít ve vlastních skriptech.
+S existujícím tokenem v proměnné ''VPSADMIN_TOKEN'' vypíšeš VPS takto:
+
+<code ruby>
+require 'vpsfree/client'
+
+api = VpsFree::Client.new
+api.authenticate(:token, token: ENV.fetch('VPSADMIN_TOKEN'))
+
+api.vps.list.each do |vps|
+  puts "#{vps.id}: #{vps.hostname}"
+end
+</code>
+
+Další možnosti knihovny popisuje
+[[https://github.com/vpsfreecz/vpsfree-client#client-library|README klienta]].
+
+==== Ukázky použití ====
 Následují skripty demonstrují možnosti využití API. Tyto skripty lze
 spouštět odkudkoli -- manuálně, z cronu, apod.
 
@@ -658,7 +565,7 @@ Ač jsou tyto ukázky stále validní, klient v CLI už obsahuje
 ještě jednodušší.
 </note>
 
-==== Každodenní stahování záloh VPS ====
+=== Každodenní stahování záloh VPS ===
 <code ruby>
 #!/usr/bin/env ruby
 # Stažení poslední (nejnovější) zálohy všech VPS.
@@ -689,7 +596,7 @@ end
 puts "Done"
 </code>
 
-==== Denní zálohování NASu s týdenní historií ====
+=== Denní zálohování NASu s týdenní historií ===
 <code ruby>
 #!/usr/bin/env ruby
 # Denní snapshotovaní NASu se 7 denní historií
@@ -720,6 +627,110 @@ api.dataset.list(role: :primary).each do |ds|
   end
 end
 </code>
+
+===== Další klienti =====
+
+Pro PHP, Python, JavaScript a TypeScript můžeš použít generické klienty HaveAPI,
+které si ze serveru stáhnou popis dostupných zdrojů, akcí a parametrů.
+Klienti pro vpsAdmin v Go, Rustu a TypeScriptu mají metody a typy pro konkrétní
+verzi API. Instalaci, autentizaci a další příklady popisuje README každého klienta.
+
+==== Klient pro Python ====
+
+Balíček [[https://pypi.org/project/haveapi-client/0.31.2/|haveapi-client]]
+vyžaduje Python 3.11 nebo novější:
+
+<code bash>
+python -m pip install haveapi-client==0.31.2
+</code>
+
+Z modulu ''haveapi_client'' importuj ''Client'' pro synchronní volání nebo
+''AsyncClient'' pro asynchronní volání. Oba podporují ''TokenAuth'',
+''BasicAuth'' a ''OAuth2Auth''. S existujícím tokenem v proměnné
+''VPSADMIN_TOKEN'' můžeš například vypsat VPS:
+
+<code python>
+import os
+from haveapi_client import Client, TokenAuth
+
+with Client("https://api.vpsfree.cz", version="7.0",
+            auth=TokenAuth(os.environ["VPSADMIN_TOKEN"])) as api:
+    result = api.vps.list.call(params={"limit": 10})
+    for vps in result.data:
+        print(vps["id"], vps["hostname"])
+</code>
+
+S ''AsyncClient'' použij ''async with'' a před volání akce přidej ''await''.
+Ukázky autentizace a asynchronního volání najdeš v
+[[https://github.com/vpsfreecz/haveapi/tree/master/clients/python|README klienta]].
+
+==== Klient HaveAPI pro JavaScript a TypeScript ====
+
+Oba jazyky používají stejný balíček z npm, který obsahuje i deklarace typů pro TypeScript:
+
+<code bash>
+npm install haveapi-client@0.31.2
+</code>
+
+''AsyncClient'' používá Promise. Následující ukázka pro Node.js používá existující
+token z proměnné ''VPSADMIN_TOKEN'':
+
+<code typescript>
+import { AsyncClient } from "haveapi-client";
+
+async function main() {
+  const token = process.env.VPSADMIN_TOKEN;
+  if (!token) throw new Error("Set VPSADMIN_TOKEN");
+  const api = new AsyncClient("https://api.vpsfree.cz", { version: "7.0" });
+  await api.authenticate("token", { token });
+  const result = await api.resource("vps").action("list")({
+    params: { limit: 10 },
+  });
+  console.log(result.value);
+}
+
+main().catch(console.error);
+</code>
+
+Balíček poskytuje také ''Client'' a ''CallbackClient'' s callbackovým rozhraním.
+Použití v prohlížeči a práci s typovanými výsledky popisuje
+[[https://github.com/vpsfreecz/haveapi/tree/master/clients/js|README klienta]].
+
+==== Klient pro vpsAdmin v TypeScriptu ====
+
+[[https://github.com/vpsfreecz/vpsadmin-typescript-client|Klient pro vpsAdmin v TypeScriptu]]
+poskytuje metody pro zdroje a akce API 7.0 včetně typů jejich parametrů a výsledků.
+Editor ti díky těmto typům může při psaní kódu napovídat názvy zdrojů, akcí
+a parametrů. Generický ''haveapi-client'' zjišťuje podobu API za běhu a poskytuje
+výše popsaná rozhraní s Promise a callbacky.
+
+Klient ve verzi 0.1.1 vyžaduje ''haveapi-client'' 0.30.2. Nainstaluj tuto dvojici:
+
+<code bash>
+npm install vpsadmin-typescript-client@0.1.1 haveapi-client@0.30.2
+</code>
+
+Použití ''createVpsAdminClient'', autentizaci a volání akcí najdeš v
+[[https://github.com/vpsfreecz/vpsadmin-typescript-client#readme|README klienta]].
+Verze klienta je nezávislá na verzi frameworku HaveAPI.
+
+==== Klient pro Rust ====
+
+[[https://github.com/vpsfreecz/vpsadmin-rust-client|Klient pro vpsAdmin v Rustu]]
+podporuje API 7.0 a vyžaduje Rust 1.95 nebo novější. Balíček
+[[https://crates.io/crates/vpsadmin-client|vpsadmin-client]] nainstaluj přidáním
+závislosti do ''Cargo.toml'':
+
+<code toml>
+[dependencies]
+vpsadmin-client = "0.1"
+</code>
+
+Pro asynchronní volání použij ''vpsadmin_client::Client''. Pro synchronní volání
+nastav závislost na ''vpsadmin-client = { version = "0.1", features = ["blocking"] }''
+a použij ''vpsadmin_client::blocking::Client''. Ukázky autentizace tokenem a volání akcí
+najdeš v [[https://github.com/vpsfreecz/vpsadmin-rust-client#readme|README klienta]].
+Verze klienta je nezávislá na verzi frameworku HaveAPI.
 
 <maintainers hidden>
 aither

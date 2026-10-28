@@ -18,124 +18,12 @@ the user who is currently logged in can work with.
 ===== Working with the API =====
 The API uses the [[https://github.com/vpsfreecz/haveapi|HaveAPI]] framework.
 Its [[https://github.com/vpsfreecz/haveapi#what-is-a-self-describing-api|self-description]]
-lets generic HaveAPI clients discover available resources, actions and parameters.
-The vpsAdmin clients for Go, Rust and TypeScript provide types for a specific API version.
-
-  * Ruby and CLI - https://github.com/vpsfreecz/vpsfree-client
-  * PHP - https://github.com/vpsfreecz/haveapi/tree/master/clients/php
-  * JavaScript and TypeScript - https://github.com/vpsfreecz/haveapi/tree/master/clients/js
-  * Python - https://github.com/vpsfreecz/haveapi/tree/master/clients/python
-  * Go client - https://github.com/vpsfreecz/vpsadmin-go-client
-  * Rust client - https://github.com/vpsfreecz/vpsadmin-rust-client
-  * TypeScript client for vpsAdmin - https://github.com/vpsfreecz/vpsadmin-typescript-client
-  * The HaveAPI web interface - https://github.com/vpsfreecz/haveapi-webui (outdated)
-
-Each client's ''README.md'' describes installation, authentication and usage.
-Generic clients download the API description from the supplied URL. The vpsAdmin
-clients provide methods and types for the resources and actions of their supported API version.
+lists the available resources, actions and parameters.
 
 The API is [[wp>Representational state transfer|RESTful]], so any REST client
 can be used for simple actions. A description of the custom data transfer protocol
 that HaveAPI clients abstract can be found in
 [[https://api.vpsfree.cz/doc/protocol.md|the documentation]].
-
-===== Python client =====
-
-The [[https://pypi.org/project/haveapi-client/0.31.2/|haveapi-client]] package
-requires Python 3.11 or newer:
-
-<code bash>
-python -m pip install haveapi-client==0.31.2
-</code>
-
-Import ''Client'' for synchronous calls or ''AsyncClient'' for asynchronous
-calls from ''haveapi_client''. Both support ''TokenAuth'', ''BasicAuth'' and
-''OAuth2Auth''. For example, with an existing token in ''VPSADMIN_TOKEN'':
-
-<code python>
-import os
-from haveapi_client import Client, TokenAuth
-
-with Client("https://api.vpsfree.cz", version="7.0",
-            auth=TokenAuth(os.environ["VPSADMIN_TOKEN"])) as api:
-    result = api.vps.list.call(params={"limit": 10})
-    for vps in result.data:
-        print(vps["id"], vps["hostname"])
-</code>
-
-With ''AsyncClient'', use ''async with'' and await the action call. See the
-[[https://github.com/vpsfreecz/haveapi/tree/master/clients/python|client README]]
-for authentication and asynchronous examples.
-
-===== HaveAPI client for JavaScript and TypeScript =====
-
-Both languages use the same npm package, which includes TypeScript declarations:
-
-<code bash>
-npm install haveapi-client@0.31.2
-</code>
-
-''AsyncClient'' provides a Promise-based interface. This Node.js example uses
-an existing token in ''VPSADMIN_TOKEN'':
-
-<code typescript>
-import { AsyncClient } from "haveapi-client";
-
-async function main() {
-  const token = process.env.VPSADMIN_TOKEN;
-  if (!token) throw new Error("Set VPSADMIN_TOKEN");
-  const api = new AsyncClient("https://api.vpsfree.cz", { version: "7.0" });
-  await api.authenticate("token", { token });
-  const result = await api.resource("vps").action("list")({
-    params: { limit: 10 },
-  });
-  console.log(result.value);
-}
-
-main().catch(console.error);
-</code>
-
-The package also provides the callback-based ''Client'' and ''CallbackClient''.
-See the [[https://github.com/vpsfreecz/haveapi/tree/master/clients/js|client README]]
-for browser usage and typed result handling.
-
-===== vpsAdmin TypeScript client =====
-
-The [[https://github.com/vpsfreecz/vpsadmin-typescript-client|vpsAdmin TypeScript client]]
-provides methods for API 7.0 resources and actions, with types for their parameters
-and results. Your editor can use these types to suggest resource names, actions
-and parameters as you write code.
-The generic ''haveapi-client'' discovers the API at runtime and provides the
-Promise and callback interfaces described above.
-
-Client version 0.1.1 requires ''haveapi-client'' 0.30.2. Install this compatible pair:
-
-<code bash>
-npm install vpsadmin-typescript-client@0.1.1 haveapi-client@0.30.2
-</code>
-
-The [[https://github.com/vpsfreecz/vpsadmin-typescript-client#readme|client README]]
-describes ''createVpsAdminClient'', authentication and action calls. The client's version
-is independent of the HaveAPI framework version.
-
-===== Rust client =====
-
-The [[https://github.com/vpsfreecz/vpsadmin-rust-client|vpsAdmin Rust client]]
-supports API 7.0 and requires Rust 1.95 or newer. Install the
-[[https://crates.io/crates/vpsadmin-client|vpsadmin-client]] crate by adding
-this dependency to ''Cargo.toml'':
-
-<code toml>
-[dependencies]
-vpsadmin-client = "0.1"
-</code>
-
-Use ''vpsadmin_client::Client'' for asynchronous calls. For synchronous calls,
-set the dependency to ''vpsadmin-client = { version = "0.1", features = ["blocking"] }''
-and use ''vpsadmin_client::blocking::Client''. The
-[[https://github.com/vpsfreecz/vpsadmin-rust-client#readme|client README]]
-contains token authentication and action examples. The client's version is
-independent of the HaveAPI framework version.
 
 ===== Authentication=====
 There are two authentication methods:
@@ -184,7 +72,9 @@ Example scopes:
 Scopes can contain globs for resource and action names. Action name is separated from resource name by a hash (''#''). Optional object IDs are separated from action name by a colon ('':'') and cannot contain globs. You can find a list of available scopes and their parameters in the [[https://api.vpsfree.cz/|documentation]]. Each token can have multiple scopes separated by spaces. At least one scope must match the called action in order for access to be granted.
 
 ===== Installing vpsfree-client =====
-[[https://github.com/vpsfreecz/vpsfree-client|The Ruby client]] also includes a CLI.
+The main client is [[https://github.com/vpsfreecz/vpsfree-client|vpsfree-client]]
+for Ruby. It includes the ''vpsfreectl'' command-line tool and a library for Ruby
+scripts, both installed from the same package.
 In order for it to work properly, you need Ruby >= 2.7, Ruby header files and ncurses (mostly packages with the ''-dev'' or ''-devel'' suffix).
 
 <code bash>
@@ -210,7 +100,7 @@ This command will display the location of all executables installed using
 $ PATH="$PATH:/home/user/.gem/ruby/3.0.0/bin"
 </code>
 
-==== Using CLI ====
+===== Using CLI =====
 
 <code>
 $ vpsfreectl --help
@@ -591,7 +481,26 @@ $ gem cleanup -n  # prints which gems would be deleted
 $ gem cleanup  # deletes the gems
 </code>
 
-===== Usage Examples =====
+===== Ruby client =====
+
+Use the library from the same ''vpsfree-client'' package in your own scripts.
+With an existing token in ''VPSADMIN_TOKEN'', you can list VPSes as follows:
+
+<code ruby>
+require 'vpsfree/client'
+
+api = VpsFree::Client.new
+api.authenticate(:token, token: ENV.fetch('VPSADMIN_TOKEN'))
+
+api.vps.list.each do |vps|
+  puts "#{vps.id}: #{vps.hostname}"
+end
+</code>
+
+See the [[https://github.com/vpsfreecz/vpsfree-client#client-library|client README]]
+for more library examples.
+
+==== Usage Examples ====
 The following scripts demonstrate ways you can use the API. These scripts can be
 run from anywhere – manually, from cron, etc.
 
@@ -601,7 +510,7 @@ Although these examples are still valid, the CLI client already contains
 even easier.
 </note>
 
-==== Daily Downloads of VPS Backups ====
+=== Daily Downloads of VPS Backups ===
 <code>
 #!/usr/bin/env ruby
 # Downloading the last (most recent) backup of all VPSs.
@@ -632,7 +541,7 @@ end
 puts "Done"
 </code>
 
-==== Daily NAS Backups with a Weekly History ====
+=== Daily NAS Backups with a Weekly History ===
 <code>
 #!/usr/bin/env ruby
 # Daily NAS snapshotting with a 7-day history
@@ -663,3 +572,109 @@ api.dataset.list(role: :primary).each do |ds|
   end
 end
 </code>
+
+===== Other clients =====
+
+The generic HaveAPI clients for PHP, Python, JavaScript and TypeScript download
+the available resources, actions and parameters from the server. The vpsAdmin
+clients for Go, Rust and TypeScript provide methods and types for a specific API
+version. Each client's README covers installation, authentication and further examples.
+
+==== Python client ====
+
+The [[https://pypi.org/project/haveapi-client/0.31.2/|haveapi-client]] package
+requires Python 3.11 or newer:
+
+<code bash>
+python -m pip install haveapi-client==0.31.2
+</code>
+
+Import ''Client'' for synchronous calls or ''AsyncClient'' for asynchronous
+calls from ''haveapi_client''. Both support ''TokenAuth'', ''BasicAuth'' and
+''OAuth2Auth''. For example, with an existing token in ''VPSADMIN_TOKEN'':
+
+<code python>
+import os
+from haveapi_client import Client, TokenAuth
+
+with Client("https://api.vpsfree.cz", version="7.0",
+            auth=TokenAuth(os.environ["VPSADMIN_TOKEN"])) as api:
+    result = api.vps.list.call(params={"limit": 10})
+    for vps in result.data:
+        print(vps["id"], vps["hostname"])
+</code>
+
+With ''AsyncClient'', use ''async with'' and await the action call. See the
+[[https://github.com/vpsfreecz/haveapi/tree/master/clients/python|client README]]
+for authentication and asynchronous examples.
+
+==== HaveAPI client for JavaScript and TypeScript ====
+
+Both languages use the same npm package, which includes TypeScript declarations:
+
+<code bash>
+npm install haveapi-client@0.31.2
+</code>
+
+''AsyncClient'' provides a Promise-based interface. This Node.js example uses
+an existing token in ''VPSADMIN_TOKEN'':
+
+<code typescript>
+import { AsyncClient } from "haveapi-client";
+
+async function main() {
+  const token = process.env.VPSADMIN_TOKEN;
+  if (!token) throw new Error("Set VPSADMIN_TOKEN");
+  const api = new AsyncClient("https://api.vpsfree.cz", { version: "7.0" });
+  await api.authenticate("token", { token });
+  const result = await api.resource("vps").action("list")({
+    params: { limit: 10 },
+  });
+  console.log(result.value);
+}
+
+main().catch(console.error);
+</code>
+
+The package also provides the callback-based ''Client'' and ''CallbackClient''.
+See the [[https://github.com/vpsfreecz/haveapi/tree/master/clients/js|client README]]
+for browser usage and typed result handling.
+
+==== vpsAdmin TypeScript client ====
+
+The [[https://github.com/vpsfreecz/vpsadmin-typescript-client|vpsAdmin TypeScript client]]
+provides methods for API 7.0 resources and actions, with types for their parameters
+and results. Your editor can use these types to suggest resource names, actions
+and parameters as you write code.
+The generic ''haveapi-client'' discovers the API at runtime and provides the
+Promise and callback interfaces described above.
+
+Client version 0.1.1 requires ''haveapi-client'' 0.30.2. Install this compatible pair:
+
+<code bash>
+npm install vpsadmin-typescript-client@0.1.1 haveapi-client@0.30.2
+</code>
+
+The [[https://github.com/vpsfreecz/vpsadmin-typescript-client#readme|client README]]
+describes ''createVpsAdminClient'', authentication and action calls. The client's version
+is independent of the HaveAPI framework version.
+
+==== Rust client ====
+
+The [[https://github.com/vpsfreecz/vpsadmin-rust-client|vpsAdmin Rust client]]
+supports API 7.0 and requires Rust 1.95 or newer. Install the
+[[https://crates.io/crates/vpsadmin-client|vpsadmin-client]] crate by adding
+this dependency to ''Cargo.toml'':
+
+<code toml>
+[dependencies]
+vpsadmin-client = "0.1"
+</code>
+
+Use ''vpsadmin_client::Client'' for asynchronous calls. For synchronous calls,
+set the dependency to ''vpsadmin-client = { version = "0.1", features = ["blocking"] }''
+and use ''vpsadmin_client::blocking::Client''. The
+[[https://github.com/vpsfreecz/vpsadmin-rust-client#readme|client README]]
+contains token authentication and action examples. The client's version is
+independent of the HaveAPI framework version.
+
