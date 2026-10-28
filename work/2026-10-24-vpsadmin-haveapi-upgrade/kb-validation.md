@@ -1,12 +1,16 @@
 # KB local preparation receipt
 
-Current 0.31.2 version refresh: [mechanics and guarded outputs](package-0.31.2/kb-checks.md).
-Previous 0.31.1 [package checks](package-0.31.1/kb-checks.md) retain their unchanged
-executable-example and version scope.
-The reviewed 0.31.0 preparation remains [historical evidence](package-0.31/kb-checks.md).
-The text below is the historical 0.30.2 receipt. Its exact prior bytes and
-eight-file bundle are preserved in `package-0.31/kb/prior-0.30.2/` at the hashes
-recorded there; the old candidate/manifests hashes are not current outputs.
+Current restructuring editorial snapshot **1/3: remove haveapi-fs** is prepared
+locally. Canonical schema-5 manifests preserve the recorded production guards;
+191 pages remain inventoried, exactly2 change and189 remain unchanged. Installed
+manifest parsing and candidate checksum reads pass. No fresh production query,
+staging write or publication is claimed. The matching intended publication
+revision starts at `kb-original` and is saved under
+`kb-restructure/publication/01-remove-fs/`.
+
+Previous [0.31.2 checks](package-0.31.2/kb-checks.md) and
+[staging receipt](package-0.31.2/staging/receipt.md) remain historical evidence.
+The text below retains the historical0.30.2 checks and their original limits.
 
 ## Historical 0.30.2 receipt
 

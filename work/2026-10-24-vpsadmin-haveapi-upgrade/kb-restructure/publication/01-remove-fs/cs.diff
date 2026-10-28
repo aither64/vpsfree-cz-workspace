@@ -1,0 +1,92 @@
+--- cs/previous
++++ cs/01-remove-fs
+@@ -26,7 +26,6 @@
+   * JavaScript - https://github.com/vpsfreecz/haveapi/tree/master/clients/js
+   * Go - https://github.com/vpsfreecz/haveapi/tree/master/clients/go
+   * Webové rozhraní z HaveAPI - https://github.com/vpsfreecz/haveapi-webui (zastaralé)
+-  * Souborový systém založený na FUSE - https://github.com/vpsfreecz/haveapi-fs (zastaralé)
+ 
+ Ukázka použití je vždy v ''README.md'' každého klienta. Obecně se klientovi
+ předá URL k API, poté si sám stáhne dokumentaci a podle ní se nastaví.
+@@ -549,81 +548,6 @@
+ $ gem cleanup  # smaže gemy
+ </code>
+ 
+-===== Souborový systém ======
+-''haveapi-fs'' je souborový systém založený na FUSE, tzn. umožňuje připojit
+-API jako souborový systém z userspace. Objekty, akce a jejich parametry můžeme
+-procházet jako adresáře a soubory v libovolném programu. Instaluje se stejným způsobem
+-jako CLI, má jen jiný název:
+-
+-<code bash>
+-$ gem install haveapi-fs
+-</code>
+-
+-==== Použití ====
+-Použití ''haveapi-fs'' je podrobně popsáno v
+-[[https://github.com/vpsfreecz/haveapi-fs#usage|README.md]], zde jen ve
+-zkratce.
+-
+-<code>
+-$ haveapi-fs https://api.vpsfree.cz /mnt/api.vpsfree.cz
+-Username: mujlogin
+-Password:
+-
+-$ cd /mnt/api.vpsfree.cz
+-$ ls -1
+-auth_token
+-cluster
+-cluster_resource
+-dataset
+-dataset_plan
+-dns_resolver
+-environment
+-help.html
+-help.man
+-help.md
+-help.txt
+-ip_address
+-language
+-location
+-mail_template
+-migration_plan
+-node
+-object_history
+-os_template
+-snapshot_download
+-transaction
+-transaction_chain
+-user
+-user_session
+-vps
+-vps_config
+-</code>
+-
+-V každém adresáři se nachází soubory ''help.{html,txt,md,man}'', které popisují co
+-aktuální adresář obsahuje.
+-
+-<code>
+-$ cat vps/5685/hostname 
+-moje-vps
+-
+-$ echo lepsi-hostname > vps/5685/hostname
+-$ echo 1 > vps/5685/save
+-$ cat vps/5685/actions/update/status 
+-1
+-$ cat vps/5685/hostname
+-lepsi-hostname
+-</code>
+-
+-Z ukázky výše lze vidět, že jednotlivé atributy objektů lze měnit jednoduše
+-zapsáním do souboru. Akce uložení se vyvolá zapsáním jedničky, případně je to
+-i spustitelný soubor, takže jej můžeme spustit.
+-
+-Pro přehlednější vytváření/úpravu objektů lze použít YAML soubory
+-''create.yml'', resp. ''update.yml''. Tyto soubory obsahují parametry jako
+-hash a po uložení a uzavření souboru se příslušná akce provede.
+-
+-Tímto způsobem lze provést jakoukoli operaci v API.
+-
+ ===== Ukázky použití =====
+ Následují skripty demonstrují možnosti využití API. Tyto skripty lze
+ spouštět odkudkoli -- manuálně, z cronu, apod.

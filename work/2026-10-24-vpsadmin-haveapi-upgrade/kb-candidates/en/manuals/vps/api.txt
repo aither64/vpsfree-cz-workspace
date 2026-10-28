@@ -29,7 +29,6 @@ The vpsAdmin clients for Go, Rust and TypeScript provide types for a specific AP
   * Rust client - https://github.com/vpsfreecz/vpsadmin-rust-client
   * TypeScript client for vpsAdmin - https://github.com/vpsfreecz/vpsadmin-typescript-client
   * The HaveAPI web interface - https://github.com/vpsfreecz/haveapi-webui (outdated)
-  * A file system based on FUSE - https://github.com/vpsfreecz/haveapi-fs (outdated)
 
 Each client's ''README.md'' describes installation, authentication and usage.
 Generic clients download the API description from the supplied URL. The vpsAdmin
@@ -591,81 +590,6 @@ dependencies remain. In order to remove all old gems, use the following command:
 $ gem cleanup -n  # prints which gems would be deleted
 $ gem cleanup  # deletes the gems
 </code>
-
-===== File system ======
-''haveapi-fs'' is a file system based on FUSE, i.e. it makes it possible to mount
-the API as a file system from userspace. Objects, actions and their parameters can be
-browsed like folders and files in any program. The file system is installed the same way
-as a CLI, it just has a different name:
-
-<code>
-$ gem install haveapi-fs
-</code>
-
-==== Usage ====
-The usage of ''haveapi-fs'' is described in detail in
-[[https://github.com/vpsfreecz/haveapi-fs#usage|README.md]]. This is just a
-brief description.
-
-<code>
-$ haveapi-fs https://api.vpsfree.cz /mnt/api.vpsfree.cz
-Username: mylogin
-Password:
-
-$ cd /mnt/api.vpsfree.cz
-$ ls -1
-auth_token
-cluster
-cluster_resource
-dataset
-dataset_plan
-dns_resolver
-environment
-help.html
-help.man
-help.md
-help.txt
-ip_address
-language
-location
-mail_template
-migration_plan
-node
-object_history
-os_template
-snapshot_download
-transaction
-transaction_chain
-user
-user_session
-vps
-vps_config
-</code>
-
-Each folder contains the files ''help.{html,txt,md,man}'', which describe what
-the current folder contains.
-
-<code>
-$ cat vps/5685/hostname 
-my-vps 
-
-$ echo better-hostname > vps/5685/hostname 
-$ echo 1 > vps/5685/save
-$ cat vps/5685/actions/update/status 
-1
-$ cat vps/5685/hostname
-better-hostname 
-</code>
-
-The example demonstrates that individual object attributes can simply be changed by
-writing into a file. The save action can be called by writing a one, or it can
-be run as an executable file.
-
-In order to get clearer creation/modification of objects, you can use the YAML files
-''create.yml'' or ''update.yml''. These files contain parameters in the form of
-a hash and after saving and closing the file, the corresponding action is performed.
-
-This way, you can perform any operation in the API.
 
 ===== Usage Examples =====
 The following scripts demonstrate ways you can use the API. These scripts can be
