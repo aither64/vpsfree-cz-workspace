@@ -1,5 +1,5 @@
 ---
-lifecycle: complete
+lifecycle: archived
 ---
 
 # API example copy regression: completed
