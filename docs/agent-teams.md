@@ -150,19 +150,44 @@ Checks supply session/worktree locations, conversation paths, working-time total
 and the open concern. The observer reads the actual user request and uses Git
 status/diffstats to assess scope and progress. It inspects selected files,
 conversations and existing check output as needed, without performing a full
-code review or copying large records into each assignment. Member clocks overlap
-and are never summed; gaps in timing coverage are explicit.
-Small tasks without delivery are reassessed after 30 working minutes. Checks
-retain their three-minute limit. Healthy results stay quiet. A first actionable
-concern appears immediately and challenges the active lead; an unresolved concern
-challenges again at the next check. Idle sessions remain idle.
+code review or copying large records into each assignment.
+Small fixes and documentation without delivery are reassessed after 30 working
+minutes. Complex work uses task-specific milestones; the observation interval
+is not a delivery deadline. Name the relevant clock, never sum overlapping
+member clocks and respect coverage gaps. Checks retain their three-minute limit.
+Healthy results stay quiet. A first actionable concern appears immediately and
+challenges the active lead; an unresolved concern challenges again at the next
+check, assessing new evidence and the remaining gap. Idle sessions remain idle.
+
+Assessment starts with authorized scope, current phase and next milestone.
+Design evidence includes resolved constraints, narrowed alternatives with
+reasons, clarified invariants and dependencies, and fewer open decisions.
+Implementation and verification have their corresponding deliverables and
+results. Time, zero code, an absent design file, waiting implementers or no
+preview alone do not establish a stall; a phase label or growing document alone
+does not establish progress. Missed milestones, repeated investigation without
+new evidence, unexplained churn and optional expansion remain actionable.
+
+If visibility is insufficient, request a lightweight checkpoint at the next safe
+boundary: learning, settled and open decisions, dependencies and the next
+observable result. Use existing notes or a working draft; no per-check document
+or commit is required. Preserve the required design brief before substantive
+implementation. Release packages only with stable relevant interfaces and
+cross-cutting invariants. Do not force parallel utilization, freeze provisional
+contracts or defer authentication or other dependencies without evidence of safe
+independence and preserved user scope. An extension needs a concrete reason and
+next observable result.
 
 At the next safe boundary, the lead adjusts or briefly justifies continuing in
 its ordinary update: `Progress response <key>: <decision and reason>`. The portal
 shows that response; resolution requires the concern key and concrete evidence
-of simplification, delivery or independently checked necessity. An assessment is unavailable when essential information cannot be obtained;
-missing optional context does not invalidate independently inspected evidence. The
-observer cannot reassign work, cancel development checks or waive requirements.
+of learning, simplification, delivery or verified dependency necessity. Inspected
+design learning can refute a mistaken concern without code delivery;
+acknowledgment alone cannot. Keep the unresolved key, assess new evidence and
+name the remaining gap before repeating a concern. An assessment is unavailable
+when essential information cannot be obtained; missing optional context does
+not invalidate independently inspected evidence. The observer cannot reassign
+work, cancel development checks or waive requirements.
 Unavailable observations are visible and never block development. See the
 runtime session guide for scheduling and recovery details and the
 [verification procedure](agent-instructions/verification.md#keep-verification-proportional)

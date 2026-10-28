@@ -27,6 +27,22 @@ An internal plan or lead-approved design does not expand user authorization.
 Inspect large handwritten growth or new subsystems early; generated output and
 locks need context rather than a universal line-count limit.
 
+Assess evidence within the current phase. Design progress includes resolved
+constraints, narrowed alternatives with reasons, clarified invariants and
+dependencies, and fewer open decisions. Implementation and verification have
+their corresponding deliverables and results. Time, zero code, an absent design
+file, waiting implementers or no preview alone do not prove a stall; a phase
+label or growing document alone does not prove progress.
+
+When visibility is insufficient, ask at the next safe boundary for learning,
+settled and open decisions, dependencies and the next observable milestone.
+Existing notes or a working draft can supply this checkpoint; no per-check
+document or commit is required. Preserve the adequate design brief before
+substantive implementation. Release packages only when their relevant interfaces
+and cross-cutting invariants are stable. Do not freeze provisional assumptions
+or defer authentication, permissions or other dependencies to keep implementers
+busy without demonstrating safe independence and preserved user scope.
+
 For small documentation changes and bounded fixes, reassess after 30 working
 minutes without a delivered milestone, excluding idle time and human waits.
 Name the remaining deliverable, necessary checks and shortest valid completion
@@ -34,6 +50,13 @@ path. Stop optional expansion and simplify automatically; ask only for genuine
 product decisions or required approvals. Necessary long checks may continue
 with a concrete risk and stopping condition. Treat later user additions as
 separate milestones instead of holding completed work behind them.
+
+Complex work uses task-specific milestones; observation cadence is not a
+delivery deadline. Identify the relevant clock, respect gaps in timing coverage
+and never sum overlapping member clocks. Missed milestones, repeated
+investigation without new evidence, unexplained churn and settled independent
+work withheld for optional exploration remain actionable. An extension needs a
+concrete reason and next observable result.
 
 Use one implementer for narrow work unless independent execution packages justify
 more. Give complete packages with acceptance criteria; avoid per-command releases
@@ -43,8 +66,12 @@ Independent review starts with scope and proportionality before detailed
 hardening, even when an internal design already approved the mechanism. Prefer
 conventional tools and smaller solutions; optional hardening is follow-up work.
 Do not excuse defects inside the supported contract. Resolve observer concerns
-with observed simplification, delivery or independently checked necessity;
-acknowledgment and reassuring summaries alone are insufficient.
+with observed learning, simplification, delivery or verified dependency
+necessity. Inspected design evidence can refute a mistaken stall premise
+without code delivery; acknowledgment and reassuring summaries alone are
+insufficient. Reassess new evidence under the same unresolved key and name the
+remaining gap before repeating a concern. Missing essential context means the
+assessment is unavailable, not that progress is healthy or stalled.
 
 ## Keep verification proportional
 
