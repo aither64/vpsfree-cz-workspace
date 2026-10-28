@@ -20,6 +20,7 @@ Acceptance: a sourced verdict on stock IncusOS as an osctld container, concrete 
 ## Decisions
 
 - This request authorizes an assessment, not source implementation, deployment or integration.
+- User clarified that Incus inside an ordinary distribution already works; focus findings and recommendations on IncusOS specifically. Do not spend further work validating or recommending that known alternative.
 - Use canonical bare-repository source reads; no feature branches or worktrees are necessary unless investigation proves otherwise.
 
 ## Compatibility and deployment
