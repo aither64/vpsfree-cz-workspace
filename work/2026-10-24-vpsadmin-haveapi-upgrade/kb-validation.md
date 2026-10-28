@@ -1,6 +1,8 @@
 # KB local preparation receipt
 
-Current 0.31.1 preparation: [focused checks and guarded outputs](package-0.31.1/kb-checks.md).
+Current client terminology followup: [mechanics and guarded outputs](kb-terminology/checks.md).
+Previous 0.31.1 [package checks](package-0.31.1/kb-checks.md) retain their unchanged
+executable-example and version scope.
 The reviewed 0.31.0 preparation remains [historical evidence](package-0.31/kb-checks.md).
 The text below is the historical 0.30.2 receipt. Its exact prior bytes and
 eight-file bundle are preserved in `package-0.31/kb/prior-0.30.2/` at the hashes

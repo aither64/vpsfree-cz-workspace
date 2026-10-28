@@ -19,21 +19,21 @@ the user who is currently logged in can work with.
 The API uses the [[https://github.com/vpsfreecz/haveapi|HaveAPI]] framework.
 Its [[https://github.com/vpsfreecz/haveapi#what-is-a-self-describing-api|self-description]]
 lets generic HaveAPI clients discover available resources, actions and parameters.
-Generated Go, Rust and TypeScript SDKs provide types for a specific vpsAdmin API version.
+The vpsAdmin clients for Go, Rust and TypeScript provide types for a specific API version.
 
   * Ruby and CLI - https://github.com/vpsfreecz/vpsfree-client
   * PHP - https://github.com/vpsfreecz/haveapi/tree/master/clients/php
   * JavaScript and TypeScript - https://github.com/vpsfreecz/haveapi/tree/master/clients/js
   * Python - https://github.com/vpsfreecz/haveapi/tree/master/clients/python
-  * Go SDK - https://github.com/vpsfreecz/vpsadmin-go-client
-  * Rust SDK - https://github.com/vpsfreecz/vpsadmin-rust-client
-  * TypeScript SDK - https://github.com/vpsfreecz/vpsadmin-typescript-client
+  * Go client - https://github.com/vpsfreecz/vpsadmin-go-client
+  * Rust client - https://github.com/vpsfreecz/vpsadmin-rust-client
+  * TypeScript client for vpsAdmin - https://github.com/vpsfreecz/vpsadmin-typescript-client
   * The HaveAPI web interface - https://github.com/vpsfreecz/haveapi-webui (outdated)
   * A file system based on FUSE - https://github.com/vpsfreecz/haveapi-fs (outdated)
 
 Each client's ''README.md'' describes installation, authentication and usage.
-Generic clients download the API description from the supplied URL. Generated
-SDKs expose the resources and actions included when they were generated.
+Generic clients download the API description from the supplied URL. The vpsAdmin
+clients provide methods and types for the resources and actions of their supported API version.
 
 The API is [[wp>Representational state transfer|RESTful]], so any REST client
 can be used for simple actions. A description of the custom data transfer protocol
@@ -68,7 +68,7 @@ With ''AsyncClient'', use ''async with'' and await the action call. See the
 [[https://github.com/vpsfreecz/haveapi/tree/master/clients/python|client README]]
 for authentication and asynchronous examples.
 
-===== JavaScript and TypeScript client =====
+===== HaveAPI client for JavaScript and TypeScript =====
 
 Both languages use the same npm package, which includes TypeScript declarations:
 
@@ -100,28 +100,29 @@ The package also provides the callback-based ''Client'' and ''CallbackClient''.
 See the [[https://github.com/vpsfreecz/haveapi/tree/master/clients/js|client README]]
 for browser usage and typed result handling.
 
-===== Generated TypeScript client =====
+===== vpsAdmin TypeScript client =====
 
-The [[https://github.com/vpsfreecz/vpsadmin-typescript-client|vpsAdmin TypeScript SDK]]
+The [[https://github.com/vpsfreecz/vpsadmin-typescript-client|vpsAdmin TypeScript client]]
 provides methods for API 7.0 resources and actions, with types for their parameters
-and results. These types come from the API description used to generate the SDK.
+and results. Your editor can use these types to suggest resource names, actions
+and parameters as you write code.
 The generic ''haveapi-client'' discovers the API at runtime and provides the
 Promise and callback interfaces described above.
 
-SDK version 0.1.1 requires ''haveapi-client'' 0.30.2. Install this compatible pair:
+Client version 0.1.1 requires ''haveapi-client'' 0.30.2. Install this compatible pair:
 
 <code bash>
 npm install vpsadmin-typescript-client@0.1.1 haveapi-client@0.30.2
 </code>
 
-The [[https://github.com/vpsfreecz/vpsadmin-typescript-client#readme|SDK README]]
-describes ''createVpsAdminClient'', authentication and action calls. The SDK's version
+The [[https://github.com/vpsfreecz/vpsadmin-typescript-client#readme|client README]]
+describes ''createVpsAdminClient'', authentication and action calls. The client's version
 is independent of the HaveAPI framework version.
 
 ===== Rust client =====
 
-The [[https://github.com/vpsfreecz/vpsadmin-rust-client|vpsAdmin Rust SDK]]
-is generated for API 7.0 and requires Rust 1.95 or newer. Install the
+The [[https://github.com/vpsfreecz/vpsadmin-rust-client|vpsAdmin Rust client]]
+supports API 7.0 and requires Rust 1.95 or newer. Install the
 [[https://crates.io/crates/vpsadmin-client|vpsadmin-client]] crate by adding
 this dependency to ''Cargo.toml'':
 
@@ -133,8 +134,8 @@ vpsadmin-client = "0.1"
 Use ''vpsadmin_client::Client'' for asynchronous calls. For synchronous calls,
 set the dependency to ''vpsadmin-client = { version = "0.1", features = ["blocking"] }''
 and use ''vpsadmin_client::blocking::Client''. The
-[[https://github.com/vpsfreecz/vpsadmin-rust-client#readme|SDK README]]
-contains token authentication and action examples. The SDK's version is
+[[https://github.com/vpsfreecz/vpsadmin-rust-client#readme|client README]]
+contains token authentication and action examples. The client's version is
 independent of the HaveAPI framework version.
 
 ===== Authentication=====
