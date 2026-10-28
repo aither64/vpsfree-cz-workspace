@@ -1,0 +1,165 @@
+--- en/previous
++++ en/03-other-clients
+@@ -575,12 +575,153 @@
+ 
+ ===== Other clients =====
+ 
+-These clients are also available alongside the main Ruby client:
+-
+-  * PHP - https://github.com/vpsfreecz/haveapi/tree/master/clients/php
+-  * JavaScript - https://github.com/vpsfreecz/haveapi/tree/master/clients/js
+-  * Go - https://github.com/vpsfreecz/haveapi/tree/master/clients/go
+-  * The HaveAPI web interface - https://github.com/vpsfreecz/haveapi-webui (outdated)
+-
+-See each client's README for usage examples.
+-
++The generic HaveAPI clients for PHP, Python, JavaScript and TypeScript download
++the available resources, actions and parameters from the server. The vpsAdmin
++clients for Go, Rust and TypeScript provide methods and types for a specific API
++version. Each client's README covers installation, authentication and further examples.
++
++==== PHP client ====
++
++Install the [[https://github.com/vpsfreecz/haveapi/tree/master/clients/php|HaveAPI PHP client]]
++using Composer:
++
++<code bash>
++composer require haveapi/client:0.31.2
++</code>
++
++After loading the autoloader, use an existing token from ''VPSADMIN_TOKEN'':
++
++<code php>
++<?php
++require __DIR__ . '/vendor/autoload.php';
++
++$token = getenv('VPSADMIN_TOKEN');
++if (!$token) {
++    throw new RuntimeException('Set VPSADMIN_TOKEN');
++}
++
++$api = new \HaveAPI\Client('https://api.vpsfree.cz', '7.0');
++$api->authenticate('token', ['token' => $token]);
++
++foreach ($api->vps->list() as $vps) {
++    echo $vps->id . ': ' . $vps->hostname . PHP_EOL;
++}
++</code>
++
++The client exposes resources and actions as properties and methods. See the
++[[https://github.com/vpsfreecz/haveapi/tree/master/clients/php#usage|client README]]
++for action parameters, responses and error handling.
++
++==== Python client ====
++
++The [[https://pypi.org/project/haveapi-client/0.31.2/|haveapi-client]] package
++requires Python 3.11 or newer:
++
++<code bash>
++python -m pip install haveapi-client==0.31.2
++</code>
++
++Import ''Client'' for synchronous calls or ''AsyncClient'' for asynchronous
++calls from ''haveapi_client''. Both support ''TokenAuth'', ''BasicAuth'' and
++''OAuth2Auth''. For example, with an existing token in ''VPSADMIN_TOKEN'':
++
++<code python>
++import os
++from haveapi_client import Client, TokenAuth
++
++with Client("https://api.vpsfree.cz", version="7.0",
++            auth=TokenAuth(os.environ["VPSADMIN_TOKEN"])) as api:
++    result = api.vps.list.call(params={"limit": 10})
++    for vps in result.data:
++        print(vps["id"], vps["hostname"])
++</code>
++
++With ''AsyncClient'', use ''async with'' and await the action call. See the
++[[https://github.com/vpsfreecz/haveapi/tree/master/clients/python|client README]]
++for authentication and asynchronous examples.
++
++==== HaveAPI client for JavaScript and TypeScript ====
++
++Both languages use the same npm package, which includes TypeScript declarations:
++
++<code bash>
++npm install haveapi-client@0.31.2
++</code>
++
++''AsyncClient'' provides a Promise-based interface. This Node.js example uses
++an existing token in ''VPSADMIN_TOKEN'':
++
++<code typescript>
++import { AsyncClient } from "haveapi-client";
++
++async function main() {
++  const token = process.env.VPSADMIN_TOKEN;
++  if (!token) throw new Error("Set VPSADMIN_TOKEN");
++  const api = new AsyncClient("https://api.vpsfree.cz", { version: "7.0" });
++  await api.authenticate("token", { token });
++  const result = await api.resource("vps").action("list")({
++    params: { limit: 10 },
++  });
++  console.log(result.value);
++}
++
++main().catch(console.error);
++</code>
++
++The package also provides the callback-based ''Client'' and ''CallbackClient''.
++See the [[https://github.com/vpsfreecz/haveapi/tree/master/clients/js|client README]]
++for browser usage and typed result handling.
++
++==== Go client ====
++
++The [[https://github.com/vpsfreecz/vpsadmin-go-client|vpsAdmin Go client]] provides
++types for API 7.0 resources, actions and parameters. Add it to your Go module:
++
++<code bash>
++go get github.com/vpsfreecz/vpsadmin-go-client/client
++</code>
++
++Create the client with ''client.New("https://api.vpsfree.cz")'' and pass an existing
++token to ''SetExistingTokenAuth''. The base URL does not include ''/v7.0/'' because
++the action paths already contain the version. See the
++[[https://github.com/vpsfreecz/vpsadmin-go-client#usage|client README]] for a complete
++VPS listing example and other action calls.
++
++==== vpsAdmin TypeScript client ====
++
++The [[https://github.com/vpsfreecz/vpsadmin-typescript-client|vpsAdmin TypeScript client]]
++provides methods for API 7.0 resources and actions, with types for their parameters
++and results. Your editor can use these types to suggest resource names, actions
++and parameters as you write code.
++The generic ''haveapi-client'' discovers the API at runtime and provides the
++Promise and callback interfaces described above.
++
++Client version 0.1.1 requires ''haveapi-client'' 0.30.2. Install this compatible pair:
++
++<code bash>
++npm install vpsadmin-typescript-client@0.1.1 haveapi-client@0.30.2
++</code>
++
++The [[https://github.com/vpsfreecz/vpsadmin-typescript-client#readme|client README]]
++describes ''createVpsAdminClient'', authentication and action calls. The client's version
++is independent of the HaveAPI framework version.
++
++==== Rust client ====
++
++The [[https://github.com/vpsfreecz/vpsadmin-rust-client|vpsAdmin Rust client]]
++supports API 7.0 and requires Rust 1.95 or newer. Install the
++[[https://crates.io/crates/vpsadmin-client|vpsadmin-client]] crate by adding
++this dependency to ''Cargo.toml'':
++
++<code toml>
++[dependencies]
++vpsadmin-client = "0.1"
++</code>
++
++Use ''vpsadmin_client::Client'' for asynchronous calls. For synchronous calls,
++set the dependency to ''vpsadmin-client = { version = "0.1", features = ["blocking"] }''
++and use ''vpsadmin_client::blocking::Client''. The
++[[https://github.com/vpsfreecz/vpsadmin-rust-client#readme|client README]]
++contains token authentication and action examples. The client's version is
++independent of the HaveAPI framework version.
++

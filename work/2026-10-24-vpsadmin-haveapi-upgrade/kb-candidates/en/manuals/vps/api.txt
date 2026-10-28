@@ -580,6 +580,38 @@ the available resources, actions and parameters from the server. The vpsAdmin
 clients for Go, Rust and TypeScript provide methods and types for a specific API
 version. Each client's README covers installation, authentication and further examples.
 
+==== PHP client ====
+
+Install the [[https://github.com/vpsfreecz/haveapi/tree/master/clients/php|HaveAPI PHP client]]
+using Composer:
+
+<code bash>
+composer require haveapi/client:0.31.2
+</code>
+
+After loading the autoloader, use an existing token from ''VPSADMIN_TOKEN'':
+
+<code php>
+<?php
+require __DIR__ . '/vendor/autoload.php';
+
+$token = getenv('VPSADMIN_TOKEN');
+if (!$token) {
+    throw new RuntimeException('Set VPSADMIN_TOKEN');
+}
+
+$api = new \HaveAPI\Client('https://api.vpsfree.cz', '7.0');
+$api->authenticate('token', ['token' => $token]);
+
+foreach ($api->vps->list() as $vps) {
+    echo $vps->id . ': ' . $vps->hostname . PHP_EOL;
+}
+</code>
+
+The client exposes resources and actions as properties and methods. See the
+[[https://github.com/vpsfreecz/haveapi/tree/master/clients/php#usage|client README]]
+for action parameters, responses and error handling.
+
 ==== Python client ====
 
 The [[https://pypi.org/project/haveapi-client/0.31.2/|haveapi-client]] package
@@ -639,6 +671,21 @@ main().catch(console.error);
 The package also provides the callback-based ''Client'' and ''CallbackClient''.
 See the [[https://github.com/vpsfreecz/haveapi/tree/master/clients/js|client README]]
 for browser usage and typed result handling.
+
+==== Go client ====
+
+The [[https://github.com/vpsfreecz/vpsadmin-go-client|vpsAdmin Go client]] provides
+types for API 7.0 resources, actions and parameters. Add it to your Go module:
+
+<code bash>
+go get github.com/vpsfreecz/vpsadmin-go-client/client
+</code>
+
+Create the client with ''client.New("https://api.vpsfree.cz")'' and pass an existing
+token to ''SetExistingTokenAuth''. The base URL does not include ''/v7.0/'' because
+the action paths already contain the version. See the
+[[https://github.com/vpsfreecz/vpsadmin-go-client#usage|client README]] for a complete
+VPS listing example and other action calls.
 
 ==== vpsAdmin TypeScript client ====
 

@@ -1,16 +1,14 @@
 # KB local preparation receipt
 
-Current restructuring editorial snapshot **2/3: authentication, CLI and the main Ruby client** is prepared
-locally. Canonical schema-5 manifests preserve the recorded production guards;
-191 pages remain inventoried, exactly2 change and189 remain unchanged. Installed
-manifest parsing and candidate checksum reads pass. No fresh production query,
-staging write or publication is claimed. The matching intended publication
-sequence starts at `kb-original`; this second revision follows the first and is saved under
-`kb-restructure/publication/02-main-ruby/`.
+Current article restructuring: [focused local checks](kb-restructure/checks.md)
+and [three intended publication revisions](kb-restructure/publication/README.md).
+Final editorial candidates and schema-5 cumulative preview manifests are prepared
+locally; independent source review and separately released staging remain pending.
+No production write is authorized. Actual production guards remain unchanged.
 
 Previous [0.31.2 checks](package-0.31.2/kb-checks.md) and
-[staging receipt](package-0.31.2/staging/receipt.md) remain historical evidence.
-The text below retains the historical0.30.2 checks and their original limits.
+[staging receipt](package-0.31.2/staging/receipt.md) retain their original scope.
+The text below is the historical0.30.2 receipt.
 
 ## Historical 0.30.2 receipt
 

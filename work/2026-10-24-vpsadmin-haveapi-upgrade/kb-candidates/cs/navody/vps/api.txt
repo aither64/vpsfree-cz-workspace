@@ -635,6 +635,38 @@ které si ze serveru stáhnou popis dostupných zdrojů, akcí a parametrů.
 Klienti pro vpsAdmin v Go, Rustu a TypeScriptu mají metody a typy pro konkrétní
 verzi API. Instalaci, autentizaci a další příklady popisuje README každého klienta.
 
+==== Klient pro PHP ====
+
+[[https://github.com/vpsfreecz/haveapi/tree/master/clients/php|Klient HaveAPI pro PHP]]
+se instaluje pomocí Composeru:
+
+<code bash>
+composer require haveapi/client:0.31.2
+</code>
+
+Po načtení autoloaderu můžeš použít existující token z proměnné ''VPSADMIN_TOKEN'':
+
+<code php>
+<?php
+require __DIR__ . '/vendor/autoload.php';
+
+$token = getenv('VPSADMIN_TOKEN');
+if (!$token) {
+    throw new RuntimeException('Set VPSADMIN_TOKEN');
+}
+
+$api = new \HaveAPI\Client('https://api.vpsfree.cz', '7.0');
+$api->authenticate('token', ['token' => $token]);
+
+foreach ($api->vps->list() as $vps) {
+    echo $vps->id . ': ' . $vps->hostname . PHP_EOL;
+}
+</code>
+
+Klient zpřístupňuje zdroje a akce jako vlastnosti a metody. Parametry akcí,
+práci s výsledky a zpracování chyb popisuje
+[[https://github.com/vpsfreecz/haveapi/tree/master/clients/php#usage|README klienta]].
+
 ==== Klient pro Python ====
 
 Balíček [[https://pypi.org/project/haveapi-client/0.31.2/|haveapi-client]]
@@ -695,6 +727,21 @@ main().catch(console.error);
 Balíček poskytuje také ''Client'' a ''CallbackClient'' s callbackovým rozhraním.
 Použití v prohlížeči a práci s typovanými výsledky popisuje
 [[https://github.com/vpsfreecz/haveapi/tree/master/clients/js|README klienta]].
+
+==== Klient pro Go ====
+
+[[https://github.com/vpsfreecz/vpsadmin-go-client|Klient pro vpsAdmin v Go]]
+poskytuje typy pro zdroje, akce a parametry API 7.0. Do svého Go modulu ho přidej
+příkazem:
+
+<code bash>
+go get github.com/vpsfreecz/vpsadmin-go-client/client
+</code>
+
+Klienta vytvoř pomocí ''client.New("https://api.vpsfree.cz")'' a existující token
+nastav metodou ''SetExistingTokenAuth''. Adresa neobsahuje ''/v7.0/'', protože
+verze už je součástí cest jednotlivých akcí. Úplný příklad výpisu VPS a další
+volání najdeš v [[https://github.com/vpsfreecz/vpsadmin-go-client#usage|README klienta]].
 
 ==== Klient pro vpsAdmin v TypeScriptu ====
 
