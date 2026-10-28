@@ -36,3 +36,14 @@ Quick checks precede final independent review; packaged/native checks follow.
 
 Projects: dev-workspace implementation, workspace guidance and runtime selection,
 vpsfree-cz-configuration dev-workspace channel and aitherdev deployment.
+
+User follow-up: color cross-session messages distinctly in the Codex transcript
+and add a Sessions filter next to All/Messages/Team/Activity. Implement in the
+portal through the existing presentation metadata extension point. No codex-web
+repository change is needed. Include received messages and outbound tool calls.
+The user explicitly chose queued deployment once aitherdev becomes available.
+
+Post-deployment user feedback adds pending-Send dropping, Settings tabs and
+communication layout correction, plus fixing retry provenance after cold input
+recovery. Scope and checks are in the design follow-up. All changes stay in
+dev-workspace, followed by matching composed/configuration pins and deployment.

@@ -1,0 +1,3 @@
+Result: **incomplete**. `nix flake check --print-build-logs` was interrupted and exited 1; the browser command was not run. No verification operation remains active.
+
+The tested revision was `e1b6dc67adfdb045dad848d26d35a54752714df9`. Logs and the result artifact are [verification-2-flake-check.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-28-cross-session-messaging/verification-2-flake-check.log) and [verification-rerun-result.md](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-28-cross-session-messaging/verification-rerun-result.md). The log records that a duplicate invocation was also stopped.

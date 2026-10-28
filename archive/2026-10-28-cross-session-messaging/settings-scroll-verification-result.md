@@ -1,0 +1,3 @@
+Stage 1 passed: the communication browser test exited 0 in 23 seconds (16:54:08–16:54:31 UTC). Full log: [settings-scroll-browser.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-28-cross-session-messaging/settings-scroll-browser.log).
+
+I stopped before the build because the specified `.../worktrees/2026-10-28-cross-session-messaging/workspace` directory does not exist; the available worktree is `.../dev-workspace`. CI was not observed. No active handles remain. The parent was notified.
