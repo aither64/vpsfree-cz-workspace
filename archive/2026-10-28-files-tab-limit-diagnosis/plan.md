@@ -6,6 +6,15 @@ the "Files" tab in dev-workspace portal is broken, it says that it has a hit fil
 
 ## Affected repositories
 
+Authorized scope addition: user said "if you found a bug, we must find the root
+cause and fix it" after archive CI preflight failed. Pause deployment before
+claim/activation. Architect0 owns causal design; implementer0 owns diagnosis,
+instrumentation, fix, tests, docs and commits. Establish actual raw status,
+exact turn identity and native live state before choosing behavior. Preserve
+true failed/interrupted outcomes and all lifecycle/retry/recovery contracts.
+Keep this coherent bug-fix commit separate from Files; final reviewed fixed
+runtime then updates both pins. User permits deployment only, expressly no merges.
+
 - `dev-workspace`: lazy directory API, browser tree, tests and documentation.
 - Coordination workspace: tracking plus a feature worktree for composed runtime pins.
 - `vpsfree-cz-configuration`: matching `dev-workspace` channel pin and aitherdev build preparation.
@@ -80,3 +89,16 @@ Commit intended changes, inventory full base/head series and pin/migration linea
 then independent review. Resolve findings before long full Go/package/composed
 workspace/host checks, launched by fresh catalog-matched verification watchers.
 Keep test/build data outside tracking trees; retain compact receipts only.
+
+
+## Approved integration and machine release
+
+After verified deployment, the user instructed “ok, merge and release aitherdev”.
+The reviewed delivery heads d0e4318c (runtime), c2bfb715 (workspace) and7a254c88
+(configuration) were fast-forwarded to their remote master branches without
+source changes. The lead independently verified deployed lineage and current
+health, then released the exact aitherdev claim6acdf377 at22:05:53UTC and verified
+released revision2. The earlier deploy-only restriction is superseded for these
+three merges. Diagnostic927 remains separate evidence, not a delivery input or
+approved merge. Leave the session open; no lifecycle or cleanup action requested.
+See state.md and rollout-preparation.md for exact commits and release proof.
