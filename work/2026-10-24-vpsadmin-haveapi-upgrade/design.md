@@ -1,17 +1,37 @@
-# HaveAPI 0.30.1 adoption design
+# HaveAPI adoption design — current release 0.31.1
 
-Design owner: architect0. Status: all four packages ready for lead assignment;
-SDK compatibility is an explicit package B acceptance gate. Initial tracking
-commit: `b6001eb8`. No project source changes or external writes were made by the
-architect. The lead owns assignment, shared Git serialization, final prose,
-review and publication.
+Design owner: architect0. Current status, 2026-10-28: released **HaveAPI 0.31.1**
+is adopted, reviewed and checked; the authorized disposable cluster redeployment
+is accepted for qualified manual use, and both final KB articles are staged.
+The lead owns final acceptance, tracking and publication. Initial tracking commit:
+`b6001eb8`. See [current state and access details](state.md) and the
+[0.31.1 adoption section](#2026-10-27-authorized-0311-adoption-gates).
 
-Current target: released **HaveAPI 0.30.2**, per the
-[2026-10-26 addendum](#2026-10-26-addendum-released-haveapi-0302).
-The [2026-10-25 registry addendum](#2026-10-25-addendum-rust-registry-adoption)
-supersedes the original Rust Git-source recommendations in packages B/D.
-Decision B1 remains historical design evidence; its performance remedy is now
-owned by the user in another session and R1 remains an external readiness gate.
+API documentation now includes Go, Rust and generated TypeScript profiles.
+The generated `vpsadmin-typescript-client` SDK remains **0.1.1**, paired with
+its supported **haveapi-client 0.30.2** runtime; generic application clients use
+0.31.1. Rust uses the published registry client, without the historical Git pin.
+[Release facts](package-0.31.1/release-facts.md) bind these distinct identities.
+
+The released TypeScript remedy and actual consumer measurements close A31-R1:
+qualified anonymous rendering measured 4.775s wall/4.772s CPU versus the retained
+0.31.0 observation of 15.231s/15.218s. This is measured consumer evidence, not an
+identical-condition benchmark claim; see the [accepted R1 proof](package-0.31.1/vpsadmin/R1-qualified-anonymous/receipt.md).
+The former external-remedy gate is no longer open.
+
+E4's native packages are independently bound to exact reviewed React head e468
+through the [complete source/input/output proof](package-c/0.31.1/native-provenance/receipt.md).
+Actual application flows and documentation checks passed and were accepted;
+the manual-use conditions are satisfied. Embedded native revision metadata
+remains unavailable, so the clean-release metadata gate is not claimed. The
+installed provider still lacks F's certificate fix: independent four-guest
+system/closure/root proof supports present use, not a complete retained-boot
+certificate or guaranteed future cold recovery. Default-branch integration and
+production KB publication remain separately unauthorized.
+
+The original scope and dated sections below are preserved as historical design
+and decision evidence. This current summary and linked state supersede their
+earlier version targets, readiness gates and operational status.
 
 ## Scope and boundaries
 
@@ -2406,3 +2426,175 @@ ownership/generation/provider-certificate limits and rollback preparation stay;
 no provider install, release publication, production KB write or default merge is
 added. Adoption source work is ready at the availability gate; operational
 activation remains behind its established verification gates.
+
+E4 source-binding amendment for 0.31.1: after final reviewed/checked successor
+heads and lead's completed public reset, retain the original canonical `vpsadmin`
+and `vpsadmin-webui` at their previously planned `*-live030` names. Move the
+new 0.31.1 successors into the vacated canonical names; do **not** move the
+retained `vpsadmin-031`/`vpsadmin-webui-031` checkouts or rewrite their refs.
+The intended new registration basenames are `vpsadmin-0311` and
+`vpsadmin-webui-0311`; they were not yet present in `portal.yml` at this design
+check, so E3 must substitute the actual final registered aliases/paths in its
+existing four-move receipt and verify exact final heads before execution. Lead
+renames only the four involved whole registration entries and public-syncs;
+031 entries, historical bases and all unrelated registrations remain intact.
+All reset-completion, private editable-config restoration, native start/build,
+capacity, four-guest proof and access checks from E4 remain unchanged. No move,
+manifest edit, probe or activation is performed by this amendment.
+
+KB staging is already owned by this session with reviewed 0019 / generic0.31.0
+pages verified. Its staging review remains valid for those exact pages. After
+E2 confirms the 0.31.1 source/runtime facts, lead updates only current generic
+version references and any genuinely changed pairing guidance; E3 refreshes
+source guards/manifests and restages/verifies the revised pair through the same
+public workflow. This does not authorize production publication.
+
+0.31.1 first artifact facts (E2 report; compact receipt follows in
+`package-0.31.1/release-facts.md`): tag source is
+`d49cfa3f3b8ee42f6cd8a6b7de8b7d551215cd42` (unsigned). Downloaded TypeScript gem
+matches registry SHA256
+`597a6fe9f7d95f4e40cb6a4795352e5798082d3df65944f19ea060841742bb02`;
+its Documentation source matches the tag with SHA256
+`57a9d866a548c86c06c7351bff70b8b8afa18b8c281407053586639ed0b6fd53`.
+E2 proves the runtime change identical to the retained patch implementation;
+architect inspected that patch: shallow selections preserve canonical-before-alias
+lookup, unique-alias rejection, Basic/token preference/header checks and
+last-insertion mixed-key normalization, with no request cache/model mutation.
+The other reported release changes are performance tests/tooling and synchronized
+versions, not server HTML rendering source. This supports the existing narrow
+A/C verification mapping; it is not a consumer timing pass or release-test claim.
+Published SDK remains0.1.1 and both its peer requirement and the packaged0.31.1
+guide/renderer retain runtime0.30.2, `createClient`, versioned API base and the
+same profile keys. Keep SDK/renderer examples and KB pairing unchanged; only
+generic application versions become0.31.1. No additional design or source scope
+is needed. A0 proceeds with adopted-source timing/role checks after required
+quick/final-review gates; C1 retains focused artifact/provenance and affected
+adapter checks, with unchanged browser/BFF evidence reusable for its exact scope.
+
+C0.31.1 baseline decision (lead accepted): use fresh WebUI main
+`9113caa0915b2908373ecd616f8f752e779ed4c9`, retaining published baf/LIVE f10.
+The recorded 119-path upstream delta includes body-parser1.20.9, qs6.16.1 and
+its independent BFF Nix hash, plus integrated product/fixture changes. The
+canonical selected-release receipt records those upstream PRs as approved and
+deployed; they are baseline content, not this session's new feature scope.
+Preserve them while carrying only the existing two logical HaveAPI upgrade/
+adapter streams with final0.31.1 pins. The empty successor's historical initial
+registration base5a stays truthful; record911 separately as the final review
+base, with old5a..baf to new911..head mapping and any conflict resolutions.
+
+C1 owns the seven overlaps: retain both work-log histories and requirements;
+PACKAGING must combine the final root npm hash with upstream BFF hash; merge
+strict E2E coverage/tsconfig additions and structural-debt removals without
+restoring obsolete allowances; preserve the new datasets regression while
+adapting its fixture to the carried client. The actual new dataset wire contract
+is `dataset[dataset]`, `to_depth:0`, and role `backup`; preserve upstream nullable
+network ownership types and HaveApiError/localized snapshot rejection handling.
+These are focused compatibility checks, not grounds to reimplement upstream UI.
+
+Retain unchanged adapter/npm runtime source equivalence only for its verified
+scope (0311 published JS is version-only, declarations unchanged). Old BFF lock,
+full frontend tree and broad browser proof do not establish911 successor identity.
+Run ordinary quick/audit/type coverage plus affected adapter/dataset/error tests;
+new BFF lock requires its normal installation, audit and BFF checks. After final
+committed affected review, use normal required test/build/package provenance
+checks against the combined head and bounded auth/expiry acceptance. Do not
+repeat upstream's entire product/browser campaign or claim prior60/62 or paired
+expiry results as a new full-browser pass. Report a concrete merge/test conflict
+through lead; no additional design gate is imposed. E2's completed
+`package-0.31.1/release-facts.md` satisfies the release-source fact gate; installed
+consumer timing/semantics remain the R1 closure gate.
+
+## 2026-10-28: E4 proposed native graph disposition
+
+Recommend accepting E3's exact proposed graph for the already authorized new
+disposable cluster, subject to the existing A services/final-writer handoff and
+execution preflights. No additional compatibility blocker was found. This is a
+graph/source assessment, not a build, guest-proof or deployment result.
+
+Read-only retained Git inspection shows OS staging
+`d9be8c4bada590c0405df85444600d40e6f3caa6` →
+`f4e55a13d7d2f5c1b61737f0300ec8a535ef02f1` is exactly one commit changing only
+`flake.lock`: stable nixpkgs `1f607aa79...` → `718f670e8...`. No OSVM runner,
+module, application, protocol, seed or migration source changes occur in that
+OS range. The status commits were unavailable in the canonical local Git
+object database; no fetch was attempted. Both exact status source trees were
+already cached locally, identified by E3's recorded NARs at
+`/nix/store/glbypzg1ixw5wm6q2wf0k2shkxcyw1bd-source` (0210b055) and
+`/nix/store/8z9sv8rm8pkpnxsgm1589lsb99j709ld-source` (e4881a93).
+Their only file-content difference is the same stable-nixpkgs lock update;
+status application/config/module source is unchanged. Native vpsfStatus follows
+its root nixpkgs/vpsadmin/vpsadminos inputs, so its own lock does not introduce
+an additional independent dependency selection in this composed graph. Its
+source revision/package identity still changes; no binary equality is claimed.
+
+The seven changed node keys comprise the two final0311 source paths, both OS
+nodes, their two stable-nixpkgs nodes and the status source. E3 records complete
+20-node graph digest `d6f76d362cbfe695550a19674150ebab6c9d3d5bcfd44728fddf2faaba562f84`.
+Selected runtime pq2jwj/provider vh650 retains contract `9c8e9e5c...`, schema1/
+policy3. This graph uses a newer stable package set, so ordinary native public
+start must build/validate its complete final canonical-path graph; C's standalone
+package outputs are not interchangeable proof. Fresh reset avoids loading old
+application/database/BFF disk state through this package update. No retained-disk
+migration or mixed-OS fleet rollout is proposed. Restore only the accepted
+editable configuration, with native fresh credential/state creation as designed.
+
+Retain E3's existing local/cache evidence for the actual two6.12.113 kernels;
+stop and investigate unexpected kernel compilation under the normal policy.
+No extra OS/status campaign, host package switch or manual pin is required.
+Final source/ignored-byte handoff, post-reset address ownership, immediate host
+capacity and canonical-source checks remain unchanged. F is still absent in the
+selected provider: independent four-guest exact system/valid closure/standard
+and provider-root observations remain required, with the known certificate
+limitation reported honestly. Native build/runtime failure returns to ordinary
+owned-operation reconciliation; this assessment does not bypass a refusal or
+authorize provider repair, defaults integration or physical-host deployment.
+
+## 2026-10-28: E4 embedded WebUI metadata versus exact source proof
+
+The running native frontend5y1v/BFFnb19 metadata says `unknown`, `dirty:true`,
+`source:unavailable`, while native labels name clean e468. Labels alone cannot
+prove package identity. The existing packaging contract intentionally emits
+this conservative metadata when its flake input lacks `self.rev`; the native
+provider's path input is the reported cause. No metadata file should be patched,
+no clean revision fabricated and no provider correction/rebuild is required
+solely to improve this display.
+
+Accept independent exact-source provenance for this **development testing
+cluster**, once C1 completes the existing evidence chain: actual services
+selection/closure and nginx/BFF runtime package paths → actual package outputs
+and their recorded derivations → complete cleaned source/build inputs → reviewed
+e468 tree and expected locks/dependency artifacts. E3's saved native-input and
+6749-derivation graph records already identify frontend drv8n5b99 and BFFdrvq8r7d
+with the same `/nix/store/6p46phpszswrwq6029rmj1gyyi7ynm44-source` (BFF `/bff`)
+as C1's reviewed/rooted e468 Git-filtered source. C1 owns the final NAR/content/
+mode/symlink and complete relevant input binding, reusing those records; E3 owns
+actual runtime linkage/access facts. This does not require standalone/native
+output equality: their nixpkgs/build graphs differ. It requires identity of the
+actual native outputs, their own complete inputs and exact reviewed application
+source, including absence of extra retained build inputs.
+
+If that chain is complete and the existing actual application-flow checks pass,
+report the cluster usable at independently proven e468, with missing embedded
+revision metadata as an explicit limitation. Do not call the normal **clean
+release metadata** gate passed: PACKAGING.md requires matching full commit IDs
+and false dirty flags for that claim. Existing standalone package proof retains
+its actual scope. No new product/source fix is necessary for qualified manual
+use. An unproved edge blocks only the unsupported exact-head claim until the
+owner resolves that concrete edge; it does not justify an automatic rebuild or
+new provider project. Any later durable provenance improvement needs a separate
+lead-owned scope decision through the existing Git-backed packaging/input seam.
+The running cluster, provider, roots, package outputs and default branches stay
+unchanged during this assessment; no new probes or repeated checks are assigned.
+
+C1's completed `package-c/0.31.1/native-provenance/receipt.md` now satisfies the
+independent source/output gate above: all2,438 retained files/90,121,622 bytes
+and executable bits match e468 with no extra files/symlinks; both actual native
+derivations use that exact reviewed6p46 source. Their complete relevant edges
+match E3's6749 graph and actual services44b2 closure/nginx root/BFF ExecStart.
+Locks, npm FOD hashes, Node inputs and installed BFF dependencies are bound.
+Absent build-only cache outputs are disclosed; retained constrained derivations
+and actual installed-output proof suffice here without a cache-restore claim.
+Architect accepts this as exact e468 provenance under ordinary Nix build/store
+trust. No provenance blocker or corrective rebuild remains for manual dev use;
+E3's actual TLS/login/application checks remain separate. Embedded metadata is
+still unavailable and the normal clean-release metadata gate remains unmet.

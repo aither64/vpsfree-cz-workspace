@@ -1,11 +1,11 @@
-# vpsAdmin HaveAPI 0.30.2 upgrade
+# vpsAdmin HaveAPI 0.31.1 upgrade
 
 ## Goal and scope
 
-Update every HaveAPI server/client dependency in vpsadmin to released 0.30.2.
-Configure API documentation examples for the Go SDK and the published Rust
-SDK from crates.io. Verify the released documentation performance remedy in
-the real consumer before closing the existing R1 blocker.
+Update every HaveAPI server/client dependency in vpsadmin to released 0.31.1.
+Configure API documentation examples for Go, Rust and the published TypeScript
+SDK, preserving SDK0.1.1/exact npm runtime0.30.2. The released renderer remedy
+is verified in the real consumer and the measured R1 scope is closed.
 Carry forward the vpsadmin-webui work from 2026-10-19-haveapi-async-client into
 this session's own branch, replacing the custom client with the published async
 TypeScript npm client. Update KB manuals:vps:api with Python, Rust and
@@ -252,3 +252,20 @@ A31-R1; prior0.31.0 raw/qualified timing remains historical. KBlead updates fina
 wording/versions/manifests; E3 stages when legitimatelyfree and redeploys only
 after accepted finalsourcegates with parentnative reset/start. No new upstream
 source work, release/tag/defaultmerge/PR74force or productionKB permission.
+
+
+## 2026-10-28 delivery disposition
+
+Released0.31.1 adoption, source/history review, required checks and publication
+are complete. User-authorized reset/redeployment passed; both real member
+login/logout flows and generated documentation work on the retained running
+cluster. Both KB articles are staged. See state.md and devcluster/e4-runtime/receipt.md.
+
+Independent exact source/input/output proof establishes native Reacte468 despite
+missing embedded Git revision metadata from the provider's path input. Qualified
+manual development use is accepted; clean-release metadata and the installed
+provider's complete retained-boot certificate remain explicit limitations, with
+no provider repair/rebuild project. No default integration or production KB
+publication is authorized. Session/cluster/staging stay open; E2 owns remaining
+integration CI monitoring. Earlier plans and rollout facts below/above are
+historical unless this final disposition retains them.

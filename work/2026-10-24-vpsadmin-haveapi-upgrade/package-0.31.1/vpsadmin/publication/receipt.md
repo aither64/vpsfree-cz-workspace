@@ -1,0 +1,17 @@
+# Published0.31.1 final no-writer handoff
+
+Published [2026-10-24-vpsadmin-haveapi-upgrade-0311](https://github.com/vpsfreecz/vpsadmin/tree/2026-10-24-vpsadmin-haveapi-upgrade-0311) at exact`9697bf28c3171d4ee3e0980160be60764ae2c4aa` by ONE explicit no-force SSH push, normal installed hooks, no upstream setting. RootNix exit0/14.481s, push0/2.982s. Freshcanonicalfetch/defaultproof kept`08c3bd7e3cb4dc324a0381df6a1eec190daab1a7`; successor absentbefore/exact9697after, oldpublished70a/2c refs unchanged. [Independentremoteproof](remote-proof.json). No uncertain effect/retry.
+
+Supported comparison capture succeeded for ownaliasvpsadmin-0311, exact08c3..9697, without repointing canonicalLIVEregistration. [Comparison](capture-comparison.json). Exactlytwo reviewedlogicalstreams(A9a2c4611/B9697bf28),29paths/tree7f76bea109eb636963e63cbc980bea2fa6c08e40/clean/NO MIGRATIONS. No sourcechange since accepted finalreview.
+
+Affected verification complete: qualified anonymous4.775/memberCS3.419/adminEN4.704 seconds with correct auth/locale/privacy/output; oldqualified0310anonymous15.231s body equals0311 afteronlyownversion replacement. LeadCLOSED A31-R1 for measured mechanism/output/isolation; no identical-condition benchmark/SLA. Required core/full docs each4examples0failures. [R1receipt](../R1-qualified-anonymous/receipt.md).
+
+Services batchnative/wrapper0 in751.148s:32/32, strictactual==preparedconfig, normalQEMUexit0/killNONE/native-destroy/allownedPIDs+argv/cwd/FD references absent. ActualpackagedAPI5gems0311/Fiddle1.1.8/libffi3.8.0/assets and actualPHP0311/Guzzle7.16.1+13tests355assertions pass. [Servicespaths/completegraphs/inputs/roots](../postreview/services/paths.json), [effects](../postreview/services/reconciliation.json). Sameimmutableywc4swi0c4sb50sy7hrynjhv77xlx686-source matches3171tracked paths/modes/symlinks. Ordinaryroots retained under/tmp/h31s.o6fahg9y/roots. No further tests.
+
+[FinalignoredPHP/source/lockinventory](final-inventory.json): exactfull0051lock and all source/effective locks unchanged; selectedconfig/vendor/installed metadata hashes retained; localPHP0311/Guzzle7.16.1/PHPUnit13.4.5. Onlyignoredgroups .gems/.rubocop_cache/rootGemfile.lock/api.gems/apiGemfile.lock/webui.vendor; no ownprivatePHPconfig or default.phpunit.cache. PHPUnitcache is in ownreceipt. LIVE70a/published2c/preserved9c refs/tree/privateconfig/root+APIignoredlocks unchanged; all4originalguestPID/name/memory tuples unchanged.
+
+**NO WRITER HANDOFF:** A0 has no active source/APIlock/PHP/vendor/Git/dependency/VM command and will issue none after this handoff. Publicationwatcher60936/thread01a17fa3-a980-7961-98d9-7adaca99b344 ended; soleutilityslot RELEASED. All operation effects reconciled. Lead/E3 may now preserve configuration/inventory and continue their separately authorized E4 path. No default integration, livepath switch, provider mutation, deployment or session lifecycle action was performed byA0. Session remainsopen.
+
+Bounded exacthead CI discovery only, no waits/dispatch/rerun:9pushruns at9697. Initialfacts: API topics40600689665 queued; migration40600689691 success; WebuiPHPUnit40600689682 inprogress; client40600689677 inprogress; i18n40600689658 inprogress; CI40600689689 inprogress; console40600689684 success; download40600689690 success; RuboCop40600689708 success. [Runs](ci-runs.json), check-runs/status snapshots retained. Lead assigns ongoing observer; A0 will not duplicate queries.
+
+[Sessionportal](https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-24-vpsadmin-haveapi-upgrade/).

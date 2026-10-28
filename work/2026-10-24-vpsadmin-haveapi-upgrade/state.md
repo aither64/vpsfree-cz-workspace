@@ -2,27 +2,141 @@
 lifecycle: active
 ---
 
-# Current status — 2026-10-27
+# Current status — 2026-10-28
 
-Phase: awaiting released HaveAPI0.31.1 and legitimate KB staging availability.
-User explicitly authorizes polling about every10minutes (possibly hours) and
-upgrading as soon as published. Prior0.31.0 code/review/test/publishedC evidence
-remains exact-input history; A31-R1 measured15.23CPU is open until fixed released
-artifact adoption and consumer proof. The user owns upstream fixing in another
-session; our patch was handed off and all local upstream work stopped.
+**HaveAPI 0.31.1 upgrade and authorized disposable-cluster redeployment are
+complete and accepted for qualified manual development use. Both KB articles
+are staged and verified.** Cluster, scope, roots, staging and session remain
+running/open. No default branch integration or production KB publication was
+performed or approved.
 
-## Active availability and continuation owners
+## Phase checklist
 
-| Owner | Result / next step |
+- [x] Exact released artifacts/source remedy and supported SDK pair verified.
+  [Release facts](package-0.31.1/release-facts.md).
+- [x] A and C committed final two-stream histories independently reviewed with
+  all four affected lanes, no new findings and explicit no-migrations conclusions.
+  [A packet](package-0.31.1/vpsadmin/review-packet.md),
+  [C packet](package-c/0.31.1/review-packet.md).
+- [x] Required quick/integration/package checks pass; both own feature refs
+  published with normal hooks/no-force SSH and independent remote proof.
+  [A handoff](package-0.31.1/vpsadmin/publication/receipt.md),
+  [C handoff](package-c/0.31.1/postreview-results.md).
+- [x] A31-R1 measured remedy accepted: anonymous EN4.775s wall/4.772sCPU versus
+  retained0310 15.231s/15.218s. MemberCS3.419s/adminEN4.704s and auth/locale/
+  privacy pass. Anonymous output identical after own-version substitution;
+  generated public panels equal across roles. Host conditions differ, no SLA
+  or identical-condition benchmark claim. [R1 proof](package-0.31.1/vpsadmin/R1-qualified-anonymous/receipt.md).
+- [x] Editable config preserved privately; parent public reset completed0;
+  four ordinary Git moves retain old70a/f10 worktrees at *-live030 and put
+  final9697/e468 at canonical paths. Exactly four registration names remapped,
+  public sync passes; private/ignored content preserved.
+- [x] Final canonical graph/config/limits accepted, public native startup0,
+  running/ready/single/bridge, correct runner/fourQEMU scope and zeroOOM.
+- [x] Four independent SSH guest checks prove exact current/booted selections,
+  complete valid closures and standard system roots. Actual closure contains
+  all five HaveAPI0311 gems, PHPclient0311, Fiddle/libffi and documentation assets.
+- [x] Strict-CA real member login2/2 and logout2/2, authenticated API7 reads200;
+  PHP EN/CS controls and deployed TypeScript/Go/Rust docs pass. React locale
+  switching was not exercised. [Deployment receipt](devcluster/e4-runtime/receipt.md).
+- [x] Native React exact e468 source→actual output/service proof accepted by lead
+  and architect:2438filteredfiles/noextras, same reviewed6p46 source/NAR, complete
+  6749derivation graph/locks/FOD/service nginx+BFF chains. Native embedded revision
+  remains unknown/dirty/unavailable: **normal clean-release metadata gate has
+  not passed**. No fabricated metadata, provider correction or rebuild.
+  [Independent native provenance](package-c/0.31.1/native-provenance/receipt.md).
+- [x] Both final bilingual KB pages staged/verified at generic0311; generated SDK
+  remains0.1.1 with exact runtime0.30.2. [Staging receipt](package-0.31.1/staging/receipt.md).
+- [ ] One existing exact9697 integration CI run40600689689 still pending at last
+  snapshot00:20:03UTC; implementer2 parentfallback PTY14554 owns only this run
+  (>=60s query cadence), no dispatch/rerun. Eight other
+  workflows passed, including API27jobs. No overallCIpass claim.
+- [ ] Default integrations/PR74 replacement and production KB publication need
+  separate explicit direction. Session remains active; no archive/stop/cleanup.
+
+## Review and verification acceptance
+
+Retained independent reviewer0 used saved Sol/xhigh/read_only settings and all
+four lanes. A exact08c3..9697 and C exact9113..e468 complete histories, final
+diffs, consolidation and no-migrations conclusions accepted. A31-R1 was the
+existing Important finding; actual0311 consumer measurement and effects proof
+close its measured mechanism/output/isolation scope. A core/full docs4+4 and
+services32/32+samepackagedfivegems/PHP13tests355assertions pass. C scripts228,
+BFF57,307unitfiles1923cases, productionbuild and five normal Nix outputs pass.
+E4 driver changed only seven literal identity/resource constants, with AST
+mechanism equality and focused checks; this metadata refresh and subsequent
+source-chain diagnosis/evidence introduced no new substantive deliverable or
+review rerun. Earlier C browser3/6 and5/6 failures plus separate paired expiry passes remain
+their actual scopes; no syntheticgreen/preexisting/exactcause claim or new
+whole-browser/SDK campaign. Native and standalone Nix graphs/outputs differ.
+
+## Deployed source and runtime identities
+
+| Component | Canonical source / published feature |
 | --- | --- |
-| implementer2 | Availabilityfirstsnapshot21:06:18UTC: all5Ruby/npm/Python0311exactendpoints404; PHPUNKNOWNparserAttributeError. Stageforeignauth-email/pendingstillnotusable. FreshLunaendedprematurely/identitynotindependentlybound, no processremains; E2VISIBLEPARENTfallbackowns600scadence(next>=21:16:18), no moreutilitylaunch. [status](package-0.31.1/availability/latest.json). No installs/mutations; returnfirstactionablecondition. |
-| architect0 | Compact0.31.1 adoption scope/review-reuse/affectedcheck brief, verify releasedfix/SDKpair once available; no duplicate registry polling or upstream source work. |
-| implementer0 / implementer1 | Retain current A9c1b3f and publishedCbaf sources/roots; ready for0.31.1 dependency update packages after availability, preserve oldrefs and coherent history. |
-| lead / implementer3 | KB candidate wording/version/manifests then legitimate publicstage/verify when free (canstagecurrentreviewed0019generic0310before0311ifstagefreesfirst); exactsessionreset/redeploy remains authorized after finalsource/review/check gates. |
+| vpsAdmin | 9697bf28c3171d4ee3e0980160be60764ae2c4aa, tree7f76bea109eb636963e63cbc980bea2fa6c08e40; branch2026-10-24-vpsadmin-haveapi-upgrade-0311, base08c3bd7e3cb4dc324a0381df6a1eec190daab1a7; two logical commits/29paths/no migrations |
+| React | e468ca48406bde1bd99cc42a05e1832fb42162f4, tree13db539707ae88c8635e194ca04f3e36c6e3d76a; branchdev/vpsadmin-haveapi-0311, base9113caa0915b2908373ecd616f8f752e779ed4c9; two logical commits/74paths/no migrations |
 
-Do not release/reset/stop another session's staging. User will resolve the bugged
-owner; observed availability is required before our claim/write. No merge,
-PR74force, productionKB, release/tag or session lifecycle action is authorized.
+Native runtime pq2jwjcv/provider vh650, contract9c8e9e5c/schema1-policy3;
+OSf4e55a13d7d2f5c1b61737f0300ec8a535ef02f1, nixpkgs718f670e8.
+Final canonical20node graph SHA256eca154989f884c08822beffda85ce064d347f69f5f3ee75f61f62d9cf6d84e38.
+API raw NAR FQ4a4Z… (provisionalpre-handoff4H/TY is historical), React rawhtG58…;
+cleaned React source6p46 NARv8sM… is independently exacte468.
+
+Parent reset21882/native1421024 exit0/22.938s; public start50507/native1456759
+exit0 at2026-10-28 00:04:32UTC. Attempt233414Z; runner1617073 and fourQEMUs
+1621949/1624130/1624935/1625109 remain in
+vpsadmin-haveapi-upgrade-e-20261027T233414Z.scope,32GiB/12CPU/zeroswap.
+Global daemon accounted separately; Nix1job/2cores requests are not aggregate
+host limits. Six historical kernel-name alerts were concrete module/initrd
+assembly, not kernel compilation; buffered completion timing remains recorded.
+
+Actual services system:
+`/nix/store/44b2rh8f1lzqb4kihz5gqaq8jh951cyk-nixos-system-vpsadmin-services-26.05pre-git`.
+Actual frontend:
+`/nix/store/5y1vzyyvqgykc8hvzja4ixm1p6jvlg1v-vpsadmin-webui-frontend-1.0.0`,
+NAR `sha256-lEKOEyFAA7wIBEPkGADFz0pPv1O0Yy+S0o0EvHrz95E=`.
+Actual BFF:
+`/nix/store/nb19j3xdg1gjh4lkq1cd4qpd0g2m88nq-vpsadmin-webui-bff-0.1.0`,
+NAR `sha256-CfKRW2qf8yI2D6Qwco5Cpyfe/bdqim05QRlyhodov14=`.
+All four guest systems/full graphs/locks/closures/host+guest roots and access
+proof are in the existing [E4 receipt](devcluster/e4-runtime/receipt.md).
+
+## Access, retained limits and remaining ownership
+
+- PHP: <https://webui.aitherdev.int.vpsfree.cz/>
+- React: <https://newadmin.aitherdev.int.vpsfree.cz/>
+- API/docs: <https://api.aitherdev.int.vpsfree.cz/v7.0/>
+- KB staging: [Czech](http://kb-cs.aitherdev.int.vpsfree.cz/navody/vps/api),
+  [English](http://kb-en.aitherdev.int.vpsfree.cz/manuals/vps/api).
+
+Development VPN/DNS, workspace CA trust and private seeded credentials are
+required; their local locations/fingerprint are in E4 receipt, no secrets in
+tracking. KB owner ours/up/currentENpending1253694e…; both pages persist.
+No production publication/stop/release of staging is assigned.
+
+Known installed F proof-loop limitation persists: only dns-primary has the
+additional provider applied root. Independent standard roots and valid current
+closures prove present use; no complete retained-boot certificate, future cold
+recovery or pruning-survival claim. No root/envelope repair/provider install.
+Native embedded unknownrevision metadata remains disclosed; independent exact
+source identity is proved, not clean-release packaging, reproducible-build
+attestation or standalone binary equivalence. Two build-only npm cache outputs
+are absent; retained derivers/FOD hashes/installed output proof suffice, no fresh
+cache-byte inspection/restore claimed. Initial app fixture wrongly expectedJSON
+at canonicalHTMLroot and stopped beforelogin; retained separately, not a product
+failure. Actual subsequent login/logout/docs checks passed.
+
+A0/C1/E3 work is handed off with no active source/verification writer; roots and
+historical refs/checkouts retained. E2 owns only remaining exact-head CI monitor.
+No physical-host deployment/claim change, foreign action, default integration,
+PR74 rewrite, production KB write, upstream remedy resumption or session lifecycle
+action is assigned. Ready for qualified manual testing; unmerged source remains
+awaiting explicit integration direction and final CI conclusion.
+
+Portal: <https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-24-vpsadmin-haveapi-upgrade/>.
+
+## Historical 0.31.0 backlog and evidence
 
 ## Active0.31 backlog
 

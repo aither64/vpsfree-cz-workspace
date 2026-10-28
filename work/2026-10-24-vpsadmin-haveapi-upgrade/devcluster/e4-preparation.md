@@ -1,23 +1,95 @@
 # E4 reset/redeploy preparation — 2026-10-27
 
-**PREPARED ONLY. No reset, move, config copy/write, guest probe or startup was
+## Latest released read-only preflight, from 22:57 UTC
+
+**Read-only facts complete; reset/start remain unreleased.** Selected runtime is
+`/nix/store/pq2jwjcv4hbyiwzcam50x6j9fv008qiq-dev-workspace-0.2.0`, provider
+`/nix/store/vh650zaiazv3n8z12yf12pfbc951xwb9-vpsfree-dev-workspace-tools-0.1.0`.
+Contract stays `9c8e9e5c…`, schema1/policy3. Actual installed proof source still
+has SSH reading stdin and full-boot enumeration using a here-string: F is not
+installed. Historical generation facts below are not today's command binding.
+
+One public `nix flake metadata` run passed in 21.347 seconds, no-write-lock-file,
+IFD=false/max-jobs0. It explicitly overrides the **proposed** 0311 aliases and
+both native OS inputs, not the old live canonical paths. Complete 20-node graph
+SHA-256: `d6f76d362cbfe695550a19674150ebab6c9d3d5bcfd44728fddf2faaba562f84`.
+Native OS `origin/staging` advanced to
+`f4e55a13d7d2f5c1b61737f0300ec8a535ef02f1`, NAR
+`sha256-HRAKzl1PywAm/AVo64V1PXOg5xD2i+Z1oMdrC/aG9Mk=`.
+Effective stable nixpkgs is `718f670e845328e9c2cecdd832835712b2cbd065`, unstable
+`3ec636362e1816bc2f0888fa0fa2c69f1bc9e504`; vpsfStatus advanced to
+`e4881a932ad20bab141e3203afb985e96a51b1da`. Seven node keys differ from the
+old accepted graph; exact [delta](e4-preflight-0311/proposed-graph-delta.json)
+is retained. This changed graph requires lead acceptance. C's standalone graph
+uses nixpkgs `5e2305d…`/OS `97045e5…`; no artifact equality/reuse is claimed.
+
+Aliases are clean exact A `9697bf28c3171d4ee3e0980160be60764ae2c4aa` and C
+`e468ca48406bde1bd99cc42a05e1832fb42162f4`; before/after dependency locks match,
+including API full lock `0051b738…`. Proposed path NARs are
+API `sha256-4H/TYNh45ocmhugc6p/7fgDh1o3ljGuoZgNAwBcXWAw=` and
+React `sha256-htG58D3bJKNw0/veLRSxYqORIjTXdKeOD495SbKFWBA=`.
+A reports stable API lock/no source writer, but later normal ignored PHP setup
+may write; raw-path identity stays provisional until final writer handoff and
+canonical mapping. C's final publication/no-writer handoff is accepted.
+
+Current canonical live source remains old70a/f10, native running/ready,
+single/bridge, pending=null. Runner2882335 matches all four native flags/socket;
+its four QEMUs remain in the original scope. All four fixed-IP neighbor MACs
+match those own old QEMUs. One other QEMU431390 is not on br0, consistent with
+the ongoing A services check. This passive attribution does not prove free
+addresses after reset. No guest commands were issued.
+
+Host snapshot: MemAvailable56,915,280KiB (54.28GiB), 64 allowed CPUs, load
+6.36/6.90/6.92, disk free97.79GB. Global Nix daemon current5.15GB/historical
+peak42.71GB is separate and not E-attributed. A overlap remains a gate; this
+snapshot is not a capacity reservation. Bridge/KVM/helper access passes.
+
+Kernel-only public evaluation with builds/IFD disabled confirms node6.12.113
+`/nix/store/4k5kg0x1msvl4kffpr2g7cidpnwbnkhk-linux-6.12.113` exists locally and
+in cache.vpsadminos.org; native test-base `linuxPackages_6_12` selects
+`/nix/store/6sn4mxbn21zap3dc6nln6zbzzqb7as0x-linux-6.12.113`, local and
+cache.nixos.org. Exact paths/derivations/NARs are retained. The preliminary
+`pkgs.linux`6.18 probe is explicitly not the native test-base selection.
+Final guest overrides/full payloads are not evaluated; no build/substitution
+occurred. Known module/initrd assembly is distinct from real kernel compilation.
+
+Evidence: [inputs/generation](e4-preflight-0311/generation-inputs.json),
+[proposed full graph](e4-preflight-0311/proposed-metadata.json),
+[command/lock guards](e4-preflight-0311/proposed-metadata-result.json),
+[sanitized host/native](e4-preflight-0311/native-host-sanitized.json),
+[passive address attribution](e4-preflight-0311/address-attribution.json),
+[node cache](e4-preflight-0311/kernel-cache-proof.json),
+[NixOS test kernel](e4-preflight-0311/nixos-test-kernel-cache.json).
+All exact command handles completed. No private helper, guest query, config
+preservation/write, reset/move, driver edit, source/ref mutation or observer was
+used. A services/effects handoff, changed-graph acceptance and fresh
+post-mapping/immediate pre-start checks remain gates; no further polls assigned.
+
+## Earlier preparation and ordered execution draft
+
+**PREPARED ONLY. No cluster reset, move, config copy/write, guest probe or startup was
 executed.** This implements the operational proposal in `design.md:2021`;
-lead retains native reset/start ownership. Final A/C heads, review and affected
-postchecks are pending. Existing LIVE cluster/source/state remain unchanged.
-Staging remains foreign-owned with a pending release and is a separate blocker.
+lead retains native reset/start ownership. Current targets are A `9697bf28…`
+(`vpsadmin-0311`) and C `e468ca48406bde1bd99cc42a05e1832fb42162f4`
+(`vpsadmin-webui-0311`), committed/quick-pass per lead. C review is accepted and
+postchecks released; A review and required A/C postchecks remain gates. Existing
+LIVE cluster/source/state remain unchanged. KB 0.31.1 staging is separately
+accepted, owned/up and retained for user review.
 
 `dev-session current` from this exact tracking directory matches the trusted
 session/workspace binding; ambient environment values are both absent. Current
 Git/lifecycle/deployment/verification procedures, selected coordination guide,
 native README/contract and public source-selection/SSH/reset paths were read.
-Public commands resolve to runtime
+The earlier preparation observed public commands resolving to runtime
 `/nix/store/46rpb1jcjaclc01vrj0r9m8v0xvp8341-dev-workspace-0.2.0`;
 provider is
 `/nix/store/cscrk1qkydsvzlkxjv272nq7xq25bg30-vpsfree-dev-workspace-tools-0.1.0`.
 Contract SHA-256 is
 `9c8e9e5c371eda46ccb49eaf275ee4996d2ddce3930c9047da39ccd195f67183`,
-schema 1/policy 3. F is not installed; the old stdin/full-boot proof defect
-remains. No private helper is part of the plan.
+schema 1/policy 3. F was not installed; the old stdin/full-boot proof defect was
+present. These historical identities must be freshly checked after execution-prep
+release; they were not queried for this draft update. No private helper is part
+of the plan.
 
 ## Preconditions and private editable config
 
@@ -68,9 +140,9 @@ paths before retry. No `--force`, symlink, branch checkout/reset or ref rewrite:
 
 ```bash
 git --git-dir=/home/aither/workspace/ai/vpsfree.cz/repos/vpsadmin.git worktree move /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-24-vpsadmin-haveapi-upgrade/vpsadmin /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-24-vpsadmin-haveapi-upgrade/vpsadmin-live030
-git --git-dir=/home/aither/workspace/ai/vpsfree.cz/repos/vpsadmin.git worktree move /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-24-vpsadmin-haveapi-upgrade/vpsadmin-031 /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-24-vpsadmin-haveapi-upgrade/vpsadmin
+git --git-dir=/home/aither/workspace/ai/vpsfree.cz/repos/vpsadmin.git worktree move /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-24-vpsadmin-haveapi-upgrade/vpsadmin-0311 /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-24-vpsadmin-haveapi-upgrade/vpsadmin
 git --git-dir=/home/aither/workspace/ai/vpsfree.cz/repos/vpsadmin-webui.git worktree move /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-24-vpsadmin-haveapi-upgrade/vpsadmin-webui /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-24-vpsadmin-haveapi-upgrade/vpsadmin-webui-live030
-git --git-dir=/home/aither/workspace/ai/vpsfree.cz/repos/vpsadmin-webui.git worktree move /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-24-vpsadmin-haveapi-upgrade/vpsadmin-webui-031 /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-24-vpsadmin-haveapi-upgrade/vpsadmin-webui
+git --git-dir=/home/aither/workspace/ai/vpsfree.cz/repos/vpsadmin-webui.git worktree move /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-24-vpsadmin-haveapi-upgrade/vpsadmin-webui-0311 /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-24-vpsadmin-haveapi-upgrade/vpsadmin-webui
 ```
 
 Lead then changes only the corresponding four registration `name` values,
@@ -79,13 +151,15 @@ carrying each whole ordinary entry (including comparison/base data) intact:
 | Old name | New name | Branch retained |
 | --- | --- | --- |
 | `vpsadmin` | `vpsadmin-live030` | `2026-10-24-vpsadmin-haveapi-upgrade` |
-| `vpsadmin-031` | `vpsadmin` | `2026-10-24-vpsadmin-haveapi-upgrade-031` |
+| `vpsadmin-0311` | `vpsadmin` | `2026-10-24-vpsadmin-haveapi-upgrade-0311` |
 | `vpsadmin-webui` | `vpsadmin-webui-live030` | `dev/vpsadmin-haveapi-upgrade` |
-| `vpsadmin-webui-031` | `vpsadmin-webui` | `dev/vpsadmin-haveapi-031` |
+| `vpsadmin-webui-0311` | `vpsadmin-webui` | `dev/vpsadmin-haveapi-0311` |
 
 Lead runs public `dev-session sync 2026-10-24-vpsadmin-haveapi-upgrade --as-is`.
-Refresh/F and every other registration remain unchanged. Post-move inventory
-must prove canonical paths hold accepted final031 heads and retained paths hold
+Both `vpsadmin-031` and `vpsadmin-webui-031` checkouts/registrations stay in place;
+published C4 `baf00acc31d34ab37720643c5833b4476a341f3b` is preserved. Refresh/F
+and every other registration remain unchanged. Post-move inventory
+must prove canonical paths hold accepted final0311 heads and retained paths hold
 old70a/f10, with unchanged branches/content/ignored locks/private bytes. The
 native provider selects literal canonical paths; aliases/environment overrides
 cannot replace these moves. No moves while old virtiofs/QEMU is alive.
@@ -123,7 +197,7 @@ detached runner/QEMU limits. Native stdout is discarded; only allowlisted
 diagnostics are emitted. A permitted fresh observer observes independent files
 or parent uses visible fallback; no competing utility, implicit retry or teardown.
 
-## Bounded acceptance and remaining staging blocker
+## Bounded acceptance and separate completed staging
 
 After native completion, strict canonical readiness/selection and all four
 QEMU scope membership must agree. Record exact result/toplevel/source graph and
@@ -136,22 +210,23 @@ Missing extra provider roots remain an explicit cold-recovery/certificate gap;
 independent valid current closures/system roots can support qualified testing.
 
 Use existing bounded TLS/seeded-member login/read/logout checks once per PHP and
-React; verify actual packaged HaveAPI/generators0.31, PHP new canonical source,
+React; verify actual packaged HaveAPI/generators0.31.1, PHP new canonical source,
 matching frontend/BFF final build-info and generated TypeScript docs alongside
 Go/Rust. No new VPS/member mutations, broad SDK/browser campaign, screenshots,
 tokens/cookies/password logs or host trust change. Report actual URLs/CA/private
 credential access and leave cluster running/session open.
 
-Staging is blocked by `2026-09-13-auth-email` and its pending EN bundle. Do not
-poll, queue, contact the foreign owner or transfer/release/reset it. Once lead
-confirms legitimate availability, final reviewed KB manifests can follow public
-start/stage/verify after fresh production guards, showing both real page/history
-URLs. No production promotion or post-handoff staging release is authorized.
+The former foreign staging blocker was resolved by its owner. KB 0.31.1 staging
+is accepted under our ownership, container up, with current EN pending manifest;
+see [staging receipt](../package-0.31.1/staging/receipt.md), SHA-256
+`11bdb447e13e90e2ec81ff3180ecbb85a5fea60970d8e644dc30b7f64cb36784`.
+No further KB checks, reset, stop/release or production promotion are assigned.
+This completed staging work supplies no E4 cluster execution clearance.
 
 Session portal:
 <https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-24-vpsadmin-haveapi-upgrade/>.
 
-## C4 prepared artifact facts received from lead
+## Historical C4 0.31.0 prepared artifact facts received from lead
 
 Read from existing Package C receipts only; no Nix/store/runtime query, probe or
 rebuild was performed. C4 head is

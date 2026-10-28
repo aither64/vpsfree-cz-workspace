@@ -9,7 +9,7 @@ Policy: retained catalog digest
 max_concurrent=1. Matching native utility:
 `dw_b9dd4137280d3e047a81fbdfe0ea73c900c9fd89f8861d12`, configuration
 `/nix/store/fqajxhsmaqg44pl8x2xshgn8q0bl7wr2-dev-workspace-0.2.0/share/dev-workspace/agent-teams/utilities/verification_watcher-low.toml`.
-The currently selected w6j9bzb catalog separately supplies full_access execution.
+The currently selected pq2jwjc catalog separately supplies full_access execution.
 Both native TOML and explicit CLI policy are danger-full-access / approval never.
 
 The observer receives only the following bounded prompt, completed with the
@@ -74,7 +74,7 @@ assert identity['scope'] == scope
 assert os.environ.get('DEV_SESSION_SLUG') == slug
 assert os.environ.get('DEV_SESSION_WORKSPACE') == str(root)
 retained = Path('/nix/store/fqajxhsmaqg44pl8x2xshgn8q0bl7wr2-dev-workspace-0.2.0')
-current = Path('/nix/store/w6j9bzbv7m04h7snndb5bs9jj39jd2kc-dev-workspace-0.2.0')
+current = Path('/nix/store/pq2jwjcv4hbyiwzcam50x6j9fv008qiq-dev-workspace-0.2.0')
 assert Path(shutil.which('dev-session')).resolve() == current / 'bin/dev-session'
 catalog = json.loads((retained / 'share/dev-workspace/agent-teams.json').read_text())
 assert catalog['catalog_digest'] == '840de47527dea8325fcac0c2eb7ca5ae9728b31523ec368bcce595c6f15983fa'

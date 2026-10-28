@@ -1,13 +1,13 @@
 # Proposed parent activation command and observation contract
 
-Preparation only, 2026-10-26. **Not executed.** Lead has not released activation.
+E4 preparation after accepted 0.31.1 source mapping. **This rebound template has not been executed.** Parent owns startup release and execution.
 This adds a reviewable session-local wrapper around the exact public native
 start. It changes no provider, OS, application source, canonical ref or host
 configuration. Existing roots and stopped state remain intact.
 
 Selected identities accepted by lead for this prepared command: runtime
-`/nix/store/w6j9bzbv7m04h7snndb5bs9jj39jd2kc-dev-workspace-0.2.0`, provider
-`/nix/store/q19s1vj5yn00jq46n4gs7g10z5f76y68-vpsfree-dev-workspace-tools-0.1.0`.
+`/nix/store/pq2jwjcv4hbyiwzcam50x6j9fv008qiq-dev-workspace-0.2.0`, provider
+`/nix/store/vh650zaiazv3n8z12yf12pfbc951xwb9-vpsfree-dev-workspace-tools-0.1.0`.
 Prior accepted fa7zlb/7vrkd bytes and hashes are retained in
 `history/fa7zlb-accepted-activation/`; only identity constants were rebound.
 
@@ -15,14 +15,14 @@ Lead accepted the architect's clarification: a foreign `vpsfree:aitherdev`
 physical-deployment/profile hold does not itself block this ordinary owned
 QEMU startup. No guest claim, transfer or foreign release is appropriate. Any
 actual collision, native refusal, changed input/generation or required host
-configuration/profile action returns to lead. Current C 60/62 remains recorded;
-the accepted residual is not represented as a clean suite.
+configuration/profile action returns to lead. Earlier C residuals remain historical evidence. The final 0.31.1 source/checks
+and effects handoffs were accepted separately.
 
 ## Gates before executing
 
-Lead first releases A API/legacy verification and resource clearance, then
-rechecks exact session/generation, clean 70a/f10 heads, native OS d9be, complete
-20-node graph, schema/policy, config/tuple/pending state, available memory/CPU,
+Lead accepted the final A/C gates and canonical source mapping; before execution,
+recheck exact session/generation, clean 9697/e468 heads, native OS f4e55a13, complete
+accepted 20-node graph, schema/policy, config/tuple/pending state, available memory/CPU,
 no overlapping legacy guests, and fixed-IP/native ownership observations.
 The wrapper adds bounded identity/limit checks; it does not replace this fresh
 lead preflight or independently accept a changed input graph.
@@ -42,7 +42,7 @@ native output to tee or use an unattended mutation utility.
 cd /home/aither/workspace/ai/vpsfree.cz
 export DEV_SESSION_SLUG=2026-10-24-vpsadmin-haveapi-upgrade
 export DEV_SESSION_WORKSPACE=/home/aither/workspace/ai/vpsfree.cz
-export NIX_CONFIG="${NIX_CONFIG-}"$'\nmax-jobs = 2\ncores = 4\n'
+export NIX_CONFIG="${NIX_CONFIG-}"$'\nmax-jobs = 1\ncores = 2\n'
 e_attempt="$(date -u +%Y%m%dT%H%M%SZ)"
 e_scope="vpsadmin-haveapi-upgrade-e-${e_attempt}.scope"
 e_dir="/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/devcluster/activation/${e_attempt}"
@@ -92,7 +92,7 @@ obtain a different tool handle, and do not use a second watcher while A owns it.
 Accounting payloads use `scope_accounting` for counters; `scope` remains the
 unit-name string in operation identity. This avoids duplicate keyword keys in
 the initial and final event assembly. The failed 151600 attempt and its exact
-prior driver bytes are retained in `history/w6j9bzb-activation-failure-20261026T151600Z/`.
+prior driver bytes are retained in `history/pq2jwjc-activation-failure-20261026T151600Z/`.
 
 Once `identity.json` exists, the observer may run this read-only command using
 the exact recorded attempt directory and scope, without the execution flag:
@@ -122,7 +122,7 @@ Observation is incomplete until all of these agree:
   scope or children. Record actual process/cgroup evidence after startup returns;
   absence of a ready file or scope alone is not proof of complete boot.
 - Native applied guest/system/root/seed/refresh proof and intended runtime
-  0.30.2, API 7 and 70a/f10 identities agree. The wrapper does not establish
+  0.31.1, API 7 and 9697/e468 identities agree. The wrapper does not establish
   application readiness, TLS trust or either actual PHP/React login/logout.
 
 Escalate immediately on `HALT_REQUIRED_unexpected_kernel_compile`, ignored
@@ -141,7 +141,7 @@ matches, Ctrl-C the scope indiscriminately, or stop a foreign process.
 
 Daemon-backed builds are outside the user scope; its 32 GiB / 12 CPU cap is
 **not a hard aggregate cap on the Nix daemon or total host activity**. The
-command requests two local jobs with four build cores each, checks the client
+command requests one local job with two build cores each, checks the client
 settings before native start and reports ignored-setting diagnostics. These
 are concurrency hints, not a daemon memory/CPU cgroup limit or a bound on
 every build tool's thread count. No global daemon setting is changed.
