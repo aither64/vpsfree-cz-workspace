@@ -21,7 +21,10 @@ advisory recommendations. Expected scope: workspace observer/lead instructions
 and aligned documentation; generic dev-workspace only where its actual prompts
 or stock-instruction recognition require alignment; vpsfree-cz-configuration for
 the matching host runtime pin when needed. Architect confirms exact boundaries.
-No default-branch integration has been approved.
+User later approved all three master integrations with "ok, merge it" and
+explicitly requested aitherdev release. All three final heads are now integrated;
+deployment is verified and the machine claim is released. Current final heads and
+equivalence/remote proof are in state.md, review.md and rollout.md.
 
 ## Approach
 
@@ -44,6 +47,10 @@ No default-branch integration has been approved.
   verified facts. Do not infer that OAuth can safely be postponed.
 - Preserve anti-stall checks without treating elapsed minutes, idle implementers,
   file absence or zero code diff as sufficient proof of unproductive design.
+- Integration retained the runtime/configuration heads unchanged. Workspace's
+  tracking-only baseline refresh has an independently accepted equivalent
+  successor with identical successful derivations; the original deployed commit
+  is retained under its recovery ref and is not described as literally merged.
 
 ## Compatibility and deployment
 
