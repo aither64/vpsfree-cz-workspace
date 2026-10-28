@@ -5,8 +5,8 @@
 Implement the accepted plan: explicit archive stops proven native watchers without
 requiring retained-team admission. User authorized implementation, aitherdev
 deployment through vpsfree-cz-configuration, and recovery of the previously
-requested archive of 2026-10-28-observer-progress-guidance. Integration into default
-branches is not authorized. Do not archive this implementation initiative.
+requested archive of 2026-10-28-observer-progress-guidance. The later user instruction "merge and release aitherdev" authorized integration
+into dev-workspace/master, workspace/master and vpsfree-cz-configuration/master. Do not archive this implementation initiative.
 
 ## Scope and ownership
 
@@ -32,8 +32,8 @@ lifecycle stop; it does not permit starting or retrying work. Preserve queued
 prompts, goals, shutdown ordering, resampling and restart recovery. Package
 selection stays guarded and forward-only. Prior package remains available as
 recovery evidence; never bypass package/lifecycle gates. Machine retention follows
-installed policy; absent integration approval, deployed machine ownership remains
-held until approved lineage integration.
+installed policy; deployed machine ownership remains held until verified effects and approved
+lineage integration; both were completed before release on this rollout.
 
 ## Documentation and verification
 
