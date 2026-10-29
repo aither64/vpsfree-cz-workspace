@@ -70,3 +70,8 @@ logs, downloaded artifacts and build output untracked during active work; Archiv
 deletes those files. Commit project changes before archiving, because checkout
 files and index state are not backed up. Shared tracking remains in the main
 workspace; feature workspace checkouts omit work/ and archive/.
+
+## Versions in documentation
+
+Follow the [vpsFree.cz writing skill's workflow](https://github.com/vpsfreecz/dev-workspace/blob/master/skills/vpsfree-user-facing-writing/SKILL.md#workflow)
+for version guidance in documentation prose, installation snippets and links.

@@ -36,6 +36,9 @@ that history to migrate or recover. Record removal rationale in commit
 messages, DokuWiki revision summaries, or initiative notes instead of page
 prose.
 
+Apply the [documentation version policy](documentation.md#versions-in-documentation)
+to KB prose, examples and links.
+
 For vpsAdmin changes that can affect visible WebUI documentation, follow the
 canonical workflow in `vpsfree-kb-contracts/docs/webui-change-workflow.md`.
 Use `kb-contract-fetch`, `kb-contract-build`, and
