@@ -32,6 +32,10 @@ directory and verify its SHA-256 before execution.
    per-instance ExecStartPre hook runs the partition after old native shutdown.
    It refuses remaining source native processes or open DB/history descriptors.
    Root descriptor inspection is read-only via existing host SSH access.
+   Recursive inotify observation rejects source writes during copying, including
+   an embedded CLI process that starts and exits between descriptor scans. Queue
+   overflow also refuses publication. A durable metadata fingerprint detects
+   changes across a lost observer when the job resumes after publication intent.
 6. The partition builds private SQLite files with the exact source schemas,
    checks every retained value, copies and checksums rollout bytes, preserves
    unknown stock records and independently provisioned portal settings/login.
@@ -51,10 +55,16 @@ Before profile selection, a refusal leaves original data authoritative and the
 ordinary switch restores portal/terminal availability. The outer job restarts
 stock after its locks unwind. Fix the reported refusal and resume the same job.
 After profile selection, recover forward with the same source, claim and journal.
+If the publication hook failed, the runner first verifies the selected pending
+native target and starts its stopped service, re-entering the hook. This restores
+the backend that ordinary switch admission needs; it never stops a running service.
 Once publication intent exists, use its inode identities: do not start a new copy
 or restore the old home over newer writes. A lost post-exchange journal update is
 reconciled without another swap. An interrupted partial copy without publication
 intent is disposable and rebuilt from the original source under renewed exclusion.
+If the original source changes after publication intent, automatic recovery refuses.
+Retain both homes and reconcile the extra writes before resuming; do not clear the
+refusal marker or discard either copy to force progress.
 
 A recorded signal intent prevents issuing a second potentially forced signal.
 If interruption lands between recording intent and delivering SIGTERM, inspect
@@ -228,7 +238,7 @@ if __name__ == '__main__':
 
 ## migration-partition.py
 
-SHA-256: `164cd21bb9dffd079044ee0c40136033a524ccc48ba9d4f526db62e812d6be1a`
+SHA-256: `32ee9e0610801d80916f8ff327d3e627d3ca12d106df6f90f9ec23ed66504273`
 
 ```python
 #!/usr/bin/env python3
@@ -238,6 +248,7 @@ This is not installed by dev-workspace. The cutover runner owns writer exclusion
 publication and recovery. This module writes only new staging directories.
 """
 
+import contextlib
 import hashlib
 import json
 import os
@@ -273,10 +284,13 @@ def partition_database(source, destination, ids, excluded_ids, portal, old_home,
     reader = sqlite3.connect(f'file:{source}?mode=ro', uri=True)
     definition = schema(reader)
     if schema_hash(definition) != SCHEMAS[source.name]:
+        reader.close()
         raise ValueError(f'unsupported native schema: {source.name}')
     if reader.execute('pragma quick_check').fetchall() != [('ok',)]:
+        reader.close()
         raise ValueError(f'source database is damaged: {source.name}')
     if source.name == 'memories_1.sqlite' and reader.execute('select count(*) from jobs').fetchone()[0]:
+        reader.close()
         raise ValueError('memory jobs need explicit migration ownership')
     reader.close()
     writer = sqlite3.connect(str(destination), uri=True)
@@ -478,8 +492,8 @@ def partition(inventory, staging, final_portal, prepared_portal):
             continue
         if source_db.name not in ('logs_1.sqlite', 'logs_2.sqlite'):
             raise ValueError(f'unclassified database: {source_db.name}')
-        with sqlite3.connect(f'file:{source_db}?mode=ro', uri=True) as reader:
-            with sqlite3.connect(stock / source_db.name) as writer:
+        with contextlib.closing(sqlite3.connect(f'file:{source_db}?mode=ro', uri=True)) as reader:
+            with contextlib.closing(sqlite3.connect(stock / source_db.name)) as writer:
                 reader.backup(writer)
         os.chmod(stock / source_db.name, 0o600)
     for destination in (stock, portal):
@@ -508,7 +522,7 @@ def partition(inventory, staging, final_portal, prepared_portal):
 
 ## migration-cutover.py
 
-SHA-256: `24cb000768e50cbf93b284cd5160ffac8531ddeca951a9751451ee61cf47b129`
+SHA-256: `4afc72bad6460b2ea67283c999a18a7f50bd5172a079cb18addafead009517e8`
 
 ```python
 #!/usr/bin/env python3
@@ -522,12 +536,15 @@ import argparse
 import contextlib
 import ctypes
 import fcntl
+import hashlib
 import importlib.util
 import json
 import os
 import shutil
 import shlex
 import signal
+import sqlite3
+import struct
 import subprocess
 import sys
 import time
@@ -537,6 +554,8 @@ HERE = Path(__file__).resolve().parent
 SOURCE = Path('/home/aither/.codex')
 PORTAL = Path('/home/aither/.local/state/dev-workspaces/codex-homes/vpsfree-cz')
 PROFILE = Path('/home/aither/.local/state/dev-workspaces/profile')
+CODEX_CURRENT = PROFILE.parent / 'codex/current/bin/codex'
+PENDING = PROFILE.parent / 'codex/pending'
 UNIT = 'workspace-codex@vpsfree-cz.service'
 DROPIN = Path('/home/aither/.config/systemd/user') / (UNIT + '.d') / '90-home-migration.conf'
 SLUG = '2026-10-28-portal-status-timing'
@@ -610,7 +629,7 @@ def native_processes(home):
             if proc.stat().st_uid != os.getuid():
                 continue
             args = (proc / 'cmdline').read_bytes().split(b'\0')
-            if b'app-server' not in args or 'codex' not in os.readlink(proc / 'exe'):
+            if Path(os.readlink(proc / 'exe')).name != 'codex':
                 continue
             env = dict(item.split(b'=', 1) for item in (proc / 'environ').read_bytes().split(b'\0') if b'=' in item)
             selected = env.get(b'CODEX_HOME', b'/home/aither/.codex').decode()
@@ -624,6 +643,96 @@ def native_processes(home):
         except (FileNotFoundError, ProcessLookupError):
             continue
     return found
+
+
+class SourceChanged(RuntimeError):
+    pass
+
+
+def source_fingerprint(home):
+    """Durable change evidence across a lost inotify observer.
+
+    Include inode, ctime and mtime so a write followed by content restoration
+    still invalidates the copy. Root timestamps alone change on our exchange.
+    Reads may update atime, so it is deliberately absent. This detects ordinary
+    concurrent writes, not manipulation by the trusted machine administrator.
+    """
+    digest = hashlib.sha256()
+    for directory, directories, files in os.walk(home):
+        directories.sort()
+        for name in sorted(directories + files):
+            path = Path(directory) / name
+            if path.parent == home and name.endswith('.sqlite-shm'):
+                continue  # SQLite's derived WAL index/reader locks, not data.
+            info = path.lstat()
+            entry = [str(path.relative_to(home)), info.st_dev, info.st_ino,
+                     info.st_mode, info.st_uid, info.st_gid, info.st_size,
+                     info.st_mtime_ns, info.st_ctime_ns]
+            digest.update(json.dumps(entry).encode() + b'\n')
+    return digest.hexdigest()
+
+
+def prepare_source_readers(home):
+    # SQLite's read-only WAL reader can create empty -wal/-shm sidecars.
+    # Materialize those before observing the copy; never checkpoint or alter
+    # database content. Later reads must leave the observed source stable.
+    for database in home.glob('*.sqlite'):
+        with contextlib.closing(sqlite3.connect(f'file:{database}?mode=ro', uri=True)) as reader:
+            reader.execute('pragma schema_version').fetchone()
+
+
+def original_source(staging, publication):
+    for path in (SOURCE, staging / 'stock'):
+        if identity(path) == publication['stock'][0]:
+            return path
+    raise RuntimeError('original source identity changed')
+
+
+class SourceWatch:
+    """Detect even short-lived embedded/CLI writers throughout the data copy.
+
+    Native lifecycle locks do not cover codex exec's in-process App Server.
+    inotify watches the existing source tree; creation, removal or modification
+    invalidates this attempt. Overflow also refuses, never weakens the proof.
+    """
+    def __init__(self, home):
+        self.libc = ctypes.CDLL(None, use_errno=True)
+        self.fd = self.libc.inotify_init1(os.O_NONBLOCK | os.O_CLOEXEC)
+        if self.fd < 0:
+            raise OSError(ctypes.get_errno(), 'cannot observe source stability')
+        self.directories = {}
+        try:
+            for directory, _, _ in os.walk(home):
+                # CLOSE_WRITE only means an O_RDWR descriptor closed; SQLite
+                # readers use those for WAL coordination without writing data.
+                mask = 0x2 | 0x4 | 0x40 | 0x80 | 0x100 | 0x200 | 0x400 | 0x800
+                watch = self.libc.inotify_add_watch(self.fd, os.fsencode(directory), mask)
+                if watch < 0:
+                    raise OSError(ctypes.get_errno(), 'cannot watch source directory')
+                self.directories[watch] = Path(directory).relative_to(home)
+        except BaseException:
+            self.close()
+            raise
+
+    def assert_stable(self, allow_exchange=False):
+        while True:
+            try:
+                events = os.read(self.fd, 1024 * 1024)
+            except BlockingIOError:
+                return
+            offset = 0
+            while offset < len(events):
+                watch, mask, _, size = struct.unpack_from('iIII', events, offset)
+                name = os.fsdecode(events[offset + 16:offset + 16 + size].split(b'\0', 1)[0])
+                offset += 16 + size
+                if self.directories.get(watch) == Path('.') and name.endswith('.sqlite-shm'):
+                    continue  # Read-only SQLite access updates its shared index.
+                if allow_exchange and mask == 0x800 and self.directories.get(watch) == Path('.'):
+                    continue  # Our atomic exchange moves the watched root inode.
+                raise SourceChanged(f'source changed during migration (inotify mask {mask:#x})')
+
+    def close(self):
+        os.close(self.fd)
 
 
 def assert_no_open_source_files(home):
@@ -667,7 +776,10 @@ def publish(root, config):
     if selected != config['candidatePackage']:
         raise RuntimeError('unexpected selected package at publication')
     with lock(root / 'publication.lock'):
+        update(root, hookEntered=True)
         journal = json.loads((root / 'journal.json').read_text())
+        if journal.get('sourceChangedAfterIntent'):
+            raise RuntimeError('source changed during publication; retain both homes and reconcile before resuming')
         if journal.get('published'):
             return
         outer = journal.get('outer')
@@ -677,6 +789,7 @@ def publish(root, config):
         if start != outer['start']:
             raise RuntimeError('detached migration runner identity changed')
         staging = root / 'partition'
+        observer = None
         if not journal.get('publication'):
             if native_processes(SOURCE):
                 raise RuntimeError('source native writers are still running')
@@ -685,25 +798,55 @@ def publish(root, config):
             # partial copy is disposable; the untouched source is authoritative.
             if staging.exists():
                 shutil.rmtree(staging)
-            inventory = module('migration-inventory').inventory()
-            save(root / 'inventory.json', inventory)
-            update(root, phase='copying')
-            module('migration-partition').partition(inventory, staging, PORTAL, PORTAL)
-            assert_no_open_source_files(SOURCE)
-            if native_processes(SOURCE):
-                raise RuntimeError('source native appeared during the copy')
-            publication = {
-                'stock': [identity(SOURCE), identity(staging / 'stock')],
-                'portal': [identity(PORTAL), identity(staging / 'portal')],
-            }
-            journal = update(root, phase='publishing', publication=publication)
-        # Stock first: if interrupted here, stock is already independent and
-        # may accept writes. Recovery must never recopy or replace it.
-        publication = journal['publication']
-        exchange(SOURCE, staging / 'stock', *publication['stock'])
-        update(root, phase='stock-published')
-        exchange(PORTAL, staging / 'portal', *publication['portal'])
-        update(root, phase='homes-published', published=True)
+            prepare_source_readers(SOURCE)
+            observer = SourceWatch(SOURCE)
+        try:
+            if not journal.get('publication'):
+                fingerprint = source_fingerprint(SOURCE)
+                inventory = module('migration-inventory').inventory()
+                save(root / 'inventory.json', inventory)
+                update(root, phase='copying')
+                module('migration-partition').partition(inventory, staging, PORTAL, PORTAL)
+                assert_no_open_source_files(SOURCE)
+                if native_processes(SOURCE):
+                    raise RuntimeError('source native appeared during the copy')
+                if source_fingerprint(SOURCE) != fingerprint:
+                    raise SourceChanged('source changed during the copy')
+                observer.assert_stable()
+                publication = {
+                    'stock': [identity(SOURCE), identity(staging / 'stock')],
+                    'portal': [identity(PORTAL), identity(staging / 'portal')],
+                    'sourceFingerprint': fingerprint,
+                }
+                journal = update(root, phase='publishing', publication=publication)
+            else:
+                # Re-establish observation before comparing durable evidence.
+                # Never trust a pre-crash observer or recopy after intent.
+                original = original_source(staging, journal['publication'])
+                observer = SourceWatch(original)
+                if source_fingerprint(original) != journal['publication'].get('sourceFingerprint'):
+                    raise SourceChanged('original source changed after publication intent')
+                assert_no_open_source_files(original)
+                observer.assert_stable()
+            # Stock first: if interrupted here, stock is already independent and
+            # may accept writes. Recovery must never recopy or replace it.
+            publication = journal['publication']
+            exchange(SOURCE, staging / 'stock', *publication['stock'])
+            if observer:
+                observer.assert_stable(allow_exchange=True)
+            update(root, phase='stock-published')
+            exchange(PORTAL, staging / 'portal', *publication['portal'])
+            assert_no_open_source_files(staging / 'stock')
+            if observer:
+                observer.assert_stable(allow_exchange=True)
+            update(root, phase='homes-published', published=True)
+        except SourceChanged:
+            if journal.get('publication'):
+                update(root, sourceChangedAfterIntent=True)
+            raise
+        finally:
+            if observer:
+                observer.close()
 
 
 def command(args, **kwargs):
@@ -716,6 +859,22 @@ def require_claim(config):
         '--as-is', '--id', config['claimId'], '--json'], cwd=WORKSPACE, text=True))
     if value['state'] != 'held' or 'machine:vpsfree:aitherdev' not in value['resources']:
         raise RuntimeError('this session no longer holds aitherdev')
+
+
+def recover_selected_native(root, config):
+    journal = json.loads((root / 'journal.json').read_text())
+    if str(PROFILE.resolve()) != config['candidatePackage'] or not journal.get('hookEntered'):
+        return
+    # The ordinary reconciliation selected its native target before requesting
+    # restart. The failed hook is durable evidence of reaching that boundary.
+    # Restarting only a stopped service lets the next ordinary switch query it;
+    # systemctl start never interrupts a running service.
+    if not journal.get('published'):
+        pending = json.loads(PENDING.read_text())
+        if pending.get('package_root') != config['candidatePackage'] or \
+                Path(pending['codex_path']).resolve() != CODEX_CURRENT.resolve():
+            raise RuntimeError('selected native recovery no longer matches its pending target')
+    command(['systemctl', '--user', 'start', UNIT])
 
 
 def wait_for_idle(root, config):
@@ -761,7 +920,8 @@ def run(root, config):
             raise RuntimeError('workspace feature head changed')
         start = Path('/proc/self/stat').read_text().rsplit(')', 1)[1].split()[19]
         journal = update(root, outer={'pid': os.getpid(), 'start': start}, phase='preparing')
-        if not journal.get('publication'):
+        selected_hook = str(PROFILE.resolve()) == config['candidatePackage'] and journal.get('hookEntered')
+        if not journal.get('publication') and not selected_hook:
             wait_for_idle(root, config)
         require_claim(config)
         DROPIN.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -793,6 +953,7 @@ def run(root, config):
             environment = os.environ.copy()
             environment.update(DEV_SESSION_SLUG=SLUG, DEV_SESSION_WORKSPACE=WORKSPACE,
                                DEV_WORKSPACE_CLAIM_ID=config['claimId'])
+            recover_selected_native(root, config)
             update(root, phase='switching')
             # A refusal leaves ordinary recovery authoritative. Exit with retained
             # journal; a subsequent run resumes the same source and claim.
@@ -1023,7 +1184,7 @@ if __name__ == '__main__':
 
 ## migration-test.py
 
-SHA-256: `90923886a062b8075d57f5ca8da5e73dee3bd7ed995293f46ec629d67845f34b`
+SHA-256: `774e0347883939c016e016af425d859be1d3da902f8d0066ab6d91867613ddd6`
 
 ```python
 #!/usr/bin/env python3
@@ -1031,9 +1192,13 @@ SHA-256: `90923886a062b8075d57f5ca8da5e73dee3bd7ed995293f46ec629d67845f34b`
 import importlib.util
 import contextlib
 import json
+import os
 import sqlite3
+import subprocess
+import sys
 import tempfile
 import unittest
+from types import SimpleNamespace
 from pathlib import Path
 from unittest.mock import patch
 
@@ -1129,7 +1294,166 @@ class PartitionTest(unittest.TestCase):
             self.run_partition()
 
 
+    @contextlib.contextmanager
+    def publication_fixture(self):
+        operation = self.root / 'operation'
+        operation.mkdir()
+        candidate = self.root / 'candidate'
+        candidate.mkdir()
+        profile = self.root / 'profile'
+        profile.symlink_to(candidate)
+        start = Path('/proc/self/stat').read_text().rsplit(')', 1)[1].split()[19]
+        c.save(operation / 'journal.json', {'outer': {'pid': os.getpid(), 'start': start}})
+        modules = {'migration-inventory': SimpleNamespace(inventory=lambda: self.inventory),
+                   'migration-partition': m}
+        with patch.object(c, 'SOURCE', self.source), patch.object(c, 'PORTAL', self.prepared), \
+                patch.object(c, 'PROFILE', profile), patch.object(c, 'native_processes', return_value=[]), \
+                patch.object(c, 'assert_no_open_source_files'), patch.object(c, 'module', side_effect=modules.__getitem__):
+            yield operation, {'candidatePackage': str(candidate), 'previousPackage': '/old-package'}
+
+    def test_short_lived_writer_during_copy_refuses_publication(self):
+        partition = m.partition
+        def copy_with_writer(*args):
+            result = partition(*args)
+            subprocess.run([sys.executable, '-c',
+                            'import pathlib,sys; pathlib.Path(sys.argv[1]).write_text("new turn")',
+                            str(self.source / 'sessions' / 'new-turn.jsonl')], check=True)
+            return result
+        with self.publication_fixture() as (operation, config), patch.object(m, 'partition', side_effect=copy_with_writer):
+            with self.assertRaises(c.SourceChanged):
+                c.publish(operation, config)
+            journal = json.loads((operation / 'journal.json').read_text())
+            self.assertNotIn('publication', journal)
+            self.assertTrue((self.source / 'sessions' / 'new-turn.jsonl').exists())
+            self.assertFalse((self.prepared / 'state_5.sqlite').exists())
+
+    def test_wal_source_reads_preserve_observed_content(self):
+        for name in self.definitions:
+            with contextlib.closing(sqlite3.connect(self.source / name)) as db:
+                db.execute('pragma journal_mode=WAL')
+        with self.publication_fixture() as (operation, config):
+            c.publish(operation, config)
+            self.assertTrue(json.loads((operation / 'journal.json').read_text())['published'])
+
+    def test_short_lived_wal_writer_refuses_publication(self):
+        with contextlib.closing(sqlite3.connect(self.source / 'state_5.sqlite')) as db:
+            db.execute('pragma journal_mode=WAL')
+        partition = m.partition
+        def copy_with_writer(*args):
+            result = partition(*args)
+            subprocess.run([sys.executable, '-c',
+                'import sqlite3,sys; c=sqlite3.connect(sys.argv[1]); '
+                'c.execute("update threads set title=?", ("new title",)); c.commit(); c.close()',
+                str(self.source / 'state_5.sqlite')], check=True)
+            return result
+        with self.publication_fixture() as (operation, config), patch.object(m, 'partition', side_effect=copy_with_writer):
+            with self.assertRaises(c.SourceChanged):
+                c.publish(operation, config)
+            self.assertNotIn('publication', json.loads((operation / 'journal.json').read_text()))
+
+    def test_interrupted_exchange_resumes_without_losing_new_stock_writes(self):
+        exchange = c.exchange
+        def interrupt_after_exchange(*args):
+            exchange(*args)
+            raise InterruptedError('simulated process loss')
+        with self.publication_fixture() as (operation, config):
+            with patch.object(c, 'exchange', side_effect=interrupt_after_exchange):
+                with self.assertRaises(InterruptedError):
+                    c.publish(operation, config)
+            (self.source / 'new-stock-turn').write_text('accepted after exchange')
+            c.publish(operation, config)
+            self.assertTrue(json.loads((operation / 'journal.json').read_text())['published'])
+            self.assertEqual((self.source / 'new-stock-turn').read_text(), 'accepted after exchange')
+            with contextlib.closing(sqlite3.connect(self.prepared / 'state_5.sqlite')) as db:
+                self.assertEqual(db.execute('select id from threads').fetchall(), [(self.ids[0],)])
+
+    def test_source_write_after_interruption_refuses_resume(self):
+        with self.publication_fixture() as (operation, config):
+            with patch.object(c, 'exchange', side_effect=InterruptedError('before first exchange')):
+                with self.assertRaises(InterruptedError):
+                    c.publish(operation, config)
+            (self.source / 'sessions' / 'late-turn.jsonl').write_text('not in staged copy')
+            with self.assertRaisesRegex(c.SourceChanged, 'after publication intent'):
+                c.publish(operation, config)
+            self.assertTrue(json.loads((operation / 'journal.json').read_text())['sourceChangedAfterIntent'])
+            self.assertTrue((self.source / 'sessions' / 'late-turn.jsonl').exists())
+
+    def test_outer_retry_starts_failed_selected_hook_before_switch(self):
+        with self.publication_fixture() as (operation, config):
+            config.update(source='/fixture', sourceRevision='expected', claimId='fixture')
+            current = self.root / 'codex'; current.touch()
+            pending = self.root / 'pending'
+            pending.write_text(json.dumps({'package_root': config['candidatePackage'], 'codex_path': str(current)}))
+            c.update(operation, hookEntered=True)
+            commands = []
+            def run_command(args, **kwargs):
+                commands.append(args)
+                if args[:3] == ['systemctl', '--user', 'start']:
+                    c.publish(operation, config)
+            def switch(args, **kwargs):
+                self.assertTrue(json.loads((operation / 'journal.json').read_text())['published'])
+                commands.append(args)
+                return SimpleNamespace(returncode=0)
+            with patch.object(c, 'require_claim'), patch.object(c, 'wait_for_idle') as idle, \
+                    patch.object(c, 'CODEX_CURRENT', current), patch.object(c, 'PENDING', pending), \
+                    patch.object(c, 'DROPIN', self.root / 'dropin' / 'migration.conf'), \
+                    patch.object(c, 'command', side_effect=run_command), \
+                    patch.object(c.subprocess, 'check_output', return_value='expected\n'), \
+                    patch.object(c.subprocess, 'run', side_effect=switch):
+                c.run(operation, config)
+                idle.assert_not_called()
+            self.assertEqual(json.loads((operation / 'journal.json').read_text())['phase'], 'accepted')
+            start = next(i for i, args in enumerate(commands) if args[:3] == ['systemctl', '--user', 'start'])
+            switch_index = next(i for i, args in enumerate(commands) if 'switch' in args)
+            self.assertLess(start, switch_index)
+
+
 class PublicationTest(unittest.TestCase):
+    def test_inotify_detects_completed_writer_and_accepts_own_exchange(self):
+        with tempfile.TemporaryDirectory(prefix='portal-watch-test-') as directory:
+            root = Path(directory)
+            live, staged = root / 'live', root / 'staged'
+            live.mkdir(); staged.mkdir()
+            (live / 'history').write_text('before')
+            observer = c.SourceWatch(live)
+            try:
+                subprocess.run([sys.executable, '-c',
+                    'import pathlib,sys; pathlib.Path(sys.argv[1]).write_text("after")',
+                    str(live / 'history')], check=True)
+                with self.assertRaises(c.SourceChanged):
+                    observer.assert_stable()
+            finally:
+                observer.close()
+            observer = c.SourceWatch(live)
+            try:
+                before = c.source_fingerprint(live)
+                c.exchange(live, staged, c.identity(live), c.identity(staged))
+                observer.assert_stable(allow_exchange=True)
+                self.assertEqual(c.source_fingerprint(staged), before)
+            finally:
+                observer.close()
+
+    def test_selected_failed_hook_recovers_native_before_switch(self):
+        with tempfile.TemporaryDirectory(prefix='portal-recover-test-') as directory:
+            root = Path(directory)
+            profile = root / 'profile'
+            candidate = root / 'candidate'
+            candidate.mkdir(); profile.symlink_to(candidate)
+            current = root / 'codex'
+            current.touch()
+            pending = root / 'pending'
+            pending.write_text(json.dumps({'package_root': str(candidate), 'codex_path': str(current)}))
+            c.save(root / 'journal.json', {'hookEntered': True})
+            with patch.object(c, 'PROFILE', profile), patch.object(c, 'CODEX_CURRENT', current), \
+                    patch.object(c, 'PENDING', pending), patch.object(c, 'command') as run:
+                c.recover_selected_native(root, {'candidatePackage': str(candidate)})
+                run.assert_called_once_with(['systemctl', '--user', 'start', c.UNIT])
+                pending.write_text(json.dumps({'package_root': 'wrong', 'codex_path': str(current)}))
+                run.reset_mock()
+                with self.assertRaisesRegex(RuntimeError, 'pending target'):
+                    c.recover_selected_native(root, {'candidatePackage': str(candidate)})
+                run.assert_not_called()
+
     def test_exchange_recovers_after_lost_journal_write_and_preserves_new_writes(self):
         with tempfile.TemporaryDirectory(prefix='portal-exchange-test-') as directory:
             root = Path(directory)
