@@ -24,14 +24,17 @@ directory and verify its SHA-256 before execution.
 4. Launch `migration-cutover.py --root OPERATION_DIRECTORY` in a detached systemd
    user service, with an unlimited start/stop timeout and no forced signal.
    `journal.json`, `switch.log` and `acceptance.json` are durable status. The job
-   waits for both native backends' loaded threads to become idle. It then holds
+   waits for both native backends' loaded threads to become idle and for stock
+   CLI clients to close. Portal tmux clients remain owned by ordinary switch.
+   It then holds
    stock daemon/startup locks and sends each managed stock process one SIGTERM.
    This chat may finish while the detached job waits; it is not the job's parent.
 5. The ordinary claimed workspace switch owns transition/lifecycle admission,
    portal drain, terminal quiescence, selection and forward recovery. A temporary
    per-instance ExecStartPre hook runs the partition after old native shutdown.
    It refuses remaining source native processes or open DB/history descriptors.
-   Root descriptor inspection is read-only via existing host SSH access.
+   Root process/descriptor inspection is read-only via existing host SSH access.
+   The local user cannot inspect all same-UID protected /proc entries.
    Recursive inotify observation rejects source writes during copying, including
    an embedded CLI process that starts and exits between descriptor scans. Queue
    overflow also refuses publication. A durable metadata fingerprint detects
@@ -522,7 +525,7 @@ def partition(inventory, staging, final_portal, prepared_portal):
 
 ## migration-cutover.py
 
-SHA-256: `d7b69f8b57945974e659b9ec9391c217a6ae0864786c6dec1e16c3ff8f62a00b`
+SHA-256: `3911785793967f379e587fff482521a03fa5d1d98fc818569f9da7035eafabb8`
 
 ```python
 #!/usr/bin/env python3
@@ -622,12 +625,16 @@ def lock(path):
 
 
 def native_processes(home):
+    if os.geteuid() != 0:
+        remote = shlex.join([sys.executable, str(HERE / 'migration-cutover.py'), '--scan-native', str(home)])
+        return json.loads(subprocess.check_output(
+            ['ssh', '-o', 'BatchMode=yes', 'root@172.16.106.40', remote], text=True))
     found = []
     for proc in Path('/proc').iterdir():
         if not proc.name.isdigit():
             continue
         try:
-            if proc.stat().st_uid != os.getuid():
+            if proc.stat().st_uid != 1000:  # This installation's aither account.
                 continue
             args = (proc / 'cmdline').read_bytes().split(b'\0')
             if Path(os.readlink(proc / 'exe')).name != 'codex':
@@ -640,7 +647,12 @@ def native_processes(home):
             start = (proc / 'stat').read_text().rsplit(')', 1)[1].split()[19]
             found.append({'pid': int(proc.name), 'start': start,
                           'managed': b'--managed-daemon' in args,
-                          'updater': b'pid-update-loop' in args})
+                          'updater': b'pid-update-loop' in args,
+                          'appServer': b'app-server' in args,
+                          'portalTerminal': any(
+                              item == b'unix:///run/user/1000/dev-workspaces/vpsfree-cz/app-server.sock'
+                              and index > 0 and args[index - 1] == b'--remote'
+                              for index, item in enumerate(args))})
         except (FileNotFoundError, ProcessLookupError):
             continue
     return found
@@ -905,8 +917,12 @@ def wait_for_idle(root, config):
                     seen.add(cursor)
             finally:
                 client.close()
-        update(root, phase='waiting-for-idle', busyThreads=busy)
-        if not busy:
+        # Ordinary switch owns portal server/namer/tmux shutdown. A stock CLI
+        # outside that ownership must be closed by its user before cutover.
+        stock_clients = [p for p in native_processes(SOURCE)
+                         if not (p['appServer'] or p['portalTerminal'])]
+        update(root, phase='waiting-for-idle', busyThreads=busy, stockClients=stock_clients)
+        if not busy and not stock_clients:
             return
         time.sleep(15)
 
@@ -978,7 +994,11 @@ if __name__ == '__main__':
     parser.add_argument('--root', type=Path)
     parser.add_argument('--publish', action='store_true')
     parser.add_argument('--scan-source', type=Path)
+    parser.add_argument('--scan-native', type=Path)
     args = parser.parse_args()
+    if args.scan_native:
+        print(json.dumps(native_processes(args.scan_native)))
+        sys.exit(0)
     if args.scan_source:
         assert_no_open_source_files(args.scan_source)
         sys.exit(0)
@@ -1185,7 +1205,7 @@ if __name__ == '__main__':
 
 ## migration-test.py
 
-SHA-256: `95b1039676bd265e226d83e8be78359dd61d24d32255f505a4b836a0dbc1adb6`
+SHA-256: `b8f710f5324f765e1dd377d62ba63308ed786b8a9a8b6895dab69199aba53a6b`
 
 ```python
 #!/usr/bin/env python3
@@ -1415,6 +1435,21 @@ class PartitionTest(unittest.TestCase):
 
 
 class PublicationTest(unittest.TestCase):
+    def test_privileged_native_scan_detects_embedded_cli_identity(self):
+        with tempfile.TemporaryDirectory(prefix='portal-native-scan-') as directory:
+            root = Path(directory)
+            executable = root / 'codex'
+            c.shutil.copy2(c.shutil.which('sleep'), executable)
+            child = subprocess.Popen(['sleep', '30'], executable=str(executable),
+                                     env={**os.environ, 'CODEX_HOME': str(root)})
+            try:
+                found = c.native_processes(root)
+                self.assertEqual([p['pid'] for p in found], [child.pid])
+                self.assertFalse(found[0]['managed'])
+                self.assertFalse(found[0]['updater'])
+            finally:
+                child.terminate(); child.wait()
+
     def test_inotify_detects_completed_writer_and_accepts_own_exchange(self):
         with tempfile.TemporaryDirectory(prefix='portal-watch-test-') as directory:
             root = Path(directory)
