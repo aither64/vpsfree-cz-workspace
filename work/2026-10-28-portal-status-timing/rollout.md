@@ -522,7 +522,7 @@ def partition(inventory, staging, final_portal, prepared_portal):
 
 ## migration-cutover.py
 
-SHA-256: `4afc72bad6460b2ea67283c999a18a7f50bd5172a079cb18addafead009517e8`
+SHA-256: `d7b69f8b57945974e659b9ec9391c217a6ae0864786c6dec1e16c3ff8f62a00b`
 
 ```python
 #!/usr/bin/env python3
@@ -615,7 +615,8 @@ def exchange(left, right, before_left, before_right):
 def lock(path):
     path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
     with path.open('a') as stream:
-        os.chmod(path, 0o600)
+        if os.fstat(stream.fileno()).st_mode & 0o777 != 0o600:
+            os.fchmod(stream.fileno(), 0o600)
         fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
         yield stream
 
@@ -1184,7 +1185,7 @@ if __name__ == '__main__':
 
 ## migration-test.py
 
-SHA-256: `774e0347883939c016e016af425d859be1d3da902f8d0066ab6d91867613ddd6`
+SHA-256: `95b1039676bd265e226d83e8be78359dd61d24d32255f505a4b836a0dbc1adb6`
 
 ```python
 #!/usr/bin/env python3
@@ -1378,7 +1379,7 @@ class PartitionTest(unittest.TestCase):
             self.assertTrue(json.loads((operation / 'journal.json').read_text())['sourceChangedAfterIntent'])
             self.assertTrue((self.source / 'sessions' / 'late-turn.jsonl').exists())
 
-    def test_outer_retry_starts_failed_selected_hook_before_switch(self):
+    def test_outer_retry_after_intent_starts_selected_hook_before_switch(self):
         with self.publication_fixture() as (operation, config):
             config.update(source='/fixture', sourceRevision='expected', claimId='fixture')
             current = self.root / 'codex'; current.touch()
@@ -1400,7 +1401,12 @@ class PartitionTest(unittest.TestCase):
                     patch.object(c, 'command', side_effect=run_command), \
                     patch.object(c.subprocess, 'check_output', return_value='expected\n'), \
                     patch.object(c.subprocess, 'run', side_effect=switch):
+                with patch.object(c, 'exchange', side_effect=InterruptedError('after intent, before exchange')):
+                    with self.assertRaises(InterruptedError):
+                        c.run(operation, config)
+                before = c.source_fingerprint(self.source)
                 c.run(operation, config)
+                self.assertEqual(c.source_fingerprint(operation / 'partition' / 'stock'), before)
                 idle.assert_not_called()
             self.assertEqual(json.loads((operation / 'journal.json').read_text())['phase'], 'accepted')
             start = next(i for i, args in enumerate(commands) if args[:3] == ['systemctl', '--user', 'start'])
