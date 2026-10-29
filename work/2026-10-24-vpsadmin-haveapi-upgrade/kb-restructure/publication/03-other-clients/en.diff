@@ -1,30 +1,27 @@
---- en/previous
-+++ en/03-other-clients
-@@ -575,12 +575,153 @@
+--- before/en/manuals/vps/api.txt
++++ after/en/manuals/vps/api.txt
+@@ -575,12 +575,156 @@
  
  ===== Other clients =====
  
 -These clients are also available alongside the main Ruby client:
--
--  * PHP - https://github.com/vpsfreecz/haveapi/tree/master/clients/php
--  * JavaScript - https://github.com/vpsfreecz/haveapi/tree/master/clients/js
--  * Go - https://github.com/vpsfreecz/haveapi/tree/master/clients/go
--  * The HaveAPI web interface - https://github.com/vpsfreecz/haveapi-webui (outdated)
--
--See each client's README for usage examples.
--
 +The generic HaveAPI clients for PHP, Python, JavaScript and TypeScript download
 +the available resources, actions and parameters from the server. The vpsAdmin
 +clients for Go, Rust and TypeScript provide methods and types for a specific API
 +version. Each client's README covers installation, authentication and further examples.
-+
+ 
+-  * PHP - https://github.com/vpsfreecz/haveapi/tree/master/clients/php
+-  * JavaScript - https://github.com/vpsfreecz/haveapi/tree/master/clients/js
+-  * Go - https://github.com/vpsfreecz/haveapi/tree/master/clients/go
+-  * The HaveAPI web interface - https://github.com/vpsfreecz/haveapi-webui (outdated)
 +==== PHP client ====
-+
+ 
+-See each client's README for usage examples.
 +Install the [[https://github.com/vpsfreecz/haveapi/tree/master/clients/php|HaveAPI PHP client]]
 +using Composer:
 +
 +<code bash>
-+composer require haveapi/client:0.31.2
++composer require haveapi/client
 +</code>
 +
 +After loading the autoloader, use an existing token from ''VPSADMIN_TOKEN'':
@@ -52,11 +49,11 @@
 +
 +==== Python client ====
 +
-+The [[https://pypi.org/project/haveapi-client/0.31.2/|haveapi-client]] package
-+requires Python 3.11 or newer:
++Install the [[https://pypi.org/project/haveapi-client/|haveapi-client]] package using pip.
++See the package page for Python requirements.
 +
 +<code bash>
-+python -m pip install haveapi-client==0.31.2
++python -m pip install haveapi-client
 +</code>
 +
 +Import ''Client'' for synchronous calls or ''AsyncClient'' for asynchronous
@@ -83,7 +80,7 @@
 +Both languages use the same npm package, which includes TypeScript declarations:
 +
 +<code bash>
-+npm install haveapi-client@0.31.2
++npm install haveapi-client
 +</code>
 +
 +''AsyncClient'' provides a Promise-based interface. This Node.js example uses
@@ -134,32 +131,35 @@
 +The generic ''haveapi-client'' discovers the API at runtime and provides the
 +Promise and callback interfaces described above.
 +
-+Client version 0.1.1 requires ''haveapi-client'' 0.30.2. Install this compatible pair:
++Install the client package. npm installs a compatible ''haveapi-client''
++according to its declared dependency:
 +
 +<code bash>
-+npm install vpsadmin-typescript-client@0.1.1 haveapi-client@0.30.2
++npm install vpsadmin-typescript-client
 +</code>
 +
 +The [[https://github.com/vpsfreecz/vpsadmin-typescript-client#readme|client README]]
-+describes ''createVpsAdminClient'', authentication and action calls. The client's version
-+is independent of the HaveAPI framework version.
++describes ''createVpsAdminClient'', authentication and action calls.
 +
 +==== Rust client ====
 +
 +The [[https://github.com/vpsfreecz/vpsadmin-rust-client|vpsAdmin Rust client]]
-+supports API 7.0 and requires Rust 1.95 or newer. Install the
-+[[https://crates.io/crates/vpsadmin-client|vpsadmin-client]] crate by adding
-+this dependency to ''Cargo.toml'':
++supports API 7.0. See the
++[[https://github.com/vpsfreecz/vpsadmin-rust-client#readme|client README]] for Rust requirements.
++Add the [[https://crates.io/crates/vpsadmin-client|vpsadmin-client]] crate to your project:
 +
-+<code toml>
-+[dependencies]
-+vpsadmin-client = "0.1"
++<code bash>
++cargo add vpsadmin-client
 +</code>
 +
 +Use ''vpsadmin_client::Client'' for asynchronous calls. For synchronous calls,
-+set the dependency to ''vpsadmin-client = { version = "0.1", features = ["blocking"] }''
-+and use ''vpsadmin_client::blocking::Client''. The
-+[[https://github.com/vpsfreecz/vpsadmin-rust-client#readme|client README]]
-+contains token authentication and action examples. The client's version is
-+independent of the HaveAPI framework version.
++enable the ''blocking'' feature:
 +
++<code bash>
++cargo add vpsadmin-client --features blocking
++</code>
++
++Then use ''vpsadmin_client::blocking::Client''. The
++[[https://github.com/vpsfreecz/vpsadmin-rust-client#readme|client README]]
++contains token authentication and action examples.
+ 
