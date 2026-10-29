@@ -92,3 +92,27 @@ forward-recovery boundary even if home publication has not occurred yet: retry
 the same reviewed switch and publication journal. This refines the earlier
 before/after-publication recovery shorthand to match the existing runtime's
 forward-only contract. No temporary shared-home runtime mode is needed.
+
+Review remediation: observe the source tree with inotify throughout copying and
+publication, and persist a metadata fingerprint with intent for interruption
+recovery. Ordinary embedded CLI writers are outside daemon startup locks; any
+source change or event overflow refuses. An interrupted publication rechecks the
+original inode's fingerprint before continuing, never recopying over newer stock
+writes. If selected native startup failed in the hook, verify the pending native
+target and start the stopped service before ordinary switch admission retries.
+
+## Idle timing display discovered during final acceptance preparation
+
+The autostart session also has an ordinary recovery hold: recovery reports idle
+and permits explicit input, but app.js skips every activity read while held. The
+existing activity endpoint reads native metadata/history without subscribing or
+resuming, and already returned historical timing for that exact session. Permit
+browser timing reads only when recovery has verified idle, preserving holds for
+unavailable/failed/waiting states and preserving all execution admission. Refresh
+when recovery becomes idle. Extend the existing real HTTP/browser recovery fixture
+to prove timing appears while native resume/send/queue calls remain absent before
+the one explicit original message. This bounded display correction is needed for
+the original status/timing report; the home migration alone does not change it.
+It adds no persistent state, migration, native invocation or new API. Existing
+native upgrade/provider results remain applicable; rerun affected browser checks,
+review this change, and refresh consumer pins/package builds.
