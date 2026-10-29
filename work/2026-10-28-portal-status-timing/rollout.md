@@ -1,7 +1,8 @@
 # Portal home split: one-time rollout
 
-Prepared, not executed. This installation is the only consumer of this data
-conversion. The scripts below are operational source, retained here because raw
+Host deployed; the first switch selected the candidate but refused its second
+idle proof before data publication. This installation is the only consumer of
+this data conversion. The scripts below are operational source, retained here because raw
 tracking artifacts are disposable on archive. They are not installed in the
 runtime. Extract each named fenced block unchanged into the private operation
 directory and verify its SHA-256 before execution.
@@ -525,7 +526,7 @@ def partition(inventory, staging, final_portal, prepared_portal):
 
 ## migration-cutover.py
 
-SHA-256: `3911785793967f379e587fff482521a03fa5d1d98fc818569f9da7035eafabb8`
+SHA-256: `df14cd9b4548bd991f5196ad9ee7e05447af8ae23d1fb4d11ae90de91aa618ba`
 
 ```python
 #!/usr/bin/env python3
@@ -936,7 +937,11 @@ def run(root, config):
         if actual != config['sourceRevision']:
             raise RuntimeError('workspace feature head changed')
         start = Path('/proc/self/stat').read_text().rsplit(')', 1)[1].split()[19]
-        journal = update(root, outer={'pid': os.getpid(), 'start': start}, phase='preparing')
+        prior = json.loads((root / 'journal.json').read_text()) if (root / 'journal.json').exists() else {}
+        failure = {'lastFailure': {'phase': prior.get('phase'), 'error': prior['error'],
+                                  'at': prior.get('updatedAt')}} if prior.get('error') else {}
+        journal = update(root, outer={'pid': os.getpid(), 'start': start}, phase='preparing',
+                         error=None, **failure)
         selected_hook = str(PROFILE.resolve()) == config['candidatePackage'] and journal.get('hookEntered')
         if not journal.get('publication') and not selected_hook:
             wait_for_idle(root, config)
@@ -975,7 +980,10 @@ def run(root, config):
             # A refusal leaves ordinary recovery authoritative. Exit with retained
             # journal; a subsequent run resumes the same source and claim.
             with (root / 'switch.log').open('a') as log:
-                result = subprocess.run([str(PROFILE / 'bin/workspace-host'), 'switch', '--source', config['source']],
+                host = [str(PROFILE / 'bin/workspace-host')]
+                if str(PROFILE.resolve()) == config['candidatePackage']:
+                    host = ['ruby', str(HERE / 'migration-host.rb'), '--root', str(root)]
+                result = subprocess.run([*host, 'switch', '--source', config['source']],
                                         env=environment, stdout=log, stderr=subprocess.STDOUT)
             if result.returncode:
                 update(root, phase='switch-refused' if str(PROFILE.resolve()) == config['previousPackage']
@@ -1205,7 +1213,7 @@ if __name__ == '__main__':
 
 ## migration-test.py
 
-SHA-256: `b8f710f5324f765e1dd377d62ba63308ed786b8a9a8b6895dab69199aba53a6b`
+SHA-256: `b5c0b9ed0bb063e7ad87c194c9ab1f17b8f94fd73d5e42941ac574586343526a`
 
 ```python
 #!/usr/bin/env python3
@@ -1425,10 +1433,14 @@ class PartitionTest(unittest.TestCase):
                     with self.assertRaises(InterruptedError):
                         c.run(operation, config)
                 before = c.source_fingerprint(self.source)
+                c.update(operation, error='previous interrupted attempt', phase='forward-recovery-required')
                 c.run(operation, config)
                 self.assertEqual(c.source_fingerprint(operation / 'partition' / 'stock'), before)
                 idle.assert_not_called()
-            self.assertEqual(json.loads((operation / 'journal.json').read_text())['phase'], 'accepted')
+            resumed = json.loads((operation / 'journal.json').read_text())
+            self.assertEqual(resumed['phase'], 'accepted')
+            self.assertIsNone(resumed['error'])
+            self.assertEqual(resumed['lastFailure']['error'], 'previous interrupted attempt')
             start = next(i for i, args in enumerate(commands) if args[:3] == ['systemctl', '--user', 'start'])
             switch_index = next(i for i, args in enumerate(commands) if 'switch' in args)
             self.assertLess(start, switch_index)
@@ -2225,5 +2237,239 @@ SHA-256: `9292c98a68c73fd288e7c0ab8bdbcad2d9116832bfa86d63bb949732a2285c89`
     ]
   ]
 }
+```
+
+
+## Selected-package idle-proof recovery
+
+The first execution stopped with `forward-recovery-required` before the native
+publication hook. Candidate activation rechecks idle execution using its new
+helper, while old Codex 0.164 still serves rollouts from .codex. Its private-home
+authority rejects those source paths. The old native remains running; no copy,
+publication intent, exchange or resend occurred. Keep the original claim,
+configuration and selected package.
+
+The one-time migration-host.rb adapter loads the exact selected host and changes
+only the environment of quiesce --package-transition before publication. It
+requires this exact workspace, old launch marker, old native executable and
+source home. It passes that home to all existing idle, queue, submission and
+archive-path checks. It routes the exact nested candidate _activate through
+the same adapter; other operations and daemon launch are unchanged. After
+publication it retains normal private-home arguments. This is not installed
+project functionality and changes no lifecycle or package journals.
+
+On retry use the original systemd unit and existing journal. The runner chooses
+the adapter only when the candidate is already selected. Do not edit the source
+revision/package/claim or clear the first failure. A retry preserves the prior failure under lastFailure and clears the current
+error, so phase/error describe the resumed run. The append-only switch log
+retains full earlier output.
+The exact installed-host fixture covers old-native quiescence, other invocations,
+private-home behavior after publication, nested activation and identity refusals.
+
+## migration-host.rb
+
+SHA-256: `b20833c2771385509fb9a6519475a14af3e50c3665137767cfdb057c1a02ace2`
+
+```ruby
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# One-installation adapter for the selected package's second idle proof.
+# Load the exact installed host; leave its gates and state machine intact.
+require 'json'
+require 'rbconfig'
+
+module PortalHomeMigration
+  SOURCE = '/home/aither/.codex'
+  WORKSPACE = '/home/aither/workspace/ai/vpsfree.cz'
+  PROFILE = '/home/aither/.local/state/dev-workspaces/profile'
+  SOURCE_NATIVE = '/nix/store/5rm5bizqzrc1sjlpbdnwps2cf16dxys0-codex-package-0.164.0/libexec/codex/bin/codex'
+  SOURCE_LAUNCH = '/nix/store/5rm5bizqzrc1sjlpbdnwps2cf16dxys0-codex-package-0.164.0/bin/codex'
+
+  attr_accessor :migration_root
+
+  def migration_configuration
+    JSON.parse(File.read(File.join(migration_root, 'config.json')))
+  end
+
+  def migration_published?
+    JSON.parse(File.read(File.join(migration_root, 'journal.json')))['published'] == true
+  end
+
+  def require_source_native!(entry)
+    unless entry.fetch('name') == 'vpsfree-cz' && entry.fetch('root') == WORKSPACE &&
+           File.realpath(PROFILE) == migration_configuration.fetch('candidatePackage')
+      raise DevWorkspaceHost::Error, 'migration quiescence has an unexpected workspace or package'
+    end
+    marker = load_registration_marker(entry)
+    unless marker.is_a?(Hash) && !marker.fetch('launch').key?('storage') &&
+           marker.dig('launch', 'codex_path') == SOURCE_LAUNCH
+      raise DevWorkspaceHost::Error, 'migration quiescence has an unexpected native launch'
+    end
+    pid = capture!('systemctl', '--user', 'show', '-p', 'MainPID', '--value',
+                   'workspace-codex@vpsfree-cz.service').strip
+    unless pid.match?(/\A[1-9][0-9]*\z/) && File.realpath("/proc/#{pid}/exe") == SOURCE_NATIVE
+      raise DevWorkspaceHost::Error, 'migration source native is not running'
+    end
+    environment = File.binread("/proc/#{pid}/environ").split("\0").to_h { |item| item.split('=', 2) }
+    home = environment.fetch('CODEX_HOME') { File.join(environment.fetch('HOME'), '.codex') }
+    unless home == SOURCE && environment.fetch('CODEX_SQLITE_HOME', SOURCE) == SOURCE
+      raise DevWorkspaceHost::Error, 'migration source native has an unexpected home'
+    end
+  end
+
+  def dev_session_invocation(entry, argv, **options)
+    environment, command, arguments = super
+    if argv.first == 'quiesce' && argv.include?('--package-transition') && !migration_published?
+      require_source_native!(entry)
+      environment = environment.merge('CODEX_HOME' => SOURCE, 'CODEX_SQLITE_HOME' => SOURCE,
+                                      'DEV_WORKSPACE_CODEX_HOME' => SOURCE)
+    end
+    [environment, command, arguments]
+  end
+
+  def system_env!(environment, *argv, **options)
+    candidate = migration_configuration.fetch('candidatePackage')
+    if argv == [File.join(candidate, 'bin/workspace-host'), '_activate']
+      argv = [RbConfig.ruby, File.expand_path(__FILE__), '--root', migration_root, '_activate']
+    end
+    super(environment, *argv, **options)
+  end
+end
+
+if $PROGRAM_NAME == __FILE__
+  raise 'migration adapter requires --root DIRECTORY' unless ARGV.shift == '--root'
+  root = File.realpath(ARGV.shift)
+  configuration = JSON.parse(File.read(File.join(root, 'config.json')))
+  candidate = configuration.fetch('candidatePackage')
+  raise 'migration candidate is not selected' unless File.realpath(PortalHomeMigration::PROFILE) == candidate
+  unless ARGV == ['_activate'] || ARGV == ['switch', '--source', configuration.fetch('source')]
+    raise 'migration adapter only supports the exact switch and nested activation'
+  end
+  load File.join(candidate, 'libexec/.workspace-host-wrapped')
+  DevWorkspaceHost::Host.prepend(PortalHomeMigration)
+  host = DevWorkspaceHost::Host.new
+  host.migration_root = root
+  exit host.run('workspace-host', ARGV.dup)
+end
+```
+
+## migration-host-test.rb
+
+SHA-256: `00b29bab56fb99a4062c03805d95741f44a47155ef94588df7c69aac2db4b46f`
+
+```ruby
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+gem 'minitest', '= 5.25.4'
+require 'minitest/autorun'
+require 'minitest/mock'
+require 'tmpdir'
+require_relative 'migration-host'
+
+CANDIDATE = '/nix/store/d0wikyzpr7qk1w2c2zbqgj97qz1m58qn-dev-workspace-0.2.0'
+load File.join(CANDIDATE, 'libexec/.workspace-host-wrapped')
+
+class MigrationHostTest < Minitest::Test
+  class Adapter < DevWorkspaceHost::Host
+    prepend PortalHomeMigration
+  end
+
+  def setup
+    @root = Dir.mktmpdir('portal-home-adapter-')
+    @entry = {'name' => 'vpsfree-cz', 'root' => PortalHomeMigration::WORKSPACE,
+              'hostname' => 'example.test', 'aliases' => []}
+    @env = {'HOME' => @root, 'XDG_RUNTIME_DIR' => File.join(@root, 'run'),
+            'DEV_WORKSPACES_STATE' => File.join(@root, 'state')}
+    @host = Adapter.new(env: @env)
+    @host.migration_root = @root
+    File.write(File.join(@root, 'config.json'), JSON.generate({'candidatePackage' => CANDIDATE}))
+    File.write(File.join(@root, 'journal.json'), JSON.generate({'phase' => 'forward-recovery-required'}))
+  end
+
+  def teardown
+    FileUtils.remove_entry(@root)
+  end
+
+  def invocation(argv)
+    @host.stub(:codex_version, '0.164.0') do
+      @host.stub(:extension_catalog, Struct.new(:cluster_providers).new({})) do
+        @host.send(:dev_session_invocation, @entry, argv, transition_lock: false)
+      end
+    end
+  end
+
+  def test_selected_old_native_quiescence_uses_source_without_changing_proof
+    seen = []
+    @host.stub(:require_source_native!, ->(entry) { seen << entry }) do
+      environment, command, arguments = invocation(['quiesce', 'fixture', '--as-is', '--package-transition'])
+      assert_equal [@entry], seen
+      %w[CODEX_HOME CODEX_SQLITE_HOME DEV_WORKSPACE_CODEX_HOME].each do |key|
+        assert_equal PortalHomeMigration::SOURCE, environment.fetch(key)
+      end
+      assert_equal File.join(CANDIDATE, 'libexec/workspace-portal/dev-session'), command
+      assert_includes arguments, '--expected-host-generation'
+      assert_includes arguments, '--package-transition'
+      assert_includes arguments, '--codex-socket'
+    end
+  end
+
+  def test_unverified_native_refuses_quiescence
+    @host.stub(:require_source_native!, ->(*) { raise DevWorkspaceHost::Error, 'wrong native' }) do
+      assert_raises(DevWorkspaceHost::Error) { invocation(['quiesce', 'fixture', '--package-transition']) }
+    end
+  end
+
+  def test_nontransition_commands_and_published_home_use_private_storage
+    @host.stub(:require_source_native!, ->(*) { flunk 'source proof must not run' }) do
+      [['sync', 'fixture'], ['quiesce', 'fixture']].each do |argv|
+        environment, = invocation(argv)
+        assert_equal File.join(@root, 'state/codex-homes/vpsfree-cz'), environment.fetch('CODEX_HOME')
+      end
+      File.write(File.join(@root, 'journal.json'), JSON.generate({'published' => true}))
+      environment, = invocation(['quiesce', 'fixture', '--package-transition'])
+      assert_equal File.join(@root, 'state/codex-homes/vpsfree-cz'), environment.fetch('CODEX_HOME')
+    end
+  end
+
+  def test_nested_candidate_activation_retains_environment_and_adapter
+    calls = []
+    status = Struct.new(:success?).new(true)
+    Open3.stub(:capture3, ->(*args) { calls << args; ['', '', status] }) do
+      @host.send(:system_env!, {'DEV_WORKSPACE_ACTIVATION' => '1'}, File.join(CANDIDATE, 'bin/workspace-host'), '_activate')
+      @host.send(:system_env!, {}, 'other-command', '_activate')
+    end
+    assert_equal [{'DEV_WORKSPACE_ACTIVATION' => '1'}, RbConfig.ruby,
+                  File.join(__dir__, 'migration-host.rb'), '--root', @root, '_activate'], calls.fetch(0)
+    assert_equal [{}, 'other-command', '_activate'], calls.fetch(1)
+  end
+
+  def test_source_proof_refuses_wrong_workspace_before_process_access
+    assert_raises(DevWorkspaceHost::Error) do
+      @host.require_source_native!(@entry.merge('name' => 'foreign'))
+    end
+  end
+
+  def test_source_proof_checks_marker_executable_and_home
+    marker = {'launch' => {'codex_path' => PortalHomeMigration::SOURCE_LAUNCH}}
+    paths = {PortalHomeMigration::PROFILE => CANDIDATE, '/proc/123/exe' => PortalHomeMigration::SOURCE_NATIVE}
+    @host.stub(:load_registration_marker, marker) do
+      @host.stub(:capture!, '123') do
+        File.stub(:realpath, ->(path) { paths.fetch(path) }) do
+          File.stub(:binread, "HOME=/home/aither\0") { @host.require_source_native!(@entry) }
+          File.stub(:binread, "HOME=/foreign\0") do
+            assert_raises(DevWorkspaceHost::Error) { @host.require_source_native!(@entry) }
+          end
+          paths['/proc/123/exe'] = '/wrong-native'
+          assert_raises(DevWorkspaceHost::Error) { @host.require_source_native!(@entry) }
+          paths['/proc/123/exe'] = PortalHomeMigration::SOURCE_NATIVE
+          marker['launch']['storage'] = {}
+          assert_raises(DevWorkspaceHost::Error) { @host.require_source_native!(@entry) }
+        end
+      end
+    end
+  end
+end
 ```
 
