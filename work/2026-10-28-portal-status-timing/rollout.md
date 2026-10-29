@@ -526,7 +526,7 @@ def partition(inventory, staging, final_portal, prepared_portal):
 
 ## migration-cutover.py
 
-SHA-256: `df14cd9b4548bd991f5196ad9ee7e05447af8ae23d1fb4d11ae90de91aa618ba`
+SHA-256: `54fa1ddb4c87f3dcc83350861bdc32055f85b9f14593c8d2a76320851bdcd12b`
 
 ```python
 #!/usr/bin/env python3
@@ -982,7 +982,7 @@ def run(root, config):
             with (root / 'switch.log').open('a') as log:
                 host = [str(PROFILE / 'bin/workspace-host')]
                 if str(PROFILE.resolve()) == config['candidatePackage']:
-                    host = ['ruby', str(HERE / 'migration-host.rb'), '--root', str(root)]
+                    host = [str(HERE / 'migration-host.sh'), '--root', str(root)]
                 result = subprocess.run([*host, 'switch', '--source', config['source']],
                                         env=environment, stdout=log, stderr=subprocess.STDOUT)
             if result.returncode:
@@ -2268,7 +2268,7 @@ private-home behavior after publication, nested activation and identity refusals
 
 ## migration-host.rb
 
-SHA-256: `b20833c2771385509fb9a6519475a14af3e50c3665137767cfdb057c1a02ace2`
+SHA-256: `490973936b29a576040343622dd1519d114120c3e170f84313e8fbb4f3a8fc30`
 
 ```ruby
 #!/usr/bin/env ruby
@@ -2277,7 +2277,6 @@ SHA-256: `b20833c2771385509fb9a6519475a14af3e50c3665137767cfdb057c1a02ace2`
 # One-installation adapter for the selected package's second idle proof.
 # Load the exact installed host; leave its gates and state machine intact.
 require 'json'
-require 'rbconfig'
 
 module PortalHomeMigration
   SOURCE = '/home/aither/.codex'
@@ -2331,7 +2330,7 @@ module PortalHomeMigration
   def system_env!(environment, *argv, **options)
     candidate = migration_configuration.fetch('candidatePackage')
     if argv == [File.join(candidate, 'bin/workspace-host'), '_activate']
-      argv = [RbConfig.ruby, File.expand_path(__FILE__), '--root', migration_root, '_activate']
+      argv = [File.join(migration_root, 'migration-host.sh'), '--root', migration_root, '_activate']
     end
     super(environment, *argv, **options)
   end
@@ -2343,8 +2342,10 @@ if $PROGRAM_NAME == __FILE__
   configuration = JSON.parse(File.read(File.join(root, 'config.json')))
   candidate = configuration.fetch('candidatePackage')
   raise 'migration candidate is not selected' unless File.realpath(PortalHomeMigration::PROFILE) == candidate
-  unless ARGV == ['_activate'] || ARGV == ['switch', '--source', configuration.fetch('source')]
-    raise 'migration adapter only supports the exact switch and nested activation'
+  checks = [PortalHomeMigration::SOURCE_LAUNCH, File.join(candidate, 'libexec/codex/bin/codex')]
+  unless ARGV == ['_activate'] || ARGV == ['switch', '--source', configuration.fetch('source')] ||
+         checks.any? { |binary| ARGV == ['check-codex', '--codex', binary] }
+    raise 'migration adapter only supports the exact switch, activation and native checks'
   end
   load File.join(candidate, 'libexec/.workspace-host-wrapped')
   DevWorkspaceHost::Host.prepend(PortalHomeMigration)
@@ -2356,7 +2357,7 @@ end
 
 ## migration-host-test.rb
 
-SHA-256: `00b29bab56fb99a4062c03805d95741f44a47155ef94588df7c69aac2db4b46f`
+SHA-256: `7b83ba4c4ba2b6d6730f973734b75588338374e07ebe42daa2db69602f6ae9d7`
 
 ```ruby
 #!/usr/bin/env ruby
@@ -2440,8 +2441,8 @@ class MigrationHostTest < Minitest::Test
       @host.send(:system_env!, {'DEV_WORKSPACE_ACTIVATION' => '1'}, File.join(CANDIDATE, 'bin/workspace-host'), '_activate')
       @host.send(:system_env!, {}, 'other-command', '_activate')
     end
-    assert_equal [{'DEV_WORKSPACE_ACTIVATION' => '1'}, RbConfig.ruby,
-                  File.join(__dir__, 'migration-host.rb'), '--root', @root, '_activate'], calls.fetch(0)
+    assert_equal [{'DEV_WORKSPACE_ACTIVATION' => '1'}, File.join(@root, 'migration-host.sh'),
+                  '--root', @root, '_activate'], calls.fetch(0)
     assert_equal [{}, 'other-command', '_activate'], calls.fetch(1)
   end
 
@@ -2473,3 +2474,93 @@ class MigrationHostTest < Minitest::Test
 end
 ```
 
+
+## Packaged launcher environment recovery
+
+The second attempt passed source-home quiescence but failed the candidate's
+protocol check because the adapter loaded the Ruby implementation directly and
+bypassed the installed shell wrapper's PATH. Ambient Python lacked jsonschema.
+No publication hook, copy or exchange occurred. Preserve the same operation.
+
+The executable migration-host.sh below contains the exact public wrapper exports
+and exact libexec wrapper PATH setup from selected d0wikyzpr7, replacing only
+their final dispatch with the adapter's Ruby entry. Both outer and nested
+activation use this launcher. The bundled Ruby and Python/jsonschema environment
+are therefore identical to ordinary host execution. The adapter also admits the
+two exact read-only check-codex commands so real protocol/schema/startup checks
+can run through this launcher before offline cutover. No check is skipped.
+
+Export .sh as mode 0700; other source files remain 0600. The prepared launcher
+was generated from the exact package's bin/workspace-host and
+libexec/workspace-host after asserting both final exec lines. Its adapter path
+is relative to its own directory; the candidate package/source identity remains
+checked by migration-host.rb. Retain prior errors/logs and restart the same unit
+only after actual-input rehearsal, required checks and review pass.
+
+## migration-host.sh
+
+SHA-256: `c9fe01a09618acf2a787bed0c300d8229c6f58446394a79dc08b888a6b0be6f4`
+
+```bash
+#! /nix/store/axl12yr00f105bjqvj628f5f0s6r0cnp-bash-5.3p9/bin/bash -e
+export DEV_WORKSPACE_HOST_MODE='workspace-host'
+export DEV_WORKSPACES_EXTENSION_CATALOG='/nix/store/d0wikyzpr7qk1w2c2zbqgj97qz1m58qn-dev-workspace-0.2.0/share/dev-workspace/extensions.json'
+export DEV_WORKSPACE_ACTIVATION_ALIASES=''
+export DEV_WORKSPACES_NAMESPACE=${DEV_WORKSPACES_NAMESPACE-'dev-workspaces'}
+export DEV_WORKSPACES_ROUTER_SOCKET=${DEV_WORKSPACES_ROUTER_SOCKET-'/run/dev-workspaces/router.sock'}
+PATH=${PATH:+':'$PATH':'}
+PATH=${PATH/':''/nix/store/a1rnj8z32di3n9scgb6p3ndhscs76jzc-tmux-3.6a/bin'':'/':'}
+PATH='/nix/store/a1rnj8z32di3n9scgb6p3ndhscs76jzc-tmux-3.6a/bin'$PATH
+PATH=${PATH#':'}
+PATH=${PATH%':'}
+export PATH
+PATH=${PATH:+':'$PATH':'}
+PATH=${PATH/':''/nix/store/khnfirshq5j299s6sfj0laxj0vr7gaa6-systemd-260.2/bin'':'/':'}
+PATH='/nix/store/khnfirshq5j299s6sfj0laxj0vr7gaa6-systemd-260.2/bin'$PATH
+PATH=${PATH#':'}
+PATH=${PATH%':'}
+export PATH
+PATH=${PATH:+':'$PATH':'}
+PATH=${PATH/':''/nix/store/5shv7ihqxa98r1psfz995q3j2cwk22sa-ruby-3.4.9/bin'':'/':'}
+PATH='/nix/store/5shv7ihqxa98r1psfz995q3j2cwk22sa-ruby-3.4.9/bin'$PATH
+PATH=${PATH#':'}
+PATH=${PATH%':'}
+export PATH
+PATH=${PATH:+':'$PATH':'}
+PATH=${PATH/':''/nix/store/5a0h3d6488628sh6w1ccqk8dizvmp8ji-python3-3.13.15-env/bin'':'/':'}
+PATH='/nix/store/5a0h3d6488628sh6w1ccqk8dizvmp8ji-python3-3.13.15-env/bin'$PATH
+PATH=${PATH#':'}
+PATH=${PATH%':'}
+export PATH
+PATH=${PATH:+':'$PATH':'}
+PATH=${PATH/':''/nix/store/qilxjlbdj0rvrz8isfmnfb9cp91fbvv1-openssh-10.5p1/bin'':'/':'}
+PATH='/nix/store/qilxjlbdj0rvrz8isfmnfb9cp91fbvv1-openssh-10.5p1/bin'$PATH
+PATH=${PATH#':'}
+PATH=${PATH%':'}
+export PATH
+PATH=${PATH:+':'$PATH':'}
+PATH=${PATH/':''/nix/store/wknkybkzrc16r11vk5vrykh4wmw7a353-nix-2.34.8/bin'':'/':'}
+PATH='/nix/store/wknkybkzrc16r11vk5vrykh4wmw7a353-nix-2.34.8/bin'$PATH
+PATH=${PATH#':'}
+PATH=${PATH%':'}
+export PATH
+PATH=${PATH:+':'$PATH':'}
+PATH=${PATH/':''/nix/store/5vpcfsdx1lcnlb2y4k7xyc74shp5qwbh-git-2.54.0/bin'':'/':'}
+PATH='/nix/store/5vpcfsdx1lcnlb2y4k7xyc74shp5qwbh-git-2.54.0/bin'$PATH
+PATH=${PATH#':'}
+PATH=${PATH%':'}
+export PATH
+PATH=${PATH:+':'$PATH':'}
+PATH=${PATH/':''/nix/store/lmnakv2iy4b8m8saqvwkxywyd76yvypl-gh-2.100.0/bin'':'/':'}
+PATH='/nix/store/lmnakv2iy4b8m8saqvwkxywyd76yvypl-gh-2.100.0/bin'$PATH
+PATH=${PATH#':'}
+PATH=${PATH%':'}
+export PATH
+PATH=${PATH:+':'$PATH':'}
+PATH=${PATH/':''/nix/store/61685rbaxmpigwi3z23i33sv3jyfl70q-coreutils-9.11/bin'':'/':'}
+PATH='/nix/store/61685rbaxmpigwi3z23i33sv3jyfl70q-coreutils-9.11/bin'$PATH
+PATH=${PATH#':'}
+PATH=${PATH%':'}
+export PATH
+exec /nix/store/5shv7ihqxa98r1psfz995q3j2cwk22sa-ruby-3.4.9/bin/ruby "$(dirname "$0")/migration-host.rb" "$@"
+```
