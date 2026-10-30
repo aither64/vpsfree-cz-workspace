@@ -4,9 +4,11 @@
 
 Audit the exact published HaveAPI range
 `f6e5c3750c747b33ec869c54ca220bf6f1d9d2d0..ae46cf27a9afb6558d386c293cec7231dd6c423d`
-for introduced security regressions. The five commits are reviewed as a whole,
-with unchanged code read only where needed to establish reachability, policy,
-escaping, request lifetime, cache lifetime, and base-versus-head behavior.
+for introduced security regressions and, following the user's later scope
+expansion, every confirmed pre-existing security bug found in the same reviewed
+boundary. The five commits are reviewed as a whole, with unchanged code read
+only where needed to establish reachability, policy, escaping, request lifetime,
+cache lifetime, and base-versus-head behavior.
 
 ## Interfaces and files
 
@@ -88,3 +90,32 @@ points. Targeted checks exercise suspicious paths with existing local helpers or
 small synthetic fixtures. Potentially longer repository checks are run only
 when they directly resolve a material lead, with a bounded target and stop
 condition; no external or live request is permitted.
+
+## Corrected-head re-audit boundary
+
+The second pass compares direct parent
+`ae46cf27a9afb6558d386c293cec7231dd6c423d` to corrected head
+`ddf836fbb33ec6f920c3edfd9a4a53c2c2eb494b`, expected tree
+`30efb19e02a756036771767745a9858fe968f95b`. It independently verifies that each
+previously executable payload becomes one literal argv token without changing
+the documented CLI/curl request semantics, and that the centralized quoting is
+applied exactly once to all dynamic shell tokens. The adjacent CLI-help
+formatter is in scope only to resolve the concrete copy/run injection lead; no
+broad client audit is added.
+
+Acceptance for this pass requires unchanged original PoCs to stop creating
+markers, positive argv/JSON preservation checks for the fixed renderers, local
+proof for any remaining/new issue, exact corrected source identity, clean
+tracked source, and reconciled owned processes. A fix that merely prevents the
+marker while corrupting the intended argument does not satisfy the invariant.
+
+## Second corrected-head boundary
+
+Compare `ddf836fbb33ec6f920c3edfd9a4a53c2c2eb494b` to final corrected head
+`aee093cd3387c261570067e58b7f1e16029e3619`, while verifying its direct parent
+`a3f522e509faaf9da34d9e87c7f7e9246c76bd6c`. Acceptance requires all original
+VULN-01 through VULN-04 execution payloads to remain inert, exact CLI/curl argv
+and request JSON, visibly preserved hostile response text, every physical
+response line remaining a shell comment in the retained combined code block,
+and the real Copy control preserving that same safe text. Any new finding still
+requires its own locally triggered PoC and report.
