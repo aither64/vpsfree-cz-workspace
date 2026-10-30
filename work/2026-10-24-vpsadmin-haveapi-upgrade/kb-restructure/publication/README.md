@@ -3,7 +3,7 @@
 These are complete Czech/English page revisions in publication order, starting
 from the captured production originals. Each directory contains its affected
 pages, localized revision summaries and a diff against the preceding revision.
-The final pages equal the canonical candidates: step05 in both languages.
+The final pages equal the canonical candidates: step06 in both languages.
 The previous three-step chain and cumulative manifests are preserved under
 `../install-policy/prior/`; its staging receipts remain historical evidence.
 
@@ -30,6 +30,13 @@ The previous three-step chain and cumulative manifests are preserved under
    paragraph, with links to the existing CLI, Ruby and other-client sections.
    The detailed sections, installation guidance and examples remain unchanged.
    [Czech diff](05-client-overview/cs.diff), [English diff](05-client-overview/en.diff).
+6. **Clarify dynamic and generated client selection.** Remove the main-client
+   claim and optional API selectors; distinguish runtime discovery from generated
+   schema-specific methods and types. Update the overview links with the renamed
+   sections, retain the generated TypeScript client's required schema-matching
+   prefix, and replace copied Ruby/PATH requirements with maintained sources and
+   executable-directory discovery. Preserve token handling and install pairing.
+   [Czech diff](06-client-selection/cs.diff), [English diff](06-client-selection/en.diff).
 
 `content-chain.json` binds each predecessor and result by content SHA256.
 It does not claim production revisions for changes that have not been published.
@@ -85,6 +92,19 @@ guards precede one ordinary public save per language with the exact step05
 summary. Verify exact source/revision/diff and all eight rendered overview links
 against their actual heading IDs. Final pending remains null.
 
+Step05 is also complete; its immutable [overview receipt](../overview/staging/receipt.md)
+binds actual CS1793369708/contentc7b1f412… and EN1793369764/contentd6ca6635….
+Append step06 directly after those exact predecessors, one ordinary public save
+per language with its approved localized summary, after the committed focused
+checks, independent general review and fresh source/owner/auth/ACL guards.
+Preserve every prior snapshot and revision; no baseline restore or replay.
+Check exact source, actual predecessor diff, summary and revision, then all eight
+overview links per language against the actual rendered renamed heading IDs.
+The architect's source-backed default/compatibility decisions and CLI-literal
+appendix are in `design.md:4656`; local checks are in
+[client-selection/checks.md](../client-selection/checks.md). No production
+authority or new client/install/runtime matrix follows from this continuation.
+
 After explicit approval of the exact changesets, use the normal guarded release
 workflow for each step and language: prepare its schema-5 manifest, stage,
 verify the source/rendered page and localized summary, then promote. Save the
@@ -99,7 +119,8 @@ staging another manifest replaces the global pending digest. There is no English
 step04. Production approval must cover the exact ordered changesets.
 
 The user-facing writing was prepared by the lead. This package changes KB text
-only. Existing authentication/CLI examples and API7 values are retained;
-avoidable install pins are removed under the accepted `design.md` installation
-and header brief. It does not alter an API, schema, OAuth configuration or
+only. Step06 intentionally changes the PATH block and three optional client
+selectors per language; all other code remains exact. Generated-client wire
+paths and schema-prefix requirements are preserved without copied numeric
+support claims. It does not alter an API, schema, OAuth configuration or
 deployment.

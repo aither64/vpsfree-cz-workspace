@@ -1,0 +1,164 @@
+--- before/cs/navody/vps/api.txt
++++ after/cs/navody/vps/api.txt
+@@ -21,12 +21,12 @@
+ 
+ Pro práci s API můžeš použít tyto klienty:
+ 
+-  * [[#instalace_klienta|CLI vpsfreectl]] a [[#klient_pro_ruby|knihovna pro Ruby]]: hlavní klient v balíčku ''vpsfree-client''.
++  * [[#instalace_klienta|CLI vpsfreectl]] a [[#klient_pro_ruby|knihovna pro Ruby]] z balíčku ''vpsfree-client''
+   * [[#klient_pro_php|PHP]]
+   * [[#klient_pro_python|Python]]
+-  * [[#klient_haveapi_pro_javascript_a_typescript|Generický klient HaveAPI pro JavaScript a TypeScript]]
++  * [[#dynamicky_klient_haveapi_pro_javascript_a_typescript|Dynamický klient HaveAPI pro JavaScript a TypeScript]]
+   * [[#klient_pro_go|Go]]
+-  * [[#klient_pro_vpsadmin_v_typescriptu|Klient pro vpsAdmin v TypeScriptu]]
++  * [[#generovany_klient_pro_vpsadmin_v_typescriptu|Generovaný klient pro vpsAdmin v TypeScriptu]]
+   * [[#klient_pro_rust|Rust]]
+ 
+ API je [[wp>Representational state transfer|RESTful]], takže pro jednoduché
+@@ -40,8 +40,8 @@
+   * [[#http_basic|HTTP Basic]]
+   * [[#tokeny|Pomocí tokenů]]
+ 
+-Konkrétní ukázky autentizace pro podporované programovací jazyky a CLI najdete
+-v [[https://api.vpsfree.cz/v6.0/#auth|dokumentaci API]].
++Ukázky autentizace pro podporované programovací jazyky a CLI najdeš
++v [[https://api.vpsfree.cz/|dokumentaci API]].
+ 
+ ==== HTTP Basic ====
+ S každým požadavkem na API se musí zaslat jméno a heslo v HTTP hlavičce "Authorization".
+@@ -82,11 +82,11 @@
+ Scope může obsahovat globy pro název resource a akce. Akce je od resource oddělena křížkem (''#''). Volitelné ID objektů se píšou za dvojtečkou ('':'') a nemohou obsahovat globy, musí být přesně. Každý token může mít více nastavených scopes, oddělují se mezerou. Pro udělení přístupu musí aspoň jedno nastavené scope platit pro volanou akci v API.
+ 
+ ===== Instalace klienta =====
+-Hlavním klientem je [[https://github.com/vpsfreecz/vpsfree-client|vpsfree-client]]
+-pro Ruby. Obsahuje příkaz ''vpsfreectl'' pro práci z příkazové řádky i knihovnu
+-pro Ruby skripty. Obojí nainstaluješ jedním balíčkem.
+-Pro správnou funkci vyžaduje Ruby >= 2.7, nainstalované hlavičkové soubory
+-Ruby a ncurses (většinou balíčky s příponou ''-dev'' či ''-devel'').
++Balíček [[https://github.com/vpsfreecz/vpsfree-client|vpsfree-client]] obsahuje
++příkaz ''vpsfreectl'' pro práci z příkazové řádky i knihovnu pro Ruby skripty.
++Potřebuješ Ruby, jeho hlavičkové soubory a ncurses (většinou balíčky s příponou
++''-dev'' či ''-devel''). Požadavky na závislosti najdeš na
++[[https://rubygems.org/gems/vpsfree-client|stránce balíčku]].
+ Poté klienta nainstalujeme pomocí Ruby gems:
+ 
+ <code bash>
+@@ -98,7 +98,7 @@
+   * Linux
+     * [[navody:vps:api:arch|Arch Linux]]
+     * [[navody:vps:api:centos|CentOS]]
+-    * [[navody:vps:api:ubuntu|Ubuntu 20.04]]
++    * [[navody:vps:api:ubuntu|Ubuntu]]
+   * [[navody:vps:api:macos|macOS]]
+   * [[navody:vps:api:windows|Windows]]
+ 
+@@ -113,7 +113,7 @@
+ ''gem''. Stačí tedy onen adresář přidat do ''$PATH'', např.:
+ 
+ <code bash>
+-$ PATH="$PATH:/home/user/.gem/ruby/2.7.0/bin"
++$ export PATH="$PATH:$(ruby -r rubygems -e 'puts Gem.bindir')"
+ </code>
+ 
+ ===== Použití CLI =====
+@@ -638,10 +638,12 @@
+ 
+ ===== Další klienti =====
+ 
+-Pro PHP, Python, JavaScript a TypeScript můžeš použít generické klienty HaveAPI,
+-které si ze serveru stáhnou popis dostupných zdrojů, akcí a parametrů.
+-Klienti pro vpsAdmin v Go, Rustu a TypeScriptu mají metody a typy pro konkrétní
+-verzi API. Instalaci, autentizaci a další příklady popisuje README každého klienta.
++Dynamičtí klienti HaveAPI pro PHP, Python, JavaScript a TypeScript si za běhu
++ze serveru načtou popis dostupných zdrojů, akcí a parametrů. Pokud verzi nezadáš,
++použijí výchozí verzi nastavenou na serveru. Generovaní klienti
++pro vpsAdmin v Go, Rustu a TypeScriptu mají metody a typy podle uloženého popisu
++API. Kompatibilitu, instalaci, autentizaci a další příklady popisuje README
++každého klienta.
+ 
+ ==== Klient pro PHP ====
+ 
+@@ -663,7 +665,7 @@
+     throw new RuntimeException('Set VPSADMIN_TOKEN');
+ }
+ 
+-$api = new \HaveAPI\Client('https://api.vpsfree.cz', '7.0');
++$api = new \HaveAPI\Client('https://api.vpsfree.cz');
+ $api->authenticate('token', ['token' => $token]);
+ 
+ foreach ($api->vps->list() as $vps) {
+@@ -693,7 +695,7 @@
+ import os
+ from haveapi_client import Client, TokenAuth
+ 
+-with Client("https://api.vpsfree.cz", version="7.0",
++with Client("https://api.vpsfree.cz",
+             auth=TokenAuth(os.environ["VPSADMIN_TOKEN"])) as api:
+     result = api.vps.list.call(params={"limit": 10})
+     for vps in result.data:
+@@ -704,7 +706,7 @@
+ Ukázky autentizace a asynchronního volání najdeš v
+ [[https://github.com/vpsfreecz/haveapi/tree/master/clients/python|README klienta]].
+ 
+-==== Klient HaveAPI pro JavaScript a TypeScript ====
++==== Dynamický klient HaveAPI pro JavaScript a TypeScript ====
+ 
+ Oba jazyky používají stejný balíček z npm, který obsahuje i deklarace typů pro TypeScript:
+ 
+@@ -721,7 +723,7 @@
+ async function main() {
+   const token = process.env.VPSADMIN_TOKEN;
+   if (!token) throw new Error("Set VPSADMIN_TOKEN");
+-  const api = new AsyncClient("https://api.vpsfree.cz", { version: "7.0" });
++  const api = new AsyncClient("https://api.vpsfree.cz");
+   await api.authenticate("token", { token });
+   const result = await api.resource("vps").action("list")({
+     params: { limit: 10 },
+@@ -739,7 +741,7 @@
+ ==== Klient pro Go ====
+ 
+ [[https://github.com/vpsfreecz/vpsadmin-go-client|Klient pro vpsAdmin v Go]]
+-poskytuje typy pro zdroje, akce a parametry API 7.0. Do svého Go modulu ho přidej
++poskytuje typy pro zdroje, akce a parametry API. Do svého Go modulu ho přidej
+ příkazem:
+ 
+ <code bash>
+@@ -747,17 +749,20 @@
+ </code>
+ 
+ Klienta vytvoř pomocí ''%%client.New("https://api.vpsfree.cz")%%'' a existující token
+-nastav metodou ''SetExistingTokenAuth''. Adresa neobsahuje ''/v7.0/'', protože
+-verze už je součástí cest jednotlivých akcí. Úplný příklad výpisu VPS a další
++nastav metodou ''SetExistingTokenAuth''. Použij základní adresu API bez prefixu
++verze, který už je součástí generovaných cest akcí. Úplný příklad výpisu VPS a další
+ volání najdeš v [[https://github.com/vpsfreecz/vpsadmin-go-client#usage|README klienta]].
+ 
+-==== Klient pro vpsAdmin v TypeScriptu ====
++==== Generovaný klient pro vpsAdmin v TypeScriptu ====
+ 
+-[[https://github.com/vpsfreecz/vpsadmin-typescript-client|Klient pro vpsAdmin v TypeScriptu]]
+-poskytuje metody pro zdroje a akce API 7.0 včetně typů jejich parametrů a výsledků.
+-Editor ti díky těmto typům může při psaní kódu napovídat názvy zdrojů, akcí
+-a parametrů. Generický ''haveapi-client'' zjišťuje podobu API za běhu a poskytuje
+-výše popsaná rozhraní s Promise a callbacky.
++[[https://github.com/vpsfreecz/vpsadmin-typescript-client|Generovaný klient pro vpsAdmin v TypeScriptu]]
++má pojmenované metody pro zdroje a akce včetně typů jejich parametrů a výsledků,
++vygenerované z uloženého popisu API vpsAdminu. Editor ti může napovídat názvy
++a parametry a překladač TypeScriptu kontrolovat jejich typy.
++Dynamický ''haveapi-client'' naopak zjišťuje podobu API za běhu. Generovaný klient
++používá HaveAPI pro přenos požadavků a autentizaci, ale jeho typy musí odpovídat
++schématu volaného API. Základní adresu API nastav podle jeho README včetně
++prefixu verze, který dané schéma vyžaduje.
+ 
+ Nainstaluj balíček klienta. npm k němu nainstaluje kompatibilní ''haveapi-client''
+ podle deklarované závislosti:
+@@ -772,7 +777,7 @@
+ ==== Klient pro Rust ====
+ 
+ [[https://github.com/vpsfreecz/vpsadmin-rust-client|Klient pro vpsAdmin v Rustu]]
+-podporuje API 7.0. Požadavky na Rust najdeš v
++má asynchronní i synchronní rozhraní. Kompatibilitu a požadavky na Rust najdeš v
+ [[https://github.com/vpsfreecz/vpsadmin-rust-client#readme|README klienta]]. Balíček
+ [[https://crates.io/crates/vpsadmin-client|vpsadmin-client]] přidej do projektu:
+ 

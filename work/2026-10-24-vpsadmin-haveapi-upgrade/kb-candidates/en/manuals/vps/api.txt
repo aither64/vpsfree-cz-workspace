@@ -22,12 +22,12 @@ lists the available resources, actions and parameters.
 
 The following clients are available:
 
-  * [[#installing_vpsfree-client|vpsfreectl CLI]] and [[#ruby_client|Ruby library]]: the main client, provided by ''vpsfree-client''.
+  * [[#installing_vpsfree-client|vpsfreectl CLI]] and [[#ruby_client|Ruby library]] from the ''vpsfree-client'' package
   * [[#php_client|PHP]]
   * [[#python_client|Python]]
-  * [[#haveapi_client_for_javascript_and_typescript|Generic HaveAPI client for JavaScript and TypeScript]]
+  * [[#dynamic_haveapi_client_for_javascript_and_typescript|Dynamic HaveAPI client for JavaScript and TypeScript]]
   * [[#go_client|Go]]
-  * [[#vpsadmin_typescript_client|vpsAdmin TypeScript client]]
+  * [[#generated_typescript_client_for_vpsadmin|Generated TypeScript client for vpsAdmin]]
   * [[#rust_client|Rust]]
 
 The API is [[wp>Representational state transfer|RESTful]], so any REST client
@@ -41,7 +41,7 @@ There are two authentication methods:
   * [[#http_basic|HTTP Basic]]
   * [[#tokens|Using tokens]]
 
-Example usage in different programming languages can be found in [[https://api.vpsfree.cz/v6.0/#auth|API documentation]].
+Example usage in different programming languages can be found in [[https://api.vpsfree.cz/|API documentation]].
 
 ==== HTTP Basic ====
  The name and password must be sent along with every API request in HTTP header //Authorization//.
@@ -82,10 +82,11 @@ Example scopes:
 Scopes can contain globs for resource and action names. Action name is separated from resource name by a hash (''#''). Optional object IDs are separated from action name by a colon ('':'') and cannot contain globs. You can find a list of available scopes and their parameters in the [[https://api.vpsfree.cz/|documentation]]. Each token can have multiple scopes separated by spaces. At least one scope must match the called action in order for access to be granted.
 
 ===== Installing vpsfree-client =====
-The main client is [[https://github.com/vpsfreecz/vpsfree-client|vpsfree-client]]
-for Ruby. It includes the ''vpsfreectl'' command-line tool and a library for Ruby
-scripts, both installed from the same package.
-In order for it to work properly, you need Ruby >= 2.7, Ruby header files and ncurses (mostly packages with the ''-dev'' or ''-devel'' suffix).
+The [[https://github.com/vpsfreecz/vpsfree-client|vpsfree-client]] package includes
+the ''vpsfreectl'' command-line tool and a library for Ruby scripts.
+You need Ruby, Ruby header files and ncurses (usually packages with the ''-dev''
+or ''-devel'' suffix). See the [[https://rubygems.org/gems/vpsfree-client|package page]]
+for dependency requirements.
 
 <code bash>
 gem install vpsfree-client
@@ -107,7 +108,7 @@ This command will display the location of all executables installed using
 ''gem''. All you need to do is add that folder to ''$PATH'', e.g.:
 
 <code>
-$ PATH="$PATH:/home/user/.gem/ruby/3.0.0/bin"
+$ export PATH="$PATH:$(ruby -r rubygems -e 'puts Gem.bindir')"
 </code>
 
 ===== Using CLI =====
@@ -585,10 +586,12 @@ end
 
 ===== Other clients =====
 
-The generic HaveAPI clients for PHP, Python, JavaScript and TypeScript download
-the available resources, actions and parameters from the server. The vpsAdmin
-clients for Go, Rust and TypeScript provide methods and types for a specific API
-version. Each client's README covers installation, authentication and further examples.
+The dynamic HaveAPI clients for PHP, Python, JavaScript and TypeScript discover
+resources, actions and parameters from the server at runtime. Without an explicit
+version, they use the server's configured default. The generated
+vpsAdmin clients for Go, Rust and TypeScript provide methods and types based on
+a saved API description. Each client's README covers compatibility, installation,
+authentication and further examples.
 
 ==== PHP client ====
 
@@ -610,7 +613,7 @@ if (!$token) {
     throw new RuntimeException('Set VPSADMIN_TOKEN');
 }
 
-$api = new \HaveAPI\Client('https://api.vpsfree.cz', '7.0');
+$api = new \HaveAPI\Client('https://api.vpsfree.cz');
 $api->authenticate('token', ['token' => $token]);
 
 foreach ($api->vps->list() as $vps) {
@@ -639,7 +642,7 @@ calls from ''haveapi_client''. Both support ''TokenAuth'', ''BasicAuth'' and
 import os
 from haveapi_client import Client, TokenAuth
 
-with Client("https://api.vpsfree.cz", version="7.0",
+with Client("https://api.vpsfree.cz",
             auth=TokenAuth(os.environ["VPSADMIN_TOKEN"])) as api:
     result = api.vps.list.call(params={"limit": 10})
     for vps in result.data:
@@ -650,7 +653,7 @@ With ''AsyncClient'', use ''async with'' and await the action call. See the
 [[https://github.com/vpsfreecz/haveapi/tree/master/clients/python|client README]]
 for authentication and asynchronous examples.
 
-==== HaveAPI client for JavaScript and TypeScript ====
+==== Dynamic HaveAPI client for JavaScript and TypeScript ====
 
 Both languages use the same npm package, which includes TypeScript declarations:
 
@@ -667,7 +670,7 @@ import { AsyncClient } from "haveapi-client";
 async function main() {
   const token = process.env.VPSADMIN_TOKEN;
   if (!token) throw new Error("Set VPSADMIN_TOKEN");
-  const api = new AsyncClient("https://api.vpsfree.cz", { version: "7.0" });
+  const api = new AsyncClient("https://api.vpsfree.cz");
   await api.authenticate("token", { token });
   const result = await api.resource("vps").action("list")({
     params: { limit: 10 },
@@ -685,26 +688,28 @@ for browser usage and typed result handling.
 ==== Go client ====
 
 The [[https://github.com/vpsfreecz/vpsadmin-go-client|vpsAdmin Go client]] provides
-types for API 7.0 resources, actions and parameters. Add it to your Go module:
+types for resources, actions and parameters. Add it to your Go module:
 
 <code bash>
 go get github.com/vpsfreecz/vpsadmin-go-client/client
 </code>
 
 Create the client with ''%%client.New("https://api.vpsfree.cz")%%'' and pass an existing
-token to ''SetExistingTokenAuth''. The base URL does not include ''/v7.0/'' because
-the action paths already contain the version. See the
+token to ''SetExistingTokenAuth''. Use the API origin without a version prefix;
+the generated action paths already include it. See the
 [[https://github.com/vpsfreecz/vpsadmin-go-client#usage|client README]] for a complete
 VPS listing example and other action calls.
 
-==== vpsAdmin TypeScript client ====
+==== Generated TypeScript client for vpsAdmin ====
 
-The [[https://github.com/vpsfreecz/vpsadmin-typescript-client|vpsAdmin TypeScript client]]
-provides methods for API 7.0 resources and actions, with types for their parameters
-and results. Your editor can use these types to suggest resource names, actions
-and parameters as you write code.
-The generic ''haveapi-client'' discovers the API at runtime and provides the
-Promise and callback interfaces described above.
+The [[https://github.com/vpsfreecz/vpsadmin-typescript-client|generated TypeScript client for vpsAdmin]]
+provides named resource and action methods, with parameter and result types
+generated from a saved vpsAdmin API description. Your editor can suggest names
+and parameters, and the TypeScript compiler can check their types.
+The dynamic ''haveapi-client'' discovers the API at runtime instead. The generated
+client uses HaveAPI for transport and authentication, but its types must match
+the API schema it calls. Follow its README when setting the API base URL,
+including the version prefix required by that schema.
 
 Install the client package. npm installs a compatible ''haveapi-client''
 according to its declared dependency:
@@ -719,8 +724,8 @@ describes ''createVpsAdminClient'', authentication and action calls.
 ==== Rust client ====
 
 The [[https://github.com/vpsfreecz/vpsadmin-rust-client|vpsAdmin Rust client]]
-supports API 7.0. See the
-[[https://github.com/vpsfreecz/vpsadmin-rust-client#readme|client README]] for Rust requirements.
+provides asynchronous and synchronous interfaces. See the
+[[https://github.com/vpsfreecz/vpsadmin-rust-client#readme|client README]] for compatibility and Rust requirements.
 Add the [[https://crates.io/crates/vpsadmin-client|vpsadmin-client]] crate to your project:
 
 <code bash>
