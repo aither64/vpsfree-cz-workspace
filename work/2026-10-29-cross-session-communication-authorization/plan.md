@@ -113,10 +113,16 @@ ready-for-integration handoff.
 
 ## Affected repositories
 
-The architect will establish source ownership from canonical source before
-selection. Generic dev-workspace is the expected owner; codex-web is included
-only if a concrete transport contract requires it. No incident-session private
-records are needed or authorized.
+Generic dev-workspace owns the complete grant/delivery/policy contract. Architect
+inspection at 08f3dbb92bc8585929edee85a824d44dfb3b0846 found that codex-web's
+existing TurnOptions can carry trusted policy; no codex-web change is needed.
+No incident-session private records are needed or authorized.
+
+Native verification also proved a production web-composition gap: communication
+activity reads used the recorder-free operational client instead of the existing
+observer. The [design addendum](design.md) scopes a private fresh-read adapter,
+preserving Native.Ready and all grant/provider/recovery checks, plus actual portal
+constructor/worker acceptance. No global recorder or transport API change.
 
 ## Approach
 
