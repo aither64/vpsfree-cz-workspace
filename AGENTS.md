@@ -175,13 +175,9 @@ and forward compatibility of old and new affected components, including:
 - deployment ordering, rolling upgrades, and mixed-version operation;
 - whether a rollback can load state created by the new version.
 
-Repository claims cover approved shared merges only; feature work, hook setup, tests
-and review need none. Prepare, then claim one repository for fresh target checks,
-merge/hooks, SSH push and remote proof; release before CI, records or cleanup.
-On stale preparation/intervention, stop commands and verify effects; repair
-unlocked; reconcile uncertain shared mutations before release. For machine
-reservations and automatic release, follow the runtime policy referenced by
-[machine retention](docs/coordination.md#machine-retention). Preserve existing
+Follow the mandatory Git procedure for repository claims; only approved merges
+need them. For machine reservations and automatic release, follow
+[machine retention](docs/coordination.md#machine-retention), preserving existing
 recovery contracts.
 
 Prefer clean designs that can be deployed incrementally. Incompatible changes
@@ -222,18 +218,13 @@ record the settings and fallback reason.
 
 ## Rule Precedence
 
-This AGENTS.md controls workspace orchestration, tracking, worktrees, SSH remotes,
-cross-project planning and compatibility expectations.
-
-Repository-local AGENTS.md controls that repository's structure, coding style,
-build/test commands, generated files, release rules, hooks, branch names, PRs,
-commit formats and tooling. Do not apply it to other repositories. For content
-conflicts, follow local rules while preserving workspace tracking, compatibility
-and SSH-based Git remotes.
-
-Never assume one repository's commands apply elsewhere. Use its AGENTS.md,
-README, flake, Gemfile, go.mod, Makefile, Rakefile, Composer configuration and
-existing CI definitions as sources of truth.
+This AGENTS.md governs workspace orchestration, tracking, worktrees, SSH remotes,
+cross-project planning and compatibility. Repository-local AGENTS.md controls
+its repository's structure, style, commands, generated files, releases, hooks,
+branches, PRs, commits and tools. Follow local content rules while preserving
+workspace tracking, compatibility and SSH remotes. Derive commands from that
+repository's instructions, manifests and CI; never apply another repository's
+rules or commands.
 
 ## Storage retention
 
