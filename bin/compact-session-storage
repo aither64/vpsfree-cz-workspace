@@ -63,7 +63,9 @@ class SessionStorageCompactor
   end
 
   def compact(slug, tracking)
-    journals = Dir[File.join(@workspace, 'worktrees', '.locks', "#{slug}.*.json")]
+    journals = Dir[File.join(@workspace, 'worktrees', '.locks', "#{slug}.*.json")].reject do |path|
+      completed_creation_record?(path, slug)
+    end
     receipt = File.join(@state, 'tracking-sync', Digest::SHA256.hexdigest(@workspace), "#{slug}.json")
     if !journals.empty? || File.file?(receipt) && JSON.parse(File.read(receipt))['state'] == 'pending'
       return {'slug' => slug, 'skipped' => 'lifecycle or tracking sync is unfinished'}
@@ -95,6 +97,15 @@ class SessionStorageCompactor
       end
     end
     row
+  end
+
+  def completed_creation_record?(path, slug)
+    return false unless File.basename(path) == "#{slug}.creation.json" && File.file?(path) && !File.symlink?(path)
+
+    record = JSON.parse(File.read(path))
+    record.is_a?(Hash) && record['slug'] == slug && record['state'] == 'ready'
+  rescue JSON::ParserError
+    false
   end
 
   def allocated(path)

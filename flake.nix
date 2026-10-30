@@ -94,6 +94,16 @@
               ruby source/test/deployment_contract_test.rb
               touch "$out"
             '';
+        storage-retention =
+          pkgs.runCommand "workspace-storage-retention-tests"
+            {
+              nativeBuildInputs = [ pkgs.ruby pkgs.git ];
+              DEV_WORKSPACE_RUNTIME_SOURCE = vpsfree-dev-workspace.inputs.dev-workspace;
+            }
+            ''
+              ruby ${workspaceSource}/test/storage_retention_test.rb
+              touch "$out"
+            '';
         agent-instructions =
           pkgs.runCommand "workspace-agent-instructions-tests"
             {

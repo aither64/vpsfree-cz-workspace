@@ -30,9 +30,19 @@ class StorageRetentionTest < Minitest::Test
     path
   end
 
+  def creation_record(options, slug, record = {'state' => 'ready'})
+    locks = File.join(options[:workspace], 'worktrees', '.locks')
+    FileUtils.mkdir_p(locks)
+    path = File.join(locks, "#{slug}.creation.json")
+    File.write(path, JSON.generate({'schema' => 3, 'slug' => slug}.merge(record)))
+    path
+  end
+
   def test_preview_does_not_write_and_apply_is_repeatable
     with_fixture do |options|
       path = tracking(options, 'old-session')
+      creation = creation_record(options, 'old-session')
+      original_creation = File.binread(creation)
       preview = SessionStorageCompactor.new(options).run
       assert_equal 1, preview.first['trackingFiles']
       assert File.file?(File.join(path, 'raw.log'))
@@ -44,6 +54,7 @@ class StorageRetentionTest < Minitest::Test
       refute File.exist?(File.join(path, 'raw.log'))
       assert_equal 'retain summary', File.read(File.join(path, 'plan.md'))
       assert_equal 0, SessionStorageCompactor.new(options.merge(apply: true)).run.first['trackingFiles']
+      assert_equal original_creation, File.binread(creation)
     end
   end
 
@@ -69,6 +80,7 @@ class StorageRetentionTest < Minitest::Test
   def test_recovery_preview_and_apply_finish_compact_payload_cleanup
     with_fixture do |options|
       tracking(options, 'old-session')
+      creation_record(options, 'old-session')
       workspace = options[:workspace]
       system('git', 'init', '--quiet', workspace, exception: true)
       system('git', '-C', workspace, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.test',
@@ -103,6 +115,87 @@ class StorageRetentionTest < Minitest::Test
     end
   end
 
+  def test_legacy_file_snapshot_compacts_after_completed_creation
+    with_fixture do |options|
+      tracking(options, 'old-session')
+      creation_record(options, 'old-session')
+      workspace = options[:workspace]
+      system('git', 'init', '--quiet', workspace, exception: true)
+      system('git', '-C', workspace, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.test',
+             'commit', '--quiet', '--allow-empty', '-m', 'retained head', exception: true)
+      head = IO.popen(['git', '-C', workspace, 'rev-parse', 'HEAD'], &:read).strip
+      group = File.join(options[:state], 'original-worktrees')
+      source = File.join(group, 'sample')
+      system('git', '-C', workspace, 'worktree', 'add', '--quiet', '--detach', source, head, exception: true)
+      File.write(File.join(source, 'build-output'), 'disposable ' * 1000)
+      admin = IO.popen(['git', '-C', source, 'rev-parse', '--absolute-git-dir'], &:read).strip
+      record = {'path' => 'sample', 'common_dir' => File.realpath(File.join(workspace, '.git')),
+                'admin_dir' => admin, 'head' => head, 'branch' => nil}
+      identity = "#{File.basename(workspace)}-#{Digest::SHA256.hexdigest(workspace)[0, 16]}"
+      root = File.join(options[:state], 'archived-worktrees', identity, 'old-session', 'fixture')
+      destination = File.join(root, Digest::SHA256.hexdigest('sample'))
+      selected = options.merge(tracking_only: false, recovery_only: true)
+      # Preview loads the selected runtime without changing archive data.
+      SessionStorageCompactor.new(selected).run
+      recovery = DevSession::ArchiveRecovery.new(root, group, DevSession::CommandRunner.new(out: $stderr, err: $stderr))
+      recovery.capture_legacy!([record])
+      assert_equal 2, JSON.parse(File.read(File.join(root, 'inventory.json')))['schema']
+      assert File.file?(File.join(destination, 'files', 'build-output'))
+      assert_equal [record], recovery.records
+
+      result = SessionStorageCompactor.new(selected.merge(apply: true)).run.first
+      assert_operator result['recoveryBytesRemaining'], :<, result['recoveryBytes']
+      assert_equal 3, JSON.parse(File.read(File.join(root, 'inventory.json')))['schema']
+      assert_equal 'committed', JSON.parse(File.read(File.join(destination, 'record.json')))['kind']
+      refute File.exist?(File.join(destination, 'files'))
+      refute File.exist?(File.join(destination, 'admin'))
+      assert_equal [record], recovery.records
+    end
+  end
+
+  def test_incomplete_or_invalid_creation_records_preserve_tracking
+    [
+      {'state' => 'preparing'},
+      {'state' => nil},
+      {'state' => 'ready', 'slug' => 'another-session'}
+    ].each do |record|
+      with_fixture do |options|
+        path = tracking(options, 'old-session')
+        creation_record(options, 'old-session', record)
+        result = SessionStorageCompactor.new(options.merge(apply: true)).run.first
+        assert_equal 'lifecycle or tracking sync is unfinished', result['skipped']
+        assert File.file?(File.join(path, 'raw.log'))
+      end
+    end
+  end
+
+  def test_malformed_creation_record_does_not_abort_other_archives
+    with_fixture do |options|
+      blocked = tracking(options, 'blocked-session')
+      tracking(options, 'ready-session')
+      creation = creation_record(options, 'blocked-session')
+      File.write(creation, '{invalid')
+      creation_record(options, 'ready-session')
+      rows = SessionStorageCompactor.new(options).run.to_h { |row| [row['slug'], row] }
+      assert_equal 'lifecycle or tracking sync is unfinished', rows['blocked-session']['skipped']
+      assert_equal 1, rows['ready-session']['trackingFiles']
+      assert File.file?(File.join(blocked, 'raw.log'))
+    end
+  end
+
+  def test_ready_creation_does_not_override_pending_tracking_sync
+    with_fixture do |options|
+      path = tracking(options, 'old-session')
+      creation_record(options, 'old-session')
+      receipt = File.join(options[:state], 'tracking-sync', Digest::SHA256.hexdigest(options[:workspace]), 'old-session.json')
+      FileUtils.mkdir_p(File.dirname(receipt))
+      File.write(receipt, JSON.generate('state' => 'pending'))
+      result = SessionStorageCompactor.new(options.merge(apply: true)).run.first
+      assert_equal 'lifecycle or tracking sync is unfinished', result['skipped']
+      assert File.file?(File.join(path, 'raw.log'))
+    end
+  end
+
   def test_active_tracking_and_pending_journal_are_preserved
     with_fixture do |options|
       active = tracking(options, 'active-session')
@@ -111,6 +204,8 @@ class StorageRetentionTest < Minitest::Test
       locks = File.join(options[:workspace], 'worktrees', '.locks')
       FileUtils.mkdir_p(locks)
       File.write(File.join(locks, 'pending-session.archive.json'), '{}')
+      creation_record(options, 'active-session')
+      creation_record(options, 'pending-session')
       rows = SessionStorageCompactor.new(options).run
       assert rows.all? { |row| row['skipped'] }
       assert File.file?(File.join(active, 'raw.log'))

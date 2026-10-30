@@ -29,6 +29,10 @@ under dev-workspaces; --state selects disposable state for tests.
 
 The script skips active tracking, busy sessions, unfinished lifecycle journals
 and pending tracking sync. It takes the package transition and session locks.
+Completed session-creation records (`SLUG.creation.json` with the matching slug
+and `state: ready`) remain as historical metadata and do not block cleanup.
+Incomplete, malformed or mismatched creation records still block that session;
+a completed creation record never overrides an unfinished lifecycle operation.
 Completed recovery inventories become committed-head metadata before their old
 file/index payloads are removed. Git branches and committed objects remain.
 Cleanup is irreversible for uncommitted files; there is no backup or artifact
