@@ -1,0 +1,5 @@
+- **Result:** Passed; exit status 0. Elapsed time was about 1 second.
+- **Operation:** Ran the assigned registry propagation script once from `/home/aither/workspace/ai/vpsfree.cz`.
+- **Evidence:** The log is at [typescript-registry-propagation.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-30-haveapi-client-releases/typescript-registry-propagation.log). The registry returned HTTP 200 for version 0.2.0.
+- **Tarball:** Downloaded to `work/2026-10-30-haveapi-client-releases/typescript-publication-41059048868/public-vpsadmin-typescript-client-0.2.0.tgz`; SHA-256: `36e699738830303fe8e1d76d102eacda025653dc75c07ce88d65a134c6ff3e3b`.
+- **Still running:** None.

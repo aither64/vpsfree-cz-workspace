@@ -1,0 +1,9 @@
+**Result: incomplete with the protected gate reached.** Exact run [41059048868](https://github.com/vpsfreecz/vpsadmin-typescript-client/actions/runs/41059048868) matches workflow `Package validation and release`, event `push`, branch/tag `v0.2.0`, and head `e5786f69b7c223c3bb5b1de99b7f97186eec368a`. Build succeeded; `publish` is waiting.
+
+The pending environment is `release` (ID `25494232596`); `current_user_can_approve` is `true`. Reviewer metadata lists user `aither64`. No approval was submitted.
+
+- Artifact ID `12978397388`, name `npm-package-e5786f69b7c223c3bb5b1de99b7f97186eec368a`, GitHub digest `sha256:182d07bf0a44d555ea271c1c914d7af722427b7abdc7f2cc751339009f399c04`.
+- Retained under `/home/aither/workspace/ai/vpsfree.cz/work/2026-10-30-haveapi-client-releases/typescript-tag-41059048868/`: run/jobs/pending-deployment/artifact metadata and `build.log`. The log file is empty: GitHub reported logs unavailable while the run remained in progress, so this is an evidence gap; I did not rerun to capture it.
+- Extracted artifact is in `artifact/`: `vpsadmin-typescript-client-0.2.0.tgz` and `receipt.json`. Receipt reports package `vpsadmin-typescript-client`, version `0.2.0`, tag `v0.2.0`, source commit above, filename above, SHA-256 `36e699738830303fe8e1d76d102eacda025653dc75c07ce88d65a134c6ff3e3b`, and integrity `sha512-EugXnu4GEEdEXuaCh62MwCWQ4D9LkgmBuTnpLaSZM13NgwPbQkAWDiOdaQmr8Xt2lYsE4HrPuNEVrJsYuGJKkw==`. Consumer-validation log result was not available in the retained job output.
+
+No retry, diagnosis, approval, or deployment was performed. Elapsed time for this observation was about 3 minutes.

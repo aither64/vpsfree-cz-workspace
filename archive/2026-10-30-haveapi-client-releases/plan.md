@@ -4,8 +4,8 @@
 
 Prepare an implementation plan for HaveAPI 0.32.0, followed by regeneration
 and conditional minor releases of the vpsAdmin generated clients. This request
-covers planning. Implementation, integration, tags and publication are future
-execution steps.
+initially covered planning; the user's subsequent `proceed` authorizes
+implementation. Integration, tags and publication retain their explicit gates.
 
 ## Affected repositories
 
@@ -43,15 +43,20 @@ repository evidence, exact commands, version inventory and execution boundaries.
    environment and PHP mirror master/tag updates. Verify every distribution
    before dependent client publication; reconcile partial releases first.
 4. **Regenerate clients, preserving their versions during comparison.** Use
-   exact HaveAPI 0.32.0 source. Capture public API 7.0 once for Go/Rust and reuse
+   exact HaveAPI 0.32.0 source. Candidate preparation and checks can proceed
+   before publication from a clean frozen committed candidate; rebind/recheck
+   if the final release commit or relevant inputs change. HaveAPI publication
+   and final artifact equivalence remain prerequisites for client publication.
+   Capture public API 7.0 once for Go/Rust and reuse
    it offline; use the established full-plugin committed-source fixture export
    for TypeScript. Review source/input changes separately, retain hashes and
    provenance, and compare generated code, public types and copied runtime.
    Check file removals as well as additions. Update only necessary generator
    tooling; TypeScript may need pinned Prettier 3.9.10 available to regeneration.
-5. **Apply the conditional release gate.** A client gets a minor release only
-   for meaningful generated code/type/runtime changes. Provenance, formatter,
-   pin, ownership-manifest or version-only churn does not qualify. For changed
+5. **Apply the conditional release gate.** A client gets a minor release for
+   actual generated source changes, including formatting. Provenance, pin,
+   ownership-manifest or version-only changes alone do not qualify. The user's
+   formatter question corrected our earlier, narrower semantic-only threshold. For changed
    clients, bump versions and applicable locks/configuration/changelogs, then
    regenerate and verify deterministic output. For unchanged clients, retain
    the version and record that publication was skipped. Required handwritten
@@ -72,6 +77,29 @@ repository evidence, exact commands, version inventory and execution boundaries.
 
 These are source-ref findings, not claims of registry publication. Actual
 generated diffs and current remote versions remain execution-time evidence.
+
+## Settled execution decisions
+
+- HaveAPI's release candidate is 0.32.0, with the coordinated package scope above.
+- The authoritative Go remote has no tags. Meaningful API/runtime changes
+  justify the first proposed module release, v0.1.0. Go 1.16.15 compilation
+  passes. Its README/changelog documents source-breaking field/type cleanup
+  and the inherited Custom-input limitation. No generated source was hand-patched.
+- Rust's generated API/runtime source is byte-identical to both current main
+  and published 0.1.0. Retain version 0.1.0 without a crate release; integrate
+  the verified lock, provenance, CI and documentation adaptation.
+- All 674 TypeScript modules change through the exact formatter transformation,
+  with no modules added or removed and no API/runtime behavior change. These
+  source changes qualify for the requested minor release: prepare 0.2.0, keeping
+  runtime 0.30.2. The earlier no-release decision used a narrower interpretation
+  of 'any changes' and is superseded by the user's formatter clarification.
+- HaveAPI's initial f0465630 candidate needed a CI environment repair.
+  Successor 0e7166a0 adds latest Ruby 3.2 patch selectors in two workflows,
+  preserving the declared 3.2.0 floor and all effective generator, runtime,
+  formatter and lock inputs. Reviews and SDK source rebinds retain exact
+  old/new ranges and equivalence evidence.
+- Final heads, check/review receipts and the current approval boundary live in
+  [state.md](state.md). No integration/publication approval has been inferred.
 
 ## Owners, dependencies and acceptance
 

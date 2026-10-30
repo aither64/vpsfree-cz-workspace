@@ -1,0 +1,8 @@
+Result: **passed** (workflow conclusion `success`; watcher exit status `0`).
+
+- Revision: `e5786f69b7c223c3bb5b1de99b7f97186eec368a`, branch `2026-10-30-haveapi-client-releases`, push event.
+- Run: [41055792607](https://github.com/vpsfreecz/vpsadmin-typescript-client/actions/runs/41055792607). Build passed in 48 seconds; publish skipped. Elapsed from run creation to completion: 52 seconds.
+- Evidence directory: [`typescript-ci-41055792607`](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-30-haveapi-client-releases/typescript-ci-41055792607). It contains the full run log, watch output and exit status, run metadata, and artifact metadata.
+- Artifact: ID `12976497463`, name `npm-package-e5786f69b7c223c3bb5b1de99b7f97186eec368a`, digest `sha256:3942467a18649138a5f78582691cebba9673dede218176495989dd0309c2a7f8`. It is unexpired and tied to the requested run and SHA.
+- Downloaded tarball: [`vpsadmin-typescript-client-0.2.0.tgz`](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-30-haveapi-client-releases/typescript-ci-41055792607/artifact/vpsadmin-typescript-client-0.2.0.tgz). Receipt: [`receipt.json`](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-30-haveapi-client-releases/typescript-ci-41055792607/artifact/receipt.json). Receipt fields: package `vpsadmin-typescript-client`, version `0.2.0`, commit `e5786f69b7c223c3bb5b1de99b7f97186eec368a`, tag `null`, filename `vpsadmin-typescript-client-0.2.0.tgz`, SHA-256 `36e699738830303fe8e1d76d102eacda025653dc75c07ce88d65a134c6ff3e3b`, integrity `sha512-EugXnu4GEEdEXuaCh62MwCWQ4D9LkgmBuTnpLaSZM13NgwPbQkAWDiOdaQmr8Xt2lYsE4HrPuNEVrJsYuGJKkw==`.
+- No failed steps or still-running operation.
