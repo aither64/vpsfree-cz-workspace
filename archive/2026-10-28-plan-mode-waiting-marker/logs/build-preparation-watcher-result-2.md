@@ -1,0 +1,5 @@
+Result: **passed**. Both requested builds completed successfully at the specified HEADs, with expected outputs. The generation listing and metadata are recorded; no deployment, copy, or activation was performed.
+
+- Report: [build-preparation-watcher-result-2.md](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-28-plan-mode-waiting-marker/logs/output-last-message-build-preparation-watcher-result-2.md)
+- Progress record: [build-preparation-progress-2.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-28-plan-mode-waiting-marker/logs/build-preparation-progress-2.json)
+- Logs: [application build](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-28-plan-mode-waiting-marker/logs/composed-app-build-2.log), [configuration build](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-28-plan-mode-waiting-marker/logs/configuration-system-build-2.log), [generation listing](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-28-plan-mode-waiting-marker/logs/configuration-generation-list-2.log)
