@@ -1,0 +1,1 @@
+The first static scope-check invocation treated the selected relative checker path differently from its absolute preserved-inventory key. The allowed-path comparison alone was corrected to use its absolute spelling. The complete static proof then passed. No C/docs/checker/native-script change or execution resulted from this checker bookkeeping error.

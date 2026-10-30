@@ -1,0 +1,3 @@
+Result: **incomplete; operation not run**. The source freeze matches at the actual path `osctld/lib/osctld/commands/container/start.rb`, and the spec hash and HEAD match the brief. However, I could not verify the required current session and both presence markers under `/home/aither/workspace/ai/vpsfree.cz`, so I did not start the command.
+
+No command output or exit status exists. No process was started or cancelled, and no retry was made.

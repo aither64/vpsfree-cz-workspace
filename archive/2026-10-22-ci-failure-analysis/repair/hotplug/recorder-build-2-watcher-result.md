@@ -1,0 +1,6 @@
+- **Result:** Passed; exit status 0. The script reported 12 seconds elapsed.
+- **Operation:** The exact assigned command ran once from `/home/aither/workspace/ai/vpsfree.cz`.
+- **Artifacts:** `/tmp/ci-failure-analysis-2026-10-22/hotplug/recorder-build-2`
+- **Output:** `exit=0 elapsed=12 attempt=/tmp/ci-failure-analysis-2026-10-22/hotplug/recorder-build-2`
+- **Bounded excerpt:** No compiler or CLI errors were emitted.
+- **Process/effect proof:** The operation completed normally; no cancellation was taken. The script’s one-line output did not report remaining owned processes or native builder effects.

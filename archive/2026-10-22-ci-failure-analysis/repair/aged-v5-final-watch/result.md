@@ -1,0 +1,4 @@
+- **Result:** Passed. `gh run watch` exited `0`; GitHub reports the workflow completed successfully.
+- **Run:** `vpsfreecz/vpsadminos` run `40217314767`, tested head `f715e9d99b56a2f0e52d17b15f086b99cc926e13`.
+- **Jobs:** All jobs completed successfully, including `Livepatch lifecycle (amd-scale-aged-v5)` job `121244289167`. No still-running items.
+- **Evidence:** [Watcher log](</home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-ci-failure-analysis/repair/aged-v5-final-watch/gh-run-watch.log>), [run result](</home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-ci-failure-analysis/repair/aged-v5-final-watch/result.json>), and [watch exit status](</home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-ci-failure-analysis/repair/aged-v5-final-watch/gh-run-watch.exit>).

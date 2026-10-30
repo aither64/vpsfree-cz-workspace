@@ -1,0 +1,5 @@
+- **Result:** Passed, exit status 0; the command emitted no terminal output. Recorded original and support evaluations and graph comparison each exited 0, with elapsed times of 35s, 41s, and 4s.
+- **Command:** `timeout --signal=TERM --kill-after=5s 540s bash /home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-ci-failure-analysis/repair/support/run-preflight-batch3.sh` (run once).
+- **Summary:** [preflight-batch3-summary.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-ci-failure-analysis/repair/support/preflight-batch3-summary.json). Recorded start/end: 19:26:36–19:27:57 UTC. Disk free space remained above 40 GiB.
+- **Evidence:** Artifacts are under `/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-ci-failure-analysis/repair/support/`, including exit, elapsed, stdout/stderr, resource, and graph records. The decoded graphs report 5,794 original nodes and 1 support node.
+- **Owned operation remaining:** None. A process search found no running preflight or Nix evaluation command. The retained root and snapshot records remain for parent diagnosis.

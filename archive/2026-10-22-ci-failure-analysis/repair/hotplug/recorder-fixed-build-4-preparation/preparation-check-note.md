@@ -1,0 +1,1 @@
+The first preservation-check invocation stopped with NameError because its pure prior-path expression namespace omitted WATCH/BUILD. Only that checker namespace was corrected; the check then passed. No driver/guard/source change or self-test repeat occurred because of this checker error.

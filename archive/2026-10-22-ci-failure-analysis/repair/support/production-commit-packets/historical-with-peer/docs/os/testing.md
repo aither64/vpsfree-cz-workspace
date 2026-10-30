@@ -1,0 +1,776 @@
+# Testing
+
+vpsAdminOS has a framework for writing and running tests. It is similar to tests
+on [NixOS](https://nixos.org/nixos/manual/index.html#sec-nixos-tests), but it is
+a different implementation.
+
+Tests are run on one or more virtual machines running vpsAdminOS. These machines
+are managed by the test framework. All tests can be found in the
+[vpsAdminOS repository](https://github.com/vpsfreecz/vpsadminos/tree/staging/tests).
+
+## Writing a test
+Each test is a Nix file stored in directory `tests/suite`. A test has a name,
+one or more virtual machines to run on and a Ruby script that is run from
+the host system and which can interact with the virtual machines.
+
+```nix
+import ../make-test.nix ({ pkgs }: {
+  name = "my-test";
+
+  description = ''
+    It's a great test indeed
+  '';
+
+  machine = import ../machines/empty.nix pkgs;
+
+  testScript = ''
+    machine.start
+    machine.succeeds("shell command that must succeed...")
+  '';
+})
+```
+
+Different machines may be needed for various storage, configuration or clustering
+tests. If only one machine is needed, it is simply called `machine` and declared
+as such. More machines can be defined as:
+
+```nix
+import ../make-test.nix ({ pkgs }: {
+  name = "my-test";
+
+  description = ''
+    It's a great test indeed
+  '';
+
+  machines = {
+    first = import ../machines/empty.nix pkgs;
+    second = import ../machines/empty.nix pkgs;
+  };
+
+  testScript = ''
+    first.start
+    second.start
+  '';
+})
+```
+
+## Disk lifecycle
+
+Managed file-backed disks preserve their contents on VM startup by default.
+This includes NixOS root disks. A stop/start within a test reuses those disks;
+set `preserve = false` on a disk to recreate it on each start.
+
+vpsAdminOS VMs booted from squashfs still have a temporary root filesystem.
+Files in that root disappear on reboot, while data on attached disks, including
+ZFS pools and containers, remains. Firmware-booted installations keep their
+installed root on the attached disk.
+
+| Command | Initial reset | Cleanup on exit |
+| --- | --- | --- |
+| `test` | None | Delete managed disks |
+| `test --fresh` | All managed disks, once per attempt | Delete managed disks |
+| `test --no-destructive` | None | Keep disks |
+| `test --no-destructive --fresh` | All managed disks, once per attempt | Keep disks |
+| `debug` | None | Keep disks |
+| `debug --fresh` | All managed disks, before the REPL opens | Keep disks |
+
+The initial reset from `-f, --fresh` applies regardless of `preserve`. It does
+not reset disks again between examples or VM restarts. A disk with
+`preserve = false` is recreated when the VM starts, even in debug mode.
+`machine.destroy_disks` explicitly removes managed disks regardless of their
+preservation setting. Block devices and files with `create = false` are
+externally managed and are never created, replaced, or deleted by these actions.
+They cannot use `preserve = false`.
+
+Test and debug use the same state directory for a given test path and
+`--state-dir`. For example, retain a failed run and inspect it with:
+
+```sh
+./test-runner.sh test --no-destructive --fresh driver/nixos
+./test-runner.sh debug driver/nixos
+```
+
+Each test has a lock held through VM cleanup and result publication. A second
+command targeting the same state fails while that lock is held. Scripts of the
+same test share its state. Use separate `--state-dir` values for independent
+runs, including tests from different repositories.
+
+Retaining a disk does not resize it or copy a newer source image into it.
+NixOS direct boot requires the selected system closure to exist on its root
+filesystem. After changing a test's NixOS configuration, use `--fresh` to start
+from its new image, or copy and activate the closure in the running VM before
+restarting it.
+
+A managed disk can use `image = /path/to/source.img` instead of `size`. OSVM
+copies the image when creating the disk. Preparation uses a temporary file next
+to the destination; a failed copy or resize leaves the previous disk intact.
+
+For a NixOS machine, `rootDisk` overrides the generated root disk descriptor:
+
+```nix
+machine = {
+  spin = "nixos";
+  rootDisk.preserve = false;
+  config.system.stateVersion = "26.05";
+};
+```
+
+The generated root uses `{machine}-root.img` and is attached before additional
+disks. Root and additional disks use the same `device`, `type`, `create`,
+`preserve`, `image`, and `size` fields. JSON configurations using `diskImage`
+remain readable; they cannot also specify `rootDisk`.
+
+Disks can be added as:
+
+```nix
+import ../make-test.nix ({ pkgs }: {
+  name = "my-test";
+
+  description = ''
+    It's a great test indeed
+  '';
+
+  machine = {
+    # List of disk devices
+    disks = [
+      # 10 GB file sda.img will be created in the test's state directory
+      # and added to the virtual machine
+      { type = "file"; device = "sda.img"; size = "10G"; }
+      # This scratch disk is blank on every VM start
+      { type = "file"; device = "scratch.img"; size = "1G"; preserve = false; }
+    ];
+
+    # Machine configuration
+    config = {
+      imports = [ ../configs/base.nix ];
+
+      boot.zfs.pools.tank = {
+        layout = [
+          { devices = [ "sda" ]; }
+        ];
+        doCreate = true;
+        install = true;
+      };
+    };
+  };
+
+  testScript = ''
+    machine.start
+    machine.wait_for_zpool("tank")
+  '';
+})
+```
+
+See template machine configs in `tests/machines/`. vpsAdminOS configurations
+used by machines for testing can be found in `tests/configs` and the tests
+themselves in `tests/suite/`.
+
+All tests have to be registered in `tests/all-tests.nix`, otherwise they cannot
+be run.
+
+### Machine spins (vpsAdminOS vs NixOS)
+Machines default to vpsAdminOS. To boot NixOS instead, set `spin = "nixos"` on
+the machine definition and provide the NixOS config you want to test. You can
+mix vpsAdminOS and NixOS machines within a single test.
+
+Minimal NixOS example:
+
+```nix
+import ../make-test.nix ({ pkgs }: {
+  name = "nixos-example";
+  description = "NixOS machine example";
+
+  machine = {
+    spin = "nixos";
+    config = {
+      networking.hostName = "nixos";
+      virtualisation.memorySize = 2048;
+      virtualisation.cores = 2;
+    };
+    # optional extra modules
+    # modules = [ ./extra-module.nix ];
+  };
+
+  testScript = ''
+    machine.start
+    machine.wait_for_boot
+    machine.wait_for_service("test-shell")
+    machine.succeeds("echo hello")
+  '';
+})
+```
+
+## Running tests
+To run the entire test suite, use:
+
+```
+./test-runner.sh test
+```
+
+Selected tests can be pattern-matched, e.g.:
+
+```
+./test-runner.sh test 'docker/*'
+```
+
+Tests can also be selected by tags, labels and metadata expressions. Tags are
+listed in the test definition using `tags = [ ... ];`; labels are listed using
+`labels = { ... };`. Test scripts inherit test-level tags and labels, and can
+add or override their own metadata.
+
+Existing tag and label filters are simple AND filters:
+
+```
+./test-runner.sh test -t ci
+./test-runner.sh test -t ci -t docker
+./test-runner.sh test -t ^manual
+./test-runner.sh test -l runtime=long
+./test-runner.sh test -l runtime!=long
+```
+
+For more advanced selection, use `--filter` with a metadata expression. The
+virtual label `tag` matches tags; other names match labels. Expressions use
+`&&` for AND, `||` for OR and parentheses for grouping:
+
+```
+./test-runner.sh ls --filter 'tag=ci && tag!=manual'
+./test-runner.sh ls --filter 'tag=ci && runtime!=long'
+./test-runner.sh test -t ci --filter 'tag=vps || tag=storage'
+./test-runner.sh test --filter 'tag=ci && (tag=docker || tag=podman)'
+./test-runner.sh test -t ci --filter 'runtime!=long && (tag=docker || tag=podman)'
+```
+
+Shell quoting is required for expressions containing `&&`, `||` or parentheses.
+
+While developing a test, it is possible to start it with an interactive Ruby REPL:
+
+```
+./test-runner.sh debug my-test
+```
+
+The REPL can be used to issue the same commands as in the test script. The test
+script itself can be run by calling method `test_script`. You can call method
+`breakpoint` from inside the test to open the REPL from any point of execution.
+
+## Userspace upgrades between versions
+
+The 23 `upgrade/from-6.12*` and `upgrade/from-6.18*` cases retain their frozen
+3cc/3cb predecessor pins and broader compatibility matrix. They are absent from
+default unfiltered discovery. Set the literal
+`VPSADMINOS_ENABLE_HISTORICAL_UPGRADE_TESTS=1` to expose them:
+
+```sh
+VPSADMINOS_ENABLE_HISTORICAL_UPGRADE_TESTS=1 ./test-runner.sh ls 'upgrade/from-*'
+```
+
+They carry `upgrade` and `manual` tags, so `-t ci` excludes them even with that
+opt-in. The diagnostic gate below is separate. Historical cases activate the
+local checkout; `VPSADMINOS_CONFIG` selects the target configuration. Unsuffixed historical cases use cgroup v2 and
+`-v1` cases use cgroup v1. Each predecessor supplies its kernel, daemon, LXC,
+ZFS and locked dependencies. No predecessor worktree, production access or
+`VPSADMINOS_UPGRADE_FROM` is needed.
+
+`common.nix` boots the predecessor, creates two running workloads, and activates
+the target with `switch-to-configuration test`. The host kernel and boot ID
+must stay unchanged while the daemon changes. The test preserves container
+init/worker/HTTP identities, cgroups, veths, consoles, data and connectivity,
+then starts and restarts a new networked container and verifies its data.
+It also repeats activation and gracefully/abruptly restarts the daemon while
+checking workload and private mount identities. Predecessor-created never-started,
+mounted-stopped and previously-run containers must start successfully, and
+stopped exec/runscript networking must work before startup. Inherited running
+containers must stop/start, restart with normal guest init, and retain their data.
+All containers must stop and delete cleanly. This tests
+**userspace switching**, not live kernel replacement or a host reboot upgrade.
+
+Only the predecessor's **test-shell module** is replaced with the current
+runner's test transport. This permits ordinary `./test-runner.sh` use even
+when older guests used a different serial protocol. It does not replace the
+old daemon, container manager, kernel, ZFS, lifecycle callbacks or networking.
+The test shell stays open across activation; it is not an application workload.
+
+### Opt-in upgrade diagnostics
+
+Set `VPSADMINOS_ENABLE_UPGRADE_DIAGNOSTICS=1` to include
+`upgrade/from-6.12-guests-first-switch` and `upgrade/nested-podman-sandbox` in
+suite selection. They carry the `manual` tag and stay outside the default
+unfiltered suite and the `ci` selector. List them explicitly before selecting
+a bounded diagnostic run:
+
+```sh
+VPSADMINOS_ENABLE_UPGRADE_DIAGNOSTICS=1 ./test-runner.sh ls 'upgrade/from-6.12-guests-first-switch'
+VPSADMINOS_ENABLE_UPGRADE_DIAGNOSTICS=1 ./test-runner.sh ls 'upgrade/nested-podman-sandbox'
+```
+
+The first-switch case boots its immutable 6.12 predecessor and activates exactly
+`846bb469505789ba0b2a405fa5905ba6d8253006`. This override is accepted only for
+that diagnostic; it cannot retarget an ordinary upgrade case. It captures raw
+runtime and GC YAML, held process birth/root and mount/ZFS identities, persistent
+and temporary markers, and sysctl observations after container start, before
+activation and after pool import. Records are saved under
+`first-switch-capture/<phase>/` in the native test state. Empty files retain
+empty bytes, their hash and stat; missing files retain an explicit error.
+
+After the first activation and existing assertions succeed, the diagnostic
+stops before repeated switches and daemon/container restart checks. Its script
+body has an 1800-second deadline. Assertion and capture errors still fail, and
+the native runner retains its ordinary cleanup. A diagnostic success does not
+certify the full upgrade matrix. Frozen source revisions and lockfiles also do
+not prove identical store derivations or container image archives; record actual
+prepared identities when comparing a historical execution.
+
+The Podman sandbox case performs one predecessor container startup and records
+DHCP sandbox entry before package installation or target activation. Its trace
+wrapper, deadline and newly fetched image can affect the result. Use the recorded
+syscall arguments and errno for attribution; a completed trace or an imposed
+network-service timeout is not a nested Podman continuity pass.
+
+### Adding and retiring cases
+
+1. Copy a small `from-*.nix` case and choose an immutable, full predecessor
+   commit, normally the relevant default-branch revision before the change.
+   Never resolve a moving branch at test time.
+2. Give it a descriptive name and expected kernel prefix. If necessary, select
+   a configuration file **from the predecessor revision**; otherwise its
+   default is used. Keep the target unpinned.
+3. Register historical cases behind the historical opt-in in `tests/all-tests.nix`.
+   Reuse `common.nix` for their standard continuity scenario.
+4. Run the named case from the development checkout with the desired target
+   configuration. Confirm the actual predecessor kernel and target generation
+   in the native logs. A fresh target boot is not an upgrade result.
+5. Remove a case and its registration when its source version or transition is
+   no longer supported/relevant. Do not silently retarget an old case to a new
+   commit and lose the compatibility boundary it represented. Git history
+   preserves retired cases; no separate fixture registry is necessary.
+## Livepatch Intel CI distribution
+
+The existing `livepatch-intel` selector includes cumulative .95 NFS cancellation.
+Native .110 NFS cancellation belongs to the existing
+`livepatch-qualification-intel-representative-v6` selector, after that row's v6
+qualification. Both rows use `intel-kvm` and execute their scripts serially.
+This avoids placing both long NFS groups in one 350-minute step. The ordinary
+`ci` selector still includes both groups; their machines, examples, 25 forced
+stop/restart cycles and per-example deadlines are unchanged. No matrix row or
+longer step deadline is added.
+
+## Livepatch CPU hotplug diagnostics
+
+Qualification checks kernel health after each hotplug and workload-progress
+check, using the example's original dmesg baseline. A warning before the
+transition fails that phase even when CPU online/offline and progress checks
+succeed. The ordinary workload, aging, ABI, quarantine and recovery requirements
+still apply.
+
+The [livepatch test sources](https://github.com/vpsfreecz/vpsadminos/tree/staging/tests/suite/kernel/livepatch-6.12.95)
+include the standalone experimental `hotplug-recorder.nix` and its C/BPF sources.
+The caller must authenticate its required `vmlinuxHeader` against the original
+boot binary. The recorder requires GNU build ID
+`7801779436291880089e3407e50e5813f80d76f1`, CPU127 and the locked predicate at
+`sched_cpu_dying+0xa4`. Its command-line entry point is `hotplug-recorder --help`.
+
+Runtime attachment, verifier admission and complete recording remain unproven.
+Ordinary qualification does not invoke the recorder or orchestrate its first
+hotplug capture. A successful source build or help command does not establish
+runtime admission or a kernel-fault cause.
+
+## Livepatch qualification shutdown diagnostics
+
+Livepatch qualification guests retain a shutdown-only RSS diagnostic.
+After workload cleanup, a return probe mirrors `__mmdrop` completion during
+poweroff to the kernel console, with the return caller, task name and
+online/dying CPU masks. Console tracing is allocated at boot but remains off
+through the workload. Console verbosity is raised only after cleanup so the
+records reach the serial console rather than only the dmesg ring. They help
+investigate late accounting BUGs; they do not suppress faults or establish
+that a particular BUG is harmless.
+The counter-sum helper itself is not traceable on the pinned boot kernel;
+the diagnostic respects that restriction and observes mm teardown instead.
+
+If qualification already failed, its after-example hook reports unavailable
+diagnostics or cleanup without replacing the original example failure. A
+wedged cgroup migration can also prevent the guest from forking the commands
+needed to collect diagnostics. No successful cleanup or snapshot is inferred
+from this fallback. Cleanup exceptions after completed qualification still
+propagate and fail the test.
+
+## Guest kernel failures
+
+Unexpected guest kernel failures remain fatal and are not retried. During
+cleanup, the runner continues collecting the console so that a panic's later
+stack traces and per-CPU tracing dumps can reach `<machine>-console.log`.
+Collection stops at console EOF, after 30 seconds without new console bytes,
+or 600 seconds after the first failure was detected, whichever comes first.
+The runner then terminates the guest. New output, including repeated failure
+messages, cannot extend that hard collection deadline.
+
+This wait only affects failure cleanup: it does not suppress kernel-failure
+detection, permit further guest commands, or turn a failing test into a pass.
+A dump can still be incomplete if a collection limit is reached.
+
+Console detection includes bad-RSS accounting BUGs reported during final
+shutdown. A successful script body and zero QEMU exit status do not clear a
+recorded kernel failure; the runner checks again after final console collection.
+
+## NFS cancellation lock diagnostics
+
+The NFS cancellation test's remote-lock example enables a dedicated trace
+instance while the FIFO-held lock and competing client are exercised. Its
+`nfs4`, `nfsd`, `sunrpc`, and `filelock` event rings are bounded to 1 MiB per
+virtual CPU. On failure, tracing is stopped and per-CPU loss statistics and
+the retained events are collected before the holder is released, alongside
+lock, mount, process, firewall and server-state snapshots. A wrapped ring is
+not a complete operation history; use the recorded loss statistics.
+
+The trace instance and enabled events are removed after the example. Capture
+and cleanup do not turn a failed lock assertion into a pass. Server diagnostics
+enter the server's mount, network and PID namespaces so its private proc mount
+can resolve the diagnostic process's network statistics.
+
+Failure snapshots also retain each live `flock` process's descriptors and
+`fdinfo`, plus device/inode/link-count observations for those descriptors and
+the server/client lock paths. This distinguishes a live lock holder from a
+stale or different path without changing the remote contention assertion.
+These are post-failure observations: the short-lived contender has already
+closed its descriptor, and path metadata can require fresh NFS requests.
+Use the retained trace and its loss statistics to establish operation-time
+filehandle identity; a matching pathname alone is not proof.
+
+A separate transport ring starts before each protocol's first client mounts.
+It records `inet_sock_set_state`, `tcp_send_reset`, and `tcp_receive_reset`,
+with 1 MiB per virtual CPU. State changes and received resets are filtered
+to source or destination port 2049. Sent resets have packed socket addresses
+rather than scalar port fields, so they are retained without a port filter. A
+callback connection can predate the lock example, so this history is not
+cleared when the operation-time NFS trace starts. Lock failure collects both
+rings and their loss statistics, plus server/client TCP socket snapshots.
+The transport instance is removed after the protocol group. Socket snapshots
+are post-failure observations, and an overwritten ring cannot establish that
+an earlier disconnect or reset was absent. No lock or cancellation assertion
+depends on a particular transport topology or on the diagnostic contents.
+
+## Preparing images before running tests
+
+`./test-runner.sh test --prebuild --jobs auto -t ci` builds the configurations
+and image closures for the selected tests before starting any selected VM.
+Patterns, script selectors, tags, labels and metadata expressions keep their
+usual meaning. Several selected scripts from one test share one prepared
+configuration. The prepared JSON and its closure stay GC-rooted through all
+attempts and VM cleanup; runtime loads those exact configurations without
+invoking Nix. A test script or extension that explicitly starts a separate host
+build is outside this boundary.
+
+Prebuild is opt-in. `--no-prebuild` keeps per-test image preparation. Both modes
+use the same test squashfs cache default and runtime resource scheduling.
+`debug` continues to prepare one test when it starts. CI enables prebuild for
+native tests; the manual `prebuild` boolean can disable it.
+
+Preparation snapshots VM capacity before building, then refreshes assigned
+limits before starting VMs. It chooses local Nix build jobs separately from
+`--jobs`, using available host/cgroup memory bounded by assigned capacity and
+`--max-memory-mib`. After subtracting `--memory-reserve-mib` (default 8192), it
+divides the usable memory by `--prebuild-memory-per-job-mib` (default 8192),
+rounds down, and caps the result at inherited local Nix `max-jobs`. The estimate
+must be positive. Unknown headroom requires an explicit usable maximum;
+insufficient capacity fails before any VM starts. Runtime memory overcommit is
+not applied to preparation sizing. Inherited `max-jobs=0` keeps remote-only or
+substitution behavior; local headroom does not size remote builders.
+
+The 8192 MiB estimate is an admission heuristic, not a derivation RSS limit.
+Preparation changes neither Nix `cores` nor kernel/compression CPU parallelism.
+Evaluation, substitution and daemon overhead, one unusually heavy derivation,
+and unrelated builds can exceed the estimate. CI sizing assumes one worker job
+per runner container without a competing test or build workload.
+
+Preparation errors are reported as infrastructure/build failures, with the
+selected identities, full build log path, and exit code or signal. They start
+zero selected VMs and do not fabricate script assertion results. Cancellation
+reaps the owned Nix client and releases its root; shared daemon work is not
+killed. Retrying the command reuses valid cached outputs. Disk reset through
+`--fresh` begins only after complete preparation succeeds.
+
+### Squashfs cache
+
+vpsAdminOS test images default to `system.squashfsMemoryMiB = 2048`, passed to
+both `sqfstar` and `mksquashfs`. This bounds the compressor cache, not total
+build memory. Metadata, dictionaries, compression contexts and other processes
+use additional memory. The setting preserves CPU parallelism, compression
+settings (zstd level 10 by default) and image metadata. Override it when needed;
+`null` restores the tool default. Production defaults to `null`. Historical
+pinned OS sources and unrelated Nixpkgs image builders do not inherit this
+setting.
+
+### Runtime resource scheduling
+
+The scheduler budgets RAM, `/dev/shm` and CPUs across concurrent tests. If no
+pending test fits and no test is running, it warns and runs one test alone,
+even when that test exceeds a budget. Guest memory, CPU counts and shared-memory
+requests are unchanged. The test may exhaust the host or fail from OOM.
+
+## Expected failure
+A test can be expected to fail. The failure is shown, but it does not result
+in error exit status. If a test succeeds and we expected it to fail, it is
+considered as an error.
+
+```nix
+import ../make-test.nix ({ pkgs }: {
+  name = "my-failed-test";
+
+  description = ''
+    It's a great test indeed
+  '';
+
+  expectFailure = true;
+
+  machine = import ../machines/empty.nix pkgs;
+
+  testScript = ''
+    machine.start
+    machine.succeeds("shell command that fails...")
+  '';
+})
+```
+
+## Multiple test scripts
+Each test can contain multiple test scripts. Test scripts are a part of
+test name and be run selectively.
+
+```nix
+import ../make-test.nix ({ pkgs }: {
+  name = "my-test";
+
+  description = ''
+    It's a great test indeed
+  '';
+
+  expectFailure = true;
+
+  machine = import ../machines/empty.nix pkgs;
+
+  testScripts = {
+    script1 = {
+      # Each script be expected to fail
+      # expectFailure = false;
+
+      # The test itself
+      script = ''
+        machine.start
+        machine.succeeds("uptime")
+      '';
+    };
+
+    script2 = {
+      script = ''
+        machine.succeeds("ps aux")
+      '';
+    };
+  };
+})
+```
+
+`./test-runner.sh ls 'my-test#*'` would show these tests as:
+
+```
+my-test#script1
+my-test#script2
+```
+
+Script name is separated from test name by a hash (`#`). Test scripts of
+one test are run in the same environment and share the same virtual machines.
+By default, they run one after the other in random order.
+
+Tests can opt into parallel test script execution with `testScriptJobs`:
+
+```nix
+{
+  testScriptJobs = 2;
+
+  testScripts = {
+    script1.script = ''
+      machine.succeeds("uptime")
+    '';
+
+    script2.script = ''
+      machine.succeeds("ps aux")
+    '';
+  };
+}
+```
+
+Parallel scripts share the same VM state, so they must avoid conflicting
+changes to the machine. Each running script gets its own test shell.
+
+Machines can declare named extra shells for commands that should be able to
+run without blocking the script's default shell:
+
+```nix
+{
+  machine = {
+    shells = [ "first" "second" ];
+  };
+
+  testScript = ''
+    machine.shells['first'].succeeds("sleep 10")
+    machine.succeeds("uptime", shell: "second")
+  '';
+}
+```
+
+Named shells share the same VM state as the default shell. Shell names can be
+looked up as strings or symbols, e.g. `machine.shells[:first]`.
+
+Generated direct-boot test guests use flow-controlled `virtserialport` devices
+for command traffic, separate from the serial console used for boot and kernel
+diagnostics. Unlike `virtconsole`, these ports do not discard shell replies
+when the host socket is temporarily full. Each guest service opens its named
+`/dev/virtio-ports/org.osvm.shellN` device once and shares that descriptor for
+stdin, stdout and stderr; it is not a TTY and does not use `stty`.
+
+The machine JSON records `testShellTransport`, which can be `virtserialport`
+or `virtconsole`. Old JSON without this field keeps the legacy `/dev/hvcN`
+transport. Firmware-boot machines also default to `virtconsole`, because their
+guest image is supplied separately. A machine can explicitly set
+`testShellTransport` when its image needs a different transport; the guest
+service and host port must agree. For separately built vpsAdminOS images, the
+matching guest option is `osctl.test-shell.transport`.
+
+## Test templates
+Templates can be used to create multiple instances of a test. The difference between
+templates and multiple test scripts is that tests created by templates are isolated,
+have their own virtual machines and can run in parallel.
+
+```nix
+import ../make-template.nix ({ distribution, version }: rec {
+  instance = "${distribution}-${version}";
+
+  test = { pkgs }: {
+    name = "my-template@${instance}";
+
+    description = ''
+      Test something on ${distribution}-${version}
+    '';
+
+    machine = import ../machines/tank.nix pkgs;
+
+    testScript = ''
+      machine.wait_for_osctl_pool("tank")
+      machine.wait_until_online
+      machine.succeeds("osctl ct new --distribution ${distribution} --version ${version} testct")
+    '';
+  };
+})
+```
+
+Within `all-tests.nix`, the template would be listed as:
+
+```nix
+{ template = "my-template"; instances = distributions.all; }
+```
+
+`./test-runner.sh ls 'my-template@*'` would show these tests as:
+
+```
+my-template@debian-stable
+my-template@ubuntu-24.04
+...
+```
+
+## RSpec expectations
+Test scripts can use RSpec expectations and optionally also example groups similar
+to RSpec. We reuse [rspec-expectations](https://rspec.info/features/3-13/rspec-expectations/)
+and provide our own implementation of [rspec-core](https://rspec.info/features/3-13/rspec-core/).
+We aim to be compatible with RSpec when possible.
+
+The following test demostrates available RSpec features.
+
+```nix
+import ../make-test.nix ({ pkgs }: {
+  name = "my-test";
+
+  description = ''
+    Test with RSpec expectations
+  '';
+
+  machine = import ../machines/tank.nix pkgs;
+
+  testScript = ''
+    # Optional global configuration for example groups / examples
+    configure_examples do |config|
+      # `:defined`, `:rand`, instance of `Random` or `Integer` used as a seed
+      # Defaults to `:rand` if not set
+      config.default_order = :defined
+    end
+
+    before(:suite) do
+      puts 'block executed before all examples'
+    end
+
+    # Create an example group
+    describe 'machine' do
+      before(:context) do
+        puts 'block executed before examples in this group'
+      end
+
+      after(:context) do
+        puts 'block executed after examples in this group'
+      end
+
+      before(:example) do
+        puts 'block executed before each example'
+      end
+
+      after(:example) do
+        puts 'block executed after each example'
+      end
+
+      it 'can execute commands' do
+        _, output = machine.succeeds('echo hello')
+        expect(output.strip).to eq('hello')
+      end
+
+      example 'without a block is skipped'
+
+      skip 'examples created by skip are also skipped' do
+        puts 'this will not run'
+      end
+
+      example 'can be skipped from the code block' do
+        skip
+        skip('with a reason')
+      end
+
+      pending 'examples are expected to fail' do
+        # This example will fail if expectations will be met
+        expect(0).to eq(1)
+      end
+
+      example 'can be marked as pending from the code block' do
+        pending
+        pending('this is expected to fail')
+        expect(0).to eq(1)
+      end
+
+      context 'nested example group with custom order of evaluation', order: :rand do
+        example '#1'
+        example '#2'
+      end
+    end
+
+    after(:suite) do
+      puts 'block executed after all examples'
+    end
+  '';
+})
+```
+
+Groups and examples are evaluated in random order unless configured otherwise.
+
+## Temporary config changes
+It is possible to change all test machine configurations by creating
+`os/configs/tests.nix` file, e.g. to change a kernel version used in tests:
+
+```nix
+{ config, ... }:
+{
+  boot.kernelVersion = "6.1.30";
+}
+```

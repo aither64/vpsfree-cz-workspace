@@ -1,0 +1,5 @@
+Result: **passed**, script exit status 0; elapsed time 168 seconds. The script’s final output marker is `/tmp/ci-failure-analysis-2026-10-22/podman/attempt-1/prepared`. Kernel substitution, LXC substitution, and configuration realization each recorded exit status 0.
+
+The script SHA-256 matched the accepted hash. Retained evidence is under `/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-ci-failure-analysis/repair/podman/` in the `preparation-1*` files, including logs, output paths, closure, resource measurements, and binary hashes. The configuration log was 221,872 bytes; kernel log 306 bytes; LXC log 474 bytes.
+
+At completion, filesystem free space was 109,957,259,264 bytes, recorded new store growth was 798,420,992 bytes, and owned scratch was 4,096 bytes. No owned operation process remained. No cancellation was needed.

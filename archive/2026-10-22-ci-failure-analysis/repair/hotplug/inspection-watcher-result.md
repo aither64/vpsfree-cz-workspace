@@ -1,0 +1,5 @@
+Result: **failed**, exit status **1**, elapsed **2.4 seconds**. Session identity and helper SHA256 matched. The command ran once in `ci-hotplug-probe-preflight-1.scope` (invocation `8358811cffed46409c2b677f256daac1`).
+
+Bounded failure excerpt: `OSError: [Errno 27] File too large`
+
+Raw output, exit status, and result are retained at [inspection-run.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-ci-failure-analysis/repair/hotplug/inspection-run.log), [inspection-run.exit](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-ci-failure-analysis/repair/hotplug/inspection-run.exit), and [inspection-run-result.md](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-ci-failure-analysis/repair/hotplug/inspection-run-result.md). The command returned; no still-running process was reported.

@@ -1,0 +1,5 @@
+Result: **failed**, native exit status **1** after 7.09 seconds. The script completed its metadata steps, then recorded an `AssertionError`; its raw stdout and stderr are retained.
+
+- Revision: `9bea27c93beb22d08c3be2eb481bce4ef57300a6`; selected source SHA256: `4bf11e25f04d444b5af5ac4cc506ab566c13ba50d96e67bf2c72c5b774005b00` (16,576 bytes).
+- Evidence: [watcher evidence directory](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-ci-failure-analysis/repair/hotplug/recorder-fixed-metadata-1-watcher3-evidence); native receipts: `/tmp/ci-failure-analysis-2026-10-22/hotplug/recorder-fixed-metadata-1`.
+- Scope is inactive/dead; no cancellation was recorded. Sixteen samples at roughly 0.5-second intervals; maximum observed attempt allocation 4,908 bytes and minimum shared free space 135,170,535,424 bytes. Samples do not rule out transient peaks or hidden store materialization.

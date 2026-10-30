@@ -1,0 +1,3 @@
+Verification result: the inspector did not run because `/usr/bin/time` was unavailable. The dry run and metadata query both exited 0; no owned process remains.
+
+Logs and results are under [repair/support](</home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-ci-failure-analysis/repair/support/preflight-batch1-result.md>). The result file records elapsed times and resource evidence. Dry-run output listed store paths; metadata returned the requested test metadata.

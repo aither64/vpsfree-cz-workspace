@@ -1,0 +1,10 @@
+Result: passed (script and enclosing systemd-run command exit 0)
+Session/revision: 2026-10-22-ci-failure-analysis; product HEAD 87e6bd4a5f5a117be5885d7a1a15ab602dde91e0
+Command identity: PID 1211963; systemd invocation ID 09682027dfd546a9a2fc6fb9bf34fcae; exact argv and launch limits in probe-assembly-1-watcher-identity.json (FSIZE unlimited, core 0)
+Elapsed: 69.047 seconds (wrapper); native script receipt: 68 seconds
+First bounded error: none; operation output contains no error; all expected input/config/boot hashes OK.
+Allocation gate: passed before compression; allocation-gate.json reports total upper bound 2,639,048,650 bytes against 4,294,967,296-byte budget; free 137,681,534,976 bytes; guest NAR 1,115,849,072 bytes, 609 guest paths.
+Final JSON: /nix/store/4kkh0742658h9c2q5ckw7nb2iq5qxwic-os-test-kernel-livepatch-probe-admission.json SHA256 daafd11dde916f90772276902b2b1acd7a73e99451e109442a88d4bfb147256a (exact script output path)
+Scope/client reconciliation: client PID 1211963 absent; user scope was inactive/dead immediately after completion and was subsequently no longer found. No cancellation was taken. A separate system nix-daemon process pair (PIDs 1299969/1214499, child argv references 1214459) was visible; not authenticated as this operation and untouched. Daemon builder/cwd/fd effects are not proven fully reconciled from watcher evidence.
+Monitoring limitation: the operation supervisor polled only its own command completion at 0.5-second intervals; it did not independently sample disk growth, RSS, owned daemon builders, or watcher/native log size during execution. Therefore those continuous bounds are not independently evidenced here. Script-native precompression gate and start/end df receipts are retained.
+Artifacts: /home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-ci-failure-analysis/repair/hotplug/probe-assembly-1-watcher-operation.log; /home/aither/workspace/ai/vpsfree.cz/work/2026-10-22-ci-failure-analysis/repair/hotplug/probe-assembly-1-watcher-identity.json; /tmp/ci-failure-analysis-2026-10-22/hotplug/probe-assembly-1/ (all native receipts and roots retained).
