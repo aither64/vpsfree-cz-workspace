@@ -1,25 +1,21 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 
 # Client formatting implementation
 
-**Rebased, verified and published; ready, awaiting HaveAPI master merge approval.**
-User requested rebase onto moved master; that work is complete. Session remains
-active/open. No master merge, package publication or deployment authorized.
+**Complete: merged into remote HaveAPI master; all ten master CI workflows pass.**
 
-- Current base: `c79645e0d43885c26cdc4129cbac96fdd5a13b07`.
-- Current SSH-published head: `7edb003dd5d5a058b3308510bb8a5f60387ad654`.
-- Ten owned commits replayed without conflict/adaptation; all ten patches equal
-  and feature diff byte-identical. Lead independent tree reconstruction matches.
-- Quick checks passed; affected general/risk/history review has no findings and
-  retains unchanged original review conclusions. All eleven fresh exact-head
-  CI workflows passed, including full build/test/packaged generator smoke.
-- Project worktree/index clean; remote head/base confirmed, portal comparison
-  refreshed. No operation remains running; no superseded active run existed.
-- Current evidence: [rebase/equivalence](rebase-master.md), [affected review](rebase-review.md),
-  [fresh CI/package receipt](rebase-ci-receipt.md). Older receipts below remain
-  historical evidence at their original explicit revisions.
+User direction "merge it" approved HaveAPI/master integration. Ordinary
+fast-forward c79645e0 -> `7edb003dd5d5a058b3308510bb8a5f60387ad654` and non-force
+SSH push succeeded. Both master and retained feature ref match exact final head.
+Feature worktree/index clean, disposable merge target removed, exact repository
+claim released and verified. No remaining work or running verification process.
+No package publication/deployment. Session remains open; no archive/delete/stop
+or delayed cleanup requested/performed.
+
+[Final integration, claim, CI and package receipt](integration.md).
+Prior full review, affected rebase review and exact-head CI receipts retained.
 
 ## Phase checklist
 
@@ -32,7 +28,9 @@ active/open. No master merge, package publication or deployment authorized.
 - [x] Feature publication, exact-head CI/build/package evidence and comparison.
 - [x] Redesign integrated upstream; ten owned commits rebased onto current master.
 - [x] Affected review and eleven fresh exact-head workflows passed.
-- [ ] Explicit HaveAPI master merge approval and integration.
+- [x] Explicit HaveAPI master merge approval and verified remote integration.
+- [x] Disposable merge target removed safely after claim release.
+- [x] Automatic master CI: all ten workflows passed.
 
 ## Repository and lineage
 
@@ -153,7 +151,15 @@ CI and release artifact/manifest verified; digest
 Release run41038382962/artifact12969666315 retains complete tool/input graphs;
 publish job skipped. Full evidence in linked rebase receipts.
 
-No implementation/check/review/rebase action remains. Explicit HaveAPI/master
-merge approval is the next required user action for integration. No package
-publication approval. Keep session/worktree/refs available; no archive, deletion
-or stop requested. No repository/machine claim acquired for independent work.
+No implementation/check/review/rebase/integration action remains. Exact final
+feature head is integrated in approved remote master; master CI passes. Keep
+session/feature worktree/branches/recovery refs open and retained. No publication,
+deployment or session lifecycle action is authorized by completion.
+
+## Integration approval
+
+Source: latest user message "merge it", following exact7edb003d/rebase/11CIpassed handoff. Scope: git@github.com:vpsfreecz/haveapi.git target refs/heads/master, fast-forward only. Lead owns final claim/check/merge/hooks/SSHpush/remoteproof/release; implementer2 prepares a clean detached target/environment/hooks outside claim. No approval needed again for unchanged reviewed head. Final premerge inventory tenlogicalcommits/noobsoletehistory/no migrations and affected review accepted.
+
+## Completion proof
+
+Finalmaster/featurehead7edb003dd5d5a058b3308510bb8a5f60387ad654 exactremoteverified; allregisteredfinalheads integrated (HaveAPIonly), all10masterworkflows pass; releasepublishjobskipped; detachedtargetcleanupcomplete; claim29b13975-c194-43c7-bf0f-fc4bb4d309b0 releasedrevision2. No remainingreview/CI/deploy/approval/cleanup or unfinishedmutation. Complete status leaves sessionopen. Master artifact12971285029 digestsha256:2fd224ce325aa5edd0cca0bcd26cfca7c7b177f75b59c7b4635b36543fb336d4 independently matched; manifestfullsource/tool/inputgraph retained.
