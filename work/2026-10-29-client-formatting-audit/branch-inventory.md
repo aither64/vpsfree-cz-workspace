@@ -1,50 +1,25 @@
-# Final branch inventory
+# Current branch inventory
 
-Own initial base: `ae46cf27a9afb6558d386c293cec7231dd6c423d`. Remote default observed: `f6e5c3750c747b33ec869c54ca220bf6f1d9d2d0`. Final head: `d6c2748a9e937c1c083fcc60c0e3fcc0a59a0038`.
+Current master base: `c79645e0d43885c26cdc4129cbac96fdd5a13b07`. Rebased/published head: `7edb003dd5d5a058b3308510bb8a5f60387ad654`.
 
-## Own complete series
+## Complete base-to-head series
 
 ```text
-
-5aa2de000c5d5e8f63103ce85c576a41d0c9cbc9 clients/js: normalize authored source with Prettier defaults
-058e9315c8e348dac376e7eee05dd5456d4b0bfc clients/js: enforce shared Prettier defaults for authored source
-26f578cecae02b0d82151f4bc3e00ae3af6835fb ci: cover Ruby tooling inputs in RuboCop triggers
-8bd669389aeb087f63c41197e725d1fcba05d556 clients/go: cover formatting failures and canonical output
-05082918c71e1571f5dc9005b4d00208901cb49b clients/php: apply canonical source formatting
-08e8716de5206e36c7871d2d8311421c9613f707 clients/php: enforce style and PHP 8.0 syntax
-31f2a08126789656f7aaa8274aa47e94ee4f3027 clients/typescript: format generated clients with Prettier
-5e871ab42cdb348e43fd02cc46c8c42afd822a56 release: verify formatted TypeScript generator packages
-86e32916da1c7236416cac1771fabc412620794e clients: align formatting tools and contributor checks
-d6c2748a9e937c1c083fcc60c0e3fcc0a59a0038 clients/rust: verify fixture formatting and failures
-
+173edf81a7ed32b736153bc0fda4a2966e4994f9 clients/js: normalize authored source with Prettier defaults
+a7209152fda6a32fd5ba175410a8f42653450a69 clients/js: enforce shared Prettier defaults for authored source
+3ac5ef632edd0090f07e4b2a223ab31ac5026db9 ci: cover Ruby tooling inputs in RuboCop triggers
+e5769f47f19558975ebb41054eb8843f031cca1a clients/go: cover formatting failures and canonical output
+717d6272daee3073d00798a50a24ace3ad57150b clients/php: apply canonical source formatting
+125c7723b2dba683f60eae26829e5c5f9889d2a0 clients/php: enforce style and PHP 8.0 syntax
+74679a6b2d8eeb95cf4d0b092543499c3f412c58 clients/typescript: format generated clients with Prettier
+8e482036546fdc8234c2621e3a8512c7fd6e4052 release: verify formatted TypeScript generator packages
+108d8f0fc4bdf864c01b14b551aac1f9e8417552 clients: align formatting tools and contributor checks
+7edb003dd5d5a058b3308510bb8a5f60387ad654 clients/rust: verify fixture formatting and failures
 ```
 
-## Complete default-to-head series (including inherited redesign)
+## Final diffstat
 
 ```text
-
-51073383f063abbc24bf19ca669b9b6e46bb9555 documentation: redesign reference and client examples
-78ab264add97495aa38ffb33800f16cc9870838d servers/ruby: add optional OAuth documentation sessions
-2f6c18a80f3a5f8ce46449ff81183b100b60f34c servers/ruby: preserve documentation performance contracts
-1b264e25a73a0ab9bca5f847bd52254f74e0931c docs: align client examples with language style
-ae46cf27a9afb6558d386c293cec7231dd6c423d docs: document client example source conventions
-5aa2de000c5d5e8f63103ce85c576a41d0c9cbc9 clients/js: normalize authored source with Prettier defaults
-058e9315c8e348dac376e7eee05dd5456d4b0bfc clients/js: enforce shared Prettier defaults for authored source
-26f578cecae02b0d82151f4bc3e00ae3af6835fb ci: cover Ruby tooling inputs in RuboCop triggers
-8bd669389aeb087f63c41197e725d1fcba05d556 clients/go: cover formatting failures and canonical output
-05082918c71e1571f5dc9005b4d00208901cb49b clients/php: apply canonical source formatting
-08e8716de5206e36c7871d2d8311421c9613f707 clients/php: enforce style and PHP 8.0 syntax
-31f2a08126789656f7aaa8274aa47e94ee4f3027 clients/typescript: format generated clients with Prettier
-5e871ab42cdb348e43fd02cc46c8c42afd822a56 release: verify formatted TypeScript generator packages
-86e32916da1c7236416cac1771fabc412620794e clients: align formatting tools and contributor checks
-d6c2748a9e937c1c083fcc60c0e3fcc0a59a0038 clients/rust: verify fixture formatting and failures
-
-```
-
-## Own final diff inventory
-
-```text
-
 .editorconfig                                      |   10 +-
  .git-hooks/pre_commit/js_format.rb                 |   13 +
  .github/workflows/clients-js-tests.yml             |   20 +-
@@ -174,17 +149,12 @@ d6c2748a9e937c1c083fcc60c0e3fcc0a59a0038 clients/rust: verify fixture formatting
  utils/release/typescript_smoke.rb                  |   11 +-
  utils/spec/version_update_spec.rb                  |   32 +
  128 files changed, 9926 insertions(+), 5680 deletions(-)
-
 ```
 
-## Scope and provenance
+## History and migration conclusion
 
-The five redesign commits preceding the initial base are inherited by user direction. This session owns ten subsequent logical commits. Mechanical JS/TS and PHP normalization remain separate. Small package.json normalization stays with its tooling commit; the moved negative-type directive stays with its wrapped fixture. Message-only local amendments replaced warning-bearing subjects/bodies; no obsolete approach or fixup commit remains in the final owned series.
+Exactly ten logical formatting commits; inherited redesign already integrated into master and not duplicated. Mechanical JS/PHP changes remain separate from tooling. No obsolete approach, unused compatibility path, repeated dependency stream, intermediate pin, database migration, committed library lock or version bump. Existing generated format1 is the intentionally supported predecessor. R1 is folded in its release owner. No feature deployment/publication/master integration.
 
-No database migrations or migration files. Existing generated manifest format1 is a supported predecessor: additive provenance plus regeneration/check behavior is intentional compatibility. No release, deployment or external consumption of these own commits. No flake-lock updates, repeated dependency-pin streams or transitional schema paths. One exact Prettier dependency addition uses the existing locked Nix package.
+## Review and evidence lineage
 
-Default-branch integration is not approved. The inherited redesign is not yet on remote master; later transplant only these own commits onto approved integrated lineage, compare patches and repeat affected checks/review.
-
-## Review refresh
-
-Original immutable reviewed range and accepted R1 fix are retained in [review.md](review.md). [Consolidation receipt](history-consolidation.md) binds old/new ranges, all nine unaffected patches, the exact accepted release delta and final-tree equality. Lead independently checked the complete range-diff and both equal delta hashes. Final parity/metadata rerun passed; final project index/worktree clean.
+Original reviewed/fixed/consolidated ranges and complete inherited series are retained in [review.md](review.md) and [history-consolidation.md](history-consolidation.md). [Rebase receipt](rebase-master.md) binds old/new bases and heads, all ten equal range-diff patches, byte-identical feature delta, upstream disjointness and lead independent tree reconstruction. [Affected review](rebase-review.md) explicitly accepts unchanged review reuse and new-baseline interactions. Previous CI is retained in [ci-receipt.md](ci-receipt.md); current exact-head CI evidence follows separately.

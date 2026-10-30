@@ -4,15 +4,22 @@ lifecycle: active
 
 # Client formatting implementation
 
-Implementation, independent review and CI are complete on the user-selected
-unmerged documentation-redesign base. **Ready, awaiting merge approval after
-redesign integration/rebase.** The session stays active and open.
+**Rebased, verified and published; ready, awaiting HaveAPI master merge approval.**
+User requested rebase onto moved master; that work is complete. Session remains
+active/open. No master merge, package publication or deployment authorized.
 
-- Published head: `d6c2748a9e937c1c083fcc60c0e3fcc0a59a0038` (ten owned commits).
-- [Feature branch](https://github.com/vpsfreecz/haveapi/tree/2026-10-29-client-formatting-audit).
-- All ten exact-head CI workflows passed. Project worktree/index clean; no
-  remaining review findings or verification command. No master merge, package
-  publication, deployment, resource claim or session lifecycle action performed.
+- Current base: `c79645e0d43885c26cdc4129cbac96fdd5a13b07`.
+- Current SSH-published head: `7edb003dd5d5a058b3308510bb8a5f60387ad654`.
+- Ten owned commits replayed without conflict/adaptation; all ten patches equal
+  and feature diff byte-identical. Lead independent tree reconstruction matches.
+- Quick checks passed; affected general/risk/history review has no findings and
+  retains unchanged original review conclusions. All eleven fresh exact-head
+  CI workflows passed, including full build/test/packaged generator smoke.
+- Project worktree/index clean; remote head/base confirmed, portal comparison
+  refreshed. No operation remains running; no superseded active run existed.
+- Current evidence: [rebase/equivalence](rebase-master.md), [affected review](rebase-review.md),
+  [fresh CI/package receipt](rebase-ci-receipt.md). Older receipts below remain
+  historical evidence at their original explicit revisions.
 
 ## Phase checklist
 
@@ -23,7 +30,9 @@ redesign integration/rebase.** The session stays active and open.
 - [x] Committed deliverable, independent final review and prescribed R1 fix.
 - [x] History consolidation with exact equivalence/provenance proof.
 - [x] Feature publication, exact-head CI/build/package evidence and comparison.
-- [ ] Redesign integration/rebase and explicit HaveAPI master merge approval.
+- [x] Redesign integrated upstream; ten owned commits rebased onto current master.
+- [x] Affected review and eleven fresh exact-head workflows passed.
+- [ ] Explicit HaveAPI master merge approval and integration.
 
 ## Repository and lineage
 
@@ -32,10 +41,11 @@ Branch: `2026-10-29-client-formatting-audit`.
 Worktree: `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-29-client-formatting-audit/haveapi`.
 Inherited initial base: `ae46cf27a9afb6558d386c293cec7231dd6c423d`, selected from
 redesign-example-instructions rather than the older original redesign branch.
-Fresh post-CI SSH evidence still shows that redesign ref at ae46cf27 and remote
-master at `f6e5c3750c747b33ec869c54ca220bf6f1d9d2d0`; feature ref matches final head.
+Original delivery remote master was f6e5c375; this historical baseline is now
+integrated into current master c79645e0. Current feature/head proof is above.
 
-Portal comparison captured f6e5c375 -> d6c2748a. [Own and inherited full series,
+Current portal comparison captured c79645e0 -> 7edb003d; original comparison
+was f6e5c375 -> d6c2748a. [Own and inherited full series,
 final diffstat and migration inventory](branch-inventory.md) distinguish the five
 inherited redesign commits from the ten formatting commits. No database
 migrations or repeated dependency-pin stream; no flake-lock update/version bump.
@@ -120,11 +130,30 @@ finished. Raw bootstrap/npm/dependency/quick/CI logs and artifact files are loca
 disposable support under this tracking directory; Markdown receipts retain the
 useful conclusions and authoritative identities.
 
-## Next action and limits
+## Rebase completion and next action
 
-No implementation/check/review action remains on this baseline. When the
-redesign is integrated, verify its approved remote lineage and transplant only
-our owned commits, retaining range/equivalence and affected check/review evidence.
-Do not merge the inherited redesign onto master solely on this review. Explicit
-HaveAPI/master integration approval remains required. No publication approval.
-Keep session/worktree/refs available; no archive, deletion or stop requested.
+User direction: "haveapi master moved, so rebase onto it". Implementer2 owned the
+exclusive complete rebase/check package. Old head d6c2748a retained under an owned
+review ref. Current master includes four new CLI/shell-doc fixes with eight paths
+disjoint from128owned paths. Replay yielded ten equal range-diff patches and
+byte-identical complete binary feature delta SHA256
+`fbdcf10b77ce1852047b4d46491e47decab7858d85d38b422265ab3128515124`.
+Lead independently reconstructed tree`ed397888e12edcd0ec81fc0ac078e593f78ea0b0`
+before receiving resulting head. No inherited redesign duplication, migrations,
+source conflicts, unused approach or repeated pin. Ordinary hooks/signatures
+remained active through inspected historical-config transitions.
+
+Quick checks:427Rubyfiles/nativeformatters clean, metadata/input checks valid,
+make doc, CLIhelp3examples/shell13examples pass. Reviewer0 retained Sol/xhigh
+read_only independently checked full upstream delta and all new-range history,
+accepted general/risk interactions and prior unchanged review reuse, no findings.
+Explicit old-head lease push succeeded; superseded active runs0. Fresh11workflow
+CI and release artifact/manifest verified; digest
+`sha256:6782a327326ef1837e0fab692cb5d6866f74cd36f99230bb45ce15a8264c5bc8`.
+Release run41038382962/artifact12969666315 retains complete tool/input graphs;
+publish job skipped. Full evidence in linked rebase receipts.
+
+No implementation/check/review/rebase action remains. Explicit HaveAPI/master
+merge approval is the next required user action for integration. No package
+publication approval. Keep session/worktree/refs available; no archive, deletion
+or stop requested. No repository/machine claim acquired for independent work.
