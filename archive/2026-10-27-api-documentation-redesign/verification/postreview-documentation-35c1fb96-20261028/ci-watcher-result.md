@@ -1,0 +1,3 @@
+Result: evidence download completed successfully; batch exit status **0**. Tested revision: `35c1fb964735639c0873aacf078e18569f05f9bc`. All four runs were collected in order: `40723980063`, `40723979876`, `40723979827`, `40723979835`.
+
+Evidence is retained under `/home/aither/workspace/ai/vpsfree.cz/work/2026-10-27-api-documentation-redesign/verification/postreview-documentation-35c1fb96-20261028/` as `ci-<run>.json`, `jobs-<run>.json`, `log-<run>.txt`, and `artifacts-<run>.json`. Elapsed time was about 18 seconds. No command failed; no active process remains.

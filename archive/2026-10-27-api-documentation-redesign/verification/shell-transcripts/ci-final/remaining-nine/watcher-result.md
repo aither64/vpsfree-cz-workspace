@@ -1,0 +1,4 @@
+- **Result:** Passed; all nine specified run IDs completed successfully.
+- **Revision:** `aee093cd3387c261570067e58b7f1e16029e3619`; branch `2026-10-27-api-documentation-redesign-shell-transcripts`.
+- **Command:** Executed once; exit status `0`; elapsed time 65.7 seconds. No running command remains.
+- **Evidence:** [result.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-27-api-documentation-redesign/verification/shell-transcripts/ci-final/remaining-nine/result.json), [status.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-27-api-documentation-redesign/verification/shell-transcripts/ci-final/remaining-nine/status.json), and per-command stdout/stderr captures in the same directory.

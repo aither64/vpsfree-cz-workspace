@@ -1,0 +1,5 @@
+Result: **passed**. All 11 specified GitHub runs completed successfully on head `1b264e25a73a0ab9bca5f847bd52254f74e0931c`, branch `2026-10-27-api-documentation-redesign-example-style`, event `push`, attempt 1. The final status snapshot confirms all 11 exact matches.
+
+Raw observations and final status are in [ci-final-1b264e25](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-27-api-documentation-redesign/verification/example-style-preparation/ci-final-1b264e25). Release job metadata and the successful build job log are [release-jobs.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-27-api-documentation-redesign/verification/example-style-preparation/ci-final-1b264e25/release-jobs.json) and [release-build-job.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-27-api-documentation-redesign/verification/example-style-preparation/ci-final-1b264e25/release-build-job.log); the log shows the checked-out SHA.
+
+Observation commands exited 0. No active operation handles remain.

@@ -1,0 +1,4 @@
+- **Result:** Failed, exit status `1`. The focused log is empty (0 lines), so there is no check output to report.
+- **Operation:** Ran the assigned `style-focused-command-3.sh` after the launch gate appeared; shell operation took 12.9 seconds. Tested revision supplied: `2f6c18a80f3a5f8ce46449ff81183b100b60f34`.
+- **Artifacts:** [style-batch-3.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-27-api-documentation-redesign/verification/example-style-preparation/style-batch-3.log) and [style-batch-3.exit](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-27-api-documentation-redesign/verification/example-style-preparation/style-batch-3.exit).
+- **Processes:** The assigned command has ended; I found no remaining process running it. A separate wrapper process was visible, apparently launching another watcher; I did not interact with it.

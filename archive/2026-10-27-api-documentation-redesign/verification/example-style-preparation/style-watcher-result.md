@@ -1,0 +1,4 @@
+- **Result:** Failed, exit status `1`. Tested revision: `2f6c18a80f3a5f8ce46449ff81183b100b60f34` plus the checked candidate delta.
+- **Command:** Ran the assigned `style-focused-command.sh` once after the approval gate appeared. Elapsed time was about 2 seconds.
+- **Evidence:** Log at [style-batch.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-27-api-documentation-redesign/verification/example-style-preparation/style-batch.log) is empty; [style-batch.exit](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-27-api-documentation-redesign/verification/example-style-preparation/style-batch.exit) contains `1`.
+- No matching verification process remained when checked.

@@ -1,0 +1,5 @@
+- Result: **failed**, exit status 1; elapsed time about 13 seconds.
+- Tested revision: `2f6c18a80f3a5f8ce46449ff81183b100b60f34`.
+- Command: `style-focused-command-2.sh`.
+- Log: [style-batch-2.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-27-api-documentation-redesign/verification/example-style-preparation/style-batch-2.log); status: [style-batch-2.exit](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-27-api-documentation-redesign/verification/example-style-preparation/style-batch-2.exit).
+- The log contains no output. No assigned verification process remains running.
