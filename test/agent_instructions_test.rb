@@ -28,9 +28,9 @@ class AgentInstructionsTest < Minitest::Test
   end
 
   def test_feature_merge_needs_explicit_user_direction
-    core = File.read(File.join(ROOT, 'AGENTS.md'))
-    git = File.read(File.join(ROOT, 'docs/agent-instructions/git.md'))
-    sessions = File.read(File.join(ROOT, 'docs/agent-instructions/sessions.md'))
+    core = File.read(File.join(ROOT, 'AGENTS.md'), encoding: 'UTF-8')
+    git = File.read(File.join(ROOT, 'docs/agent-instructions/git.md'), encoding: 'UTF-8')
+    sessions = File.read(File.join(ROOT, 'docs/agent-instructions/sessions.md'), encoding: 'UTF-8')
 
     assert_match(/Feature content may enter a repository's default branch only after the user/, core)
     assert_match(/direct default-branch pushes.*\n.*pull-request merges/m, git)
@@ -40,7 +40,7 @@ class AgentInstructionsTest < Minitest::Test
   end
 
   def test_machine_release_routes_to_the_authoritative_runtime_policy
-    coordination = File.read(File.join(ROOT, 'docs/coordination.md')).gsub(/\s+/, ' ')
+    coordination = File.read(File.join(ROOT, 'docs/coordination.md'), encoding: 'UTF-8').gsub(/\s+/, ' ')
     canonical = 'https://github.com/aither64/dev-workspace/blob/master/docs/coordination.md#machine-retention'
 
     assert_includes(coordination, "](#{canonical})")
@@ -54,7 +54,7 @@ class AgentInstructionsTest < Minitest::Test
     paths = %w[AGENTS.md docs/agent-instructions/deployment.md
                docs/agent-instructions/lifecycle.md docs/agent-instructions/git.md]
     paths.each do |path|
-      text = File.read(File.join(ROOT, path))
+      text = File.read(File.join(ROOT, path), encoding: 'UTF-8')
       target = path == 'AGENTS.md' ? 'docs/coordination.md#machine-retention' : '../coordination.md#machine-retention'
       assert_includes(text, "](#{target})", path)
       resolved = File.expand_path(target.split('#').first, File.dirname(File.join(ROOT, path)))
@@ -63,17 +63,17 @@ class AgentInstructionsTest < Minitest::Test
                    "#{path} must reference, rather than copy, the release policy")
     end
 
-    deployment = File.read(File.join(ROOT, 'docs/agent-instructions/deployment.md')).gsub(/\s+/, ' ')
+    deployment = File.read(File.join(ROOT, 'docs/agent-instructions/deployment.md'), encoding: 'UTF-8').gsub(/\s+/, ' ')
     assert_includes(deployment, 'Deployment and release supply no merge or lifecycle approval')
-    lifecycle = File.read(File.join(ROOT, 'docs/agent-instructions/lifecycle.md')).gsub(/\s+/, ' ')
+    lifecycle = File.read(File.join(ROOT, 'docs/agent-instructions/lifecycle.md'), encoding: 'UTF-8').gsub(/\s+/, ' ')
     assert_match(/Do not infer permission to archive, delete, or stop a session/, lifecycle)
     assert_match(/Legacy archive completion automatically releases machine reservations/, lifecycle)
     assert_match(/original recovery contracts/, lifecycle)
   end
 
   def test_review_uses_saved_member_settings_or_catalog_fallback
-    core = File.read(File.join(ROOT, 'AGENTS.md'))
-    verification = File.read(File.join(ROOT, 'docs/agent-instructions/verification.md'))
+    core = File.read(File.join(ROOT, 'AGENTS.md'), encoding: 'UTF-8')
+    verification = File.read(File.join(ROOT, 'docs/agent-instructions/verification.md'), encoding: 'UTF-8')
 
     assert_match(/retained reviewers, honor the member's saved model and reasoning effort/, core)
     assert_match(/review-purpose role from the installed catalog's default development team/, verification)
@@ -84,7 +84,7 @@ class AgentInstructionsTest < Minitest::Test
     paths = %w[AGENTS.md docs/agent-teams.md docs/agent-instructions/sessions.md
                docs/agent-instructions/verification.md]
     paths.each do |path|
-      text = File.read(File.join(ROOT, path)).gsub(/\s+/, ' ')
+      text = File.read(File.join(ROOT, path), encoding: 'UTF-8').gsub(/\s+/, ' ')
       assert_match(/Routine\s+planning, investigation, findings,.*evidence alone\s+never trigger automatic review/m, text, path)
       assert_match(/(?:Earlier review requires an explicit user request|Explicitly requested earlier review)/, text, path)
       assert_match(/is advisory/, text, path)
@@ -94,8 +94,8 @@ class AgentInstructionsTest < Minitest::Test
   end
 
   def test_default_sol_policy_documents_exact_requested_model
-    core = File.read(File.join(ROOT, 'AGENTS.md')).gsub(/\s+/, ' ')
-    teams = File.read(File.join(ROOT, 'docs/agent-teams.md')).gsub(/\s+/, ' ')
+    core = File.read(File.join(ROOT, 'AGENTS.md'), encoding: 'UTF-8').gsub(/\s+/, ' ')
+    teams = File.read(File.join(ROOT, 'docs/agent-teams.md'), encoding: 'UTF-8').gsub(/\s+/, ' ')
 
     assert_includes(core, '`gpt-6.1-sol`')
     assert_includes(teams, 'model = "gpt-6.1-sol";')
@@ -106,9 +106,9 @@ class AgentInstructionsTest < Minitest::Test
   end
 
   def test_team_ownership_and_progress_policy_is_routed_consistently
-    core = File.read(File.join(ROOT, 'AGENTS.md')).gsub(/\s+/, ' ')
-    sessions = File.read(File.join(ROOT, 'docs/agent-instructions/sessions.md')).gsub(/\s+/, ' ')
-    teams = File.read(File.join(ROOT, 'docs/agent-teams.md')).gsub(/\s+/, ' ')
+    core = File.read(File.join(ROOT, 'AGENTS.md'), encoding: 'UTF-8').gsub(/\s+/, ' ')
+    sessions = File.read(File.join(ROOT, 'docs/agent-instructions/sessions.md'), encoding: 'UTF-8').gsub(/\s+/, ' ')
+    teams = File.read(File.join(ROOT, 'docs/agent-teams.md'), encoding: 'UTF-8').gsub(/\s+/, ' ')
 
     assert_match(/selected design owner records the design and verification brief/, core)
     assert_match(/implementers edit application code from architect-owned or\s+lead-owned briefs/, core)
@@ -123,7 +123,7 @@ class AgentInstructionsTest < Minitest::Test
   end
 
   def test_implementer_packages_and_small_team_fallback_are_documented
-    teams = File.read(File.join(ROOT, 'docs/agent-teams.md')).gsub(/\s+/, ' ')
+    teams = File.read(File.join(ROOT, 'docs/agent-teams.md'), encoding: 'UTF-8').gsub(/\s+/, ' ')
     assert_includes(teams, 'New teams default to Full team with two implementers (`delegated`)')
     (2..6).each do |count|
       id = count == 2 ? 'delegated' : "delegated_#{count}"
@@ -137,9 +137,9 @@ class AgentInstructionsTest < Minitest::Test
   end
 
   def test_final_readiness_requires_complete_history_and_migration_lineage
-    core = File.read(File.join(ROOT, 'AGENTS.md'))
-    git = File.read(File.join(ROOT, 'docs/agent-instructions/git.md'))
-    verification = File.read(File.join(ROOT, 'docs/agent-instructions/verification.md'))
+    core = File.read(File.join(ROOT, 'AGENTS.md'), encoding: 'UTF-8')
+    git = File.read(File.join(ROOT, 'docs/agent-instructions/git.md'), encoding: 'UTF-8')
+    verification = File.read(File.join(ROOT, 'docs/agent-instructions/verification.md'), encoding: 'UTF-8')
 
     [core, git, verification].each do |text|
       assert_match(/base-to-head/, text)
