@@ -1,5 +1,5 @@
 ---
-lifecycle: complete
+lifecycle: archived
 ---
 
 # Client formatting implementation
