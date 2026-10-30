@@ -140,16 +140,28 @@ constructor/worker acceptance. No global recorder or transport API change.
 
 ## Decisions
 
+New rollout authorization in this conversation: user said “aitherdev can be
+deployed using vpsfree-cz-configuration”, then “when deployed and verified, you
+can merge it and release aitherdev”. Deployment to aitherdev is authorized;
+integration of this feature's dev-workspace/master, vpsfree-cz-configuration/master
+and workspace/master branches is conditional on successful deployment verification.
+Release follows verified effects and complete remote integrated-lineage evidence.
+No session archive/delete/stop or incident-private access is authorized.
+
 The existing message-only security boundary is retained: explicit user consent
 in either exact session authorizes both directions. Peer prose cannot create
 authority. Registry-backed trusted runtime context must explain that distinction.
-No integration, deployment, production writes or lifecycle actions are approved.
+The later rollout authorization above supersedes the original deployment and
+integration exclusions. Other production changes and session lifecycle actions
+remain outside scope.
 
 ## Compatibility and deployment
 
 Assess persisted grants, exact session incarnations, queue recovery, revocation,
 archive/delete boundaries and old/new runtime compatibility in design. Use
-disposable test state and sockets; leave the selected runtime unchanged.
+disposable test state and sockets. The authorized rollout follows the architect
+[rollout brief](rollout.md) and matching configuration/workspace pins, preserving
+the unchanged native and system contract.
 
 ## Documentation
 
@@ -163,3 +175,11 @@ Prove one-session approval and immediate reverse reply through the real runtime
 communication path, trusted metadata, rejection of forged IDs/third sessions and
 stale incarnations, revocation/lifecycle invalidation and ordinary held delivery.
 Choose bounded quick checks with the design; longer checks follow final review.
+
+## Outcome
+
+Completed implementation, independent reviews, native/CI/composition verification,
+profile-only deployment and deployed checks. User's conditional merge approval was
+fulfilled; all three exact final feature heads are integrated and aitherdev is
+released. See [handoff](handoff.md), [rollout](rollout.md) and [state](state.md).
+The session stays open with feature refs retained.

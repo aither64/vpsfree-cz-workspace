@@ -1,0 +1,3 @@
+Run **40975812804** completed successfully on the requested head. Creation, archive, and fast passed; host was skipped. Elapsed time was **17m 52s**.
+
+Evidence is saved in [ci-result.md](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-29-cross-session-communication-authorization/verification/ci-result.md) and the latest status snapshot in [ci-jobs.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-29-cross-session-communication-authorization/verification/ci-jobs.json). The existing local watcher was left to exit naturally.

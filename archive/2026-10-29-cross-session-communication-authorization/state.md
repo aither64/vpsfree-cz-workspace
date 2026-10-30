@@ -1,20 +1,45 @@
 ---
-lifecycle: active
+lifecycle: archived
 ---
 
 # 2026-10-29-cross-session-communication-authorization
 
 ## Status
 
-- Ready, awaiting merge approval for dev-workspace/master. Full native idle/steer
-  and required CI PASSED at published4155d009. Fresh remote proof/source/history
-  checks complete. Production unchanged from reviewed a6; no deployment or merge.
-- Session binding verified by dev-session current, matching complete environment
-  identity and trusted thread binding.
-- Native identity verified for lead and all five retained members from exact
-  native thread database rows, session_meta and latest turn_context. All use
-  codex-lb, native CLI 0.165.0. Lead Sol/high; architect Astra/xhigh;
-  implementers, observer and reviewer Sol/xhigh. No settings changed.
+Complete: implemented, reviewed, tested, deployed and verified on aitherdev.
+All three exact final feature heads are integrated into their approved SSH remote
+master branches. Aitherdev claim7bb60f85-6258-478f-b436-0af467b4144a was released
+and authoritative released status verified at 2026-10-30T09:55:35Z. No unfinished command
+or remaining operator action. This session stays open; no archive/delete/stop.
+Feature branches and registered feature worktrees are retained.
+
+One explicit approval in either exact session now authorizes deliberate messages
+both ways through trusted runtime grant context. Peer prose cannot create authority;
+every new send/reply still checks current registry and endpoint identity. Fresh
+observer admission repairs working-recipient delivery without using UI cache.
+
+Runtime/native/CI and the composed package plus four relevant checks passed.
+Installed helper policy/schema, portal/router health, naming prerequisites and
+own lead/member continuity/settings passed. Native and tmux PIDs stayed unchanged;
+both system paths stayed on the prior generation. Existing unrelated AGENTS-size
+check failure is unchanged and accepted outside this pin scope; see E evidence.
+
+Current [handoff](handoff.md), [rollout](rollout.md),
+[final lineage](rollout/final-lineage.json), [machine release](rollout/machine-release.json).
+
+## Final integration inventory
+
+| Repository | Exact remote master/final feature head |
+| --- | --- |
+| dev-workspace | 4155d0099d03028b43d5f08d225a88156cb4155a |
+| vpsfree-cz-configuration | fcc7fc97be79df92ed39b4a7bfcc8ba21dc6c627 |
+| workspace | 4beddf77a8f9af1d926c5b48bd6ee4c84f439e85 |
+
+Workspace deployed8302996e is not literally merged. The independent accepted
+[equivalent successor review](review-followup-rollout.md) maps deployed55a..830
+to final589..4bed with reconstructed-tree proof and EXACT same built/deployed
+DRVgia18/outputd97. Original ranges/reviews and complete input graphs are retained.
+No migrations, obsolete pin stream or superseded approach remains.
 
 ## Phase checklist
 
@@ -27,14 +52,50 @@ lifecycle: active
 - [x] Full actual-worker native idle/steer verification.
 - [x] Feature publication and exact remote-head verification.
 - [x] Complete packaged and ordinary feature CI.
-- [x] Ready-for-integration handoff; explicit approval still required.
-- Deployment/usability: unchanged installed runtime; deployment unauthorized.
+- [x] Implementation handoff completed; later conditional merge approval recorded below.
+- Prior implementation handoff performed no deployment; new rollout authorization
+  and conditional integration approval are recorded below.
+
+## New rollout phase checklist
+
+- [x] Verify bound session/retained roster and read deployment/coordination guides.
+- [x] Establish profile-only ownership and unchanged host contract/native graph.
+- [x] Create/register isolated configuration and workspace worktrees.
+- [x] Architect rollout brief and pin execution packages.
+- [x] Matching channel/nested pins, hooks/quick checks/commits/publication.
+- [x] Final composition review, exact composed build and copies.
+- [x] Machine reservation, guarded profile activation and deployed verification.
+- [x] Conditional approved remote default integration, then exact machine release.
+- [x] Final handoff; session remains open, no lifecycle cleanup authorized.
+
+## Rollout authorization and current boundary
+
+User messages in this bound conversation: “aitherdev can be deployed using
+vpsfree-cz-configuration”, followed by “when deployed and verified, you can merge
+it and release aitherdev”. This authorizes deployment and, only after verification,
+integration of the feature's runtime/configuration/workspace branches into master.
+Release requires settled effects and complete approved remote integrated lineage.
+No actual-session pair communication grants or lifecycle actions are authorized.
+
+Architect proved profile-only deployment: current runtime5f4f1c1c is ancestor of
+4155d009; host module/paths, runtime contracts and native inputs unchanged. Live
+system and system profile bothr4rd3qyn52z1bipbln8kdh43mjd2wb1k aitherdev generation.
+Current selected packageg650vgjpzvyifjmb1j44pc5bby3522z4-dev-workspace-0.2.0.
+Matching config dev-workspace/devWorkspace and workspace nested runtime pins
+must select4155d009; no system activation. Exact source graph/store paths belong
+to the architect [rollout receipt](rollout.md). Preparation has now completed; see final deployed/integrated/released evidence above.
+
+Own worktrees registered: configuration baseb3b933bf6f9fc9f7f533b3f4e06775defd8879da,
+workspace base398dc7bab89ee51bcc77d23a5acc52c7e02878c1. Config checkout hook
+reported missing pinned gems outside Nix environment, but actual clean checkout,
+branch and portal registration reconciled. Resolve tool environment/hooks in D;
+no hook bypass. Source runtime branch remains reviewed/published4155d009.
 
 ## Next actions
 
-User may approve integration of the published branch into dev-workspace/master.
-No authorized implementation/check/review work or blocker remains. Integration
-and deployment are separate, unapproved actions. [Final handoff](handoff.md).
+No remaining work. Retain the open session and feature refs. Any later deployment
+needs fresh machine ownership. Do not archive/delete/stop this session without
+explicit direction for that exact action.
 
 ## Execution backlog
 
@@ -46,7 +107,10 @@ and deployment are separate, unapproved actions. [Final handoff](handoff.md).
 | implementer1 | Policy/docs and real MCP-to-dispatch/native regression | Runtime context from A/C; actual portal constructor/observer/worker | Final Bb0279514, full native idle/steer pass; [evidence](implementation-b.md) |
 | reviewer0 | Independent complete branch/history/security review | Committed intended changes and passing quick checks | Original and affected final review complete/no findings; [final report](review-report-production.md) |
 | fresh utility | Longer native/package verification and CI | Final review resolved; exact commands/head | Native/CI pass; all owned monitors exited |
-| lead | Final wording, acceptance, publication and handoff | Evidence above; no default-branch/deployment approval | Complete; final checkpoint and handoff |
+| lead | Initial implementation acceptance/publication/handoff | Runtime checks/review | Complete; superseded by authorized rollout phase |
+| architect0 | Profile-only rollout brief and package boundaries | Unchanged host/native proof; [receipt](rollout.md) | Complete |
+| implementer0 | D configuration channel pin, hooks/graph/quick checks/publication | Exact runtime4155d009; bootstrap passed | Complete; fcc7fc97 published, graph/checker/hooks pass |
+| implementer1 | E workspace nested pin/graph/native/quick checks/publication | Exact runtime4155d009; D matching checker | Final4beddf77 integrated; equivalent deployed artifact/lineage accepted |
 
 ## Documentation
 
@@ -58,7 +122,7 @@ independent reports distinguish implementation/checks/review/deployment/usabilit
 
 ## Repositories
 
-- dev-workspace only; canonical SSH origin git@github.com:aither64/dev-workspace.git.
+- Runtime implementation: dev-workspace; canonical SSH origin git@github.com:aither64/dev-workspace.git.
 - Branch: 2026-10-29-cross-session-communication-authorization.
 - Worktree: worktrees/2026-10-29-cross-session-communication-authorization/dev-workspace.
 - Initial base: 08f3dbb92bc8585929edee85a824d44dfb3b0846.
@@ -306,3 +370,35 @@ independent reports distinguish implementation/checks/review/deployment/usabilit
 ## Open questions
 
 ## Cleanup
+
+## Approved integration progress
+
+Deployment verified; runtime4155d009 and configurationfcc7fc97 fast-forwarded
+and SSH remote master verified, their short claims906b4760/b9ca1918 released.
+No master/feature history rewritten. Shared workspace automatic archive advanced
+55a->58989d3 while build ran; outside work/archive unchanged. E refreshed only
+pin to4beddf77a8f9af1d926c5b48bd6ee4c84f439e85 (published/clean).
+Lead independently applied original55a..830 patch to589 with isolated temporary
+index: reconstructed final tree6bcd7257a816e0ed7e72f7dd0eaf6f864ea8a7d4.
+Range-diff equal; flake files equal; fresh final DRVgia18/outputd97 EXACTLY
+deployed artifact. Matching check passes; no new build required.
+[Reconstruction](rollout/workspace-refresh-reconstruction.json), E appendix
+and original review retain old/new ranges. Reviewer0 owns narrow independent
+refreshed-history/migration/equivalent successor conclusion, no content rerun.
+Deployed830 is nonancestor of refreshed final4bed and must not be called merged.
+Workspace repository claim not acquired yet; machine7bb60f85 held pending final
+workspace integration/fresh complete lineage then immediate owner release.
+
+## Final completion receipt
+
+All intended source heads and deployment effects are settled. Three repository
+claims were individually released before records; complete fresh SSH default
+ancestry/input graph proof is in rollout/final-lineage.json. Machine exact owned
+claim was inspected held, released and then read back released. No session
+lifecycle action was invoked. Only two owned unregistered detached merge targets
+were removed through ordinary Git worktree removal; all registered features remain.
+
+Review/report artifacts and raw Nix/activation/check logs remain locally under
+this tracking directory. No extra tracking-only commit was made: the normal
+same-day checkpoint cadence is preserved, and the portal reads current records.
+Stable portal: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-29-cross-session-communication-authorization/

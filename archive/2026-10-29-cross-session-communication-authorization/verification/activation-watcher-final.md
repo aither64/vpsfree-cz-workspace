@@ -1,0 +1,3 @@
+**Result: passed.** The existing activation exited with code 0 in 1m 6s. The recorded result is in [activation-watcher-result.md](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-29-cross-session-communication-authorization/rollout/activation-watcher-result.md).
+
+No live operation is indicated by the terminal status. This reports the activation result only; it does not establish deployment usability or release the machine claim.

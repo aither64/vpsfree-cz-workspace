@@ -445,3 +445,112 @@ the actual call and outcome, or explicitly that no call occurred. Compare the
 exact before/after sidecar and root/socket/active identity. Preserve ordinary
 queued/held behavior and all existing authority checks. B owns the narrow fixture
 fix and diagnostic evidence; no additional production package is indicated.
+
+## Aitherdev rollout addendum (2026-10-30)
+
+The completed runtime deliverable is published at
+`4155d0099d03028b43d5f08d225a88156cb4155a`, with independent review, native
+idle/steer acceptance and CI recorded in this session. This addendum adds two
+matching composition pins and deployment; it does not reopen runtime design.
+Exact baseline paths, input identities and execution receipts belong in
+[rollout.md](rollout.md).
+
+The user authorized deployment via vpsfree-cz-configuration, then said “when
+deployed and verified, you can merge it and release aitherdev”. As scoped by the
+lead, integration covers this feature's dev-workspace/master,
+vpsfree-cz-configuration/master and workspace/master, **after deployed
+verification**. Keep the physical machine reserved until settled deployment
+effects and complete remote integrated-lineage proof. No lifecycle action,
+incident-session access or grants between actual sessions are authorized.
+
+### Source ownership and minimal change
+
+Configuration's `flake.nix` maps channel `dev-workspace`, role `devWorkspace`,
+to the matching host module/runtime input. Workspace `flake.nix` independently
+selects the application through
+`inputs.vpsfree-dev-workspace.inputs.dev-workspace.url`. The extension remains
+`767dfd587e346168e1443e65ccdb67ce748f3fe3`; its own older runtime lock is not the
+effective selection. Preserve the direct nested override, all follows edges,
+sibling identities and locked hashes. Neither codex-web nor extension source
+needs edits.
+
+The configuration owner's
+`docs/operations/codex-providers-aitherdev.md` explicitly supports application-only
+profile activation. Old selected runtime `5f4f1c1c52cc009970a2697f5dbc330c0a4dd7a3`
+to target has no changes in `nix/`, `libexec/`, `flake.nix`, `flake.lock` or
+`portal/internal/session/runtime-contract.json`. Selected runtime contract bytes
+also equal the candidate. Installed and inspected workspace composition, catalog
+and coordination inputs match. Thus update the matching configuration channel
+and workspace nested pin, build the composed application, and activate only its
+user profile. A system build/switch, provider switch or native upgrade adds no
+necessary behavior. Reassess this decision if final input comparison differs.
+
+### Complete execution packages
+
+| Package / proposed owner | Owned files and deliverable | Dependencies and acceptance |
+| --- | --- | --- |
+| D / implementer0 | Own configuration worktree: channel-generated `flake.lock` and any channel-owned generated metadata actually changed by confctl | Start at registered `b3b933bf6f9fc9f7f533b3f4e06775defd8879da`. Establish pinned Nix/gem environment and required hooks/trust first; no hook bypass. Run `confctl inputs channel set --commit dev-workspace devWorkspace 4155d0099d03028b43d5f08d225a88156cb4155a`; preserve generated history. Only intended runtime identity changes; host, provider, native and unrelated inputs remain equal. |
+| E / implementer1 | Own workspace worktree: `flake.nix`, generated `flake.lock` | Registered initial base `398dc7bab89ee51bcc77d23a5acc52c7e02878c1`. Change only nested runtime URL, run `nix flake update vpsfree-dev-workspace/dev-workspace`, preserve extension/siblings/follows. Required hooks and formatting pass. |
+| Verification / implementer1 with lead-owned activation | Existing source-native evidence plus selected-artifact smoke and this session's rollout receipt; no application edits | After D/E quick checks and review disposition, build exact composed package, identify its complete inputs and native executable, then perform artifact verification below. Lead performs claim/activation/integration/release. |
+
+D and E can proceed independently in separate repositories. The final combined
+`bin/check-dev-workspace-deployment --workspace-root WORKSPACE --configuration-root
+CONFIGURATION` depends on both pins. Each owner supplies exact base/head, clean
+status, complete semantic lock diff, hooks/check evidence and no-migration/history
+assessment. Inspect the entire input graph in addition to the matching checker;
+the checker is not a proof that all sibling inputs stayed equal. Keep one final
+logical pin update per stream. Serialize any later overlapping Git operations
+through the lead. No new reusable operations page is needed for routine pins.
+
+### Review, verification and supported recovery
+
+Quick checks: matching checker; semantic full-lock comparison; relevant
+format/hooks and workspace deployment-contract tests; target runtime contract,
+host-source and native-input equality. Commit all intended changes before final
+review. The lead applies mandatory-review rules to the mechanical pins and
+complete branch histories; substantive composition or fixture changes require
+affected final review. Existing runtime evidence remains valid for its exact
+source; do not repeat the whole suite without a changed input or open failure.
+
+After review, a utility runs the exact composed package build and applicable
+package checks. Retain output/derivation/input identities; prepare copies before
+machine ownership. No build, claim or deployment was run by the architect.
+The lead then performs ordinary selected `workspace-host switch --source PATH`
+with the exact held machine claim and verified session identity. Same-native
+live-switch policy preserves Codex, tmux and managed terminals, restarts the
+portal/router and retains roster/provider settings. Do not force idle, stop
+sessions, supply a native override, or use an unnecessary candidate entry.
+
+Postdeployment proof combines selected-output/source/native identity, shipped
+tool/policy smoke, and read-only live health, naming availability, own-conversation
+continuity and provider/settings checks. Retain the completed source-native
+idle/steer/reply evidence and its fresh-observer, recovery and receipt invariants.
+The tagged test exercises the production constructor/worker inside its test
+executable; `LIVE_SWITCH_CODEX` selects native only. Record that boundary rather
+than claiming it executes the installed portal process. The lead accepts this
+combined proof on the unchanged graph/module evidence. Do not build an additional
+installed-worker harness or run new provider/DeepSeek requests without a concrete
+mismatch. If an installed-binary fixture becomes materially necessary, use only
+owned unregistered roots, isolated state/socket/mock provider and an exact
+disposable pair; refer consequential additions through the lead. No incident
+records, real-workspace grants or actual-session lifecycle calls are involved.
+
+There is no new schema, transport or migration. Preserve grants, original legacy
+saved options, queued messages, stable IDs and uncertain receipt reconciliation.
+Submission-time context remains a snapshot; later send/reply revalidates current
+authority. Generation fencing prevents parallel old/new delivery. On activation
+failure retain the machine, roots and journals, establish actual effects and
+retry the same supported switch or a corrected compatible forward package.
+Do not select an older package, erase state, reset clusters or bypass refusals.
+
+Only after deployed verification may the lead integrate runtime, then matching
+configuration/workspace branches. Prepare outside claims; hold one repository
+claim only for fresh checks, fast-forward/hooks, SSH push and remote proof.
+Workspace integration also takes the nonblocking tracking lock. Release each
+repository before CI/records. For a clean history refresh preserve exact old/new
+ranges, range-diff, package/input equivalence, migration evidence and independent
+conclusion. A nonancestor deployed commit is not literally merged; an accepted
+equivalent successor may prove lineage. A substantive successor needs a new
+verified deployment and applicable scope approval. Before machine release verify
+its exact owned claim, settled effects and fresh remote lineage for all three
+repositories; release and confirm state. Leave this session open.
