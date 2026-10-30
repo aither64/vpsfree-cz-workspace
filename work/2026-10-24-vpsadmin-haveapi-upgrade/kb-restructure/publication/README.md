@@ -1,9 +1,9 @@
 # API article changesets
 
 These are complete Czech/English page revisions in publication order, starting
-from the captured production originals. Each directory contains both pages,
-its localized revision summaries and a diff against the preceding revision.
-The final pages equal the canonical candidates: Czech step04 and English step03.
+from the captured production originals. Each directory contains its affected
+pages, localized revision summaries and a diff against the preceding revision.
+The final pages equal the canonical candidates: step05 in both languages.
 The previous three-step chain and cumulative manifests are preserved under
 `../install-policy/prior/`; its staging receipts remain historical evidence.
 
@@ -26,6 +26,10 @@ The previous three-step chain and cumulative manifests are preserved under
    required-header speculation, preserving the protocol link. There is no
    corresponding English edit or no-op revision.
    [Czech diff](04-obsolete-header-note/cs.diff).
+5. **Restore the opening client overview.** Add a concise list before the REST
+   paragraph, with links to the existing CLI, Ruby and other-client sections.
+   The detailed sections, installation guidance and examples remain unchanged.
+   [Czech diff](05-client-overview/cs.diff), [English diff](05-client-overview/en.diff).
 
 `content-chain.json` binds each predecessor and result by content SHA256.
 It does not claim production revisions for changes that have not been published.
@@ -69,6 +73,17 @@ restoration is review setup, not a production changeset. Final pending state is
 honestly null after public page saves. The root aggregate schema5 manifests
 remain canonical preview/check inputs, not an ordered production release.
 No production write is authorized by this staging plan.
+
+Steps01–04 have already been reviewed and staged; see the immutable
+[separate-revision receipt](../install-policy/staging/receipt.md). The overview
+continuation appends step05 only, after actual Czech revision1793311563 and
+English revision1793311560, with their exact source hashes as recorded in
+`content-chain.json`. Preserve those source guards and all existing history;
+do not restore the baseline or replay prior steps. After the overview commit's
+focused checks and independent review, fresh owner/auth/ACL and production
+guards precede one ordinary public save per language with the exact step05
+summary. Verify exact source/revision/diff and all eight rendered overview links
+against their actual heading IDs. Final pending remains null.
 
 After explicit approval of the exact changesets, use the normal guarded release
 workflow for each step and language: prepare its schema-5 manifest, stage,
