@@ -15,6 +15,7 @@ User follow-up authorizes implementation, verification and integration of the fi
 1. Architect establishes the exact vpsadminos failure from current workflow and failed Actions logs, checks upstream compatibility and recommends a solution.
 2. Implementer0 independently inventories managed repository workflows and recent runs, distinguishing confirmed failures, latent exposure and unaffected repositories.
 3. Lead reconciles findings and presents the smallest practical solution with evidence and remaining uncertainty.
+4. Following user authorization, implementer0 delivered the three-workflow fix; reviewer0 independently reviewed exact committed ranges; fresh utilities verified feature and default CI. Lead integrated unchanged exact heads to approved defaults and released both short repository claims. All steps completed; no deployment required.
 
 ## Decisions
 
@@ -23,6 +24,7 @@ User follow-up authorizes implementation, verification and integration of the fi
 - Accepted recommendation: explicitly select CI Ruby '3.4' in vpsadminos RuboCop; use the same selector in security-advisories RuboCop and RSpec. Current 3.4.12 has Ubuntu 26.04 assets. Preserve project-wide version policy. Include vpsadminos workflow self-trigger paths.
 - Merge approval: user follow-up in this conversation, "ok, implement the fixes. merge it after verification." Applies to vpsadminos → staging and security-advisories → 2026-07-13-security-advisory-automation, their freshly verified remote default branches.
 - One implementer owns the narrow three-workflow package; architect owns brief updates; independent reviewer owns final review after commits and quick checks, before CI verification. Lead owns merge coordination.
+- Lead accepted architect's bounded explicit ubuntu-26.04 selection in all three affected jobs. This ensures the final reviewed jobs test the failing OS directly during the moving ubuntu-latest rollout and avoids temporary validation workflows or matrices.
 
 ## Compatibility and deployment
 
