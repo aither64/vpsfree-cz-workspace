@@ -3,7 +3,8 @@
 Find why retained sessions cannot recover after aitherdev reboot, implement the
 smallest compatible fix, verify it, deploy it and integrate the affected branches.
 The user also directs resuming 2026-10-24-vpsadmin-haveapi-upgrade and
-2026-10-30-linux-cve-review after the fix is verified.
+2026-10-30-linux-cve-review after the fix is verified, and subsequently added
+2026-10-30-oomd-abuse-policy.
 
 Initial scope: dev-workspace recovery authority and submission observation;
 workspace runtime selection and vpsfree-cz-configuration only as deployment needs.
@@ -16,7 +17,7 @@ package. Host deployment uses the configuration repository if required.
 
 Verification: focused regression and negative identity/submission tests, quick
 checks, committed independent whole-branch review, relevant package/integration
-checks, deployed portal health and recovery. Resume only the two requested
+checks, deployed portal health and recovery. Continue only the three requested
 sessions after verifying the fix. The user authorized merging the verified fix;
 record the concrete affected repository/target set once root cause is known.
 
