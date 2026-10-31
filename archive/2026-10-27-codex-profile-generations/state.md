@@ -1,5 +1,5 @@
 ---
-lifecycle: complete
+lifecycle: archived
 ---
 
 # Codex generation retention
