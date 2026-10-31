@@ -6,13 +6,13 @@ Diagnose the failed archive of `2026-10-30-vpsadminos-kernel-cve-check`, fix the
 
 ## Scope and approach
 
-Likely owners are generic `dev-workspace` lifecycle code, this workspace's runtime selection, and `vpsfree-cz-configuration` host runtime selection. Architect must establish actual ownership from the archive failure and identify the smallest implementation package before edits. Preserve existing archive journals and recovery contracts. No unrelated session changes or metadata repair to bypass safeguards.
+Proven owner is this workspace repository: `.gitignore` retention negations introduced in 4579b97f13708afe94e64cb51a030bcaf665ae74 override sensitive session exclusions in `.git/info/exclude`. Fix the work/archive session-root pattern boundary and add focused regression coverage. Generic runtime correctly rejects exposed sensitive records; no runtime or configuration changes/deployment are needed. Preserve existing archive journals and recovery contracts. No unrelated session changes or metadata repair to bypass safeguards.
 
 ## Owners and milestones
 
 - architect0: root cause, evidence and design/verification brief in design.md.
 - implementer0: complete runtime execution package, regression tests, documentation, quick checks, commits and fixes once design is accepted.
-- implementer1: deployment configuration/selection package only if design proves independent boundaries.
+- implementer1: read-only deployment-contract preparation completed; no deployment necessary and no mutations performed.
 - reviewer0: independent committed-deliverable review after quick checks and full history/migration inventory.
 - lead: tracking, acceptance, review assignment, deployment/merge coordination and user communication.
 
