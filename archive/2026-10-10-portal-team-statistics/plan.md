@@ -11,7 +11,8 @@ and allow model/effort choices during work, errors and execution holds.
 
 - codex-web: aggregate activity metadata, automatic waits and compatibility.
 - dev-workspace: member monitoring/statistics API and UI, durable held settings.
-- workspace: composed runtime selection and documentation of this initiative.
+- workspace: composed runtime selection and the prerequisite instruction-size
+  routing repair, preserving every existing rule; initiative documentation.
 - vpsfree-cz-configuration: matching dev-workspace channel and aitherdev deployment.
 
 ## Approach
@@ -73,3 +74,41 @@ API ownership, independent failures and browser draft/staleness behavior. Run qu
 checks, commit all intended changes, inventory history, and obtain independent
 mandatory review before long package/integration checks and deployment. Long checks
 are owned by a fresh utility watcher. Record exact results and deployment evidence.
+
+## Accepted compact-table follow-up
+
+User requested implementation of the revised plan: fit the Team table at a
+1280 px browser width with the ordinary sidebar. Separate Member, Activity, Sent,
+Received, Tools, Working, Waiting, Idle, Model/reasoning and Actions columns. Place
+roster/access metadata and abbreviated thread identity beneath Member; expose the
+full ID by title and clipboard icon. Remove View messages and the Team transcript.
+Use a popup settings editor for lead and ready members, bound to the clicked
+member rather than Codex selection. Keep drafts across polling and uncertain
+saves. Add-member role/model/reasoning share a desktop row, with an auto-width
+button; small screens stack the controls.
+
+Both reported sessions have native active status but unclassified recorder state.
+Recover classification from fresh active/work evidence from the current connection
+and turn. Record future coverage only, preserving unknown history and known waits.
+An ambiguous unfinished turn says Turn in progress rather than inviting a prompt.
+Existing activity and settings APIs and checkpoint formats remain compatible.
+Keep native Codex unchanged, refresh composed selections, review the entire branch
+series and redeploy aitherdev. No default-branch integration is authorized.
+
+
+## Other team members working follow-up
+
+Accepted on 2026-10-10: show a compact Codex-panel notice while the focused
+member is idle or waiting. Include working, sleeping, waiting-for-team and
+unclassified in-progress turns; exclude focused/removed/stopped/blocked members.
+List three addresses then the remaining count. Preserve approval/answer requests,
+replace idle waiting-for-instructions wording with Idle when others have ongoing
+work, and suppress its attention dot. Existing team-stats API is shared with the
+Team table every five visible seconds; stale observations after 15 seconds or a
+failed read show unavailable status. No wire/persistence/provider change.
+
+Tests cover member selection, automatic waits, blocked members, truncation,
+completion, failed/delayed reads, page visibility, Chromium/Firefox and 1280/narrow
+layouts. Update owning portal guide; quick checks, committed whole-branch review,
+long browser/package/composition checks, then authorized aitherdev deployment.
+Retain pins/provenance and branches; no default-branch integration authorization.
