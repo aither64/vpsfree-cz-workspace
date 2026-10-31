@@ -1,0 +1,13 @@
+# KB08 token acquisition: focused checks
+
+Final pages exactly match the lead's bilingual candidates: CS SHA256 `385997273efe0f854b1cf0e7cc94fe368a7e9c756b597681bec0b0f3e5edfef7`; EN `5783bbcd9d55fb904be86683a7aecfee1e5d4265f16cde77033ef7d3cc95a8c9`. No formatting/source change was needed; Go is already gofmt-formatted, rustfmt is absent and was not installed. Lead applied the writing skill and both pinned Humanizers after A0 settled design.md:6069.
+
+Existing canonical builder passed191 pages,2 changed,189 preserved, schema5 manifests/checksums and unchanged real production guards. Publication08 appends two localized logical changes after actual07 CS1793457686 and EN1793457690; all13 previous chain entries and old snapshots/receipts remain. Root manifests remain cumulative preview inputs;08 has the exact lead summaries.
+
+Exactly nine code blocks change in each language: Ruby main plus two Ruby backups, PHP, Python, dynamic JS, Go, generated TypeScript and Rust. Each active example uses literal USERNAME/PASSWORD and has one commented literal TOKEN alternative. Static reconstruction replaces only auth imports/setup with07 and recovers each prior code block byte-for-byte. This proves listing/output and backup behavior unchanged. Python checks Authenticated; Rust matches TokenStep::Complete before installing the returned token. The existing-token alternative replaces each entire acquisition/error-check block, retaining the necessary context/client construction. No token value is printed.
+
+Both active and existing-token variants passed available offline Ruby/PHP syntax, Python AST and Go parser/format checks. No login, backup, SDK installation, client/compiler/runtime build, live API or browser run. JS/Rust facts use the architect's settled source proof, with no duplicate investigation. Seven client bodies match across languages after accounting only for the deliberately localized explanatory comments and challenge error messages; backup bodies remain exact to their own07 source.
+
+Exactly three permitted prose regions change: brief token-auth/TOTP/password-change limitations, Ruby intro and Other-client intro. All headings, overview links, installation/run commands, reciprocal page/maintainer markers, code language tags and unaffected code remain exact. Both javascript tags stay unchanged. Nine commented alternatives and their complete replacement scope are explicitly checked in quick-checks.json.
+
+NO MIGRATIONS: documentation/examples only; no API/auth policy/schema/runtime/package/host change. One logical bilingual08 review/staging step; existing consumed history is preserved. Normal commit/final retained review precede any staging. Production remains unapproved.

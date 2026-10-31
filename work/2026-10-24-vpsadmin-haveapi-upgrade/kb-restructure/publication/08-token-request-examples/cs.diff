@@ -1,0 +1,171 @@
+--- before/cs/navody/vps/api.txt
++++ after/cs/navody/vps/api.txt
+@@ -62,6 +62,10 @@
+   * //permanent// - token je platný napořád, resp. dokud není smazán
+ 
+ Typ tokenu a časový interval, o který se prodlužuje, si volí klient.
++
++Autentizace tokenem musí být pro tvůj účet povolená. Ukázky níže se přihlašují
++uživatelským jménem a heslem. Pokud přihlášení vyžaduje také kód TOTP nebo změnu
++hesla, použij přihlašovací postup z dokumentace klienta nebo existující token.
+ 
+ ===== Scopes =====
+ U autentizačních tokenů si můžeme zvolit, jaké akce bude token mít k dispozici.
+@@ -547,13 +551,19 @@
+ ===== Klient pro Ruby =====
+ 
+ Knihovnu ze stejného balíčku ''vpsfree-client'' můžeš použít ve vlastních skriptech.
+-Místo ''TOKEN'' doplň existující [[#tokeny|token API]] a vypiš své VPS:
++Ukázka získá [[#tokeny|token API]] pomocí uživatelského jména a hesla do vpsAdminu
++a pak vypíše tvé VPS. Místo ''USERNAME'' a ''PASSWORD'' doplň své přihlašovací
++údaje. Pokud už token máš, nahraď přihlašovací kód zakomentovanou alternativou
++a doplň ho místo ''TOKEN'':
+ 
+ <code ruby>
+ require 'vpsfree/client'
+ 
+ api = VpsFree::Client.new
+-api.authenticate(:token, token: 'TOKEN')
++api.authenticate(:token, user: 'USERNAME', password: 'PASSWORD',
++                 lifetime: 'renewable_auto')
++# Nebo předchozí přihlášení nahraď existujícím tokenem:
++# api.authenticate(:token, token: 'TOKEN')
+ 
+ api.vps.list.each do |vps|
+   puts "#{vps.id}: #{vps.hostname}"
+@@ -580,7 +590,10 @@
+ require 'vpsfree/client'
+ 
+ api = VpsFree::Client.new
+-api.authenticate(:token, token: 'PUT YOUR TOKEN HERE')
++api.authenticate(:token, user: 'USERNAME', password: 'PASSWORD',
++                 lifetime: 'renewable_auto')
++# Nebo předchozí přihlášení nahraď existujícím tokenem:
++# api.authenticate(:token, token: 'TOKEN')
+ 
+ api.dataset.list(role: :hypervisor).each do |ds|
+   last_snapshot = ds.snapshot.list.last
+@@ -611,7 +624,10 @@
+ require 'vpsfree/client'
+ 
+ api = VpsFree::Client.new
+-api.authenticate(:token, token: 'PUT YOUR TOKEN HERE')
++api.authenticate(:token, user: 'USERNAME', password: 'PASSWORD',
++                 lifetime: 'renewable_auto')
++# Nebo předchozí přihlášení nahraď existujícím tokenem:
++# api.authenticate(:token, token: 'TOKEN')
+ 
+ api.dataset.list(role: :primary).each do |ds|
+   # Vytvoření nového snapshotu
+@@ -638,8 +654,10 @@
+ 
+ ===== Další klienti =====
+ 
+-Ukázky používají existující [[#tokeny|token API]] a vypisují ID a hostname nejvýše
+-10 VPS. Místo ''TOKEN'' doplň svůj token.
++Každá ukázka získá [[#tokeny|token API]] pomocí uživatelského jména a hesla do
++vpsAdminu a pak vypíše ID a hostname nejvýše 10 VPS. Místo ''USERNAME''
++a ''PASSWORD'' doplň své přihlašovací údaje. Pokud už token máš, nahraď
++přihlašovací kód zakomentovanou alternativou a doplň ho místo ''TOKEN''.
+ 
+ ==== Klient pro PHP ====
+ 
+@@ -658,7 +676,9 @@
+ require __DIR__ . '/vendor/autoload.php';
+ 
+ $api = new \HaveAPI\Client('https://api.vpsfree.cz');
+-$api->authenticate('token', ['token' => 'TOKEN']);
++$api->authenticate('token', ['user' => 'USERNAME', 'password' => 'PASSWORD']);
++// Nebo předchozí přihlášení nahraď existujícím tokenem:
++// $api->authenticate('token', ['token' => 'TOKEN']);
+ 
+ foreach ($api->vps->list(['limit' => 10]) as $vps) {
+     echo $vps->id . ': ' . $vps->hostname . PHP_EOL;
+@@ -679,9 +699,19 @@
+ Ukázku ulož jako ''vps-list.py'' a spusť příkazem ''python vps-list.py'':
+ 
+ <code python>
+-from haveapi_client import Client, TokenAuth
+-
+-with Client("https://api.vpsfree.cz", auth=TokenAuth("TOKEN")) as api:
++from haveapi_client import Authenticated, Client, TokenAuth
++
++with Client("https://api.vpsfree.cz") as api:
++    login = api.begin_token_login({
++        "user": "USERNAME",
++        "password": "PASSWORD",
++        "lifetime": "renewable_auto",
++    })
++    if not isinstance(login, Authenticated):
++        raise RuntimeError("Přihlášení vyžaduje další krok")
++    # Nebo předchozí blok přihlášení nahraď existujícím tokenem:
++    # api.set_auth(TokenAuth("TOKEN"))
++
+     result = api.vps.list(limit=10)
+     for vps in result.data:
+         print(vps["id"], vps["hostname"])
+@@ -706,7 +736,9 @@
+ 
+ async function main() {
+   const api = new AsyncClient("https://api.vpsfree.cz");
+-  await api.authenticate("token", { token: "TOKEN" });
++  await api.authenticate("token", { user: "USERNAME", password: "PASSWORD" });
++  // Nebo předchozí přihlášení nahraď existujícím tokenem:
++  // await api.authenticate("token", { token: "TOKEN" });
+   const result = await api.resource("vps").action("list")({
+     params: { limit: 10 },
+   });
+@@ -747,7 +779,14 @@
+ 
+ func main() {
+ 	api := client.New("https://api.vpsfree.cz")
+-	api.SetExistingTokenAuth("TOKEN")
++	if err := api.SetNewTokenAuth(&client.TokenAuthOptions{
++		User:     "USERNAME",
++		Password: "PASSWORD",
++	}); err != nil {
++		log.Fatal(err)
++	}
++	// Nebo předchozí blok přihlášení nahraď existujícím tokenem:
++	// api.SetExistingTokenAuth("TOKEN")
+ 
+ 	action := api.Vps.Index.Prepare()
+ 	action.NewInput().SetLimit(10)
+@@ -788,7 +827,9 @@
+ 
+ async function main() {
+   const runtime = new AsyncClient("https://api.vpsfree.cz/v7.0");
+-  await runtime.authenticate("token", { token: "TOKEN" });
++  await runtime.authenticate("token", { user: "USERNAME", password: "PASSWORD" });
++  // Nebo předchozí přihlášení nahraď existujícím tokenem:
++  // await runtime.authenticate("token", { token: "TOKEN" });
+   const api = createVpsAdminClient({ execute: createHaveApiExecutor(runtime) });
+   const page = await api.vps.index({ params: { limit: 10 } });
+   for (const vps of page.data) {
+@@ -815,12 +856,24 @@
+ Ukázku ulož jako ''src/main.rs'' a spusť příkazem ''cargo run'':
+ 
+ <code rust>
+-use vpsadmin_client::blocking::Client;
++use vpsadmin_client::{blocking::Client, TokenStep};
+ 
+ fn main() -> Result<(), Box<dyn std::error::Error>> {
++    let login = Client::builder("https://api.vpsfree.cz").build()?;
++    let response = login.authentication__token__token().request()
++        .user("USERNAME")
++        .password("PASSWORD")
++        .lifetime("renewable_auto")
++        .send()?;
++    let TokenStep::Complete { token } = response.output.token_step()? else {
++        return Err("Přihlášení vyžaduje další krok".into());
++    };
+     let api = Client::builder("https://api.vpsfree.cz")
+-        .token("TOKEN")
++        .token(token.expose_secret())
+         .build()?;
++    // Nebo předchozí přihlášení a vytvoření klienta nahraď existujícím tokenem:
++    // let api = Client::builder("https://api.vpsfree.cz").token("TOKEN").build()?;
++
+     let response = api.vps().index().limit(10).send()?;
+     for vps in response.output {
+         if let (Some(id), Some(hostname)) = (vps.id, vps.hostname) {
