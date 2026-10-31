@@ -1,5 +1,33 @@
 # Design and verification brief
 
+## Clipboard filename follow-up
+
+Approved behavior: number every pasted file from one, per original filename and
+session, continuing across messages/reloads. Insert the number before the last
+extension; dotfiles and extensionless files append it. Picker/drop names stay
+unchanged. The lead owns this bounded shared-component change.
+
+codex-web owns admission/name reservation and File cloning. Reserve names before
+starting transfers, seed from the complete authorized upload catalogue and local
+drafts, and retain per-name high-water counters beside the existing draft key.
+Keep counters after submit/remove/clear. New scopes have their own sequence.
+Trim generated stems at Unicode boundaries to fit 255 UTF-8 bytes while preserving
+the extension. Retain sourceName in pasted draft entries; reselecting the original
+file reconstructs its assigned name without changing IDs, size/checksum validation
+or retry receipts. Browser metadata is additive; no server API/schema migration.
+Old draft arrays remain readable. Old bundles ignore the new fields; a paused
+renamed file must be selected under its assigned name in those bundles. Recovery
+deploys a compatible forward fix under the existing package policy.
+
+Quick provider contracts cover distinct bytes, batch admission, catalogue
+collisions, counters across clear/remove/reload, recovery identity/prefix checks,
+Unicode/length, legacy drafts and native mixed paste. Representative portal
+browser checks exercise repeated image.png in both composers and a restored
+creation draft. Publish provider, pin runtime, preserve extension, align workspace
+and confctl inputs, review the full committed series, then run affected package
+and browser checks, build/dry-activate/switch aitherdev and the separate user profile.
+Live smoke is read-only; no banked reset or real session creation is used.
+
 The lead owns this design and implementation (unmanaged/threadless initiative,
 no retained team). The change uses xhigh design effort.
 
@@ -75,3 +103,45 @@ a Use click that discovers an unresolved attempt blocks rather than resending it
 Unknown outcomes retain the attempt. Automatic history repair resumes after a
 background pause while failed manual older-page reads still require Retry.
 The compact account dialog includes the ordinary allowance windows and reset times.
+
+## Visual follow-up brief
+
+This bounded portal presentation correction is lead-owned. Use existing colors
+and typography: account lines match muted limit metadata, with a 12px top gap
+and a small line gap. The summary is plain text. Information and pencil buttons
+use 28px targets and 16px stroke icons, muted foreground, transparent background,
+and visible hover/focus states. Keep Account details and Edit Codex settings as
+accessible names and tooltips.
+
+A shared portal formatter rounds finite numeric credit balances to whole
+credits with locale grouping in both views. Preserve unlimited/unreported
+fallbacks. Only display formatting changes; account JSON and redemption logic
+are untouched.
+
+Move the mode toggle and its status into the attachment/Send group, preserving
+the existing attachment/Send/Queue order. Center both action groups vertically.
+Keep the model summary and pencil together, with Interrupt beside them. Allow
+groups to wrap without clipping at narrow widths. Keep stable element IDs and
+controller ownership. Bump portal asset query versions together.
+
+Existing browser fixtures will verify rounded balances, spacing, icon-only
+accessible buttons, vertical centers and left-group placement at desktop/narrow
+widths. Mock all account mutations. Retain the previous deployed heads as rollout
+history; consolidate only unapplied corrections. No migrations or API changes.
+
+## New-session clipboard correction
+
+The approved bounded correction is lead-owned. Pass the Initial request textarea
+as pasteTarget when mounting creation uploads. Reuse codex-web handling; keep
+native text and mixed paste, readiness gating, tab-local persistence and frozen
+creation recovery unchanged. No API or persisted-format changes or migrations.
+
+Extend the existing usability browser fixture with the index form: actual
+clipboard text insertion, binary image/file and mixed events, deduplication,
+held-upload submission gating, reload restoration, file-only request encoding,
+and immutable pending-request behavior. Use only the disposable server and
+intercept all creation POSTs and account mutations. Bump app.js query versions
+consistently and update the attachment README. No clipboard permission API is
+added to the product. Retain already deployed commit history; publish the fix,
+review the whole branch, check affected packages and redeploy matching host/profile
+pins. No live reset use or default-branch integration.

@@ -1,5 +1,16 @@
 # 2026-10-09-portal-codex-usability
 
+## Approved filename follow-up
+
+Number every pasted file from the first occurrence, e.g. image-1.png,
+image-2.png. Continue per original filename within the same session across
+messages and reloads, with fresh sequences in new sessions. Preserve text paste
+and selected/dropped names. Shared upload admission persists counters separately
+and retains original names for recovery. See design.md for compatibility and
+checks. Reuse these branches and the already authorized aitherdev deployment;
+integration into all four master branches was authorized by the user on
+2026-10-09 ("ok, merge it").
+
 ## Goal
 
 Make portal background refreshes quiet, show current model/reasoning as text
@@ -33,8 +44,9 @@ the same UUID through retries and reread authoritative limits after redemption.
 - Count-only reset reports may offer confirmed next-available redemption.
 - Preserve native text paste, including mixed text/file clipboard payloads.
 - Never consume actual reset credits during verification; use mocks with three.
-- User requested implementation and deployment; default-branch integration is
-  not authorized. Publish feature branches and retain an active initiative.
+- User authorized implementation, deployment and subsequently integration into
+  all four master branches. Use fast-forward-only merges and retain feature
+  branches and the session after completion.
 
 ## Compatibility and deployment
 
@@ -64,3 +76,21 @@ expiration, confirmation, reload/idempotency and cache races. Clipboard tests
 cover binary-only, text-only, mixed and multiple files and upload limits.
 Quick checks precede mandatory committed whole-branch review. Longer checks
 use the verification watcher. Deployed account verification is read-only.
+
+## Approved visual follow-up
+
+The user rejected the prominence and spacing of the account summary and
+requested whole-credit rounding. Render credits and resets as two muted lines
+with 12px spacing after the limit visualization. Put an information icon beside
+the limits heading. Center the model summary vertically, replace Edit with a
+pencil icon, and move Plan/Default beside the attachment and Send controls on
+the left. Keep model information and Interrupt on the right. Verify desktop and
+narrow layouts, then publish, update runtime pins and redeploy aitherdev.
+
+## Approved New session paste fix
+
+User reported binary paste works only in existing sessions and approved the
+follow-up plan. Creation upload mounting omitted pasteTarget. Connect the Initial
+request textarea to the shared handler, add real-browser creation coverage,
+update README and cache versions, publish/review and redeploy to aitherdev.
+Native text paste and all three resets must remain intact. No API/schema change.
