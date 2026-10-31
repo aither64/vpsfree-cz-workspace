@@ -1,39 +1,28 @@
-# 2026-10-27-codex-profile-generations
+# Codex generation retention implementation
 
-## Goal
+## Goal and authorization
 
-dev-workspace codex profiles seem misdesigned to me. Look at this directory: /home/aither/.local/state/dev-workspaces/codex/generations/
+Implement the accepted plan to remove redundant per-application Codex roots, deploy and verify on aitherdev, and integrate the verified feature. User on 2026-10-31: “okay, so create a plan to implement it. aitherdev can be deployed using vpsfree-cz-configuration. when it's verified and done, you can merge it.” Subsequent “Implement the plan” accepts the proposed three-repository implementation/deployment/integration sequence. Targets: dev-workspace, workspace and vpsfree-cz-configuration → master, conditional on successful checks/review/deployment verification. No session lifecycle action authorized.
 
-it contains many generations and I don't see any way to remove the old generations. if it used standard nix-env profile, there would be an easy way to delete old generations. why was it done this way, is there any reason why it can't use normal nix-env? see if other profiles regarding the dev-workspace don't have a similar problem.
+## Design and boundaries
 
-investigate and suggest a solution.
+The architect-owned [accepted implementation brief](design.md#accepted-implementation-and-verification-brief--2026-10-31) is authoritative. Historical investigation is retained there. Existing standard application profile retains bundled Codex; Nix runtime roots retain running store executables and closures. Keep codex/current for independent selection and existing pending/forward recovery; remove redundant numeric history through existing collector preview/apply. No replacement history, per-process pins, Codex upgrade, native-release pruning, forced GC or unrelated profile cleanup.
 
-## Affected repositories
+## Owners and dependencies
 
-- `dev-workspace`: profile generation creation, switching, rollback and retention.
-- Site workspace/configuration: read-only consumers and retention policy if relevant.
-- No application edits, installed-profile changes, cleanup, deployment or integration requested.
+1. implementer0: dev-workspace writers/helpers, bounded collector action, focused tests, technical docs, hooks/quick checks, commit/publication and fixes.
+2. implementer1: independent workspace/configuration preparation; exact final pins depend on published runtime head. Preserve nested runtime override, extension/siblings/follows; use confctl channel for configuration.
+3. reviewer0: independent final committed-deliverable review after quick checks, including full histories/root-retirement provenance.
+4. lead: acceptance, tracking, watcher verification, claims, system then user-profile activation, live validation, approved merges and release.
 
-## Approach
+## Compatibility and migration
 
-1. Architect `architect0` traces installed layout and source/history, inventories related profiles, and writes evidence and a recommendation in `design.md`.
-2. Lead checks that the findings answer the user's questions and presents the smallest conventional solution with explicit limits.
+Collector uses existing exclusion and strict pending parser, preserves unknown layouts and current/profile roots, checks exact link/profile identity, and unlinks only recognized numeric direct-store symlinks. Valid pending skips only this cleanup; invalid pending fails closed. Existing forward recovery/schema/protocol stay unchanged. Root retirement is idempotent; Nix GC determines store liveness. No database migration.
 
-Acceptance: explain documented versus inferred rationale; establish actual root/retention behavior; assess normal `nix-env` feasibility; cover other profile families; propose migration and cleanup semantics preserving running and recovery references.
+## Checks and delivery
 
-## Decisions
-
-- Investigation and proposal only. Inspect live state read-only; do not remove generations or invoke package transitions.
-- The same-session retained architect has ready workspace-write access and owns substantive investigation/design. Implementers remain unassigned because implementation is outside this request.
-
-## Compatibility and deployment
-
-Assess immutable generation references, rollback, package-transition journals, mixed old/new helpers and GC reachability. No deployment is planned.
+Quick focused Ruby checks/hooks, then independent review, then declared packaged checks and applicable transition/collection integration checks with fresh pinned Luna/low utilities. Final workspace/configuration lock identities must agree via bin/check-dev-workspace-deployment. Build final committed app/system before machine claim. Under vpsfree:aitherdev claim dry-activate/switch system without reboot then workspace-host user-profile switch. Verify exact identities, root retirement/current selection, services, naming and conversation/tmux continuity. Integrate runtime then consumers with short claims/FF/SSH/remote proof; release physical machine once verified and complete deployed lineage integrated. Session remains open.
 
 ## Documentation
 
-Readers: user and a future implementer. Findings/proposal belong in this session's `design.md`; plan/state hold scope and evidence. Owning project documentation can change with a later implementation, once behavior is decided.
-
-## Testing plan
-
-Read-only inventory and source/history inspection. No builds or integration tests are needed for this investigation. Distinguish verified runtime facts from an unimplemented/unverified proposal.
+Implementer0 updates owning package/collector docs; rollout/review evidence stays in this session. Shared plan/state follow normal tracking commit cadence. Stable portal: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-27-codex-profile-generations/
