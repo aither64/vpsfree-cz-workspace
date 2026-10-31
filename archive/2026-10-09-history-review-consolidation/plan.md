@@ -5,7 +5,10 @@
 The user requested stronger instructions after four successive devWorkspace pin
 updates entered configuration master despite an existing consolidation rule.
 Implement the proposed review clarifications. User explicitly says to wait for
-approval before merging. Prior portal merge approval does not cover this work.
+approval before merging. Prior portal merge approval did not cover this work. The user subsequently
+approved these two master targets with "ok, merge it" on2026-10-09. Both reviewed
+feature heads are now integrated; this did not authorize deployment or rewriting
+previously merged portal/configuration history.
 
 Affected projects: workspace (Git/readiness procedure) and vpsfree-dev-workspace
 (canonical mandatory-change-review skill and general lane). Generic runtime,
