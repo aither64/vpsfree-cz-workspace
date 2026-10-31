@@ -3,7 +3,83 @@
 require 'minitest/autorun'
 require 'tmpdir'
 require 'fileutils'
+require 'open3'
 load File.expand_path('../bin/compact-session-storage', __dir__)
+
+class TrackingIgnoreTest < Minitest::Test
+  RECORDS = %w[plan.md portal.yml raw.log notes/summary.md notes/portal.yml notes/raw.log].freeze
+
+  def with_tracking_ignore_fixture
+    Dir.mktmpdir('tracking-ignore-') do |workspace|
+      tracking_git(workspace, 'init', '--quiet')
+      File.write(File.join(workspace, '.gitignore'),
+                 File.read(File.expand_path('../.gitignore', __dir__)))
+      File.write(File.join(workspace, '.git/info/exclude'),
+                 "/work/sensitive-session/\n/archive/sensitive-session/\n")
+      yield workspace
+    end
+  end
+
+  def tracking_git(workspace, *args, expected_status: 0)
+    output, error, status = Open3.capture3(
+      {'GIT_CONFIG_GLOBAL' => File::NULL, 'GIT_CONFIG_NOSYSTEM' => '1'},
+      'git', '-C', workspace, *args
+    )
+    assert_equal expected_status, status.exitstatus, "git #{args.join(' ')}: #{error}"
+    output
+  end
+
+  def write_tracking_records(workspace, root)
+    RECORDS.each do |record|
+      path = File.join(workspace, root, record)
+      FileUtils.mkdir_p(File.dirname(path))
+      File.write(path, 'synthetic fixture')
+    end
+  end
+
+  def test_tracking_ignore_preserves_private_roots_and_descendants
+    with_tracking_ignore_fixture do |workspace|
+      %w[work archive].each do |tracking|
+        root = "#{tracking}/sensitive-session"
+        [false, true].each do |create|
+          write_tracking_records(workspace, root) if create
+          ["#{root}/", *RECORDS.map { |record| "#{root}/#{record}" },
+           "#{root}/future/nested/summary.md", "#{root}/future/portal.yml"].each do |path|
+            tracking_git(workspace, 'check-ignore', '--quiet', '--', path)
+          end
+        end
+      end
+    end
+  end
+
+  def test_tracking_ignore_stages_only_ordinary_retained_records
+    with_tracking_ignore_fixture do |workspace|
+      expected = ['.gitignore']
+      %w[work archive].each do |tracking|
+        %w[ordinary-session sensitive-session].each do |slug|
+          write_tracking_records(workspace, "#{tracking}/#{slug}")
+        end
+        RECORDS.reject { |record| record.end_with?('.log') }.each do |record|
+          expected << "#{tracking}/ordinary-session/#{record}"
+        end
+      end
+      tracking_git(workspace, 'add', '-A')
+      assert_equal expected.sort, tracking_git(workspace, 'ls-files', '-z').split("\0").sort
+    end
+  end
+
+  def test_tracking_ignore_detects_explicit_private_root_overrides
+    with_tracking_ignore_fixture do |workspace|
+      %w[work archive].each do |tracking|
+        root = "#{tracking}/sensitive-session/"
+        FileUtils.mkdir_p(File.join(workspace, root))
+        tracking_git(workspace, 'check-ignore', '--quiet', '--', root)
+        File.open(File.join(workspace, '.gitignore'), 'a') { |file| file.puts "!/#{root}" }
+        tracking_git(workspace, 'check-ignore', '--quiet', '--', root, expected_status: 1)
+      end
+    end
+  end
+end
 
 class StorageRetentionTest < Minitest::Test
   def with_fixture

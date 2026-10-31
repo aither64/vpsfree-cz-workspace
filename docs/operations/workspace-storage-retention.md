@@ -6,6 +6,12 @@ write useful summaries before archiving. Historical Git objects and branches
 remain available, but revival does not restore uncommitted changes from new
 archives. Predecessor archives retain their recorded policy until compacted.
 
+Tracking ignore rules apply below each immediate session directory in work/ and
+archive/. This lets private `.git/info/exclude` entries exclude sensitive session
+roots and all their records. Broad directory negations such as `!/work/**/`
+override those private exclusions and must not be restored. Ordinary sessions
+still expose direct and nested Markdown and portal.yml while ignoring raw files.
+
 Additional workspace checkouts exclude work/ and archive/ through Git sparse
 checkout. The registered shared checkout still contains session tracking. Nix
 package and check inputs filter out those directories. Git archive exports use
