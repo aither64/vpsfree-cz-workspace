@@ -1,0 +1,287 @@
+--- before/en/manuals/vps/api.txt
++++ after/en/manuals/vps/api.txt
+@@ -495,13 +495,13 @@
+ ===== Ruby client =====
+ 
+ Use the library from the same ''vpsfree-client'' package in your own scripts.
+-With an existing token in ''VPSADMIN_TOKEN'', you can list VPSes as follows:
++Replace ''TOKEN'' with an existing [[#tokens|API token]] to list your VPSes:
+ 
+ <code ruby>
+ require 'vpsfree/client'
+ 
+ api = VpsFree::Client.new
+-api.authenticate(:token, token: ENV.fetch('VPSADMIN_TOKEN'))
++api.authenticate(:token, token: 'TOKEN')
+ 
+ api.vps.list.each do |vps|
+   puts "#{vps.id}: #{vps.hostname}"
+@@ -586,12 +586,8 @@
+ 
+ ===== Other clients =====
+ 
+-The dynamic HaveAPI clients for PHP, Python, JavaScript and TypeScript discover
+-resources, actions and parameters from the server at runtime. Without an explicit
+-version, they use the server's configured default. The generated
+-vpsAdmin clients for Go, Rust and TypeScript provide methods and types based on
+-a saved API description. Each client's README covers compatibility, installation,
+-authentication and further examples.
++Each example below uses an existing [[#tokens|API token]] and prints the ID and
++hostname of up to 10 VPSes. Replace ''TOKEN'' with your token.
+ 
+ ==== PHP client ====
+ 
+@@ -602,56 +598,45 @@
+ composer require haveapi/client
+ </code>
+ 
+-After loading the autoloader, use an existing token from ''VPSADMIN_TOKEN'':
++Save this example as ''vps-list.php'' next to the ''vendor'' directory and run it
++with ''php vps-list.php'':
+ 
+ <code php>
+ <?php
+ require __DIR__ . '/vendor/autoload.php';
+ 
+-$token = getenv('VPSADMIN_TOKEN');
+-if (!$token) {
+-    throw new RuntimeException('Set VPSADMIN_TOKEN');
+-}
+-
+ $api = new \HaveAPI\Client('https://api.vpsfree.cz');
+-$api->authenticate('token', ['token' => $token]);
+-
+-foreach ($api->vps->list() as $vps) {
++$api->authenticate('token', ['token' => 'TOKEN']);
++
++foreach ($api->vps->list(['limit' => 10]) as $vps) {
+     echo $vps->id . ': ' . $vps->hostname . PHP_EOL;
+ }
+ </code>
+ 
+-The client exposes resources and actions as properties and methods. See the
+-[[https://github.com/vpsfreecz/haveapi/tree/master/clients/php#usage|client README]]
+-for action parameters, responses and error handling.
++See the [[https://github.com/vpsfreecz/haveapi/tree/master/clients/php#usage|client README]]
++for other actions and error handling.
+ 
+ ==== Python client ====
+ 
+-Install the [[https://pypi.org/project/haveapi-client/|haveapi-client]] package using pip.
+-See the package page for Python requirements.
++Install [[https://pypi.org/project/haveapi-client/|haveapi-client]] using pip:
+ 
+ <code bash>
+ python -m pip install haveapi-client
+ </code>
+ 
+-Import ''Client'' for synchronous calls or ''AsyncClient'' for asynchronous
+-calls from ''haveapi_client''. Both support ''TokenAuth'', ''BasicAuth'' and
+-''OAuth2Auth''. For example, with an existing token in ''VPSADMIN_TOKEN'':
++Save this example as ''vps-list.py'' and run it with ''python vps-list.py'':
+ 
+ <code python>
+-import os
+ from haveapi_client import Client, TokenAuth
+ 
+-with Client("https://api.vpsfree.cz",
+-            auth=TokenAuth(os.environ["VPSADMIN_TOKEN"])) as api:
+-    result = api.vps.list.call(params={"limit": 10})
++with Client("https://api.vpsfree.cz", auth=TokenAuth("TOKEN")) as api:
++    result = api.vps.list(limit=10)
+     for vps in result.data:
+         print(vps["id"], vps["hostname"])
+ </code>
+ 
+-With ''AsyncClient'', use ''async with'' and await the action call. See the
+-[[https://github.com/vpsfreecz/haveapi/tree/master/clients/python|client README]]
+-for authentication and asynchronous examples.
++The [[https://github.com/vpsfreecz/haveapi/tree/master/clients/python|client README]]
++also covers asynchronous calls with ''AsyncClient''.
+ 
+ ==== Dynamic HaveAPI client for JavaScript and TypeScript ====
+ 
+@@ -661,85 +646,138 @@
+ npm install haveapi-client
+ </code>
+ 
+-''AsyncClient'' provides a Promise-based interface. This Node.js example uses
+-an existing token in ''VPSADMIN_TOKEN'':
+-
+-<code typescript>
++This example works in JavaScript and TypeScript. To run it with Node.js, save it
++as ''vps-list.mjs'' and use ''node vps-list.mjs'':
++
++<code javascript>
+ import { AsyncClient } from "haveapi-client";
+ 
+ async function main() {
+-  const token = process.env.VPSADMIN_TOKEN;
+-  if (!token) throw new Error("Set VPSADMIN_TOKEN");
+   const api = new AsyncClient("https://api.vpsfree.cz");
+-  await api.authenticate("token", { token });
++  await api.authenticate("token", { token: "TOKEN" });
+   const result = await api.resource("vps").action("list")({
+     params: { limit: 10 },
+   });
+-  console.log(result.value);
++  const vpses = result.response.data;
++  if (Array.isArray(vpses)) {
++    for (const vps of vpses) {
++      console.log(vps.id, vps.hostname);
++    }
++  }
+ }
+ 
+ main().catch(console.error);
+ </code>
+ 
+-The package also provides the callback-based ''Client'' and ''CallbackClient''.
+ See the [[https://github.com/vpsfreecz/haveapi/tree/master/clients/js|client README]]
+-for browser usage and typed result handling.
++for other actions and browser usage.
+ 
+ ==== Go client ====
+ 
+-The [[https://github.com/vpsfreecz/vpsadmin-go-client|vpsAdmin Go client]] provides
+-types for resources, actions and parameters. Add it to your Go module:
++Add the [[https://github.com/vpsfreecz/vpsadmin-go-client|vpsAdmin Go client]]
++to your Go module:
+ 
+ <code bash>
+ go get github.com/vpsfreecz/vpsadmin-go-client/client
+ </code>
+ 
+-Create the client with ''%%client.New("https://api.vpsfree.cz")%%'' and pass an existing
+-token to ''SetExistingTokenAuth''. Use the API origin without a version prefix;
+-the generated action paths already include it. See the
+-[[https://github.com/vpsfreecz/vpsadmin-go-client#usage|client README]] for a complete
+-VPS listing example and other action calls.
++Save this example as ''main.go'' and run it with ''go run .'':
++
++<code go>
++package main
++
++import (
++	"fmt"
++	"log"
++
++	"github.com/vpsfreecz/vpsadmin-go-client/client"
++)
++
++func main() {
++	api := client.New("https://api.vpsfree.cz")
++	api.SetExistingTokenAuth("TOKEN")
++
++	action := api.Vps.Index.Prepare()
++	action.NewInput().SetLimit(10)
++	response, err := action.Call()
++	if err != nil {
++		log.Fatal(err)
++	}
++	if !response.Status {
++		log.Fatalf("%s: %v", response.Message, response.Errors)
++	}
++
++	for _, vps := range response.Output {
++		fmt.Println(vps.Id, vps.Hostname)
++	}
++}
++</code>
++
++See the [[https://github.com/vpsfreecz/vpsadmin-go-client#usage|client README]]
++for other actions and parameters.
+ 
+ ==== Generated TypeScript client for vpsAdmin ====
+ 
+-The [[https://github.com/vpsfreecz/vpsadmin-typescript-client|generated TypeScript client for vpsAdmin]]
+-provides named resource and action methods, with parameter and result types
+-generated from a saved vpsAdmin API description. Your editor can suggest names
+-and parameters, and the TypeScript compiler can check their types.
+-The dynamic ''haveapi-client'' discovers the API at runtime instead. The generated
+-client uses HaveAPI for transport and authentication, but its types must match
+-the API schema it calls. Follow its README when setting the API base URL,
+-including the version prefix required by that schema.
+-
+-Install the client package. npm installs a compatible ''haveapi-client''
+-according to its declared dependency:
++The [[https://github.com/vpsfreecz/vpsadmin-typescript-client|vpsAdmin TypeScript client]]
++provides typed methods for vpsAdmin resources and actions. Install it using npm,
++which also installs its ''haveapi-client'' dependency:
+ 
+ <code bash>
+ npm install vpsadmin-typescript-client
+ </code>
+ 
+-The [[https://github.com/vpsfreecz/vpsadmin-typescript-client#readme|client README]]
+-describes ''createVpsAdminClient'', authentication and action calls.
++This example works in JavaScript and TypeScript. To run it with Node.js, save it
++as ''vps-list.mjs'' and use ''node vps-list.mjs''.
++Use ''https://api.vpsfree.cz/v7.0'' as the base URL for this client:
++
++<code javascript>
++import { AsyncClient } from "haveapi-client";
++import { createHaveApiExecutor, createVpsAdminClient } from "vpsadmin-typescript-client";
++
++async function main() {
++  const runtime = new AsyncClient("https://api.vpsfree.cz/v7.0");
++  await runtime.authenticate("token", { token: "TOKEN" });
++  const api = createVpsAdminClient({ execute: createHaveApiExecutor(runtime) });
++  const page = await api.vps.index({ params: { limit: 10 } });
++  for (const vps of page.data) {
++    console.log(vps.id, vps.hostname);
++  }
++}
++
++main().catch(console.error);
++</code>
++
++See the [[https://github.com/vpsfreecz/vpsadmin-typescript-client#readme|client README]]
++for other actions and types.
+ 
+ ==== Rust client ====
+ 
+-The [[https://github.com/vpsfreecz/vpsadmin-rust-client|vpsAdmin Rust client]]
+-provides asynchronous and synchronous interfaces. See the
+-[[https://github.com/vpsfreecz/vpsadmin-rust-client#readme|client README]] for compatibility and Rust requirements.
+-Add the [[https://crates.io/crates/vpsadmin-client|vpsadmin-client]] crate to your project:
+-
+-<code bash>
+-cargo add vpsadmin-client
+-</code>
+-
+-Use ''vpsadmin_client::Client'' for asynchronous calls. For synchronous calls,
+-enable the ''blocking'' feature:
++Add the [[https://crates.io/crates/vpsadmin-client|vpsadmin-client]] crate to your
++Rust project. This example uses synchronous calls, so enable the ''blocking'' feature:
+ 
+ <code bash>
+ cargo add vpsadmin-client --features blocking
+ </code>
+ 
+-Then use ''vpsadmin_client::blocking::Client''. The
+-[[https://github.com/vpsfreecz/vpsadmin-rust-client#readme|client README]]
+-contains token authentication and action examples.
+-
++Save this example as ''src/main.rs'' and run it with ''cargo run'':
++
++<code rust>
++use vpsadmin_client::blocking::Client;
++
++fn main() -> Result<(), Box<dyn std::error::Error>> {
++    let api = Client::builder("https://api.vpsfree.cz")
++        .token("TOKEN")
++        .build()?;
++    let response = api.vps().index().limit(10).send()?;
++    for vps in response.output {
++        if let (Some(id), Some(hostname)) = (vps.id, vps.hostname) {
++            println!("{} {}", id, hostname);
++        }
++    }
++    Ok(())
++}
++</code>
++
++See the [[https://github.com/vpsfreecz/vpsadmin-rust-client#readme|client README]]
++for other actions, asynchronous calls and Rust requirements.
++

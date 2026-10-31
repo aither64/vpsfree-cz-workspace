@@ -3,7 +3,7 @@
 These are complete Czech/English page revisions in publication order, starting
 from the captured production originals. Each directory contains its affected
 pages, localized revision summaries and a diff against the preceding revision.
-The final pages equal the canonical candidates: step06 in both languages.
+The final pages equal the canonical candidates: step07 in both languages.
 The previous three-step chain and cumulative manifests are preserved under
 `../install-policy/prior/`; its staging receipts remain historical evidence.
 
@@ -37,6 +37,12 @@ The previous three-step chain and cumulative manifests are preserved under
    prefix, and replace copied Ruby/PATH requirements with maintained sources and
    executable-directory discovery. Preserve token handling and install pairing.
    [Czech diff](06-client-selection/cs.diff), [English diff](06-client-selection/en.diff).
+
+7. **Add uniform practical client examples.** Give each other-language client an
+   installation command, complete existing-token VPS listing example, run command
+   and documentation link. Use literal token placeholders and supported JavaScript
+   highlighting; change the nearby Ruby read example to the same token placeholder.
+   [Czech diff](07-client-examples/cs.diff), [English diff](07-client-examples/en.diff).
 
 `content-chain.json` binds each predecessor and result by content SHA256.
 It does not claim production revisions for changes that have not been published.
@@ -124,3 +130,13 @@ selectors per language; all other code remains exact. Generated-client wire
 paths and schema-prefix requirements are preserved without copied numeric
 support claims. It does not alter an API, schema, OAuth configuration or
 deployment.
+
+Step06 is complete; append step07 directly after actual Czech1793373737 and
+English1793373856, preserving all earlier revisions. After committed checks,
+independent final review and lead acceptance, save each exact reviewed step07
+page once through public `kb-page save --wiki cz-staging|org-staging`, with its
+localized summary, fresh owner/auth/ACL and exact predecessor guards. Do not
+restore or replay the baseline. Verify exact source, summary/revision/history,
+reciprocal markers, overview links and rendered supported-language code blocks.
+Production remains unapproved. Lead owns all bilingual prose; this continuation
+adds only the approved examples and two-line Ruby placeholder adjustment.

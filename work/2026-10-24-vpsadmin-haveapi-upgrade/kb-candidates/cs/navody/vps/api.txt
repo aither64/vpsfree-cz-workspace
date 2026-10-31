@@ -547,13 +547,13 @@ $ gem cleanup  # smaže gemy
 ===== Klient pro Ruby =====
 
 Knihovnu ze stejného balíčku ''vpsfree-client'' můžeš použít ve vlastních skriptech.
-S existujícím tokenem v proměnné ''VPSADMIN_TOKEN'' vypíšeš VPS takto:
+Místo ''TOKEN'' doplň existující [[#tokeny|token API]] a vypiš své VPS:
 
 <code ruby>
 require 'vpsfree/client'
 
 api = VpsFree::Client.new
-api.authenticate(:token, token: ENV.fetch('VPSADMIN_TOKEN'))
+api.authenticate(:token, token: 'TOKEN')
 
 api.vps.list.each do |vps|
   puts "#{vps.id}: #{vps.hostname}"
@@ -638,73 +638,57 @@ end
 
 ===== Další klienti =====
 
-Dynamičtí klienti HaveAPI pro PHP, Python, JavaScript a TypeScript si za běhu
-ze serveru načtou popis dostupných zdrojů, akcí a parametrů. Pokud verzi nezadáš,
-použijí výchozí verzi nastavenou na serveru. Generovaní klienti
-pro vpsAdmin v Go, Rustu a TypeScriptu mají metody a typy podle uloženého popisu
-API. Kompatibilitu, instalaci, autentizaci a další příklady popisuje README
-každého klienta.
+Ukázky používají existující [[#tokeny|token API]] a vypisují ID a hostname nejvýše
+10 VPS. Místo ''TOKEN'' doplň svůj token.
 
 ==== Klient pro PHP ====
 
-[[https://github.com/vpsfreecz/haveapi/tree/master/clients/php|Klient HaveAPI pro PHP]]
-se instaluje pomocí Composeru:
+[[https://github.com/vpsfreecz/haveapi/tree/master/clients/php|Klienta HaveAPI pro PHP]]
+nainstaluj pomocí Composeru:
 
 <code bash>
 composer require haveapi/client
 </code>
 
-Po načtení autoloaderu můžeš použít existující token z proměnné ''VPSADMIN_TOKEN'':
+Ukázku ulož jako ''vps-list.php'' vedle adresáře ''vendor'' a spusť příkazem
+''php vps-list.php'':
 
 <code php>
 <?php
 require __DIR__ . '/vendor/autoload.php';
 
-$token = getenv('VPSADMIN_TOKEN');
-if (!$token) {
-    throw new RuntimeException('Set VPSADMIN_TOKEN');
-}
-
 $api = new \HaveAPI\Client('https://api.vpsfree.cz');
-$api->authenticate('token', ['token' => $token]);
+$api->authenticate('token', ['token' => 'TOKEN']);
 
-foreach ($api->vps->list() as $vps) {
+foreach ($api->vps->list(['limit' => 10]) as $vps) {
     echo $vps->id . ': ' . $vps->hostname . PHP_EOL;
 }
 </code>
 
-Klient zpřístupňuje zdroje a akce jako vlastnosti a metody. Parametry akcí,
-práci s výsledky a zpracování chyb popisuje
+Další akce a zpracování chyb popisuje
 [[https://github.com/vpsfreecz/haveapi/tree/master/clients/php#usage|README klienta]].
 
 ==== Klient pro Python ====
 
-Balíček [[https://pypi.org/project/haveapi-client/|haveapi-client]] nainstaluj pomocí pip.
-Požadavky na Python najdeš na stránce balíčku.
+Balíček [[https://pypi.org/project/haveapi-client/|haveapi-client]] nainstaluj pomocí pip:
 
 <code bash>
 python -m pip install haveapi-client
 </code>
 
-Z modulu ''haveapi_client'' importuj ''Client'' pro synchronní volání nebo
-''AsyncClient'' pro asynchronní volání. Oba podporují ''TokenAuth'',
-''BasicAuth'' a ''OAuth2Auth''. S existujícím tokenem v proměnné
-''VPSADMIN_TOKEN'' můžeš například vypsat VPS:
+Ukázku ulož jako ''vps-list.py'' a spusť příkazem ''python vps-list.py'':
 
 <code python>
-import os
 from haveapi_client import Client, TokenAuth
 
-with Client("https://api.vpsfree.cz",
-            auth=TokenAuth(os.environ["VPSADMIN_TOKEN"])) as api:
-    result = api.vps.list.call(params={"limit": 10})
+with Client("https://api.vpsfree.cz", auth=TokenAuth("TOKEN")) as api:
+    result = api.vps.list(limit=10)
     for vps in result.data:
         print(vps["id"], vps["hostname"])
 </code>
 
-S ''AsyncClient'' použij ''async with'' a před volání akce přidej ''await''.
-Ukázky autentizace a asynchronního volání najdeš v
-[[https://github.com/vpsfreecz/haveapi/tree/master/clients/python|README klienta]].
+[[https://github.com/vpsfreecz/haveapi/tree/master/clients/python|README klienta]]
+popisuje také asynchronní volání s ''AsyncClient''.
 
 ==== Dynamický klient HaveAPI pro JavaScript a TypeScript ====
 
@@ -714,86 +698,141 @@ Oba jazyky používají stejný balíček z npm, který obsahuje i deklarace typ
 npm install haveapi-client
 </code>
 
-''AsyncClient'' používá Promise. Následující ukázka pro Node.js používá existující
-token z proměnné ''VPSADMIN_TOKEN'':
+Ukázka funguje v JavaScriptu i TypeScriptu. Pro spuštění v Node.js ji ulož jako
+''vps-list.mjs'' a použij příkaz ''node vps-list.mjs'':
 
-<code typescript>
+<code javascript>
 import { AsyncClient } from "haveapi-client";
 
 async function main() {
-  const token = process.env.VPSADMIN_TOKEN;
-  if (!token) throw new Error("Set VPSADMIN_TOKEN");
   const api = new AsyncClient("https://api.vpsfree.cz");
-  await api.authenticate("token", { token });
+  await api.authenticate("token", { token: "TOKEN" });
   const result = await api.resource("vps").action("list")({
     params: { limit: 10 },
   });
-  console.log(result.value);
+  const vpses = result.response.data;
+  if (Array.isArray(vpses)) {
+    for (const vps of vpses) {
+      console.log(vps.id, vps.hostname);
+    }
+  }
 }
 
 main().catch(console.error);
 </code>
 
-Balíček poskytuje také ''Client'' a ''CallbackClient'' s callbackovým rozhraním.
-Použití v prohlížeči a práci s typovanými výsledky popisuje
+Další akce a použití v prohlížeči najdeš v
 [[https://github.com/vpsfreecz/haveapi/tree/master/clients/js|README klienta]].
 
 ==== Klient pro Go ====
 
-[[https://github.com/vpsfreecz/vpsadmin-go-client|Klient pro vpsAdmin v Go]]
-poskytuje typy pro zdroje, akce a parametry API. Do svého Go modulu ho přidej
-příkazem:
+[[https://github.com/vpsfreecz/vpsadmin-go-client|Klienta pro vpsAdmin v Go]]
+přidej do svého Go modulu:
 
 <code bash>
 go get github.com/vpsfreecz/vpsadmin-go-client/client
 </code>
 
-Klienta vytvoř pomocí ''%%client.New("https://api.vpsfree.cz")%%'' a existující token
-nastav metodou ''SetExistingTokenAuth''. Použij základní adresu API bez prefixu
-verze, který už je součástí generovaných cest akcí. Úplný příklad výpisu VPS a další
-volání najdeš v [[https://github.com/vpsfreecz/vpsadmin-go-client#usage|README klienta]].
+Ukázku ulož jako ''main.go'' a spusť příkazem ''go run .'':
+
+<code go>
+package main
+
+import (
+	"fmt"
+	"log"
+
+	"github.com/vpsfreecz/vpsadmin-go-client/client"
+)
+
+func main() {
+	api := client.New("https://api.vpsfree.cz")
+	api.SetExistingTokenAuth("TOKEN")
+
+	action := api.Vps.Index.Prepare()
+	action.NewInput().SetLimit(10)
+	response, err := action.Call()
+	if err != nil {
+		log.Fatal(err)
+	}
+	if !response.Status {
+		log.Fatalf("%s: %v", response.Message, response.Errors)
+	}
+
+	for _, vps := range response.Output {
+		fmt.Println(vps.Id, vps.Hostname)
+	}
+}
+</code>
+
+Další akce a parametry najdeš v
+[[https://github.com/vpsfreecz/vpsadmin-go-client#usage|README klienta]].
 
 ==== Generovaný klient pro vpsAdmin v TypeScriptu ====
 
-[[https://github.com/vpsfreecz/vpsadmin-typescript-client|Generovaný klient pro vpsAdmin v TypeScriptu]]
-má pojmenované metody pro zdroje a akce včetně typů jejich parametrů a výsledků,
-vygenerované z uloženého popisu API vpsAdminu. Editor ti může napovídat názvy
-a parametry a překladač TypeScriptu kontrolovat jejich typy.
-Dynamický ''haveapi-client'' naopak zjišťuje podobu API za běhu. Generovaný klient
-používá HaveAPI pro přenos požadavků a autentizaci, ale jeho typy musí odpovídat
-schématu volaného API. Základní adresu API nastav podle jeho README včetně
-prefixu verze, který dané schéma vyžaduje.
-
-Nainstaluj balíček klienta. npm k němu nainstaluje kompatibilní ''haveapi-client''
-podle deklarované závislosti:
+[[https://github.com/vpsfreecz/vpsadmin-typescript-client|Klient pro vpsAdmin v TypeScriptu]]
+poskytuje typované metody pro zdroje a akce vpsAdminu. Nainstaluj ho pomocí npm,
+které přidá i jeho závislost ''haveapi-client'':
 
 <code bash>
 npm install vpsadmin-typescript-client
 </code>
 
-Použití ''createVpsAdminClient'', autentizaci a volání akcí najdeš v
+Ukázka funguje v JavaScriptu i TypeScriptu. Pro spuštění v Node.js ji ulož jako
+''vps-list.mjs'' a použij příkaz ''node vps-list.mjs''.
+U tohoto klienta použij základní adresu ''https://api.vpsfree.cz/v7.0'':
+
+<code javascript>
+import { AsyncClient } from "haveapi-client";
+import { createHaveApiExecutor, createVpsAdminClient } from "vpsadmin-typescript-client";
+
+async function main() {
+  const runtime = new AsyncClient("https://api.vpsfree.cz/v7.0");
+  await runtime.authenticate("token", { token: "TOKEN" });
+  const api = createVpsAdminClient({ execute: createHaveApiExecutor(runtime) });
+  const page = await api.vps.index({ params: { limit: 10 } });
+  for (const vps of page.data) {
+    console.log(vps.id, vps.hostname);
+  }
+}
+
+main().catch(console.error);
+</code>
+
+Další akce a typy popisuje
 [[https://github.com/vpsfreecz/vpsadmin-typescript-client#readme|README klienta]].
 
 ==== Klient pro Rust ====
 
-[[https://github.com/vpsfreecz/vpsadmin-rust-client|Klient pro vpsAdmin v Rustu]]
-má asynchronní i synchronní rozhraní. Kompatibilitu a požadavky na Rust najdeš v
-[[https://github.com/vpsfreecz/vpsadmin-rust-client#readme|README klienta]]. Balíček
-[[https://crates.io/crates/vpsadmin-client|vpsadmin-client]] přidej do projektu:
-
-<code bash>
-cargo add vpsadmin-client
-</code>
-
-Pro asynchronní volání použij ''vpsadmin_client::Client''. Pro synchronní volání
-zapni funkci ''blocking'':
+Do svého projektu v Rustu přidej balíček
+[[https://crates.io/crates/vpsadmin-client|vpsadmin-client]]. Ukázka používá
+synchronní volání, proto zapni podporu ''blocking'':
 
 <code bash>
 cargo add vpsadmin-client --features blocking
 </code>
 
-Pak použij ''vpsadmin_client::blocking::Client''. Ukázky autentizace tokenem a volání akcí
-najdeš v [[https://github.com/vpsfreecz/vpsadmin-rust-client#readme|README klienta]].
+Ukázku ulož jako ''src/main.rs'' a spusť příkazem ''cargo run'':
+
+<code rust>
+use vpsadmin_client::blocking::Client;
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let api = Client::builder("https://api.vpsfree.cz")
+        .token("TOKEN")
+        .build()?;
+    let response = api.vps().index().limit(10).send()?;
+    for vps in response.output {
+        if let (Some(id), Some(hostname)) = (vps.id, vps.hostname) {
+            println!("{} {}", id, hostname);
+        }
+    }
+    Ok(())
+}
+</code>
+
+Další akce, asynchronní volání a požadavky na Rust najdeš v
+[[https://github.com/vpsfreecz/vpsadmin-rust-client#readme|README klienta]].
 
 <maintainers hidden>
 aither
