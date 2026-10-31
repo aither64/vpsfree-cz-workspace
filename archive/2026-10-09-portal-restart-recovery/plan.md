@@ -72,3 +72,22 @@ queue ordering, team holds, exact authority, live portal-only restart, failed
 identity isolation and explicit Send/Continue. Disposable fixtures may restart;
 the real aitherdev host may not. Verify final composed deployment pins and live
 service health using only an owned smoke session.
+
+## Approved follow-up: duplicate artifact availability
+
+User approved implementation of the reiterated plan: repeated valid artifact
+paths are harmless declarations, handled silently. Both Go and Ruby validators
+accept them after validating every record. The portal catalog retains the first
+label/order per normalized path, including equivalent relative spellings. Reads
+and validation do not rewrite manifests. All existing identity, lifecycle, YAML
+and path restrictions remain. No new commands, schema, warning UI or native
+protocol changes. Existing affected tracking must work without manual cleanup.
+
+Reuse retained branches. Preserve deployed runtime 97ea4c56 as an immutable
+supported source; append this functional change. Consolidate workspace/config
+pin streams to the final runtime and keep rollout provenance. Verify shared
+fixtures, live-server duplicate insertion, CLI readiness and byte preservation,
+then run independent committed-deliverable review and packaged checks. Deploy
+matching configuration and composed user profile without host/native/tmux restart.
+Verify the affected session page without editing its records. Default branch
+integration remains unapproved.
