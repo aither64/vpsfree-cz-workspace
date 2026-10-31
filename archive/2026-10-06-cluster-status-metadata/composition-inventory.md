@@ -22,7 +22,26 @@ Runtime, extension, configuration pin and package contracts are unchanged.
 Published the rebased feature ref with an exact old-head lease; original merge
 approval and independent pin review still apply to the identical patch.
 
+After the additional approved archive recoveries, final workspace head is
+57bd3304b7901d2c942f5f50ecd8897b53bde1ef, rebased onto shared master
+23214457ffafd70526ad825758a0c3870f10d568. Range-diff again reports the same sole
+pin patch. The extra base commits contain only tracking checkpoint/archive
+transitions. Package evaluation still returns the same b2q12p1725bqrb4nrd6yfjg28hgsggcf
+output, and deployment-contract validation passes. Exact lease publication
+succeeded. The saved portal comparison uses origin/master f8b7271d as its base,
+including those coordination transitions. A second explicit-base capture for
+the same head correctly refused replacement of that immutable saved comparison.
+The final pin diff against shared master remains two files and has no migrations.
+
 ## vpsfree-cz-configuration
+
+Final head6f6aff9029cd57e1a0f9201356f7fdc9f6480671 is a clean rebase onto
+aec21498cf052dc788e97df3c895992a69e91d93, which adds only the separately
+released WebUI pin and deployment record. Range-diff reports an identical
+generated runtime-pin commit. Deployment-contract checks and aitherdev build
+passed; the system changed only its confctl configuration-info.json link.
+Final normal host activation passed both health checks. Final feature/master
+refs are proven in integration-proof.json. No obsolete history or migrations.
 
 Feature head165e465ae5be6ad1706e0528d537011616d20efb, parent/base
 cde8451718d75929c931db63626b48f7de92fc4f. One generated dependency-pin commit,

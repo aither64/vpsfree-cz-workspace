@@ -1,5 +1,15 @@
 # Archive-test CI failure
 
+Default-branch [Check37526123525](https://github.com/aither64/dev-workspace/actions/runs/37526123525)
+at the exact same e3315a4 head also failed this assertion: it read the prior
+running/prepared receipt rather than the replacement paused receipt. The full
+failed step log is default-ci-failed.log and matches the isolated baseline
+diagnosis below. The host VM smoke job passed. No new decoder failure appeared.
+A green repeat does not fix this existing archive race. GitHub Actions write
+permission remains unavailable, so verification uses an owned SSH-published ref
+at unchanged e3315a4; master host success covers the default-only job. No source
+or empty commit is introduced to trigger that repeat.
+
 Runtime feature e3315a483f3d3536d492ecbe40f2655449cf630f passed its full local
 `nix flake check --no-update-lock-file --print-build-logs` operation. GitHub
 [Check 37510298035](https://github.com/aither64/dev-workspace/actions/runs/37510298035)
