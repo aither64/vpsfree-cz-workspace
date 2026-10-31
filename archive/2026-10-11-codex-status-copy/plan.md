@@ -50,3 +50,14 @@ complete branch histories/diffs, then mandatory independent review before long
 checks. Run Chromium/Firefox browser contracts including stable counter geometry,
 package/composition/host checks and exact-head CI. After deployment verify assets,
 units, process continuity and live status rendering. Remain active awaiting merge.
+
+## Follow-up: remove the separator
+
+User rejected the dot because the fixed timer slot leaves it visually detached.
+Remove the DOM element, update logic and styling; retain fixed timer width and
+tabular digits, terse labels and right-side counters. Refresh cache identities.
+No API, state, protocol, schema or mixed-version contract change. Old/new browser
+assets are safe across deployment; no migration. Update docs and existing geometry
+checks, then focused browser checks, exact consumer pins and deployment. Preserve
+previous deployed source refs before consolidating the unmerged branch histories.
+Merge still requires fresh approval.

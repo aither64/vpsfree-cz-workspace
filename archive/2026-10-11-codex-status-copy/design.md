@@ -13,14 +13,14 @@ Focused wait/blocking request remains first. Keep full descriptions on row
 hover/ARIA and tab hover/ARIA; retain attention, freshness and completed-plan
 visibility rules. Do not shorten the separate Team table's activity detail.
 
-Add an aria-hidden middle dot between counts and elapsed time only when both
-are nonempty. Preserve a single flex row, label ellipsis and right-side counts.
+Keep a single flex row, label ellipsis and right-side counts beside elapsed
+time. The user rejected a separator after live inspection; remove it entirely.
 Tabular numerals remove proportional-digit jitter. A stable right-aligned timer
 slot prevents unit transitions from shifting counts. Size for ordinary long
 durations and verify timer readability at 420px; retain full error text through
 hover/accessibility when space is constrained. Bump JS/CSS asset versions.
 
-Acceptance: short visible/full accessible descriptions; optional separator;
+Acceptance: short visible/full accessible descriptions; no separator element;
 unchanged peer sorting, overflow, freshness and focused-wait precedence; stable
 counter positions across ticking digits and seconds/minutes/hours transitions;
 no horizontal page overflow at 1280/420px. Quick pure contracts/template checks
