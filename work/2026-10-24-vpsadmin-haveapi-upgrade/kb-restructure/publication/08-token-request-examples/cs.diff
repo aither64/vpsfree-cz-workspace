@@ -115,6 +115,15 @@
    const result = await api.resource("vps").action("list")({
      params: { limit: 10 },
    });
+@@ -718,7 +750,7 @@
+   }
+ }
+ 
+-main().catch(console.error);
++main().catch(() => console.error("Požadavek na API selhal."));
+ </code>
+ 
+ Další akce a použití v prohlížeči najdeš v
 @@ -747,7 +779,14 @@
  
  func main() {
@@ -142,6 +151,15 @@
    const api = createVpsAdminClient({ execute: createHaveApiExecutor(runtime) });
    const page = await api.vps.index({ params: { limit: 10 } });
    for (const vps of page.data) {
+@@ -796,7 +837,7 @@
+   }
+ }
+ 
+-main().catch(console.error);
++main().catch(() => console.error("Požadavek na API selhal."));
+ </code>
+ 
+ Další akce a typy popisuje
 @@ -815,12 +856,24 @@
  Ukázku ulož jako ''src/main.rs'' a spusť příkazem ''cargo run'':
  

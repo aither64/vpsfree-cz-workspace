@@ -115,6 +115,15 @@
    const result = await api.resource("vps").action("list")({
      params: { limit: 10 },
    });
+@@ -666,7 +698,7 @@
+   }
+ }
+ 
+-main().catch(console.error);
++main().catch(() => console.error("The API request failed."));
+ </code>
+ 
+ See the [[https://github.com/vpsfreecz/haveapi/tree/master/clients/js|client README]]
 @@ -695,7 +727,14 @@
  
  func main() {
@@ -142,6 +151,15 @@
    const api = createVpsAdminClient({ execute: createHaveApiExecutor(runtime) });
    const page = await api.vps.index({ params: { limit: 10 } });
    for (const vps of page.data) {
+@@ -744,7 +785,7 @@
+   }
+ }
+ 
+-main().catch(console.error);
++main().catch(() => console.error("The API request failed."));
+ </code>
+ 
+ See the [[https://github.com/vpsfreecz/vpsadmin-typescript-client#readme|client README]]
 @@ -762,12 +803,24 @@
  Save this example as ''src/main.rs'' and run it with ''cargo run'':
  
