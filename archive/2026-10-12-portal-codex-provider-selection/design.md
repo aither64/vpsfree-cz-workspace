@@ -1,5 +1,24 @@
 # Design and verification brief
 
+## Cancellation feedback follow-up
+
+The limits popup must hide historical canceled operations, including the live
+verification request, while retaining local confirmation for a Switch or Cancel
+action made in the currently open popup. Track its exact operation UUID separately
+from the retry attempt; observing acceptance must not clear that feedback identity.
+Clear feedback on dialog close (including Escape) and preview selection changes.
+Polling and reopening must not restore it. Waiting, applying, failures, recovery
+and terminal-restoration notices remain shared and visible.
+
+This is a bounded browser-only change: no HTTP, provider state, receipt, native
+protocol or schema changes. Both package directions can load existing state;
+software recovery remains forward-only. Add focused status and actual popup-event
+regressions, then commit and obtain independent affected-lane/history review.
+Consolidate refreshed configuration/workspace pin streams, check the composed
+deployment contract and build the user package. Deploy via the stable profile
+switch, retaining the native PID and active codex-lb selection. No VM or native
+routing rerun is needed unless review or checks reveal a changed boundary.
+
 ## Scope and contracts
 
 Implement the approved initial subscription/Snajpa catalog and workspace-wide
@@ -96,6 +115,23 @@ remain read-only. Generic codex-web exposes explicit provider fields/results and
 an application-owned resume hook; it does not own workspace catalogs or switching.
 
 ## Acceptance and verification
+
+Final-review refinements: keep bounded UUID receipts in the same atomic state
+write as the operation; retain the enabled worker between requests; prove both
+forward and compensation resume payloads before quiescing; wait for exact native
+service and protocol readiness even with an empty loaded set. Persist a terminal
+restoration notice before releasing the reservation and clear it after restoration.
+Reconstruct member-specific identity and clear active limits on provider changes.
+
+Restart ownership permits the exact native daemon and its direct, idle built-in
+code-mode host, plus direct team MCP children whose complete arguments match an
+inventoried retained member. Accepted helper executables belong to the selected
+runtime or the validated daemon launch marker's retained runtime. All threads must
+pass the existing idle/goal/submission proofs. Unknown processes, descendants of
+helpers (including VMs), foreign member arguments and mismatched executables refuse
+the stop. This replaces the impractical sole-PID requirement: native capture can
+itself start required idle MCP servers. Verify selected-native behavior in isolation
+and request affected architecture/risk/compatibility review before rollout.
 
 Quick focused Go/Ruby/browser contracts: configuration validation/redaction, origin
 protection, idempotency/cancel races, per-provider caches, popup preview independence,
