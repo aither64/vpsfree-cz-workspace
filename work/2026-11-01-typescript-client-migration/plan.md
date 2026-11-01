@@ -2,46 +2,98 @@
 
 ## Goal
 
-I'd like you to check what would it take for vpsadmin-webui to use vpsadmin-typescript-client instead of the dynamic haveapi-client. Would be beneficial for correctness? Would it be difficult to implement? How about maintainability? Suggest a solution.
+Implement full adoption of `vpsadmin-typescript-client` in vpsadmin-webui,
+replacing the custom endpoint/request solution. The user accepted the assessment,
+authorized regeneration with current HaveAPI, permitted SDK changes for clarity
+and separation of concerns, required those changes to come from its generator,
+and authorized autonomous implementation in isolated worktrees. The user may
+steer the work while it proceeds. Merge, registry publication and deployment
+have not been requested.
 
 ## Affected repositories
 
-- `vpsadmin-webui`: consumer architecture and current dynamic client use.
-- `vpsadmin-typescript-client`: generated client/runtime and release workflow.
-- `haveapi`: current dynamic runtime and TypeScript generator contracts.
-- Read-only assessment of fetched default branches; no implementation, merge or
-  deployment is requested.
+- `haveapi`: TypeScript generator, generated public APIs and focused regression
+  tests. Reusable transport remains HaveAPI-owned.
+- `vpsadmin-typescript-client`: schema/provenance refresh, regeneration from the
+  exact generator revision, current runtime alignment, package consumer checks.
+- `vpsadmin-webui`: shared request policy and full migration of vpsAdmin calls,
+  capabilities, outputs, tests, documentation and reproducible dependency pins.
+- `vpsadmin`: clean full-fixture schema export input; API behavior changes are
+  not planned.
 
 ## Approach
 
-Architect `architect0` owns the code investigation and recommendation in
-`design.md`. Lead owns scope, acceptance inspection, session records and the
-user-facing assessment. Compare concrete call patterns, shared types and runtime
-behavior, identify confirmed gaps, and propose incremental adoption with bounded
-effort estimates. Use existing implementers only for independent read-only
-inventories if the architect needs them.
+Architect `architect0` owns `design.md`, stable contracts and package boundaries.
+Lead owns acceptance, tracking, coordination and user communication. Eight
+retained implementers own complete execution packages through source, tests,
+technical docs, hooks, commits and follow-up fixes. Preserve retained settings.
+
+Generator foundation and clean schema capture precede final SDK regeneration;
+the shared WebUI policy/pilot must pass before dependent domain migrations run
+in parallel. Temporary compatibility wrappers are transitional only. Final
+acceptance removes `haveApiCall`, `CallOpts`, historical unwrapping and duplicate
+wire DTOs. SDK functionality improvements originate in the HaveAPI generator;
+never patch generated SDK files directly.
+
+Provisional owners: implementer0 generator; implementer1 schema/SDK package;
+implementer2 WebUI foundation/pilot/shared integration; implementer3 VPS/storage;
+implementer4 networking/DNS; implementer5 users/settings; implementer6
+infrastructure/operations; implementer7 finance/content. Activate packages only
+when their dependencies and file boundaries are settled in `design.md`.
 
 ## Decisions
 
-- Assess correctness, implementation effort and maintenance together.
+- Prefer a clean separation of reusable SDK mechanics and WebUI application
+  policy; SDK changes are authorized when needed for that separation.
 - Preserve authentication, server authorization, capability discovery, error
   semantics and transport behavior in any proposed solution.
 - Do not treat generated TypeScript types as runtime validation.
+- All vpsAdmin operations and descriptions/capability queries use SDK APIs in
+  the final tree. BFF/session/OAuth and external downloads remain their own
+  protocols, not invented vpsAdmin SDK operations.
+- Serialize Git operations and overlapping edits per repository. Rebase at
+  phase boundaries and before final review, inspect upstream additions, and
+  migrate new custom call sites too. Preserve colleagues' commits and behavior.
 
 ## Compatibility and deployment
 
-Assess generated schema/API drift and old/new consumer/server combinations.
-No persistent-state migration or deployment is being performed. A future
-proposal must retain the OAuth BFF boundary and account for rollback.
+Preserve old/new supported API combinations, live field/permission checks,
+public isolation, OAuth BFF boundaries, uncertain-write handling, no automatic
+write replay, action-state receipts and pagination completeness. No persistent
+state/schema or node protocol migration is intended. Rollback restores the
+previous frontend/dependency artifact; already accepted server writes still
+require reconciliation. No integration or deployment approval is inferred.
 
 ## Documentation
 
-Readers are the maintainer and a future migration implementer. Investigation
-findings and the proposed solution belong in this session's `design.md`; no
-product documentation changes are needed for this assessment.
+Readers are implementers, reviewers, maintainers and operators. `design.md`
+contains the architect-owned implementation/verification brief and assessment
+evidence. Lasting SDK contracts go in HaveAPI/SDK docs; final WebUI architecture,
+API/provenance/package docs and work log change with implementation. Temporary
+phase/revision/rebase evidence remains in session records.
 
 ## Testing plan
 
-Inspect source and existing tests at exact fetched revisions. Do not run builds
-or integration tests for a read-only feasibility assessment. State confidence
-limits and the checks required for a later implementation.
+Run focused generator/SDK consumer and WebUI quick checks per package. Complete
+and commit intended changes, consolidate transitional history and pass quick
+checks before mandatory independent final review by retained reviewer0
+(Astra/xhigh). Then run the risk-appropriate longer build/integration/browser
+checks, using fresh verification watchers for long/uncertain operations. Record
+exact commits, schemas and dependency inputs. Verify real isolated API behavior
+separately from fixtures. No new validation framework or unrelated API fixes.
+
+## Execution records
+
+- [Architect-owned implementation brief](design.md): exact generator contract,
+  64-file domain partition, phase dependencies and verification.
+- [Source-backed contract dispositions](contract-dispositions.md): unsupported
+  current request shapes and minimal direct-consumer corrections.
+- [Execution backlog](backlog.md) and [milestones](implementation-milestones.md).
+- [Original feasibility assessment](assessment.md): evidence and scope before
+  the user authorized full implementation.
+
+The first foundation source changes are underway. A fresh full-fixture capture
+is byte-identical to the prior schema; source/tooling provenance is refreshed.
+Generator changes add reusable SDK facilities and retain current0.32 runtime
+support. Later domain fixes address real unsupported controls and advisory
+revision checks, preserving supported semantics without backend expansion.
