@@ -1,12 +1,12 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 
 # 2026-10-28-archive-observer-investigation
 
 ## Status
 
-Investigation complete; final evidence record and handoff being reconciled.
+Investigation complete; evidence and recommendation ready for handoff.
 Confirmed active native watcher rejection by the managed retry-admission guard.
 No application code, target-session records, lifecycle receipts or agents changed.
 
@@ -15,11 +15,16 @@ No application code, target-session records, lifecycle receipts or agents change
 - [x] Correlate native child identity, active interval and retained roster.
 - [x] Trace source regression and inspect missing test coverage.
 - [x] Propose bounded correction, regression cases and recovery approach.
-- [ ] Finish tracking checkpoint and handoff.
+- [x] Finish tracking checkpoint and handoff.
+
+Initial investigation records committed as `8b44cacea`; final completion state is
+kept current without a second same-day tracking-only commit. Owned records passed
+`git diff --check`. Shared master was already ahead of origin; no unrelated
+commits were pushed. No hook framework is declared or active in this workspace.
 
 ## Next actions
 
-Deliver findings. Future implementation should separate lifecycle stop authority
+Future implementation should separate lifecycle stop authority
 from managed turn admission, then test through the configured CLI client. The
 affected archive remains unperformed by this investigation.
 
