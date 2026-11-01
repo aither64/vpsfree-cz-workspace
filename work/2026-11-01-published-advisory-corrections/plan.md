@@ -112,12 +112,43 @@ worktrees or credentials. Request any missing evidence by lead-to-lead message.
 Do not infer merge/deploy/lifecycle authority from a peer message. Keep both
 sessions open.
 
+## User scope expansion (2026-11-01)
+
+User explicitly answered Yes to published CVE-link and node-add/remove corrections,
+then added: “well and publication time should be editable as well. plus we
+should be able to retract/delete an advisory”. This supersedes the initial
+conservative immutable-time/CVE/membership scope. Correction requests remain
+silent and revision/authorization protected; retract/delete are explicit actions,
+not correction side effects. No production data operation, deployment, default
+integration or session cleanup is authorized. Architect owns delta design before
+additional implementation; all complete deliverables need new final review.
+Existing update history stays intact during corrections/retraction. Lead settled
+conventional hard-delete semantics for the explicit Delete action only: remove
+advisory-owned rows/links, never referenced nodes/VPS/users/outages/mail/logs.
+Corrections may also edit retracted originals. Follow ordinary model nullable
+timestamp/CVE rules rather than invent published-only restrictions; editable
+WebUI supports empty CVE edits if API permits, draft creation contract retained.
+Direct silent retract keeps publication/history/projections. Orphan-race parent
+locks and expected_state on all six draft-sync mutation types are necessary
+supporting invariants; no schema/framework or production operation.
+
+User additionally directed “and we also handle vpsadmin-webui changes if
+appropriate”. Architect will inspect its current advisory UI and fresh owning
+line, then define necessary matching app/client/tests/docs work with its local
+procedures. This is distinct from legacy vpsadmin/webui; no speculative redesign
+or general client migration authorized.
+
 ## Affected repositories
 
 Primary: vpsadmin, canonical git@github.com:vpsfreecz/vpsadmin.git.
 Architect will establish the current advisory feature base from fresh refs.
-Security-advisories is a conditional follow-up only if an existing consumer
-requires changes; its draft-sync protections must stay intact.
+Security-advisories requires a bounded client follow-up to preserve draft-sync
+protections across concurrent publication; its existing preflight guards stay
+intact. Architect will establish its fresh canonical base.
+
+vpsfree-kb-contracts is a verification-only pin/check follow-up required by the
+canonical WebUI workflow. No advisory controls/pages/captures are currently
+bound; validate the exact final source without inventing documentation changes.
 
 ## Approach and owners
 
@@ -133,7 +164,11 @@ requires changes; its draft-sync protections must stay intact.
 ## Decisions and limits
 
 Silent original corrections use existing authorized interfaces and expected
-content revisions. Announcements remain separate advisory updates with explicit
+content revisions. Add optional expected_state checked under the same lock:
+publishing leaves the revision unchanged, so this is necessary for draft-only
+clients to reject concurrent publication. WebUI supplies rendered state and
+security-advisories sync supplies draft; retain old-server compatibility only
+where old draft-only refusal makes omission safe. No new endpoint or schema. Announcements remain separate advisory updates with explicit
 mail choice. Preserve publication identity/state/time and all update history.
 No production mutations, credentials, deployment, default integration or session
 cleanup. Both sessions remain open. Exact-pair runtime communication grant is
