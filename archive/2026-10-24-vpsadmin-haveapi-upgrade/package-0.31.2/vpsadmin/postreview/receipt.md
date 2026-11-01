@@ -1,0 +1,11 @@
+# A0312 affected package/services verification
+
+Native services PASS32/32/expected_success/exit0 at exact8102179cf7f7e9bb534965c8acb3e02ef723045f, immutablefilteredsource6pvm8ybrgjn5d19n2yc0sdkb2vlfxjzx-source/all3171trackedpaths/modes/symlinks match. Strictactual==preparedconfigm28rz63g…; freshcapacityinclLIVE4,16GiBRAM/shm8CPU/Nixjobs1cores2, shortsocketbudget retained. Nativegueststop/QEMUexit0/killNONE/destroy, no owned effects/process/FD refs remain.
+
+**Originalwrapperlimitation:** services/status.json retains wrapperexit1/912.853s after successfulnative+actualAPIload because the temporary artifact selector omitted GoDocumentation before its hashassertion. It was a receiptKeyError, not a service/assertion failure. Originalstatus/logs immutable. Lead accepted diagnosis and released only unperformedpackageproofs; no servicesrerun/testrepeat or inventedwrapper0. See services/reconciliation.json.
+
+Remaining-onlyproof native0/3.876s: actualGoDocumentation532b386…d1e9 andTS57a9…6fd53/selectedsource bytes matchverified0312gemarchives; both packagedJSbundlesecda280f…9259 matchrelease. Actualfive0312/Faraday2.15.1/Fiddle1.1.8/sharedassets load wasalready0 inoriginalbatch; missinglinkage/closure confirmslibffi3.8.0. SAMEactualPHPnormaloutputclient0312/Guzzle7.16.1load0, fullrecursivegraph+roots retained. See remaining-probes/{status.json,reconciliation.json,packaged-source-and-assets.json,paths.json}. No PHP13repeat/timing/matrix/SDK/auth/upstream/predeployGET.
+
+All testedsource/fullignored45d4lock unchanged. Originalsource/input/test/system/APIrecursivegraphs in services/, remainingPHPgraph+paths in remaining-probes/. Rootedsource/test/systemclosure andPHP under/tmp/h32s.vg93tm18/roots retained. ActualAPI /nix/store/iwc7rbf3dm8fn72jp5p3rjdzh2jnybv7-vpsadmin-api-unknown; actualPHP /nix/store/b1bkz4qfg3n5y6arlcgzsgcc80psqsaj-vpsadmin-webui. Exact.drv/system paths are in paths.json. These are standalone services-test inputs, not a native devclusteroutput-equivalence claim.
+
+Final public Go token HTMLproof remains for actualredeployment: SetExistingTokenAuth/HAVEAPI_TOKEN/noformerwarning/unchangedtransport+BasicOAuthinit, no tokenacquisition/authenticatedSDKrequest. Lead/E3 own separatelyauthorizedreset/rebind/start; A0 did none.

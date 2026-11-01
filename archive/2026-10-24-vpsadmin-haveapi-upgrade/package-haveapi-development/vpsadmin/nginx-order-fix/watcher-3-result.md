@@ -1,0 +1,4 @@
+- Result: failed; exit status `1`.
+- Command: the exact assigned `run.sh` invocation, run once from the specified workspace directory. Elapsed time: about 68 seconds.
+- Captured output: empty. The script’s own logs and stage result were not printed in the captured output, so I can’t report the failing stage or log paths from this run.
+- No retry, diagnosis, edits, approval, deployment, or other operation was performed. No process remains running.

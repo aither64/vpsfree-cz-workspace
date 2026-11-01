@@ -1,0 +1,4 @@
+- **Result:** Passed, exit status 0; elapsed time 206.439 seconds.
+- **Command:** `python3 /tmp/h311-setup.py` in the assigned workspace. All seven recorded steps exited 0.
+- **Evidence:** [status.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-0.31.1/vpsadmin/setup/status.json) records the result. The command also reported `API BUNDLE0.31.1 READY` and `RESULT passed`.
+- **Temporary root:** `/tmp/h311.nvpejht0`.

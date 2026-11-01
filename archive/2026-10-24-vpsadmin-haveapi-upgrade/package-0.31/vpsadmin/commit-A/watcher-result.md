@@ -1,0 +1,3 @@
+- **Result:** Passed. The exact command exited 0; status records commit `3f113098e8cdb90ad90426144f37594265b4a571`.
+- **Elapsed:** 55.031 seconds. The command ran in the `vpsadmin-031` worktree.
+- **Evidence:** Full log and status are in [commit-A](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-0.31/vpsadmin/commit-A). The status file records the executed `nix develop -c git commit` invocation and exit status.

@@ -1,0 +1,4 @@
+- **Result:** Command exited successfully with status 0 after 14.481 seconds.
+- **Operation:** `python3 /tmp/h311-publication-root.py` from the assigned working directory.
+- **Result artifact:** [root-result.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-0.31.1/vpsadmin/publication/root-result.json)
+- **Recorded effect:** The root command invoked the Nix publication wrapper and exited 0. This artifact does not establish the remote push outcome; no independent remote effect proof was performed.

@@ -1,0 +1,3 @@
+The assigned command `python3 /tmp/h31-measure.py` exited **1** after 56.135 seconds. The anonymous/en GET returned HTTP 200 in 15.0459 seconds (15.0260 seconds process CPU), with 2,806,144 response bytes. The command ended with `END 1 failed`; no member/admin rows were reported.
+
+The status artifact records `fullLockUnchanged: true`, source head `d258591f81e49365b02206dd184296f5f5e7d045`, and an empty source status. Result artifact: [native-results.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-0.31/vpsadmin/A31-R1-measure/native-results.json). Status: [status.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-0.31/vpsadmin/A31-R1-measure/status.json).

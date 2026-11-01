@@ -1,0 +1,5 @@
+- **Result:** Passed; exact command exited `0`.
+- **Command:** `python3 /tmp/h31-quick-setup.py`
+- **Elapsed:** 150.248 seconds.
+- **Evidence:** All six stages reported exit `0`; API readiness marker was emitted. Status: [status.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-0.31/vpsadmin/quick-setup/status.json). Full per-stage logs are in `/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-0.31/vpsadmin/quick-setup`.
+- **Observed effects:** The assigned setup completed, including the selective Composer update and PHP metadata load/format stages.

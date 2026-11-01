@@ -1,0 +1,4 @@
+- **Result:** Passed; `python3 /tmp/h312-setup.py` exited 0 after 224.386 seconds.
+- **Evidence:** Every recorded step in `status.json` exited 0. The tool output also reported `API BUNDLE0.31.2 READY` and `RESULT passed`.
+- **Status artifact:** [status.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-0.31.2/vpsadmin/setup/status.json)
+- **Scope:** Command output records the scoped generation, API load, tooling DSL and offline specs, selective Composer update, and PHP metadata steps. No failure or escalation was reported.

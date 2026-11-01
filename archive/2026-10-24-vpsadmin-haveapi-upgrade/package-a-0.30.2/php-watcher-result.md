@@ -1,0 +1,5 @@
+- **Result:** Passed, exit status 0. The 13 focused PHP tests completed with 355 assertions; PHPUnit reported 1 deprecation.
+- **Revision and command:** Baseline `57a53e700132d43589f4e6bcf519f1c7ec3fd2ed` with assigned dependency edits; `nix develop .#webui -c /tmp/vpsadmin-haveapi-a302-php.sh`
+- **Elapsed:** About 23 seconds.
+- **Log:** `/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-a-0.30.2/php-generation.log`
+- **Live operation:** None.

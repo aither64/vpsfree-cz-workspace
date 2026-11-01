@@ -1,0 +1,3 @@
+- Wrapper exit: `0` (native `exit.txt`: `0`).
+- Elapsed time: about 63 seconds.
+- Command completed from the specified working directory. Logs and results are in [operation.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-haveapi-development/vpsadmin/core-final/operation.log) and [exit.txt](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-haveapi-development/vpsadmin/core-final/exit.txt), alongside the nativecore/full JSON artifacts.

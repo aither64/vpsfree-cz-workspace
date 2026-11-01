@@ -1,0 +1,7 @@
+- **Result:** Failed; overall command exit status 1. The `console` stage exited 0, then the batch stopped on an assertion.
+- **Revision:** `70a2ed54b98d0c2f359a9cc4484452a257a9807b`
+- **Command:** `python3 /tmp/ha3-legacy-batch.py` (run once)
+- **Elapsed:** 1475.877 seconds
+- **Recorded stages:** `flake-source-graph` 0; `root-test-runner` 0; `prepare-console-router` 0; `console-router-recursive-derivations` 0; `prepare-webui` 0; `webui-recursive-derivations` 0; `console-pre-run-native-roots` 0; `console-node-pre-run-system-roots` 0; `console-services-pre-run-system-roots` 0; `console` 0.
+- **Failure evidence:** Assertion referenced `/tmp/ha3.ssn7ogsv/console/os-test-console-router-718eeef8/config.json` and `/nix/store/xqdwq4y4vhfdh73p792igr5l6f6lx682-os-test-console-router.json`.
+- **Status artifact:** [status.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/verification-a-legacy-70a2ed54b/status.json). The batch ended before the remaining scenarios. No active operation remains.

@@ -1,0 +1,4 @@
+- **Result:** Failed before the assigned script started; exit status 1. Shell output: `setup/operation.log: No such file or directory`, then `setup/exit.txt: No such file or directory`.
+- **Operation handle:** completed exec `chunk_id 0.1.0` (no running process to retain).
+- **Elapsed:** 0.1 seconds.
+- **Artifacts:** Neither requested file was created. The shell errors are in the exec result; there is no captured script log or authoritative script exit file. Stopped without retrying.

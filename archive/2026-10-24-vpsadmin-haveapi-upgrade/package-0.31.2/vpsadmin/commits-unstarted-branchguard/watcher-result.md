@@ -1,0 +1,1 @@
+Result: failed. `python3 /tmp/h312-commit.py` exited 1 after 0.042 seconds with `FAILED AssertionError()`. The single read of [status.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-0.31.2/vpsadmin/commits/status.json) reports no completed steps and 0.007 seconds elapsed. No commits are reported.

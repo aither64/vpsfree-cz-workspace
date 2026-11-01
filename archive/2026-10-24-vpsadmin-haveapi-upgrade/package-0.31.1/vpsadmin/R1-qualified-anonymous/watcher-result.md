@@ -1,0 +1,3 @@
+Result: operation completed; command exit status 0, elapsed 45.611 seconds. Tested source head: `9697bf28c3171d4ee3e0980160be60764ae2c4aa`.
+
+The `ROLE_RESULT` reported an anonymous English request, HTTP 200, 2,806,144 response bytes, with all listed checks true. Retained artifacts are in [R1-qualified-anonymous](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-0.31.1/vpsadmin/R1-qualified-anonymous): `command.log`, `status.json`, `requests.jsonl`, and `native-results.json`. No further operation was run.

@@ -1,0 +1,4 @@
+- **Result:** Passed. `status.json` reports `passed`; the command exited 0. All recorded steps, including `services-up`, packaged API/PHP loads, native linkage, and PHP regression, exited 0.
+- **Revision:** `9697bf28c3171d4ee3e0980160be60764ae2c4aa`
+- **Command:** `python3 /tmp/h311-services.py` — elapsed 751.148 seconds.
+- **Evidence:** [status.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-0.31.1/vpsadmin/postreview/services/status.json). No failure or escalation was reported.

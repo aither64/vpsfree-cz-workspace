@@ -1,0 +1,3 @@
+Result: **failed**, exit status `1`. The assigned script ran to completion in about 30 seconds; it produced no terminal output. I did not retry or investigate.
+
+Authoritative artifacts: [operation.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-haveapi-development/vpsadmin/finalize-ready/operation.log) and [exit.txt](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-haveapi-development/vpsadmin/finalize-ready/exit.txt).

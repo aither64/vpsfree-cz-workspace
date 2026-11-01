@@ -1,0 +1,1 @@
+Result: failed; command exited with status 1 after 23.4 seconds. The script produced no stdout. I did not retry or diagnose; its owned logs/status remain the source of failure evidence.

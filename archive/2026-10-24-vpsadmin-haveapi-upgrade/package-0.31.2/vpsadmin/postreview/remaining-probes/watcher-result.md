@@ -1,0 +1,3 @@
+Result: **passed**. The exact command `python3 /tmp/h312-remaining-probes.py` exited 0 after 3.876 seconds. All six probes passed, including Fiddle linkage and closure, PHP derivation checks, the packaged PHP load, and final native-root check.
+
+Status: [status.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-0.31.2/vpsadmin/postreview/remaining-probes/status.json). No failures or kernel compile were reported.

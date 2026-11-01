@@ -1,0 +1,125 @@
+# WebUI Next design and requirements handbook
+
+Reviewed baseline: product `fd290b5ec1b22900e704e8cb990c5ba050af2394`, 2026-09-27.
+That is the original review baseline, not the current deployment pointer.
+The [2026-09-30 release receipt](../work-log/2026-09-30-three-site-release.md)
+records PRs 1–8 deployed as `718cf759` on all three WebUI hosts.
+Documentation language: English. Product languages: Czech and English.
+
+The canonical repository is now `vpsfreecz/vpsadmin-webui`, with the original
+`Kerrycek/clankerdev` Git history retained through upstream revision
+`e7ce3d73e799fc60e5933fe23bdb3a979eb4d6b9`. That source revision is an
+adoption baseline, not evidence that the new NixOS preview has been deployed.
+The [operations guide](OPERATIONS.md) separates the older Clankerdev releases
+from the NixOS `newadmin.vpsfree.cz` service and records their current boundaries.
+
+## Purpose and authority
+
+This handbook explains what the UI does, why it is designed this way, how it got
+here, and how to assess a change without losing existing behavior. The maintainer
+requested a self-contained design/requirements handover on 2026-09-27.
+
+The previous documentation pointed to a sibling `UI_REDESIGN.md` outside this
+repository. That file was absent from the available source checkout and searched
+workspace. Many older spec pages had been replaced by quarantine stubs. Those
+links cannot serve as a handover. This handbook replaces that external dependency
+for ongoing requirements and design documentation. It does not pretend to recover
+the missing file's exact content or an undocumented original rationale.
+
+Evidence priority: latest explicit maintainer decision, recorded accepted decision,
+current API/source contract, reproducible test evidence. Code describes implemented
+behavior; it does not by itself approve new requirements. Conflicts and missing
+history must be recorded rather than silently resolved in favor of existing code.
+
+The root [UI_REDESIGN.md](../../UI_REDESIGN.md) is a compatibility navigation page;
+it does not contain a recovered original or a competing specification.
+
+## Reading order
+
+1. [Requirements register](REQUIREMENTS.md): stable IDs, source, acceptance,
+   implementation status and links.
+2. [Product and interaction design](PRODUCT_DESIGN.md): audiences, navigation,
+   screen composition, forms, errors, responsiveness and accessibility.
+3. [Workflow catalog](WORKFLOWS.md): what each product area supports and its
+   success/failure obligations.
+4. [Architecture](ARCHITECTURE.md): runtime, data flow, security and source map.
+5. [API contracts](API_CONTRACTS.md): backend boundaries and known mismatches.
+6. [Decision history](DECISIONS.md): rationale, alternatives and superseded designs.
+7. [Verification and release](VERIFICATION.md): evidence levels, commands and
+   outstanding beta gates.
+8. [Operations and handover](OPERATIONS.md): setup, deployment, rollback and
+   remaining ownership questions.
+9. [Source register](SOURCES.md): provenance, reconstructed history and limitations.
+10. [Generated inventory](IMPLEMENTATION_INVENTORY.md): every declared route and
+    API adapter in the current checkout, with source links.
+11. [Immutable packages](PACKAGING.md): separate frontend/BFF outputs, dependency
+    hashes, source boundaries and provenance checks.
+12. [NixOS service](NIXOS_SERVICE.md): reusable disabled module, runtime
+    environment, private nginx boundary and evaluation fixtures.
+
+13. [Action contracts](ACTION_CONTRACTS.md): role/state/input rules and legacy boundaries.
+14. [Requirement evidence](EVIDENCE_MATRIX.md) and [domain coverage](DOMAIN_COVERAGE.md): verification entry points and reverse adapter traceability.
+15. [Development](DEVELOPMENT.md), [configuration](CONFIGURATION.md) and [troubleshooting](TROUBLESHOOTING.md): clean setup, persisted data and failure diagnosis.
+16. [Handover](HANDOVER.md), [documentation review](DOCUMENTATION_REVIEW.md) and [visual references](VISUAL_REFERENCES.md): acceptance responsibilities and dated evidence.
+
+These chapters port [legacy PR530](https://github.com/Kerrycek/clankerdev/pull/530),
+adapted to canonical main and the 2026-09-30 release. The
+[port record](../work-log/2026-10-03-documentation-port.md) distinguishes current
+contracts from imported historical verification.
+
+The [work log](../../WORK_LOG.md) records chronology. Requirements record current
+intent; decisions explain transitions; test results prove only their stated scope.
+
+## Contributor and operator entry points
+
+- [Clean checkout](DEVELOPMENT.md): dependencies, fixture tests and local authentication setup.
+- [Configuration and data](CONFIGURATION.md): precedence, all BFF settings, browser/server state and recovery limits.
+- [Failure diagnosis](TROUBLESHOOTING.md): symptoms, evidence boundaries and security-review map.
+
+## Detailed review and handover
+
+- [Domain coverage](DOMAIN_COVERAGE.md): every API module mapped back to behavior, including helpers and non-adapter boundaries.
+- [Action contracts](ACTION_CONTRACTS.md): role/state/action tables and concrete validation rules.
+- [Requirement evidence matrix](EVIDENCE_MATRIX.md): each requirement mapped to verification, with missing proof explicit.
+- [Handover checklist](HANDOVER.md): acceptance, owners to assign, evidence access and remaining decisions.
+- [Visual references](VISUAL_REFERENCES.md): synthetic captures with revision and status.
+- [Audit disposition](DOCUMENTATION_REVIEW.md): findings, corrections and limits.
+
+## Maintenance contract
+
+Follow the [maintainer review and release workflow](../../AGENTS.md#maintainer-workflow-agreed-2026-09-30):
+prepare focused PRs for review, merge on explicit instruction, and deploy only
+the explicitly requested release through the separate site configuration
+repository. Application commits and deployment input updates are distinct.
+Use descriptive `dev/...` task branches. Account for concurrent contributors:
+check current upstream and overlapping PRs, preserve their work and reconcile
+documentation changes. Maintain this handbook and the work log during each
+task, not only at release time. Existing Clankerdev hosts have not been retired
+or reassigned by this agreement.
+
+Every behavior change must update the affected requirement and workflow in the
+same PR, plus a dated entry under [docs/work-log](../work-log/README.md).
+Record the requirement ID in the PR. If no requirement applies, add one with its actual source; mark proposals as proposed. Preserve IDs
+and supersession history. New instructions override older conflicting decisions,
+but must be written down with their consequences and migration needs.
+
+For each row distinguish code status, verification scope and deployment status.
+Do not upgrade an open PR to delivered based on a screenshot or local pass. Update
+release outcomes separately with exact UI/API revisions. Regenerate the inventory
+when routes or adapters change. `npm run audit:design-docs` checks local links/heading anchors,
+requirement IDs, one evidence coverage row per ID, module-to-domain coverage and generated inventory drift; it cannot validate prose accuracy.
+
+Reviewers check: source of the requirement; old/new behavior; all roles and scopes;
+API reality; error/uncertain outcomes; cs/en; mobile/desktop; test evidence; migration
+and rollback; documentation/work-log updates. Do not restore superseded layouts or
+weaken tests to satisfy an outdated document.
+
+## Coverage limit
+
+The register records the concrete maintainer requests recovered during the documented review of the
+available task history, recent PR history, and a domain inventory of current code.
+It is a reviewable baseline, not a claim that every earlier conversation has been
+recovered or every legacy feature has been certified. Unknown rationale, missing
+live evidence and outstanding decisions are listed explicitly. Full independent
+code/security audit and final beta certification have not been completed by this
+documentation change.

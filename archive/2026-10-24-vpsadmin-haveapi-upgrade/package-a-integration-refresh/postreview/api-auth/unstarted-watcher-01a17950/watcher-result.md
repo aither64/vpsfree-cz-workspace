@@ -1,0 +1,1 @@
+The command receipt is written and the `launch-release` marker exists. I have not launched the command because the parent’s thread/handle has not arrived; the assigned verification remains unstarted.

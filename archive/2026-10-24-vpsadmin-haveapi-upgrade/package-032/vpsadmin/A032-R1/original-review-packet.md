@@ -1,0 +1,58 @@
+# Released HaveAPI 0.32: committed consumer review packet
+
+**Committed and quick-green; STOPPED for independent review before long builds/tests/publication.**
+
+Repository `vpsadmin`, branch `2026-10-24-vpsadmin-haveapi-upgrade-032`, own worktree `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-24-vpsadmin-haveapi-upgrade/vpsadmin-haveapi-032`. Final range `ac10a62f1cb0fc890378ae83cdf18dd0e29f049a..76ba8e63882da42acbcc5117fba794d7f4e445f2`, tree `b1eaae15c2dfcc60afd65ba67008be3495ab13d6`. Immutable final source `/nix/store/gls37jl1ab5y1651ra462kyd6880fblx-source`, rooted under `/tmp/h032.ab4eyukw/roots/source`; all3172tracked bytes/modes/links match the committed checkout. Source clean, owned process references empty, all command effects reconciled. [Exact final proof](final-proof.json).
+
+User requests the released HaveAPI version in vpsAdmin and separate preparation of production channel/instructions. This A0 package implements only the consumer source and quick checks under architect design.md:4311, including accepted two-active-JS and exact inert-exporter-sample amendments. E1 owns configuration/production preparation; E3/parent own later dev transfer/activation/served acceptance. No default integration, production operation, credential/client action or KB work is included.
+
+## Source, baseline and history
+
+Fresh canonical SSH fetch selected exact default `ac10a62f1cb0fc890378ae83cdf18dd0e29f049a`, matching the accepted baseline. Its old08c3-to-ac10 delta is four ordinary dependency-refresh commits/16metadata paths, without application/schema/migration changes. Reviewed application content from `08c3bd7e..aae07e6` was carried to this new branch while preserving ac10 dependency records. The new release is a substantive successor, not whole-tree equivalence.
+
+The complete final series has exactly two logical commits and39changed paths:
+
+- `11b26c0a5f6fa51fc6eb63b8f28dd5e8ccbaf721` — released0.32 dependency update,17paths. API five registry gems, Ruby CLI/download/outage consumers, PHP metadata and both actual npm bundles.
+- `76ba8e63882da42acbcc5117fba794d7f4e445f2` — owning consumer profiles/private optional configuration/proxy protections/docs/tests and coherent exporter release boundary,22paths.
+
+All prior repeated development Git pin updates and Git-only installer machinery are absent from this series. `packages/api/common.nix` equals the baseline's ordinary installer; the Git shim, installer RUBYOPT hooks, make-doc and two-index removal do not enter the final tree. Published registry gems supply their own generated docs. The supported prior8102 release stream and publishedaae/1b,90e2/2f6,59d/511 plus earlier recovery refs/roots/receipts remain intact separately; no published ref was rewritten. The old four-commit series is not retained as redundant final pin history.
+
+**NO MIGRATIONS**: no migration files/schema changes in the complete range, and its migration commit history is empty. There is no introduced merged/released/deployed/externally-consumed migration to retain. [Complete series](complete-series.txt), [complete final diff](complete-feature.diff), [39-path inventory](complete-paths.txt), [diffstat](diffstat.txt), [old08c3..aae versus newac10..76ba range comparison](range-diff.txt), [old-to-new final tree diff](old-new.diff), [baseline refresh delta](baseline-delta.diff).
+
+## Released package and consumer boundaries
+
+Canonical annotated HaveAPI tagv0.32.0 peels to `0e7166a0f8f15827bfac051666a53bf449e999ec`, tree `a87c3b7d186b015c720210eb3dc765af6e186170`. All five actual downloaded RubyGems archives independently match the accepted SHA256;232packaged lib/bin files match this exact tag, and the server archive contains11doc files. [Archive identities](archive-identities.json), [tag/archive content proof](archive-tag-content.json). These checks establish artifact/source identity, not a new broad upstream audit.
+
+API manifest uses ordinary `~> 0.32.0` constraints for all five gems; packaged and full effective locks select exact0.32.0. Full API lock SHA256 `ea0a24b176bd3526288fa217dbd43f38e715fe7c3b9f468a94682015559fa0a1`. Metadata was generated with the existing scoped Gemfile/copy helpers, conservative HaveAPI-only lock updates, bundix and nixfmt. All115common unrelated API entries,27client entries and32download-mounter entries remain exact to ac10. API adds only the three generator gems and their required Fiddle/tomlrb dependencies; local vpsadmin-client metadata updates its HaveAPI requirement. Eight other baseline package lock/gemset paths remain exact ac10 objects. [Conservative metadata delta](metadata-delta.json), [registry hashes/default-installer proof](registry-metadata-proof.json).
+
+PHP Composer update selects haveapi/client0.32.0 at mirrord0d51d09ada7beb863d2cd726ca446504312579a, preserving43unrelated Composer entries exactly. Normal composer2nix generation changes only the owning HaveAPI archive source/hash in php-packages.nix; the package's noDev deployed output remains a later proof. [PHP metadata proof](php-metadata-proof.json).
+
+Both active generic JS files (`webui/public/js/haveapi-client.js`, `console_router/public/haveapi-client.js`) are exact `package/dist/haveapi-client.js` from actual npm0.32 archive SHA256144cf17ada3b4578c8a3d81c87d183c94bd72d98e83934475c019b8bfd8b2efc. Their identical173805bytes have SHA2569285eab56e435ee86a501a24808e15496d44521881a032090003a1108511f016. The tag's checked-in dist was not used or version-patched. The WebUI template really loads its bundle. SDK0.1.1/runtime0.30.2 and React2e32 remain independent and unchanged. [Direct JS archive binding](javascript-archive-proof.json).
+
+Reviewed profiles, VPS owner login example, real mounted Go sample/code outcome, docs-cookie privacy/locale/header-vs-cookie/OPTIONS/nil-state cleanup, direct API HAProxy route, safe logs and optional private configuration remain. Existing mounted assertions required no change for this release. Exact released OAuth/helper/auth/server/public-assets source equality supports only its honest unchanged scope; default dependency and PHP artifact changes still require targeted later deployed proof.
+
+The exporter substitution, runtime exact guard, CLI help and docs now consistently select0.32.0. Its tracked inert `api.rb.example` is the only new literal controlled-file allowance. The regular-file/symlink ordering and live api.rb/database/hooks/private OAuth JSON/key, inherited environment, clean-source and fixture refusals remain. The normal loader reads exact config/name.rb and never loads the example. The positive sentinel/no-ActiveRecord case includes this sample; negative cases include symlinked sample/private files. Original current-source refusal is retained in [negative log](exporter-current-source-negative.log); the accepted narrow fix resolves it without a wildcard or configuration loading. [Affected final safety result](exporter-safety-final.json), [guard/syntax/lint log](exporter-safety-final.log).
+
+## Quick checks and effects
+
+Retained implementer settings were verified: Sol/xhigh/workspace_write, installed full_access. Retained840 native watcher configuration is unavailable, so the documented visible owner-monitor fallback was used without model substitution or setup loop. Ordinary Nix1job/2cores profiles remain `/tmp/h032.ab4eyukw/roots`; all original handles ended. No long API/PHP/CLI package or services VM, real fixture export, CI or live query ran.
+
+- Focused mounted full **8/8PASS**,68.427s; core **8/8PASS**,56.296s; same IDs,0failures/0pending. Full effective lock restored exactly. [Mounted proof](mounted-quick-proof.json), [full result](full.json), [core result](core.json).
+- Existing database-free exporter safety/snapshot **14/14PASS** before the amendment. After the accepted guard change, only affected safety **9/9PASS** and current-checkout no-API-load check were run; unchanged snapshot results are retained. [Initial units](exporter-unit.json), [final safety](exporter-safety-final.json).
+- One bounded local check reused exact producer methods against the installed registry bundle for CLI/curl argv, complete commented success/failure/password transcripts and Ruby CLI help. **16/16PASS**, with local argv-capturing stubs and no network target/API calls or executed marker. [Native result](shell-argv-transcript-help.json), [log](local-safety.log). No broad compiler/browser/upstream audit campaign ran.
+- Ruby syntax on11owning inputs, Nix parse/format, shell syntax, RuboCop and diff checks PASS. Final affected safety files separately pass syntax/RuboCop. [Format log](format.log).
+- Both commits and the final prose amend pass normal pre-commit and commit-msg hooks. [Release hooks](commit-release.log), [consumer hooks](commit-consumer.log), [final amend hooks](amend-consumer.log). No bypass. The final subject-width advisory was corrected in the owning amend.
+
+Operational repairs stayed bounded: initial post-checkout Overcommit trust refusal was resolved by proving all hook/config bytes equal to ac10 and normal --sign, then completing normal worktree registration. Composer2nix's first nameless invocation refused before generation; passing the existing package name completed normal generation with baseline equality. An overly broad staging assertion stopped before a commit operation and was corrected to exclude only actual release paths; my premature status was explicitly corrected. Original receipts/logs remain. None is presented as a product failure or hidden retry.
+
+Ignored files are own generated gem caches/locks and Composer vendor dependencies; no ignored API private config exists. Canonical mountedaae, its PHP/private files, client/key/config and rollback source were not changed. This new worktree's generated Composer vendor is normal quick tooling state; actual deployment must use the newly built lock-derived noDev vendor, not infer identity from it.
+
+## Documentation, review and remaining gates
+
+`docs/api-client-examples.md` describes normal released packaging, retains private hook/proxy/SDK compatibility guidance, and removes obsolete Git-source/rejection prose. `docs/api-schema-export.md` records the exact release for reproducible export and the inert tracked sample. Entry links remain in docs/README. The lead's writing pass and the vpsFree English writing skill were applied; incidental release-series wording was removed while exact exporter/SDK compatibility versions remain for a reason. No KB/config ownership overlaps were edited.
+
+Requested retained independent review: reviewer0, saved Sol/xhigh/read_only; general, architecture/repetition, scope/proportionality, risk/compatibility lanes with complete final history and explicit no-migrations conclusion. Overall risk **HIGH** for dependency/security/deployment boundaries and exporter input checks. Reuse unchanged accepted source conclusions only at their actual scope; the new registry/client/PHP/JS artifacts and baseline are not old Git outputs.
+
+After accepted review, separately released longer work must prove actual five registry gem/spec/load/docs/assets and frozen API closure; actual CLI/download/PHPnoDev outputs and both JS package bytes; a real isolated exporter fixture; ONE required all34services-up with phase-correct capacity/effects; then conditional exact feature SSH publication/no-writer handoff. Current source has not been published or deployed. E3/parent own later protected transfer/public update, actual vendor/JS/CLI bindings, bounded PHP login/read/logout and served CLI/curl inert transcript acceptance. Production remains preparation; no default integration authorization exists.
+
+Session: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-24-vpsadmin-haveapi-upgrade/

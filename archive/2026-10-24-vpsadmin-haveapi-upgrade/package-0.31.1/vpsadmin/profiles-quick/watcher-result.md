@@ -1,0 +1,3 @@
+- **Result:** Passed, command exit status 0; all three verification steps reported exit status 0.
+- **Command:** `python3 /tmp/h311-profiles-quick.py` in the assigned workspace; elapsed 96.748 seconds.
+- **Status:** [status.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-0.31.1/vpsadmin/profiles-quick/status.json). The command reported no failure or kernel compile.

@@ -1,0 +1,4 @@
+- Result: passed, exit status 0.
+- Command completed in about 3 minutes 24 seconds under operation handle `44760`.
+- Log: `/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-haveapi-development/vpsadmin/commit-final/operation.log`
+- Authoritative exit file: `/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-haveapi-development/vpsadmin/commit-final/exit.txt`

@@ -1,0 +1,5 @@
+- Result: completed single anonymous request, command exit status **0**; native RSpec utility also returned **0**.
+- Tested revision: `d258591f81e49365b02206dd184296f5f5e7d045`. Elapsed: **55.63 seconds**.
+- Evidence: HTTP 200, role `anonymous`, locale `en`, no current session; all reported checks passed. Response: 2,806,144 bytes; wall time 15.23s; CPU 15.22s.
+- Native results: [native-results.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-0.31/vpsadmin/A31-R1-qualified-anonymous/native-results.json). Status: [status.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-0.31/vpsadmin/A31-R1-qualified-anonymous/status.json).
+- No failure or escalation reported.

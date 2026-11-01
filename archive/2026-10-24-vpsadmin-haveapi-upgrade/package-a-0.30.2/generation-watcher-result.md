@@ -1,0 +1,5 @@
+- **Result:** Passed, exit status 0.
+- **Command:** `/tmp/vpsadmin-haveapi-a302-generate.sh`; baseline `57a53e700132d43589f4e6bcf519f1c7ec3fd2ed`.
+- **Elapsed:** About 53 seconds.
+- **Evidence:** Full output retained at [generation.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-a-0.30.2/generation.log). It records successful dependency installation and all four HaveAPI gems at version `0.30.2`.
+- **Live operation:** None.

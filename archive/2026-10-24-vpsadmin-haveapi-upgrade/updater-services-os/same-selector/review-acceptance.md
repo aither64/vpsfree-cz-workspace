@@ -1,0 +1,11 @@
+# Corrected provider final review acceptance
+
+Reviewer0, saved gpt-6.1-sol/xhigh/read_only, completed all four lanes at HIGH risk with **NO FINDINGS**. Assignment c5fc0b54-892d-4e0f-81ae-28df29bdef48; native turn01a1912c-89ef-7be1-8a8f-1071a697245c; same-session roster40 and native settings verified in the reviewer report. No nested reviewer or source mutation.
+
+Complete range767dfd587e346168e1443e65ccdb67ce748f3fe3/tree80181fb9f3805e99734b85edfdbcdd022f5e4b67..3fdecfbbdd93f92754a0384d0134958c260cf619/tree4990ae5d719e4d7cdea8d207660ad26632fb4270. Exactly one coherent commit, seven paths/+575/-53,105 outside entries unchanged and clean final source. No obsolete history, repeated pin stream or further consolidation. **NO MIGRATIONS**: schema/envelope/provenance formats unchanged; target-proof refusal is an explicit compatibility restriction.
+
+Review accepts ordinary OS selection for every operation, lazy selected-target payloads, truthful retained boot export/host tools, independent layout validation plus unchanged final strict guard, target-specific proof, unchanged peer descriptors, pending/retry/promotion ordering and proved retained-start payloads. README explains the build/export distinction and legacy recovery boundary. Scope remains provider-only; no new restart/export-transition framework.
+
+Final quick results were inspected at their actual scope: CLI1/32; maintenance34/250; retained-start/root failure2/21; pure projection including ten layout refusals. Earlier mixed-batch passes remain scoped; no full48 or installed-package pass is inferred. Normal fullflake and devcluster-check with the new real services projection are still required. Oldacc is a substantive superseded design, not an equivalent predecessor. Its recovery refs, logs, roots and uninstalled consumer132/61v remain preserved.
+
+Lead accepted the report and released postreview package e30b988a. Publication preserves remoteacc before leasing only the feature to3fdec. Consumer source refresh can proceed independently only after current baseline contracts are settled; acceptance/deployment depends on corrected checks. The user's separate aitherdev workspace deployment approval is recorded in state.md. No integration or lifecycle permission follows.

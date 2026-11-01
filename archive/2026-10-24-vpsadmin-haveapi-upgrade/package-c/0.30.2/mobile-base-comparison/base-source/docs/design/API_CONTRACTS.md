@@ -1,0 +1,265 @@
+# API contracts and compatibility
+
+Requirements: REQ-018–023, 035–055, 059, 071. Source of request details is the checked
+adapter plus the matching deployed backend revision, not a guessed legacy form.
+[Adapter inventory](IMPLEMENTATION_INVENTORY.md) gives all current entry points.
+
+## Cross-cutting contract
+
+HaveAPI resources return envelopes and metadata. The client configures version,
+metadata namespace and authentication header. Preserve typed failures, validation
+messages, permission errors and transport ambiguity. Never equate missing/failed
+data with an empty successful collection or silently broaden owner scope.
+
+For each endpoint change review: method/path; supported filters; input units;
+nullable/missing fields; role/ownership; ordering/cursor; success receipt; error
+body/status; transaction/action-state behavior; cancellation/idempotency limits.
+Frontend/server versions are independent and must be recorded together for live
+claims. Local adapter tests verify serialization, not deployed backend capability.
+
+| Contract | Implemented/required behavior | Evidence and caution |
+| --- | --- | --- |
+| UI settings | PUT `/webui_user_settings/{namespace}/{key}` with value-only resource body; URI-encode namespace/key. | [adapter](../../src/lib/api/webuiUserSettings.ts); collection PUT + POST fallback caused the persistence bug fixed by PR519. |
+| Session JSON | Same-origin JSON with accessToken, sessionKey, sessionExpiresAt; anonymous values null; no secrets in executable config. | [server](../../bff/server.js), [auth](../../src/app/auth.tsx); retain origin/security checks. |
+| New OAuth session identity | The authorization-code exchange sends one validated callback `req.ip` in `Client-IP` and exact `User-Agent: vpsadmin-webui`; invalid IP fails before provider contact. Refresh and revocation use that User-Agent without Client-IP. | [BFF contract](../../bff/README.md), [server](../../bff/server.js); this describes new session metadata, not retroactive changes or browser authorization identity. |
+| Resource overrides | Explicit admin override only where backend action supports it. | PR503; do not infer that every create/edit endpoint accepts one universal flag. |
+| Custom soft deletion | Admin lifecycle PUT for the supported future lifetime transition; member uses normal DELETE. | PR518; do not send invented expiry parameters to DELETE or use a delete-then-edit race. |
+| Hard deletion | Explicit privileged mode; disregard a leftover soft-expiry draft. | PR518; validate actual backend permission and receipt. |
+| Console entry | Acquire/reuse console token through existing API; bounded request on entry. | PR517; do not create unbounded replacement sessions during polling. |
+| Registration reconsideration | Derive supported actions from actual request state/created-user constraints. | PR510; a generic state dropdown must not advertise unsupported transitions. |
+| Effective timezone | Resolve actual account/server timezone when account field is absent. | PR502; Europe/Prague is a real zone ID, not a hardcoded label for all accounts. |
+| Node heatmap | Use configured legacy base URL, validated node FQDN/type/maintenance eligibility. | [URL model](../../src/lib/nodeHeatmap.ts); missing config omits unavailable actions. |
+| News translations | POST `/news_logs` and PUT `/news_logs/:id` use the `news_log` namespace with `en_message`, `cs_message` and `published_at`. English is required; empty Czech removes its translation. Read-only `message` is localized and must not be used as an English editing fallback. | [adapter](../../src/lib/api/newslog.ts), [browser contract](../../e2e/specs/app/admin_newslog.spec.ts); backend source inspected at locked `a65a4dfeb92a59df4a80a737a20bcbf8558793ff`, not a new live certification. |
+| Async mutations | Require an appropriate action-state receipt, then track completion. | [action states](../../src/lib/api/actionStates.ts); success without required identity is uncertain. |
+
+## Intentional capability and filter limits
+
+These are the checked frontend contracts at the handbook baseline, not a new
+certification of every deployed API version. A field displayed on an object is
+not automatically a supported list filter. Pagination and includes metadata are
+separate from filtering; filtering only the loaded page must not be presented as
+a search of the whole collection.
+
+| Collection | Supported filter boundary | Source / regression entry point |
+| --- | --- | --- |
+| Exports | Owner (`user`); no global text, dataset, snapshot, host or state filter in this adapter. Detail-by-ID is a separate request. | [adapter](../../src/lib/api/exports.ts), [fixture contract](../../e2e/specs/app/exports_filter_contract.spec.ts) |
+| Networks | `location`, `purpose` and optional exact `enabled` when supported by the API. The current list search exposes location/purpose only. Do not forward text, IP-version, role or managed-state filters merely because those attributes exist on a network. | [adapter](../../src/lib/api/networks.ts), [adapter tests](../../src/lib/api/networks.test.ts), [URL/filter fixture](../../e2e/specs/admin/cluster_networks_filter_contract.spec.ts) |
+| Migration plans | `state` and `user`; no free-text query. This does not limit the separate destination-node picker for a VPS migration. | [adapter](../../src/lib/api/migrations.ts), [fixture contract](../../e2e/specs/admin/migration_plans_filter_contract.spec.ts) |
+| Transaction items | `transaction_chain`, `node`, `type`, `success`, `done`; no item-name/text search. Transaction **chains** have a different contract which does accept `name`, as well as state, object and user/session filters. | [both adapters](../../src/lib/api/transactions.ts), [item-filter fixture](../../e2e/specs/app/transaction_items_filter_accessibility.spec.ts) |
+| User namespaces / maps | No text or label search. Namespaces support `size`; maps support `user_namespace`. Owner filtering, and namespace `block_count`, are exposed only in admin scope with admin fields enabled and no fixed owner. Removing an invalid/disallowed URL filter resets cursor/page. | [scope/URL rules](../../src/components/userNamespaces/userNamespaceFilterSemantics.ts), [fixture contract](../../e2e/specs/app/user_namespace_filter_contract.spec.ts) |
+| Resource packages | Adapter filters are `environment` and `user`, not package-label text. Global/personal/all scope normalization is handled by the list model. | [adapter](../../src/lib/api/clusterResourcePackages.ts), [model](../../src/pages/app/admin/cluster/ResourcePackagesListModel.ts), [model tests](../../src/pages/app/admin/cluster/ResourcePackagesListModel.test.ts) |
+
+These test links are verification entry points, not a claim of a fresh live run.
+Any extension needs a verified endpoint contract and scope/pagination regression
+coverage; adding a search input alone does not establish server support.
+
+### Node creation versus editing
+
+The [node lifecycle model](../../src/pages/app/admin/nodes/NodeLifecycleModel.ts)
+keeps role, location and bootstrap CPU/memory/swap capacity out of the edit payload,
+although they participate in creation. Updates contain only changed `active`,
+`name`, `ip_addr`, `max_tx`, `max_rx` and `max_vps` fields. Blank optional limits
+must not become zero: clearing a populated limit sends null only when its API
+metadata permits null; otherwise validation rejects the edit. An already-unset
+limit is omitted. See [model cases](../../src/pages/app/admin/nodes/NodeLifecycleModel.test.ts).
+Do not infer editability from the create form or silently add unsupported update
+fields when reorganizing the node page.
+
+## Pagination: known blockers
+
+For the locked vpsAdmin source `a65a4dfeb92a59df4a80a737a20bcbf8558793ff`
+(HaveAPI 0.29.8, API 7.0), `/host_ip_addresses` with `order=asc` and
+effective-admin `/ip_addresses` with `order=asc` return ascending IDs after
+`from_id`. These two lists use a 250-row sequential traversal with at most 20
+requests or 5,000 rows, 10 seconds per request and 30 seconds overall. Each next
+request uses the last validated ID unchanged. The first page's count is useful
+diagnostic metadata, not a transaction snapshot; a full final page at the
+budget remains partial. A failed later page keeps earlier validated rows and
+displays partial status. This source finding still needs a pinned live API check.
+
+For non-admin `/ip_addresses`, the same `order=asc` groups by owner before ID.
+It therefore uses one bounded response of at most 1,000 rows without an ID
+continuation. `desc` and `interface` on the admin page sort loaded rows in the
+browser. Host IP lookup uses the supported exact `addr` filter, and an ID outside
+the suggestion sample is accepted for an eligibility-dependent DNS transfer
+only after a targeted filtered API query returns that exact ID. The `q` filter
+is unsupported on these host IP routes. Legacy `q` or cursor links reset with
+an explanation; the sampled free-IP suggestions cannot prove availability.
+
+This does not change the ordering contract of network interfaces, assignments,
+accounting, datasets or other collections. Their separate correctness work
+remains open.
+
+The common UI uses `from_id`/visited cursor history, but that alone does not define
+ordering. The next cursor must agree with each backend's ordering and inclusivity.
+A minimum ID is unsafe when time-ordered data has nonmonotonic IDs; equal timestamps
+need deterministic tie handling. An empty page, a short page, an explicit next
+cursor and an API error are different outcomes.
+
+| Area | Requirement | Current tracked work | Release constraint |
+| --- | --- | --- | --- |
+| VPS user-data | Supported owner/format filters and honest search; stable multipage traversal. | Issue241, [PR496](https://github.com/Kerrycek/clankerdev/pull/496) | Pending; depends on backend work excluded by maintainer. |
+| IP assignment history | Ordered cursor, tied times, owner scope, end/recovery. | Issue208, [PR507](https://github.com/Kerrycek/clankerdev/pull/507) | Pending; no lossless guarantee on current deployed contract. |
+| Dataset/snapshot lists | Match actual dataset/snapshot order and cursor. | Issue189, [PR509](https://github.com/Kerrycek/clankerdev/pull/509) | Pending; frontend-only assumptions cannot fix unsupported server order. |
+
+A prior isolated user-data run recorded three pages (25/25/1), owner/format/search,
+error/end and cleanup checks against UI `3ac1be67` / API `320af0e1`. It does not
+certify the deployed main or IP/dataset/snapshot cases, and its database timestamps
+were not an adversarial time-order fixture. Keep this evidence scoped.
+
+Backend PR43 concerns user payments and was present in test API `486350466`; it
+is not the user-data/IP fix. Backend PR44 was later rejected by the maintainer.
+Do not merge dependent work or revive frontend PR242 based on earlier approval.
+A new agreed contract must precede release of the dependent fixes.
+
+Required cursor matrix: at least three pages; nonmonotonic IDs versus timestamps;
+tied timestamps; filtered/owner-specific lists; foreign-owner denial; malformed
+cursor and API errors; previous/next/back/reload; empty/final page; no duplication
+or omission. Local fixture success is not enough to prove the server's ordering.
+
+## VPS address availability
+
+`GET /ip_addresses` accepts `usable_for=vps`, which includes networks with
+purpose `vps` **and** `any`; `purpose=vps` is an exact filter. The compatible-use
+contract was added upstream in `632786cba39c03394ccf00db54639b0e835773cd`
+and is present in the dev API revision
+`486350466e8fb6f966add1cde3fa2bc12b4d6b62`.
+
+The `location` filter uses LocationNetwork membership, including secondary
+locations. Non-admin requests also honor `userpick` and address visibility.
+`network.primary_location` is descriptive metadata, not the list of allowed
+locations. Do not apply a second primary-location/environment filter in the UI.
+An export-only network is not compatible with VPS allocation.
+
+With network availability support, assignment requests also send
+`network_enabled=true` when `IpAddress.Index` metadata advertises that filter.
+Cached detached addresses are revalidated with the same availability criteria.
+Explicitly disabled addresses are excluded from assignment selectors but remain
+visible in owned inventory, with assignment unavailable. Missing `enabled` is
+unknown: older APIs receive no unsupported filter and no fabricated disabled
+state. Capability lookup failures remain visible instead of broadening selection.
+
+Free-IP suggestions apply the advertised network availability filter before the
+50-row limit and reject explicitly disabled rows in stale responses. A successful
+capability response from an older API omits the unsupported filter.
+
+Each suggestion query has one 12-second budget covering shared capability
+discovery and its address request. Expiry settles that suggestion as an error
+and allows later locations to load. It cannot start an address request after
+late metadata or accept late address results. The shared capability request and
+its five-minute cache remain available to other callers; a suggestion timeout
+does not cancel or invalidate them. Capability failures are errors, not evidence
+of an older API or an empty pool.
+
+Explicit retry starts a new suggestion budget. It reuses successful cached
+metadata, retries a settled failed lookup, or joins an existing pending lookup.
+Joining a stalled lookup is still bounded for that caller; retry does not force
+a second shared OPTIONS request. The budget applies per query, not to the whole
+page. Priority locations load first and later locations continue progressively.
+
+Administrator network create/edit checks the relevant action's `enabled` input
+metadata before displaying or sending the availability control. An edit also
+requires a known current boolean state. Omitted fields preserve server state;
+false is sent explicitly when disabling. The dialog shows network identity and
+existing assigned/owned counts. Disabled networks remain in ordinary lists.
+A failed capability lookup shows the error and a retry action. Cached capability
+data cannot authorize availability writes while a lookup is pending, fetching
+or errored. Other fields remain editable.
+
+Administrator Network responses may include `available_to_users` and
+`owned_unassigned`. The first counts registered allocations without an owner,
+interface or operation reservation and is zero on disabled networks. The second
+counts owned allocations without an interface, including reserved entries and
+disabled networks. Each address or prefix counts once. These are inventory
+totals; allocation still depends on location, purpose, quota and current
+reservations. They are read-only and absent from non-admin responses.
+
+The network list displays `used` as registered stock, `assigned` as interface
+assignments (including VPS and exports), and the two new counts independently.
+The editor displays total `owned`, including assigned entries. Older APIs may
+omit the new counts; a dash represents unknown data without a derived fallback.
+Admin IP flags warn only when the included network explicitly reports
+`enabled=false`; true or missing state adds no warning or extra request.
+
+These additions use the enforcing backend's network availability contract and
+are separate from backend PR #44 and IP-history cursor work. API validation
+remains the final authority for ownership, quota, network availability, concurrent
+reservations and successful assignment. Admission accepted before disable may
+finish afterward; existing assigned service continues.
+
+## Dev deletion configuration limitation
+
+Investigation recorded a missing default lifetime for VPS soft deletion in the dev
+API environment. The frontend can expose supported modes and custom expiry, but
+cannot decide the service's retention policy. Confirm whether the original delete
+was accepted before retrying. The maintainer must choose the default policy before
+an authorized shared configuration change; do not change a live VPS to test it.
+
+## Backend proposal procedure
+
+Capture sanitized reproduction, exact UI/API pins, current request/response,
+expected supported behavior, owner/role boundary, ordering assumptions and tests.
+Prepare a scoped proposal separately. Do not modify upstream repositories, shared
+schemas or services without explicit matching authorization. Local references and
+previous PR approval do not confer blanket permission.
+
+## Concrete client contracts
+
+The [action contracts](ACTION_CONTRACTS.md) specify request state transitions,
+reason/placement rules, migration timing/IP serialization, deletion modes, resource
+overrides and DNS validation. They are the reviewed frontend contract at the stated
+revision; deployed backend permission/capacity remains authoritative. Contract
+changes must identify the matching backend resource/action/version and have
+adversarial tests, not just update an adapter type.
+
+## API language and transaction labels
+
+The WebUI sends `Accept-Language: cs` or `en` with HaveAPI calls, matching the
+resolved UI preference (including system language). This overrides the API
+user-language default without changing the user's mail language. The existing
+API contract comes from locked vpsAdmin `a65a4dfeb92a59df4a80a737a20bcbf8558793ff`.
+Transaction `label` is translated by the API; `name` is a technical identifier.
+Headings prefer nonblank `label`, then `name`, then the UI fallback. Technical
+names remain available for diagnostics and operation classification.
+
+Changing UI language cancels old query results and invalidates read caches;
+active queries refresh and inactive queries refresh when next used. Editors
+remain mounted and mutations are never replayed. A read retried after OAuth
+renewal retains its original language. No local translation map duplicates the
+API catalog. See [verification and limitations](../work-log/2026-10-06-transaction-api-labels.md).
+
+## VPS initialization inputs
+
+Both VPS create and reinstall accept either `vps_user_data` (saved resource ID)
+or `user_data_format` plus `user_data_content` (inline), never both from these
+forms. Disabled initialization omits all three fields. Blank inline content is
+rejected locally; submitted nonblank bytes, including indentation and trailing
+newlines, are preserved. This uses the existing API contract and does not change
+the backend.
+
+The saved picker queries `/vps_user_data` in descending ID pages of 50, continuing
+with the minimum ID as `from_id`. Admin accounts send the selected VPS owner's
+`user` filter, including their own ID in My view. Regular members omit `user`
+because that input is blacklisted and the API scopes results to the authenticated
+member. Query cache keys include owner and role; returned rows are additionally
+restricted to that owner. It does not send the unsupported `q` filter. Changing
+owner clears and invalidates the selected ID before submission.
+
+## Admin node overview and maintenance (REQ-028)
+
+The inventory keeps `/nodes` keyset pagination/state filters and enriches its rows
+by ID from admin-only `/nodes/overview_list`. Both calls are existing contracts;
+OverviewList has no cursor/filter parameters and returns active nodes. Inactive
+index entries retain their own fields. Public status remains a limited fallback,
+not the sole authority for authenticated metrics. Memory/ARC are MiB and uptime
+is seconds. Only administrators request the overview; support uses its permitted
+index and public status. A failed overview is visible without erasing the list.
+
+Maintenance checks OPTIONS `/nodes/:id/set_maintenance?method=POST` and exact
+`GET /nodes/:id` before confirmation and again before posting. Synchronous
+`POST /nodes/:id/set_maintenance` sends `node.lock` plus optional `node.reason`.
+No API change or synthetic task ID is needed. Unknown outcomes require exact
+read-back before another write. `master_lock` belongs to a parent resource and
+cannot be removed on the node. The frontend comparison detects stale state and
+reason, but cannot provide an atomic compare-and-swap guarantee absent from API.
+[Implementation, test scope and limitations](../work-log/2026-10-19-nodes-overview-maintenance.md).

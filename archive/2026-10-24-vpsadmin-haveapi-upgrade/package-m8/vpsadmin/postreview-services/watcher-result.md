@@ -1,0 +1,5 @@
+- **Result:** Passed; wrapper exit status 0.
+- **Command:** `bash /home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-m8/vpsadmin/postreview-services/run.sh`
+- **Elapsed:** About 18 minutes.
+- **Output:** No stdout or stderr from the wrapper. I did not inspect separate artifacts or logs.
+- **Runner state:** The invocation exited; no remaining owned process was reported.

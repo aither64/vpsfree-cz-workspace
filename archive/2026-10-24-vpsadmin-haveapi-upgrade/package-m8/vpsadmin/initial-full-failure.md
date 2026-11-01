@@ -1,0 +1,1 @@
+Full8 ran:7passed, OAuth example failed NameError from unintended duplicated cluster metadata assertion. Actual anonymous/nav example passed. Removed only duplicate; retain full.json/operation.log. Resume affected full OAuth +unperformed core8, no metadata regeneration.

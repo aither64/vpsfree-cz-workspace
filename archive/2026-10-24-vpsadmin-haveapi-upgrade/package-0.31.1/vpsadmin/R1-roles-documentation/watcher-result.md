@@ -1,0 +1,3 @@
+Result: **passed**. The command exited 0 after 143.789 seconds; all three steps reported exit status 0. Tested command: `python3 /tmp/h311-roles-documentation.py`.
+
+The result is recorded in [status.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-0.31.1/vpsadmin/R1-roles-documentation/status.json). The first step’s native results are at [roles-native-results.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-0.31.1/vpsadmin/R1-roles-documentation/roles-native-results.json).

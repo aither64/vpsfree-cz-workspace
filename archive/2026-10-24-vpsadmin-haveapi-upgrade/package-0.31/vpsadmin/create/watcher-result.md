@@ -1,0 +1,4 @@
+- Result: passed; exit status 0.
+- Command: `python3 /tmp/h31-create.py`; elapsed 18.79 seconds.
+- Status records `physicalWorktreeExists: true` for the requested `vpsadmin-031` worktree.
+- Logs: [command.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-0.31/vpsadmin/create/command.log) and [status.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-0.31/vpsadmin/create/status.json).

@@ -1,0 +1,4 @@
+- Result: **failed**, wrapper exit status **1** after **174.979 seconds**.
+- Tested revision: `94ccabc5471a1b8f0ecbca66f3fe0eec4749a338`. The API package build exited 0, and the five-gem/docs probe exited 0. The batch then stopped with recorded error `KeyError('gemName')`; the API milestone was not written, so there is no `API_PACKAGE_PROOF_PASS` evidence.
+- Logs and result: [operation.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-haveapi-development/vpsadmin/postreview-corrected/operation.log) and [status.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-haveapi-development/vpsadmin/postreview-corrected/status.json).
+- The services-up native VM batch did not start; the wrapper exited and no process remains from this operation.

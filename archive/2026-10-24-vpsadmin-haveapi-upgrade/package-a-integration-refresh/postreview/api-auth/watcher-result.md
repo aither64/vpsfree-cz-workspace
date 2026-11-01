@@ -1,0 +1,5 @@
+- **Result:** Passed (exit status 0); all seven steps exited 0.
+- **Command:** `python3 /tmp/har-api-auth.py`, run once at revision `2c6542941fde72c0ea7bb2991274981e98c5781c`; elapsed 2,514.394 seconds.
+- **Steps:** `root-services-testConfig`, `root-services-system`, `root-services-api`, `core-topics`, `full-topics`, `api-shell-recursive-derivations`, `retained-services-system-roots`.
+- **Status artifact:** `/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-a-integration-refresh/postreview/api-auth/status.json`
+- **Active effects:** The script’s temp root was `/tmp/har.wkithqwc`. The command exited; no cancellation or escalation was reported.

@@ -1,0 +1,5 @@
+- **Result:** Failed; exact command exit status **1**. The command produced no output.
+- **Command:** `bash /home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-m8/vpsadmin/postreview/run.sh`
+- **Elapsed:** About 3 minutes 20 seconds.
+- **Evidence:** The specified `/tmp/hm8p.zv7xyw0b/s/os-test-*/test-runner.log` was not present when checked. No `M8_PACKAGE_PROOF_PASS` artifact was observed.
+- **Remaining processes:** The command process exited. I did not inspect for other runner, VM, or virtiofs processes. No retry or cancellation was performed.

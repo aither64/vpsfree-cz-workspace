@@ -1,0 +1,5 @@
+- Result: **passed**, command exit 0; the script reported `BATCH RESULT passed`.
+- Revision: `70a2ed54b98d0c2f359a9cc4484452a257a9807b`. Command: `python3 /tmp/vpsadmin-a-services-short.py`. Elapsed: about 6 minutes 25 seconds.
+- All reported stages passed: `flake-source-graph`, `services-up`, `services-system-closure`, `test-recursive-derivations`, `system-recursive-derivations`, `api-recursive-derivations`, `same-packaged-api-build`, `packaged-api-load`, and `fiddle-closure`.
+- Artifact directory: `/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/verification-a-services-70a2ed54b-short`. The requested `RECEIPT/status.json` was absent after completion; the stage markers and process exit provide the result.
+- No owned operation remains active; no escalation was reported.

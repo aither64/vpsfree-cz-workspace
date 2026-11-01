@@ -1,0 +1,9 @@
+# Final workspace deployment and aitherdev release
+
+Both approved repositories are integrated: workspace consumer `c83620f63200da8274efbbaebfc985f35d4b9e1d` and extension `e4e7e95ed39bf514b33f8f8ae61ba9868de060ae`. Fresh SSH also confirms selected generic runtime `6f54d0c7fdb974705c120b3c1ef5372f5897d544` and Codex-web `d3a29bee90ef00a08816920408c596152339a637` exactly on their remote defaults. [Complete deployed lineage and source/input graph](lineage.json).
+
+Ordinary `workspace-host switch` completed with exit0 in50.380s, original handle70212. Profile219 selects the exact reviewed, checked and prepared `/nix/store/blwbq3jy7p8xpb3ajqmivylc4gdm4dvi-dev-workspace-0.2.0`. This is a new verified deployment of the substantive successor; nonancestor predecessor f1d is not described as literally merged.
+
+Five services are active/running, native Codex/provider process identities and same-session conversation continuity are preserved, and the existing cluster's public status is byte-identical. Original switch/driver processes are gone; authoritative coordination reports no pending jobs or integrations. Local portal request for this exact session returned200. Public TLS verified with the actual CA and correctly refused unauthenticated access401. An authenticated public end-to-end200 was not repeated because no reusable credential mechanism was available in the bounded context. [Runtime effects](runtime-health.json), [portal/native scope](health.json).
+
+After those checks, exact session-owned machine claim `d0061f09-dbfd-4531-b10f-862e7354a78f` was released and independently read back **released at2026-10-31T18:26:52Z**. [Compact receipt](receipt.json). No UI acceptance wait remains. Any later physical deployment requires fresh ownership. Source/private/recovery refs remain; no host-system or guest operation, cleanup or session lifecycle action was performed. The session stays open for application completion.

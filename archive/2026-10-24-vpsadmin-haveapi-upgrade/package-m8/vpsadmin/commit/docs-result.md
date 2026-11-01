@@ -1,0 +1,4 @@
+- **Result:** Passed, exit status `0`.
+- **Command:** `bash /home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-m8/vpsadmin/commit/docs.sh`, run once from the assigned workspace.
+- **Elapsed:** About 78 seconds.
+- **Output:** No stdout or stderr. The script owns logs and release; I did not inspect them. No running handle remains.

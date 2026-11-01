@@ -1,0 +1,5 @@
+- **Result:** Passed; command exit status 0. Total elapsed time: 127.824 seconds.
+- **Command:** `python3 /tmp/h312-correct-profiles.py`
+- **Steps:** retained-lock gemsets, core profiles, and full profiles all exited 0.
+- **Evidence:** [status.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-0.31.2/vpsadmin/profiles-quick/status.json); logs are in the same `profiles-quick` directory (`retained-lock-gemsets.log`, `core-profiles.log`, `full-profiles.log`, `watcher.log`).
+- **Physical effect:** No physical or live-system effect was reported in the status.

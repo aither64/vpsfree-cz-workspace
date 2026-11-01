@@ -1,0 +1,1 @@
+The assigned command did not start. The launch used an incorrect redirection path with a space before `batch.log`, so Bash failed with “Is a directory” and exit status 1. I did not retry or run anything else. No process was started; no batch log or status result was produced.

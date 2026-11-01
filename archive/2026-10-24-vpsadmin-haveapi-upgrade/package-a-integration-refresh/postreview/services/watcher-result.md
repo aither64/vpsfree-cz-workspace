@@ -1,0 +1,5 @@
+- Result: **passed**, command exit 0.
+- Revision: `2c6542941fde72c0ea7bb2991274981e98c5781c`; command: `python3 /tmp/har-services.py`; elapsed: 788.767 seconds.
+- All 15 recorded steps exited 0, including `services-up`, packaged API build/load, and Fiddle linkage and closure checks.
+- Status artifact: `/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-a-integration-refresh/postreview/services/status.json`
+- The command exited; no active effects or cancellation were reported.

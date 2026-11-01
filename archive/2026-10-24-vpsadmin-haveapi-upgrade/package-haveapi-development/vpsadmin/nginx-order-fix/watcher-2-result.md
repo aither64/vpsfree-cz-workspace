@@ -1,0 +1,5 @@
+- Result: **failed**, exit status `1`.
+- Command: `bash /home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-haveapi-development/vpsadmin/nginx-order-fix/run.sh`
+- Elapsed: about 13 seconds. Tested head: `94cc` (as supplied).
+- Raw output: empty; no log paths or stage information were printed in the captured output.
+- No operation remains running. No retry was made. The remaining operation is for the lead to review the script-owned result and decide what follows.

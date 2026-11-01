@@ -1,0 +1,5 @@
+**Result: failed**, exit status 1. The exact command completed in 540.7 seconds on revision `70a2ed54b98d0c2f359a9cc4484452a257a9807b`. `flake-source-graph` passed; `services-up` exited 1 after 540.0 seconds. The script recorded `BATCH FAILED: services-up exited 1; no retry`. No retry was performed, and the assigned command has finished; no owned operation remains active.
+
+- Status: `/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/verification-a-services-70a2ed54b/status.json`
+- Attempt 2 command receipt: `/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/verification-a-services-70a2ed54b/attempt2-command-received.json`
+- Full logs and other receipts: `/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/verification-a-services-70a2ed54b/`

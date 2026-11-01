@@ -1,0 +1,7 @@
+- Result: **passed** (command exit 0); all recorded steps exited 0.
+- Revision: `70a2ed54b98d0c2f359a9cc4484452a257a9807b`
+- Command: `python3 /tmp/ha3-webui-auth-released.py` (run once)
+- Elapsed: 1169.714 seconds; `webui#auth` took 1157.304 seconds.
+- Status receipt: [status.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/verification-a-webui-70a2ed54b/auth-corrected/status.json)
+- Command receipt: [command-received.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/verification-a-webui-70a2ed54b/auth-corrected/command-received.json)
+- Temporary roots were under `/tmp/ha3.ju8_ygrg`; the status records `native-roots` cleanup verification exit 0. No active process remains.

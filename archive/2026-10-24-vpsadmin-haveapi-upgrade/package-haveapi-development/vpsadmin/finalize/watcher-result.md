@@ -1,0 +1,3 @@
+The assigned operation failed. Its recorded exit is `01` (the process exited 1) after about 77 seconds.
+
+The log shows RuboCop found one offense: `Lint/MissingCopEnableDirective` in `packages/api/haveapi-git-gemspec-glob.rb:1`. Full output is in [operation.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-haveapi-development/vpsadmin/finalize/operation.log); recorded status is in [exit.txt](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-haveapi-development/vpsadmin/finalize/exit.txt). I did not retry or investigate.

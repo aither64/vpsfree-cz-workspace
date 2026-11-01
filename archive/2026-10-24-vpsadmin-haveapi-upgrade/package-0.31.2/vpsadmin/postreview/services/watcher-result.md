@@ -1,0 +1,5 @@
+- **Result:** Failed; command exit status `1`. The runner reported `KeyError('lib/haveapi/go_client/documentation.rb')`.
+- **Command/revision:** `python3 /tmp/h312-services.py` at `8102179cf7f7e9bb534965c8acb3e02ef723045f`.
+- **Elapsed:** 912.853 seconds.
+- **Evidence:** [status.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-0.31.2/vpsadmin/postreview/services/status.json). The services-up step and packaged API load both exited 0; the overall batch failed afterward.
+- No retry or cancellation was performed.

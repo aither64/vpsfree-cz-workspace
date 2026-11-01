@@ -1,0 +1,13 @@
+# Final site verification and publication accepted
+
+Exact reviewed c7a758c379a32c0edbfa4f3c1f8e60e4dfb082ab/tree92367c44992f4578ce7af33cf875920cb2fee357 passed all four ordinary confctl builds, selected proxy nginx syntax and selected Varnish VCL compilation. Sourcexj297/NAR7gO8 and475 entries/entire lock bind the final7219 product and preservedc218 runtime input. No deployment occurred.
+
+Lead independently read actual clean embedded revisions in all four built systems, compared all4136 common complete encoded derivation records in the4167 union and traversed the recorded nginx/PHP/FPM ini/pool/HAProxy/Varnish recursive input graphs against checked6d. Actual selected binary/config and retained PHP fixture hashes match. The31 changed derivations are traced by E1 to revision/source references, dependent wrappers and four proxy routes. Installed1120-entry package comparison is scoped to the sole.git-revision change; original site196 PHP5 stays the tested result. Site Varnish binary/VCL/unit/recursive inputs equal its own6d predecessor; product cache VTC stays scoped to its different tested build. No blanket cross-binary or mutable-dev/runtime claim.
+
+The lead's first readback used an incorrect metadata filename and then an absolute derivation key against the saved basename-keyed schema2 graph. Both were read-only reader errors corrected before acceptance, with no source/build/test repeated. E1's original65779 evidence-reader error is separately retained; corrected78379 passed.
+
+Lead inspected ordered ordinary-hook publication commands and independently compared saved SSH before/recovery/after maps. Nonforce6d recovery was published/read back first; only ownfeature changed under explicit expected6d lease toc7. Master2e1 and every other head remain unchanged. Publication62326 exited0 and comparison capture passed. Exact branch CI discovery exited0 with no runs; this is not a CI-pass claim. E1 final effects/handoff were inspected and accepted: all handles consumed,14 recorded PIDs gone, no uncertain effects and source/Git writer released. Final handoff and receipt hashes match the reported values.
+
+Product7219 has five automatic workflow successes and two in progress as of saved22:17:18Z; original observer87797 remains E2-owned. No duplicate monitoring or new remote queries by lead. No application default integration/deployment/claim/PR/lifecycle/cleanup authority inferred.
+
+[Review](../final/review-acceptance.md) · [Inputs](final-input-output-binding.json) · [Reuse](verification-reuse.json) · [Publication](publication.json) · [Session](https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-24-vpsadmin-haveapi-upgrade/)

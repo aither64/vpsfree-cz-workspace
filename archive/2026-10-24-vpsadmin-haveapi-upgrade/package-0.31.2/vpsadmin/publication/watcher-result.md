@@ -1,0 +1,3 @@
+Result: **passed**. The exact command exited 0 in 14.652 seconds. Its recorded push also exited 0 in 3.342 seconds, publishing reviewed head `8102179cf7f7e9bb534965c8acb3e02ef723045f` to `2026-10-24-vpsadmin-haveapi-upgrade-0312` with a normal, non-force push.
+
+Evidence: [root-result.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-0.31.2/vpsadmin/publication/root-result.json), [push-result.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-0.31.2/vpsadmin/publication/push-result.json), and [normal-push.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-0.31.2/vpsadmin/publication/normal-push.log).

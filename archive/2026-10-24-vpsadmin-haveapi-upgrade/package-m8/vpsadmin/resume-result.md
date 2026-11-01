@@ -1,0 +1,6 @@
+- **Result:** Passed; exit status **0**.
+- **Command:** `bash /home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-m8/vpsadmin/resume.sh`
+- **Revision:** `3ae74281` (as specified).
+- **Elapsed:** About 2 minutes 52 seconds.
+- **Output/artifacts:** No terminal output; the script owns its log, artifact, and release gate paths, which were not printed.
+- **Remaining owned processes:** None.

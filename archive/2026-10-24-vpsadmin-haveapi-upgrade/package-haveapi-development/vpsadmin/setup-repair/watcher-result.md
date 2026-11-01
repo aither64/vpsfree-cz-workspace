@@ -1,0 +1,5 @@
+- Result: **failed**, exit status `1`; elapsed time **52.9 seconds**.
+- Command: `bash /home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-haveapi-development/vpsadmin/setup-repair/run.sh`
+- Working directory: `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-24-vpsadmin-haveapi-upgrade/vpsadmin-haveapi-dev`
+- Authoritative artifacts: `/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-haveapi-development/vpsadmin/setup-repair/operation.log` and `exit.txt`.
+- The process completed; no retry or diagnosis was performed.

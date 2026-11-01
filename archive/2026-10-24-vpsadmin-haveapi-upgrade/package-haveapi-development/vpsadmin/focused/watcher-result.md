@@ -1,0 +1,5 @@
+- Result: **failed**, wrapper exit status **1**.
+- Exact command: `bash /home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-haveapi-development/vpsadmin/focused-checks.sh`
+- Elapsed: **106 seconds**.
+- Operation log: [operation.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-haveapi-development/vpsadmin/focused/operation.log). Recorded wrapper status: [exit.txt](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-24-vpsadmin-haveapi-upgrade/package-haveapi-development/vpsadmin/focused/exit.txt).
+- No terminal output. I made no retries or acceptance decisions.

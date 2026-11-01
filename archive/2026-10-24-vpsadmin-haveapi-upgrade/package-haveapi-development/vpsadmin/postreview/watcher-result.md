@@ -1,0 +1,5 @@
+- **Result:** Failed, exit status `1`; elapsed time about **54 minutes**.
+- **Command handle:** `4296`. The assigned command ran in the specified worktree for frozen revision `cba626581` / tree `40375`.
+- **Output:** `flake-source-graph`, `root-source`, `root-haveapi-source`, and `evaluate-services-derivation` ended with status `0`. `prepared-recursive-derivations` ended with status `1`, followed by `BATCH FAILED: RuntimeError('prepared-recursive-derivations exited 1; no retry')` and `BATCH RESULT failed`.
+- **API proof milestone:** `API_PACKAGE_PROOF_PASS` was not observed.
+- **Remaining process:** None; the command exited. No retry or separate status/log inspection was performed.
