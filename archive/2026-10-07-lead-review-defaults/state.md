@@ -1,14 +1,16 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 
 # 2026-10-07-lead-review-defaults
 
 ## Status
 
-Implemented, reviewed, tested and deployed on aitherdev. Live verification passed.
-Ready, awaiting merge approval; no merge, archive, delete or stop authorization.
-All feature heads are published and unmerged. No implementation/deployment blockers.
+Implemented, reviewed, tested, deployed on aitherdev and merged into master in all
+three repositories. Live verification passed.
+Post-merge runtime CI passed. Initiative complete; session remains open.
+User’s “merge it” direction covered the exact three repository/target set below.
+No implementation, review or deployment blockers; no archive/delete/stop direction.
 
 - [x] Planning and scope decisions
 - [x] Implementation and documentation
@@ -16,7 +18,8 @@ All feature heads are published and unmerged. No implementation/deployment block
 - [x] Independent final review
 - [x] Package checks and CI
 - [x] Deployment and live verification
-- [ ] Explicit merge direction and integration
+- [x] Explicit merge direction and integration
+- [x] Post-merge runtime CI
 
 ## Result and next action
 
@@ -27,27 +30,38 @@ and resets both on team changes. Explicit drafts and submitted retry bodies are
 preserved; existing presets and saved rosters keep their settings. Schema 4 remains
 unchanged; no migrations.
 
-Integrate only after explicit direction for the three repositories and master.
-Refresh refs/rebase before integration and preserve reviewed patches/comparisons.
-Configuration master advanced during deployment to b8e92252 (unrelated vpsAdminOS
-staging input update); aitherdev's selected channels do not include these inputs.
-The deployed configuration remains the exact reviewed feature head below. This
-branch needs rebasing onto current master during integration. Retain branches,
-worktrees, older Codex roots and this open initiative.
+Merge direction received in this conversation on 2026-10-07: “merge it”.
+Scope: aither64/dev-workspace -> master; aither64/vpsfree-cz-workspace -> master;
+vpsfreecz/vpsfree-cz-configuration -> master. All were fast-forwarded and pushed.
+The generic runtime head stayed unchanged. Workspace/configuration clean rebases
+preserved the reviewed patches exactly (`git range-diff` shows `=` for every
+commit). Upstream configuration staging input updates were preserved. No deployment
+change was needed: the selected runtime and site behavior remain the deployed ones.
 
-## Repositories
+## Repositories and integration
 
-All branches: 2026-10-07-lead-review-defaults. Clean dedicated worktrees beneath
-worktrees/2026-10-07-lead-review-defaults/:
+All retained branches: 2026-10-07-lead-review-defaults. Dedicated worktrees remain
+beneath worktrees/2026-10-07-lead-review-defaults/:
 
 - dev-workspace: a2bbf2f1c588de7eec0d7d52580a89a9d4bef984.
-- workspace: fe6ef13c324500648b2e42b2910dee55c9a2a813.
-- vpsfree-cz-configuration: cfa61475e57e12d3cc980844dfe00384cca14271.
+- workspace: acedfe1ae5671431f69cd0171dcf7ae027decf01 (was fe6ef13c).
+- vpsfree-cz-configuration: 20cc8ae3292df24b519b9e4858d39660b362295e (was cfa61475).
 
-[branch-inventory.json](branch-inventory.json) records bases, complete five-commit
-series, final diffs and remote defaults at handoff. Final comparison snapshots
-captured for all three. Final SSH remote feature heads match exact local heads.
-No obsolete unmerged approaches or repeated dependency updates remain.
+Remote feature refs match these exact final heads, and each is an ancestor of its
+remote master. [integration-proof.json](integration-proof.json) preserves approval,
+reviewed/final head provenance, complete final commit series and remote merge proof.
+[branch-inventory.json](branch-inventory.json) retains the original review inventory.
+Final comparisons were recaptured after rebasing and before merging. Range-diffs:
+[workspace](workspace-integration-range-diff.txt),
+[configuration](configuration-integration-range-diff.txt).
+No obsolete approaches, repeated dependency updates or migrations remain.
+
+Post-rebase quick instruction tests passed (8 runs, 144 assertions); composed Nix
+no-build evaluation and paired-runtime deployment checker passed. Configuration
+lock diff contains only devWorkspace relative to new master. All 143 unrelated
+tracked working files and the shared index were preserved through integration.
+Temporary integration worktrees were removed; feature branches/worktrees and
+older Codex roots remain. Session stays open.
 
 ## Verification
 
@@ -70,6 +84,14 @@ Initial CI failed a stale source-text assertion, corrected and folded into the
 portal commit. Original failure log retained locally. Superseded CI cancellation
 was denied HTTP403, then that run finished; only final-head success was accepted.
 Initial Nix positive fixture overflow fixed by forcing drvPath; evaluation passed.
+
+Post-merge [CI run 37627253930](https://github.com/aither64/dev-workspace/actions/runs/37627253930)
+passed on exact a2bbf2f1; host activation/rollback and fast package/check jobs both
+succeeded. Watch exit 0; elapsed watch 635s. Fresh catalog utility
+`dw_024841fba072af1d79bd78026612eaeca055acfa31ecc89f` used gpt-6-luna/low,
+catalog digest 437585347ac8b2cdbf498a169d8871e684f3f61ccf1dd48e8589d79ef9629abd.
+[master-ci-result.json](master-ci-result.json) records complete jobs and conclusion;
+full watch log remains local. No retry/cancellation or operation remains running.
 
 ## Independent review
 
@@ -122,4 +144,7 @@ Initial tracking commit 079394de preceded project commits/external mutations.
 Exact new slug and absolute workspace identity verified. Shared checkout contains
 unrelated changes; preserve them and stage only owned records. Temporary candidate
 build link removed after selected-profile proof; older Codex roots retained.
-Lifecycle remains active; no archive/delete/stop authorized.
+Lifecycle complete after exact remote ancestry proof and post-merge CI success.
+No remaining work, blockers or operator action. No archive/delete/stop authorized.
+This tracking update follows the existing daily checkpoint and remains local until
+the next authorized tracking commit/archive; no extra same-day checkpoint was made.

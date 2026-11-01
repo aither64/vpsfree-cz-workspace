@@ -26,7 +26,9 @@ metadata to render concrete settings and preserve saved creation recovery.
 - Both default-team selectors use lead_reviewed; one specialist slot.
 - Preserve other presets and the separate Luna/low verification watcher.
 - User selected resetting both lead controls to the selected team's defaults.
-- User selected deploying on aitherdev. Default-branch integration is not approved.
+- User selected deploying on aitherdev.
+- User subsequently directed “merge it” for all three repository master branches;
+  integration and post-merge CI completed. See integration-proof.json.
 - Tracking-only initiative has no Codex roster; parent owns implementation.
 
 ## Compatibility and deployment
