@@ -1,5 +1,5 @@
 ---
-lifecycle: active
+lifecycle: archived
 ---
 
 # HaveAPI 0.32.1: released and verified
