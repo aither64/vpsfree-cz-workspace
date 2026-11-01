@@ -41,5 +41,5 @@ shared reservation. Preserve deployed lineage and other owners' operations.
 
 Existing schema-3 submission records remain readable. Unknown legacy attempts
 must not be reset from negative history evidence. Browser replacement metadata
-is additive. Deployment and successful verification do not authorize merging
-feature branches or archiving this initiative.
+is additive. The user subsequently authorized merging all four affected feature branches into
+master after the fix is deployed and verified. Archival remains unauthorized.

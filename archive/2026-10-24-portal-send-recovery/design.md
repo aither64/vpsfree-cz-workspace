@@ -50,3 +50,29 @@ Build/copy outside claims, activate under ordinary shared aitherdev ownership,
 then select the separate application profile. Preserve journals and forward-only
 profile recovery. Verify portal/router health and existing conversations; do not
 send the original affected message. Keep branches unmerged pending direction.
+
+## Cancellation evidence discovered by full CI
+
+Two CI attempts exposed the existing socket-disconnect versus caller-cancel
+ordering race in RetireThread's read-only discovery request. Request errors must
+retain a concurrently completed caller cancellation in their error chain while
+preserving original RPC/transport identity and diagnostics. Add this only at
+the public Request/admitted-request wrapper, leaving successful receipts and
+writer/admission evidence unchanged. It must not imply definitely-unsent input.
+Cover a deterministic admission failure that cancels the caller while returning
+a transport error, and the same transport failure without cancellation. Keep
+errors.As/Is for both original and context causes. Repeat focused send/admission
+and retirement checks, commit and have the existing independent reviewer assess
+this added boundary before rebuilding final pins and long verification.
+
+## Composer startup admission
+
+The final composer browser fixture exposed Send enabled in server HTML before
+async conversation-module loading and submit-handler registration. A fast click
+after reload can invoke native form submission instead of the durable JavaScript
+handoff. Initial Send must be disabled; existing updateMessageActions enables it
+only after handlers are installed. Delay the real conversation asset in the
+browser regression and assert disabled initial Send, then release and exercise
+normal delivery/banner recovery. No user copy, persisted format or API change.
+Fold into the portal functional commit, retain one final dependency commit, quick
+check and independent review this added startup boundary before final builds.
