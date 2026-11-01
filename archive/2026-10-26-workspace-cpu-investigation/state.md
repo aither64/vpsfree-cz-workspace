@@ -8,6 +8,33 @@ Implemented, deployed on aitherdev without reboot, verified, and integrated into
 all three approved remote master branches. All repository claims and the machine
 claim are released. Session remains open. Automatic post-merge runtime CI also passed; no work or active claim remains.
 
+## Read-only follow-up, 2026-10-28
+
+- [x] Current identity verified from the tracking directory; both environment markers absent.
+- [x] Selected package pq2jwjcv4hbyiwzcam50x6j9fv008qiq maps to runtime d5d2b39b13a6875a26b218ffaf7b589b9d71a1fb, immutable source l4y0gzsc3xc7s4x0kwd1jaj3pk5xl0wl.
+- [x] One ten-minute passive sample (twenty 30-second bins) and updated recommendations.
+
+Suggestions only. No product/service/settings changes, injected traffic, profiling,
+tests, builds or benchmark rerun. Implementer0 prepared the temporary sampler;
+fresh Luna/low watcher completed its single execution (600.063s, exit0).
+Portal main66.935% / service171.307%; helpers104.372percentagepoints (~61%).
+All20bins stable/healthy, no restarts. Architect0 inspected current source;
+recommendations cover repository/cluster display reuse, coordination helpers,
+health observations and duplicate retry reads. Evidence: [live verification](live-verification.md).
+No implementation is authorized or pending; original lifecycle state is unchanged.
+
+## Read-only follow-up, 2026-10-27
+
+- [x] Five-minute passive portal/service CPU observation and process-role census.
+- [x] Remaining costs assessed with architect0 and implementer0; suggestions only.
+- [x] No product/service/settings changes, profiling, tests or benchmark rerun.
+
+Portal mean main CPU80.818%, whole-service177.537%; helper difference96.719% of
+one core. Additional older server0.142%; 144MCP helpers1.720% combined.
+Uncontrolled workload and no function-level attribution; evidence and suggested
+priorities appended to [live verification](live-verification.md). No change work
+is authorized or pending for this follow-up. Original deployment remains complete.
+
 ## Phase checklist
 
 - [x] Investigation, architect design and bounded implementation packages.
