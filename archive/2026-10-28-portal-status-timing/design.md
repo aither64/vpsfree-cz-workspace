@@ -116,3 +116,36 @@ the original status/timing report; the home migration alone does not change it.
 It adds no persistent state, migration, native invocation or new API. Existing
 native upgrade/provider results remain applicable; rerun affected browser checks,
 review this change, and refresh consumer pins/package builds.
+
+## Selected-package recovery before publication
+
+Live activation exposed a second quiescence pass: after selecting the new package,
+its activation calls the new helper while the old native still serves shared-home
+rollouts. The new helper's private-home authority correctly rejects those paths.
+No home copy/publication occurred. Recovery must preserve the selected candidate.
+
+Add a one-time Ruby operation adapter, pinned to the existing candidate, that loads
+its unmodified host implementation and changes only the environment returned for
+`quiesce --package-transition` while the operation is unpublished and the verified
+old native process/launch marker still identify the original home. All ordinary
+idle, submission, directory, lifecycle, claim and transition checks still execute;
+the archive proof receives the old daemon's actual home instead of the future one.
+The adapter routes the nested exact candidate `_activate` invocation through itself
+so both admission passes use that same context. It changes neither daemon startup
+nor normal client/session invocation. After publication ordinary private-home
+invocations pass through unchanged. No installed migration option or project change.
+
+Quick verification will load the exact packaged Ruby host against disposable
+registry/runtime/marker fixtures and assert the selected quiesce home, unchanged
+other invocations, fail-closed wrong identities, nested activation routing and
+private-home behavior after publication. Retain all existing partition fixtures.
+Commit operational source and independent review before resuming the existing
+failed unit. Keep the original journal, source revision, package and claim.
+
+The adapter must run inside the exact selected shell-wrapper environment, including
+its Python/jsonschema closure. The live second attempt demonstrated that loading
+Ruby directly is insufficient. migration-host.sh retains both public and libexec
+wrapper environment setup and bundled Ruby, and both outer/nested invocations
+use it. Real check-codex calls for both pinned versions now verify that path before
+cutover. Actual live-data conversion is rehearsed in private disposable copies,
+including new-native cold reads of every portal thread, without credentials.
