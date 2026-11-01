@@ -1,0 +1,5 @@
+- **Result:** Passed; observer exit status 0. Activation completed in phase `activated-and-identities-verified`.
+- **Observed identities:** dev-workspace `960dd816b7e56cbdd4af0da15bf0b26257775151`; configuration `270d348a29a832e552a798ba8bb467152a2d36d6`; workspace `3e72f394a73c33be71fcdc1313d05cc74abb802f`. System target `w1m7vv5ccfdx7h6jgzf0sxssldl1awps-nixos-system-aitherdev-26.05.20261021.da6dc0e`; package `fqajxhsmaqg44pl8x2xshgn8q0bl7wr2-dev-workspace-0.2.0`.
+- **Elapsed:** 76 seconds wall time; observer reported 75 seconds.
+- **Artifacts:** [observer log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-25-archive-unmanaged-files-investigation/startup-final-activation-observe.log) and [status](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-25-archive-unmanaged-files-investigation/startup-final-activation-observe.status).
+- The recorded system and profile commands both exited 0. Claim remained held in the observer’s proof. No observer process remains running.

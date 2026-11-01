@@ -69,3 +69,69 @@ readiness is not claimed. The archive-specific acceptance is successful.
 There are no owned running local runners or guests. Nix test drivers performed
 normal guest cleanup. Raw logs/generated ad hoc fixtures stay local and untracked;
 Markdown records retain compact evidence and the relevant conclusions.
+
+## Creation contention follow-up (supersedes the earlier unresolved assessment)
+
+The user requested root-cause fixes for both CI failures. Deterministic real
+Go/Ruby regressions reproduce both messages with an identified normal portal
+queue/reconcile SH holder. The plan subprocess proves the same device/inode as
+that holder. The two independent causes and fixes are documented in
+creation-contention-findings.md. The original CI holder PIDs remain unavailable;
+this is causal reproduction, not retrospective PID attribution.
+
+Fix commits a27fd38e and b974f2f3 follow the two reviewed archive commits. New
+regressions pass, including exact custom-name collision, suffix/replay identity,
+plan wait/replacement/cancellation and real journal recovery without the source.
+Related Go preparation/fork/plan tests pass in 12.803s; 9 Ruby source/binding and
+recovery regressions pass with 117 assertions. Independent review is clear in
+creation-contention-review.md after all intended changes were committed. It
+independently reran the new tests (web 3.091s) and those Ruby regressions.
+
+Fresh CI run 40223710351 covers head
+b974f2f3f83792a494610d1ea03f3d69e97bc1a4. It builds fast/package checks and runs
+packaged creation/archive native VMs. It completed successfully on attempt 1: creation, archive and fast jobs passed; the standard master/manual-only host job was skipped. Prior passing
+archive/older-reader checks remain evidence for 5e4e99df, not a substitute for
+final-head acceptance. No schema or protocol changed in the contention fixes.
+
+## Final acceptance result
+
+CI run 40223710351 completed successfully at the exact final head
+b974f2f3f83792a494610d1ea03f3d69e97bc1a4 on its first attempt. Packaged creation,
+archive and fast/package checks all passed. Creation job 121260557495, archive
+job 121260557803, fast job 121260557763. The host VM job was skipped under its
+normal master/manual guard. No failed job was rerun for this final head.
+
+The fresh watcher returned pass, exit 0, after 1226.2 seconds. Raw status and
+exact job conclusions are retained locally in creation-contention-ci-result.json;
+creation-contention-ci-watch.log/status preserve observation. The reviewer and
+watcher both completed without edits to source or new deployments. Source tree
+cleanliness, full-range whitespace and exact remote head proof passed.
+
+Earlier failed CI attempts remain historical evidence of the now reproduced and
+fixed causes; they do not describe final readiness. No verification remains
+running. Integration and deployment are still pending explicit direction.
+
+## Authorized deployment verification (2026-10-25)
+
+See rollout.md for exact system/profile artifacts, ownership, commands and recovery.
+Downstream final independent review (deployment-review.md) found no Blocking or
+Important issues; its documentation pointer advisory was corrected. Complete
+one-pin histories accepted, with no repeated streams, obsolete history or migrations.
+
+Final configuration/workspace builds and deployment-contract check passed in
+672.5s. Compatibility preparation passed before machine acquisition. Both
+activation commands returned 0; exact live system/profile/application identities
+matched the prepared artifacts. Configured systemd/firewall health checks passed.
+Portal health/index/Operations/session pages and native model endpoint returned
+200. Codex/tmux PIDs were preserved. Live isolated Luna/low naming passed in 2139ms.
+
+Selected-package disposable archive acceptance passed (100.0s): ready 6/6,
+one unmanaged marker blocker with terminal preserved and Operations HTTP 200,
+ready 6/6 after exact fixture cleanup, then portal archive complete on attempt 1
+and terminal retired. Fixture tracking-sync status later confirmed synced/no error.
+No live lead was created; retained-lead repair/restart coverage is the passed
+final-head packaged CI. See deployment-archive-watcher.md and compact JSON evidence.
+All watcher/native policies were confirmed from actual launch metadata.
+Temporary build links removed after selection, no guest started and no owned
+verification operation remains. Machine claim is intentionally retained because
+feature lineage is unmerged; deployment is complete and does not grant merge approval.

@@ -1,0 +1,5 @@
+- **Result:** Passed; watcher exit status 0. All four jobs, including `host`, succeeded.
+- **Run/revision:** CI run `40239653867`, source `960dd816b7e56cbdd4af0da15bf0b26257775151` on master.
+- **Elapsed:** 224.3 seconds. No process remains running.
+- **Artifacts:** [complete watcher output](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-25-archive-unmanaged-files-investigation/startup-final-master-watch.log) · [exact status](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-25-archive-unmanaged-files-investigation/startup-final-master-watch.status)
+- **Failure excerpt:** None; no failed jobs or logs to report.
