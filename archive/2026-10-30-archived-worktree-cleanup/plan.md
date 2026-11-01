@@ -72,3 +72,10 @@ the installed watcher policy. Live validation uses recovery-only preview and
 apply with the selected runtime and workspace authority. Capture before/after
 allocated bytes and filesystem availability without treating concurrent disk
 activity as task-owned savings.
+
+## Additional explicit scope
+
+The user later authorized archiving and cleaning
+`2026-10-18-archive-live-acceptance` in response to the exact active-snapshot
+question. That session is included in this operation. This does not authorize
+archiving the current cleanup initiative or other active sessions.
