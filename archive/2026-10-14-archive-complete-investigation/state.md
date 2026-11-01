@@ -1,5 +1,5 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 
 # 2026-10-14-archive-complete-investigation
@@ -15,15 +15,15 @@ Phase checklist:
 - [x] Inspect affected session state and selected runtime implementation.
 - [x] Trace the error and identify the introducing change.
 - [x] Reproduce through the installed pure helper with actual session content.
-- [ ] Finish durable diagnosis and handoff.
+- [x] Finish durable diagnosis and handoff.
 
 No application changes, independent review, deployment or successful archival
 are claimed. Investigation-only evidence does not trigger mandatory change review.
 
 ## Next actions
 
-Record the reusable diagnosis and report the required implementation correction.
-Any implementation must correct `tracking_lifecycle_content` and test explicit
+Diagnosis is complete. Any implementation must correct
+`tracking_lifecycle_content` and test explicit
 archival from complete and abandoned states, preserving strict-mode policy.
 
 ## Documentation
@@ -31,6 +31,13 @@ archival from complete and abandoned states, preserving strict-mode policy.
 The owning runtime's `docs/dev-sessions.md` and
 `docs/session-archive-recovery.md` already specify neutral explicit archival.
 The workspace lifecycle procedure agrees. The implementation contradicts them.
+
+Reusable finding:
+`notes/dev-workspace/2026-10-14-explicit-archive-completed-lifecycle.md`.
+The initial investigation records and note were committed together as
+`c28a59b8` and pushed to workspace `origin/master`. Final phase state remains in the working tree under the tracking
+cadence. No project behavior documentation edit is needed for this diagnosis;
+the documented behavior is already correct.
 
 ## Repositories
 
@@ -49,6 +56,10 @@ no retained members were created or assigned.
 - Invoke installed Ruby with `DevSession::Runner.allocate` and call only
   `tracking_lifecycle_content`/`lifecycle_state`; no CLI archive was executed.
 - Inspect introducing commit `f02ed71165ebc6d64e70a21248ba84bdc55366d2`.
+- Verify owned changes with `git diff --check`, commit the initial records and
+  diagnostic note, and publish tracking-only commit `c28a59b8` over SSH.
+- Register `reproduction.json` through the validated artifact command and obtain
+  the stable investigation portal URL.
 
 ## Results
 
