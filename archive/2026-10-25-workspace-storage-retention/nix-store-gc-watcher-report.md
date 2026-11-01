@@ -1,0 +1,5 @@
+- **Result:** Passed, exit status `0`.
+- **Operation:** Parent-owned ordinary Nix store GC over root SSH: `flock /run/lock/nix-store-cleanup.lock nix-store --store unix:///nix/var/nix/daemon-socket/socket --gc`. Machine claim: `11ac5465-9fbe-42c0-839c-f4cce6c63ac0`.
+- **Revisions:** Runtime `ec53874b6eea73bf65099cf19aa1a4bc5a3336aa`; configuration `2d33a9ca715d305d7b4003e17bbf3e31f1be1d60`; workspace `564979a0a7475b68747136c848144c1aeb2328ba`.
+- **Evidence:** [Complete log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-25-workspace-storage-retention/nix-store-gc.log), [exit status](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-25-workspace-storage-retention/nix-store-gc.exit). Log reports 104 store paths deleted and 12.3 GiB freed; no failure evidence observed.
+- **State:** Operation completed; no cancellation taken.

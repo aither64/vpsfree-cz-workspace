@@ -27,3 +27,15 @@ finish partial payload cleanup without deleting branches or active worktrees.
 Acceptance scenarios and rollout gates are in plan.md. Implementation may refine
 format mechanics only while preserving these user-visible and recovery contracts;
 record consequential deviations here and in state before executing them.
+
+## Mechanics established during implementation
+
+Archive journal/sidecar shapes stay unchanged; the private inventory and record
+formats select committed-only restoration. Existing partial inventories/records
+select the predecessor capture policy. New records contain no files/admin copies.
+Capability policy3 reads inventory1/2/3; candidate entry is needed if an installed
+policy2 host refuses the newer capability while old inventories exist.
+
+A busy integration also holds shared retained sources conservatively, while
+unrelated completed integration scratch and unrelated eligible roots can be
+collected. This preserves legacy reuse that precedes journaling its next head.

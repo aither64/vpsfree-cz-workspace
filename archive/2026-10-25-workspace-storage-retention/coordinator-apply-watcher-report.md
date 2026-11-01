@@ -1,0 +1,5 @@
+- **Result:** Passed; exit status `0` in [coordinator-apply.exit](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-25-workspace-storage-retention/coordinator-apply.exit).
+- **Operation:** Parent-owned workspace-host coordination `gc --apply --json --expire-unused`, observing cleanup only. Machine claim: `11ac5465-9fbe-42c0-839c-f4cce6c63ac0`.
+- **Revisions:** runtime `ec53874b6eea73bf65099cf19aa1a4bc5a3336aa`; configuration `2d33a9ca715d305d7b4003e17bbf3e31f1be1d60`; workspace `564979a0a7475b68747136c848144c1aeb2328ba`.
+- **Evidence:** [coordinator-apply.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-25-workspace-storage-retention/coordinator-apply.log) contains a JSON result with `"mode":"apply"` and `"retry":false`. No failure evidence was observed.
+- **Status:** The definitive exit file appeared with `0`; operation is complete. No cancellation or retry was performed.

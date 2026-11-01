@@ -1,0 +1,5 @@
+- **Result:** Passed; exit status `0`.
+- **Command:** `python3 /home/aither/workspace/ai/vpsfree.cz/work/2026-10-25-workspace-storage-retention/run-verification.py coordinator-preview workspace-host coordination gc --dry-run --json --expire-unused --sizes`
+- **Revision:** The supplied workspace context identifies selected package `/nix/store/xjsni6q4ldh2anc8l1vn6zxjf64m4aska-dev-workspace-0.2.0`, runtime `ec53874b`, workspace `564979a0`, configuration `2d33a9ca`.
+- **Elapsed:** 59.5 seconds, as reported by the helper.
+- **Evidence:** Full JSON log at `/home/aither/workspace/ai/vpsfree.cz/work/2026-10-25-workspace-storage-retention/coordinator-preview.log`; exact exit status in `/home/aither/workspace/ai/vpsfree.cz/work/2026-10-25-workspace-storage-retention/coordinator-preview.exit` (`0`). No failure evidence.

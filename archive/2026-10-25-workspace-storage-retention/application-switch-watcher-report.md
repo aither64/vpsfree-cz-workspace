@@ -1,0 +1,5 @@
+- **Result:** Passed; definitive exit status `0`.
+- **Operation:** `nix run .#workspace-host -- switch --source /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-25-workspace-storage-retention/workspace --from-candidate`. Tested application: `/nix/store/xjsni6q4ldh2anc8l1vn6zxjf64m4ska-dev-workspace-0.2.0`.
+- **Revisions:** Runtime `ec53874b6eea73bf65099cf19aa1a4bc5a3336aa`; configuration `2d33a9ca715d305d7b4003e17bbf3e31f1be1d60`; workspace `564979a0a7475b68747136c848144c1aeb2328ba`.
+- **Evidence:** Complete log at `/home/aither/workspace/ai/vpsfree.cz/work/2026-10-25-workspace-storage-retention/application-switch.log`; definitive result at `/home/aither/workspace/ai/vpsfree.cz/work/2026-10-25-workspace-storage-retention/application-switch.exit`. The log records protocol compatibility checks, Codex `0.163.0`, package activation, and the installed package path. No failure evidence observed.
+- **Still running:** No; the result file records exit `0`.

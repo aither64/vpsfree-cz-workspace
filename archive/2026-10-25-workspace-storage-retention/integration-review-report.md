@@ -1,0 +1,9 @@
+No Blocking, Important, or Advisory findings in the affected general/risk lanes.
+
+- **Scope/equivalence:** workspace `cb89659d..e9144243` and configuration `95f10b50..aca63e8a` preserve the reviewed patches. Independent read-only tree reconstruction matches both final trees. Configuration changes only `devWorkspace` relative to its new target; workspace’s lock and narrowed archive-deletion entries are unchanged.
+- **Release lineage:** after fresh remote proof that all three final feature heads are integrated, the equivalent configuration successor can establish integrated deployed **feature** lineage under the installed machine-retention policy. Deployed configuration `2d33a9ca` is **not** literally an ancestor. Redeploying unrelated baseline dependency updates is unnecessary for that lineage proof.
+- **Remaining verification:** parent must complete the refreshed scoped build/Codex-contract check, recheck deployment health and unresolved effects, and verify the exact owned claim before normal release. The rebased configuration’s root `llm-agents` changed upstream; this review does not authorize activating a Codex upgrade. The runtime and its dependency graph remain unchanged at `ec53874b`.
+- **History/consolidation:** three coherent workspace commits, two configuration commits, unchanged runtime series; one final runtime pin per consumer. No obsolete iterations or redundant pin updates remain.
+- **Migration lineage:** no DB migrations. Archive schema 3 is now deployed and consumed by two completed conversions; its readers and forward recovery remain required and unchanged.
+
+Evidence: [integration-equivalence.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-25-workspace-storage-retention/integration-equivalence.json). Review complete; no edits, deployments, or agents.
