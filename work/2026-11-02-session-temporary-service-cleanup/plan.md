@@ -1,6 +1,64 @@
 # 2026-11-02-session-temporary-service-cleanup
 
-## Goal
+## Implementation authorization — 2026-11-02
+
+User: "proceed with implementation. aitherdev can be deployed using
+vpsfree-cz-configuration." This supersedes the proposal-only restriction in the
+historical brief below. Implement the accepted registered-service cleanup and
+Resources/Team portal design. Preserve the exclusion of existing unregistered
+services. Deployment may use the configuration repository's aitherdev procedure;
+the application remains in its user profile, with matching host/module and
+workspace input graphs. No default-branch integration or session lifecycle action
+is authorized by this request.
+
+Owners: architect0 reconciles the accepted design against the feature base and
+freezes execution boundaries/interfaces. Implementer0 owns registered service
+state/launch/cleanup and focused Ruby tests/docs. Implementer1 owns independent
+portal Resources/Team work and then service projection/package compatibility,
+focused Go/JS tests/docs, with shared-file and commit serialization. Lead owns
+tracking, package acceptance, final user-facing wording, review and rollout
+coordination. Deployment pins/repair packages remain delegated after final heads
+are available. reviewer0 (retained Sol/xhigh) runs mandatory final review after
+committed deliverables and quick checks, before long VM/integration tests.
+
+Read the final design and package contract before each dependent package starts.
+No repository claim is needed for feature work. Build/copy before machine claims;
+claims cover authorized activation and remain governed by verified deployment and
+integrated-lineage release rules. Obtain separate repository/target integration
+approval before any default-branch merge.
+
+## Current scope amendment — 2026-11-02
+
+User direction after the first proposal: "let's not handle existing
+unregisteredservices." This supersedes legacy-resource handling in the original
+brief below. Automatic cleanup covers only services durably registered through
+the new launcher, including future launches in existing sessions. No discovery,
+adoption, inventory audit, audited-empty declaration or migration coverage gate.
+An old session without registered resources follows ordinary archival behavior;
+existing unregistered services remain untouched and outside the guarantee.
+Corrupt/lost known registered state and uncertain registered launches/stops still
+block destructive cleanup. This is a proposal revision, not implementation approval.
+
+## Portal navigation follow-up — current user direction
+
+User now requests one sidebar entry for clusters, reservations and services;
+its destination has three subtabs. Show separate per-kind resource counts in the
+sidebar, hiding zero indicators and all indicators when none exist. Keep the entry
+available. Also show the Team member count in parentheses. This supersedes the
+previous separate Services navigation recommendation.
+
+Architect settled the smallest existing-source-aligned design: authoritative
+counts matching resource/team views, explicit unknown/stale states, preserved
+cluster/reservation controls and old navigation links, existing bounded refresh,
+and no lifecycle or inactivity effects from reads. Lead accepts the Resources
+label and Clusters / Reservations / Services subtabs. Count confirmed owned
+clusters (including stopped), nonretired registered services and distinct held
+machines; waiting reservations remain separately visible on their page. Team (N)
+counts lead plus nonremoved retained members, excluding utilities; solo is Team (1).
+Existing unregistered services remain excluded; new service view stays read-only.
+No implementation or runtime changes are authorized in this proposal phase.
+
+## Original brief
 
 Investigate and propose a solution for automatic cleanup of all session-owned temporary services and servers during workspace session archival. PROPOSAL ONLY: explain the problem, delegate investigation/design to this Full team's architect, record a minimal design and verification plan, and present the proposed solution to the user. Do not implement, merge, deploy, archive/delete any session, stop/remove any existing service, or otherwise change the running workspace yet. The user will continue directly in this new session after reading the proposal.
 
@@ -41,7 +99,8 @@ Creation preferences explicitly requested: same provider as originating session,
   maintain plan/state/portal, inspect acceptance, present recommendation.
 - `architect0` (retained Astra/xhigh, workspace-write): inspect selected package
   and owning sources/docs read-only; write `design.md` with the minimal ownership,
-  launch, cleanup, retry and migration contract and disposable verification plan.
+  launch, cleanup and retry contract and disposable verification plan, revised
+  to exclude existing unregistered services.
 - Implementers: no assignments in proposal phase. Reviewer: no automatic review
   for planning/investigation records. No team settings are changed.
 
@@ -51,7 +110,7 @@ The supplied HaveAPI service names are evidence, not authority to inspect the
 originating session or change its services. No cross-session communication grant
 is requested or created. No live lifecycle experiment is permitted.
 
-The recommendation must cover every preview/candidate, descendants, graceful and
+The recommendation must cover every registered preview/candidate, descendants, graceful and
 bounded forced shutdown, exact ownership, failure before file removal, unit and
 artifact retirement, interrupted/retried archival and revival. Compare explicit
 archival with the existing automatic-worker policies; mention delete only for
@@ -60,8 +119,9 @@ current non-authorization boundary.
 
 ## Compatibility and deployment
 
-Assess older sessions/unregistered services, existing archive journals and
-revival, selected package generation/rollback and durable or unrelated services.
+Assess existing archive journals and revival, selected package
+generation/rollback and durable or unrelated services. Existing unregistered
+services are excluded; do not add migration or audit obligations for them.
 Do not silently infer ownership from names, ports, PIDs or matching paths. Record
 unproven behavior as a verification obligation. There is no deployment in this
 proposal; any implementation or rollout requires a later user instruction.
