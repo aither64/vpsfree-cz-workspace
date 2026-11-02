@@ -1,4 +1,45 @@
-# mx2 NixOS branch recovery and verification proposal
+# mx2 NixOS migration and automated verification
+
+## Current status: verification complete
+
+User now asks to minimize their input and let the agent perform verification.
+Authorization wording: “not really sure how you suggest to proceed. I'd like to
+minimize my input during the verification and let you do it.” This extends the
+previous proposal-only scope to executable isolated tests and necessary candidate
+fixes. Production cutover/deployment, default integration, mail submission to real
+recipients and primary/old-MX reconfiguration remain outside the current work.
+
+Additional user direction: “you can fixup the internal zone if the mail records
+do not correspond to the public DNS -- the public DNS is correct, the internal
+is probably stale”. Align source internal mail MX/A/AAAA records with current
+public DNS as the operator-designated authority, preserving unrelated split-DNS
+records and incrementing SOA serial. No live reload/deployment implied. This is a
+separate logical source change and test/build acceptance package.
+
+Deliver a repeatable conventional isolated SMTP test reusing production mx2 mail
+configuration. Fix proven relay/firewall defects and any test-discovered candidate
+failures without inventing a new mail architecture. Cover allowed/denied relay,
+message content/envelope forwarding, outage queueing, restart persistence and
+recovery, temporary/permanent SMTP responses, IPv4/IPv6 and relevant filtering/TLS
+behavior. Explicitly record fixture overrides and remaining real-primary limits.
+Prefer existing NixOS VM-test tooling; architect establishes available infrastructure
+and stable implementation boundary first. No dependency refresh campaign.
+
+Architect0 completed the executable brief in design.md. Implementer1 completed
+the bounded baseline and DNS source package, then released repository writes/Git
+to implementer0. Implementer0 completed configuration, tests, documentation,
+quick checks, commits and follow-up fixes. Lead accepted the packages, coordinated
+independent reviews and completed the required verification using the documented
+parent fallback after utility readiness was unavailable.
+
+The prior branch recovery/build remains delivered and its evidence is preserved.
+The full isolated mail suite and all five affected-system builds passed.
+[Final results](verification-results.md) and [state](state.md) record the final
+published head, reviewed ranges, exact successful derivation/input reuse and
+actual native build provenance. No further check or source change remains in
+this phase. User input is reserved for genuinely unavailable essential
+facts or production-affecting decisions; ordinary fixture/implementation choices
+are autonomous.
 
 ## Goal and scope
 
@@ -28,6 +69,21 @@ this request.
 Use one implementer for this dependent repository package; other implementers
 are retained and available only for demonstrated independent work.
 
+## Primary mail server context
+
+User clarification: the primary mail server runs Debian 13 and is managed outside
+`vpsfree-cz-configuration`. This is operator-supplied topology information, not a
+live inspection. The repository's references to `prasiatko-mail.vpsfree.cz` do not
+provide its actual MTA configuration, recipient policy, TLS settings or trust rules.
+Debian version alone does not establish the MTA or its configuration.
+
+The isolated primary/sink should model the agreed SMTP responses. Final
+preproduction verification must include delivery from candidate mx2 to the actual
+Debian 13 primary using agreed test recipients, including recipient rejection,
+TLS negotiation and acceptance of the candidate's sender/address identity.
+Obtain actual primary-side behavior/configuration from its operator when preparing
+those checks; no primary reconfiguration is implied by this clarification.
+
 ## Compatibility and deployment
 
 Assess SMTP relay policy, primary-MX routing, TLS, IPv4/IPv6 and durable queue
@@ -41,7 +97,7 @@ No production credentials, live mail, network identity changes or deployments.
 Operators need a staged verification proposal and cutover/rollback acceptance
 criteria; preserve these in session design/findings for this requested proposal.
 Record exact refs, rebase resolutions, check results and unresolved risks in
-session state and linked evidence. Avoid adding an unsolicited testing subsystem.
+session state and linked evidence. The new authorized verification phase adds only the smallest conventional repeatable test needed; avoid a generalized framework.
 
 ## Verification
 
@@ -53,6 +109,7 @@ must distinguish isolated repeatable checks from production acceptance evidence.
 
 ## Decisions
 
-- User authorizes branch import/rebase and a verification recommendation.
+- Initial scope: branch import/rebase and verification recommendation; delivered.
+- Current scope: execute isolated verification and candidate fixes autonomously.
 - No default-branch integration or deployment approval supplied.
 - Session remains open and active.

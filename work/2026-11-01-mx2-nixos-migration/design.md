@@ -1,3 +1,201 @@
+# Executable isolated mx2 verification
+
+Status: bounded implementation package ready, 2026-11-02. This phase supersedes
+the proposal-only scope below. The user now authorizes autonomous isolated tests
+and necessary candidate fixes, plus narrow internal DNS source reconciliation
+against public mail records. No live DNS deployment, production deployment/cutover,
+primary-server changes or default-branch integration is included. Architect0 owns
+this brief. Implementer1 owns the DNS source package and repository writes first;
+after direct handoff, implementer0 owns the overlapping mail configuration/test
+edits and repository writes. Lead coordinates that sequence and final review.
+
+## Starting evidence and boundaries
+
+Retain reviewed import head `e4c1ac0c5ae7426fb019b79ba936b30ce63e6e6c` and original
+source head/ref recorded below before consolidating history. Imported configuration
+build passed, but generated evidence proves empty relay_domains and no TCP25
+firewall exception. These are candidate defects to correct in this package.
+Current pinned nixpkgsStable provides `pkgs.testers.runNixOSTest`, Postfix 3.11.7
+and Postgrey. Local `/dev/kvm` is readable/writable. No input update is needed.
+
+Read [primary-baseline.md](primary-baseline.md) for independent discovery:
+public DNS still points all three domains to prasiatko-mail/mx2, while the internal
+resolver omits prasiatko-mail and has a different mx1 IPv6. Existing transport is
+not proven stale. Primary probe found Debian Postfix, STARTTLS with a self-signed
+certificate, and SIZE 104857600. Recipient, trust, filtering and queue policies
+remain unknown. The fixture models SMTP responses; it is not a Debian reproduction.
+Do not change upstream destination to mx1 on the strength of the internal alias.
+
+## Separately approved internal DNS source package
+
+The user explicitly authorized: "you can fixup the internal zone if the mail
+records do not correspond to the public DNS -- the public DNS is correct, the
+internal is probably stale". Implementer1 owns narrow changes to
+`configs/internal-dns/zone.vpsfree.cz.`: reconcile relevant mail MX and host
+address records against the observed public view, increment the zone serial,
+validate with the repository's zone parser/tooling, and commit before handing
+repository write ownership directly to implementer0. Preserve unrelated internal
+records and public zones; no general DNS cleanup or live reload is included.
+
+Acceptance: changed MX targets/preferences and supporting A/AAAA mail records
+match the public evidence, aliases remain internally consistent, serial advances,
+zone validation passes, and the final diff contains only the authorized records
+and serial. Record the evidence used and any intentionally retained difference.
+Do not invent a vpsfree.org internal zone if none is owned here. The core isolated
+test interface remains unchanged and continues using only fixture DNS answers.
+Correcting source does not prove the real resolver has loaded it: after a future
+authorized DNS deployment, query the candidate's actual configured resolvers and
+verify primary/backup resolution and IPv4/IPv6 reachability before cutover.
+
+## One implementation package: shared policy plus ordinary NixOS test
+
+Own these files only unless a concrete implementation need is reported to lead:
+
+- New `configs/mx2.nix`: move the existing Postfix/Postgrey policy here, including
+  its socket linkage/transport map, and own SMTP firewall allowance here. Import
+  this exact module from both production host and test node. No role framework,
+  new public module API, shared container profile change or dependency campaign.
+- Existing `cluster/cz.vpsfree/containers/mx2/config.nix`: import shared mail module;
+  retain base/container imports, root authorization and stateVersion 25.05.
+- `tests/mx2.nix`, with a small adjacent Python driver/helper only if clearer:
+  conventional NixOS Python test driver, standard Postfix/DNS tools and smtplib
+  or swaks. Add `checks.x86_64-linux.mx2` in existing flake checks using devPkgs.
+- A short reusable explanation in `docs/operations/mx2.md`, linked from README,
+  describing check invocation, tested behavior, fixture exceptions and deployment
+  limits. Per-run output, source receipts and deployment evidence stay in session.
+
+Correct relay authorization with explicit `settings.main.relay_domains` for
+`vpsfree.cz`, `lists.vpsfree.cz`, `vpsfree.org`; migrate touched legacy Postfix
+`config` to current `settings.main`. Keep untrusted relay decisions independent
+of greylisting: conventional `smtpd_relay_restrictions` with trusted/SASL permits
+then `reject_unauth_destination`. Do not broaden trusted networks or enable SASL.
+Set TCP25 allowance in the shared production module, leaving firewall enabled.
+Postfix default `parent_domain_matches_subdomains` includes relay_domains:
+exclude that item while preserving the other defaults, so arbitrary subdomains
+are not authorized by adding the three relay domains. Test this explicitly.
+
+Keep historical transport destination and milter fail-open setting pending real
+policy evidence. Do not invent a recipient directory or enforce online primary
+verification, which would defeat outage queueing. Unknown recipients may be
+accepted then bounced by the primary; this backscatter risk remains explicit.
+Align candidate advertised message limit to the observed primary 104857600 bytes,
+with a comment explaining the equality and tests of EHLO/SIZE preflight rejection;
+no 100MB payload is needed. This is a bounded mail-compatibility correction.
+Production inbound TLS stays an explicit unresolved certificate-provisioning
+requirement; do not put fixture keys in the production config or add ACME guesses.
+Retain outbound opportunistic TLS (`may`), compatible with observed self-signed
+primary. No policy requires verified/publicly trusted primary TLS in this phase.
+
+## Fixture topology and fidelity invariants
+
+Three VMs: `sender` (untrusted SMTP client and DSN sink), `mx` (shared candidate
+mail module), `primary` (Postfix receiver, controlled recipient response map,
+local authoritative DNS). Separate test-only addresses on a private test VLAN;
+configure IPv4 and IPv6. Do not bind production addresses on host interfaces.
+Set `virtualisation.restrictNetwork = true` for every VM, no host port forwards,
+no external gateway and DNS with recursion/upstream forwarding disabled. Resolve
+all production-spelled test domains/upstream names only to fixture addresses.
+Tests must fail if required names lack fixture answers, never query public DNSBLs
+or contact real primary/mx2. Assert effective resolver and route configuration.
+
+The MX fixture must NOT override relay domains, transport map, trust/relay or
+recipient restrictions, TCP25 rules, queue location, persistent directories or
+Postfix/Postgrey enablement. It imports the production module unchanged. Allowed
+fixture differences: hostname/interface/resolver plumbing, shorter Postgrey delay,
+optional shorter retry/policy timeouts, and test certificates only for a separately
+identified TLS-capability case. Enumerate each actual override in the test. Keep
+Postgrey whitelist semantics unchanged and use fresh client/sender/recipient tuples
+for first-seen assertions so auto-whitelisting cannot hide a broken greylist test.
+
+Use controlled DNS answers for the *original* Spamhaus/Barracuda queries: negative
+answers normally and a positive fixture answer for a dedicated rejection case.
+Do not delete their restrictions to make tests pass. Keep missing milter endpoint
+and prove original `milter_default_action=accept` behavior; do not imply scanning
+happened. A later milter implementation is separate scope unless real evidence
+establishes the required current service.
+
+Prove fidelity in review and quick evaluation: compare the real confctl MX's
+selected effective Postfix settings, transport map, TCP25 allowance, queue/data
+paths and Postgrey persistence/socket to the test node, accounting only for listed
+fixture differences. Runtime assertions also check effective `postconf` and
+firewall state. The full production confctl build remains required; this VM test
+does not exercise the vpsAdminOS container profile, host networking or placement.
+
+## Runtime acceptance matrix
+
+Use unique Message-ID/body markers and controlled envelopes, not log-only success.
+Bound every wait. Sender connects from its own address, outside candidate's
+mynetworks, over IPv4 and IPv6; never send only via loopback.
+
+1. Confirm listener reachable through enabled firewall and exact three relay
+   domains accepted after greylisting. Verify primary receives envelope recipient,
+   envelope sender and full marker/content for each domain, on declared transport.
+   Deny unrelated domain and arbitrary subdomain at RCPT (5xx) and prove no queue
+   acceptance. Verify invalid recipient syntax/unknown DNS domain rejection.
+   EHLO limit equals primary limit; oversized declared SIZE is rejected early.
+2. Fresh tuple gets temporary Postgrey response; retry after short fixture delay
+   succeeds. Persist whitelist state across service and VM restart. Stop Postgrey
+   and assert bounded temporary failure rather than accepting or losing mail.
+   Deterministic DNSBL positive rejects; missing milter still follows fail-open
+   acceptance. Record these as observed behavior, not an anti-spam certification.
+3. Stop only primary SMTP (keep DNS running). Submit and require final DATA 250;
+   capture queue ID and queued envelope/content. Restart Postfix, then reboot MX
+   using the same VM disk, and prove message still queued. Restore primary, flush
+   with normal Postfix tool, observe content/envelope delivery and empty queue.
+4. Primary returns explicit temporary 4xx for a controlled recipient: accepted
+   mail remains deferred, survives restart if combined with step 3, then delivers
+   when response is changed. Permanent 5xx causes the expected DSN to controlled
+   sender/sink and removal of original queue item; verify failure status and
+   original recipient/marker, rather than confusing bounce with successful mail.
+   SMTP can duplicate after ambiguous acknowledgment; do not assert global
+   exactly-once semantics or delete queues to obtain an empty-queue result.
+5. Primary offers self-signed STARTTLS: prove candidate negotiates encryption
+   under unchanged outbound `may`; with primary STARTTLS disabled, prove plaintext
+   fallback still delivers. Record protocol evidence from both ends. Assert
+   production inbound STARTTLS is currently absent. An optional isolated case
+   may install an ephemeral test cert and test STARTTLS capability, clearly
+   separated from production certificate readiness; core tests must not depend
+   on that override. No need to implement issuance infrastructure.
+
+## Checks, sequence, limits and recovery
+
+Quick checks before final review: normal formatting/hooks, Nix parsing,
+`git diff --check`, test derivation evaluation without realization, Python syntax,
+MX production evaluation, fixture-difference inventory and complete range-diff.
+Ensure final full series includes original import lineage, corrected host policy
+and coherent tests/docs; preserve reviewed-import/source refs before rewriting
+unmerged followup history. No database/schema migration exists; Postgrey and
+Postfix persisted paths must remain unchanged. Reconcile new live facts through
+lead before altering settled external interfaces or source scope.
+
+Commit intended changes and obtain independent final review BEFORE long runtime
+checks. Lead launches a fresh policy watcher for exact-head `nix build -L
+.#checks.x86_64-linux.mx2` and targeted `nix develop -c confctl build --yes
+cz.vpsfree/containers/mx2`. Retain lock/input/derivation/output identities and
+logs under session; do not claim reuse from mere source equality. No CI expansion.
+
+Plan one runtime batch, target under 15 minutes once closures exist, 30-minute
+runtime ceiling; allow a separately reported substitution/build preparation window.
+Use at most 3 VMs, about 1GiB RAM/1 vCPU each initially; increase only for observed
+needs. Per-step waits normally 30-90s, queue drain up to 120s. Stop on external
+network escape, unexpected kernel compilation, repeated boot failure or first
+assertion failure; preserve relevant logs/state, return diagnosis to implementer,
+then rerun only justified checks after fixes/review. No blind retry loop.
+Use native test-driver shutdown for owned VMs; retain compact receipts, then
+remove only owned disposable test artifacts per policy. No production machine
+claim or session lifecycle action is needed for this isolated test.
+
+Success means the corrected candidate passes isolated relay/queue/policy checks
+and full build, and the internal mail-zone source passes the reconciliation checks
+above. Limits remain for real recipient policy, production TLS, deployment of the
+corrected internal zone and actual resolver behavior, container hosting and eventual
+cutover. It does not mean the CentOS replacement has been deployed or is already
+production-accepted.
+
+---
+
+# Original import brief (retained historical scope and provenance)
+
 # mx2 branch import and verification brief
 
 Status: execution package ready; runtime verification below is a proposal, not
@@ -140,6 +338,21 @@ The repository-required targeted `confctl build cz.vpsfree/containers/mx2` is a
 longer check coordinated by lead and a fresh verification watcher after review;
 architect does not launch it. A successful build is build evidence only. Never
 use `confctl deploy ... dry-activate` in this request: it contacts/acts on a target.
+
+## Primary mail server context
+
+User clarification: the primary mail server runs Debian 13 and is managed outside
+`vpsfree-cz-configuration`. This is operator-supplied topology information, not a
+live inspection. The repository's references to `prasiatko-mail.vpsfree.cz` do not
+provide its actual MTA configuration, recipient policy, TLS settings or trust rules.
+Debian version alone does not establish the MTA or its configuration.
+
+The isolated primary/sink should model the agreed SMTP responses. Final
+preproduction verification must include delivery from candidate mx2 to the actual
+Debian 13 primary using agreed test recipients, including recipient rejection,
+TLS negotiation and acceptance of the candidate's sender/address identity.
+Obtain actual primary-side behavior/configuration from its operator when preparing
+those checks; no primary reconfiguration is implied by this clarification.
 
 ## Proposed staged mail verification before replacement
 

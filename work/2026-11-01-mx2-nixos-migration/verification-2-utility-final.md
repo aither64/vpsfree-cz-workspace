@@ -1,0 +1,3 @@
+**Result: incomplete.** Session/workspace binding, clean source HEAD, and `flake.lock` SHA256 matched the requested values. The supplied native TOML specifies `danger-full-access` and approval `never`, but I could not verify the pinned catalog and selected package execution policy or the actual standalone utility launch policy. I therefore launched none of the commands; no VM effects occurred.
+
+The progress note and summary are at [verification-2-progress.md](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-mx2-nixos-migration/verification-2-progress.md) and [verification-run-2.md](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-mx2-nixos-migration/verification-run-2.md). No command logs, exit statuses, or durations exist; no operation is running.
