@@ -1,5 +1,28 @@
 # Published advisory corrections
 
+## Approved visibility correction
+
+The user explicitly agreed that **only published advisories are readable by
+non-admins; draft and retracted advisories are admin-only**. Direct hidden reads
+return 404 and related collections must not expose their content or membership.
+Retraction remains silent and preserves administrator history; deletion remains
+separate. The user subsequently directed that visibility belongs entirely to
+the server and the UIs display its authorized responses. The API is the sole
+authority: central `visible_to` scope plus the concrete reverse-outage query
+intersection. No additional UI filtering, render/cache defenses or public-route
+restrictions on administrators are part of this correction.
+[The visibility brief](visibility-design.md) is authoritative. The previous
+15-path React visibility candidate is superseded; implementer1 completed its
+restoration to `1c8478bceb3943645ec06ccde895ee4b0985873f`, pushed and clean per
+the lead-confirmed peer receipt. Retain its ref/equivalence evidence.
+Implementer0 solely owns API/legacy/KB. Focused quick checks precede affected
+committed-source review; the full multi-file API suites follow review.
+API/KB checks and affected review remain required before
+the authorized same-session preview update. Both UIs receive read-only acceptance
+against the server policy, preserving existing administrator access and behavior.
+Retracted exposure is confirmed; anonymous draft exposure was not reproduced.
+No product question remains open, and no production/default merge is authorized.
+
 ## Expanded scope: authoritative delta brief
 
 This section supersedes conflicting restrictions in the original brief below.

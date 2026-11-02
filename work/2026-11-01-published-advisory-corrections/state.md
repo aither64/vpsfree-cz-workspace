@@ -4,22 +4,78 @@ lifecycle: active
 
 # Published advisory corrections
 
-Reviewed implementation and local acceptance are complete. Ready for integration
-subject to the remaining hosted CI and explicit merge approval. All four final
-feature heads are pushed and clean. No local test process/guest/driver/utility
-remains. Session stays open; no production data, mail, credentials, deployment,
-default integration or session lifecycle action occurred.
+Current phase: server-only visibility fix complete in the running DEV preview.
+Only published advisories are readable by anonymous/member/support; drafts and
+retracted records/relations are admin-only. Direct retract remains silent and
+retains admin history. Both UI runtimes are unchanged; rejected modern f7 guard
+candidate was withdrawn and exact1c847 restored. No frontend filtering shipped.
+
+Final APIa38c9f871f89312f16d18e158efbbbb340ec53e4 and
+KB4fd4f2b8ca737b6b6baaf97998fb9484be4c1e91 are committed/quick/hook-pass/pushed.
+[Independent affected review](visibility-final-review.md): no findings, fourlanes,
+Highrisk, complete histories/NO MIGRATIONS. Full API84/core74, strictKB4fd4 and
+native legacy18 passed. Exact failed CI case seed19905 also passed1example/
+60successful-envelope requests; original hosted countnil cause remains UNKNOWN.
+
+Data-preserving services update exited0 in319.3s. Running APIa38c/sourcebytes
+verified, services /nix/store/mygq0r3nbd1hyb3ddy1r0sbvmsb7n7l2...; appliedpending
+null, node/config/OS unchanged, modern1c unchanged. Actual trustedTLS API66 role
+reads PASS; modern24destinations normalOAuth/freshcontexts PASS; PHP21pages normal
+rolelogin PASS. Anonymous/member lists only2published and denied direct1draft/
+3retracted; admin management retains1/2/3. No advisory writes. Fixtures1draftrev1/
+2publishedrev2/3retractedrev2 remain. No active test/browser/utility; cluster stays
+RUNNING for user. [Delivery](visibility-verification.md), [preview](preview-verification.md),
+[modern browser evidence](modern-preview.md). No reset/stop/production/defaultmerge.
+
+Open hosted checks: API41465157664 failed corecountmetadataassertion whose first
+response was not retained; full local+isolatedpass do not relabel CIgreen orprove
+flake. KBManaged41465898434 failed unchangedobsoleteHTMLreadinessbaseline; strict
+localpassed, no unrelatedKBcodefix. APIintegration41465157701 inprogress at final
+snapshot; lint/PHP/i18n/KBCheck passed. No CI wait/rerun/retryloop. Production/
+integration readiness remains separate; DEVrequest complete on reviewedsource.
+Temporary1lineassertionpatch savedprivately/notshipped; no needlessamend/repin.
+
+Development preview is RUNNING/READY for both WebUIs, left running for the user's
+manual trial. Explicit user START request fulfilled; no production deployment,
+merge, session stop/reset/archive or cluster cleanup occurred.
+
+- Legacy PHP: https://webui.aitherdev.int.vpsfree.cz/?page=security_advisory
+- Modern React: https://newadmin.aitherdev.int.vpsfree.cz/admin/security-advisories
+- Login: session portal → Cluster → service credential fields (no passwords here).
+- Internal/VPN DNS/routes and public [development CA](preview-ca.crt) trust required.
+- Shared synthetic examples:1draft/rev1,2published/rev2,3retracted/rev2.
+
+Normal trusted-TLS OAuth/login/control checks passed in both UIs. Modern
+published/retracted editor, lifecycle confirmations and separate announcement
+composer opened/canceled; legacy all3details, guarded editors and bounded node
+form verified. No advisory browser writes; one guarded same-name API correction
+on published2 advanced revision silently. Publications/retraction retained0→0
+Mailpit evidence; final3messages are new-sign-in notices, no advisory mail.
+
+Exact API49f5/React1c847 worktrees remain clean. Runtime source/store/closure,
+paired modern2541sourcefiles+7BFFmodule equality, actual path-input unknown build
+metadata limitation, source OS823, operation ownership and browser evidence:
+[preview-verification.md](preview-verification.md), [modern-preview.md](modern-preview.md),
+[preview-plan.md](preview-plan.md). Two guests services+node1 single/bridge,
+pid1475262; all start/browser observers finished. No active utility/check; cluster
+runner/guests intentionally remain running. Do not stop/reset/release them absent
+explicit direction. Technical preview plan/verification are session evidence,
+not new product changes requiring another final code review.
+
+Implementation/review/local acceptance remain complete, exact feature heads
+below unmerged. Remaining hosted CI and any integration/deployment are separate.
 
 ## Final branches and histories
 
 | Repository / target | Final head | Reviewed base |
 | --- | --- | --- |
-| vpsadmin / master | 49f5a29e5a7d85559d06d31496acb5c08895bcda | 097226b22edf8b59f80b5dfaa55265e9d0cac633 |
+| vpsadmin / master | a38c9f871f89312f16d18e158efbbbb340ec53e4 | 097226b22edf8b59f80b5dfaa55265e9d0cac633 |
 | security-advisories / 2026-07-13-security-advisory-automation | 0b771120bb2a878c012512b685208124c2b4263b | 7b6c71807e3c5a41f585fd1d9563e151ada71244 |
-| vpsfree-kb-contracts / master | 5276b64b9cab0d29bc14968730eccf88c230059d | ce2c8cd9358c3636e5d39343e595df813a0b197f |
+| vpsfree-kb-contracts / master | 4fd4f2b8ca737b6b6baaf97998fb9484be4c1e91 | ce2c8cd9358c3636e5d39343e595df813a0b197f |
 | vpsadmin-webui / main | 1c8478bceb3943645ec06ccde895ee4b0985873f | 63d484fc070dbee633d32624de545e834d483701 |
 
-API has A9415cf2855a3f9caef6ab68dc7df8405ed9f3ef8 then B49f5a29e5.
+API has A163677bd45b5ac0a179a0bfa144bcbd9ada9e231 then Ba38c9f87.
+Previous49f5/5276 acceptance below remains baseline evidence, not new runtime proof.
 Others each have one consolidated commit; KB is five coherent source pins +8/-8.
 No obsolete fixup, repeated pin stream or MIGRATIONS. Old reviewed/tested ranges
 remain evidence refs; no default history rewritten. Modern branch is
@@ -27,6 +83,10 @@ remain evidence refs; no default history rewritten. Modern branch is
 Other branches use this slug; all worktrees are in its verified group.
 
 ## Phase checklist
+
+- [x] User authorized same-session devcluster start; supported topology/source/auth plan recorded.
+- [x] Development cluster ready on exact reviewed API/modern source.
+- [x] Both WebUIs verified with shared development data; user access/instructions delivered.
 
 - [x] Verified session/provider/full retained roster; initial substantive tracking committed.
 - [x] Architect design, expanded user scope, API/client/both UIs/exact KB pin implemented.

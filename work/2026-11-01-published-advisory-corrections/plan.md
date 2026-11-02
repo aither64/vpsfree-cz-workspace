@@ -196,3 +196,36 @@ rollback and affected-node/user/VPS projection consistency; draft compatibility.
 Run quick checks before review, then risk-appropriate longer checks using a fresh
 verification watcher. Inspect branch CI after push. Exact commands come from
 repository instructions and architect's brief.
+
+## User-approved visibility correction (2026-11-02)
+
+User reported anonymous visibility of retracted/draft advisories, then agreed
+to the lead recommendation: only published advisories are public/member-readable;
+drafts and retracted advisories are admin-only, including lists/direct URLs and
+related reads. Retract remains silent, preserves original/history for admins,
+and differs from permanent Delete. Actual first anonymous probe confirms drafts
+already404/omitted, retracted200/listed; do not invent a reproduced draft leak.
+API is authority; both UIs follow the same rule and stale public content must not
+render from a known nonpublished record or trigger child fetches. Scoped source/
+tests/docs, quick checks, committed affected independent review then bounded
+role/state/browser checks and same-session devcluster update are required.
+Preserve running cluster data/three synthetic fixtures; no reset/stop/production
+or default integration. Earlier reviews/results retain their immutable scope.
+
+Authoritative accepted execution boundaries: [visibility-design.md](visibility-design.md).
+Implementer0 retains all API/legacy/KB Git; implementer1 owns modern only. New
+focused regressions/quick checks precede committed affected review; longer
+API/core/browser/strict KB acceptance and preview update follow that gate.
+
+### Server-only visibility boundary (later user correction)
+
+The user explicitly rejected duplicate client-side visibility enforcement:
+“the visibility is handled by the server completely. the UIs shows what the
+server sends them, it is useless to implement retracted advisory hiding also in
+UIs”. This supersedes the new modern public filters/cache guards and their test/
+doc package. Restore exact reviewed/running modern1c847; preserve f7c4 as rejected
+candidate evidence. Only the API owns the published-only non-admin policy, with
+related query intersection/regressions. UIs display server results; administrators
+retain authorized retracted access, without an extra public-route state policy.
+Existing standalone UI implementation remains unchanged. API/KB review, relevant
+checks and running preview update still required; no frontend framework/campaign.

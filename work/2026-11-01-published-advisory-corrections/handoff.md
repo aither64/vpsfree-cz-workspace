@@ -1,4 +1,17 @@
-# Advisory corrections — prepared implementation
+> **Current visibility follow-up complete in DEV:** reviewed APIa38c/KB4fd4,
+> unchanged modern1c. Server alone hides drafts/retracted from nonadmins;
+> API66 + modern24 + PHP21 live checks passed, all fixtures preserved, cluster
+> left running. [Current evidence](visibility-verification.md). Hosted count
+> metadata failure remains unexplained and KB Managed readiness baseline failed;
+> no production CI/integration/deployment claim. Original49f5/5276 evidence below
+> is historical. No UI hiding changes shipped.
+
+# Advisory corrections — reviewed implementation
+
+User-requested development preview is now RUNNING/READY with both UIs and
+shared synthetic advisory1draft/2published/3retracted. See
+[preview access/verification](preview-verification.md) for links, portal credentials,
+public CA trust and exact running source/input proofs. Leave the cluster running.
 
 Reviewed implementation and local acceptance are complete. Ready, awaiting merge
 approval; session remains active. No production correction, retraction, deletion,

@@ -5,6 +5,34 @@ verified against `/home/aither/workspace/ai/vpsfree.cz`. Saved Sol/xhigh,
 workspace_write retained. No production, credential, deployment, integration or
 session lifecycle operation performed. Lead owns shared state and approvals.
 
+## Final unchanged-modern / corrected-server live acceptance
+
+Read-only normal trusted-TLS/OAuth fresh-context anonymous/member/admin matrix
+PASS2026-11-02T17:04:36.937Z, modern1c847/APIa38c. Public nonadminlist[2],
+direct draft1/retracted3 real API404 and ordinary UI unavailable; published2
+API200/rendered. Admin management retains all three originals/200/Edit; existing
+public admin behavior accepts2+3 and rejects draft1 despite authorized parent200.
+No client filtering code/mocks/build/source changes, zero advisory writes, samples
+intact. Browserclosed/watcherterminal; utility released to implementer0. Initial
+separate Node-CA helper setup failure preserved, corrected normal Chromium fetch
+passed. Full precise boundaries: [modern-preview.md](modern-preview.md), sanitized
+[role result](modern-server-visibility-result.json). No further operation pending.
+
+## Modern visibility correction withdrawn; exact reviewed source restored
+
+User corrected the boundary: advisory visibility belongs completely to the
+server. All fifteen paths of the new modern filtering/cache/test/docs delta
+were restored; branch and draft PR122 now exactly match reviewed/running
+`1c8478bceb3943645ec06ccde895ee4b0985873f`, tree
+`7d3169bc4f80af199631e73cc4442b7985d8cf6d`. Clean source; SSH exact-lease
+publication and fresh remote proof; unchanged main63d484/input graph. No new
+commit, tests/build or preview update; no other-repo or lifecycle mutation.
+Withdrawn f7c4eb282cd146d5b905c70db74f2aedb4ff4969 remains in an evidence ref,
+with its quick receipts explicitly superseded in
+[modern-visibility.md](modern-visibility.md). Only its active own-branch browser
+CI41460012379 now confirms completed/cancelled; restored1c847
+previous/current runs remain intact.
+
 ## Expanded delivery checkpoint (supersedes earlier scope below)
 
 C final consolidated commit is `0b771120bb2a878c012512b685208124c2b4263b`,
@@ -38,6 +66,15 @@ snapshot hook. The state was moved to its actual panel owner; panel remains
 495 lines. Final quick checks and refreshed same synthetic desktop/mobile cs/en
 captures follow. Earlier4 capture-only passes do not certify mutation acceptance.
 No full suites/builds/package/browser acceptance before committed final review.
+
+## Live modern preview accepted
+
+Normal CA-trusted OAuth/current test-admin/logout-relogin and read-only published/
+retracted advisory controls passed against live shared dev API49f5/modern1c847.
+Actual running paired packages/source bytes and path-metadata limitation are in
+[modern-preview.md](modern-preview.md). No advisory writes or source/Git/reset/stop;
+all three examples preserved, browser closed, utility slot released. Main owns
+final explanation/preview handoff; implementer0 owns backend/mail/legacy proof.
 
 ## Legacy membership layout follow-up
 
