@@ -130,3 +130,17 @@ the runtime's `docs/session-archive-recovery.md` owns its other temporary reader
 Both inventories include active/archive records and restore/revival paths and
 require zero dependent inputs and zero supported reintroduction paths.
 Unknown-base schema-1 and schema-2 journals remain supported formats.
+
+## Temporary services
+
+Launch every new session-owned temporary local server, preview and candidate
+through `dev-session service run`. Use `dev-session service list` to inspect
+registrations and `dev-session service stop` for an authorized stop. Follow the
+runtime's [temporary service guide](https://github.com/aither64/dev-workspace/blob/master/docs/dev-sessions.md#temporary-services)
+for arguments and supported behavior. Every candidate needs its own registration.
+Existing unregistered services are excluded; do not discover, adopt or add
+migration gates for them. Registered cleanup runs before supporting-file removal
+as part of an authorized archive or delete operation. Failed or uncertain
+shutdown keeps that operation pending; retry its original command under the
+[recovery procedure](https://github.com/aither64/dev-workspace/blob/master/docs/session-archive-recovery.md#registered-temporary-service-cleanup).
+Ordinary task completion and handoff do not request session archival or shutdown.

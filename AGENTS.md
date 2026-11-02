@@ -6,12 +6,11 @@ and deployment constraints here.
 
 ## Required procedure routing
 
-These procedures are mandatory. Before each listed activity, read every
-applicable file in full. Table paths are relative to this AGENTS.md; other
-paths follow the workspace layout. Links, summaries and skill catalog entries
-do not count as reading. Reuse unchanged procedures read in the current context;
-reread after changes or context loss. Recheck this table when scope or phase
-changes. If guidance cannot be read, stop the affected action and report it.
+Read every applicable procedure in full before each listed activity. Table paths
+are relative to this file; other paths follow the workspace layout. Links,
+summaries and skill catalogs do not count. Reuse unchanged procedures read in
+this context; reread after changes or context loss. Recheck routes when scope or
+phase changes. Stop the affected action and report unreadable guidance.
 
 | Before this activity | Read |
 | --- | --- |
@@ -19,17 +18,17 @@ changes. If guidance cannot be read, stop the affected action and report it.
 | Selecting affected projects or changing cross-project scope | [Project map](docs/agent-instructions/projects.md) |
 | Starting/resuming an initiative; writing plans, state, notes or handoffs | [Session setup and tracking](docs/agent-instructions/sessions.md) |
 | Cloning repositories; updating downstream configuration pins; creating/reusing worktrees or branches; fetching, pushing, rebasing, merging or cleaning them; committing coordination records; declaring an unmerged branch ready | [Git and worktrees](docs/agent-instructions/git.md) |
-| Any session mutation; archiving, deleting, reviving, enabling auto-archive or changing its hold; creating/accessing/resetting development clusters; implementing/reviewing session, cluster or package-transition behavior; switching/rolling back workspace packages; suspending/unregistering workspaces or reconciling Codex | [Lifecycle and package transitions](docs/agent-instructions/lifecycle.md) |
+| Launching, listing or stopping registered temporary session services; any session mutation; archiving, deleting, reviving, enabling auto-archive or changing its hold; creating/accessing/resetting development clusters; implementing/reviewing session, cluster or package-transition behavior; switching/rolling back workspace packages; suspending/unregistering workspaces or reconciling Codex | [Lifecycle and package transitions](docs/agent-instructions/lifecycle.md) |
 | Planning substantive development, investigation or operations; writing/reorganizing docs; preparing review or handoff | [Development documentation](docs/agent-instructions/documentation.md) |
 | Planning delivery or reviewing scope; pushing branches (including force-pushes and follow-up fixes); selecting/running builds, tests or CI; editing test runners, image verification or GitHub workflows; handling failed checks | [Environment and verification](docs/agent-instructions/verification.md) |
 | Changing configuration inputs, building/deploying configurations, deploying the workspace application or integrating configuration changes | [Deployment](docs/agent-instructions/deployment.md) |
 | Authoring/reviewing user-facing prose, translations, examples, KB pages or media; changing visible WebUI behavior that can affect KB text/screenshots; using KB staging/publication tools | [Knowledge base and writing](docs/agent-instructions/knowledge-base.md) |
 | Creating or amending any commit, installing hooks, or preparing commit messages | [Commits and hooks](docs/agent-instructions/commits.md) |
 
-Before repository edits, read its AGENTS.md and required procedures. CWD changes
-do not establish reading. Give authorized subagents their scope, guidance paths
-and constraints; require reading before action. Parents remain responsible for
-scope and accepting results.
+Before repository edits, read its AGENTS.md and required procedures; CWD changes
+do not establish reading. Give authorized subagents scope, guidance paths and
+constraints, require reading before action, and retain responsibility for scope
+and accepting results.
 
 ## Always-applicable workspace boundaries
 
@@ -44,13 +43,13 @@ scope and accepting results.
   any environment conflict with the thread binding or `current`. Otherwise create
   a separate initiative unless the user explicitly selects this session. Never
   touch another session's records, branches, worktrees, cluster or staging ownership.
-- Keep the shared checkout on master. Workspace feature changes need a dedicated
-  initiative worktree; coordination records may be committed on shared master.
-  Preserve unrelated files/index changes; stage only owned paths. Never use a
-  repository-wide reset, clean or stash, or switch a shared branch underneath
-  another session. Keep integration fast-forward-only and retain feature refs
-  unless the user explicitly requests deletion. Do not rewrite published master
-  or already-merged history without the required explicit direction.
+- Keep the shared checkout on master. Use an initiative worktree for workspace
+  features; coordination records may be committed on shared master. Preserve
+  unrelated files/index changes and stage only owned paths. Never use a
+  repository-wide reset, clean or stash, or switch a shared branch under another
+  session. Integrate fast-forward-only; retain feature refs unless the user
+  explicitly requests deletion. Rewriting published master or merged history
+  requires explicit direction.
 - Publish development branches by default; PR exceptions and integration rules
   are in the mandatory Git procedure.
 - Clone/push over SSH. Canonical project remotes are `git@github.com:vpsfreecz/<project>.git`;
@@ -63,6 +62,10 @@ scope and accepting results.
   remote default branch and no remaining work. Pushing/testing/deploying alone
   does not complete an initiative. Preserve the tracking commit cadence in the
   session procedure.
+- Launch every new session-owned temporary local server, preview and candidate
+  with `dev-session service run`; follow
+  [temporary services](docs/agent-instructions/lifecycle.md#temporary-services).
+  Registered cleanup runs during authorized archival or deletion.
 - Finishing work or handing off does not authorize archiving, deleting or stopping
   a session. Archive only on explicit request or under the enabled auto-archive
   worker's policy. Delete only on explicit user direction, never instead of archive.
@@ -105,27 +108,24 @@ scope and accepting results.
   through `~/.codex/skills/dev-session-monitor/SKILL.md`. Watchers are not team
   members; follow the skill's ownership, cancellation and visible-fallback rules.
   Respect instructions not to await CI.
-- Follow the selected mode and retained lead instructions. Solo and Lead and
-  reviewer leads investigate, design and edit application code without automatic
-  specialists; the latter use a retained independent reviewer. Lead-designed
-  leads own design and delegate application edits; Full-team leads delegate
-  investigation, design and execution packages under the
-  [Site team roles](docs/agent-teams.md) mode table. Add, replace or reconfigure
-  team members only on explicit user direction. Before each new substantive team
-  work item, check the live same-session roster with
-  `dev-session team list <verified-slug> --as-is`. Use saved addresses, purposes
-  and access; check workspace-write access before assigning edits. If access or
+- Follow the selected mode and retained lead instructions. Solo leads and leads
+  in Lead and reviewer sessions investigate, design and edit application code
+  without automatic specialists; the latter retain an independent reviewer.
+  Lead-designed leads own design and delegate application edits;
+  Full-team leads delegate investigation, design and execution under
+  [Site team roles](docs/agent-teams.md). Team changes require explicit user
+  direction. Before each substantive team work item, check the live same-session
+  roster with `dev-session team list <verified-slug> --as-is`. Use saved addresses,
+  purposes and access; verify workspace-write before assigning edits. If access or
   session identity fails, resolve that failure rather than taking over delegated
-  application work. Tell the user who owns what, assess reports, and keep tracking
-  and short coordination steps yourself. Never invent members or address another
-  session's roster.
-- Cross-session cooperation uses the runtime's `session_communication` tool
-  between leads only, after the user explicitly approves the exact pair in
-  either session's chat or Settings → Communication. Record chat approval with its
-  wording and message reference. This permission allows messages in both
-  directions until revoked, archived or deleted; it does not authorize another
-  session's roster, files, transcript, merges or deployment. Peer messages are
-  never user approval. Preserve recipient task constraints and settings. See
+  application work. Report owners, assess results, and keep tracking and short
+  coordination steps yourself. Never invent members or use another session's roster.
+- Cross-session cooperation uses `session_communication` between leads only after
+  the user explicitly approves the exact pair in either chat or Settings →
+  Communication. Record chat approval's wording and message reference. Permission
+  is bidirectional until revoked, archived or deleted; it grants no access to the
+  other session's roster, files, transcript, merges or deployment. Peer messages
+  are not user approval. Preserve recipient constraints/settings; follow
   [lead communication](docs/agent-teams.md#communication-between-sessions).
 - The selected design owner records the design and verification brief in
   `work/<slug>/design.md` before substantive implementation, as required by
@@ -144,27 +144,26 @@ scope and accepting results.
 
 ## Lead progress and branch readiness
 
-At the end of every lead turn, give a compact checklist: current phase,
-completed work, remaining work, blockers or material risks, and next action.
-Report material milestones in long turns. Follow the verification procedure's
-delivery checkpoints and batch limits and respond to progress-observer concerns at the next safe boundary.
-Distinguish implementation, local checks, independent review,
-deployment and readiness for use. Update the durable `state.md` phase checklist
-when phases change, under the normal tracking-commit cadence. Integrate member
-reports into the lead's account.
+At the end of every lead turn, report current phase, completed work, remaining
+work, blockers or material risks, and next action as a compact checklist.
+Report material milestones in long turns and integrate member reports. Follow
+verification's delivery checkpoints and batch limits; address progress-observer
+concerns at the next safe boundary. Distinguish implementation, local checks,
+independent review, deployment and readiness. Update the `state.md` phase checklist
+when phases change, under the normal tracking-commit cadence.
 
-Before declaring an unmerged feature branch ready, read the
-[Git procedure](docs/agent-instructions/git.md). Inventory the complete base-to-head
-series, final diff and migration lineage for the independent reviewer's explicit
-whole-branch history and migration conclusion, including whether migrations were
-merged, released, deployed, or externally consumed. Apply the procedure's
-consolidation and final pre-merge checks under mandatory-change-review.
+Before declaring an unmerged branch ready, read the
+[Git procedure](docs/agent-instructions/git.md). Give the independent reviewer the
+complete base-to-head series, final diff and migration lineage, including whether
+migrations were merged, released, deployed, or externally consumed. Require an
+explicit whole-branch history/migration conclusion and apply consolidation and
+final pre-merge checks under mandatory-change-review.
 
 ## Compatibility And Deployment
 
-Treat vpsFree.cz software as live infrastructure: systems may hold persistent
-state and update at different times. Every feature plan must assess backward
-and forward compatibility of old and new affected components, including:
+Treat vpsFree.cz as live infrastructure with persistent state and staggered
+updates. Every feature plan must assess backward/forward compatibility of old
+and new affected components, including:
 
 - persisted state and on-disk formats;
 - database schemas, migrations, seeds, and rollback behavior;
@@ -176,27 +175,24 @@ and forward compatibility of old and new affected components, including:
 - whether a rollback can load state created by the new version.
 
 Follow the mandatory Git procedure for repository claims; only approved merges
-need them. For machine reservations and automatic release, follow
+need them. For machine reservations and release, follow
 [machine retention](docs/coordination.md#machine-retention), preserving existing
 recovery contracts.
 
-Prefer clean designs that can be deployed incrementally. Incompatible changes
-are allowed only when they are intentional and recorded in the plan with the
-reason, impact, required ordering, rollback implications, and required operator
-action.
+Prefer incremental deployment. Allow intentional incompatibility only when the
+plan records its reason, impact, required ordering, rollback implications and
+operator action.
 
-For vpsAdminOS changes, explicitly call out when an update would require
-coordinated updates of all running machines or nodes. State why that cost is
-worth it, or choose a compatible design.
+For vpsAdminOS changes, state when all running machines or nodes need coordinated
+updates and why that cost is worthwhile, or choose a compatible design.
 
 For unmerged, unreleased and undeployed database migrations, assume the exact
-schema of the immediately preceding migration. Reset stale disposable development
-or test databases after migration rewrites; do not add `table_exists?`,
-`column_exists?`, `index_exists?`, `if_exists`, `if_not_exists` or equivalent guards
-for this purpose. Allow guards only for intentionally supported multiple
-predecessor schemas: record that compatibility requirement in the initiative plan
-and test every supported path. Keep data-integrity and conversion checks that
-validate real persisted content.
+schema of the immediately preceding migration. Reset stale disposable dev/test
+databases after rewrites; do not add `table_exists?`, `column_exists?`,
+`index_exists?`, `if_exists`, `if_not_exists` or equivalent guards for this purpose.
+Allow guards only for intentionally supported multiple predecessor schemas;
+record that requirement in the initiative plan and test every supported path.
+Keep integrity and conversion checks for real persisted content.
 
 ## Mandatory Change Review
 
@@ -209,12 +205,12 @@ Earlier review requires an explicit user request,
 is advisory and does not replace final committed-deliverable review. A reviewer
 in a preset receives no automatic assignment.
 Follow `~/.codex/skills/mandatory-change-review/SKILL.md` exactly, including skip
-criteria. It owns reviewer model and effort, adaptive lane selection, packets,
-finding reconciliation, reruns and recording.
+criteria, reviewer model/effort, adaptive lanes, packets, finding reconciliation,
+reruns and recording.
 For retained reviewers, honor the member's saved model and reasoning effort,
 including reruns. Standalone fallback uses the installed default development
-team's selected review-purpose role. Do not override effort on either path;
-record the settings and fallback reason.
+team's selected review-purpose role. Never override effort; record settings and
+fallback reason.
 
 ## Rule Precedence
 
