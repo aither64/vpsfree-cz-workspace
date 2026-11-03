@@ -1,37 +1,75 @@
-> **Current visibility follow-up complete in DEV:** reviewed APIa38c/KB4fd4,
-> unchanged modern1c. Server alone hides drafts/retracted from nonadmins;
-> API66 + modern24 + PHP21 live checks passed, all fixtures preserved, cluster
-> left running. [Current evidence](visibility-verification.md). Hosted count
-> metadata failure remains unexplained and KB Managed readiness baseline failed;
-> no production CI/integration/deployment claim. Original49f5/5276 evidence below
-> is historical. No UI hiding changes shipped.
+# Advisory corrections — merge preparation
 
-# Advisory corrections — reviewed implementation
+**Ready, awaiting merge approval.** Implementation, independent review, required
+local acceptance, final source/input/cleanup proof and all five freshness checks
+are complete. PR122 is ready; no further tests or source changes are selected. Nothing
+has been merged into a default branch or deployed to production.
 
-User-requested development preview is now RUNNING/READY with both UIs and
-shared synthetic advisory1draft/2published/3retracted. See
-[preview access/verification](preview-verification.md) for links, portal credentials,
-public CA trust and exact running source/input proofs. Leave the cluster running.
+| Repository / target | Published feature head |
+| --- | --- |
+| vpsadmin / master | `942c6eaed41331f823d8e0f670ed239e2b308440` |
+| security-advisories / 2026-07-13-security-advisory-automation | `0b771120bb2a878c012512b685208124c2b4263b` |
+| vpsfree-kb-contracts / master | `f97785c2c265172a4c78893e0673034fde56e4dd` |
+| vpsadmin-webui / main | `1c8478bceb3943645ec06ccde895ee4b0985873f` |
+| vpsfree-cz-configuration / master | `c4107822060e9e34b24a83950d618c9f28a7722b` |
 
-Reviewed implementation and local acceptance are complete. Ready, awaiting merge
-approval; session remains active. No production correction, retraction, deletion,
-mail, credential change, deployment or default integration occurred.
+API preserves HaveAPI0.32.2 master5586 and has three logical commits: advisory
+API, legacy advisory management, independent VPS return-navigation fix with
+its owning regression. KB has one final API pin plus unchanged readiness helper;
+configuration has one generated Services pin over0d71. Both select942c with
+matching NAR. No migrations, obsolete implementation/fixup or repeated pin stream
+remains. Old reviewed/deployed heads remain evidence refs, not literal ancestry.
 
-Final pushed heads: API49f5a29e5a7d85559d06d31496acb5c08895bcda,
-client0b771120bb2a878c012512b685208124c2b4263b,
-KB5276b64b9cab0d29bc14968730eccf88c230059d and
-modern1c8478bceb3943645ec06ccde895ee4b0985873f.
-Modern [draft PR122](https://github.com/vpsfreecz/vpsadmin-webui/pull/122).
-state.md records exact bases, final CI snapshot and any remaining hosted checks.
+[Independent affected review](admin-pagination-final-review.md) returned no
+Blocking/Important/Advisory findings, including whole histories/no migrations,
+assertion order, complete pin graphs and actual consumed-input reuse. It reuses
+[prior navigation/HaveAPI conclusions](navigation-haveapi-final-review.md) at their
+proven boundaries. The one-line admin test repair follows actual success and
+canonical URL assertions, then reopens the filtered list for row observation;
+it cannot hide wrong-Overview navigation. RuntimeC/auth/headers/timeouts unchanged.
 
-Full/core advisory API88/79 and client298 examples passed; modern1976 tests,
-production build,10desktop/2mobile cases and all5Nix outputs passed. Final strict
-KB passed453.13s and all18 real legacy Playwright cases passed (command1387.69s).
-Native guests exited/destroyed with no owned runner process left. Original API
-runtime-test SHA and proven identical source/derivation/bundle inputs are retained
-honestly; final legacy/strict KB were executed on the exact heads above.
-Independent full and affected reviews are complete with findings fixed and
-consolidated whole-history/NO MIGRATIONS conclusions.
+Strict finalKBf977 passed509.55s. Admin-core on942c passed all3serial browsercases
+(no failures/skips), nativeexpected_success; wrapper1299.84s/wholebatch2747.17s.
+Only admin and strict ran in the final batch, under one verified restricted
+Luna/low utility. Actual2823 services-up34, user-core4 and lifecycle3 passes are
+retained under independently checked runtime/helper/selected-script/input reuse,
+without claiming whole Playwright bundle or guest derivation equality. Hosted
+API41544311588 all26topics+aggregate and actual0.32.2 environments likewise apply
+through unchanged Ruby/API input proof. Earlier KVM stays at its stated sources.
+
+Normal hooks/quick checks, KB zero drift and config graph/mapping/representative
+evaluation passed. Ambient Overcommit0.71 prepush failure was recovered in declared
+Nix0.74 without signing/bypass/recommit. Earlier runner-path setup failure was
+resolved with short socket paths; original failures and utility provenance limits
+remain retained. Original missing-count/password-lock causes remain UNKNOWN.
+
+Final modern/client/config snapshot03:14:07Z confirms clean published heads and
+unchanged ancestor defaults. Modern/client CI passed; config has no hosted runs,
+with normal local hooks/evaluation recorded. PR122 is ready/MERGEABLE/CLEAN at
+03:14:45.924716Z; only its approved terminal status sentence changed. Final API/KB SSH heads/defaults are exact/clean/ancestor, matching the reviewed
+ranges. Final actual guest graph6656 binds2958matching runtime blobs and the
+correct942c admin bundle; machine logs terminal/native PID gone, two retained
+virtiofs pidfiles reference nonexistent processes. Preflight socket64bytes,
+maximum observed path68bytes, below108limit.
+
+Latest API942c CI41563874916 is queued; PHPUnit/i18n passed. KBf977 Check passed;
+Managed41564405472 is in progress. Old2823 integration is completed/cancelled.
+These pending current runs are not called green, and no broad wait/campaign is
+selected. Any new actual failure needs disposition before integration.
+
+DEV preview stays running: backendAPIa38c/modern1c, synthetic data intact;
+host-mounted PHP reads unchanged runtimeC from942c without another activation.
+Credentials remain in portal Cluster fields. Config's separate modern70bd source
+is unchanged; the API channel does not select/deploy modern1c. No preview fixture
+writes, restart, backend update or session lifecycle action is authorized.
+
+Next: explicit integration direction for the repository/target set above. Each
+approved merge still needs a fresh target/head/history check; material changes
+require the appropriate refreshed verification and review. Future production
+rollout needs compatible UI/API pairs, every active six-guard sync client and no
+mixed API pool. Full hashes/bases/results and prepared recovery constraints are
+in [state.md](state.md), [owner evidence](visibility-verification.md) and
+[configuration receipt](config-channel-update.md). Keep the session open.
 
 ## API interface and validation
 
@@ -96,7 +134,9 @@ Read-only/dry-run commands stay available.
 Actual HaveAPI metadata includes labeled choice maps; machine keys identify
 states. Root OPTIONS is authenticated capability evidence, not record-specific
 permission: endpoint preparation and write authorization/locking remain decisive.
-No shared transport/framework/generated SDK or dependency migration is introduced.
+No shared transport/framework/generated SDK change is introduced by the feature.
+The refreshed API baseline selects HaveAPI 0.32.2 under the reviewed compatibility
+and actual-input verification boundary.
 
 ## Compatibility and rollout requirements (not executed)
 
@@ -139,8 +179,9 @@ and range evidence belongs in implementer1.md.
 Any integration requires explicit direction naming repository and target. The
 actual client default is 2026-07-13-security-advisory-automation; other defaults
 are API/KB master and modern main. Deployment and production corrections remain
-separate decisions. Hosted KB Managed retry status is in state.md; its first
-failed unchanged process-fixture precheck remains preserved, not relabeled.
+separate decisions. Historical KB Managed/process-fixture failures and their later source-scoped
+outcomes remain in state.md and the linked owner receipts; they are not relabeled
+as final HaveAPI 0.32.2 execution.
 
 Session stays open:
 https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-11-01-published-advisory-corrections/

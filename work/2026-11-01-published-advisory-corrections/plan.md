@@ -1,5 +1,20 @@
 # 2026-11-01-published-advisory-corrections
 
+## Current merge-preparation scope
+
+The user's later “well then continue, prepare for merging” and requested
+configuration channel update authorize published feature preparation only.
+Final API942c, KBf977, configc410 and unchanged modern1c/client0b are committed,
+quick-checked and independently reviewed. Required local acceptance passed:
+strict final KB and the affected three admin browser cases; other successful
+native/API evidence is reused only within the reviewed actual-input boundary.
+The incidental VPS navigation repair and its test-context correction stay in
+one independent logical C commit. Complete histories have no migrations or
+obsolete repeated pin stream. [State](state.md) owns exact sources, remaining
+receipt/freshness work and CI status; [handoff](handoff.md) owns the prepared
+interfaces/rollout/recovery summary. No merge, production operation, preview
+mutation or session lifecycle action is authorized by preparation.
+
 ## Goal
 
 # Implement corrections to published security advisories
@@ -229,3 +244,91 @@ related query intersection/regressions. UIs display server results; administrato
 retain authorized retracted access, without an extra public-route state policy.
 Existing standalone UI implementation remains unchanged. API/KB review, relevant
 checks and running preview update still required; no frontend framework/campaign.
+
+## Requested configuration channel update (2026-11-02)
+
+User additionally requested “vpsadmin channel update in vpsfree-cz-configuration”.
+Prepare one normal confctl-owned channel/input update in a new session-owned
+configuration feature worktree after inspecting actual channel/role mapping.
+The requested advisory feature is unmerged; use exact final published feature
+revision via confctl channel set rather than accidentally selecting upstream
+master without the feature. Keep generated changelog/message, hooks and one
+logical pin stream; inspect unrelated/transitive graph changes and run relevant
+nondeploy validation. No manual lock editing, production activation or default
+integration is authorized. Implementer1 owns config-only package; implementer0
+retains API/legacy/KB. Current APIa38c candidate readiness is limited by unknown
+hosted count failure, pending integration and fresh API master1d4869 vs reviewed
+097; current pin preparation is not unconditional release readiness. Any final
+API successor needs a consolidated mechanical channel refresh/equivalence check.
+
+Accepted mechanical mapping: channel `vpsadmin`, role `vpsadmin`, root input
+`vpsadminServices`. Pin current verified candidate `a38c9f8` using the declared
+confctl command. The 17 declared host names indicate channel membership, not
+that every service package changes. Preserve separate staging/production role
+inputs and the independent WebUI source pin; inspect expected transitive follows.
+Use parse/semantic graph and bounded channel/host/options evaluation, without
+fleet builds or deployment. Keep the result on its owned feature branch.
+
+## Authorized merge preparation continuation (2026-11-02)
+
+User followed the readiness report with “well then continue, prepare for
+merging”. Continue feature preparation through necessary diagnosis, patch-equivalent
+API reconciliation, narrow owning test-helper repair if required, consolidated
+API/KB/config heads, quick checks, applicable independent affected review, and
+risk-based verification. This is not default-branch integration or deployment
+approval. Preserve current DEV runtime/data and the rejected frontend-policy
+boundary. Retain old reviewed/deployed ranges and input provenance; no source
+identity or green rerun alone proves that the hosted count failure was harmless.
+
+Architect0 records the bounded brief in existing design.md. Implementer0 owns
+API/legacy/KB and their Git/tests; implementer1 owns only final config regeneration
+and one end-package modern/client freshness snapshot. Serialize utility use and
+all same-repository source/Git operations. Reuse successful checks only within
+their proven source/effective-input scope; assess changed bundle inputs before
+selecting repetitions. No optional broad campaign or unrelated framework repair.
+
+## Proven integration navigation correction (2026-11-02)
+
+Final integration's3failedWebUI scripts have a proven common wrong destination:
+Restart/Shutdown succeeds, then existing origin-only same-host referrer resolves
+to Overview instead of the explicit VPS fallback under strict-origin policy.
+The owning PHP helper reproduces this deterministically. The accepted TOPdesign
+brief permits the smallest helper/existing-unit correction: ignore only origin-
+only targets with empty/missing query, preserve meaningful root queries and
+filtered/paginated same-host URLs and all existing validation/auth/header/CSRF
+behavior, use canonical list fallback where required. No new UI concept/copy,
+policy framework, timeout change or production action.
+
+Implementer0 owns separate logical C (independent VPS navigation fix), quick PHP
+checks/hooks/commit and one final consolidated KB pin, then affected review and
+only3failednative scripts (15–25min) with actual selector/input proof. Existing117
+successes/advisory18/API/KVM evidence remains source-scoped; no135script/4.5h
+repeat by default. Implementer1 refreshes one config pin after stable API handoff.
+Actual KB contract drift determines impact; no capture/staging/publication without
+reported need. Source edits may affect live-mounted DEV PHP; record actual effect
+without an extra cluster activation or changes to APIa38c/modern1c/storeddata.
+
+## Fresh HaveAPI0.32.2 target boundary (2026-11-03)
+
+Master advanced to5586ea8 after the navigation fix's quick checks. Its13dependency/
+tooling paths change HaveAPI server/client/generator/exporter inputs, not owning
+application or C paths. The accepted TOPdesign brief permits compatible A/B/C
+refresh after canonical0.32.1→0.32.2 source/release inspection: ordinary dispatch,
+resource/input/output/count/auth/rootOPTIONS owners unchanged; documentation,
+locale handling/packaging and TS generation changed. Actual five-gem published
+hash provenance is checked. No schema migration or concrete advisory/sixguard
+contract break found. C stays a separate logical commit; old.32.1 proof is scoped.
+
+Verify actual loaded.32.2/effective full-core locks/NAR/derivation/graph and final
+feature metadata/read/mutation evidence; use normal hosted coverage when available.
+Existing exporter safety/snapshot checks and REQUIRED services-up verify changed
+packaged schema/protocol/clientdocs. After committed quick/source review, native
+package is services-up plus3failedWebUI scripts, no135script replay by default,
+then strict finalKB pin and only necessary drift remediation. Stableconfigrefresh
+follows finalAPI handoff. No production/cluster/ReferrerPolicy/auth changes.
+
+Actual modern consumer inspection found no production dependency on Services'
+TSgenerator: config70bd uses handwritten fetch/nohaveapi-client; feature1c uses
+npm-lockpinnedhaveapi-client0.32.0/handwrittenAsyncClient adapters. Production
+frontend/BFF args do not include vpsadmin/generator; follow is localization/module/
+VM context. No newfrontendbuild/regeneration or code is needed from this update.

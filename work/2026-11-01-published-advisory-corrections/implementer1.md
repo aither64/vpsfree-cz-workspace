@@ -5,6 +5,75 @@ verified against `/home/aither/workspace/ai/vpsfree.cz`. Saved Sol/xhigh,
 workspace_write retained. No production, credential, deployment, integration or
 session lifecycle operation performed. Lead owns shared state and approvals.
 
+## Final preparation completed — 2026-11-03T03:14:45Z
+
+The lead released preparation after actual common API942c/KBf977 strict509.55s
+and admin-core three serial browser cases PASS (3passed/21.6m, nativeexpected_success),
+with successful services34/user4/lifecycle3/API26/aggregate evidence retained by
+its owner. No acceptance rerun or API/KB snapshot was performed by implementer1.
+
+One fresh snapshot at03:14:07Z confirms all three owned worktrees/indexes clean,
+local and remote exact heads, unchanged defaults and ancestorcheck0:
+
+| Repository | Exact feature head | Actual current default | Source tree |
+| --- | --- | --- | --- |
+| configuration | c4107822060e9e34b24a83950d618c9f28a7722b | master0d71dd289feeb1ea2686f9c7cf0f93728baf9bd2 | 1efa0031c1b2339f2deb8e70861307f08bf95ac6 |
+| modern WebUI | 1c8478bceb3943645ec06ccde895ee4b0985873f | main63d484fc070dbee633d32624de545e834d483701 | 7d3169bc4f80af199631e73cc4442b7985d8cf6d |
+| advisory client | 0b771120bb2a878c012512b685208124c2b4263b | 2026-07-13-security-advisory-automation7b6c71807e3c5a41f585fd1d9563e151ada71244 | 3564af67baf853721197b342733a0f3c470552e3 |
+
+Exact modernCI41462732480 and browser41462732324 SUCCESS; all PR rollup jobs
+SUCCESS, including nonbrowser/build/script/desktop/mobileChrome/mobileWebkit.
+ClientRSpec41336065180 and RuboCop41336065173 SUCCESS. Config exact-head CI
+listing is empty; no hosted configuration CI success is claimed. Its normal
+hooks/bounded graph/evaluation and mechanical-history review evidence remain
+scoped to currentc410. The required-check CLI reports no configured matches for
+PR122, not a failing check. No CI wait/cancel/rerun or new test/build was selected.
+
+PR122 is now ready (isDraft=false), still exact1c847, main base, MERGEABLE/CLEAN,
+with unchanged title 'Enable guarded advisory corrections and lifecycle actions'.
+Post-transition proof confirms its body changed ONLY the main-approved terminal
+sentence to 'Prepared for merging; no production data, merge or deployment changes.'
+No reviewer requests, comments or external contributor messages were sent;
+reviewRequests remains empty. Preparation authority does not authorize merging.
+Existing full review/no-migration/source/input and portal comparison evidence is
+retained; no source/ref refresh/regeneration or tree change was needed.
+
+Raw metadata/body-before/body-after/proof: /tmp/2026-11-03-final-readiness/.
+Sanitized [final result](implementer1-final-readiness.json).
+All own commands terminal, no utility owned. No claim/default integration/deploy/
+runtime/preview/cluster/session lifecycle action. Lead-owned state/handoff/portal
+untouched. Ready, awaiting explicit merge approval under the workspace contract.
+
+## Historical modern/client metadata preparation — 2026-11-03T00:15:43Z
+
+One fresh read-only sweep after current repository AGENTS/Git rules: modern1c847
+and client0b771 clean/pushed; actual defaults remain63d484 and automation7b6c718,
+respectively, both verified ancestors. Source/input evidence remains valid; no
+source change, fetch, new tests/build or API-input dependency invented. Exacthead
+modern PR122 rollup checks allSUCCESS; latest CI41462732480/browser41462732324.
+ClientRSpec41336065180/RuboCop41336065173SUCCESS. RequiredchecksCLI reports no
+configured matches, not a failed check. PR122 title/body reviewed, stilldraft,
+MERGEABLE/CLEAN, no reviewrequests. Currentbody remains accurate; proposed only
+finalDraftPRsentence→'Prepared for merging; no production data, merge or deployment changes.'
+Mainwritingpass pending before publication. No local rule prevents ordinary
+ready transition; actualmerge still requires explicit integration direction.
+Draft→ready HELD until lead confirms common API services-up/three-native/strict
+acceptance PASS. No reviewrequests/comments/messages to external contributors.
+Configd1eb/0d71 untouched; impl0 retains sole nativewatcher. No activeoperationhere.
+
+## Configuration final API942c candidate prepared
+
+Final single generated configc4107822060e9e34b24a83950d618c9f28a7722b over
+unchangedmaster0d71dd289feeb1ea2686f9c7cf0f93728baf9bd2 pins finalAPI942c6eae.
+Oldd1eb evidence retained; normalhooks/64nodefollows/same17mapping/two representative
+API1+PHPWebui1 derivation eval PASS. ExactSSHlease/clean/FF/comparison proof,
+noobsoletepinchain. All unrelated sourcepins inclmodern70bd unchanged. No new
+frontend/client/build/CI/browser/source or runtime action. PR122draft/body held
+until commonPASS. Full [currentreceipt](config-channel-update.md), artifacts
+/tmp/2026-11-03-config-channel-update-942c/. NoLuna overlap; parentcommands terminal.
+Ready for retainedaffectedreview of finalranges before nativeadmin/strict checks.
+No merge/deploy/claim/lifecycle; lead-owned state/handoff untouched.
+
 ## Final unchanged-modern / corrected-server live acceptance
 
 Read-only normal trusted-TLS/OAuth fresh-context anonymous/member/admin matrix

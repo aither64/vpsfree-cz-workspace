@@ -1,5 +1,424 @@
 # Published advisory corrections
 
+## Admin-list pagination: test-only acceptance correction
+
+The exact API `2823e0e75c67dbb94d90722b06e6fcaebf8c9a34` recovery passed
+services-up34, user-core4 and lifecycle3. Admin-core passed its creation case,
+failed its list-action case and skipped the final serial case. Actual native
+failure is `tests/playwright/webui/specs/vps-admin-core.spec.cjs:151` in
+`runFilteredListAction`: after Restart32, the notification and canonical
+`page=adminvps&action=list` assertions passed, but row32 was not on the default
+25-row list. The snapshot contains “Restart of 32 planned” and “VPS list [Admin
+mode] / Limit: 25”. C intentionally uses the canonical list fallback when
+strict-origin removes the previous `from_id`, `user` and `limit` query.
+
+Implementer0 may change **only this existing spec owner**: call
+`openAdminVpsListAround(page, vpsId)` after the existing notification/dialog and
+`waitForQueryParams` assertions, before the row-visibility assertion. The helper
+already submits the existing filters with `fromId: vpsId - 1`, `limit: 1` and
+the fixture user. This restores the row-observation setup without weakening the
+return-navigation acceptance: never navigate before verifying the action result
+and returned URL. Preserve every action, login/auth, dialog, notification,
+row/link/filter, transaction-settling and final status assertion and timeout.
+No runtime helper, header, policy, fixture semantics or auth change is needed.
+
+Amend C with the test-owner correction, preserving A/B and C's runtime patch;
+retain old2823's exact review/execution ref and receipts. Run pinned Node syntax
+and normal hooks/quick checks, then consolidate one final KB pin stream while
+preserving its readiness-helper patch. Implementer1 refreshes the single config
+pin only after stable final API handoff. All intended final ranges/pins are
+committed and quick-passed before retained reviewer0's affected review, including
+complete history/no-migrations and the test-versus-product acceptance distinction.
+
+After review, run **only `webui#vps-admin-core`**, all three existing serial cases,
+using the actual nonempty selector and existing runner, short owned socket-state
+path and fresh watcher. Keep the original failed evidence; do not repeat passed
+services-up/user-core/lifecycle, API or advisory browser campaigns by default.
+Reuse them only with actual runtime/dependency/plugin/runner/guest-input proof
+and a selected-script comparison showing their source/definition/filter unchanged.
+The whole bundled Playwright suite/source revision can change because this one
+spec changed; distinguish that provenance change from the unchanged selected
+successful scripts and application inputs rather than claiming identical overall
+derivations. Escalate any additional material input change before extending checks.
+
+**Strict KB validation must repeat on the final source pin:** the mandatory
+canonical workflow validates the final committed vpsAdmin revision, so the old
+strict5df pass (467.87s) is retained but not called a final-pin execution. Run
+normal strict `nix develop -c bin/check` after affected review, without overrides
+or allow-missing. This adds no page/capture/media work; runtime/UI bytes and the
+KB helper/content remain unchanged. Do not rerun successful managed KVM merely
+for this test-only source-pin change when its actual consumed-input comparison
+supports reuse. No source implementation by architect, product scope expansion,
+CI retry, preview mutation, deployment, merge or lifecycle operation is included.
+
+## HaveAPI 0.32.2 target refresh: compatibility and bounded checks
+
+Read-only inspection supports compatible preparation on fresh vpsAdmin master
+`5586ea8ab7dbf7e116083b0ea1819ea4d17f66a5`. Implementer0 may now reconcile the
+separately committed C (`c037c5a8ee19302881b3873c464e54448e157584`) and A/B onto
+that target with normal hooks and patch-equivalence/history proof, then prepare
+one final KB pin and the stable API handoff for implementer1's config refresh.
+No HaveAPI edits, consumer migration, deployment or merge is authorized.
+
+Canonical release comparison is HaveAPI `v0.32.1`
+(`9efeadf91d894e01d1d4f4a3e3fc64c6309785c7`) to `v0.32.2`
+(`1ef9b204ba45bb261d3334be5c555cc1856b713b`). Server changes concern localized
+HTML documentation, example generation, article packaging and content-versioned
+assets. `server.rb` adds documentation helpers/routes; ordinary action dispatch
+and root OPTIONS handling are unchanged. Action/resource/parameter/input/output,
+authorization and count implementations are unchanged. The upstream locale spec
+explicitly covers ordinary actions and OPTIONS retaining the API locale despite
+documentation cookies/query parameters, and locale restoration after rendering.
+These are inspected source assertions, not a newly executed upstream suite.
+
+No advisory state/visibility/count/cursor/resource-input or success-envelope
+contract change is identified. Existing parent scopes, six draft-sync guards and
+their capability metadata remain authoritative. Ruby client executable source
+differs only in `version.rb`. TypeScript generator adds live descriptions, typed
+receipts, local `ClientInputError` and metadata-namespace handling; its release
+notes preserve existing generated clients with their matching runtime. The
+unchanged modern/client consumers need no regeneration or code change. Actual
+consumer inspection, rather than compatibility promises for old generated clients,
+establishes the modern boundary: configuration-selected modern `70bd11d` uses a
+handwritten fetch transport and its production frontend/BFF build consumes
+`pkgs`, source/provenance and checked-in npm locks through `buildNpmPackage`,
+documentation audit and Vite; it takes no Services API/generator or
+`haveapi-client` npm input. Feature modern1c has the same production build
+boundary and uses locked `haveapi-client@0.32.0` through AsyncClient adapters,
+not a regenerated SDK. The followed API flake input supplies terminology,
+module-evaluation and VM-check contexts, not frontend/BFF production arguments.
+Thus this Services API refresh adds no relevant TypeScript-generator or production
+frontend/BFF input and warrants no extra modern build/code/regeneration campaign.
+Metadata/live-wire compatibility remains covered by Ruby/API source findings
+and final native feature evidence. Exporter
+tooling now requires exact HaveAPI 0.32.2 rather than 0.32.1; its bootstrap,
+sanitization and schema algorithms are unchanged. This pin change alone does not
+require generating or migrating a client/schema artifact.
+
+The target changes 13 dependency/tooling/docs paths with no C or application
+overlap and no migrations. All five HaveAPI gems are 0.32.2; implementer0's
+`rubygems-0322-pin-proof.json` verifies published gem SHA256 values against the
+actual `packages/api/gemset.nix` hashes. Source tags, published gem hashes,
+dynamic ignored locks and packaged Nix inputs remain distinct evidence. Capture
+the actual loaded versions/effective full/core locks, selected source/NAR hashes,
+derivations and complete pin graph after refresh; do not infer them from a version
+declaration or reuse an old 0.32.1 lock silently. The upstream PHP Composer and
+this session's modern/client locks are unchanged.
+
+Available exact-master API runs `41534770638` and `41537522135` passed all 26
+topics plus aggregate; RuboCop/i18n passed. Their integration runs were still in
+progress at the bounded snapshot. These passes establish baseline evidence,
+not this feature's interaction with 0.32.2 or a packaged-doc result.
+
+**Verification order.** Preserve C's passed PHP syntax/unit/style and normal
+hooks for their actual inputs; after reconciliation verify unchanged C patch
+and actual PHP dependencies. Run normal final hooks and the existing exporter
+database-free `safety_spec.rb`/`snapshot_spec.rb` checks under its documented
+environment, plus final-source affected API metadata/read/mutation evidence with
+actual 0.32.2 inputs. Prefer the ordinary final-head hosted API job artifacts for
+full/core coverage over a duplicate local full-suite campaign. Before review,
+use focused existing advisory examples only where necessary to verify changed
+load/metadata integration; do not repeat the prior lock-order diagnoses or all
+API/native suites by default. All intended changes must be committed and quick
+checks pass before retained affected review, including the dependency/source
+reuse boundary and complete A/B/C plus KB histories.
+
+After review, **`./test-runner.sh test services-up` is required** by vpsAdmin
+`docs/agent-instructions/testing.md` for this HaveAPI package update. It tests
+packaged shared JSON-schema/protocol/client documentation and generated examples,
+addressing the actual changed release surface. Its previous native script passed
+34 checks in 154.8s; allow roughly 5–15 minutes with guest setup, with uncached
+package realization recorded separately. Add this target to the existing three
+failed WebUI scripts (15–25 minutes), enumerate the actual nonempty selection,
+and use the normal fresh watcher/stop-on-failure procedure. No arbitrary
+135-script/4.5-hour replay. Final KB still gets the mandatory strict contract
+check at its final pin, with reported real drift disposition and no media campaign.
+
+Retain previous 117 native successes, advisory18, API and strict/KVM evidence at
+their actual old inputs. They are not literal final-input executions: packaged
+HaveAPI changes invalidate blanket derivation equality. Reuse unaffected behavior
+only with the reviewed release/source/input comparison, and verify changed docs,
+startup and feature integration as above. If existing exact-input CI supplies a
+required check, use its actual manifest/environment/outcome instead of rerunning
+it locally. A new concrete failure returns to its owner; no auth policy,
+Referrer-Policy, server-only privacy, storage or preview-data change is included.
+Legacy host-mounted PHP effects remain as recorded in C's receipt; API preview
+stays on `a38c`, modern1c remains unchanged, and no cluster driver is invoked.
+
+## VPS return navigation: approved bounded integration fix
+
+The lead approved this correction from actual final-head integration evidence.
+In run `41497643925` on API `ebe0ab`, the three failed native scripts
+`webui#vps-admin-core`, `webui#vps-lifecycle` and `webui#vps-user-core` successfully
+planned Restart/Shutdown, then landed on Overview. The configured `strict-origin`
+Referrer-Policy strips the path; `webui/lib/vps.lib.php`'s existing
+`vps_run_redirect_path` accepts that same-host origin-only referrer as `/` instead
+of its explicit VPS fallback. Implementer0 reproduced both list/detail failures
+in the declared PHP environment and confirmed full filtered referrers work.
+This is a proven wrong destination, not a deadline or asserted baseline failure.
+
+Implementer0 owns the existing helper and its existing PHP unit test (about two
+paths). Ignore only an origin-only target with missing/empty query, with or
+without the trailing slash, and use the existing explicit list/detail fallback.
+Use canonical list fallback `?page=adminvps&action=list` if the existing fallback
+needs correction; preserve detail `info`/`id`. Root `/` with a nonempty query is
+valid WebUI routing and remains accepted, as do full same-host filtered/paginated
+targets. Preserve existing local-redirect validation, foreign/absent/reflexive
+referrer handling, authentication, CSRF, Referrer-Policy, JavaScript, assertions
+and timeouts. No URI framework, unrelated hardening, copy/catalog/style change,
+navigation semantic IDs or default screenshot campaign.
+
+Extend the owning unit tests for origin-only slash/no-slash with list and detail
+fallbacks; absent, reflexive and foreign referrers; meaningful root query; and
+full filtered/paginated same-host return paths. Run declared PHP syntax, targeted
+PHPUnit and normal hooks. Commit the correction as separate logical **C** after
+original API A and advisory legacy B: this VPS navigation fix has an independent
+purpose and must not be folded into B. All intended changes are committed and
+quick-checked before retained affected review. No speculative backend/auth fix.
+
+After review, run only the three failed native scripts through their actual
+existing **nonempty** selector; verify the selected names before launch. Expected
+duration is 15–25 minutes versus the original 16.1-minute WebUI run. Use the
+normal fresh Luna/low watcher and stop on actual failure. Preserve the 117 other
+successful native tests and exact-`ebe0ab` advisory 18-test success, API, strict
+KB and KVM evidence for their actual sources and inputs. No 135-script/4.5-hour
+workflow repeat by default. Prove relevant source, dependency, runner and guest
+derivation identity before reuse; a package revision-label change is not itself
+changed backend behavior, and a source-only comparison is not full input proof.
+
+At stable final API head, implementer0 consolidates the single final KB pin
+stream and evaluates the mandatory actual contract/drift; implementer1 then
+consolidates the configuration pin from the exact handoff. This restores intended
+VPS return navigation rather than introducing new UI concepts. No production KB,
+staging or capture campaign without an actual reported need. Retain the separate
+KB readiness-helper commit and previous check provenance.
+
+Before editing, implementer0 records whether the development PHP service reads
+the host worktree live. If so, authorized source edits can immediately affect
+PHP behavior without a separate activation; report the actual source effect
+instead of calling that runtime unchanged. No additional driver, cluster update,
+fixture write, browser campaign, reset/stop, deployment or merge is authorized.
+API preview `a38c`, modern1c and stored data remain; backend/client/modern product
+behavior and server-only advisory privacy are unchanged. Implementation proceeds
+under this accepted brief without another product question or per-command release.
+
+## Final-head foundation failure: bounded diagnostic disposition
+
+This follow-up keeps frozen API `ebe0ab51509222fba69a53431ea512cea51e2b6a`,
+KB `c46bc3f753439b962ae4e11c59a71e15c0a56b87` and config `2dde376` unchanged.
+The lead accepted one diagnostic and automatic continuation to the missing KB
+checks as specified below; implementer0 owns execution. No auth runtime change,
+broad test campaign, deployment or preview operation is selected. The one hosted
+rerun accepted after the completed diagnosis is recorded below.
+
+**Completed diagnosis and selected hosted verification.** The one 39-case run
+passed in exact original order (92.28s total, 25.48s setup, 50.29s native), using
+Bundler 2.6.9 and current full lock `8e06732a…`. Its sanitized observations show
+zero open transactions after all nine advisory cases, idle worker connections,
+and no lock waits. Local Ruby 3.4.9/MariaDB 11.4.12 still differ from hosted
+3.4.12/11.8.6. No actionable cleanup defect was found; strict/KVM checks resume.
+The lead selected **one ordinary targeted rerun of the failed hosted
+full-foundation job and dependent aggregate at exact `ebe0ab`**, with supported
+Actions debug logging, to cover that remaining hosted environment distinction.
+Implementer0 owns the normal parent mutation and monitoring coordination;
+reviewer0 assesses the evidence/residual disposition concurrently. Retain
+attempt 1 separately; do not rerun the 25 successful topic jobs or a second local
+diagnostic. A pass verifies the current check, not the unknown original cause.
+If it fails again, retain debug/native artifacts and return the result to the
+lead; no retry loop, source/auth change or timeout adjustment is authorized.
+
+**Observed failure.** Final API run `41497643976`, full-foundation job
+`125456660302`, attempt 1, seed 57138: 1461 examples, one failure, three pending,
+zero outside errors. Password-recovery case `[1:31]` failed after 50.65s at
+`api/lib/vpsadmin/api/authentication/password_recovery.rb:265`, `user.lock!`,
+with `ActiveRecord::LockWaitTimeout`. The spec's POST is at line 970. Its actual
+blocking transaction/query identity was not retained. No resource-hook exception
+record is expected from this custom-route path; absence is not evidence of no
+DB failure. Core-mode success and unchanged route/spec bytes do not waive it.
+
+Native JSON proves nine advisory-concurrency examples at positions 808–816,
+18 intervening OOM/dataset examples, then eleven password cases at 835–845 before
+failure 846. The contiguous segment totals 62.55s native including the timeout.
+The advisory spec uses `:no_transaction`, worker `with_connection`, session/context
+ensure cleanup, and joined/value-checked threads with `finish_threads` safeguards;
+no cleanup exception is recorded. The failed case creates a **new** lifecycle
+user under the ordinary per-example rollback transaction, not `SpecSeed.user`.
+This narrows the question to actual connection/transaction ownership; it does
+not identify a leaked worker or justify changing authentication locking.
+
+Hosted full environment: Ruby 3.4.12, Bundler 2.6.9, RSpec 3.13.6, effective lock
+`8e06732a351ca376e1acee926fb8a6c0d5b703a3d73f0b2d0578d32b80d2bdc5`, MariaDB
+11.8.6, REPEATABLE-READ and `innodb_snapshot_isolation=0`. Existing local MariaDB
+is 11.4.12. Capture the actual diagnostic full-plugin environment and effective
+lock; do not infer them from packaged locks or call differing inputs identical.
+Implementer0 found no workflow runs at exact master `1d4869b`. Compare the retained
+successful `a38c` full-foundation artifact/environment/order if available, as
+already requested, without a new baseline execution or broader history search.
+That comparison narrows differences; it does not erase the current failed run.
+
+**One selected run.** Using normal RSpec and an isolated test DB, execute only
+native JSON `examples[808..846]` from the retained failed result, full-plugin
+mode, seed 57138, with native JSON output and stop-on-first-failure. The paths are
+the existing advisory concurrency, OOM-report, dataset full-download and password
+recovery specs. Derive the exact 39 IDs from the saved artifact; verify the actual
+ordered IDs before interpreting results. Keep the 18 intervening cases: they
+cost about 2.5s native and remove an unnecessary ordering assumption. This is
+not a 1461-example foundation replay. Budget about 3–8 minutes including ordinary
+setup, record setup separately, and reassess unexpected duration rather than
+extending application timeouts. A fresh Luna/low watcher owns the one run.
+
+Use a temporary private diagnostic loaded through the existing runner to observe
+thread/connection ownership and outstanding DB transactions after advisory
+cleanup, before the password segment and at the failed request. During a lock
+wait, a bounded native DB observer may record requesting/blocking transaction
+and connection IDs, transaction state/age, lock table/index/mode and relevant
+thread liveness/open-transaction counts. Restrict observations to this isolated
+test database. Exclude SQL text/values, lock row data, tokens, credentials and
+request/advisory bodies; do not dump process lists or InnoDB status verbatim.
+Stop/join the observer when the run ends. Preserve ordinary test transactions,
+timeouts and assertions; do not add an application/framework diagnostic layer.
+
+**Outcome and automatic next action.** If failure or test interference reproduces,
+retain the actual lock relationship and fix its proven owning test/cleanup code
+before acceptance; any proposed auth runtime change returns to the lead with
+evidence and a new bounded brief. Stop dependent expensive checks if that finding
+requires an API successor. If no actionable source defect appears, end this
+diagnostic after the one run, retain the original lock-holder/cause as UNKNOWN,
+and automatically resume strict final-pin `nix develop -c bin/check` followed by
+the previously selected managed KVM target on frozen `c46bc3f`. Those missing
+checks have independent value and no concrete source fix currently makes their
+discard inevitable. No per-command lead release or repeated plan is needed.
+
+A diagnostic pass does not relabel the failed hosted full-foundation job green,
+prove a flake, or cover an untested DB-version distinction. Report its exact
+inputs and known residual for lead/reviewer readiness disposition alongside
+actual final hosted results; do not announce unconditional readiness while a
+required result remains failed or unresolved. Further reproduction needs a new
+concrete finding, not the irrecoverability of the original lock identity.
+Existing server-only privacy, all six client draft guards, modern1c, retained
+data and no-migrations contract remain unchanged.
+
+## Authorized merge preparation: current delivery delta
+
+The user said “well then continue, prepare for merging”. This authorizes feature
+preparation and verification, not integration or deployment. This section owns
+the remaining readiness work; [visibility-design.md](visibility-design.md) owns
+the server-only privacy contract and [visibility-verification.md](visibility-verification.md)
+retains the actual failures, successes, inputs and running-preview evidence.
+No new product decision is needed. Preserve the existing preview/data, unchanged
+modern `1c8478bceb3943645ec06ccde895ee4b0985873f`, all six client draft guards,
+correction/revision/locking/mail semantics and administrator access. No migrations,
+UI campaign, new framework, production action or cluster operation is included.
+
+**Ownership and target reconciliation.** Implementer0 owns all API/legacy/KB
+edits, Git, diagnostics and required checks. Implementer1 holds config `25288bf`
+until exact final API handoff, then makes one consolidated channel-pin refresh
+with bounded graph/evaluation/remote proof. The lead owns scope acceptance and
+independent review; architect edits this design only.
+
+Implementer0 reports the authorized clean rebase complete, local/unpushed:
+`37ea14b646e388db3bc1594b8153ae3311609b54` on master
+`1d4869b6e81dd60916ecb96688ca14a192000b1f`. The old `097226b..a38c9f8` feature
+patch is byte-equal to `1d4869b..37ea14b`; reconstruction matches the new tree,
+range-diff maps both commits 1:1, normal hooks ran, and old refs/evidence remain.
+The only old-head/new-head differences are the 16 generated dependency files
+from the two upstream commits. Retain this proof and verify any further target
+movement before final readiness. The preview still runs reviewed `a38c9f8`.
+
+**Bounded API diagnostic and assertion correction.** Original hosted run
+`41465157664`, job `125343963839`, attempt 1, seed `19905` failed child case
+`spec/api/resources/security_advisory_spec.rb[1:3:2]` at line 511: requested
+count 0 was nil. HTTP 200 and `rows || []` did not prove a successful envelope.
+The original response/role/child was not retained and cannot be recovered.
+The prior isolated 60-request pass is not cause proof or evidence of a flake.
+
+Implementer0 reconstructed the hosted effective lock from its log, exactly
+SHA256 `9a28f956043b65a7ca8ed7b96bcedad17a9d589154028934ec07b07bc4ed0bd1`.
+Against successful local core lock `9ff97d9b998c7169302cf28f08c0bb3ef814dac660eec526ca7caec2d2200e05`,
+the sole gem-version difference was `amq-protocol` 2.10.0 hosted versus 2.9.0
+local; checksum/Bundler metadata also differed. The rebased baseline supplies
+2.10.0, while its `domain_name` 0.7.20261031 differs from the original hosted
+0.7.20261007. Hosted Ruby 3.4.12/Bundler 2.6.9 versus previous local
+3.4.9/4.0.23 remains an explicit distinction; capture actual new identities,
+effective lock, plugin mode, DB isolation and result order before interpreting
+new results. Do not claim a fully identical hosted environment.
+
+Add the conventional successful-envelope assertion before reading collection
+rows/counts in the owning spec. On failure retain sanitized role, request path,
+advisory state, HTTP status, success/error classification and requested/returned
+metadata; no credentials or report bodies. Preserve all exact row/count/privacy
+expectations. Inspect the actual request/count owners against the retained
+artifacts; neither unsupported metadata nor a flaky test is an established cause.
+
+Run one focused core diagnostic using normal RSpec, the isolated test DB and
+seed 19905: the original twelve predecessor examples
+`[1:10:2], [1:10:1], [1:10:3], [1:10:5], [1:10:4], [1:2:2], [1:2:4],
+[1:2:3], [1:2:1], [1:9:1], [1:9:2], [1:9:3]`, then `[1:3:2]`, all in the
+same resource file. Use the existing retained response diagnostic and native
+JSON evidence; verify actual executed IDs/order rather than assuming filtering
+preserves it. Expected duration is 6–8 minutes, not a quick gate. A fresh
+Luna/low watcher launches it with stop-on-first-failure; it is diagnosis needed
+to establish the final change and may precede final review. No whole-file/topic,
+full/core or native campaign follows automatically.
+
+If a current failure reproduces, fix its actual owner and run the affected
+focused regression before acceptance. Otherwise stop this diagnostic after the
+one evidence-based run: the missing old response is a named historical residual,
+not an unbounded investigation requirement. Source inspection, stronger failure
+evidence and exact-final hosted affected checks must support the readiness
+conclusion. Independent review assesses that disposition; a green repetition
+does not retrospectively fix or relabel the original failure. Any further run
+needs a concrete remaining distinction and a narrower-alternative assessment.
+
+**KB observation correction.** Managed run `41465898434`, job `125346565326`
+failed five KVM readiness waits despite healthy HaveAPI 0.32.1 HTML; its literal
+`API description` check is obsolete. In KB's existing
+`tests/runner/extensions/vpsadmin_services.rb:92–107`, use the same behavior-based
+readiness predicate already reviewed in the API-owned helper: unauthenticated
+root OPTIONS `?describe=versions`, successful JSON envelope, Hash response,
+versions Array, and a nonempty String default contained in that array.
+Keep the existing host/caller/deadline/curl error behavior; malformed/error JSON
+remains unready. Do not replace one HTML title with another, increase timeouts,
+change production services or introduce a readiness framework. Reuse the narrow
+valid/malformed/timeout/error checks described in [readiness-review.md](readiness-review.md)
+and its [accepted review](readiness-final-review.md), adapted to this owner.
+Commit this substantive helper correction distinctly from the one consolidated
+final API pin stream; preserve unrelated KB inputs/content/captures.
+
+**Ordered gates and reuse limits.** First finish the bounded diagnosis, owning
+assertion/helper changes and focused regressions; run touched syntax/lint, helper
+contract checks and normal hooks. Commit all intended final API/KB changes and
+prepare exact ranges, range-diff, complete histories, no-migrations conclusion,
+source/input identities and failure/residual disposition. The lead then assigns
+affected independent review. Diagnostic runs above are not a substitute for
+that final committed-deliverable gate.
+
+After review, use exact-final hosted affected API results and native result/
+environment artifacts to cover the failing core platform-operations path and
+any changed owner. Check the formerly pending integration run's actual outcome
+once; it is old-source evidence unless a matching final-input receipt establishes
+reuse. A completed failed job requires its logs before any retry. Do not repeat
+local full84/core74 by default. Those passes remain valid for their recorded
+source/Ruby/bundle/DB inputs, but changed effective dependencies forbid claiming
+automatic final-input equivalence. Use focused current-input coverage for the
+actual changed risk and hosted evidence; if broader execution is necessary,
+record which risk narrower checks cannot resolve before launching it.
+
+Run mandatory strict `nix develop -c bin/check` on the final KB pin, then the
+failed managed KVM target through its existing runner/selection to exercise the
+changed readiness helper in a real guest. Preserve successful unrelated managed
+results with their actual source/runner/guest-input receipts; compare those
+inputs before reuse. No blanket managed/native rerun or new screenshot campaign.
+Original native18 and live API66/modern24/legacy21 remain proofs of running
+`a38c9f8` and unchanged modern1c, not execution of the rebased package. Modern
+and client evidence can remain reused when their exact inputs are unchanged.
+
+Hand the stable final pushed API revision to implementer1 for the consolidated
+config refresh. Final readiness records exact pushed heads, target ancestry,
+required check outcomes, review and any bounded historical residual. Do not
+merge, claim integration readiness from pending checks, activate configuration,
+update the preview or stop/reset its data under this preparation assignment.
+
 ## Approved visibility correction
 
 The user explicitly agreed that **only published advisories are readable by
