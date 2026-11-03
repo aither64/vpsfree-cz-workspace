@@ -55,6 +55,7 @@
         (vpsfree-dev-workspace.lib.mkPackage {
           inherit pkgs siteConfig teamConfig;
           coordinationConfig = import ./config/coordination.nix;
+          machineIdentityConfig = import ./config/machine-identity.nix;
           integrationConfig = import ./config/integration.nix;
         }).override
           (previous: {

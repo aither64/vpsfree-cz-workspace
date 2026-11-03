@@ -10,6 +10,8 @@ in
 {
   schema = 1;
   adapters = { }; # The extension installs the immutable confctl adapter.
+  # Compatibility-only catalog for predecessor packages and retained operations.
+  # New configured machine targets use typed claims without catalog entries.
   machines.aitherdev = {
     id = "vpsfree:aitherdev";
     aliases = [

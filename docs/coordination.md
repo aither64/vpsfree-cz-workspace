@@ -18,8 +18,11 @@ repository claim. Prepare the clean target checkout and its dependencies first;
 obtain merge approval before requesting ownership. Repository tools own hook
 trust and ordinary Git locking. Keep hooks and signatures enabled.
 
-Use `coordination acquire SESSION --as-is --request FILE` with a schema-1 request
-containing a UUID `requestId`, `label`, and `repositories`/`machines` arrays.
+Use `workspace-host coordination acquire SESSION --as-is --request FILE` with a
+UUID `requestId`, `label`, and `repositories`/`machines` arrays. Schema 1 remains
+available for repository claims and legacy catalog machines. New machine requests
+use schema 2 and exact targets from a session's registered configuration repository,
+as described below.
 Supply at least one registered repository or configured machine. The request
 atomically returns `held` or `waiting`. A waiter owns no resources; the coordinator
 notifies its retained conversation when the complete request is granted. End the
@@ -28,9 +31,8 @@ A notice neither authorizes work nor proves command completion.
 
 Run the shared merge or deployment only while its claim is held. Independent
 feature commands remain available during a merge wait. Follow the runtime's
-[machine retention and release policy](#machine-retention). Select machine
-identities from the configured catalog and the configuration repository's
-operations guide.
+[machine retention and release policy](#machine-retention) and the configuration
+repository's operations guide.
 Use `release SESSION --as-is --id UUID` after the applicable release requirements
 are met, or `cancel-claim` for an unneeded waiting request. Retrying the exact
 acquire request returns the same claim even after release; a new attempt needs
@@ -51,11 +53,79 @@ session Reservations tab. This is cooperative locking. Ordinary project tools do
 not intercept arbitrary commands. Participating sessions must acquire the required
 resources before mutation and keep ownership until the work is safe to release.
 
+## Machine claims
+
+Use the repository's exact configured `Machine.name`, including an FQDN when that
+is its configured name. The default logical identity combines the canonical Git
+origin with that name; it does not inspect the OS hostname, DNS, SSH target or
+physical machine. Clones, worktrees and local repository aliases with the same
+canonical origin and configured name contend for the same lock. Use a unique
+configured target name when several machines have the same OS hostname.
+
+For this workspace's host, a machine request has this form:
+
+```json
+{"schema":2,"requestId":"11111111-1111-4111-8111-111111111111","label":"Deploy workspace host","repositories":[],"machines":[{"repository":"vpsfree-cz-configuration","selector":"cz.vpsfree/machines/aitherdev","adapter":"confctl"}]}
+```
+
+The runtime resolves metadata from the registered repository's committed feature
+head through the installed adapter. Commit configuration changes and prepare any
+missing locked inputs before acquiring ownership. Resolution evaluates local
+configuration metadata without building or copying a system or contacting the
+machine. Ordinary new targets need no workspace package or catalog update.
+
+The default identifier for this target is
+`machine:github.com/vpsfreecz/vpsfree-cz-configuration:cz.vpsfree/machines/aitherdev`.
+Identifiers use single colons and percent-encode reserved characters; the runtime
+stores structured identity fields rather than parsing this display string.
+
+Configurations that intentionally refer to the same target through different
+repositories can set the same `labels."dev-workspace.lock-id"` value. It replaces
+the repository/name identity with one shared logical ID. Values must be valid
+UTF-8, contain 1–256 bytes, and have no control characters or leading or trailing
+whitespace. An absent label uses the default identity; the resolver rejects null,
+empty or malformed labels. Coordination does not detect accidental physical
+overlap between different logical identities. Changing an origin, configured name
+or shared ID changes the lock namespace. Preserve a stable ID or an explicit
+compatibility bridge while active ownership or accepted legacy aliases depend on
+the old mapping. Held ownership never silently follows a changed identity.
+Terminal history alone does not retain ownership, but still requires a package
+that can read schema-2 records.
+
+Before an intended committed deployment batch, verify its current mapping once:
+
+```sh
+workspace-host coordination verify-machine SESSION --as-is --id UUID \
+  --repository vpsfree-cz-configuration --selector cz.vpsfree/machines/aitherdev --json
+```
+
+This read-only check requires an owning held claim and the same current logical
+mapping. It does not grant ownership or replace deployment, artifact or recovery
+checks. Repeat it for a new intended batch rather than before every confctl command.
+
+`config/coordination.nix` retains the old `aitherdev` name, ID and aliases only for
+predecessor packages and retained operations. `config/machine-identity.nix` sets
+the profile target to the repository/name identity above and bridges the exact old
+resource `machine:vpsfree:aitherdev` to it. Keep this finite compatibility policy;
+do not add ordinary new machines to the legacy catalog.
+
+For the first upgrade from the old selected package, acquire its existing schema-1
+hold with `machines: ["aitherdev"]`. Deploy the authorized system first, then use
+the ordinary user-profile switch under that same hold. The new candidate must
+recognize the old resource through the bridge. Use schema-2 machine requests only
+after the new package is selected. Missing bridges or unresolved ownership refuse
+the switch; never release or rewrite evidence merely to make it pass.
+
 ## Machine retention
 
 The runtime's [machine retention and release policy](https://github.com/aither64/dev-workspace/blob/master/docs/coordination.md#machine-retention)
-governs ownership and automatic release for all deployed physical machines.
+defines when the owner must release a deployed machine.
 Use `workspace-host coordination guide` to read the selected package's version.
+Release the deployed machine promptly after verifying deployment effects and
+integrating its complete deployed lineage into the approved remote defaults.
+Follow-up UI review can continue afterward. Failed or uncertain effects and
+missing integration proof keep ownership held until the original recovery
+procedure reconciles them. Deployment approval alone does not approve integration.
 
 ## Git and deployment
 
