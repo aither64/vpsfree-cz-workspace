@@ -66,7 +66,9 @@ concrete reason and next observable result.
 
 Use one implementer for narrow work unless independent execution packages justify
 more. Give complete packages with acceptance criteria; avoid per-command releases
-and repeated status documents. Keep the existing team and ownership rules.
+and repeated status documents. Follow the [package workflow](../agent-teams.md#package-workflow)
+for release boundaries, evidence ownership, capacity and same-repository sequencing.
+Keep the existing team and ownership rules.
 
 Independent review starts with scope and proportionality before detailed
 hardening, even when an internal design already approved the mechanism. Prefer

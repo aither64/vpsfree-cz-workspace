@@ -164,6 +164,10 @@ The selected design owner keeps the technical design and verification brief in
 for application edits for each preset. Implementers accept either
 architect-owned or lead-owned briefs.
 Adding, replacing or reconfiguring members requires explicit user direction.
+Use the [package workflow](../agent-teams.md#package-workflow) for complete
+ownership, sufficient release briefs, direct technical clarification, capacity
+and conflict sequencing. Keep its compact package status/timeline in the existing
+plan/state; link evidence rather than adding repeated status documents.
 Routine planning, investigation, findings, session tracking and evidence alone
 never trigger automatic review. Explicitly requested earlier review is advisory
 and does not replace final review of the completed, committed substantive

@@ -40,12 +40,6 @@ architects use GPT-6 Astra/xhigh and reviewers use Sol/xhigh. The selectable
 Lead and reviewer preset retains its Sol/xhigh lead and Astra/xhigh reviewer.
 A separate GPT-6 Luna/low utility watches long checks.
 
-Members can message ready peers in the same session with `dev-session team
-assign <slug> --as-is --from <own-address> --to <peer-address> --message TEXT
---message-id UUID`. Use a stable message ID and the same exact text when retrying
-uncertain delivery. `report_to_lead` remains dedicated to lead reports.
-
-
 | Preset | Persistent members | Design owner | Application edits | Specialist slots |
 | --- | --- | --- | --- | --- |
 | `solo` | lead (1 total) | lead | lead | 0 |
@@ -84,12 +78,8 @@ checklist at the end of every turn and integrate member reports.
 
 Full-team leads coordinate and communicate with the user. The architect owns
 substantive investigation and design and identifies independent implementation
-packages. Implementers own their packages through diagnosis, source, tests,
-technical documentation, quick checks, commits and follow-up fixes, including
-review findings. The lead keeps a compact backlog with owners, acceptance
-criteria, dependencies and checks, assigns independent work to available
-implementers, and serializes overlapping edits and Git operations within each
-repository.
+packages. The lead allocates packages and accepts their results under the
+[package workflow](#package-workflow) below.
 Dependent implementation stays with an implementer. Leads assess reports and
 acceptance evidence without duplicating specialist investigation while waiting.
 
@@ -105,6 +95,114 @@ the lead in Lead-designed and Lead and reviewer sessions defaults to xhigh
 and allows high/xhigh. Substantive design and implementation use xhigh, with high
 allowed for a bounded simple unit when
 the reason is recorded. Independent reviewers retain their saved effort.
+
+## Package workflow
+
+Use the verified same-session roster and its saved purposes, settings and access
+before allocating substantive work. Each package names its owner, deliverable and
+file boundary, dependencies, acceptance criteria, checks and required evidence.
+Assignments also name the same-session peers available for routine clarification.
+The lead retains scope, priority, allocation, acceptance, user reporting and
+approval-bound integration/deployment coordination.
+
+Implementers own complete packages through diagnosis, assigned source, tests,
+technical documentation, quick checks, commits and follow-up fixes, including
+review findings. They prepare evidence with the work: changed-file inventory,
+exact base/head revisions, check commands/results, known gaps and whole-branch
+history/migration provenance. One existing implementer may assemble repository
+evidence as a bounded package after the execution work. This does not add a role
+or independent review: the lead checks final packet completeness and invokes
+the mandatory-review skill; the independent reviewer remains read-only.
+
+### Release a sufficient package
+
+Independent investigation can start with bounded questions, evidence limits and
+acceptance criteria while the design owner resolves the broader design.
+Substantive implementation starts when its sufficient brief is recorded in
+`work/<slug>/design.md` by the selected design owner, or under the existing
+direct-lead-brief exception for a bounded small edit. The brief must establish:
+
+- Files, interfaces, supported behavior, acceptance criteria and checks.
+- Relevant authority, data-integrity, compatibility and recovery invariants;
+  unresolved decisions cannot invalidate this package.
+- Satisfied dependencies or demonstrated safe independence, with explicit
+  ownership and sequencing for conflicting files and shared mutable resources.
+
+The design owner identifies settled boundaries and what remains blocked; the
+lead accepts that release boundary as part of package allocation. Unrelated open
+design decisions need not delay independent work. Do not freeze provisional
+contracts or defer authentication, permissions, data integrity or recovery to
+keep members busy. A dependent package stays delegated when its prerequisites
+become available; it need not return to lead execution.
+
+### Clarification, capacity and delivery
+
+Route routine technical clarification directly between the assigned architect
+and implementers, or between implementers working on an agreed interface. With
+the verified slug, own/peer addresses and a fresh message UUID in the variables
+below, use the existing same-session transport:
+
+```sh
+dev-session team assign "$verified_slug" --as-is --from "$own_address" \
+  --to "$peer_address" --message-stdin --message-id "$message_id"
+```
+
+Supply the text on stdin and identify it as `clarification/current package` or
+`next package`. Use a new stable message ID for each message; retry uncertain
+delivery with the same ID, exact text and options. Preserve sender binding and
+session identity checks. Routine clarification does not require a lead relay.
+Scope, consequential design revisions, overlapping ownership and approval-bound
+actions still go through the lead. Report blockers promptly and send an explicit
+completion report through `report_to_lead` with exact revision, checks, gaps and
+the next dependency. A finished turn is not automatically forwarded to the lead.
+Avoid per-command permission requests and acknowledgments within an assigned
+package.
+
+Each implementer executes one package at a time. Roster `ready` means initialized,
+not available for another package. Before allocating the next, the previous
+execution must be reported for acceptance or explicitly parked with its blocker
+and owner, and capacity confirmed. Delivery to a busy member steers the current
+turn; it does not enqueue an independent next task. Current-package clarification
+may arrive during execution; do not stack new work as an implicit backlog.
+This workflow uses explicit dispatch, with no automatic pull, polling or wake-up
+mechanism.
+
+### Sequence conflicts within a repository
+
+Parallelize disjoint edits and independent checks, including in the same
+repository. Sequence overlapping edits, index/commit/rebase operations and work
+sharing generated outputs or mutable fixtures. The lead names the order and an
+exclusive owner for each short mutation window; the owner proceeds within that
+window without per-command releases and reports when it is complete. Sharing a
+repository does not require serializing all work. Preserve unrelated files and
+index changes, required hooks and the prohibitions on broad resets/stashes.
+Repository claims cover approved default-branch integration only; they are not
+feature-work scheduling locks.
+
+### Keep status and evidence compact
+
+Keep one package table in the existing plan/state, linking the design and evidence
+rather than duplicating them. For example:
+
+| Package / deliverable and files | Owner | Dependencies / acceptance and checks | Status / blocker | Evidence / next report |
+| --- | --- | --- | --- | --- |
+| B: workflow docs | implementer1 | Accepted brief; instruction check | Executing; commit window follows A | Diff/check results; report when reviewable |
+
+Use `blocked`, `ready to assign`, `executing`, `ready for acceptance` and `accepted`
+as human-maintained status, separate from runtime roster state. Record meaningful
+transitions when available: contract ready, assigned, started, reviewable and
+accepted. Unknown timestamps stay unknown. Explain blocked intervals and the
+dependency that releases them; include verification start/finish/results when
+relevant. Existing reports and state suffice; do not add per-command documents,
+status polls or commits. Follow the ordinary tracking cadence.
+
+Assess milestone elapsed time, dispatch and acceptance delay, rework, ownership
+conflicts and required checks. Compare comparable scope and phases, respecting
+coverage gaps and unclassified intervals. Do not target equal role clocks, sum
+overlapping member durations as elapsed time or claim speedup without a baseline.
+These records are an operating convention, not runtime telemetry or a scheduler.
+
+## Review and retained instructions
 
 Run independent final review after the intended substantive deliverable is
 complete, all intended changes are committed and quick checks pass, before
@@ -128,8 +226,13 @@ including an older Lead-designed lineup containing an architect. Do not
 reconfigure an existing roster to apply new defaults.
 
 Shared workspace rules and installed skills change globally rather than being
-frozen with a session. They can conflict with older saved prompts. These defaults do not refresh retained lead or reviewer prompts or change
-existing rosters. Before a new progress check, recognized stock observer instructions are refreshed
+frozen with a session. They can conflict with older saved prompts. Workspace
+guidance applies as it is read; catalog edits affect future selections only after
+the package is deployed separately. They do not silently refresh retained lead,
+architect, implementer or reviewer prompts, or change existing rosters. Use
+explicit bounded assignments within saved role authority; prompt or roster
+reconfiguration still requires explicit user direction. Before a new progress
+check, recognized stock observer instructions are refreshed
 on the same idle native thread, preserving history, model and effort. Manual work
 or uncertain submissions defer the refresh. Custom instructions remain unchanged.
 
