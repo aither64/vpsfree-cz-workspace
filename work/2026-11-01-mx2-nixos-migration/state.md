@@ -2,156 +2,168 @@
 lifecycle: active
 ---
 
-# mx2 migration and automated verification
+# mx2 private staging
 
-Implementation, independent review, automated mail verification and all five
-affected-system builds are complete. The published feature is ready, awaiting
-merge approval. It is ready for controlled staging; production replacement still
-requires the live checks below. This session remains open and active.
+The private staging candidate is implemented, independently reviewed, published
+and built successfully. **It has not been deployed.** Container27627 at172.19.9.22
+still runs its original NixOS25.05 system. Agent activation awaits exact-target
+admission in the workspace machine-reservation catalog. User approval for that
+separate workspace catalog/user-package update has been requested; no such source
+or package change has occurred.
 
-The user authorized autonomous verification and internal mail-zone source
-correction against public DNS. No deployment, DNS reload, real mail submission,
-primary changes or default-branch integration occurred.
+The user authorized agent deployment: "done. well, with this access, you can
+deploy mx2 yourself." This covers the private candidate only. CentOS/public IP
+transfer, public DNS, primary configuration and default-branch integration remain
+excluded. The feature is ready, awaiting merge approval; the session stays active.
 
 ## Phase checklist
 
-- [x] Recover/rebase the old branch; preserve original source and import refs.
-- [x] Record Debian 13 primary outside this repository and bounded live baseline.
-- [x] Architect the isolated verification package and implement shared mail policy.
-- [x] Correct internal mail-zone source and validate all four template variants.
-- [x] Commit/consolidate history; pass quick checks, hooks and fidelity checks.
-- [x] Complete full independent review and reconcile R1/R2 and narrow test fixes.
-- [x] Pass the full three-VM mail matrix, including queue/reboot recovery.
-- [x] Repair exporter metadata; complete affected-lane independent review.
-- [x] Build final mx2 and all four DNS consumers; reconcile actual source/inputs.
-- [x] Publish final branch, capture comparison and prepare verification handoff.
-- [ ] Separately authorized controlled staging and live production acceptance.
-- [ ] Explicitly approved integration into configuration master.
-- [ ] Separately authorized cutover with queue-safe rollback.
+- [x] Recover/rebase source; preserve original/import/runtime/reviewed refs.
+- [x] Shared mail corrections, internal DNS source correction and VM suite.
+- [x] Prior independent reviews and five production/DNS-consumer builds.
+- [x] Verify supplied candidate host fingerprint and establish root SSH access.
+- [x] Bounded read-only candidate/source-address preflight.
+- [x] Architect minimal private staging contract; implement two host files.
+- [x] Quick checks, normal hooks, generated mail/firewall/resolver/key assertions.
+- [x] Clean rebase, consolidated history, exact publication/comparison.
+- [x] Independent final staging review with no Blocking/Important findings.
+- [x] Exact VM consumed-graph reuse and scoped consumer-build proof.
+- [x] Five-system native staging build and registered-output verification.
+- [ ] Resolve configured candidate admission and acquire exact machine ownership.
+- [ ] Copy/dry-activate/switch exact new system; verify runtime and installed identity.
+- [ ] At most two controlled podpora messages and candidate-only queue/reboot test.
+- [ ] User confirms receipt; record live result and remaining public-cutover gates.
+- [ ] Separately approved default integration and public-address cutover.
 
-## Final repository and history
+## Current repository and source
 
-Repository: `vpsfree-cz-configuration`, SSH origin
+Repository vpsfree-cz-configuration, SSH origin
 `git@github.com:vpsfreecz/vpsfree-cz-configuration.git`.
-Branch: `2026-11-01-mx2-nixos-migration`.
-Worktree: `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-11-01-mx2-nixos-migration/vpsfree-cz-configuration`.
+Branch2026-11-01-mx2-nixos-migration, worktree
+`/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-11-01-mx2-nixos-migration/vpsfree-cz-configuration`.
 
 | Boundary | Exact revision |
 | --- | --- |
-| Fresh unchanged remote master/base | `c040c14cdbacc07998700b524996a89306188d7f` |
-| Final local/published head | `1e3afc478fb72b54a25a0147910463f060fee88f` |
-| Final tree | `77d73449040aba400215ca81843c3d6a2173593c` |
-| Host/shared mail/exporter metadata | `9c6e36135192f65baed975e3b127160f068e0b0d` |
-| Internal DNS source | `a5848319ae19d1bcd348ab3837683dec71c90e01` |
-| Tests and documentation | `1e3afc478fb72b54a25a0147910463f060fee88f` |
+| Fresh remote master/base | `c4107822060e9e34b24a83950d618c9f28a7722b` |
+| Current local/published staging head | `0844881779d62d9a6a86d2bacd61d21565b33932` |
+| Tree | `34dc1820c5feda2a0d875f60c964b8375de0af49` |
+| Host/shared/private staging | `548514a9e573ccbc3f145d49d7d307c3e23b5aa5` |
+| DNS source correction | `e7cd91d881fce72fe15339a8df736a6481d7000d` |
+| Tests/docs | `0844881779d62d9a6a86d2bacd61d21565b33932` |
 
-Fresh remote proof confirms the exact feature and base; worktree is clean,
-comparison captured, feature CI run list empty. Final diff: 13 paths,
-733 additions/four deletions. No migrations, dependency/input changes or repeated
-update streams. Independent review explicitly cleared complete history and
-migration provenance; no obsolete final implementation history remains.
+Worktree clean, remote exact, comparison captured, feature CI empty. Final range
+13paths/740 additions/four deletions. Only two host files differ from prior
+reviewed1e behavior; the inherited upstream lock change is separate. Original
+source40411, reviewed importe4, successful VM runtime8d and reviewed-mail1e refs
+remain preserved. None is claimed literally merged/deployed in refreshed ancestry.
+No obsolete final host/key/exporter iteration, migrations, queue conversion or
+feature-owned repeated dependency stream remains; independent review agrees.
 
-Preserved refs under the session prefix retain original source
-`40411d67ee97cea800bcccd89b0473432b4502c4`, reviewed import
-`e4c1ac0c5ae7426fb019b79ba936b30ce63e6e6c`, and successful runtime head
-`8d4e03d53699d80f46030b0ee6eb213151b8ae30`. These nonancestor revisions are not
-claimed literally merged or deployed. The source checkout remains untouched.
+Full final lock equals current default: blob
+`f6b87ab2ca27a72c3fe1bdd134129ff1e4a9f7e9`, SHA256
+`507e781c2fa52da5a389e6eab824efe68baa72b1727de0fc162ea0a5e6b4c098`.
+Only upstream vpsadminServices changed from the old root lock; mx2/test selected
+roles remain nixpkgsStable718f670e and vpsadminosOsStagingb45b27b4. Do not describe
+the entire root lock as unchanged. Full graph is recoverable from final flake.lock
+and recorded in staging-input-graph.json.
 
-## Verification and actual build provenance
+## Actual candidate and staging behavior
 
-[Verification results](verification-results.md) is the authoritative final
-summary, with full realized system paths, derivations, NAR hashes and generation
-bindings. [Batch 6](verification-run-6.md) passed the full mail test in 227.03 s
-(script 202.93 s): IPv4/IPv6 relay authorization, envelope/content integrity,
-greylisting and filtering failures, accepted queues through service restart and
-same-disk reboot, recovery/drain, primary 450/550 behavior, DSN, TLS/fallback and
-SIZE boundary. All guests used restricted networking and local nonforwarding DNS;
-native cleanup completed.
+[Candidate preflight](candidate-preflight.md) preserves both initial refusals and
+subsequent success. User-supplied ED25519 fingerprint exactly matched; only the
+verified exact-host known_hosts entry was added locally. The user installed the
+existing workspace public key; strict pinned-key root SSH then worked.
 
-The final metadata-only successor has the identical successful test derivation
-`/nix/store/8pan3ddqairw3js87iaysvjqwzalxgls-vm-test-run-mx2.drv` and complete
-input graph. Independent review accepted reuse. The output was realized and
-NAR-verified immediately after success but is now absent/unregistered locally;
-cause unknown, no session-owned store deletion. Historical pass and exact graph
-proof remain valid; current artifact presence is not claimed.
+Observed: NixOS25.05/LXC, hostname mx2, stateVersion25.05 from installed source,
+persistent ZFS tank/ct/27627 root/var/nix, private172.19.9.22/32, IPv4 default route,
+link-local IPv6 only, no old public address, active Postfix/Postgrey and zero queue.
+Workspace source172.16.106.40 is confirmed. Physical node, NAT and actual primary
+DNS/SMTP connectivity remain unverified. The guest lacked dig; no tool was
+installed or fabricated DNS answer recorded.
 
-[Batch 7](verification-run-7.md) passed the final native five-system build,
-exit 0 in 161.55 s:
+Still-installed current/profile/booted rollback reference:
+`/nix/store/98n9xjgm42pjmzi9vy430qilp2hqbzvb-nixos-system-mx2-25.05.git.7c43f080a`.
 
-```sh
-nix develop --no-write-lock-file -c confctl build --yes \
-  'cz.vpsfree/containers/{mx2,brq/int.ns1,prg/int.ns1,prg/int.mon1,prg/int.mon2}'
-```
+Staging preserves ID/target/hostname/stateVersion, host networking and tested mail
+policy. It uses private metadata, no auto-update or production monitoring/logging,
+sole resolver1.1.1.1 and TCP25 only from172.16.106.40/32, retaining SSH22 and enabled
+firewall. It does not add the source to Postfix trusted networks. Generated key
+inspection caught an omitted workspace key; the existing confData reference is
+now explicitly included locally for the candidate, preserving all previous keys.
+No global credentials or administrator settings changed.
 
-Inventory selected exactly those five. All native generations are
-`2026-11-02--18-26-56`; generation JSON, symlinks and registered output/NARs agree.
-Actual mx2 output:
-`/nix/store/r3y0rddwn8mkpvbdd7wyymsfzgdn3vz8-nixos-system-mx2-26.05.20261026.718f670`.
-These are built outputs, not deployed profiles.
+## Review, tests and native build
 
-[Metadata remediation](monitor-metadata-remediation.md) resolves the difference
-from earlier unbuilt standalone predictions: absolute-path flake self has no Git
-revision and omits configuration-info, while native confctl uses clean Git `.#`
-and embeds it. All five actual outputs report final head `1e3afc47`,
-`revisionDirty=false`, schema 1, and locked input roles. Native source content
-matches HEAD. No source/argument/input mismatch remains and no further build is
-needed for this evidence reconciliation.
+[Staging implementation](staging-implementation.md) holds exact generated/settings,
+source/inputs, consumer, publication and build-target receipts.
+[Independent staging review](staging-review.md), retained reviewer0
+Sol/xhigh/read_only, clears all four applicable lanes with no Blocking/Important
+finding. It includes explicit whole-history/migration/update-stream conclusions.
+Prior [mail review](verification-review.md) and [metadata review](monitor-review.md)
+remain applicable to unchanged content.
 
-Complete graph: final lock blob `ec3d5aea9a7e55e69778e3ae4136cf2b3bb84e86`,
-SHA-256 `505f6c89e18972827beecc29a0c7c85e1df2576ed4074205501167a3dd6f326a`.
-Exact graph remains recoverable from final HEAD's `flake.lock`.
+Generated main.cf/transport/Postgrey/Postfix derivations/text equal reviewed1e;
+firewall, resolver, approved keys, private metadata and absent exporter/rsyslog
+were verified. Actual selected-consumer comparison changes only mx2 Prometheus
+scrape/ping entries and Alertmanager node-down inhibition. Both DNS consumers
+change only revision metadata; their new revision-bearing closures are not claimed
+built. Build set is mx2,mon1,mon2,alerts1,alerts2; none of those consumers is deployed.
 
-## Reviews, owners and retained evidence
+The final VM check is exactly the historical passing8pan3ddqairw3js87iaysvjqwzalxgls
+derivation. Root canonical SHA256d1e739bbeefe29f257dbb3a5e27558bb2183fe48314d324fa59a7ee661191255
+and4038-node consumed graph SHA256e366b1480f8650a403de926389d537a45e9652f37ea962422ba2117ba0915c96
+were independently confirmed. Reuse is immutable graph proof, not tree equality;
+inherited vpsadminServices is not consumed. Historical VM output was realized/NAR
+verified then later absent locally; current presence is not claimed and no rerun
+was needed. See [prior results](verification-results.md) and batch6 record.
 
-Architect0 owned [design](design.md). Implementer1 owned the bounded
-[primary baseline](primary-baseline.md) and
-[DNS reconciliation](internal-dns-reconciliation.md); implementer0 owned shared
-configuration, tests, docs, quick checks, commits and follow-up diagnosis/fixes.
-Repository/Git writes were serialized. All packages are accepted and complete;
-no new member work remains assigned. Lead owns this handoff and approval-bound
-next steps.
+The native five-system batch completed exit0 in154.13s (parent handle43854).
+Actual generation/output/deriver/NAR and input/configuration-info checks passed.
+All current generation links select2026-11-03--15-47-12: confctl reuses an existing
+matching toplevel/input generation, so the later invocation did not make a new
+15-50 generation. Actual mx2 built output:
+`/nix/store/4pc5mic0rp9h5qb2lhgmdh2x8z50pqd2-nixos-system-mx2-26.05.20261026.718f670`.
+Full five-system bindings are in staging-built-systems.json and
+staging-build-result.md. These are build outputs, not deployed profiles.
 
-Retained reviewer0, saved Sol/xhigh/read_only, independently completed
-[full review](verification-review.md) and
-[targeted metadata review](monitor-review.md). R1 IPv6 negative coverage and R2
-queue-bound temporary response checks are fixed. Native type/address/reboot/reply
-format corrections were directly inspected under the narrow-fix rule; no checks
-were suppressed or production policy weakened. No unresolved finding remains.
-[Implementation receipt](verification-implementation.md) and individual
-remediation/run records retain the exact reviewed ranges, failed attempts and
-accepted fixes. Their earlier active/pending statuses are historical and are
-superseded by this state and the final results.
+Execution reconciliation: the fresh watcher was interrupted after lead mistakenly
+assumed it had not started. A parent fallback duplicated a local build invocation.
+The earlier watcher-created generation was subsequently reused. Preserve the
+mixed/NUL-containing raw log and actual registration/generation proof; no extra
+build, deployment or cleanup was performed to hide this. Parent's exit0/status is
+retained. No owned build or uncertain remote mutation remains.
 
-The fresh utility could not pass readiness before executing checks; the documented
-parent-monitoring fallback ran the actual batches. No owned command, VM,
-machine/repository claim or uncertain production operation remains. Owned native
-quick-check directories and standalone scratch file were removed by their owner;
-source, branches, generations, evidence and the session remain retained.
+## Admission and live verification still pending
 
-## Remaining live rollout gates
+[Deployment admission proposal](deployment-admission.md) describes the additional
+workspace catalog/user-package update requested from the user. Installed catalog
+contains only aitherdev. Mandatory guide requires a held claim for the exact
+configured machine; no candidate/physical-node mapping or documented dynamic
+registration/guest exemption exists. No surrogate claim or bypass is allowed.
+The proposal has not changed workspace source or selected package, and default
+integration remains separately unapproved.
 
-The actual Debian 13 primary is outside this repository. Strict administrative
-SSH access was unavailable; the bounded protocol baseline observed Postfix,
-100 MiB SIZE and self-signed STARTTLS. No real MAIL/RCPT/DATA/AUTH was sent.
-Recipient/trust/filter policy equivalence remains unknown.
+After admission, acquire exact ownership near activation; preserve rollback
+state/key access and empty/accounted queue. Lead copies and dry-activates then
+switches only the reviewed built mx2 target and checks new current/profile/source,
+SSH/network/firewall/DNS/units/persistence. No consumer/DNS/primary/CentOS activation.
 
-Before replacing CentOS, verify actual container/host placement, address ownership,
-resolver propagation, both address families, and candidate delivery/acceptance by
-the real primary using agreed test recipients. Resolve inbound certificate and
-recipient/backscatter policy and the absent-milter scanning behavior. Keep old
-and new queues independent; retain and drain accepted NixOS mail even if ingress
-is rolled back. No CentOS spool/state conversion is implemented or certified.
+User supplied important mailbox podpora@vpsfree.cz. Send at most two marked small
+messages, same return address, normal delivery then candidate-only temporary
+SMTP egress outage/restart/reboot recovery. No deliberate live DSNs, primary
+interruption, invalid-recipient campaign or mailbox credentials. User confirms
+receipt. No live test mail has been sent yet.
 
-The internal DNS correction is source only; it preserves unrelated split-DNS
-records and the mail alias. Public DNS remains the operator-designated authority.
-The actual monitor endpoint is `mx2.vpsfree.cz:9100`; service metadata address
-`37.205.11.114` is separate. Live DNS/exporter reachability must be verified during
-an approved rollout.
+Public IPv4/IPv6 ingress, final outbound identity, inbound TLS, recipient/backscatter
+and absent-milter policy remain cutover gates. Keep CentOS and NixOS queues
+independent; preserve/drain accepted NixOS mail even if ingress rolls back. No
+CentOS spool/database conversion is implemented. The internal DNS correction is
+source only. Keep original host/public DNS unchanged throughout private staging.
 
-Repeatable operations are documented in
-[project mx2 guide](../../worktrees/2026-11-01-mx2-nixos-migration/vpsfree-cz-configuration/docs/operations/mx2.md),
-linked from the project README. Reusable fixture/exporter lessons are in workspace
-notes. Next step is controlled staging and its approval/access preparation;
-merge, deployment and lifecycle actions need their own explicit direction.
+Owners: architect0 completed bounded design/staging contract; implementer0 owns
+completed source and final build-receipt validation; reviewer0 completed independent
+review; lead owns admission, activation and acceptance. Reusable project guidance
+remains docs/operations/mx2.md; temporary rollout evidence remains here. No session
+lifecycle action is authorized or performed. Session and worktree stay open.
 
-[Stable session portal](https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-11-01-mx2-nixos-migration/).
+[Session portal](https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-11-01-mx2-nixos-migration/).

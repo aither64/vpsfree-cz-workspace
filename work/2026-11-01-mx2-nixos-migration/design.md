@@ -1,3 +1,164 @@
+# Active package: deploy corrected private mx2 candidate
+
+Ready for implementer0; 2026-11-03. This block supersedes earlier staging
+instructions below. User authorized agent deployment: "done. well, with this
+access, you can deploy mx2 yourself." Scope is VPS 27627 / 172.19.9.22 only.
+Old CentOS, public DNS/IP transfer, primary configuration and master integration
+remain excluded. The objective is activation of the newly prepared branch system;
+the current original-branch guest and preflight are not that deployment.
+
+## Accepted live facts and minimal source boundary
+
+Owner0 strict preflight succeeded. Candidate is LXC NixOS 25.05, hostname mx2,
+stateVersion 25.05 from installed configuration, persistent ZFS tank/ct/27627
+root/var/nix, private venet0 172.19.9.22/32, IPv4 default via 255.255.255.254,
+link-local IPv6 only, no global IPv6 and neither old public address. Postfix and
+Postgrey are active, rspamd absent, queue count zero. Existing current/profile/
+booted system is `/nix/store/98n9xjgm42pjmzi9vy430qilp2hqbzvb-nixos-system-mx2-25.05.git.7c43f080a`.
+Exact host-key trust and pinned-key root access work. One allowed followup
+confirmed SSH client source 172.16.106.40. Guest lacks dig, so DNS answers remain
+unobserved; do not run more discovery or install tooling before this package.
+See [candidate-preflight.md](candidate-preflight.md) and owner probe receipts.
+
+Implementer0 owns exactly two application source files:
+
+1. `cluster/cz.vpsfree/containers/mx2/module.nix`: keep ID 27627, target
+   172.19.9.22, host name/domain and channels. Replace public address metadata
+   with 172.19.9.22/32 and an empty global IPv6 list. Remove auto-update, set
+   monitoring.enable=false and logging.enable=false; remove dormant node-exporter
+   service metadata. Do not guess physical placement or edit its data record.
+   Address metadata does not allocate guest IPs: actual networking remains
+   host-supplied /ifcfg.add. These edits prevent misleading consumers, not a
+   claimed fix to an observed public-IP collision.
+2. `cluster/cz.vpsfree/containers/mx2/config.nix`: keep imports, installed-compatible
+   stateVersion25.05 and hostname behavior; keep all existing authorized admin
+   keys, and explicitly reference the already approved workspace deployment public
+   key through its existing confData entry. The generated candidate authorized_keys
+   check proved that declaring the key in confData does not include it through
+   shared administrator settings. Keep this reference candidate-local; no global
+   key change or new credential. Require the exact approved key in generated root
+   authorized_keys before deployment.
+   Apply a candidate-only resolver override to `[ "1.1.1.1" ]`. This bounded
+   staging choice is justified by the independently observed internal split-DNS
+   NXDOMAIN for the canonical primary and the identical inherited resolver order;
+   it does not claim a successful query from this guest. Do not change shared DNS
+   sources/servers or hardcode the primary IP. Actual DNS resolution is a required
+   postactivation check before mail, and failure stops the mail phase.
+
+   Restrict SMTP to observed workspace source 172.16.106.40/32. Keep the firewall
+   enabled; override this host's public allowedTCPPorts to `[ 22 ]` using mkForce
+   and add a standard iptables extraCommands source-specific TCP25 ACCEPT rule
+   through nixos-fw-accept. Preserve SSH, do not add the source to Postfix mynetworks,
+   and do not open IPv6 SMTP or exporter ports. Confirm generated firewall ordering
+   and source selection in quick checks. This is a staging host restriction;
+   `configs/mx2.nix`, transport/relay/filter/queue policy and tests stay unchanged.
+
+Do not expand to workspace/catalog source, deployment scripts, new modules,
+frameworks or docs bundles. Key preservation must be established from generated
+authorized_keys, not inferred from a confData declaration or shared administrator
+membership. Shared base/ct profiles,
+input locks, existing DNS correction and data placement remain untouched.
+
+## Checks, release and deployment contract
+
+Run formatting, normal hooks, full-range whitespace, production evaluation,
+selected effective mail-policy equality against reviewed1e3afc47, private metadata,
+SSH key presence, resolver and firewall assertions. Save exact new head/input graph
+and changed consumer derivations. Commit and obtain required independent review
+before longer checks. Build exactly the candidate and only shared consumers whose
+actual evaluated derivations changed; monitoring metadata can affect consumers,
+so prove scope rather than automatically rebuilding all previous five systems.
+Reuse successful VM evidence only with identical test derivation and complete
+input graph; host-only staging ACL/DNS are separately covered by live checks.
+Lead uses the required fresh watcher or documented fallback for long work.
+Preserve reviewed1e3afc47 and original/import/runtime refs and exact range evidence.
+
+Lead owns activation and verification, after prepared exact source/closure and
+rollback receipt are reviewable. Agent deployment is currently BLOCKED on exact
+configured-machine claim admission: selected catalog has only aitherdev, not mx2/
+27627 or a proven physical-host mapping. Installed coordination guidance requires
+machine ownership for deployment and documents no guest-only exemption or dynamic
+machine registration command. Never use aitherdev as surrogate or invent a claim.
+This does not block the implementation/review/build package. Resolve admission
+through supported configuration/policy separately; no runtime project is authorized
+here. A held valid claim, exact target/key/head and empty/accounted queue are
+activation preconditions. Integration remains separately unapproved; any deployed
+machine hold follows installed retention/integrated-lineage rules.
+
+After admission, use ordinary confctl at the exact new built generation for
+`cz.vpsfree/containers/mx2`, pinned existing SSH key and strict known-host trust.
+Prepare copies before ownership when supported; acquire/verify exact ownership
+near activation. Run dry activation first, inspect its effects, then switch only
+this target; never run deploy-infra/wildcards or deploy DNS/monitor consumers.
+Record new source/input graph, native build generation, exact system derivation/
+closure and current/profile paths; compare installed configuration-info to the
+new head. The old98n9 closure is the rollback target, never the claimed new result.
+Before switch retain its generation and verify rollback activation path; preserve
+on-disk state and workspace SSH access. Stop and reconcile uncertain effects rather
+than replaying commands or releasing ownership.
+
+## Bounded live acceptance and recovery
+
+After activation verify strict SSH, source/system/profile identity, systemd units,
+private-only addresses/routes, 25.05 stateVersion, persistent paths, enabled
+firewall (TCP25 only from172.16.106.40), no exporter/central-log side effects and
+canonical-primary DNS through the actual selected resolver. Record actual outbound
+source/NAT where available; no globalIPv6 or public Internet acceptance is claimed.
+Source-restricted staging may retain missing inboundTLS/milter/recipient-policy
+cutover gates. Public DNSBL effects are observed, not bypassed to force a pass.
+
+User supplied important support mailbox `podpora@vpsfree.cz`. Send at most TWO
+small, clearly marked synthetic messages there from the same return address:
+one normal delivery and one candidate-only outage/queue/recovery message. No
+attachments/sensitive content, deliberate invalid recipient or live DSN campaign.
+User receipt confirmation suffices; no mailbox credentials needed. Unrelated-domain
+RCPT rejection uses no DATA. If unexpected DSN occurs, it returns to the agreed
+support address; stop and diagnose rather than repeatedly sending.
+
+Before queue test require zero/unambiguously owned queue and record the temporary
+fault/removal. Block only candidate SMTP egress to the primary (all resolved
+addresses/usable families), leave SSH/DNS and real primary unaffected, and retain
+the block across candidate reboot. Require final DATA250 before proving queued
+marker/envelope survives Postfix restart and same-disk container reboot. Restore
+candidate egress, flush normally, obtain receipt and prove queue drain. Do not
+modify host networking or restart a physical node. Every wait is bounded; abort
+on unexpected real mail, uncertain fault-rule effect or lost management access.
+
+On failure close staging ingress, reconcile commands and retain queues/disk.
+Restore old98n9 generation only after checking state compatibility; do not copy
+CentOS state or delete accepted messages. Remove only owned fault rules. Keep
+CentOS/public routing unchanged. Full cutover still needs inbound certificate,
+recipient/backscatter/milter choices, final public v4/v6/firewall/PTR/source-path
+checks and a separately ordered IP move. Do not mark task complete after build or
+preflight: report actual activation plus live acceptance, or its exact remaining
+deployment prerequisite.
+
+---
+
+# Earlier planning checkpoint (superseded by active package above)
+
+The isolated verification phase below has completed; exact results are in
+[verification-results.md](verification-results.md). The user's next step is a
+separate staging deployment using its existing private IP, with old mx2/public
+DNS unchanged. No new public allocation is required for initial tests if the
+workspace can reach the candidate and it can resolve/reach the real primary on
+TCP25. The user confirms candidate ID `27627` and management `172.19.9.22`,
+matching existing source. Implementer0's [strict preflight](candidate-preflight.md)
+verified the supplied ED25519 fingerprint and installed exact-host trust, then
+root authentication failed. No remote command executed. The immediate prerequisite
+is restoring the intended root access using the single existing public key being
+identified locally by implementer0; no fingerprint re-request, duplicate probe,
+key generation or alternate-credential exploration is needed.
+Installed-state/network/access facts remain unknown; no source package is released
+until root access is restored and the owner completes preflight. Follow
+[staging-plan.md](staging-plan.md): preserve
+confirmed identity and actual stateVersion, prepare/review necessary staging
+metadata and restrictions before activation, then verify the actual
+container and primary path. Current production-address metadata is not a ready
+staging target. Test the reachable families and record outbound/NAT identity;
+external public IPv4/IPv6, PTR and final-source acceptance remain later gates.
+The user owns deployment; this planning update performs none.
+
 # Executable isolated mx2 verification
 
 Status: bounded implementation package ready, 2026-11-02. This phase supersedes

@@ -1,6 +1,46 @@
 # mx2 NixOS migration and automated verification
 
-## Current status: verification complete
+## Current phase: prepare temporary-IP staging
+
+On 2026-11-03 the user agreed to deploy a separate candidate with different IPs,
+verify it, then replace the existing mx2 addresses after acceptance. They asked:
+"create a plan and tell me what to do. I can deploy mx2 if it is ready and then
+we can proceed with verification."
+
+Architect0 completed the staging plan and the executable package at the top of
+[design.md](design.md). The user subsequently authorized agent deployment:
+“done. well, with this access, you can deploy mx2 yourself.” Lead owns candidate
+deployment and verification; integration, public DNS/IP transfer, primary
+configuration and old CentOS changes remain excluded.
+
+Confirmed candidate: VPS27627, private172.19.9.22, hostname mx2, NixOS25.05/LXC,
+installed stateVersion25.05 and persistent ZFS. Strict root SSH works with the
+user-verified host fingerprint and approved workspace key. The current original
+system is the rollback reference, not the intended new branch deployment.
+Observed workspace source172.16.106.40 selects the staging SMTP firewall rule.
+The guest has no public/globalIPv6 address. Public allocation is not required for
+initial staging; public IPv4/IPv6 and final-source acceptance remain later gates.
+
+Implementer0 owns the complete two-file staging package: confirmed identity and
+shared mail policy retained, private address metadata, automatic updates and
+production monitoring/logging disabled, candidate-only public resolver, SMTP only
+from the observed workspace address. Quick checks/commits/history and publication
+precede independent final review, then the necessary system/consumer builds.
+Reuse prior mail test results only with exact derivation/input identity.
+
+The user supplied podpora@vpsfree.cz as the important support mailbox. Live scope
+is at most two clearly marked small synthetic messages (normal and temporary
+queue/recovery), same return address, no deliberate live failure/DSN campaign.
+User receipt confirmation suffices; no mailbox credentials are requested.
+
+Activation requires exact configured-machine claim admission under installed
+coordination policy. The catalog currently has only aitherdev; no candidate27627
+mapping or supported dynamic registration exists. Prepare/review/build the
+candidate independently; do not use a surrogate claim or expand into a runtime
+project. Resolve this concrete prerequisite before activation. No activation or
+live test mail has occurred yet.
+
+## Completed automated-verification phase
 
 User now asks to minimize their input and let the agent perform verification.
 Authorization wording: “not really sure how you suggest to proceed. I'd like to
