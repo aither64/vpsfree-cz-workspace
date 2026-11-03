@@ -1,0 +1,5 @@
+# Tag gate monitoring
+
+Initial snapshot: repository `vpsfreecz/haveapi`, tested head `1ef9b204ba45bb261d3334be5c555cc1856b713b` for tag `v0.32.2` (annotated tag object `7f8f656ca7655bafaf2cf5e7095573806085a442`) and target `haveapi-0.32`. All specified runs are recorded in `ci-tag-gate-evidence/initial-runs.json`. Tag components: 8 success, rust in progress, protected release gate in progress. Target components: 9 success, performance in progress; redundant release build-only run 41528866548 attempt 2 in progress. No failure observed in this initial snapshot.
+
+Final gate snapshot: all 10 tag component workflows succeeded; protected release run 41529223599 attempt 1 has `Validate, test and build` success and `Publish approved artifacts` waiting on the protected `release` environment. Target component/performance workflows (10) succeeded. Target build-only run 41528866548 attempt 2 remains in progress and is not a prerequisite for this duplicate-workflow gate. No new failures observed. Full per-run final snapshots are in `ci-tag-gate-evidence/*-final.json`; protected environment and artifact details are in the pending-deployments and artifacts JSON files.
