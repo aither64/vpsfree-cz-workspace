@@ -21,6 +21,12 @@ must not launch or resume that mutation driver itself.
 
 ## Delivery and scope checkpoints
 
+For vpsAdmin API work and HaveAPI generator changes affecting vpsAdmin clients,
+follow the
+[generated-client synchronization procedure](https://github.com/vpsfreecz/vpsadmin/blob/master/docs/api-schema-export.md#generated-client-synchronization)
+for the required Go, Rust and TypeScript checks and completion records.
+Synchronizing source alone does not require a release.
+
 Before detailed implementation or review, compare the actual user request and
 subsequent scope decisions with the diffstat, working time and delivered result.
 An internal plan or lead-approved design does not expand user authorization.

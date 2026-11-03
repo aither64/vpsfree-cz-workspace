@@ -38,6 +38,9 @@ These repositories are in scope for this workspace:
 - `vpsf-status`: Go status page and monitoring-facing status service for
   vpsFree.cz.
 - `vpsadmin-go-client`: generated Go client library for the vpsAdmin API.
+- `vpsadmin-rust-client`: generated Rust client library for the vpsAdmin API.
+- `vpsadmin-typescript-client`: generated TypeScript client library for the
+  vpsAdmin API.
 - `confctl`: Ruby/Nix deployment management tool used with NixOS and
   vpsAdminOS fleets.
 - `vpsfree-cz-configuration`: production vpsFree.cz cluster configuration in
