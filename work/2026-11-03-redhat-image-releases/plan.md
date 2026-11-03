@@ -6,8 +6,8 @@ update redhat-family image releases in vpsadminos. when verified, you can merge 
 
 ## Affected repositories
 
-- vpsadminos: Red Hat-family image scripts only, including obsolete stable
-  Fedora images if absent from live upstream mirrors as required by the skill.
+- vpsadminos: four Red Hat-family release RPM updates plus the approved
+  source-identity plumbing and null-safe channel fixes needed for verification.
 
 ## Approach
 
@@ -16,11 +16,11 @@ update redhat-family image releases in vpsadminos. when verified, you can merge 
 3. Commit one logical update per changed image after quick checks and hooks.
 4. Independently review the complete branch and history, then run each changed
    image's image-scripts/test integration test through a verification watcher.
-5. Publish and fast-forward merge vpsadminos master after successful verification.
+5. Publish and fast-forward merge vpsadminos staging after successful verification.
 
 ## Decisions
 
-- User request authorizes integration into vpsadminos's default master after
+- User request authorizes integration into vpsadminos's default staging after
   verification: "when verified, you can merge it."
 - Retain the existing team and its saved settings; lead coordinates records and
   integration. No production deployment is requested.
@@ -47,3 +47,24 @@ update redhat-family image releases in vpsadminos. when verified, you can merge 
   every changed image; investigate any failures and stop unexpected kernel builds
   unless the runner has not yet published the expected derivation.
 - Record exact source revisions, commands, results and CI status before merge.
+
+## Approved verification fix
+
+User approved the proposed durable correction and continuation after diagnosis.
+Preserve snapshot-bound revision and dirty metadata through source resolution and
+test framework; reuse existing flake version rules when constructing test OS.
+Honor unknown revision in channel generation. Avoid live external Git metadata,
+fabricated identity, new registries or parallel review/verification systems.
+
+Assess exported framework consumers, existing override semantics and legacy
+callers. Preserve source-selection rules including supported untracked files;
+record exact design in design.md before framework edits. Meaningful regression
+checks cover clean/dirty ordinary and linked checkouts, capture stability,
+Git-free sources, and known/unknown channel revision. No production deployment,
+schema migration, or running-node update is part of this change. Keep the four
+release commits separate and add focused framework/channel logical commits.
+The original four-line review remains evidence for that range; the expanded
+completed deliverable requires updated independent final review before long
+integration tests. Longer checks use a fresh operation utility, at most one at a
+time. Repository documentation for source provenance may now be useful and belongs
+with the owning framework, reconciled before review.
