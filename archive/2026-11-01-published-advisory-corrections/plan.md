@@ -1,6 +1,18 @@
 # 2026-11-01-published-advisory-corrections
 
-## Current merge-preparation scope
+## Completed merge and cluster-release scope
+
+The user subsequently explicitly directed “merge” and “also stop & release the
+devcluster”. All five exact reviewed feature heads are now integrated into their
+approved remote defaults through normal FF/hooks/SSH push/proof; all claims
+released. Public provider stop then reset completed the authorized full devcluster
+Release, finalfoundfalse. No production deployment or session lifecycle action.
+[Integration receipt](merge-verification.md) owns exact targets/heads/claims and
+remaining informational CI status; [state](state.md) and [handoff](handoff.md)
+are current. Session/feature refs remain open/retained. Earlier preparation scope
+and initial user request below are historical decision provenance.
+
+## Earlier merge-preparation scope
 
 The user's later “well then continue, prepare for merging” and requested
 configuration channel update authorize published feature preparation only.

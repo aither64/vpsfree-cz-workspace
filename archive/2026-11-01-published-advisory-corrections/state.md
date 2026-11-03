@@ -1,37 +1,49 @@
 ---
-lifecycle: active
+lifecycle: archived
 ---
 
 # Published advisory corrections
 
-Current phase: **ready, awaiting merge approval**.
-All intended changes are committed/published, quick-checked and independently
-reviewed. Strict finalKB and the changed admin browser cases passed. The modern
-PR is ready. All five repositories have fresh clean published-head/ancestor-default
-proof and final native source/input/cleanup receipts are verified. No further tests
-or source changes are selected. Current API CI is queued and KB Managed is in
-progress; those runs are disclosed, not assumed green or added as a broad wait.
-
-The user's “well then continue, prepare for merging” authorizes preparation.
-No default-branch integration, production deployment or session lifecycle action
-is authorized. Keep lifecycle active, the session open and the DEV preview running.
+Current phase: **all five repositories merged; devcluster stopped and fully released**.
+The user's explicit “merge” and “also stop & release the devcluster” are fulfilled.
+All five exact reviewed heads are on their approved remote defaults; normal FF,
+hooks, SSH pushes and remote proof passed. All five repository claims are released,
+with no jobs or machine reservations. PR122 auto-merged. No production deployment
+or session lifecycle action was performed. Session records/worktrees/refs remain;
+the session stays open for follow-up.
 
 ## Phase checklist
 
-- [x] Advisory corrections/lifecycle, server-only visibility, both UIs and all six draft-sync guards.
-- [x] Proven VPS redirect repair and owning pagination-observation test correction.
-- [x] Normal quick/hooks, published consolidated API/KB/config histories and exact pins.
-- [x] Independent final review, complete histories/consolidation and NO MIGRATIONS.
-- [x] Hosted API full/core evidence plus scoped successful native reuse accepted by reviewer.
-- [x] Strict finalKBf977 passed509.55s without overrides/allow-missing.
-- [x] FinalAPI942c admin-core all3serial browsercases passed, no failures/skips.
-- [x] Modern/client/config fresh source/default/ancestry snapshot; PR122 ready.
-- [x] Final API/KB source/input/cleanup/freshness and one currentCI receipt reconciled; pending runs disclosed.
-- [ ] Explicit integration direction for the named repositories/targets; nothing merged/deployed.
+- [x] Implementation, quick/hooks, independent final review, complete histories and NO MIGRATIONS.
+- [x] Required exact-source local acceptance and independently reviewed successful-input reuse.
+- [x] API942c feature CI SUCCESS; Ubuntu mirror prerequisite failure explicitly accepted out of scope.
+- [x] UFW follow-up withdrawn before launch; no extra check/cleanup needed.
+- [x] User integration approval recorded for the five repository/target set.
+- [x] Fresh targets, one-repository claims, FF/hooks/SSH push/exact remote proof for all five.
+- [x] All five claims authoritatively released; no active job or machine reservation.
+- [x] Explicitly authorized cluster Stop→verify→full Release→verify, both commands0, finalfoundfalse.
+- [x] PR122 auto-MERGED; feature refs retained; one postmerge CI snapshot taken without wait.
+- [x] Integration/release receipts and operator handoff reconciled. No source/deployment task remains.
 
-## Published sources and complete histories
+## Approval and integrated results
 
-| Repository / target | Feature head | Reviewed base |
+Approval: user's current “ok, merg” followed by “merge”, after the prepared five-
+repository set; later “also stop & release the devcluster” authorizes only this
+session's cluster release, not session archive/delete/stop. Normal public provider
+stop then reset are the documented full Release; final state reports foundfalse.
+Its retained preview disks/config were removed as requested, not shared provider
+infrastructure or any other cluster. No public credentials are copied to records.
+
+[Merge and release verification](merge-verification.md) contains the exact target/
+head/claim/release-time table, postmerge CI IDs, public cluster commands and final
+whitelisted status, actual observer/policy, package version and execution roots.
+Every prepared source below was integrated unchanged; no refreshed head/rebase or
+new migration. Original previewAPIa38c/modern1c and live runtimeC remain historical
+proof; do not call the nonancestor old API literally merged. No production rollout.
+
+## Integrated sources and complete histories
+
+| Repository / target | Exact integrated head | Reviewed base |
 | --- | --- | --- |
 | vpsadmin / master | 942c6eaed41331f823d8e0f670ed239e2b308440 | 5586ea8ab7dbf7e116083b0ea1819ea4d17f66a5 |
 | vpsfree-kb-contracts / master | f97785c2c265172a4c78893e0673034fde56e4dd | ce2c8cd9358c3636e5d39343e595df813a0b197f |
@@ -131,32 +143,64 @@ API41544311588 on exact2823 passed all26topics+aggregate. Actual full/core platf
 Bundler2.6.9/all5HaveAPI0.32.2/Maria11.8.6 and actual locks/native artifacts are
 retained. Unchanged Ruby/API inputs support reviewed942c reuse.
 
-## Freshness, PR and CI
+## Final integration, PR and CI
 
-Implementer1's final03:14:07Z Nov3 snapshot confirms configc410, modern1c and
-client0b local=remote, clean and unchanged ancestor defaults as listed above.
-Modern CI41462732480/browser41462732324 and all rollups passed; client
-RSpec41336065180/RuboCop41336065173 passed. Config CI listing is empty; no hosted
-config green is claimed. Normal local preparation evidence applies.
+All five immediate SSH default/feature-ref proofs match the integrated table;
+normal merge/push hook failure arrays are empty. Authoritative claim-status after
+batch shows released for every exact claim, no active jobs/reservations. Driver
+and fresh observation-only utility terminal0. Feature refs and source worktrees
+remain; clean detached preparation targets retained without uncertain effects.
+[PR122](https://github.com/vpsfreecz/vpsadmin-webui/pull/122) auto-merged at
+2026-11-03T13:45:04Z with mergeCommit exactly1c8478b. No GitHub merge button,
+branch deletion or additional body change was used after integration.
 
-[PR122](https://github.com/vpsfreecz/vpsadmin-webui/pull/122) is READY (isDraftfalse)
-at03:14:45.924716Z, exact1c/main, MERGEABLE/CLEAN, no review requests. Title unchanged;
-only the main-approved terminal sentence changed to “Prepared for merging; no
-production data, merge or deployment changes.” Exact before/after and readiness
-proof are in implementer1.md and implementer1-final-readiness.json.
+Postmerge snapshots13:48:35–13:48:53Z, without waits: clientRubocop41647013760/
+RSpec41647013747 SUCCESS. API master RuboCop41647065600/PHPUnit41647065014/
+i18n41647065167 SUCCESS; CI41647065275 in_progress, API Specs41647065023 queued.
+KB master Managed41647235594 in_progress/Check41647235548 queued. Modern main
+CI41647131321/smoke41647131106/broad41647131208 queued. ConfigCIlisting empty.
+No new automatic run is called green. Premerge exact942cCI41563874916 SUCCESS,
+local strictf977/admin3pass and reviewed scoped native/API reuse remain the
+accepted preparation evidence. Old2823integration41544311870 completed/cancelled.
+Originalf977Managed41564405472 FAILURE is explicitly useracceptedoutscope as
+recorded below. No additional campaign or CI wait selected.
 
-Final API/KB fresh SSH proof confirms exact remote942c/f977 and unchanged
-master5586/ce2c, both target ancestors, clean trees/series3+2/no migrations;
-comparisons captured at final ranges. Together with impl1's snapshot, all five
-published heads match the independent final reviews. No merge claim is held.
+## Retained KB Managed failure and user disposition
 
-ONE final currentCI snapshot: API942c CI41563874916 queued; PHPUnit41563874914
-and i18n41563874994 SUCCESS. KBf977 Check41564405469 SUCCESS; Managed41564405472
-in_progress. Old2823 integration41544311870 is now completed/cancelled. No new
-failure observed, current/foreign/completed runs untouched, no further wait or
-retry. Local accepted checks and reviewed scoped reuse complete preparation;
-queued/in-progress CI is not described as green. Any later actual failure returns
-to its owner before integration. No blanket campaign was added.
+Originalf977 Managed41564405472 attempt1/job125682327742 retained:75KBrawjoblog
+and artifact13202356715 (529KB/33files), under
+`final-acceptance/redirect/managed-f977-failure41564405472/` in the visibility
+artifact root. Native12scripts/4tests,1883.99s: only kb/firewall#ufw unexpectedly
+failed; remaining11scripts passed. Repository check passed; evaluate-results
+failure is downstream. Workflow cleanup step succeeded. Failed UFW example
+104.34s/script108.1s, firewallgroup855.07s. Concrete prerequisite failure:
+Ubuntu24.04 apt-get install openssh-server/socat/curl/iptables exited100 after
+41.57s; apt update warned indexes unavailable but exited0/stale indexes. Mirror
+cz.archive.ubuntu.com:80 returned IPv6 network-unreachable/IPv4 connect timeout.
+This precedes configure-ufw/listeners/firewall/restart assertions. Owner
+prepare_apt_packages at tests/suite/kb/firewall.nix:140, called near443; fixture
+invocation455 never reached. Owner blob28ab29d2 unchanged ce2c..f977.
+Deeper hosted runner-egress versus mirror-outage cause is unavailable; no baseline,
+flake or product-fix claim. All11other scripts include5KVM; their5guest logs end
+stop/qemu_exit0/killSIGNONE/destroy, workflow cleanup succeeds.
+
+Lead disposition kb-ufw-mirror: release ONE ordinary kb/firewall#ufw native target
+on frozenf977/API942c, same assertions/retries/timeouts/fixture, after ordinary
+current mirror preparation. Fresh restricted watcher/unique shortstate; actual
+nonempty one-script selection and input/cleanup proof required. No source/pin/
+mirror/config change, whole Managed rerun or repeat of11successes/strict/API/admin/
+KVM. Stop if ordinary preparation/first execution fails; no retry loop. A local
+pass would verify missing target/current environment, not green the hosted run.
+No new source review is needed for evidence-only verification. Original failure
+and successful exact-input scripts are preserved.
+
+USER DISPOSITION supersedes the released verification: “ok, that is out of scope
+for us. are we ready to merge?” The external Ubuntu mirror/apt setup failure is
+accepted out of scope and does not block feature readiness. UFW-only follow-up
+withdrawn; no new network diagnosis/retry/test is needed. Implementer0 is to
+reconcile any exact already-started disposable check through supported tools,
+without session/preview/cluster action. No claim that the hosted failure became
+green, flaky or retrospectively fixed. No application change is indicated.
 
 ## Preserved failures and limits
 
@@ -182,26 +226,27 @@ Reusable lessons: [socket paths](../../notes/vpsadmin/2026-11-03-native-runner-u
 [Nix hook environment](../../notes/vpsadmin/2026-11-03-overcommit-pre-push-nix-environment.md),
 [kernel package names](../../notes/cross-project/2026-11-02-kernel-preflight-package-name-ambiguity.md).
 
-## Preview and next operator action
+## Devcluster release and next operator action
 
-DEV preview remains running on backendAPIa38c/modern1c with synthetic data intact.
-Host-live-mounted PHP reads unchanged runtimeC from current942c worktree without
-separate activation. Prior TLS/OAuth API66/modern24/PHP21 role checks belong to
-their recorded runtime; Mailpit4sign-in notices/0advisory messages. Credentials
-stay in portal Cluster fields. See [preview access](preview-verification.md).
-No fixture writes, restart/backend update, stop/reset or session cleanup is
-requested. Config still selects modern70bd; API channel does not select/deploy1c.
+The requested DEV preview is now STOPPED and FULLY RELEASED. Lead's public
+vpsadmin-devcluster stop and reset commands both returned0; whitelisted status
+proved stopped/readyfalse before reset, then foundfalse. The prior runtime,
+TLS/OAuth role counts and sample/Mailpit state in
+[preview evidence](preview-verification.md) are historical; endpoints are no
+longer running and saved preview disks/config were removed as requested.
+No session stop/archive/delete, production deployment, source-worktree removal
+or manual credential/fixture operation was performed.
 
-Future rollout must pause sync, upgrade every active six-guard consumer, complete
-compatible API/UI rollout before writes and avoid mixed API pools. Software
-rollback must preserve published-only privacy; it does not reverse corrections
-or retraction and cannot restore deletions (backup required). No schema/daemon/OS
-coordination is introduced. Production advisory edits/deletions remain separate.
+Merge and cluster-release tasks are complete. The session remains open; current
+source refs/worktrees/records are retained. Production deployment and advisory
+corrections/deletions require separate authorization. Config still selects modern
+70bd; merging API channel does not deploy modern1c. A future rollout must pause
+sync, upgrade every active six-guard client, use compatible API/UI versions and
+avoid mixed API pools. Rollback must retain published-only privacy; it does not
+reverse corrections/retraction or restore deletions (backup required).
 
-Next operator action: explicitly direct integration for the repository/target
-set in the table when desired. Before an approved merge, recheck exact current
-target/head/history and apply ordinary changed-input/review rules if they moved.
-Preparation is ready; no integration or production action has been performed.
-No repository/machine integration/deployment claim is held; keep session open.
+No repository/machine claim or uncertain command remains. No further user action
+is required for the completed merge/release request. Postmerge CI status is
+reported separately without assuming success or waiting for broad repetition.
 
 https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-11-01-published-advisory-corrections/

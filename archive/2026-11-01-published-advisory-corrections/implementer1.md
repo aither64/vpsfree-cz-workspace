@@ -5,7 +5,62 @@ verified against `/home/aither/workspace/ai/vpsfree.cz`. Saved Sol/xhigh,
 workspace_write retained. No production, credential, deployment, integration or
 session lifecycle operation performed. Lead owns shared state and approvals.
 
-## Final preparation completed — 2026-11-03T03:14:45Z
+## Integrated, not deployed — 2026-11-03T13:48:35Z
+
+The lead completed the user-authorized five-repository integration. For the three
+implementer1 packages, its exact per-repository result.json/SSH proof records:
+
+| Repository | Remote default now at exact final feature | Released claim |
+| --- | --- | --- |
+| security-advisories | 2026-07-13-security-advisory-automation → 0b771120bb2a878c012512b685208124c2b4263b | 30c995bb-b27f-411c-a9d8-4c794a86b20d |
+| vpsadmin-webui | main → 1c8478bceb3943645ec06ccde895ee4b0985873f | 54735573-3f98-49a8-9bdc-10fbdb4c40bc |
+| vpsfree-cz-configuration | master → c4107822060e9e34b24a83950d618c9f28a7722b | 0dac9e96-6474-42e5-a56b-1e550b0374e7 |
+
+All three lead receipts state merged_released, exact remote proof and no merge/
+push hook failures. The lead confirmed authoritative released state; implementer1
+did not reacquire claims or repeat Git mutation/fetch operations.
+Result directory: /tmp/2026-11-01-published-advisory-corrections-merge-20261103T132728Z/.
+
+PR122 ordinary auto-close verified: MERGED at2026-11-03T13:45:04Z, merge commit
+exact1c8478bceb3943645ec06ccde895ee4b0985873f. No GitHub merge button/API, branch
+deletion, comment or reviewer request was used. One fresh host-ref read confirms
+all three feature refs remain at their exact integrated heads; no repair needed.
+
+One useful postintegration CI snapshot:
+
+- Client default-head RuboCop41647013760 and RSpec41647013747 completedSUCCESS.
+- Modern main-head CI41647131321, Playwright smoke41647131106 and broad smoke
+  41647131208 are QUEUED, not completed success. Earlier exacthead PR CI41462732480
+  and browser41462732324 remain SUCCESS. No wait/rerun/cancel or new tests/build.
+- Config current-head run list is empty; normal local hooks/evaluation/review
+  evidence is retained, no hosted CI conclusion invented.
+
+Exact feature/default/claim/PR/CI result: [postintegration JSON](implementer1-postintegration.json).
+Raw metadata: /tmp/2026-11-03-postintegration-implementer1/.
+Source trees, review/no-migration conclusions, comparison and input provenance
+remain unchanged. Project WORK_LOG/source-time documentation was not rewritten
+or committed merely to restate the integration. Detached prep targets remain.
+All own commands/handles are terminal; no uncertain mutation or utility remains.
+
+This is merged source/configuration, not production deployment. In particular,
+the Services pin does not activate the modern feature or alter the existing70bd
+config modern-source selection. The lead separately executed the user's explicit
+cluster stop/release through public stop→reset, both0 (stopped then found=false).
+That preview is historical; the session remains open, not archived/deleted/stopped.
+Implementer1 ran no cleanup, cluster/lifecycle/deployment or additional feature work.
+Lead-owned state/handoff/portal remain untouched.
+
+## Historical integration preparation delivered — 2026-11-03T13:27:36Z
+
+Usermergeauthorization acknowledged; lead owns all actual merges/pushes/claims.
+Three clean detached targets at fetched exact modern63d484/client7b6/config0d71
+prepared with target-local Nix/tools/hooks/trust; feature heads1c/0b/c410 unchanged.
+Parentdriver/observer PASS153.2s and terminal; no integration/defaultpush/claim.
+Full exact paths/commonGit/origin/base/head/environment/Git commands and critical
+hook expectations: [integration preparation](implementer1-integration-preparation.md).
+No source/input/test/buildcampaign/preview/lifecycle change; impl0 now owns utility.
+
+## Historical final preparation completed — 2026-11-03T03:14:45Z
 
 The lead released preparation after actual common API942c/KBf977 strict509.55s
 and admin-core three serial browser cases PASS (3passed/21.6m, nativeexpected_success),

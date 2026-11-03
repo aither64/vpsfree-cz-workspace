@@ -1,5 +1,15 @@
 # Modern live session preview
 
+## Historical preview — stopped and released by explicit user request
+
+After source integration, the lead executed the user's requested development
+cluster stop/release through public stop then reset, both exit0: after-stop state
+stopped, after-reset found=false. The source/runtime/OAuth evidence below remains
+historical evidence for its exact revisions. No production deployment occurred.
+The session remains open; no session archive/deletion/stop or cleanup was performed
+by implementer1. Do not infer that the URLs below currently have a running cluster.
+
+
 ## Current server-only visibility acceptance — 2026-11-02
 
 The server-only correction is live at API
