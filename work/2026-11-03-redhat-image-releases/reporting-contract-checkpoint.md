@@ -79,3 +79,13 @@ No live roster, peer session files, transcripts or credentials were read; no
 self-message test, CI observation, runtime mutation, lifecycle action, utility
 or source change was performed. Only installed/committed source and public
 documentation were inspected.
+
+## Subsequent operational validation
+
+On2026-11-04, implementer2 image-outcome report
+465f3de5-62b3-415a-9eb5-4b95b972472a returned native
+turn01a1a3aa-9f30-7892-9c83-f65e3890722a with steered=false. That report
+actually resumed the idle lead, which verified the session binding, source
+head and image workflow success. This adds a real successful idle continuation
+to the earlier source-only evidence; it does not promise all future transport
+states will complete. Existing uncertainty/retry/identity rules still apply.

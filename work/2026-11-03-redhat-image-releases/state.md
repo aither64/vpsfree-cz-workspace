@@ -6,39 +6,54 @@ lifecycle: active
 
 ## Current status
 
-Phase: verified locally; CI running/queued before approved integration.
-Implementation, independent review and all four local image tests are complete.
-No merge or deployment yet.
+Phase: refreshed branch published/reviewed; exact-head CI queued and monitored.
+At reviewed head `1a637e9eac4311adba2b08d60dfa7a17d07bcb52`, all four
+image tests passed locally and in native 24 GiB CI, and the full core suite
+passed 317 scripts / 109 tests. RSpec and RuboCop passed. Generic CI remains
+red on nine identical pre-existing livepatch fixture failures; accepted as
+unrelated failures, never represented as passes. [CI receipt](ci-managed-result.md).
 
-- Final app head: `1a637e9eac4311adba2b08d60dfa7a17d07bcb52`.
-  Tree: `49b8a7879e6b363349ae70808c4cdecc996e578e`.
-- Feature published over SSH as `2026-11-03-redhat-image-releases`.
-  Target is `staging`, the real remote default; initial master assumption was
-  corrected before implementation. Last fetched target:
-  `dd188397abe37d0bc33f4c5dfb3605206ce5e326`.
-- Normal four-image batch passed exit0 in2716.16s; all four per-image results
-  passed at exact final head. No owned runner/QEMU/virtiofs processes remain.
-  Scoped8GiB override hash unchanged; exact source/system/kernel/initrd/resource
-  receipts are in verified-image-tests-result.md.
-- Next batch uses architect-approved8GiB memory-only verification for image
-  suite only, native guards/jobs2 ceiling, normal RepositorySource lifetime.
-  Allfour actual passes remain required; no cached diagnostic counts.
-- RSpec `41695511664` and RuboCop `41695511719` passed at final head.
-  Image workflow `41695651867` remains queued; generic CI `41695511680`
-  is now running after setup/checkout. Organization runner status is unavailable to current API
-  permissions; no credential changes were attempted.
-- Lead owns Git/configuration coordination; no repository or machine claim is
-  held. No production deployment or session lifecycle action is authorized.
+Fresh target check found `origin/staging` advanced from `dd188397` to
+`742eb30cb1a8b6766c85e915d26b0400e38244b1` with three openSUSE commits.
+No feature paths overlap. No claim was acquired and no merge occurred.
+Refreshed committed head: `54b4313404cea35b58ebb9df951ae75e27c44971`, tree
+`5c03648e084e907957b37263846bc5763abdac1f`. Rebase was conflict-free;
+all six patches and total diff are byte-identical. Source-version/channel Nix
+evals, four bash syntax checks, whitespace and Nixfmt/RuboCop/hooks passed.
+Detached target is clean at new base; shell dependencies are retained by the
+untracked refresh-hook-shell profile. [Refresh receipt](refresh-result.md).
+Same retained reviewer0 (Sol/xhigh/read_only) completed all four lanes with
+no findings. Complete refreshed series/history/no migrations accepted; all six
+patches independently reconstructed byte-identical. [Review](review-result-refresh.md).
+Implementer2 completed leased SSH feature publication; remote feature is54b43134,
+staging remains742eb30. It owns exact-head push runs generic41741634771 and
+image41741634791, both queued at initial snapshot. Fresh Luna/low/full_access
+utility /root/ci_refresh_watch owns native handles7050/79291 and PIDs913471/913599.
+Lead independently verified both exact run heads and both live30-second observer
+commands. No duplicate dispatch; actual detector coverage remains pending.
+RSpec41741634539 was running; RuboCop41741634674 passed in discovery.
+[Current CI receipt](ci-refresh-result.md) retains policy, logs and managed receipts.
+Implementer2 remains active and explicitly reports substantive/final outcomes via
+its authenticated managed route, which has already resumed this idle lead.
+No Git/index writer, source mutation or default integration is active.
+Previous successful checks retain their exact old-head scope; tree/patch equality
+alone does not establish Nix derivation/input equivalence.
+
+- Original final tested tree: `49b8a7879e6b363349ae70808c4cdecc996e578e`.
+- Four per-image commits plus nullable channel and source-identity correction.
+- Existing user approval covers vpsadminos/staging and patch-equivalent rebases.
+- No repository/machine claim, VM or deployment is active; only the owned CI batch.
+- Session remains open; no lifecycle action is authorized.
 
 ## Phase checklist
 
 - [x] All-family upstream inventory and design accepted
-- [x] Four image-release commits; syntax, whitespace and hooks pass
-- [x] Source-identity and nullable channel fixes committed
-- [x] Focused Ruby/Nix regression checks and hooks pass
-- [x] Independent final review; two narrow findings resolved and inspected
-- [x] All four local image tests passed at final head
-- [ ] Queued image/generic CI accepted
+- [x] Four image-release commits and source-identity/channel fixes
+- [x] Focused Ruby/Nix checks, hooks and independent review; findings resolved
+- [x] Four local and four native-CI image tests at original final head
+- [x] Original exact-head core CI passed 109 tests; baseline failures disposition
+- [x] Patch-equivalent refresh and independent full-range review
+- [ ] Necessary exact-head CI at refreshed54b43134 accepted
 - [ ] Final head fast-forwarded into remote staging; ancestry verified
 - [ ] Final evidence/handoff retained; session remains open
 
@@ -51,17 +66,19 @@ verified staging integration including the proposed source-identity and channel
 corrections. No other repository, kernel project, SSH timing change, downstream
 pin update or production deployment is in scope.
 
-## Repository and final history
+## Repository and original tested history
 
 - Bare clone: `repos/vpsadminos.git`, SSH origin
   `git@github.com:vpsfreecz/vpsadminos.git`.
 - Feature worktree: `worktrees/2026-11-03-redhat-image-releases/vpsadminos`.
 - Clean detached merge checkout prepared at
   `worktrees/2026-11-03-redhat-image-releases/vpsadminos-merge-target`, base
-  `dd188397abe37d0bc33f4c5dfb3605206ce5e326`; checkout hook passed.
-- Native comparison captured at final head against that base.
+  `742eb30cb1a8b6766c85e915d26b0400e38244b1`; hooks validated after base-only ff.
+- Native comparison recaptured at54b43134 against742eb30 before integration.
+- Refreshed final six-SHA mapping and patch proof: [refresh-result.md](refresh-result.md).
+  Original tested series below is historical evidence, not the refreshed ancestry.
 
-Complete final series:
+Complete original tested series (before patch-equivalent rebase):
 
 1. `09f209688616b60155e9ac99fa8431a11b9e20a0`: CentOS Stream 9, release 36→38.
 2. `a3c7c77459762d1a45f323de0f3f8dd5d8447323`: CentOS Stream 10, release 21→23.
@@ -168,8 +185,10 @@ run41683688934 was cancelled; no other branch workflows were cancelled.
 
 ## Next action and retention
 
-Wait for the normal four-case result and exact-head CI, resolve concrete failures
-within scope, then fresh-check staging and the complete final series. Read the
+Wait for the owned refreshed exact-head CI batch, handle distinct failures within
+scope, then fresh-check staging742eb30 and the complete54b43134 final series.
+The original1a four-image/core results are completed evidence, not pending or
+relabeled successes. No new merge approval is required. Read the
 selected runtime coordination guide before the approved merge. Prepare hooks
 outside ownership; acquire one short repository claim only for fresh target
 check, fast-forward merge/hooks, SSH push and remote proof, then release before
@@ -358,3 +377,23 @@ Completed image detection evidence: ci-managed-job-126191399031.log selects
 centos-10-stream,centos-9-stream,rocky-10,rocky-9. This proves selection only;
 CI execution/pass still pending. All4 local image passes remain recorded.
 This tracking checkpoint is a genuine CI evidence-package ownership handoff.
+
+## Managed idle continuation and image CI success (Nov4)
+
+Authenticated member report465f3de5-62b3-415a-9eb5-4b95b972472a returned
+turn01a1a3aa-9f30-7892-9c83-f65e3890722a with steered=false and actually resumed
+this lead, which independently verified current binding/roster/head/status.
+This is now operational evidence of the managed idle-lead path. It does not
+claim universal delivery guarantees or change the earlier source-only finding.
+
+Image41695651867 completed SUCCESS at exact1a637e9e, all3jobs green. Job
+126192300407 ran22:33:01–23:05:22UTCNov3; four selected/executed/passed cases:
+CentOS9 982.18s, CentOS10 993.49s, Rocky9 858.68s, Rocky10 972.43s;
+batch1831.14s, exit0, nativeCI24GiB. Evidence ci-managed-result.md plus full
+ci-managed-job-126192300407.log and ci-managed-41695651867-final.json.
+Local8GiB and nativeCI24GiB image verification now both complete. Generic core
+suite still running at last snapshot; known unchanged fixture failures remain
+failed/accepted-baseline disposition, not green. Implementer2 retains active
+member turn and remaining generic watch, must explicitly report substantive
+outcome through managed tool. No new source, CI rerun or lifecycle action.
+Lead retains original approval and awaits generic acceptance before ff merge.
