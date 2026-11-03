@@ -28,3 +28,13 @@ hold `RepositorySource`'s GC root across the whole batch, or retain all exact
 shared-source roots explicitly before any separately authorized cached reuse.
 The normal command's source lifetime spans synchronous prebuild and executor
 execution; the cached failure did not require weakening checkout validation.
+
+A live temporary CI watch does not establish an idle-lead wake-up. For an
+asynchronous handoff, this session used an existing retained member to own the
+check package, keep its turn active while a fresh utility observes, and explicitly
+call authenticated `report_to_lead` on the outcome. The installed runtime source
+routes that report to `turn/start` for an idle lead (cold recovery queues then
+activates). Readiness receipts into an active lead prove active delivery only;
+source contract and actual owner/observer readiness were verified before yield.
+Do not rely on passive utility completion or manufacture a reporting identity.
+See the session's reporting-contract-checkpoint.md and ci-managed-result.md.
