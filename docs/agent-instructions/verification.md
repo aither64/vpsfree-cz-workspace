@@ -134,6 +134,16 @@ builds expected to exceed one minute, and delegate uncertain-duration integratio
 tests and builds before launching them. Resolve the fresh verification watcher
 from the installed catalog's separate utility policy. It is not a team member
 and must not edit source, diagnose, retry, approve, or deploy.
+For authorized lead-owned checks, use `monitor_operation` when available to the
+exact current lead. Verify the durable operation/source, frozen installed utility
+policy and native launch receipt before relying on continuation after the turn
+ends. Each new managed watcher uses the current validated installed catalog;
+recovery retains its original operation snapshot and saved team settings stay
+unchanged. A team catalog digest alone is not a utility package pin. Inspect
+uncertain status and retry unchanged IDs; never repeat a command to repair
+notification delivery. Cancel and evidence resolve do not interrupt commands or
+clear unknown native outcomes. Follow the skill's native-only fallback when
+runtime registration is unavailable.
 Keep known quick checks inline. Resolve planning, implementation and diagnosis
 settings from the retained team roster. Mandatory review uses an eligible
 retained review-purpose member's saved model and effort; without one, use a
@@ -147,11 +157,13 @@ session tracking and evidence alone never trigger automatic review. Earlier
 review requires an explicit user request, is advisory, and does not replace
 final review. A reviewer in a preset receives no automatic assignment. Pass
 project escalation rules, including
-unexpected local kernel builds, in the watcher's brief. The parent continues
-automatically on completion or escalation. If the skill or delegation is
-unavailable, report
-that once and use minimal-output parent monitoring. A user's instruction not to
-wait for CI takes precedence.
+unexpected local kernel builds, in the watcher's brief. With native delegation,
+the parent continues the authorized workflow on completion or escalation within
+its active turn. Keep that turn active and use interruptible native waits;
+native messages do not establish an automatic wake-up for an idle parent. Do not
+end the turn while promising that continuation. If the skill or delegation is
+unavailable, report that once and use minimal-output parent monitoring. A user's
+instruction not to wait for CI takes precedence.
 
 Development is generally Nix-based. Prefer each repository's `nix develop`,
 `nix-shell`, flake outputs, or documented development shell before running
