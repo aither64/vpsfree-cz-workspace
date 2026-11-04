@@ -1,0 +1,3 @@
+I did not run the observer. The requested session identity check could not be verified: this process has no matching session environment values, and the local session index contains no entry for the initiative and workspace root. The checkout itself is at the requested exact HEAD, `ef4c0cdcb349815538bb93cedab9d3964c565998`.
+
+The observer script was read but left unchanged. No CI runs were queried, and no logs or status artifacts were created.

@@ -1,0 +1,3 @@
+Result: **passed**. The single observation completed with exit status 0 in 142.713 seconds. All 12 fixed CI runs succeeded on commit `51047a211d71f817ab25f2def1692517f00c15c6`.
+
+Logs and status are at `/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-api-doc-language-settings/final-refined-ci.log` and `final-refined-ci.status`. Performance evidence was retained under `final-refined-ci-artifacts/41355225505` and `final-refined-ci-artifacts/41355192297`. No observer process remains.
