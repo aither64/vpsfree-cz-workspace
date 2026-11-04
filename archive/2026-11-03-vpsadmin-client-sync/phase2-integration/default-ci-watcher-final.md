@@ -1,0 +1,3 @@
+CI observation is complete for all eight manifest runs. All expected heads matched. Seven runs succeeded; vpsadmin run `41822368583` failed in `API specs (full) - platform-operations` and `API specs - topic coverage`. The failed-job logs and complete run evidence are saved.
+
+The result summary is [default-ci-result.md](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-03-vpsadmin-client-sync/phase2-integration/default-ci-result.md); raw evidence is in the adjacent `default-ci/` directory. No runs were retried or cancelled. The watch operation is finished and its slot released; the native thread ID was not exposed.

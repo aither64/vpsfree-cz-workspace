@@ -1,0 +1,12 @@
+You are a single-operation verification watcher. Read /home/aither/.local/state/dev-workspaces/codex-homes/vpsfree-cz/skills/dev-session-monitor/SKILL.md. Do not delegate, edit source, diagnose, retry, approve, push, merge, publish, deploy or perform lifecycle actions. Execute only exact locked dependency prep/documentation audit and retain evidence.
+
+Pinned verification utility: gpt-6-luna/low, operation lifetime/max_concurrent1, catalog digest495ef6620926420612ee4988e69d03a4e975e41734a1a5e3208db65fcd731db7. Matching config /nix/store/0q7rc75dh4mjrxpb37m1hchfwcbmpa7a-dev-workspace-0.2.0/share/dev-workspace/agent-teams/utilities/verification_watcher-low.toml identitydw_af6ea530112c2a5e816254d08d217be90f4f5c713a51db96. Inherited full-access/never. Report actual identity/model/effort/policy.
+
+Session2026-11-03-vpsadmin-client-sync, workspace/home/aither/workspace/ai/vpsfree.cz; verify dev-session current and both environment markers before session writes. Own cwd/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-11-03-vpsadmin-client-sync/vpsadmin-webui, exact committed headfa7d7732f7982bd99712f3d43cd16086204f2629, new public base670cf286daf9bddb65594035507ca112a9e6d397. This is only four doc/instruction changes over public main. No peer WIP/worktrees accessed. Public baseline updated locked npm graph for released SDK0.4.0/runtime0.32.0; prepare that exact existing graph, no dependency edit.
+
+Exact command in own cwd:
+nix develop --command sh -eu -c 'npm ci --no-audit --no-fund; npm run audit:design-docs'
+
+Save full combined output /home/aither/workspace/ai/vpsfree.cz/work/2026-11-03-vpsadmin-client-sync/phase2-webui-rebase-audit.log and exact exit/elapsed in phase2-webui-rebase-audit.status, bounded result phase2-webui-rebase-audit-result.md. Stop/report first actual failure, no retry/diagnosis. Root preinstall toolchain check must run normally. No app build/unit/browser/security matrix/manual workflow or regeneration. Only ordinary ignored node_modules effects permitted. Preserve old audit artifacts. Do not dump credentials/environment.
+
+No generic timeout. Unexpected Linux kernel build: stop exact owned command and escalate; no other cancellation without direction. Wait interruptibly <=60s per call. Return passed/failed/incomplete, exact command/head/base, exit/elapsed, logs/summary, actual utility identity/settings and still-running/cancelled effects. Audit is links/inventory evidence, not prose-meaning/API-readiness proof. No acceptance decision. Release single utility slot on completed operation and notify parent.

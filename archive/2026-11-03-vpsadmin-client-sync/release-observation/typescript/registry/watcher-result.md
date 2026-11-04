@@ -1,0 +1,6 @@
+- **Outcome:** Passed. The public artifact was verified on sample 2; packument, version, and tarball returned HTTP 200, and the registry tarball bytes matched the source artifact.
+- **Elapsed:** 60 seconds. Exit status: `0`.
+- **Policy and identity:** Full access, approvals never; utility identity `dw_af6ea530112c2a5e816254d08d217be90f4f5c713a51db96`, GPT-6 Luna/low. Session and workspace binding matched.
+- **Verified artifact:** SHA256 `3a6f2a2a6f4eaeb31f490035b312e9b5403cf21589d649dc1fd31d60b64e1906`; SHA512 SRI `sha512-xvTQ9z/vheBmzBxuaJ50x8YsOa8ywZdFvLH6MXy/KNNgJ9tes4v3RfhhuxIHm6MaZDeTv+NYIN22sFXLCh3Oig==`.
+- **Evidence:** [observation.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-03-vpsadmin-client-sync/release-observation/typescript/registry/observation.log), [exit status](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-03-vpsadmin-client-sync/release-observation/typescript/registry/observation.exit-status), [elapsed time](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-03-vpsadmin-client-sync/release-observation/typescript/registry/observation.elapsed-seconds). Raw observations are under `work/2026-11-03-vpsadmin-client-sync/release-observation/typescript/registry/observations`.
+- **Processes:** The operation completed; no operation remains running.

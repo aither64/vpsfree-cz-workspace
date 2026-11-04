@@ -1,0 +1,5 @@
+All four specified CI runs completed successfully on head `47b6992e28c16585aa6247bd75413637a7ca6388`. Every terminal job succeeded, and each `gh run watch` process exited 0. PR127 remains open and non-draft.
+
+I retained terminal run/job JSON, full GitHub workflow logs, artifact metadata, and final PR JSON under [phase2-webui-final-ci](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-03-vpsadmin-client-sync/phase2-webui-final-ci). The compact report is [phase2-webui-final-ci-result.md](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-03-vpsadmin-client-sync/phase2-webui-final-ci-result.md).
+
+The watch stdout itself was streamed through the tool and truncated, so complete watch log files could not be retained; full GitHub workflow logs and terminal JSON are available instead. Workflow logs show 1 skipped test in each broad smoke Chromium job and 2 skipped tests in PR smoke mobile-WebKit; no flaky annotation was visible. The utility slot is free.
