@@ -1,4 +1,71 @@
-# Active package: deploy corrected private mx2 candidate
+# Current readiness: clean boot verified; unused Postgrey database reset authorized
+
+2026-11-04: system/profile now run actually deployed
+`0844881779d62d9a6a86d2bacd61d21565b33932`, closure
+`/nix/store/4pc5mic0rp9h5qb2lhgmdh2x8z50pqd2-nixos-system-mx2-26.05.20261026.718f670`.
+Activation needed bounded D-Bus recovery. The user's subsequent clean reboot
+confirmed current/profile/BOOTED all equal this closure/source, fast strict SSH,
+and active broker/logind/resolver/Postfix/firewall. Actual DNS now contains only
+1.1.1.1 and resolves the canonical primary to 37.205.15.53 and
+2a03:3b40:fe:1c3::1. Postgrey DB environment opening is the sole remaining readiness
+failure. No mail was accepted; the queue is empty. Lead holds claim
+`13ba611e-2f87-4036-b958-b0e056e13da7`.
+
+**The earlier DNS-only source proposal is superseded and must not be applied.**
+The clean boot proves the existing nameservers setting achieves the required
+outcome. Owner0 removes only its own uncommitted draft line below; no DNS source
+fix, additional review or build is needed:
+
+```nix
+networking.resolvconf.extraConfig = "name_servers='1.1.1.1'\n";
+```
+
+The proposal used a supported openresolv override, but residual live-switch state
+made it appear necessary. Do not preserve that draft as a speculative workaround
+or blacklist interfaces. Existing DNS evidence after clean boot is sufficient.
+
+Owner0 proved a library downgrade: the old Postgrey1.37/Perl5.40 binding uses
+Berkeley DB5.3.28, while deployed Postgrey1.37/Perl5.42 uses DB4.8.30. A separate
+clone fails under4.8 with unsupported log version19/DB_RUNRECOVERY; matching5.3
+opens the environment and both Btree files. The live files and verified complete
+root-only backup remained unchanged. See
+[candidate-deployment-preparation.md](candidate-deployment-preparation.md) and
+`postgrey-backup-clone.json` for the proof and backup location.
+
+The user then explicitly directed: "let's not waste time with this... mx2 was
+never used, so the db can be reset". This supersedes the matching5.3 package
+proposal. Implementer0 owns the bounded reset: keep Postgrey stopped, retain the
+verified complete protected backup, move the old environment into that protected
+backup base, and let the native deployed Postgrey service create a fresh database
+at its existing path. **Never reset or move the Postfix queue/spool.** Source084488
+and its package remain unchanged; no source edit, review or rebuild is needed.
+This intentionally discards unused greylisting history, not a format conversion
+or database-equivalence claim. Preserve the old environment and backup for recovery;
+do not assume a software rollback also restores or validates database state.
+Owner0 verifies service/socket health and the existing runtime prerequisites before
+the bounded normal SMTP test. The unchanged live-mail limits still apply. No
+duplicate reset, probe or package investigation belongs to architect0.
+
+Recovery lesson: for a system transition that replaces the live D-Bus service,
+prepare a boot generation and planned candidate reboot when authorized, retaining
+console/SSH recovery, instead of relying on a live switch across the bus change.
+Verify BOOTED/current/profile, service health and generated resolver state after
+boot before concluding a source correction is necessary. The user's clean reboot
+already supplied that recovery here; no further operator instruction is pending.
+
+If clone findings justify a later source correction, keep it bounded and preserve
+the existing explicit ref to deployed084488
+and its complete source/input/closure receipt before folding/rebasing history.
+Record old/new ranges and do not call a nonancestor deployed head merged. Commit
+any necessary final correction, run affected-lane independent review once it is
+complete, then build the new candidate. Reuse VM evidence only with exact unchanged
+test derivation/input proof; no new full campaign by default. Before the next
+committed activation batch, lead verifies the same held repository-machine binding
+with verify-machine. Preserve queue/disk and both predeployment98n9 and deployed4pc5
+recovery identities; no blind repeated activation or clearing retained effects.
+The original live-mail limit and all production/default/lifecycle exclusions remain.
+
+# Previous package: initial corrected private mx2 candidate
 
 Ready for implementer0; 2026-11-03. This block supersedes earlier staging
 instructions below. User authorized agent deployment: "done. well, with this
@@ -73,17 +140,22 @@ input graph; host-only staging ACL/DNS are separately covered by live checks.
 Lead uses the required fresh watcher or documented fallback for long work.
 Preserve reviewed1e3afc47 and original/import/runtime refs and exact range evidence.
 
-Lead owns activation and verification, after prepared exact source/closure and
-rollback receipt are reviewable. Agent deployment is currently BLOCKED on exact
-configured-machine claim admission: selected catalog has only aitherdev, not mx2/
-27627 or a proven physical-host mapping. Installed coordination guidance requires
-machine ownership for deployment and documents no guest-only exemption or dynamic
-machine registration command. Never use aitherdev as surrogate or invent a claim.
-This does not block the implementation/review/build package. Resolve admission
-through supported configuration/policy separately; no runtime project is authorized
-here. A held valid claim, exact target/key/head and empty/accounted queue are
-activation preconditions. Integration remains separately unapproved; any deployed
-machine hold follows installed retention/integrated-lineage rules.
+Lead owns the already authorized activation and verification, using the prepared
+exact source/closure and rollback receipt. Update 2026-11-04: the installed package
+supports schema-2 configured-machine claims; the former static-catalog blocker is
+superseded. Select registered repository `vpsfree-cz-configuration`, exact
+Machine.name `cz.vpsfree/containers/mx2`, adapter `confctl`, with repositories=[]
+and that single typed machine entry. No catalog edit, physical-node alias or
+additional workspace project is needed. See [deployment-admission.md](deployment-admission.md).
+
+The resolver reads the registered feature branch's exact committed metadata and
+prepared local locked inputs. Lead acquires near activation, confirms the claim
+is held, then runs verify-machine for this repository/selector once for the intended
+committed batch. The target remains candidate27627/private172.19.9.22; logical
+claim identity is repository origin plus configured Machine.name, not the SSH IP.
+Artifact/target/key/queue/recovery checks still apply. No extra approval is needed
+for the already authorized candidate deployment. Integration remains separately
+unapproved; machine retention and verified deployed-lineage requirements remain.
 
 After admission, use ordinary confctl at the exact new built generation for
 `cz.vpsfree/containers/mx2`, pinned existing SSH key and strict known-host trust.

@@ -1,6 +1,21 @@
 # mx2 NixOS migration and automated verification
 
-## Current phase: prepare temporary-IP staging
+## Current status: private staging deployed and live checks passed
+
+On 2026-11-04 the reviewed084488 build was deployed to VPS27627/private172.19.9.22.
+Clean reboot completed the new system transition. User-authorized reset of unused
+Postgrey state resolved the5.3→4.8 library/log incompatibility with original state
+retained in a protected backup. No source/package correction was needed; a DNS
+draft was removed after actual clean-boot DNS proved healthy.
+
+The real primary accepted both marked podpora messages. The second retained its
+exact full payload/envelope across a Postfix restart and VPS reboot while only
+candidate-to-primary SMTP was blocked; the exact fault was removed and the queue
+drained. [Final result](candidate-deployment-result.md) and [state](state.md) hold
+source/artifact/claim and verification evidence. User mailbox receipt is pending.
+Source/default integration and public-address cutover remain separate.
+
+## Prior staging preparation scope (executed)
 
 On 2026-11-03 the user agreed to deploy a separate candidate with different IPs,
 verify it, then replace the existing mx2 addresses after acceptance. They asked:

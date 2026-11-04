@@ -1,6 +1,22 @@
 # Deploy and verify the private mx2 candidate
 
-Updated 2026-11-03. The user installed the requested access key and authorized:
+Current readiness: after the user's clean reboot, BOOTED/current/profile all run
+the deployed084488/4pc5 system. Strict SSH and broker/logind/resolver/Postfix/firewall
+are healthy; actual resolver is only1.1.1.1 and canonical-primary A/AAAA queries
+pass. The earlier DNS-only draft is superseded and needs no source fix/build.
+Only Postgrey DB environment opening remains unresolved. Clone evidence proves
+the deployed DB4.8 cannot open the old DB5.3 log environment; matching5.3 can.
+The user explicitly authorized resetting the unused database: "mx2 was never
+used, so the db can be reset". Owner0 retains the verified complete root-only
+backup, moves the old Postgrey environment into its protected backup base, then
+lets the native deployed service create a fresh database. The Postfix queue/spool
+must remain untouched. Source084488 stays unchanged; the package override proposal
+is superseded and needs no source edit/review/build. This is an intentional reset
+of unused greylisting history, not database equivalence. Verify Postgrey health
+before the bounded normal SMTP test; preserve old state for recovery. Claim13ba
+stays held. No further operator action is requested.
+
+Updated 2026-11-04. The user installed the requested access key and authorized:
 "done. well, with this access, you can deploy mx2 yourself." The lead now owns
 agent deployment of candidate VPS **27627**, **172.19.9.22**. No further user
 installation action is currently needed. Old CentOS mx2, public DNS, public-IP
@@ -60,20 +76,23 @@ derivation and complete input proof.
    profile/source identity against the new receipt; preflight/build alone is not
    deployment success.
 
-## Concrete deployment prerequisite
+## Supported deployment admission
 
-Source preparation, review and build can proceed. **Agent activation is blocked
-until the exact candidate has a supported configured-machine claim mapping.**
-The installed coordination catalog currently lists only aitherdev, with no mx2,
-VPS27627 or proven physical-node mapping. Its guide requires machine ownership
-for deployment and supplies no guest-only exception or dynamic registration
-command. Do not reserve aitherdev as a substitute or bypass the claim.
+The former static-catalog blocker is superseded by the updated installed runtime.
+Lead uses a schema-2 claim for registered repository `vpsfree-cz-configuration`,
+exact selector `cz.vpsfree/containers/mx2`, adapter `confctl`, with no repository
+merge claim. Ordinary configured targets need no catalog entry or package change.
+The request resolves committed feature metadata with prepared local locked inputs;
+it does not build, fetch, probe or activate the machine.
 
-The lead owns resolving this prerequisite after the candidate is reviewable;
-this package does not expand into runtime/catalog changes. Before activation,
-obtain authoritative held ownership for the exact target. Preserve ownership
-through uncertain effects and the installed verification/integrated-lineage
-release conditions. Deployment approval does not authorize default integration.
+Near activation, lead acquires and confirms held ownership, then verifies that
+same repository/selector binding once for the intended committed deployment batch.
+[Deployment admission](deployment-admission.md) records the changed contract.
+The authorized private candidate, exact build/SSH/rollback checks and live scope
+remain unchanged. Missing ownership or an actual resolver refusal would be handled
+on its evidence; absence from the legacy static catalog is no longer a blocker.
+Normal effect/verification/integrated-lineage retention still applies; deployment
+approval grants no default integration or lifecycle action.
 
 ## Small live verification batch
 

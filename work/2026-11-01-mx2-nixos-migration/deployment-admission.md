@@ -1,3 +1,56 @@
+# Candidate deployment admission: schema 2 supported
+
+Updated 2026-11-04. **The previous static-catalog blocker is superseded.**
+The user already authorized agent deployment of VPS27627/private172.19.9.22.
+Current workspace docs and `workspace-host coordination guide` select package
+`/nix/store/myjy32qh6bd4avgym1awx180y29nvwz9-dev-workspace-0.2.0`, which supports
+schema-2 claims resolved from exact registered configuration machines. No static
+catalog edit, workspace source project or additional deployment approval is needed.
+
+Lead owns claim acquisition and activation. Use a fresh requestId with schema=2,
+repositories=[] and this one machines entry:
+
+```json
+{
+  "repository": "vpsfree-cz-configuration",
+  "selector": "cz.vpsfree/containers/mx2",
+  "adapter": "confctl"
+}
+```
+
+The selector is exact configured Machine.name, not `mx2`, an IP or a physical-node
+assumption. The canonical repository is
+`git@github.com:vpsfreecz/vpsfree-cz-configuration.git`. Absent a configured shared
+lock-id, its logical identity displays as
+`machine:github.com/vpsfreecz/vpsfree-cz-configuration:cz.vpsfree/containers/mx2`.
+The runtime resolves the registered feature branch's committed revision with local
+locked inputs, without target probes, builds, fetches or lockfile writes. A claim
+request cannot override its source path/revision/label. Do not use aitherdev or a
+legacy catalog alias as a surrogate.
+
+After preparation, lead acquires near activation, checks authoritative held status,
+and runs the supported `workspace-host coordination verify-machine` for this
+session, owned claim ID, repository and selector once before the intended committed
+batch. Owner0 refreshes the already built084488 candidate/output4pc5 and native
+generation/SSH/recovery receipts; this documentation update neither claims those
+checks ran again nor creates new implementation/review/build work. Ordinary
+single-target copy/dry-activate/switch and exact installed-system verification
+follow under the original deployment authorization.
+
+The rollout remains restricted to candidate27627/private172.19.9.22 and at most
+two marked podpora normal/temporary-queue messages. Preserve old98n9 rollback,
+trusted SSH, queue safety and complete source/input/generation evidence. Old
+CentOS, primary configuration, public IP/DNS changes, default integration and
+session lifecycle remain excluded. Retain ownership for uncertain effects or
+missing integrated-lineage proof; release follows the installed policy.
+
+Architect only read current guidance and updated these session records. No claim,
+candidate probe, build, source/Git mutation, runtime change or activation occurred
+in this documentation task. The earlier same-session-lock assignment failure had
+no task effects according to lead; this update is the successful documentation retry.
+
+## Historical admission assessment (superseded; do not execute its proposal)
+
 # Candidate deployment admission prerequisite
 
 The user authorized deployment of VPS27627 at172.19.9.22. SSH trust/root access
