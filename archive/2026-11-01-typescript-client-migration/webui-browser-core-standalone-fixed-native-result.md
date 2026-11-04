@@ -1,0 +1,4 @@
+- **Result:** Failed; exit status `1`.
+- **Revision:** `a89277a6a4bcd7b5849d48f760c9728982c67aa9`. The strict E2E type gate passed. Browser run: 26 passed, 1 failed, 1 interrupted, 96 not run; it stopped at the first failure in `payments_page.spec.ts`.
+- **Evidence:** [Full log](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-browser-core-standalone-fixed.log) and [result summary](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-browser-core-standalone-fixed-result.md).
+- The command exited, the worktree remained clean, and port 5187 was free afterward. No retry or diagnosis was performed.

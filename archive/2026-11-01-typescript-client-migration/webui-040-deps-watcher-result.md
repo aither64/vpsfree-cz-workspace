@@ -1,0 +1,3 @@
+Result: failed, native exit status 127 after 23.152 seconds on revision `73408141f8aee24ef10550c6d3cae1d581009b5a`. The log records successful lock validation and `npm ci`, then reports that the pinned `prefetch-npm-deps` executable was missing. The prefetch log is empty; no process remains running.
+
+I retained the full result at [webui-040-deps-watcher-result.md](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-040-deps-watcher-result.md).

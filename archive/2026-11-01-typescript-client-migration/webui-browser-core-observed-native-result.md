@@ -1,0 +1,4 @@
+- **Result:** Exit 0; the log reports 124 tests passed in 7.5 minutes.
+- **Revision:** `1bfad6ce1846aef2d21bb6a58d4529a962e7aa97`; observer PID 732764; elapsed 451.347 seconds.
+- **Cleanup:** `127.0.0.1:5187` was free after exit.
+- **Evidence:** [result](</home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-browser-core-observed-result.md>), [full log](</home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-browser-core-observed.log>), [observer state](</home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-browser-core-observed-state.json>), and [exit record](</home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-browser-core-observed-exit.json>).

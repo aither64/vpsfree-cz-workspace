@@ -1,0 +1,3 @@
+Result: **passed**. The exact assigned launcher completed with CLI exit 0; the native build exited 0 in 53.299 seconds on HEAD `b5c12bcd8afa67103ae05bd3fc993ad4fe14f256`. All five expected store paths were printed, and no operation remains running.
+
+I retained the native result in [webui-fifth-ci-final-nix-native-result.md](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-fifth-ci-final-nix-native-result.md). The complete log and durable exit record are `webui-fifth-ci-final-nix-observed.log` and `webui-fifth-ci-final-nix-observed-exit.json`.

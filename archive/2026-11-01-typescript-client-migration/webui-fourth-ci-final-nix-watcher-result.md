@@ -1,0 +1,3 @@
+The single authorized Nix build completed with native exit status 0 in 54.364 seconds for revision `24ae8a8f681ed8d4df7e147d5179116113869628`. It printed all five expected output paths; no operation remains running. No post-build inspection or acceptance decision was made.
+
+Raw result: [webui-fourth-ci-final-nix-native-result.md](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-fourth-ci-final-nix-native-result.md)

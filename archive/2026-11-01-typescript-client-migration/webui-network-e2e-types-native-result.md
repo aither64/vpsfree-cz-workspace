@@ -1,0 +1,3 @@
+**Result:** Failed, exit status 2. The E2E coverage check passed: 103 checked, 179 deferred. TypeScript reported errors in `e2e/specs/app/vps_network_tab_actions.spec.ts` at lines 281 and 586.
+
+The command ran once against HEAD `1b6fe87d03b67439c61ee72af29157fd4c0e279e` and took about 23 seconds. The requested log and result note were not successfully written: the result-note heredoc treated backticks in its content as shell substitutions, producing command errors and a permission error when writing the log path. I stopped after that single run, as instructed.

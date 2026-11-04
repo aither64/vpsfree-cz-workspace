@@ -1,0 +1,1 @@
+Result: passed, exit0, approximately69seconds. Application TypeScript and all26 requested Node validator tests pass. Exact completed native command/output/exit recovered without rerun in w-review-fixes-quick-fixed-recovered.log. Watcher did not write requested direct log/result, misreading no-extra-command instruction; nativeJSONL preserves evidence. No process remains.

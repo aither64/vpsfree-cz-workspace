@@ -1,0 +1,1 @@
+Native host build exit 0, 122.191s, exact configuration d4c4fbbdc076ccd8d821d51f0841cd94f19ac12c selecting WebUI babe51421bd1df61a548e7b2f047053df14ff3eb. Parent monitoring fallback; no deployment. Full log and actual process/exit records retained.

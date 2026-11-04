@@ -1,0 +1,3 @@
+The assigned verification failed at its first command, `application-strict`, with native exit status **2** after 59.816 seconds. No later checks ran.
+
+The reported TypeScript error is in `SecurityAdvisoryNodesPanel.test.ts:75:54`. Full output and native receipts are retained under `/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/`. The required [watcher result](</home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-040-quicks-watcher-result.md>) records the run. No retry or source changes were made.

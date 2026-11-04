@@ -1,0 +1,5 @@
+- **Result:** Failed, exit status 1. The run tested clean HEAD `6fabda0b80e04fde4490f22ed079c83ae899f0e1` and took about 2 minutes 6 seconds.
+- **Counts:** 33 passed, 1 failed, 1 interrupted, 89 did not run.
+- **First failure:** `security_advisory_update_mutations.spec.ts` expected an empty delete payload but received a nested `security_advisory_update` object. Playwright stopped at the first failure; one session expiry case was interrupted.
+- **Evidence:** Full log at [webui-browser-core-payments-fixed.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-browser-core-payments-fixed.log). Result record at [webui-browser-core-payments-fixed-result.md](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-browser-core-payments-fixed-result.md). Failure artifacts are under `work/2026-11-01-typescript-client-migration/browser-6fabda0b-nix1228/core-results`.
+- Native server cleanup and port release are unverified from the log. No retry or additional checks were run.

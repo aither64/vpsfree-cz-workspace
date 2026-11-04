@@ -1,0 +1,3 @@
+The exact command ran once and exited with status 1. The full suite reported 90 passed, 1 failed, 1 interrupted, and 32 not run; the focus suite did not run because the fixed command stops on failure.
+
+The first failure was the mobile profile keys test: `profile.keys.row.1` remained hidden. Artifacts and the complete log are retained at the paths recorded in [the result file](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-browser-core-storage-spec-fixed-result.md). The process exited, and port 5187 was no longer listening.

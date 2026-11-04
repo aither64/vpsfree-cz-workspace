@@ -1,0 +1,3 @@
+Result: incomplete; the batch was not launched. Session identity matched, and all three expected SHA256 values matched their corresponding files. However, the requested initial HEAD differs from the current checkout HEAD, and the specified two-argument launch file delegates through a Python script, so I could not verify that it was the exact authorized invocation.
+
+No native exit status, elapsed run time, or prefetch output hash is available. No retry or signal was issued. I recorded the result in [webui-registry-transition-deps-watcher-result.md](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-registry-transition-deps-watcher-result.md).

@@ -1,0 +1,3 @@
+**Verification passed.** The single wrapper run exited with status 0 after 62.664 seconds. It completed 23 SDK calls; the last contract was `deleted setting show`.
+
+The API revision was `610a96f8`; the SDK revision was `99ee0665`. I recorded the result in [sdk-real-api-3-result.md](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/sdk-real-api-3-result.md). Full output and status records are retained alongside it.

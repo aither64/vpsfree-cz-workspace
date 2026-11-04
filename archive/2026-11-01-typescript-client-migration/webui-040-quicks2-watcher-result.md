@@ -1,0 +1,3 @@
+The QUICK batch failed at its first nonzero command and stopped, so later checks did not run. Native exit status was `1` after 87.214 seconds. The reached Vitest segment reported 19 passed and 4 failed files; 150 passed and 7 failed tests.
+
+The complete log and native receipts are retained. The requested result is at [webui-040-quicks2-watcher-result.md](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-040-quicks2-watcher-result.md). No retry or diagnosis was performed.

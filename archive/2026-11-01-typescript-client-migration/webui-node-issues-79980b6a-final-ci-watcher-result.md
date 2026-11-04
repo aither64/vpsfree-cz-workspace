@@ -1,0 +1,7 @@
+**All four exact runs completed successfully:** 10 of 10 jobs passed on attempt 1 for event head `79980b6a6607d08cccd252439ced328a250bd5b0`.
+
+One qualification: push broad-smoke Chromium recorded a first-attempt failure that passed on retry, so its green conclusion includes **1 flaky test**. Its summary was 238 passed, 1 skipped, 1 flaky. The other browser summaries were: PR smoke Chromium 632 passed; mobile Chrome 574 passed, 2 skipped; mobile WebKit 274 passed, 2 skipped; PR broad smoke Chromium 239 passed, 1 skipped; mobile Chrome 96 passed.
+
+The PR workflows checked out merge commit `448487d3c55e3c42f78706462fcd4be985a65dd5`, with the expected base and event-head parents and tree `57d045735c136be50bfee0a832a51653692c00ed`. CI reported 348 test files and 2,271 tests passed; the production build and Chromium script regression passed.
+
+Complete logs, run/job metadata, and merge-commit evidence are retained in [the evidence directory](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/ci-79980b6a-final). The [structured result](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-node-issues-79980b6a-final-ci-result.json) and [watcher report](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-node-issues-79980b6a-final-ci-watcher-result.md) are saved. No artifacts were downloaded, and no tests were rerun or workflow controls used.

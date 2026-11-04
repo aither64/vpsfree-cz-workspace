@@ -1,0 +1,3 @@
+**Stopped before running the verification command.** Session identity matches: `dev-session current`, the environment, and the authority marker all identify `2026-11-01-typescript-client-migration` in `/home/aither/workspace/ai/vpsfree.cz`. The checkout is clean at the required HEAD, and port 5187 is free.
+
+I couldn’t verify the requested *paired markers*: I found the session authority marker, but no paired marker confirming the exact session/workspace pair. Per your stop-on-mismatch requirement, I did not run the command or write a result file.

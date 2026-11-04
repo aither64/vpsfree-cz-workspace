@@ -1,0 +1,3 @@
+Result: **passed**. The native operation exited 0 in 54.957 seconds for revision `4ed519b69c422ea6b4fd0bd7bf490a20fcd6983e`. The CLI wrapper also exited 0.
+
+All five expected output paths were printed. No operation remains running. The retained report is [webui-registry-transition-final-nix-watcher-result.md](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-registry-transition-final-nix-watcher-result.md); native exit, state, and log records are alongside it.

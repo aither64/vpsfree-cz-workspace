@@ -1,0 +1,5 @@
+**Result: passed.** Tracking context matched slug `2026-11-01-typescript-client-migration`; both environment values matched the required slug and workspace.
+
+The single artifact download completed with native exit `0` (about 1.9 seconds). Artifact `13279525188` was saved at the prepared destination: 1,737,793 bytes, SHA-256 `0d5dd07a779217dfdf685696e33873009769a7659def79976d89bbc97403746e`.
+
+The durable receipt is [w-79980-pushbroad-request-artifact-download-receipt.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/w-79980-pushbroad-request-artifact-download-receipt.json). Observer state, exit record, and log are retained under `/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/` with the `webui-79980-pushbroad-request-artifact-observed` prefix. No operation remains running.

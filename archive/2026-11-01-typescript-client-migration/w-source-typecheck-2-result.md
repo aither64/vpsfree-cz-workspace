@@ -1,0 +1,6 @@
+- **Result:** Failed, exit status 2. Elapsed time: 6.5 seconds.
+- **Snapshot:** HEAD `7219f760e187dfdead42e704b2cf935235194695`.
+- **Command:** Ran the requested `nix develop … --command npm run typecheck .` once from the specified worktree.
+- **Log:** [w-source-typecheck-2.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/w-source-typecheck-2.log)
+- **Compiler output:** One TypeScript diagnostic: `TS6231: Could not resolve the path '' … Root file specified for compilation`. Nix also reported an ignored busy SQLite eval-cache warning.
+- **Remaining process:** No matching typecheck process remained after command exit.

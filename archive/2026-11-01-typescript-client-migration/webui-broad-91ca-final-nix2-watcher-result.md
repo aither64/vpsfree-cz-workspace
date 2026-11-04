@@ -1,0 +1,5 @@
+Result: **passed**, native exit 0. The Nix build ran once for revision `91ca5ab44d07d62a8226f5a2b774747a44ff2c0d` and completed in 83.157 seconds. The recorded PID and start identity are no longer present.
+
+The five outputs are recorded in [build results](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/w-91ca-final-nix-build-results.json): frontend, BFF, provenance, source contents, and package contents.
+
+Native evidence: [exit record](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-broad-91ca-final-nix-observed-exit.json), [log](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-broad-91ca-final-nix-observed.log), and [state](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-broad-91ca-final-nix-observed-state.json). No operation remains running.

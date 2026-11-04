@@ -1,0 +1,1 @@
+The session and environment identity match. The observer file hash matches, but the specified command and spec-list files are absent at the given paths. I did not invoke the observer. Per the instruction not to retry a preflight failure, verification remains unrun.

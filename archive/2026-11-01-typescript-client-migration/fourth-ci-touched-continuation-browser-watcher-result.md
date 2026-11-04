@@ -1,0 +1,3 @@
+Verification completed once. The native run exited `1` at HEAD `be42b595a2a1746c55842cbfc0a6786d015fead6` after 119.295 seconds: 14 passed, 1 failed, 2 interrupted, and 113 did not run. The first failure timed out waiting for the boot request; its trace and full log are retained.
+
+Compact result: [fourth-ci-touched-continuation-native-result.md](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/fourth-ci-touched-continuation-native-result.md).

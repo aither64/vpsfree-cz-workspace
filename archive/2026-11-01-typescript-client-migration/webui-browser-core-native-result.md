@@ -1,0 +1,5 @@
+**A failed** on HEAD `1ab9853312a95b5448e99fd6f83f846453de17a5`, exit status 1, after about 4 seconds. The first case, `host_ip_addresses_responsive_actions.spec.ts`, could not launch pinned Chromium: its headless shell exited 127 because NixOS could not run the generic dynamically linked executable. Playwright stopped at the first failure: 1 failed, 1 interrupted, 122 not run.
+
+Full output and result: [webui-browser-core.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-browser-core.log) · [webui-browser-core-result.md](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-browser-core-result.md)
+
+Traces are under `browser-1ab98533/core-results/`; no screenshots were found. Port 5187 is free, and no Vite or Playwright process remains. No retry or diagnosis was performed. This run provides no UI pass evidence and does not establish live API, build, Nix package, or deployment acceptance.

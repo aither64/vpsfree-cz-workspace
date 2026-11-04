@@ -1,0 +1,5 @@
+Result: **failed**, native exit status `1`. The one authorized browser batch tested `c1ad3e253ee7953fde8c5734cfa8a4d971854614` and ran for 211.637 seconds.
+
+Chromium reported **42 passed, 1 failed, 1 interrupted, 1 skipped, 25 not run**. The failure was in `admin/requests_operations_smoke.spec.ts:717` at the `review.continue` checkbox click; the log says a dialog subtree intercepted pointer events. The batch stopped at its first failure, so the mobile tests did not run.
+
+Evidence is in [the native log](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-broad-c1ad-affected-observed.log), [native exit JSON](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-broad-c1ad-affected-exit.json), and [native state JSON](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-broad-c1ad-affected-state.json). The recorded PID `2365973` with start ticks `34197458` is absent. Failure artifacts include the screenshot, video, trace, and error context under `browser-c1ad-affected/chromium-results/`. The requested watcher result markdown was not present.

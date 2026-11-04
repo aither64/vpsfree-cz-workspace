@@ -1,0 +1,3 @@
+The single authorized continuation finished **failed**: 12 passed, 1 failed, 1 interrupted, and 106 did not run. The first failure was the lifecycle start request body assertion (`{}` expected, `{"vps":{}}` received). I did not diagnose or retry.
+
+Raw result: [fourth-ci-touched-continuation2-native-result.md](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/fourth-ci-touched-continuation2-native-result.md). Logs and failure artifacts are retained at the paths listed there.

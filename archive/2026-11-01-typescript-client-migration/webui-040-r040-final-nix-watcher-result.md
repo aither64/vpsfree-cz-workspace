@@ -1,0 +1,1 @@
+Preflight stopped: all five supplied file hashes match, and the tested checkout has the specified HEAD and tree. The required dev-session marker was absent, so I did not launch the Nix operation. No build result was produced; the prepared inputs and checkout remain untouched.

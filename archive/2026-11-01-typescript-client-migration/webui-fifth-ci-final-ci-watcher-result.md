@@ -1,0 +1,6 @@
+Verification passed for both authorized CI runs on `b5c12bcd8afa67103ae05bd3fc993ad4fe14f256`. Both native `gh run watch` commands exited 0.
+
+- CI run [41548300724](https://github.com/vpsfreecz/vpsadmin-webui/actions/runs/41548300724): all three jobs succeeded; 2,227 unit tests passed.
+- Playwright smoke run [41548300683](https://github.com/vpsfreecz/vpsadmin-webui/actions/runs/41548300683): Chromium 632 passed, mobile Chrome 574 passed, and mobile WebKit 274 passed with 2 skipped. All jobs succeeded.
+
+The complete logs, terminal metadata, and artifact metadata are in [webui-fifth-ci-ci](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-fifth-ci-ci/). The [final CI receipt](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-fifth-ci-final-ci-receipt.json) and [watcher report](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-fifth-ci-final-ci-watcher-result.md) are saved. No operations remain active; no cancellation was taken.

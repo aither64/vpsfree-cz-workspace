@@ -1,0 +1,3 @@
+**Escalation: registration receipt unavailable.** The session identity matches the required slug and workspace, but `artifacts/package-s/haveapi-master-ci-registration/receipt.json` is absent from the workspace, and a bounded search found no matching receipt. I stopped before querying the CI runs because the required owner-registration binding could not be verified.
+
+No workflows were queried or changed, and no report artifacts were written. The two runs remain unobserved by this watcher; parent action is needed to provide or locate the registration receipt.

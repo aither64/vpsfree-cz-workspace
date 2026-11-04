@@ -1,0 +1,5 @@
+Result: **failed** (native operation and launcher exit 1), on revision `91ca5ab44d07d62a8226f5a2b774747a44ff2c0d`. The operation ran once and ended after 1.792 seconds. No cases or images completed.
+
+The retained log reports that the fixture’s `package.json` was missing at `w-91ca-bulk-capture-fixture/package.json`, so the web server could not start. I did not retry or investigate further.
+
+Native result: [exit.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-broad-91ca-captures-observed-exit.json) · [log](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-broad-91ca-captures-observed.log) · [watcher report](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-broad-91ca-captures-watcher-result.md)

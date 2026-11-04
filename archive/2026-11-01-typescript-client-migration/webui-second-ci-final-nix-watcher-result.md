@@ -1,0 +1,3 @@
+Result: **passed**, exit status 0. The exact-head Nix operation completed in 66.766 seconds at `9d9617c048dded592b6362e3370d92cfca2793cb`.
+
+The observer log, state, exit receipt, and concise result are saved in `/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/`. The command reported five output store paths; their metadata and input graph still require separate inspection. No unfinished effects were observed.

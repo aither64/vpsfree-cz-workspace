@@ -1,0 +1,7 @@
+- **Result:** Failed, exit status 1.
+- **Revision:** `dbe60e2fd335efc4261f6af3a7878643221b66a7`
+- **Run:** Assigned command, executed once; approximately 164 seconds.
+- **Counts:** 42 passed, 1 failed, 2 interrupted, 79 did not run.
+- **First failure:** `vps_network_tab_actions.spec.ts` expected the interface locator to have value `"1"`; Playwright reported it was not an input element.
+- **Evidence:** [full log](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-browser-core-vps-fixed.log) and [result record](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-browser-core-vps-fixed-result.md). The failure screenshot, video, trace, and error context are listed in the log.
+- **Port cleanup:** After exit, port 5187 had no listener.

@@ -1,0 +1,3 @@
+Verification passed: the observer reported exit `0` in 236 seconds for WebUI `8d0bb48aa59ef1a98244fd531989e056db80df1d` and client `e16663a9e7ed1bbd7e25337b824283f635f47395`. The focused tests passed (2 files, 23 tests), both Vite legs returned HTTP 200, and the completed proof records restored dependencies, unchanged protected files and client `dist`, and absent Vite effects after cleanup.
+
+The recorded local archive SHA-256 is `e5cb5c21cbedfed39b8479329746248b8270e75f63ac5c088debefcc77ff4faa`. Result summary: [webui-local-client-cycle-native-result.md](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-local-client-cycle-native-result.md). Detailed receipts are in the same session directory.

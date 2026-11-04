@@ -1,0 +1,6 @@
+- **Result:** Failed; command exited 1.
+- **Revision:** `ad5327eba64919d58cede22186958ff0e0ad0b77` (clean at launch). The command ran once and took about 2m 9s.
+- **Counts:** 38 passed, 1 failed, 1 interrupted, 84 not run. Playwright stopped after its first allowed failure.
+- **First failure:** `vps_network_tab_actions.spec.ts` could not find `vps.network.page` within 15 seconds.
+- **Evidence:** Full log: [webui-browser-core-update-fixed-run.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-browser-core-update-fixed-run.log). Result record with failure artifacts: [webui-browser-core-update-fixed-run-result.md](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-browser-core-update-fixed-run-result.md).
+- **Cleanup:** Port 5187 had no listener after exit. No retry or diagnosis performed.

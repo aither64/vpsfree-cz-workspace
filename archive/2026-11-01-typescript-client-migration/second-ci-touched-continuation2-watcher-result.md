@@ -1,0 +1,3 @@
+Verification passed: the observer exited 0, and all 164 selected native browser cases passed (0 failed, interrupted, or unrun) on revision `3ca34e344b9df9d3958b4eae13fff6eb1fe0891a`. Elapsed time was 732.546 seconds.
+
+The concise report is saved at [second-ci-touched-continuation2-native-result.md](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/second-ci-touched-continuation2-native-result.md). Logs, receipts, and browser artifacts are under the session root at the paths listed there.

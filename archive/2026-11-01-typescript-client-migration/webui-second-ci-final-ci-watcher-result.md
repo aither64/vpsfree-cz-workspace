@@ -1,0 +1,7 @@
+**Verification result: failed.** Both pinned runs used head `9d9617c048dded592b6362e3370d92cfca2793cb`, attempt 1.
+
+- CI run [41480946099](https://github.com/vpsfreecz/vpsadmin-webui/actions/runs/41480946099) succeeded. Production build, required nonbrowser checks, and Chromium script regression all passed.
+- Playwright run [41480945591](https://github.com/vpsfreecz/vpsadmin-webui/actions/runs/41480945591) completed with failure. Mobile WebKit failed; Chromium and mobile Chrome ended as cancelled. The run log shows the transaction detail assertion failed in both Chromium and mobile Chrome before those final cancellations. Cancellation actor is unknown.
+- WebKit’s log shows `vps_expiration_reactivation.spec.ts:69` expected the modal to close, but it remained visible after 15 seconds.
+
+Elapsed observation time was about 1h42m. Raw metadata, the available run log, artifact inventory, and concise report are retained in [the evidence directory](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-second-ci-final-ci). Artifact archives were not downloaded. The annotation endpoint returned 404; its response is retained. No retry or cancellation was issued.

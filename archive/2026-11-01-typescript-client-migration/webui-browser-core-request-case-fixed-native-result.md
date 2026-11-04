@@ -1,0 +1,5 @@
+The requested command completed once and exited **1** on revision `4b69fe0b87f56402703550d17ba9f1a9ac4f083a`.
+
+The focused pagination case passed. The full suite reported **64 passed, 1 failed, 1 interrupted, and 58 not run**. Its first failure was a timeout in `vps_storage_tab_mounts.spec.ts` waiting for `vps.storage.root_dataset.create_subdataset`. I made no retries.
+
+The full log is at [webui-browser-core-request-case-fixed.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-browser-core-request-case-fixed.log), and the requested result record is at [webui-browser-core-request-case-fixed-result.md](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-browser-core-request-case-fixed-result.md). The run exited; port 5187 had no listener at the cleanup check.

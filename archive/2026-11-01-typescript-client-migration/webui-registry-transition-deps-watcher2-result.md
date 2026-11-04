@@ -1,0 +1,3 @@
+Dependency batch passed on WebUI revision `b5c12bcd8afa67103ae05bd3fc993ad4fe14f256`. Native and CLI exit codes were 0; native elapsed time was 93.806 seconds. The prefetch output hash is `sha256-e/oJZ1x+TRpjIw1DhoTLCJiQ2ifm4VednmrI201+ayQ=`.
+
+Watcher result: [webui-registry-transition-deps-watcher2-result.md](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-registry-transition-deps-watcher2-result.md). Full log, state, and exit record are in the same directory under the `webui-registry-transition-deps-observed` prefix. No process remains running.

@@ -1,0 +1,3 @@
+**Result: incomplete.** At exact head `d3d5efbef53af8eb1caec025737dc47ecbc67e96`, CI run **41450042642** passed all three jobs. Playwright run **41450042371** ended `cancelled`, with all three jobs cancelled. Its logs contain failed assertions before cancellation; the workflow’s cancelled conclusion is not a test-failure conclusion. I did not cancel or retry either run.
+
+The compact report, native metadata receipts, and full run/job logs are in [webui-ci-repair-ci-native-result.md](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-ci-repair-ci-native-result.md).

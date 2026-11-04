@@ -1,0 +1,1 @@
+`dev-session current` returned `2026-11-01-typescript-client-migration` (exit 0). I only read the monitor instructions and ran that command; I did not start the specified build operation.

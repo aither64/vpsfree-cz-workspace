@@ -1,0 +1,3 @@
+**Result: passed.** The prepared observer ran once on revision `1bfad6ce1846aef2d21bb6a58d4529a962e7aa97` and exited 0 after 43.806 seconds. All 8 selected cases passed; no first failure was reported.
+
+Observer PID: `789921`; test child PID: `789922`. Both have exited, and port 5187 has no listener. The retained result is [webui-browser-bilingual-observed-result.md](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-browser-bilingual-observed-result.md); the native test log is [webui-browser-bilingual-observed.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-browser-bilingual-observed.log).

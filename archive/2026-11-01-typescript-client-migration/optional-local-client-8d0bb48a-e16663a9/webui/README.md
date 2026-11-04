@@ -1,0 +1,76 @@
+# vpsAdmin WebUI
+
+React frontend and Node OAuth BFF for the new vpsAdmin interface. This
+repository preserves the history of `Kerrycek/clankerdev`; current development
+is owned by `vpsfreecz/vpsadmin-webui`.
+
+The new interface serves `newadmin.vpsfree.cz` from one NixOS VPS.
+It runs alongside the existing PHP interface at `vpsadmin.vpsfree.cz`.
+Deployment and default-interface cutover are separate decisions.
+The [operations guide](docs/design/OPERATIONS.md) covers the three deployed
+sites, the configuration-repository workflow and rollback. The
+[2026-09-30 release receipt](docs/work-log/2026-09-30-three-site-release.md)
+records the deployed revision and verification limits.
+
+## Design and requirements
+
+Start with the [design handbook](docs/design/README.md) for requirements, UX,
+architecture, API contracts, decision history, verification and handover.
+The [requirements register](docs/design/REQUIREMENTS.md) tracks current intent,
+status and acceptance. The [work log](WORK_LOG.md) records what changed and why.
+
+## Development
+
+Use the locked flake for Node 24.21.0 with bundled npm 11.19.0. The flake also
+pins the vpsAdmin source used for API and Czech terminology review. Its
+separate frontend/BFF package outputs and package checks are described in the
+[package guide](docs/design/PACKAGING.md). It also exports a separate,
+disabled-by-default [NixOS service module](docs/design/NIXOS_SERVICE.md).
+`nix develop` also provides `prefetch-npm-deps` for reproducing
+the independent npm dependency hashes.
+
+```bash
+nix develop
+npm ci
+npm run env:check
+npm run dev
+```
+
+`npm run build` selects the required BFF runtime mode at build time. It loads
+same-origin `/config.json` and `/session.json` before React starts; a missing or
+invalid response shows a bilingual retry screen. Run `npm run build:legacy`
+only for an explicitly selected standalone deployment that uses optional
+`config.js` and local overrides. Local `npm run dev` keeps that legacy behavior
+unless `VITE_RUNTIME_MODE=bff` is set. Deploy a BFF with `/config.json` before
+serving BFF-mode assets. The build selection is part of the frontend artifact;
+it cannot change after deployment.
+
+For localization work, follow [the locked-input procedure](docs/agent-instructions/localization.md)
+and record the vpsAdmin revision it resolves. The `.nvmrc` and `.node-version`
+files select the same exact Node version for developers who use those tools;
+`npm run env:locked` checks it and npm before required verification.
+
+## E2E smoke tests
+
+```bash
+# one-time browser install
+npm run e2e:install
+
+# same Playwright smoke set used for pull-request feedback
+npm run e2e:pr
+```
+
+The default Playwright suite uses deterministic HaveAPI mocks and does not
+require real login credentials. Fixture tests do not establish deployed API
+compatibility.
+
+## Docs map
+
+- [WORK_LOG.md](WORK_LOG.md): ongoing work, decisions, verification and release record
+
+- [SPEC.md](SPEC.md): specification entry point
+- [docs/CANONICAL_DOCS.md](docs/CANONICAL_DOCS.md): current and historical documentation map
+- `docs/README.md`: docs tree rules
+- `docs/spec/README.md`: historical spec fragments
+- `bff/README.md`: OAuth BFF details
+- `deploy/`: historical Clankerdev deployment notes; they are not the new VPS runbook

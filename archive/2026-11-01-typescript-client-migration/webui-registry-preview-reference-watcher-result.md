@@ -1,0 +1,1 @@
+I did not start the verification. The specified launcher, command, and observer files are absent at the provided `/home/aither/workspace/ai/vpsfree.cz/2026-11-01-typescript-client-migration/` path, so I could not verify their hashes or safely run the exact operation. The assigned checkout is at the required HEAD and clean. No verification process is running.

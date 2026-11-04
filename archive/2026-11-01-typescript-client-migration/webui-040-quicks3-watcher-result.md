@@ -1,0 +1,3 @@
+Verification finished with native observer exit status **1** after **74.309 seconds**. The typecheck ran, followed by six scoped Vitest files: **5 passed, 1 failed; 25 tests passed, 1 failed**. Remaining checks did not run.
+
+The failure was in `SecurityAdvisoryNodesPanel.review.test.tsx:87`, where an expected `pushToast` call was not observed. Full output and the native exit receipt are retained at the paths listed in the [watcher result](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-040-quicks3-watcher-result.md).

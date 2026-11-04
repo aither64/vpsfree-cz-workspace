@@ -1,0 +1,5 @@
+**Passed.** The exact authorized launcher ran once from the canonical WebUI checkout. The native observer exited 0 in 66.96 seconds for revision `670cf286daf9bddb65594035507ca112a9e6d397`; the launcher CLI also exited 0.
+
+The five requested outputs are recorded in [the Nix build results](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/w-040-r040-final-nix-build-results.json). The observer log and exit receipt are at `/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-040-r040-final-nix-observed.log` and `webui-040-r040-final-nix-observed-exit.json`.
+
+I retained the verification summary at [webui-040-r040-final-nix2-watcher-result.md](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/webui-040-r040-final-nix2-watcher-result.md). No operation remains running; no broader closure proof or package equivalence is inferred.

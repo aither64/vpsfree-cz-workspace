@@ -1,0 +1,3 @@
+**Result: incomplete; no artifact download was launched.** The preparation record and all three pinned SHA-256 hashes matched, and the session identity matched the requested slug and workspace.
+
+The required native watcher execution handle is unavailable in this turn. The instructions require observing the operation through that handle, so I did not substitute a shell launch. No artifacts were downloaded, and I did not create the requested result file. No operation is running.

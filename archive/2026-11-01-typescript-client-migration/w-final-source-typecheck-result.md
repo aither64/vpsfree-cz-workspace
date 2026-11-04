@@ -1,0 +1,3 @@
+**Verification not started.** The instruction says source owner stability must be released before launch, and that the lead will launch at that boundary. No release signal was provided, so I stopped before running the command.
+
+Read-only snapshot: HEAD `0a85883c7983b359d2239a66e73fa413e8d735f0`; `git diff --stat` reports 125 files changed, 4,671 insertions, and 3,793 deletions. No process was started and no log was created.

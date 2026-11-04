@@ -1,0 +1,3 @@
+Passed the single Chromium scenario on revision `b5c12bcd8afa67103ae05bd3fc993ad4fe14f256`: 1 passed, 0 failed, 0 skipped. Native operation exit was 0; elapsed time was 52.730 seconds.
+
+Raw result: [fifth-ci-support-native-result.md](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-01-typescript-client-migration/fifth-ci-support-native-result.md). Browser report and trace are listed there. No operation remains running.
