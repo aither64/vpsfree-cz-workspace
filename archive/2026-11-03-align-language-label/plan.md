@@ -36,3 +36,11 @@ fix, inventory the whole base-to-head series and diff (no migrations expected),
 then obtain independent final review from reviewer0 before any longer checks.
 Publish the feature branch over SSH and inspect applicable CI. Leave active and
 ready awaiting explicit merge approval when all required checks pass.
+
+## User follow-up: interactive preview
+On 2026-11-04 user requested a preview API server to inspect the fix.
+Implementer0 owns starting the existing example/test API from the exact fixed
+worktree using its declared Nix environment and runtime-owned temporary service.
+Acceptance: browser-accessible docs URL responds and served stylesheet includes
+reviewed fix. Leave server running for user; record ownership and startup details.
+No source feature, merge, production deployment or lifecycle action authorized.
