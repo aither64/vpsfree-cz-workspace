@@ -1,6 +1,82 @@
 # 2026-11-02-session-temporary-service-cleanup
 
+## Completed delivery — 2026-11-05
+
+Registered-service cleanup, Resources/Team navigation, accepted-input capacity
+retry, portable machine claims and the requested Resources tab badges are
+implemented, reviewed, verified and delivered. All four final feature heads are
+integrated into their remote masters; final runtime240a master CI41926842449 passed
+all four jobs. Aitherdev was released and that state was verified. Nothing remains
+for the user to approve or execute. The session stays open; no lifecycle or cleanup
+action is authorized or scheduled.
+
+The final runtime ninth is a fixture-only diagnostic/assertion follow-up for an
+intermittent fork-settings CI failure, with its sole review finding corrected.
+It changes no production code or package selection and required no new rollout.
+The original loss stage remains unknown; green diagnostics do not claim a causal
+fix. See state.md for final revisions, scoped rollout/CI evidence, accepted
+packages and retained historical limits. All superseded restrictions below are
+historical; the user's later “merge it when you're done and release aitherdev”
+approval was fulfilled.
+
+
+## Earlier delivery milestones (historical)
+
+The registered-service cleanup, Resources/Team navigation, bounded capacity-
+retry provenance and logical machine claims are deployed and verified at runtime
+95a53aed, extensionf8da, workspace726a6cab and configurationa6454375. Exact final
+runtime/browser/extension/composed/installed verification passed, including all11
+installed native subtests and positive three-service rendering. Keep this completed
+milestone and all source/artifact evidence intact.
+
+New user-requested UI milestone (2026-11-04): while viewing Resources, the Clusters,
+Reservations and Services tabs must each visibly show their count badge. User said
+"not yet" to default integration. B owns this bounded existing-UI edit under the
+lead's direct small-change brief: reuse existing badge styles, public count sources,
+known/unknown/stale behavior and refresh paths; no new API/counting framework or
+backend semantics. Validate initial and refreshed badges plus responsive/accessibility
+behavior through existing focused fixtures. Add a separate eighth runtime commit;
+all seven deployed commits are protected. Quick and same-reviewer affected finalreview are nowPASS at3bb08df2. The accepted
+UI-only deliverydelta is design.md2524+: normalexactheadCI, requiredfastmigration/
+package-metadata/hostpath+SITEconsumerchecks, purematchingpins/certification and
+ordinarysystem/profile rollout followed by actualselectedUIbrowser evidence. No
+newunrelatedfull21suiteextension or installedarchiveVM campaign is required;95
+nativeproof is retained atits ownscope. Runtimepublication/CI and independent
+nonexpensivepinpreparation are released; expensivepreparation andconsumerpublication
+stay behindactualCI/certification. No defaultintegration is approved.
+
+Use state.md for current heads/evidence/next actions. Earlier proposal restrictions
+below remain historical where superseded by explicit user authorizations.
+
+Affected repositories are dev-workspace (runtime), vpsfree-dev-workspace (adapter),
+workspace (policy, instructions and application selection), and
+vpsfree-cz-configuration (matching host/runtime selection). A owns the configuration
+pin and later system preparation; B owns exact-runtime extension checks and the
+workspace's final selection. The lead owns pin/history certification, rollout and
+installed usability acceptance. Prepare exact artifacts before machine ownership;
+activate the system first and ordinary user profile second. Deployment remains
+authorized, while integration into all four remote defaults needs separate explicit
+direction. Leave this session open.
+
+
 ## Implementation authorization — 2026-11-02
+
+Current user follow-up: diagnose why the portal did not automatically retry the
+turn displaying `Selected model is at capacity. Please try a different model.`
+This is separate from CI retry. Inspect the actual native error and retry policy/
+execution evidence first; preserve selected models and existing retry recovery,
+admission, quota and submission identity contracts. architect0 owns the bounded
+investigation/design; application changes remain delegated after the brief.
+The original registered-service cleanup objective remains active.
+
+Subsequent user direction: "Turn continues, capacity error is reported, I expect
+it to be retried no matter what. What's the catch?" Treat active-turn message
+volume as an unacceptable reason to lose capacity retry. architect0 owns the
+smallest bounded-proof design preserving same-model/settings execution,
+explicit cancellation and uncertain-submission recovery. A will own implementation
+after the design brief. Do not solve this merely by increasing the snapshot cap
+or bypassing proof; preserve existing state safely and keep this additional
+retry deliverable distinct from the service-cleanup feature.
 
 User: "proceed with implementation. aitherdev can be deployed using
 vpsfree-cz-configuration." This supersedes the proposal-only restriction in the
@@ -26,6 +102,37 @@ No repository claim is needed for feature work. Build/copy before machine claims
 claims cover authorized activation and remain governed by verified deployment and
 integrated-lineage release rules. Obtain separate repository/target integration
 approval before any default-branch merge.
+
+## Additional machine reservation proposal — 2026-11-03
+
+User rejects requiring a workspace catalog/package update for every new deployment
+machine and asks for a solution. Main concern is one lock identity for the same
+deployed machine across sessions. User then rejects repeated native-identity
+probes as excessive and accepts repository scoping because different repositories
+rarely deploy the same machine; `vps` means a generic hostname, not a domain.
+The revised proposal uses canonical repository origin + exact unique configured
+machine name/selector by default, even for FQDNs. Branches, commits, workspaces and
+checkout paths never enter the key. Explicit shared configuration lock ID handles
+intentional cross-repository overlap. This is a cooperative logical identity,
+not automatic physical discovery. Names/labels come from pinned adapter metadata;
+no per-machine package list, SSH/DNS/native probe, new identity registry or confctl
+source change is needed. Preserve legacy held/waiting/reservation exclusion and
+profile mappings through a one-time compatibility bridge. architect0 saved the
+revised machine-identity-proposal.md and design link; earlier physical/tiered-FQDN
+defaults are rejected. No per-session invented IDs.
+User subsequently authorized: "roger that, so let's implement your proposal and
+include it in your work, deploy it when done". Implement and deploy this latest
+logical repo-scoped proposal with the existing work; supersede proposal-only
+restrictions. No machine-ID/DNS/SSH identity probes or new global inventory.
+Architect freezes execution contracts; A owns generic runtime claims/profile
+work after its narrow retry review fix, B owns independent extension adapter then
+serialized consuming workspace changes. A fourth affected repository is now
+vpsfree-dev-workspace (git@github.com:vpsfreecz/dev-workspace.git), feature base
+e4e7e95ed39bf514b33f8f8ae61ba9868de060ae/defaultmaster, own registered worktree.
+Preserve existing claim/recovery/release rules and one final input update stream.
+Deployment includes the new feature on aitherdev; default integration still needs
+separate explicit direction for the affected repository/target set. No session
+lifecycle action is authorized.
 
 ## Current scope amendment — 2026-11-02
 

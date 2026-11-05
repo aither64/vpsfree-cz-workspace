@@ -1,0 +1,5 @@
+**CI result: failed.** Run `41503878011` for exact head `312d2e2a8994c136f96938d2f2a71ae8e2f16f33` completed with conclusion `failure`. `fast`, `archive`, and `creation` failed; `host` was skipped. No jobs remain running.
+
+The watch returned exit status 1. Full logs, status JSON, checksums, and a bounded failure excerpt are retained in [ci.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-02-session-temporary-service-cleanup/runtime-ci-312d2e2a/ci.log), [result.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-02-session-temporary-service-cleanup/runtime-ci-312d2e2a/result.json), and [failure-excerpt.txt](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-02-session-temporary-service-cleanup/runtime-ci-312d2e2a/failure-excerpt.txt). The concise handoff is in [final-summary.md](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-02-session-temporary-service-cleanup/runtime-ci-312d2e2a/final-summary.md).
+
+No diagnosis, retry, cancellation, approval, or deployment was performed.
