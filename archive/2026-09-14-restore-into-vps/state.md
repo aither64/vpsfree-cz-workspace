@@ -1,5 +1,5 @@
 ---
-lifecycle: active
+lifecycle: abandoned
 ---
 
 # Restore into VPS — investigation
@@ -48,6 +48,13 @@ repository source links, active front matter and artifact registration.
 schema accepts artifacts with label and relative path; registered the report
 in this session's portal.yml. An initial apply_patch combining delete/add of the
 same file was rejected before changes; tracking files were then written directly.
+
+Initial research/tracking commit: `c0e84a3`. Scoped staged whitespace checks
+passed and all six intended paths were committed. Final portal HEAD probe
+failed certificate verification with ambient and system CA bundles; a separate
+unauthenticated insecure HEAD probe was used only to check reachability. No
+credentials were sent and no trust configuration was changed.
+The probe returned HTTP 401 from the deployed authenticated portal endpoint.
 
 ## Open decisions and next step
 
