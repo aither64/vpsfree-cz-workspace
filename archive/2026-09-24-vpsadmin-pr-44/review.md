@@ -24,9 +24,13 @@ WebUI sends a first-page sentinel rejected by the new API. Review findings:
    and NAS backup requests. HaveAPI accepts zero and calls the pagination
    block; `api/lib/vpsadmin/api/resources/ip_address_assignment.rb:120-122`
    and `api/lib/vpsadmin/api/resources/dataset.rb:18-20` then look for row ID 0
-   and return HTTP 400. Preserve zero as a first-page sentinel in the API and
-   add focused `from_id=0` specs. Updating only the PHP caller would leave
-   other old clients exposed.
+   and return HTTP 400. The preferred fix is to omit `from_id` in those PHP
+   callers until they have an actual row ID, then verify the first page and
+   Next link against this API. `webui/forms/dataset.forms.php:106-114`
+   already uses this pattern. An initial API sentinel exception was considered,
+   but it would preserve a PHP caller convention in the public API. If another
+   supported client relies on zero, assess that compatibility requirement
+   separately; no such client was identified in this review.
 2. **Blocking — split the first commit's independent work.** Commit
    `de1cf7b06` bundles the IP assignment tuple cursor and VPS user-data ID
    ordering, which have separate implementations, tests, and consumers. Put
@@ -54,8 +58,8 @@ WebUI sends a first-page sentinel rejected by the new API. Review findings:
 
 ## Consumers and rollout
 
-The in-repository PHP WebUI needs a companion change or a compatible API
-sentinel fix before API deployment. The open beta frontend PRs
+The in-repository PHP WebUI needs a companion change before API deployment.
+The open beta frontend PRs
 [user-data #496](https://github.com/Kerrycek/clankerdev/pull/496),
 [IP history #507](https://github.com/Kerrycek/clankerdev/pull/507), and
 [storage #509](https://github.com/Kerrycek/clankerdev/pull/509) explicitly

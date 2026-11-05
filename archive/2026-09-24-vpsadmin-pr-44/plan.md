@@ -29,6 +29,10 @@ I'm interested if the changes are justified, the commits coherent or suitable fo
   modify WebUI source without a further user request.
 - The saved session roster is solo, so the mandatory review uses its catalog
   fallback reviewer after the review packet is prepared.
+- The user previewed and approved the exact GitHub response on 2026-09-25.
+  For the first-page regression, prefer fixing the PHP WebUI's zero default
+  over extending the public API with a sentinel. The approved comment was
+  posted after GitHub write access became available; see state.md.
 
 ## Compatibility and deployment
 

@@ -1,5 +1,5 @@
 ---
-lifecycle: active
+lifecycle: abandoned
 ---
 
 # 2026-09-24-vpsadmin-pr-44
@@ -11,22 +11,25 @@ lifecycle: active
   `486350466e8fb6f966add1cde3fa2bc12b4d6b62`. See [review.md](review.md).
 - The fix is justified but the PR has a blocking first-page PHP WebUI
   regression and a blocking commit split issue. It needs companion client and
-  API-description work before integration. No project branch was changed.
-- On 2026-09-25, PR base/head remained unchanged. A complete proposed comment
-  is in [pr-comment-draft.md](pr-comment-draft.md), awaiting user approval to
-  post. No GitHub response has been sent.
+  API-description work before integration. The preferred first-page remedy is
+  for PHP WebUI to omit `from_id` until it has a real cursor, rather than add
+  a zero-sentinel exception to the API. No project branch was changed.
+- On 2026-09-25, PR base/head remained unchanged. The user approved the exact
+  comment in [pr-comment-draft.md](pr-comment-draft.md), and it was posted as
+  [PR comment #5829331202](https://github.com/vpsfreecz/vpsadmin/pull/44#issuecomment-5829331202).
+  The published body was checked against the approved draft and matched.
 
 ## Next actions
 
-- PR author: preserve `from_id=0` as a first-page sentinel with regression
-  tests; split IP and user-data commits and fold dependent locale changes into
-  IP; correct dataset-family API descriptions; coordinate PHP WebUI cursor
-  reset/recovery and user-data forwarding.
+- PR author: update the PHP IP and NAS callers to omit initial `from_id` and
+  verify first-page/Next behavior; split IP and user-data commits and fold
+  dependent locale changes into IP; correct dataset-family API descriptions;
+  coordinate PHP WebUI cursor reset/recovery and user-data forwarding.
 - Re-review changed lanes after any public-contract or behavior change, then
   verify the joint API/WebUI flows. Await explicit user direction before any
   repository integration; keep this review session open.
-- Show the exact draft PR comment to the user. Post only after their approval,
-  checking the PR head and comments again first.
+- Watch for author updates or reply when requested; re-review changed lanes
+  before recommending integration.
 
 ## Documentation
 
@@ -53,6 +56,17 @@ lifecycle: active
 - `git diff --check` for PR base/head: passed.
 - On 2026-09-25, inspected the failed selected-integration check and its
   uploaded webui test log without starting or rerunning a job.
+- After user approval, confirmed the same PR head and no existing comments,
+  then attempted `gh pr comment 44 --body-file ...` and REST
+  `POST /repos/vpsfreecz/vpsadmin/issues/44/comments`. Both were denied by
+  the active personal access token (GraphQL error and HTTP 403 respectively).
+- `gh auth status` shows one active GitHub CLI login, account `aither64`, with
+  its credential stored in `~/.config/gh/hosts.yml`. No standard `GH_TOKEN` or
+  `GITHUB_TOKEN` environment override is set. The GitHub settings token name
+  is not exposed through this CLI status.
+- On user-requested retry, checked the PR head and empty comment thread, then
+  posted the exact approved draft with `gh pr comment 44 --body-file ...`.
+  A read-back confirmed the comment URL and exact body match.
 
 ## Results
 
@@ -73,6 +87,8 @@ lifecycle: active
 
 - Whether production contains snapshot rows with null `created_at`; the schema
   permits them and their tuple cursor would be rejected.
+- Whether any supported external client intentionally sends `from_id=0` as an
+  initial cursor; none was identified here.
 - Timing and ownership of PHP WebUI fixes and joint API/WebUI verification.
 
 ## Cleanup
