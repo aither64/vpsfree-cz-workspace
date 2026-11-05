@@ -1,7 +1,8 @@
 # Container image build pipeline — final plan
 
-The product scope and architecture are settled. This is the implementation plan
-for the next phase; no application code or production configuration has changed.
+The product scope and architecture are settled. User authorized implementation with "ok, implement it" on 2026-11-05.
+The plan now guides active feature work; production activation and default-branch
+integration are separate steps.
 The authoritative technical contracts, package owners and acceptance checks are
 in [design.md](design.md). Source findings are indexed in [state.md](state.md).
 
@@ -117,7 +118,13 @@ flag. Persistent privileged runners must admit trusted revisions only.
    repository integration retain their normal explicit approval gates.
 
 Future package ownership and safe overlapping-file sequencing are defined once
-in design.md. No implementation package is executing in this planning phase.
+in design.md. P0/P1/P2/P3 and native compatibility deliverables are committed and independently
+reviewed; findings were corrected within their existing contracts. Service/native
+runtime checks pass. The real two-worker smoke passed for three Alpine images:
+45 image tests, overlapping workers, same-builder reuse, sealed payload hashes
+and cleanup. A single-VM common-repository/runtime-pool consumer check is in
+progress; it does not establish full-suite or weekly-shadow coverage. Exact heads,
+checks, remaining runtime limits and ownership transitions are in state.md.
 
 ## Required acceptance scenarios
 
@@ -167,6 +174,8 @@ Actual multi-host mirrors, redundant HTTPS ingress, multiwriter publication,
 automatic writer failover, a private dashboard and global analytics are outside
 first delivery. Existing snapshot/clone controls are unavailable and unnecessary.
 
-Planning records alone do not trigger independent final change review. Completed
-implementation will follow the normal commit, review, verification and rollout
-procedures. This session remains open for the implementation phase.
+Planning records alone do not trigger independent final change review. Intended
+implementation is committed and independently reviewed; accepted review and runtime
+fixes remain within their existing contracts. Verification and rollout retain
+separate evidence and approval requirements. Full weekly shadow, production
+preflight and cutover remain unproved. The session stays active and open.

@@ -1,11 +1,12 @@
 # Container image pipeline — final implementation brief
 
-Investigation/proposal only, revised 2026-11-05. Owner: architect0. I0–I13 are
-accepted evidence. Product decisions are settled; this is the authoritative brief
-for future implementation packages. It supersedes earlier normative alternatives
-in the investigation records. No implementation,
-repository creation, builds/tests/CI, deployment, integration or session lifecycle
-action is authorized or performed by this proposal.
+Implementation brief, revised 2026-11-05. Owner: architect0. I0–I13 are accepted
+evidence. Product decisions are settled; this is the authoritative brief for
+implementation packages. It supersedes earlier normative alternatives in the
+investigation records. The user authorized implementation with "ok, implement it";
+current package releases are recorded by the lead in [state.md](state.md).
+Production deployment, default-branch integration and session lifecycle actions
+remain separately authorized. This design-support work performs no runtime checks.
 
 ## Recommended shape
 
@@ -355,9 +356,9 @@ upgrade, database migration in vpsAdmin or coordinated node rollout.
 ## Implementation packages and preflight
 
 This is a sufficient package brief; there are no remaining product decisions.
-The table defines future allocations, not current code releases. Lead acceptance
-and the user's next implementation instruction release work; deployment/integration
-retain their separate authorization. Routine internal types/CLI spelling are settled
+The table defines allocations; the lead records current releases in state.md.
+Implementation is authorized; deployment/integration retain their separate
+authorization. Routine internal types/CLI spelling are settled
 by owners under these contracts, not another architecture exercise.
 
 | Package / owner | Files and deliverable | Dependencies; acceptance/checks; required evidence |
@@ -432,7 +433,57 @@ Active site facts remain unverified in this planning turn; no runtime checks ran
 
 ## Evidence
 
-All source inspection used fixed canonical bare revisions: vpsadminos
+### Implementation support: baseline and shared interfaces
+
+Implementation starts at vpsadminos
+`d2fe1489f0b0b213fb247aeee6e081d349adaf42`. Compared with investigated
+`2951a632c4254a44747a8da326e3dde897eaa0e2`, only `flake.lock` changed:
+`nixpkgsUnstable` advanced from `0bb2eedc20e4739f29e8045034f2828ad7054f8f`
+to `1d060086d60cb76a40cf37109f979d88a5bd6396`. Project entrypoints and repository
+guidance are unchanged. Existing source conclusions stand; packaging/runtime
+checks must use the new locked inputs, not claim earlier runtime proof.
+
+P1 owns the actual compiled shared contract in
+[types.go](../../worktrees/2026-11-04-container-image-build-pipeline/vpsadminos/osctl-repo-server/types.go)
+and its wire table in
+[README.md](../../worktrees/2026-11-04-container-image-build-pipeline/vpsadminos/osctl-repo-server/README.md). These are the authoritative
+caller field definitions; do not duplicate a second schema here. The module is
+`github.com/vpsfreecz/vpsadminos/osctl-repo-server`, root package `reposerver`.
+P2 consumes `Reader.Catalog`, `OpenFile` and `Storage`; an empty run key selects
+public state. `OpenFile` returns an already-open inode that the HTTP caller closes.
+Not-ready/expired/not-found errors preserve the run readiness contract.
+
+P3 uses `ctl --socket PATH`: one JSON request line, then exactly the declared
+binary size for uploads; one JSON success/result or error/code/message response.
+Site-owned forced commands choose separate producer/publisher/admin sockets.
+Requests carry stable request ID, operation, repository, optional run key and
+params. `begin` freezes expected IDs/order/tags and returns the opaque run key;
+`bind` supplies the dispatch-frozen tuple/formats/config digest and item attempt.
+Per-format upload precedes the verified build/test result. `finish`, `seal` and
+`publish` remain independent; publication supplies the fresh generation and
+eligible IDs, with policy/ancestry checked by the protected publisher and service.
+These interfaces suffice for peer implementation; import/export stays P1-owned.
+
+P3 may implement captured configuration with a private per-assignment scripts copy
+whose selected `config.sh` contains quoted static captured values, including
+supported auxiliary attributes such as SPIN/SPINVER. All build/test/export reads
+must use that copy; retries reuse the capture and output tuples are validated.
+This avoids re-evaluating date-derived versions at downstream shell source sites.
+Acceptance includes repeated sourcing across rollover, auxiliary values and retry
+reuse. Common repository readiness also covers runtime-created pools before fetch.
+
+Lead-approved P3 ownership includes `osctld/lib/osctld/config.rb` and
+`osctld/lib/osctld/db/repositories.rb`, with focused tests/docs, for an optional
+`default_repository_url` setting. Its unset value remains the current public URL;
+only creation of a missing default repository uses it. Preserve persisted/imported
+defaults and explicit custom repositories. Common test configuration supplies the
+sealed URL to this setting and declarative defaults, with readiness assertions.
+Repository setup precedes pool-active state, covering runtime pool creation and
+first image fetch within one shell command without command interception or
+scattered test rewrites. Acceptance proves that case, unchanged unset behavior and
+preservation of persisted fixture URLs. No fleet or schema migration is required.
+
+I0–I13 source inspection used fixed canonical bare revisions: vpsadminos
 `2951a632c4254a44747a8da326e3dde897eaa0e2`, org configuration
 `ca96c95a1fee04793468785d8323a759615b2b4e`, and builder configuration
 `f4069909b55fbed907cb658f350ec6a59f97e05a`. The lead matched remote defaults on
