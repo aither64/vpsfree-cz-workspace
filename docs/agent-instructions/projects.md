@@ -50,6 +50,11 @@ These repositories are in scope for this workspace:
   integration.
 - `vpsfree-mail-templates`: localized mail templates consumed by vpsAdmin.
 - `terraform-provider-vpsadmin`: Go Terraform/OpenTofu provider for vpsAdmin.
+- `blog`: Hugo static blog in Czech at `blog.vpsfree.cz` and English at
+  `blog.vpsfree.org`. Its canonical remote is `git@github.com:vpsfreecz/blog.git`;
+  it owns content, layouts, the build contract and author workflow.
+  `vpsfree-cz-configuration` owns hosting and the shared Discourse discussion
+  setup.
 - `web`: PHP and server-side-include website for vpsFree.cz and its
   translations.
 - `ssh-exporter`: Prometheus exporter that checks systems over SSH and exports
