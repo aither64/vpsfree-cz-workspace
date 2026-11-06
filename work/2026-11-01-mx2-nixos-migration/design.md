@@ -1,4 +1,145 @@
-# Current readiness: clean boot verified; unused Postgrey database reset authorized
+# Current boundary: private staging verified; primary filtering interpretation
+
+Private staging at source084488 is complete: both marked messages reached
+`podpora@vpsfree.cz`, including queue persistence through service/VPS restart;
+services are healthy and the queue is empty. See [state.md](state.md) for current
+evidence. Public cutover and default integration remain unapproved. The recovery
+checkpoint below is historical, not an outstanding Postgrey failure.
+
+## Released Nov5 package: public configuration, prepared on the private IP
+
+Owner: implementer0, with architect0 for routine clarification and lead for scope,
+review, activation and user coordination. User agreed to proceed with source
+preparation/review/build/copy. Public transfer, old-host/primary changes, activation
+at cutover, additional mail and default integration remain outside this release.
+No public IP is needed to edit, review, build or copy either prepared generation.
+
+Keep the actually deployed084488 ref/closure/input receipts. Keep its selected
+nixpkgsStable718f670e and vpsadminosOsStagingb45b27b4 inputs and complete lock fixed:
+no channel refresh or rebase-induced OS upgrade. The heavy upgrade is complete.
+Use ordinary service switches; **no second reboot is planned or required**.
+A new concrete reboot requirement would go to the lead, not be assumed.
+
+Implement one small package in the existing host `config.nix`, `module.nix` and
+`docs/operations/mx2.md`; leave shared `configs/mx2.nix` and test policy unchanged:
+
+1. In config.nix set `services.postfix.settings.main.myhostname` to
+   `mx2.vpsfree.cz`. Retain VPS27627, private management172.19.9.22, stateVersion25.05,
+   approved root keys, current resolver and all queue/Postgrey state.
+2. Reuse `profiles/ct.nix` ACME account defaults. Define
+   `security.acme.certs."mx2.vpsfree.cz"` with native `listenHTTP = ":80"`,
+   group matching Postfix, and `reloadServices = [ "postfix.service" ]`.
+   Configure `smtpd_tls_chain_files` with `/var/lib/acme/mx2.vpsfree.cz/key.pem`
+   followed by `fullchain.pem`, and `smtpd_tls_security_level = "may"`.
+   Add Postfix `requires`/`after` on **acme-mx2.vpsfree.cz.service**, the native
+   local certificate bootstrap unit, not the order/renew network unit. Preserve
+   outbound opportunistic TLS; no mandatory TLS for arbitrary Internet senders.
+3. Native pinned ACME always creates preliminary self-signed files in the base
+   unit, then starts separate `acme-order-renew-mx2.vpsfree.cz.service` for real
+   issuance; renewal uses `acme-renew-mx2.vpsfree.cz.timer`. Postfix otherwise has
+   no ACME dependency. Therefore private activation could start with a provisional
+   certificate and failed HTTP-01 jobs: **do not activate this preparation before
+   public handover**. Build/copy privately; activate after public port80 routes
+   here. Do not add a new issuance gate, timer, wrapper, web server or DNS-01 setup.
+4. In module.nix prepare public metadata37.205.11.114/32 and
+   2a03:3b40:100::1:95/128; preserve private SSH target172.19.9.22 and ID27627.
+   These records do not assign guest addresses. Restore ordinary monitoring and
+   logging plus the repository's normal node-exporter service metadata/monitor
+   ACLs. Preserve existing placement data; do not invent a physical node or
+   broaden exporter ingress. Keep auto-update disabled. No monitor/DNS consumer
+   deployment follows from preparing its source.
+5. Prepare two ordinary native generations, reviewed together. **Bootstrap**
+   includes hostname/TLS/metadata/monitoring and TCP80 but retains the exact
+   existing SMTP rule allowing only172.16.106.40/32, with general TCP25 closed on
+   both families. **Final** differs only by removing that temporary rule and
+   allowing Internet TCP25 on both families; SSH/HTTP80/monitor ACLs stay intact.
+   Use allowed-port values preserving monitor-specific rules: bootstrap22/80,
+   final22/25/80. No custom lifecycle service or permanent staging option.
+
+The final feature history should introduce the final public behavior cleanly.
+Preserve bootstrap source under a separate explicit cutover ref and retain both
+exact source identities; it is an intentionally consumed transition, not an
+unreferenced draft. Owner chooses the smallest ordinary Git construction without
+changing inputs or unrelated commits. Review the complete final branch and the
+bootstrap-vs-final diff. Record native confctl generations and exact derivation/
+output/source/input identities for both; owner resolves the pinned native
+build/ref-selection interface as part of execution, without a new launcher.
+Never select a later "latest" generation implicitly during cutover.
+
+Retain the tested shared recipient/filter behavior as the migration baseline,
+including domain-wide acceptance and possible later bounces for unknown
+recipients, absent fail-open milter, Postgrey/RBLs, and the three-domain primary
+transport. Primary virtual recipient checks do not eliminate backup backscatter.
+Recipient export/sync and SPF/DMARC changes are separate follow-up work, not a
+prerequisite for this preparation. No policy-equivalence claim about old CentOS
+or proof of primary sender authentication is made.
+
+Acceptance: parse/format/hooks and generated checks cover both host variants,
+exact lock/selected-input equality to084488, hostname/HELO, key/chain ordering and
+permissions, native ACME/Postfix dependencies and renewal reload, source-restricted
+bootstrap vs public final IPv4/IPv6 ingress, unchanged SSH/mail/queue policy, and
+normal monitoring metadata/ACLs. Commit all intended source and pass quick checks
+before independent review of both source identities. After review build both mx2
+variants and only consumers whose actual delta requires a build. Reuse the passed
+isolated suite only with exact derivation/input proof; rerun it only if consumed
+inputs/config changed. Long checks use the normal watcher policy. Deliver compact
+review/build/copy receipts through the existing records; no new framework/bundle.
+Lead owns the ordered later switches in [staging-plan.md](staging-plan.md).
+
+## Interpretation of the supplied primary configuration
+
+The following interprets the user-supplied primary Postfix3.10.13 fragment relayed
+by the lead; it is not a live effective-configuration audit:
+
+- `reject_unauth_destination` rejects unauthorized relay destinations. An owned
+  local/virtual or authorized relay domain continues to later restrictions
+  (DUNNO); this does not authenticate its sender or skip later policy/RBL checks.
+- In each restriction list, matching `permit_mynetworks` or
+  `permit_sasl_authenticated` stops that list. In the supplied recipient list,
+  those permits bypass later sender-access, policy60000 and RBL checks.
+  `check_sender_access` returning OK/PERMIT likewise skips later checks;
+  DUNNO/no match continues. A policy-service OK can skip subsequent RBLs too.
+  A permit in one list does not globally bypass other lists or configured milters.
+  The candidate's primary-observed/NAT source and resulting trust match are
+  unknown. Successful delivery does not establish an open relay or SPF pass.
+- The user identified listener60000 as Postgrey and listener12301 as OpenDKIM.
+  Postgrey supplies greylisting; OpenDKIM signs/verifies DKIM, not SPF or DMARC.
+  No SPF/DMARC enforcement is visible in the supplied Postfix path; this is not
+  proof that no other component enforces it. RBL checks concern client reputation,
+  not sender-domain authentication.
+  `milter_default_action=accept` permits mail when the filter errors/is unavailable;
+  it does not nullify an explicit rejection from a working filter. Existing
+  DMARC `p=none` requests no rejection solely for DMARC failure; actual checking
+  and local enforcement remain unproved.
+- The user confirmed effective `smtpd_reject_unlisted_recipient=yes`. The virtual
+  MySQL mailbox/alias maps therefore participate in automatic validation, even
+  without an explicit restriction; actual map matches/catchalls remain unknown.
+  Empty `relay_recipient_maps` does not disable virtual-mailbox validation, but
+  provides no recipient list for a Mailman domain handled as a relay domain.
+  The misspelled
+  `local_recipients_maps` is unused; it does not establish the effective correctly
+  spelled `local_recipient_maps`. The unused Mailman limit warning alone explains
+  neither delivery nor sender authentication.
+
+The supplied headers explicitly describe delivery through Request Tracker.
+`mail.havefun.cz` reports DKIM pass for `d=vpsfree.cz`, selector `mail`; SPF pass
+for envelope sender `www-data@rt.vpsfree.cz` from37.205.15.53; and DMARC pass for
+visible From domain `vpsfree.cz` with policy none. These authenticate the later
+RT/outbound hop as observed by that receiver. They do not establish the original
+mx2 client IP/envelope, its authentication result, or why the primary accepted it.
+The marked messages originally sent through mx2 had no DKIM signature; these
+headers cannot retroactively authenticate that earlier submission.
+
+If the user wants to resolve the remaining source/trust question, the smallest
+additional evidence is the original primary Postfix `client=` log line for queue
+ID `55F35A7ED` or `C5F44F212`, retaining client IP and any SASL indication. That
+identifies the peer seen by the primary for comparison with its trust rules;
+the outbound RT headers cannot supply it. No keys, SQL credentials, full logs,
+whole configuration or map contents are needed. This explanatory uncertainty
+creates no new staging gate or implementation package and authorizes no probe,
+message, source change or cutover.
+
+# Historical recovery checkpoint: unused Postgrey database reset authorized
 
 2026-11-04: system/profile now run actually deployed
 `0844881779d62d9a6a86d2bacd61d21565b33932`, closure

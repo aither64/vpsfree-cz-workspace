@@ -64,7 +64,7 @@ Normal respected native300s greylisting, with one same-payload retry after305s
 before DATA. The primary then temporarily greylisted its first delivery; the
 same accepted queue entry was retried natively and handed off250, then removed.
 Both final primary handoffs show DSN2.0.0/status=sent; candidate queue is **empty**.
-User mailbox receipt remains for lead to confirm jointly; SMTP handoff is proven.
+User confirmed both support test messages arrived; SMTP handoff and receipt are proven.
 
 ## Persistence and exact fault cleanup
 
@@ -116,3 +116,28 @@ absent-milter policy remain public-cutover gates from the design. No public IP,
 CentOS, primary, DNS-fleet, source integration or lifecycle operation occurred.
 Claim13ba611e-2f87-4036-b958-b0e056e13da7 remains with lead under the existing
 verification/integrated-lineage policy; this receipt does not release it.
+
+## Confirmed receipt and authentication limits
+
+User confirmed receipt of both messages. Read-only public TXT queries through
+1.1.1.1 at2026-11-04T17:11:25Z returned NOERROR, flagsqr/rd/ra, TTL3600:
+
+```text
+vpsfree.cz: v=spf1 a mx a:vpsfree.cz a:mx2.vpsfree.cz a:prasiatko-mail.vpsfree.cz a:vpsadmin.vpsfree.cz a:lists.vpsfree.cz a:mail.snajpa.net a:mxproxy.vpsfree.cz a:rt.vpsfree.cz -all
+_dmarc.vpsfree.cz: v=DMARC1; p=none; rua=mailto:podpora@vpsfree.cz; ruf=mailto:podpora@vpsfree.cz
+```
+
+SPF is published; DMARC requests monitoring, not quarantine/rejection. Both
+exact submitted EMLs have From:podpora@vpsfree.cz and the same SMTP envelope
+sender, with no DKIM-Signature, Authentication-Results, Received-SPF or
+Return-Path header in the local input. Return-Path and receiving authentication
+results can be added later; input-file absence does not establish delivered
+mailbox headers or the primary's policy decision. We did not inspect those headers.
+
+Recorded172.16.106.40 is the workspace-to-candidate SMTP client, not proof of
+the source the primary saw. Candidate configured privateIP172.19.9.22 is known;
+actual outbound/NAT identity was not captured. Thus no SPFpass/fail inference
+is justified. Acceptance of these two own-domain recipient deliveries does
+not prove acceptance from arbitrary sources or relay to unrelated domains.
+No primary connection, new test traffic, DKIM-selector discovery or policy
+change was performed for this question. Raw TXT proof:mail-auth-public-dns.json.

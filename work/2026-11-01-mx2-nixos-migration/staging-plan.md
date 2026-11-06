@@ -1,4 +1,105 @@
-# Deploy and verify the private mx2 candidate
+# Nov6 execution complete
+
+The public cutover is verified: the transferred IPv4/IPv6 addresses and routes,
+restricted bootstrap, real trusted ACME/Postfix certificate, final ordinary switch,
+services/queue, DNS/PTR and both primary connection paths passed. Public IPv4 SMTP,
+trusted TLS and unrelated relay denial were checked by the owner. The user's
+external IPv6 TLS verification and corrected-client `554 5.7.1 Relay access denied`
+close the corresponding IPv6 checks. No reboot or additional message was needed.
+
+See [current state](state.md) and [deployment evidence](public-profile-preparation.md).
+The numbered Nov5 checklist below is the retained completed execution contract.
+Monitoring-consumer activation and default integration remain separately scoped;
+keep old VPS 2992/disk and the active machine claim until their recovery/release
+conditions are satisfied. No further cutover test or cleanup is requested.
+
+# Nov5 owner checklist: prepare privately, hand over later
+
+Private staging is complete at084488/4pc5: both marked messages arrived, queue
+persistence passed through service/VPS restart, services are healthy and the queue
+is empty. Keep those results and the protected original Postgrey backup. The
+large NixOS upgrade is already complete; **no further reboot or input refresh is
+planned**. Public IPs are not needed for edit/review/build/copy. The user agreed to
+that preparation; public handover/old-host actions still need concrete approved
+execution instructions. No additional mail or default integration is authorized.
+
+1. **Implementer0: prepare two configurations now on the private workspace.**
+   Implement the released [design.md](design.md) package using the exact deployed
+   inputs. Bootstrap keeps the existing SMTP source ACL while adding hostname,
+   native ACME/TLS, HTTP80 and normal metadata/monitoring. Final differs only by
+   opening TCP25/removing that temporary ACL. Done when both source identities
+   and refs are preserved, quick checks pass and the final history is reviewable.
+2. **Lead: coordinate independent review, builds and private copy.** Review both
+   variants; build and copy their exact native generations through172.19.9.22,
+   retaining084488 recovery and all source/input/output receipts. Done when both
+   prepared generations are verified and named explicitly. Leave084488 running;
+   do not start HTTP-01 attempts while public DNS still routes to CentOS. The
+   recipient-export/SPF/DMARC discussion does not block this preparation.
+3. **Lead + authorized VPS operator: agree and execute the later handover.**
+   First inspect/drain the old CentOS VPS2992 queue through normal SMTP, retain
+   its disk and a path to deliver any remaining queue. The user confirmed shell
+   access to2992 remains available without its IPs.
+   The single transfer action for the operator is: in vpsAdmin, remove the exact
+   public37.205.11.114 and2a03:3b40:100::1:95 allocations from VPS2992, wait for
+   successful removal transactions, then assign their routes **and host addresses**
+   to VPS27627's existing interface; retain its separate172.19.9.22 allocation.
+   Use native IP `free` then `assign_with_host_address` actions, or their normal
+   WebUI equivalents. Do not choose disown/release ownership, route-only assignment,
+   interface removal or network disable. Confirm the selected allocation/prefix
+   contains only the intended addresses; a confctl /128 does not prove the size of
+   the API allocation. Never overlap ownership. Keep public DNS unchanged when
+   reusing the same IPs. Done when both transaction chains finish and v4/v6 routes,
+   guest addresses and private management reach the intended guest. The
+   still-running084488 firewall retains the exact SMTP source restriction during
+   transfer, so general public SMTP is not exposed at this step.
+4. **Lead: ordinary-switch the reviewed bootstrap generation AFTER handover.**
+   No reboot. HTTP80 becomes reachable for native ACME; general SMTP remains
+   restricted even while the provisional self-signed certificate exists. Verify
+   actual addresses/routes/PTR, hostname, DNS, services and native HTTP-01 issuance.
+   Done when the real certificate has the correct hostname/trusted chain and
+   Postfix uses it, with renewal/reload configured. On issuance failure retain the
+   gate and diagnose; do not switch final or relax certificate validation.
+5. **Lead: ordinary-switch the exact reviewed final generation.** This removes
+   only the temporary SMTP restriction. Done when public IPv4/IPv6 SMTP and
+   STARTTLS, unrelated-relay denial without DATA, final-source primary forwarding
+   path, queue health and normal monitoring are verified. No new message campaign
+   or primary outage. Activate only the separately scoped monitoring consumers.
+6. **Lead: recover if needed without discarding mail.** Close new ingress and
+   reconcile both queues; reverse address ownership without overlap if necessary.
+   Keep/drain anything NixOS has accepted even if CentOS resumes ingress. Never
+   copy/delete spools or assume generation rollback restores database contents or
+   IP ownership. Preserve the Postgrey backup and recorded system generations;
+   select rollback only after checking current-state compatibility.
+
+Lead verifies the exact held machine binding before each later committed
+activation batch. Preparation does not grant public cutover, primary changes,
+default integration or session lifecycle actions. The older boot/reboot proposal
+is superseded by this ordinary-switch sequence; historical material below is not
+an additional operator checklist.
+
+Local-source handover evidence: vpsAdmin `IpAddress.Free` removes an allocation's
+host addresses and route; `AssignWithHostAddress` adds the route and selected host
+address. Their native chains use address-specific `osctl ct netif route`/`ip`
+operations, not VPS stop/reboot or whole-interface replacement. This supports a
+live transfer preserving an unrelated private allocation; it is not proof of
+the deployed old backend or current network eligibility. Source references are
+`api/lib/vpsadmin/api/resources/ip_address.rb`, the network-interface AddRoute/
+DelRoute chains and `libnodectld/lib/nodectld/network_interface.rb`, read from the
+configuration's existing pinned vpsAdmin input. Assignment rejects an allocation
+already in use, with incompatible ownership or unavailable in the target location.
+
+**Operator-confirmed handover:** the user stated, "old vps id is 2992. I can get
+its shell without IPs, yes." Transfer is therefore from old2992 to candidate27627,
+whose private management172.19.9.22 is retained. The two API allocation IDs/prefixes
+and target interface ID are ordinary operator selections in the existing vpsAdmin
+view at handover, not information needed now. Confirm location/ownership eligibility
+before removal; no node or CLI command is invented. No vpsAdmin CLI was present
+under the ordinary command names checked;
+no tool was installed and no API/login/host probe occurred. This does not delay
+the released build package; lead will present the one transfer step with those
+concrete selections after both generations are ready.
+
+# Historical plan: deploy and verify the private mx2 candidate
 
 Current readiness: after the user's clean reboot, BOOTED/current/profile all run
 the deployed084488/4pc5 system. Strict SSH and broker/logind/resolver/Postfix/firewall

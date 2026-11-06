@@ -1,6 +1,24 @@
 # mx2 NixOS migration and automated verification
 
-## Current status: private staging deployed and live checks passed
+## Nov6 current checkpoint: public cutover verified
+
+The user moved both public addresses from VPS 2992 to 27627. Lead verified the
+addresses and routes, activated the reviewed TLS bootstrap, verified a trusted
+certificate in Postfix, then activated the final public configuration. Actual
+source/profile, services, queue, DNS/PTR, public IPv4 and IPv6 trusted SMTP/TLS and
+unrelated relay denial all pass. The user supplied the final external IPv6 result
+using the corrected reply-aware client. Both public source addresses also reach
+the primary SMTP service; no new delivery message was submitted. No reboot,
+source/input update or rebuild was needed. See [state](state.md) and the
+[deployment receipt](public-profile-preparation.md).
+
+Public-cutover acceptance is complete. Remaining work is the separately scoped
+monitoring-consumer rollout and fresh-target configuration/master integration.
+Preserve old VPS 2992 and its disk/shell; old queue count was not independently
+measured. Retain the claim and active session until integration/release conditions
+are satisfied. No additional tests or old-host cleanup are currently needed.
+
+## Nov5 preparation snapshot
 
 On 2026-11-04 the reviewed084488 build was deployed to VPS27627/private172.19.9.22.
 Clean reboot completed the new system transition. User-authorized reset of unused
@@ -12,8 +30,37 @@ The real primary accepted both marked podpora messages. The second retained its
 exact full payload/envelope across a Postfix restart and VPS reboot while only
 candidate-to-primary SMTP was blocked; the exact fault was removed and the queue
 drained. [Final result](candidate-deployment-result.md) and [state](state.md) hold
-source/artifact/claim and verification evidence. User mailbox receipt is pending.
+source/artifact/claim and verification evidence. The user confirmed both messages arrived; mailbox receipt is verified.
 Source/default integration and public-address cutover remain separate.
+
+On Nov5 the user asked for concrete ownership/steps, corrected the unnecessary
+second reboot, and said "agreed, proceed". Prepare/review/build/copy two native
+configurations using the deployed inputs and private172.19.9.22: TLS bootstrap
+with the current source-only SMTP ACL, and final public SMTP. Ordinary switches
+are planned; no publicIP is needed during preparation, no new OS/input update or
+reboot is planned. [Current owner checklist](staging-plan.md) gives the exact
+order; [released design](design.md) owns source/check boundaries. Architect0 owns
+the brief, implementer0 owns the complete source package, and lead owns review,
+build/copy coordination and the eventual operator handover.
+
+The user identifies the old CentOS VPS as2992 and confirms shell access without
+its publicIPs. Candidate is27627. The later handover removes the exact public
+routes/hostaddresses from2992 before assigning them to27627, preserving private
+management and bothqueues/disks. Certificate issuance and the two ordinary
+switches follow that transfer; final SMTP opens only after trustedTLS verification.
+Use current tested shared mail policy for this migration; recipient export/sync
+and broader SPF/DMARC changes remain followups. No more mailpayloads are authorized.
+
+Public preparation is now complete: reviewed bootstrap27fcf245/native generation
+2026-11-05--13-04-34 and finalb120342c/generation2026-11-05--13-11-54 built and
+copied successfully. Final mx2 plus four actual monitoring consumers built; DNS
+behavior and baseline VM coverage were reused with exact evidence. One strict
+read-only guest check verifies both copied identities, unchanged running084488,
+healthy services/private network and queue0. See
+[public-profile-preparation.md](public-profile-preparation.md) for complete evidence.
+The user-facing next step is the old2992 queue/IP handover, followed by lead-owned
+bootstrap/certificate/final-switch verification. No source or build work remains
+in this preparation package; source integration needs later fresh-target work.
 
 ## Prior staging preparation scope (executed)
 
@@ -48,12 +95,10 @@ is at most two clearly marked small synthetic messages (normal and temporary
 queue/recovery), same return address, no deliberate live failure/DSN campaign.
 User receipt confirmation suffices; no mailbox credentials are requested.
 
-Activation requires exact configured-machine claim admission under installed
-coordination policy. The catalog currently has only aitherdev; no candidate27627
-mapping or supported dynamic registration exists. Prepare/review/build the
-candidate independently; do not use a surrogate claim or expand into a runtime
-project. Resolve this concrete prerequisite before activation. No activation or
-live test mail has occurred yet.
+Historical admission was resolved by the user's workspace update and native
+schema2 repository-machine identity. No catalog edit is needed. Claim13ba remains
+held for the deployed target; private activation and the two controlled live
+messages completed successfully, as recorded above and in state.md.
 
 ## Completed automated-verification phase
 
@@ -165,6 +210,7 @@ must distinguish isolated repeatable checks from production acceptance evidence.
 ## Decisions
 
 - Initial scope: branch import/rebase and verification recommendation; delivered.
-- Current scope: execute isolated verification and candidate fixes autonomously.
-- No default-branch integration or deployment approval supplied.
+- Completed: isolated verification, private candidate deployment and two user-confirmed deliveries.
+- Current scope: prepare/review/build/copy bootstrap and final public configurations at frozen inputs.
+- Existing candidate deployment authority persists; no default integration or public-address transfer has been performed or approved by the preparation release.
 - Session remains open and active.

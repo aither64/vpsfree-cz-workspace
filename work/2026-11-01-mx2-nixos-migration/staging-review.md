@@ -95,3 +95,79 @@ and final source identity remain later cutover gates.
 
 Reviewer performed local reads/evaluations only; no file/Git mutation, build,
 production probe, deployment, mail, claim or lifecycle action.
+
+
+# Nov5 final independent review: public profile and TLS bootstrap
+
+Reviewer0 (thread01a19caf-15c8-74a2-baf1-6594cf30d117) independently verified same-session
+identity and saved Sol/xhigh/read_only settings. It applied mandatory-change-review
+and all four lanes: general, architecture/repetition, scope/proportionality, and
+risk/compatibility. High risk is public SMTP/TLS/firewall and deployment ordering.
+No overrides, fallback, nested agents, substantive authorship or remote mutation.
+
+**Accepted: no Blocking or Important findings.** The complete committed package
+and quick checks permit the required native builds and private copy while084488
+remains active. Public handover, old-host actions, cutover switches and integration
+retain their separate authority. Source remains frozen at the reviewed identities.
+
+- Base c4107822060e9e34b24a83950d618c9f28a7722b.
+- Final b120342c4517b6faa1a519913ab92acafbc506f3.
+- Sibling bootstrap27fcf245fdfa3b1bff78815481d9bb954d915146.
+- Both parent actual deployed0844881779d62d9a6a86d2bacd61d21565b33932.
+- Full final range13 paths769 additions/4 deletions; new public delta3 files42/13.
+- Fresh observed masterf4069909b55fbed907cb658f350ec6a59f97e05a, deliberately not
+  rebased because current selected OS inputs are frozen. This is not a claim of
+  fresh-default integration readiness.
+
+Reviewer independently checked clean state, full diff/history/parents, whitespace,
+published SSH refs and exact lock SHA507e781c2fa52da5a389e6eab824efe68baa72b1727de0fc162ea0a5e6b4c098.
+Both source locks/semantics equal deployed084488; nixpkgsStable718f670e and
+vpsadminosOsStagingb45b27b4 unchanged. Owner evidence is in
+[public-profile-preparation.md](public-profile-preparation.md), generated assertion
+exports, consumer comparisons and exact system table linked there.
+
+Native ACME/Postfix design was independently inspected: local base certificate
+unit only in Requires/After, no network-order dependency or cycle; provisional
+and real certificate files preserve acme:postfix restricted ownership/permissions;
+key precedes chain, inbound TLS is opportunistic, renewal reloads Postfix. Bootstrap
+retains exact workspace-only SMTP and general22/80; final changes only the SMTP
+gate to general22/25/80 on both families. Exporter9100 stays limited to172.16.4.10/18.
+Keys/Postgrey/resolver/transport match deployed state; main.cf changes only
+myhostname and the two intended inbound TLS settings. Public metadata does not
+allocate addresses. No auto-update, recipient-sync/scanner or extra framework.
+
+Ordinary switches are appropriate after the old2992-to27627 handover, with both
+artifacts prepared in advance, trusted certificate verification before public SMTP,
+and both queues/disks retained. No second reboot required. Domain-wide acceptance/
+backscatter and absent fail-open milter are explicit baseline limitations, not
+newly introduced behavior. The actual host ACME/TLS path remains a live cutover
+check; no certificate issuance or public readiness is claimed by source review.
+
+Required builds: bootstrap mx2 plus final mx2/mon1/mon2/alerts1/alerts2. Consumers
+only add mx2 exporter/ping entries and inhibition. DNS only changes revision
+metadata, so no behavioral rebuild; do not claim new DNS closures built. The
+historically passed8pan VM root exactly equals both variants; reviewer reproduced
+native envelope hashd1e739bbeefe29f257dbb3a5e27558bb2183fe48314d324fa59a7ee661191255
+and prior4038-node graph bindinge366b1480f8650a403de926389d537a45e9652f37ea962422ba2117ba0915c96.
+Retain historical-pass/current-output-unavailability qualification. No new VM
+runtime run needed. A selected ACME derivative was absent in the reviewer's local
+store; it inspected pinned source and exported generated text, not every realized
+leaf. Planned builds supply actual realization evidence.
+
+Complete final history548514a9(host/private),e7cd91d8(DNS),08448817(tests/docs),
+b120342c(public profile) is coherent. No obsolete unconsumed fixup or abandoned
+implementation. Deployed084488 is a supported state boundary. Bootstrap27fc is a
+necessary separate cutover ref and is not a final ancestor; never call it literally
+merged. Successful final deployment can establish its substantive successor only
+after execution. **No schema/database migrations and no feature-owned repeated
+input/channel update stream.** Prior Postgrey reset remains separately authorized
+operational history, not a migration or state-equivalence claim.
+
+Advisory: docs/operations/mx2.md fixture paragraph's "only differences" can be
+clearer about comparing the shared mail module; the unchanged VM does not cover
+host ACME/inbound TLS. Lead accepts this minor clarity issue without source change:
+the paragraph explicitly names the imported production mail module and the following
+section excludes actual-host verification and explicitly requires trusted-certificate
+checks before public SMTP. This receipt and the live plan state that limitation;
+no new VM case or review cycle is justified. All acceptance claims remain bounded
+accordingly. This advisory is accepted, not an unresolved blocker.
