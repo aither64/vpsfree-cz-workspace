@@ -1,4 +1,74 @@
-# Current boundary: private staging verified; primary filtering interpretation
+# Current boundary: integration preparation after managed-key removal
+
+## Nov6 local integration assessment
+
+User approval "okay, you can merge it when done" covers
+`vpsfree-cz-configuration/master` after managed-key removal. This supersedes the
+earlier no-integration statements and frozen-baseline preparation below. Lead owns
+activation/integration; implementer0 exclusively owns checkout/Git. Finish and
+reconcile the current key-removal activation before any rebase. Actual rollout
+facts stay in [state.md](state.md) and existing receipts, not in final feature
+commit structure. No monitoring-consumer activation is approved.
+
+Read-only comparison used feature `fe7a8c1130356bc185b0c2b8f17916645277e976`, base
+`c4107822060e9e34b24a83950d618c9f28a7722b`, and fetched target
+`85b38f1cd07d6b3a0fde3eefd32258f747e757e5`; no evaluation or fetch was performed.
+Target adds five commits touching only `flake.lock` and
+`configs/webs/foto.vpsfree.cz.nix`, with **zero overlap with the13 feature files**.
+The feature does not change the lock. Ordinary rebase should therefore preserve
+the three feature patches; verify rather than assume that result. Adopt the
+target's lock as-is, without restoring old global pins or changing unrelated work.
+
+- `nixpkgsStable` remains exact718f670e, and `confctl` remains7bee58a5 with its
+  complete transitive graph unchanged. Their behavior is not refreshed here.
+- Selected `vpsadminosOsStaging` advances b45b27b4 to dd188397. Its transitive
+  input graph is unchanged in this composed configuration; native upstream lock
+  updates do not replace the configured nixpkgs follow. The whole
+  `os/lib/nixos-container` tree is identical at Git tree
+  `64f7cb62d46b77fb29c799e7290675c7de44e2a8`, and upstream flake.nix is unchanged.
+  mx2 imports that container module through profiles/ct.nix. Changed upstream
+  host/gem/image/CI files do not establish a changed guest runtime.
+- Other target lock changes affect devWorkspace, vpsadminServices/Staging/Webui,
+  vpsadminosStaging and notification-template graphs. The gallery configuration
+  change is unrelated to mx2. Keep them; do not widen this migration into their
+  deployments or roll their pins back.
+
+Smallest subsequent preparation, after the current activation settles:
+
+1. Owner preserves fe7 and actual consumed rollout refs, rebases the three patches
+   onto the fresh target, and records old/new ranges, ordered patch IDs/range-diff,
+   final diff and unchanged migration conclusion. Patch-equivalent rebase retains
+   the user's existing merge approval; no new approval request for that operation.
+2. Run ordinary hooks/quick checks, then compare exact generated mx2 config,
+   package/service dependencies and roots with the retained fe7 evidence. Cover
+   managed-key absence without altering user-owned manual access, mail/queue/
+   Postgrey policy, ACME/TLS, firewall, networking and activation units. Confctl
+   writes both configuration and input identities under /etc, so new toplevel/
+   etc derivations are expected even with identical guest behavior. Identify
+   metadata-only changes explicitly; never equate patch IDs with runtime proof.
+3. Compare the isolated VM derivation with retained
+   `8pan3ddqairw3js87iaysvjqwzalxgls-vm-test-run-mx2.drv` and its consumed input
+   graph. Tests/module and their nixpkgs input are unchanged, so reuse is expected;
+   rerun the suite only if actual consumed changes or unresolved failure justify
+   it. Apply the existing review refresh/equivalence procedure, not an extra gate.
+   Build the new exact mx2 target; compare DNS/monitor/alert consumer roots and
+   generated deltas, building affected consumers only when their runtime changes
+   make retained results inapplicable. No unrelated gallery/workspace campaign.
+4. If the comparison establishes only provenance/input-label changes with
+   unchanged guest behavior, retain independent equivalence/lineage evidence and
+   do not activate again merely to change recorded Git revision. If meaningful
+   guest behavior changes, review/check that delta and perform a newly verified
+   deployment before claiming that successor represents the deployed behavior.
+   No reboot follows from the currently observed source changes. Keep actual
+   deployed SHAs/closures honest; an old nonancestor need not appear in final Git
+   history or be described as literally merged.
+
+Lead then performs the ordinary fresh-target fast-forward integration under the
+short repository claim, with hooks/push/remote proof. If target moves, reconcile
+the new delta outside the claim. This assessment does not merge, rebase, build,
+activate, release a machine or create a new verification subsystem.
+
+# Historical preparation and primary filtering interpretation
 
 Private staging at source084488 is complete: both marked messages reached
 `podpora@vpsfree.cz`, including queue persistence through service/VPS restart;

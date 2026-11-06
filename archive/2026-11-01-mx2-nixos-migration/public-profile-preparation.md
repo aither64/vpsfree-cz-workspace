@@ -307,3 +307,184 @@ families, actual source/profile/services, DNS/PTR, certificate/renewal and prima
 connection paths now have the required evidence. The last observed queue was
 empty. Monitoring consumers remain built only; configuration/master integration,
 claim release and old-VPS retirement remain separate obligations and authorities.
+
+## Authorized public forwarding test completed
+
+User explicitly requested one additional real forwarding message after cutover.
+Prepared immutable [public-forwarding-test.eml](public-forwarding-test.eml),
+513bytes/SHA256`499ff859fb4211170063c53da02802281d04f400b5a1555bc4fd8b4be2585191`, subject
+`[mx2 public TEST] forwarding to primary`, envelope and headerFrom/Topodpora.
+Message-ID`<mx2-public-forward-0690f053dba14e0780132288d76e1693@vpsfree.cz>`; unique marker retained in
+[public-forwarding-test.json](public-forwarding-test.json).
+
+Strict preflight final9ywq4/cleanb120, mailhealthy, queuebaseline0. PublicIPv4
+reply-aware SMTP with trusted hostname-verified STARTTLS accepted exactoneDATA
+as mx2queue`8521868783` at`2026-11-06T20:52:59.559631+00:00`. No greylist/client retry
+or nativequeueaction. Own queue logs prove primary endpoint
+prasiatko-mail.vpsfree.cz[37.205.15.53]:25 returned final2502.0.0, primaryqueue
+`ED634234C3B`, dsn2.0.0/statussent; ownID thenremoved. Ownqueue0 and overallqueue0.
+Loggedtls=may describespolicy; no negotiated outboundcipher is claimed. This
+proves primary handoff, with mailbox receipt still optional/unconfirmed. No
+source/Git/build/deploy/fault/primary/state/claim/lifecycle change or operation
+remaining. Exactlyone additional submittedmessage, authorized separately from
+the earlier two private-testpayloads.
+
+## Nov6 requested managed-key removal: committed quick candidate
+
+User requested removing managedaither.aitherdev while retaining their manual
+rootkey for later removal. Appendcommit`8e8f2404176e05f70d31926a7a298ff54ae7b888` removes only
+that hostconfig line above actuallydeployedb120; no rewrite/rebase/inputrefresh.
+Normalhooks/parse/nixfmt/whitespace pass; sourceclean, complete lock unchanged.
+Generatedrootkeys9→8 lose exactlySHA256:38gX47C2LkQgccktDtHa27hPk8wXo3kXLMGUQSnswK0;
+toms/allotherlines byte-identical/inorder. sshdconfig/allunits unchanged; only
+etckeyfile+cleanrevisionreceipt differ; activationscript onlyreferencesnewetc.
+Native candidate`/nix/store/pz18m1wn5v9mfby068fndyh0jkdmr0gc-nixos-system-mx2-26.05.20261026.718f670.drv` → `/nix/store/b4d1w2b7vglh0j2yk29qlx3jr9w33fby-nixos-system-mx2-26.05.20261026.718f670`
+is evaluated, not built/deployed yet.
+
+Strictread-onlypreflight21:00:26Z foundfinal9ywq4/cleanb120, mailhealthyqueue0,
+manual/root/.ssh/authorized_keys regularroot:root0600 with expectedfp once.
+Baselinehash`ccb82af6b6b6b1e7baa9aaa815701119a5521b3ed7c2a15305788134f7dcd689`/metadata retained in
+[public-key-removal.json](public-key-removal.json). Exact deployed global
+AuthorizedKeysFile supports%h/.ssh/authorized_keys; newsshdconfigderivation
+identical. Remote selected-T output was empty/local-T lacksroot hostkeys; no
+privatekeys read, no claimed-T success. Manualfile untouched and must stayso.
+Full generated/inputgraph evidence linked from JSON; priorVM/mail evidence
+retained forunchangedsharedpaths, nounrelatedconsumerreevaluation/testcampaign.
+
+Updated wholebranchseriesc410..8e8f:548514a9host/sharedmail, e7cd91d8DNS,
+08448817tests/docs(deployedprivate), b120342cpublicservice(actuallydeployed),
+8e8f2404keyremoval. Bootstrap27fc is consumedcutoverref; deployed084488 andprior
+recoveryrefs retained. No migrations or own input-update stream. New source is
+reviewready; lead owns retainedreviewer0, singlecandidatebuild and lateractivation
+validation/manualfileunchangedproof. No remote mutation ormail inthispackage.
+Ordinary fast-forward featurepushb120→8e8f succeeded; freshSSHremoteproof
+and c410..8e8f capturedcomparison recorded in JSON. Reviewedbootstrap/deployed
+refs preserved; no branchCIruns. Owner source remainsfrozen pendingreview/build.
+
+## User-directed history consolidation supersedes append-only packet
+
+Prior append-only history judgment is superseded. USER directed folding the
+key removal into the actual introducing hostcommit548514a9. After old8e8f build
+settled, preserved actual-public-deployedb120 and reviewed/build8e8f explicit
+refs, then reconstructed from unchangedc410 with normalhooks on allfourcommits:
+58cb91ddhost(keyabsent),19021562DNS,2a5b498ctests,3bb962f4publicservice.
+Newfinalhead`3bb962f4593eb571843d5135b8ddde097a1a6bf0` has EXACT reviewed8e8f
+tree`8b7548a81cdfbfe0f15bd5f14bd8d6d1a41970f9`; frozenlock/inputs unchanged.
+Range-diff shows standalonefixupgone, hostonlykeydeletion, DNS/testpatchequal,
+publicpatchcontextonly. Sourceclean; exactlease8e8f→3bbpublished; comparison
+c410..3bbcaptured. [Consolidation proof](public-key-history-consolidation.json)
+and [range-diff](public-key-history-range-diff.txt) bind full old/newseries.
+
+Consumed084488/b120/27fc and priorrecovery refs remain; olddeployed084488/b120
+are NONANCESTORS of rewrittenfeature. Do not call them literallymerged. New
+successor must be built/deployed/verified; tree equality alone is not newruntime
+proof. Old8e8fbuildgeneration2026-11-06--22-10-59 is superseded, neverfordeploy.
+Nativeexact3bbcandidateevalpasses: y2q04chmh4l02zj8wjwhjcdq1lsc075f.drv →
+4260zm6zr5gpdd3sj9jwnphk89g9yzvs-system, UNBUILT. Compared8e8fgeneratedetc
+changesonly cleanrevisionreceipt; managedkeys/sshd/allunits identical.
+Completeinputgraph unchanged; no VM/consumer campaign, guest/manualfile action
+or newcontent. Retainedreviewer0 received focusedhistorypacket; lead owns new
+nativebuild/generation and actualsuccessoractivation. No migrations/inputstream.
+
+## Final USER-directed three-commit structure
+
+Four-commit rollout-stage reconstruction is superseded, not for build/activation.
+Finalhead`fe7a8c1130356bc185b0c2b8f17916645277e976` has three logicalcommits on
+SAMEc410:8d06b0b6finalmx2configuration,ee03ebabinternalDNS,fe7a8c11tests/opsdocs.
+Public hostconfig/module are entirely in firstcommit; final TLS operations text
+is in third. Messagesdescribe finalbehavior. ALL3normalhooks pass without
+warnings. Finaltree8b7548a81cdfbfe0f15bd5f14bd8d6d1a41970f9 EXACTLYequals8e8f/3bb;
+lock frozen. No extra content, rebase/inputrefresh, reconstructionrefs or guest
+actions. Deployment history survives only in existing recoveryrefs/receipts,
+not final commitstructure; olddeployedb120/084488 are nonancestors.
+
+[Three-commit range-diff](public-key-three-history-range-diff.txt) and existing
+consolidationJSON.finalThreeCommitConsolidation bind tree/series/provenance.
+Retainedreviewer0 received the exact THREE-commit focusedhistory packet. Old8e8f
+generation and unbuilt3bb must not be deployed; exactfe7source needs its own
+normal nativegeneration and verification, with no new behavior/VMcampaign.
+Finalthree focusedhistory accepted by reviewer0/lead. FreshSSHremoteproof
+confirmsfe7feature and all existingrecoveryrefs; CIlist empty. Exactnativefe7
+evaluation `/nix/store/snyw1zg50kb6fgbj55wv3n8bymik7wx5-nixos-system-mx2-26.05.20261026.718f670.drv` → `/nix/store/5gjb3k3arwkvn5hq2y27d8jgfnwmgsjj-nixos-system-mx2-26.05.20261026.718f670` passed,
+unbuiltpendingleadbatch. SourceNAR/lock identicalcontent; cleanrevisionreceipt
+changesnativeidentity. No additional owner evaluation/source/guest operations.
+
+Exactfe7nativebuild verified exit0/68.90s, generation`2026-11-06--22-24-51`,
+output`/nix/store/5gjb3k3arwkvn5hq2y27d8jgfnwmgsjj-nixos-system-mx2-26.05.20261026.718f670`, deriver`/nix/store/snyw1zg50kb6fgbj55wv3n8bymik7wx5-nixos-system-mx2-26.05.20261026.718f670.drv`,
+NAR`sha256-daazeCMSfp1BgqrZFbavXgXeuscP83MOo3RSKXTA4pw=`. Cleanfe7source/rolelinks+NARs match;
+actualmanagedkeys loseexactrequestedfp/otherkeysretained; sshdconfigidentical
+andmanualpathsupported. [Build proof](public-key-final-built.json). Actualcommand
+hadtrailingdot; pinnedCLIusesargs[0]only, nativeinventory/logexactlyone mx2
+target/onegroup. Noextra systemselected/rerun/guestprobe. Leadcanselectonly
+newliteral22-24-51generation; older8e/3bb remain superseded.
+
+## Key removal successor actually deployed and verified
+
+Lead ordinary-switch ofliteral2026-11-06--22-24-51 settled. Strictread-onlySSH
+21:30:03Z exit0/0.414s confirmscurrent/profile5gjb3k3/cleanfe7, systemprofile7.
+BOOTED4pc5 and bootIDce6c77e2-986c-42ac-af10-b77d3c8ef5ff unchanged.
+Managedrootkeyfingerprintabsent; remoteSHA287d951c… equalsproven8keyfile, so
+allotherkeysretained. Manual/root/.ssh/authorized_keys EXACTbaselineSHA
+ccb82af6b6b6b1e7baa9aaa815701119a5521b3ed7c2a15305788134f7dcd689, metadata
+(rootroot0600,size834,inode137146,mtimeNov3) unchanged; aitherfpstillonce.
+Manual+managedAuthorizedKeysFiledirectiveunchanged. System/mail/SSH/firewall
+healthy, nojobs, queue0. [Actual proof](public-key-final-activation-verification.json).
+No manualfileedit/reboot/newmail/sourcechange; newfe7successoractuallyverified.
+Olddeployedrefsremain recoveryprovenance, notancestors/literalmergedclaims.
+
+## Authorized fresh-target integration preparation
+
+Actuallydeployedfe7/5gjb keyremoval/manualfileproof remains authoritative.
+FreshSSHfetch finds85b38f1c, unchangedfromarchitectassessment. Preserved actual
+fe7ref...-deployed-managed-keys; ordinarythreepatchrebase→5941cdb3 on85b.
+OrderedstablepatchIDs/range-diffall=, entirefeaturediffbyte-identical,13files
+same scope/no migrations/owninputstreams. Adoptedmasterlockas-is; no oldpins
+restored. OrdinaryOvercommit--diff85bNixfmt and whitespacecheckPASS.
+
+[Integration proof](public-integration-preparation.json) binds exactnewhead,
+inputgraph, expectedqb3gvij7→nsxwf7wd UNBUILT and runtimeequivalence: candidate
+etc changesONLYconfiguration-info/inputs-info; allotheretc/service/package/
+managedkey/sshd/mail/TLS/firewall identitiesequal deployedfe7. Rootonlyetc+
+activation; activationtextonlynewetcref. Stable/confctlexact; OsStagingdd188
+changesprovenance butno guestbehavior. ExactVM8pan and4038-nodeconsumedgraph
+matchpriorpass; rootcanonicald1e739/fullgraphe366b148 with historicalavailability
+qualification. No newVMrun orguestactivationmerelyforGitSHA.
+
+Allsix DNS/monitor/alert consumer comparisons similarly changeonlyprovenance:
+etcsource/inputreceipts, with identicalremainingetc,ALLunits and otherdirect
+runtimepackagedependencies. No newconsumerbuild/activationrequiredforruntime;
+newexpectedoutputsareunbuilt. Existingconsumeractualbuildproofsretained.
+Exactleasefe7→5941featurepublication succeeded; comparison85b..5941captured.
+Targetcheckout.../vpsfree-cz-configuration-integration-target exact85bclean,
+detached, nativeenvironment/bundle+Overcommitready. Initialpost-checkoutmissing
+gems refusal resolved throughordinarynixdevelop, nobypass. Lead owns short
+claim/freshcheck/ffmerge/hooks/SSHpush/proof/release; ownerhasnotmerged.
+
+Final5941nativebuildactualproofPASS(exit0/51s), exactonehost, generation
+`2026-11-06--22-40-31` → `/nix/store/nsxwf7wd0d53cwds6bll58bzdhlgkrb2-nixos-system-mx2-26.05.20261026.718f670`, deriver`/nix/store/qb3gvij7i0grwn1g15x15k823mxdl7y0-nixos-system-mx2-26.05.20261026.718f670.drv`,
+NAR`sha256-2CyWvkVaTz3/oAm8nkpLuVkjS7EiDRHeHLanm/Wp9EI=`. OriginalgenerationJSON/SHA+links, clean5941
+source/embeddedroleinfo, complete source+selectedroleNARsmatchpreparedproof;
+managedkeys/sshd equalactuallydeployedfe7. [Actual build](public-integration-built.json).
+Native reportedlogpresence=False; completewatcherlog/resultretained.
+No owner evaluation/build/Git/guestaction. Actualguestremainsverifiedfe7/5gjb;
+metadata-onlyequivalent5941source readyforapprovedleadmerge, not claimedactivated.
+
+## Final integration and ownership release (Nov6)
+
+Under the user's explicit merge approval, lead integrated exact
+5941cdb3dda259e91c6a988a7dbf08c84700b326 by ordinary native-environment
+fast-forward from85b38f1 and non-force SSH push. Fresh remote master and feature
+both equal5941; hooks remained enabled and emitted no failure. The complete
+three-commit series and final diff match the accepted independent review.
+Exact-head CI query returned no runs. Clean temporary integration target removed;
+feature and recovery refs retained. See public-integration-remote-proof.json.
+
+Actual fe7/5gjb deployment is the independently proven runtime-equivalent
+predecessor; it is not literally merged and5941 is not claimed deployed. The
+successful new build and current review establish integration readiness without
+another activation just for source/input receipts. Managed key removal remains
+verified, manual key file untouched and removable by its user owner. Repository
+claim released21:43:36Z; exact mx2 claim released21:43:45Z and resulting released
+status verified after integrated-lineage/effect prerequisites passed. No command
+remains active. Monitoring consumers remain built only; old VPS/disk, queue and
+Postgrey recovery evidence remain retained. No lifecycle action taken.

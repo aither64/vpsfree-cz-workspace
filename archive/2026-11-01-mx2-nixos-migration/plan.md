@@ -1,22 +1,31 @@
 # mx2 NixOS migration and automated verification
 
-## Nov6 current checkpoint: public cutover verified
+## Nov6 current checkpoint: public cutover and managed-key removal verified
 
-The user moved both public addresses from VPS 2992 to 27627. Lead verified the
-addresses and routes, activated the reviewed TLS bootstrap, verified a trusted
-certificate in Postfix, then activated the final public configuration. Actual
-source/profile, services, queue, DNS/PTR, public IPv4 and IPv6 trusted SMTP/TLS and
-unrelated relay denial all pass. The user supplied the final external IPv6 result
-using the corrected reply-aware client. Both public source addresses also reach
-the primary SMTP service; no new delivery message was submitted. No reboot,
-source/input update or rebuild was needed. See [state](state.md) and the
+Public IPv4/IPv6 SMTP, trusted TLS, relay denial, DNS/PTR and both primary
+connection paths passed. One additionally authorized message was forwarded to
+the primary and the user confirmed receipt. No further mail test is needed.
+
+The requested aither.aitherdev removal is now deployed at fe7a8c11/system5gjb;
+actual managed absence, retained other keys, healthy SSH/mail and empty queue
+passed. The user's manual authorized_keys file is byte/metadata-identical and
+remains their later removal action. No reboot or additional source/input update.
+The final feature series is three implementation-focused commits, not rollout
+history. Prior mistaken history dispositions are superseded in the review record.
+
+User "okay, you can merge it when done" authorized this feature into
+vpsfree-cz-configuration/master. Exact final5941cdb3 was independently reviewed,
+built and fast-forwarded/pushed to master on Nov6; fresh remote proof passes.
+Rebase preserved the three patches and adopted master inputs without runtime
+changes beyond provenance. Actual deployedfe7 remains healthy and equivalent;
+no extra activation or reboot was needed. Repository and machine claims are
+released. See [state](state.md), [review](staging-review.md) and
 [deployment receipt](public-profile-preparation.md).
 
-Public-cutover acceptance is complete. Remaining work is the separately scoped
-monitoring-consumer rollout and fresh-target configuration/master integration.
-Preserve old VPS 2992 and its disk/shell; old queue count was not independently
-measured. Retain the claim and active session until integration/release conditions
-are satisfied. No additional tests or old-host cleanup are currently needed.
+Monitoring-consumer activation and old-VPS retirement remain separate. Preserve
+old2992 disk/shell and recovery state. The user may remove their manual SSH key;
+the managed copy is already absent. Session remains active for the separately
+scoped monitoring rollout; no archive/delete/stop action is authorized.
 
 ## Nov5 preparation snapshot
 

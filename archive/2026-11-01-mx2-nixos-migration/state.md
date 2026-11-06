@@ -1,12 +1,120 @@
 ---
-lifecycle: active
+lifecycle: archived
 ---
 
-# mx2 migration: public cutover verified
+# mx2 migration: deployed and merged
 
-## Current phase (2026-11-06)
+## Current phase (2026-11-06): approved migration integrated; monitoring rollout remains separate
 
-VPS 27627 now runs the reviewed final public configuration, source
+- [x] Public cutover and delivery accepted, including user-confirmed mailbox receipt.
+- [x] Managed aither.aitherdev key removed and deployed; manual key file untouched.
+- [x] Final three logical commits independently reviewed, built and merged to master.
+- [x] Fresh remote exact-head proof captured; repository and mx2 claims released.
+- [ ] Monitoring-consumer activation remains unapproved and separately scoped.
+
+Remote master and retained feature both equal
+5941cdb3dda259e91c6a988a7dbf08c84700b326, proven at 21:43Z. The user authorized
+"okay, you can merge it when done" for vpsfree-cz-configuration/master. Lead
+performed the ordinary fast-forward from 85b38f1cd07d6b3a0fde3eefd32258f747e757e5
+in the prepared clean target, with native environment/hooks enabled and no hook
+error, then a normal SSH push. Exact-head GitHub Actions query returned no runs;
+no CI success is claimed. The temporary target checkout was removed; feature
+and recovery refs remain. No merge/deployment command is active.
+
+The final series has three implementation commits: d40952e0 final configuration,
+7084114a DNS correction, 5941cdb3 tests/final operations docs. No standalone key
+cleanup or rollout-stage commit remains. The earlier claim that deployment
+history must constrain Git ancestry was wrong and is superseded in
+[staging-review.md](staging-review.md). No migrations or repeated feature-owned
+input update streams. Old deployment identities survive in records/refs only.
+
+The clean rebase onto fresh master preserves every ordered stable patch ID and
+complete feature-diff byte; master lock SHA256 is
+9ed71bd9511c7b4e16e0fd9f4de483e0fe4cf54d2556e715392d28e6e60eacd8.
+Retained reviewer0 (Sol/xhigh, read-only) independently accepted patch, history,
+input, runtime and deployed-lineage equivalence with no findings. Compared to
+actual fe7, only configuration-info/inputs-info and their propagated store paths
+change; packages, units, SSH keys/config, mail/TLS/firewall remain identical.
+The same provenance-only comparison holds for both DNS and all four monitoring
+consumers. Exact VM8pan and its4038-node graph reuse retain the historical-pass/
+currently-unavailable-output qualification; no repeat mail/VM campaign was run.
+
+The fresh one-host build passed exit0 in51s, native generation
+2026-11-06--22-40-31. Actual output is
+/nix/store/nsxwf7wd0d53cwds6bll58bzdhlgkrb2-nixos-system-mx2-26.05.20261026.718f670,
+deriver qb3gvij7i0grwn1g15x15k823mxdl7y0, NAR
+sha256-2CyWvkVaTz3/oAm8nkpLuVkjS7EiDRHeHLanm/Wp9EI=.
+Native generation/source/role/input proof passed. The separately advertised
+confctl log was absent; complete watcher output and exit evidence are retained.
+No new deployment was necessary solely for equivalent provenance metadata.
+
+Actual current/profile deployment remains fe7a8c1130356bc185b0c2b8f17916645277e976,
+system /nix/store/5gjb3k3arwkvn5hq2y27d8jgfnwmgsjj-nixos-system-mx2-26.05.20261026.718f670,
+native generation2026-11-06--22-24-51, system profile7. Managed fingerprint
+SHA256:38gX47C2LkQgccktDtHa27hPk8wXo3kXLMGUQSnswK0 is absent; all other managed
+keys are retained. Manual /root/.ssh/authorized_keys remains byte/metadata-identical:
+SHA256 ccb82af6b6b6b1e7baa9aaa815701119a5521b3ed7c2a15305788134f7dcd689,
+regular root:root0600, size834, inode137146, original Nov3 mtime, requested key
+present once. The user owns its later removal and may now do so. Both manual
+and managed AuthorizedKeysFile paths remain supported. Last actual check proves
+healthy SSH/Postfix/Postgrey/firewall, system running, no jobs, queue0. Booted4pc5
+and bootIDce6c77e2 remained unchanged; no second reboot.
+
+The independently proven equivalent successor is now integrated; fe7 is not
+claimed as a literal ancestor or 5941 as activated. All prior rollout states are
+superseded by verified fe7. Repository claim c9e49ef9-e2c5-4d71-b893-59232f8b0b7f
+released at21:43:36Z immediately after remote proof. Machine claim
+13ba611e-2f87-4036-b958-b0e056e13da7 released at21:43:45Z and status verified,
+after deployment effects and complete equivalent deployed lineage were proven.
+
+The user's spam question was answered using the actual test boundary:
+unauthenticated unrelated-domain relay rejection passed over IPv4 and IPv6.
+This does not prove comprehensive spam filtering or SPF/DMARC enforcement.
+Domain-wide recipient acceptance still allows later rejection/bounce backscatter;
+changing recipient/filter policy remains separate work, not a new merge gate.
+
+Remaining separately scoped work is monitoring activation for prg/int.mon1,
+prg/int.mon2, prg/int.alerts1 and prg/int.alerts2. Their earlier builds remain
+valid for behavior, but none was activated. Keep old VPS2992/disk/independent
+shell and Postgrey backup for recovery. Its old queue count was not independently
+measured here. No old-host retirement, additional mail, archive, deletion or
+session-stop action is authorized. Session stays active for the remaining rollout.
+
+Evidence: [deployment receipt](public-profile-preparation.md),
+[review record](staging-review.md), public-integration-preparation.json,
+public-integration-built.json, public-integration-build.log/result JSON,
+public-integration-remote-proof.json and public-key-final-activation-verification.json.
+Reusable host operations remain in the configuration repository's
+docs/operations/mx2.md; no further product documentation change was needed.
+
+### Additional public forwarding test: PASS
+
+The user explicitly requested one additional message through public mx2 to
+verify forwarding to the primary, extending the earlier two-message scope by
+one. Implementer0 sent the fixed 513-byte message once through 37.205.11.114:25
+with trusted TLS, from/to podpora@vpsfree.cz. Subject:
+`[mx2 public TEST] forwarding to primary`.
+Message-ID: `<mx2-public-forward-0690f053dba14e0780132288d76e1693@vpsfree.cz>`.
+
+At 20:52:59Z mx2 returned final DATA `250 2.0.0 Ok: queued as 8521868783`.
+Its own queue log then proved forwarding to
+`prasiatko-mail.vpsfree.cz[37.205.15.53]:25`, `dsn=2.0.0`, `status=sent`, and primary
+response `250 2.0.0 Ok: queued as ED634234C3B`, followed by queue-entry removal.
+Delivery delay was 0.65s. The bounded read-only observation at 20:53:22Z found
+both the own queue entry count and total mx2 queue count zero. No greylisting,
+resend, queue flush, fault or source/runtime change was needed. Exactly one
+additional DATA payload was accepted; cumulative authorized test messages are
+three, including the previous two staging messages.
+
+Primary handoff and mailbox receipt are proven: the user confirms the new
+message arrived. The log's `tls=may` is a policy indicator, not proof of a negotiated
+outgoing cipher; egress source is not independently shown in this message log.
+Evidence: public-forwarding-test.json and public-forwarding-test.eml, summarized
+in [the existing deployment receipt](public-profile-preparation.md). The owner
+package is accepted and no operation remains active. This request grants no
+monitoring deployment, default integration or cleanup authority.
+
+At the public-cutover checkpoint, VPS 27627 ran the reviewed final public configuration, source
 b120342c4517b6faa1a519913ab92acafbc506f3, system 9ywq4 and profile system-6-link.
 Both public addresses, 37.205.11.114 and 2a03:3b40:100::1:95, are installed with
 working routes; private management 172.19.9.22 remains available. Public A/AAAA
@@ -41,19 +149,9 @@ verification command remains active. Implementer0's package is accepted; no
 source fix, build rerun, extra mail, reboot or further test is needed for cutover.
 Both bootstrap 27fc and final b120 retain the frozen deployed 084488 input graph.
 
-Remaining work is separately scoped: activate the already built monitoring
-consumers prg/int.mon1, prg/int.mon2, prg/int.alerts1 and prg/int.alerts2, and prepare
-fresh-target integration into vpsfree-cz-configuration/master after explicit
-integration direction. The branch is reviewed and deployed; this does not prove
-compatibility with newer default-branch inputs. No consumer activation or default
-integration has been authorized. Keep old VPS 2992, its disk and independent shell
-for recovery; its old queue count was not independently measured by the agent.
-The Postgrey backup and all deployed source refs remain retained.
-
-Claim 13ba611e-2f87-4036-b958-b0e056e13da7 stays held until deployment effects and
-complete deployed-lineage integration satisfy the release contract. No repository
-merge claim is held. The initiative remains active, awaiting remaining rollout
-and integration direction; cutover completion does not authorize lifecycle cleanup.
+This is the historical public-cutover checkpoint. Its then-pending key removal,
+merge and claim release are superseded by the current section above. Monitoring
+activation and old-host retirement remain separately scoped.
 
 ## Nov5 preparation snapshot (superseded by Nov6 checkpoint)
 
@@ -119,7 +217,12 @@ gates. The original primary-observed source/NAT remains unknown.
 - [x] Verify external IPv6 SMTP connectivity and trusted TLS from user-provided output.
 - [x] Correct and validate reply-aware SMTP command sequencing on public IPv4.
 - [x] User confirms external IPv6 RCPT denial with the corrected reply-aware client.
-- [ ] Separately scope/approve monitoring-consumer activation and default integration.
+- [x] User confirms public forwarding delivery; managed key removal deployed and verified.
+- [x] Consolidate final history into three implementation commits; user approves configuration/master integration.
+- [x] Rebase onto fresh master; independent patch/runtime/input/history equivalence accepted.
+- [x] Build and verify exact final 5941 output, then merge/push/prove remote integration.
+- [x] Release repository and mx2 claims after verified deployment and equivalent integrated lineage.
+- [ ] Monitoring-consumer activation remains separately scoped and unapproved.
 
 
 Prepared native mx2 generations: bootstrap `2026-11-05--13-04-34` ->
