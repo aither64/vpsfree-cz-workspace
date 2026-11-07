@@ -4,6 +4,62 @@
 
 I'd like to migrate https://blog.vpsfree.cz from wordpress to a static generator. We should preserve the design, it doesn't have to be 1:1 of course. We must however preserve all content (articles, authors and comments). Existing comments can be added statically, future comments should be provided by discourse that runs at https://discourse.vpsfree.cz. I assume this is supported by discourse? How would it be interconnected? We should also preserve existing article URLs. Both blog and discourse are configured using vpsfree-cz-configuration. I'll be able to give you access to the blog container so that you can extract data. In addition, I would like the blog to support localization in English and Czech, so all existing articles will have to be translated to English. Suggest what static website generator would be appropriate for our usecase and create a plan to implement it. Ask if something is unclear or I forgot to mention it.
 
+## Current correction scope
+
+Final local preparation is complete: reviewed/verified feature heads BLOG82a1ee3c90990e56cfde0da28ababed8f0444441 and CONFIG1e840b8056bbc700ca3e9cd832f0d9301da52652 are published; final BLOG CI42411255497 succeeded. Default branches and production WordPress are unchanged. The current ordered user-executed rollout, exact outputs, credential/ID placeholders, webhook and Discourse setup, maintenance/cutover/recovery are in [release-preparation.md](release-preparation.md). This is the production-operations handoff; the user retains integration, deployments and live settings. Session remains active/unmerged/open with all previews/roots/recovery references.
+
+Latest scope expansion: user now directs “well then finish whatever is missing so that we can deploy it”. Prepare missing deployable SOURCE, including admitted activation/rollback and automatic delivery, English TLS/vhost/legacy aliases and Discourse readiness, then user-run rollout plan. Architect0 P18 is settling bounded sufficient implementation briefs; no safety/admission bypass or unsupported live mutation. User retains deployment/live setup execution; no default integration approval is implied. E18/B18 current source windows continue, broad final artifact stays held until final intended source/review.
+
+User accepts all current English translations as reviewed; apply truthful maintainer-approval records, current paired Czech whole-file hashes and production-eligible draft=false without changing prose. Owner3 owns bounded E18.
+
+After current modifications, deliver a production rollout plan including webhook and Discourse. User will execute deployments; team prepares only. Do not infer default integration or production/admin mutations. Explicitly expose the unfinished activation/rollback driver as prerequisite work. Verify user's statement that English DNS should already be set up (owner2 bounded public/internal/TLS facts).
+
+Latest UI addition: remove the finite rack-background cutoff during long scrolling.
+Use the existing appearance, preferably a seamless repeatable presentation tile,
+with local deterministic asset processing and minimal CSS. Preserve original
+WordPress media and content/hash contracts. Architect0 owns D18; source owner and
+review/build/focused visual verification follow its sufficient brief.
+
+
+Latest addition: the user requests production-only Piwik tracking. Czech blog
+keeps site4; user supplied English-blog siteID10. Production guard, per-language IDs4/10 and preview/fixture exclusion are now
+committed/reviewed/built/runtime-verified/published at6dae with passing CI.
+The UI failure was confirmed by the user as uBlock Origin, not a DNS fix request.
+Inspect the actual backend and supported user-recovery method only through
+trusted admin access; do not guess/reset an account or expose hashes/secrets.
+O17 stopped before authentication; further access recovery is no longer needed
+for the now-supplied English site ID.
+No analytics admin/site creation or password change has been performed.
+
+
+Keep search input and button on one line, and use readable
+`YYYY-MM-DD-english-title` article bundles. Preserve immutable article identity,
+translation pairing, public paths, source bytes, feeds and discussion contracts.
+Those source changes are complete; current source review/build receipts remain
+scoped to their exact revisions.
+
+The user superseded immediate WordPress retirement with a staged transition:
+keep WordPress active, prepare/deploy the coexistence system, test the actual
+GitHub build/artifact delivery and generated site, then approve public cutover.
+Restore initial active WordPress/PHP/MariaDB/cron/packages/health checks; preserve
+all data, owners and recovery generation. Remove the unpublished retirement
+approach from final history while retaining recovery refs and its scoped evidence.
+No default integration or public cutover is inferred from this planning direction.
+
+The user selects a webhook rather than periodic polling: GitHub notifies an
+HTTPS endpoint through the existing proxy after successful workflow completion;
+the private host authenticates the request and fetches/verifies artifacts using
+outbound HTTPS. No inbound SSH is required. Architect0 owns the sufficient D15
+receiver/proxy/systemd/staging/admission/recovery brief. Implement only settled
+interfaces, preserve the existing public-pointer admission fence and distinguish
+safe immutable preparation from activation. No speculative new framework or
+manual-pointer bypass. Exact protected-main real artifact tests, credentials,
+network reachability, installed admission and cutover remain explicit gates.
+
+Production-only analytics is complete in source at6dae: Czech4/English10, omitted
+from all preview/server/fixtures. The existingWordPress tracker remains unchanged.
+[State](state.md) owns the single package table, exact heads and current evidence.
+
 ## Affected repositories
 
 - User-created `git@github.com:vpsfreecz/blog.git` for content, templates, assets
@@ -240,3 +296,75 @@ retained backup and actual forum/topic/account/frame behavior remain operator
 gates. No forum setup, public.org DNS/TLS/proxy change, queryalias cutover or
 transition is executed here. The user forbids merges until the last step and
 requires explicit approval before touching the current blog.
+
+
+## User refinements after preview acceptance
+
+Center pagination and article images/tables. English gets a translated registration
+CTA using the existing visual identity and the correct vpsfree.org registration
+link. Audit all English drafts for repeated phrases, particularly repetition between
+the index teaser and the opening body paragraph; preserve facts, original author
+voice, source technical material, routes and immutable identities. Czech archive
+bytes remain unchanged. Apply contextual writing checks before commits.
+
+Explain static search using a generated index searched in the browser; current
+search is disabled. The question alone does not allocate a search implementation.
+No merges, production WordPress changes or transition are authorized by this
+refinement. Keep the existing VPN preview open and verify actual rendered changes.
+
+
+## Pagefind search and mobile navigation follow-up
+
+The user explicitly requested Pagefind implementation after the earlier static
+search explanation. Add local static search with separate language results,
+published-only production indexing and useful current draft-preview behavior.
+Pin the tool through the existing build environment; include every search asset
+in normal hash/release proofs. Use conventional Pagefind UI/index facilities,
+maintain authoring/preview usability and document the supported refresh path.
+No search backend, CDN, extra infrastructure or production activation is implied.
+
+Move the small-screen sidebar control to the left to match the left sidebar,
+while retaining keyboard, focus and desktop behavior. The architect settles the
+substantive search brief; implementation owners retain source/check/docs/commit
+and findings. Main owns visible copy acceptance, independent review and final
+verification/publication coordination. Existing draft/human-review, protected
+corpus bytes, feature-only Git and no-production boundaries remain in force.
+
+
+Additional pagination requirement: current page needs a selected shape/background
+and weight, usable links need clear interactive styling and focus, and disabled
+navigation must look muted and remain noninteractive. Preserve native Hugo
+pagination semantics, centered wrapping controls and stable routes. This is part
+of the bounded navigation correction, independent of Pagefind design.
+
+
+## English blog and KB destinations
+
+The user requests English article links to use corresponding English blog and
+KB articles where equivalents exist. Use immutable blog identity and verified KB
+<page> translation IDs or actual language links. Preserve mailing-list and other
+external URLs. Inventory exact query/fragment/encoded forms, define unmatched and
+unpublished translation fallback without broken routes, and keep the verified
+mapping offline so builds need no KB network access. Preserve original imported
+Czech files, code, source hashes, identities and English prose/draft state.
+The prior source-URL parity contract is retained at source level if output routing
+can satisfy the request; any intentional translated-output URL change is audited.
+
+
+## Correct historic KB destinations and mobile sidebar flow
+
+The user rejects remaining Czech KB fallbacks, citing wp490's api#cli, and asks
+that all18 occurrences be reevaluated. Missing historical source anchors/pages
+alone do not rule out a current English equivalent. Use surrounding article
+meaning and actual English sections/navigation (including bounded English KB
+search for retired pages), preserving link intent rather than requiring the old
+fragment to exist. Reuse the8exact-target inventory and verify all9cli contexts;
+retain honest unresolved cases only after semantic reevaluation. No KB writes or
+invented translations; corpus/source bytes remain protected.
+
+The small-screen sidebar must expand in normal document flow and use page
+scrolling, without its current viewport height cap, nested scroll area or clipped
+absolute overlay. Preserve desktop layout, left native checkbox/control and
+focus/keyboard behavior. These are separate bounded source packages; Pagefind is
+unchanged. Final committed checks/review and focused scrolled runtime evidence
+precede feature publication; no merge or production action is authorized.
