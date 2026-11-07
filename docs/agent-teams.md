@@ -296,6 +296,15 @@ runtime session guide for scheduling and recovery details and the
 [verification procedure](agent-instructions/verification.md#keep-verification-proportional)
 for batch limits. Observations and responses add no review or approval gate.
 
+The observer considers the cost of repeated test/fix cycles across the session.
+It should flag expensive runs that repeatedly expose basic type or fixture
+errors and suggest a focused check against the actual failing interface before
+another full run. Its recommendation states the expected cost, the evidence
+that check provides and the remaining integration requirement. It also
+challenges redundant evidence work and unnecessary approval checkpoints.
+Existing timestamps and results are sufficient; this guidance adds no timing
+collector and does not let the observer cancel checks or waive acceptance.
+
 ## Communication between sessions
 
 Existing leads cooperate through `session_communication` after the user approves
