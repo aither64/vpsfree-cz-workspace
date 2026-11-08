@@ -38,3 +38,15 @@ contracts in owning repos; exact versions, check evidence and individual rollout
 results stay here. Architect supplies bounded quick/long checks and recovery
 brief. Final reviewer receives complete base/head series, diffs, consolidated
 pin streams and explicit migration provenance.
+
+
+## Necessary CI correction
+
+Codex-web CI exposed pre-existing cold concurrent SQLite initialization contention
+before predecessor import locks. Current and exact base reproduce; preserving
+supported concurrent startup is required for delivery. Accepted narrow W1 brief
+reorders existing locks before lazy connection/WAL work and adds targeted
+cancellation/cold-concurrency regressions. No new schema/lock/retry abstraction.
+Keep this independently meaningful correction separate from the compatibility
+commit; include both in final whole-branch review. Consumer pins select only
+final corrected W revision.
