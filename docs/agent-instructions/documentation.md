@@ -31,29 +31,35 @@ checklists and temporary branch state in operational/session records, even when
 they contain no dates or revision hashes. Preserve lasting compatibility and
 failure semantics with their owning component; link procedures to them.
 
-Use these local destinations:
+The generic skill owns the [directory and README convention](https://github.com/aither64/dev-workspace/blob/master/skills/dev-session-documentation/SKILL.md#directory-and-readme-convention).
+Use its tree for new material and retain existing subsystem equivalents. The
+README stays an entry point for purpose, basic start and grouped links; keep
+specialist details in their linked homes. Create directories only when needed.
+Apply these site mappings without copying the generic contract:
 
-- Project behavior, design rationale, and accepted decisions belong in that
-  project's documentation, understandable without this coordination workspace.
-- Repeatable operations belong in separate project operations documentation;
-  site-specific procedures belong in the configuration repository that owns the
-  deployment. Generic runtime and extension docs link to their contracts
-  without copying concrete host details.
-- Supported upgrade instructions belong in the owning project's upgrade
-  guidance, scoped to source/target versions or schema boundaries and retained
-  while that path needs support. Do not invent release versions or hide guidance
-  needed by other upgraders in private session records.
-- Cross-project contracts have one authoritative home in the owning project;
-  workspace-level designs belong in this workspace's documentation. Link the
-  participating projects to that home.
-- An individual rollout's plan, exact revisions, prepared steps, execution
-  results and rollback preparation belong in a session rollout record or a
-  dated record in the deployment repository. Temporary branch state, review
-  fixtures and disposable database resets belong in session records.
-- Reusable development-environment lessons belong in `notes/` under the existing
-  convention. General project setup instructions should also reach project docs.
-- Member-facing guidance follows the existing KB/product documentation and
-  user-facing writing workflows below, including publication approvals.
+| Material | Local authoritative home |
+| --- | --- |
+| Project behavior, rationale, accepted decisions and product tasks | Owning project docs, understandable without this workspace. vpsAdminOS keeps `docs/os/`, `docs/osctld/`, `docs/user-guide/` and `docs/containers/` as existing reference/how-to homes. Configuration reference may use `configs/<component>/README.md` and linked topic pages. |
+| Repeatable deployment, diagnosis, operations and recovery | Owning project's `docs/operations/<service-or-task>.md` or existing equivalent. Concrete site procedures belong in the configuration repository that owns the deployment; generic runtime and extension docs link to the contract without copying host details. |
+| Supported upgrades | Owning project's `docs/operations/upgrades/<from>-to-<to>.md` or existing equivalent, scoped to actual source/target releases or state boundaries. |
+| Cross-project contracts and workspace designs | One authoritative home in the owning project, linked by consumers; workspace-level designs in this workspace's `docs/`. |
+| Current intent, choices, status and evidence; individual rollout plans, exact revisions, results and rollback preparation | Shared `work/<slug>/{plan,state,design}.md` and linked records such as `work/<slug>/rollout.md`. Temporary branch state, review fixtures and disposable database resets stay here. |
+| Reusable development-environment lessons | `notes/<project>/<yyyy-mm-dd-topic>.md`, or `notes/cross-project/` for shared lessons. General project setup also belongs in project docs. |
+| Member-facing guidance | Existing KB/product documentation and [user-facing writing workflow](knowledge-base.md), including publication approvals. |
+
+The [configuration repository's rules](https://github.com/vpsfreecz/vpsfree-cz-configuration/blob/master/AGENTS.md#commit--pull-request-guidelines)
+prohibit deployment receipts, per-release test reports, screenshots, browser
+traces and generated test output in tracked files. Do not recreate
+`docs/operations/releases/` or move those artifacts to another tracked directory.
+Use session rollout records for individual execution evidence there; the generic
+optional `docs/deployments/` destination does not apply. Preserve reusable
+configuration and operations guidance in that repository.
+
+Retain a supported upgrade until the owning maintainer explicitly retires the
+path with evidence covering old persisted state, backup restoration and rollback.
+When retirement evidence is unknown, preserve the instructions and mark
+applicability unresolved. Finishing one rollout does not retire its supported
+upgrade or recovery path.
 
 Before mandatory review and handoff, reconcile documentation with the final
 implementation and actual deployment evidence. Check placement as well as
@@ -64,6 +70,15 @@ or checked docs, or briefly explain why no update was useful. Follow existing
 layouts without requiring a fixed file bundle or a deployment heading on every
 feature page. Writing instructions remains distinct from authorization to
 execute them.
+
+Moves preserve prerequisites, failure/partial-success conditions, compatibility
+restrictions, data-loss warnings and recovery steps. Keep old anchors or short
+forwarding links where callers may depend on them. Include the compact topic →
+reader/class → authoritative path/link → evidence or unresolved applicability
+inventory in the existing review packet; the mandatory-review workflow owns the
+independent placement and preservation judgment. An optional
+[editor package](../agent-teams.md#optional-documentation-editor-package) follows
+existing technical ownership, main-agent writing and review boundaries.
 
 Archive records retain Markdown explanations and portal.yml manifests. Keep raw
 logs, downloaded artifacts and build output untracked during active work; Archive

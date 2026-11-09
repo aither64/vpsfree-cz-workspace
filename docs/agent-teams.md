@@ -114,6 +114,34 @@ evidence as a bounded package after the execution work. This does not add a role
 or independent review: the lead checks final packet completeness and invokes
 the mandatory-review skill; the independent reviewer remains read-only.
 
+### Optional documentation editor package
+
+For a substantial documentation reorganization, several reader groups,
+sustained bilingual work or repeated placement problems, the lead may assign a
+bounded editor package to an existing implementer with capacity. A short correct
+paragraph or routine pin update does not need one. This uses the existing
+package workflow; it adds no persistent role, catalog change, telemetry or
+independent review stage.
+
+Give the editor the settled brief, assigned files, exact source, technical-owner
+contacts and a protected inventory of facts and commands. The editor owns
+structure, navigation and consistency within those files. The technical owner
+retains factual truth, rationale and command semantics; the design owner resolves
+consequential design or applicability questions. The editor reports proposed
+factual changes to that owner and compares the factual diff, preserving failure,
+compatibility and recovery meaning. Sequence shared edits and commits under the
+ordinary ownership windows.
+
+After facts settle and before commit, the context-owning main agent/lead applies
+the [user-facing writing skill](agent-instructions/knowledge-base.md) directly
+to user-facing prose. An editor may advise or audit that rewrite. Final
+independent review still follows all intended commits and quick checks, before
+long integration tests; an editor cannot independently review its own work.
+The lead accepts the package and may assess placement rework, factual corrections
+and coordination cost from existing evidence. No separate pilot or new member
+is launched by this convention; roster changes still require explicit user
+direction.
+
 ### Release a sufficient package
 
 Independent investigation can start with bounded questions, evidence limits and
