@@ -13,6 +13,8 @@ The user explicitly authorized implementation and then session tracking.
   interruption settlement, diagnostics, tests and documentation.
 - codex-web only if its existing typed delivery errors and submission ledger
   cannot express the required behavior; prefer the existing public interface.
+- workspace and vpsfree-cz-configuration: matching runtime selection for the
+  authorized aitherdev rollout, preserving extension/Codex/unrelated inputs.
 
 ## Approach
 
@@ -26,7 +28,9 @@ The user explicitly authorized implementation and then session tracking.
 4. Settle confirmed interruption immediately and classify known pre-send
    rejection correctly. Expose actionable compaction failure diagnostics.
 5. Commit, run focused checks, independent final review, broader verification,
-   and publish the feature branch. Integration and deployment are not authorized.
+   and publish the feature branch.
+6. Deploy to aitherdev through the matching configuration and workspace profile,
+   verify service health and delivery, then integrate the deployed feature lineage.
 
 ## Decisions
 
@@ -37,6 +41,10 @@ The user explicitly authorized implementation and then session tracking.
   verification utilities apply. Do not use the livepatch session's team.
 - The original incident has confirmed capacity refusal and incorrect unknown
   delivery classification. Why its prefix compaction stopped remains unresolved.
+- Subsequent user approval: "aitherdev can be deployed using
+  vpsfree-cz-configuration. once deployed and verified, you can merge it".
+  Scope: aitherdev deployment, then master integration of dev-workspace and its
+  required workspace/configuration pins after successful live verification.
 
 ## Compatibility and deployment
 
@@ -44,7 +52,9 @@ Existing retry epochs, pending automatic identities, uncertain receipts and
 settings proof remain authoritative. Migration must preserve them and be
 restart-safe. Older packages must refuse incompatible persisted state before
 activation; recovery is forward to a compatible package. No native Codex protocol,
-model package, production configuration or live-session records are to change.
+model package is to change. Deployment updates only matching runtime selections;
+ordinary package migration owns live evidence conversion. Do not manually edit
+live-session records or send test messages to the original livepatch session.
 Delivery API compatibility should use existing codex-web typed errors. SQLite
 evidence retention and package-transition readers require explicit coverage.
 
