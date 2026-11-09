@@ -1,5 +1,5 @@
 ---
-lifecycle: complete
+lifecycle: archived
 ---
 
 # 2026-11-06-portal-message-delivery
