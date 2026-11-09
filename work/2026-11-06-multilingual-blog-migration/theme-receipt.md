@@ -1309,3 +1309,560 @@ public site, CSP/cookies/concurrent first visits and notification outcomes remai
 user-run pilot facts. Independent final review is lead-owned; document/source
 checks do not certify those runtime results. All retained roots, services,
 fixtures and the session remain open; implementer2 retains D19 findings.
+
+
+## P23: public documentation without private workspace instructions
+
+Source is one isolated docs commit `5d9cd0be0184c67e8d7c1cfbdbbe41da6acd5e48`,
+parent `e1bb2d2b43aeb7361ac72c4c565919f38daabb65`, tree
+`52fdec72f80c9583c69df11cacb3268690fdac77`, on
+`2026-11-06-multilingual-blog-migration-p23-docs` in the session's
+`blog-p23-docs` worktree. Only `README.md`, `docs/authoring.md` and
+`docs/migration.md` changed, 14 additions/33 deletions. The lead directly applied
+the writing guidance to the exact diff and accepted the wording before commit.
+Private VPN/host/IP and managed-session directions were removed; ordinary Git/Nix,
+loopback preview, draft/search and migration safety guidance remain. All 1007
+other tracked paths retain their exact parent modes/blobs. No migrations,
+application edits or history rewrite; preceding P21 history remains unchanged.
+
+Light checks passed in the isolated worktree's explicit offline Nix environment:
+README/all four public docs identifier scan, 13 relative file/heading links,
+retained command/loopback/snapshot/search claims against existing source, exact
+owned inventory and whitespace. The first link check counted a literal example
+image path as a link; excluding code corrected only the verifier. No persistent
+test was added. Normal `git commit -F <temporary-message-file>` ran inside the
+declared shell; no framework or active hook is declared and no hook was bypassed.
+Own worktree/index are clean. Read-only postproof confirms canonical BLOG and its
+session feature ref still at `e1bb`, clean/empty index: the concurrent P22 package
+identity was preserved. Independent GENERAL review and later canonical adoption
+remain lead-owned; no push, render, build, network, browser, server, service,
+deployment, default integration or cleanup occurred. Existing services/roots and
+the session remain open. P23 findings stay implementer1-owned; own index yielded.
+
+
+P23 continuation: the lead accepted reviewer0's final GENERAL/LOW review at
+Sol/xhigh with no findings on exact `e1bb..5d9`, including the complete
+`0354..5d9` 24-commit/1000-path history and no obsolete/repeated streams or
+migrations. After owner3 yielded the canonical window, fresh identity/settings,
+clean index/ref and SSH origin/remote preflights passed. Ordinary
+`git merge --ff-only` adopted `5d9` in canonical BLOG; one ordinary SSH feature
+push advanced only the session feature ref from `e1bb` to `5d9`. Independent
+before/after `ls-remote --symref` confirmed remote main/default HEAD unchanged at
+`0354dac281978867ea8c1553b092ce19bccb5ccd`. Canonical head/tree match the reviewed
+`5d9`/`52fdec`, with clean working tree/index. The isolated docs branch/worktree
+and prior refs remain. Portal comparison captures exact `0354..5d9`.
+See `p23-publication-result.json` and `p23-publication.log`; publication batch
+finished 2026-11-08T21:23:06Z, ordinary push exit 0 in 2.072 s. The canonical
+window was returned explicitly to the lead before CI waiting.
+
+One fresh installed watcher used selected package
+`/nix/store/9yibngx0gbiq17waqffcgszk067ngmhb-dev-workspace-0.2.0`, catalog
+`f2d5a8909570f32bf65098940649922528d081974eefdb3bf678fb38e4ad568d`, native utility
+`dw_e792014d07f1ab00a4e052aeb6fbc575674f9dbc9073f569`, Luna/low, full-access/never.
+Its initial current-session lookup from the workspace lacked the session;
+the parent supplied the already-verified literal environment pair for the same
+operation, then identity matched. No CI command had run before that correction.
+Exact push run `42524935636`, attempt 1, SHA `5d9cd0b`, completed successfully in
+82 s. `bin/check`, `bin/check-release` and `nix build .#site` passed; trusted-main
+package/upload and deploy were skipped, artifact API count zero. Evidence:
+`p23-ci-result.json` and `p23-ci.log`. No utility/cell/command remains active.
+This feature CI did not package, deploy or relabel the installed P22
+`e1bb`/`bi18` site. No default integration, CONFIG/runtime/proxy/key/action or
+session lifecycle changes occurred. Existing previews, fixtures, roots and
+session stay open; P23 source/findings ownership is retained, capacity free.
+
+
+## P24: temporary exact-feature Actions eligibility, source preparation
+
+Direct lead release and accepted design.md3783 authorize only source/check/commit
+at this stage. Normal commit `a66b7a0102a369a7d9f8fba2ef548319b5508d0f`, parent
+`5d9cd0be0184c67e8d7c1cfbdbbe41da6acd5e48`, tree
+`636ccf1a7addda8084cb51fdc1d1c2dc964024d6` changes exactly three files, 47+/14-:
+`.github/workflows/build.yml`, `bin/check-release`, `docs/deployment.md`.
+Package/upload/deploy keep each original protected-main expression OR exact
+repository `vpsfreecz/blog`, push event and ref
+`refs/heads/2026-11-06-multilingual-blog-migration`. Main dispatch still packages
+without deployment. The accepted visible label is `Package release`. Lead's
+direct writing pass accepted the exact temporary-support/restoration prose.
+
+Scoped offline checks passed under explicit original BLOG Nix environment:
+Ruby Psych parsed YAML; normalized parsed workflow matched the parent after
+removing only three gates and the accepted label. Action pins, environment,
+secret reference, client arguments, permissions, concurrency and dependencies
+remain unchanged. Native `bin/check-release` passed four tests in 0.267 s,
+including 14 actual-expression cases across three gates. Whitespace and exact
+three-file inventory passed; all 1007 other tracked modes/blobs match the parent.
+See `p24-source-quick-result.json` and `p24-source-quick.log`. No declared hook
+framework/active hooks were bypassed; normal `git commit -F` ran in the declared
+shell, canonical worktree/index clean afterward. Whole history is now
+`0354..a66`, 25 commits/1000 paths, with reviewed `0354..5d9` unchanged and no
+migrations or pin-stream changes.
+
+Source is frozen and index yielded for lead-invoked mandatory HIGH/all-four-lane
+review. No feature push, environment setting, target resume/switch, local site
+build/render, full suite, network/tracker request or service change occurred.
+The exception is not yet externally consumed. Actual delivery needs the lead's
+review/environment/runtime release; later ordinary restoration must retain the
+consumed upload head and its real artifact/run identity as an ancestor. Owner3
+has yielded the sole utility slot; no utility runs here. P24 dependent delivery,
+restoration and findings ownership remain with implementer1. Existing previews,
+fixtures, refs/roots and session remain open.
+
+
+P24 actual Actions delivery and restoration boundary: one ordinary released
+feature push advanced `5d9` to reviewed `a66`; independent SSH ref proof kept
+main/default HEAD at `0354`. Genuine Build blog run `42526944434`, number 11,
+attempt 1, succeeded including checks, native build, package, artifact upload
+and deploy. The fresh current-package Luna/low watcher is fully terminal.
+Immediate terminal notice reached owner3 before artifact downloading; his
+1.759 s pause returned PAUSED with new Actions floor 11.1 and selected release
+`a66b7a0102a369a7d9f8fba2ef548319b5508d0f-393eb311ba2ed86c`. Operator e1bb/bi18
+history remains separate. See `p24-push-result.json`, `p24-ci-result.json`,
+`p24-ci-watch.log`, `p24-ci-artifacts.json` and `p24-upload-response.json`.
+
+Actual artifact `13635427642` downloaded once (102333453 bytes), GitHub ZIP
+SHA-256 `d71e4abeb6f01afaeb4555cb13878e37b1ced20b649e08dfff4004a1ce3f135e`.
+Archive `393eb311ba2ed86cf531dc3518bc5ac0793d8c75c73b6a2cd858d608ecedddef`
+verified all 2397 served hashes (CS1197/EN1200), metadata and release envelope.
+Metadata SHA-256 `77ce8b9f58ba2f25d354ee29c2e232e9610c7d203d1c6e94b5be1c726eab484d`.
+Source `/nix/store/16wdj81vbrx1q7v204jsrl2alcwlly0h-source`, revision a66,
+NAR `sha256-Eghl/cCWqtTpPJnMYAwTeotR2E1HJAWWS0ZdezSkHv0=` and locked nixpkgs
+`f3a73bcf5d1c5b75a66cf35a48957e30d41d647a`/NAR
+`sha256-qVt97ILUu2DorFGGEi+mqVuzOF8R18fQLgFkHiLrNfE=` match exact offline
+flake metadata. Hugo0.167.0/Pagefind1.5.2 inputs match. Existing upload.prepare
+reconstructed transport ZIP SHA-256
+`d42b460bfde8f267efc308d689e7b958afd4f114e304a3a1ff403521fe1ba558`,
+102339398 bytes, matching actual durable200response. Server current receipt
+`d5649a285ca5b57615aa3df8c4001a6b771fd9d8ad300ce722c53a211be5a38a` is distinct
+from package receipt SHA
+`707bd4c6676182a048d75aefba810df1094d0a9d1be692e81565cfe8e4dcad0c`.
+Full inputs are in `p24-artifact-verification-result.json`; genuine package is
+`p24-actions-artifact/{payload.tar.gz,receipt.json}`, extracted control files
+`p24-artifact-verified/{metadata.json,release.json}`. Exact bindings/paths were
+handed directly to owner3 for independent selected-content/private verification.
+No local site rebuild, repackaging/relabel or upload retry occurred.
+
+Dependent ordinary restoration commit
+`de63bad8deab97c0a081b9f1f1b19065f934806a`, tree
+`97c5cfaf651564f10e71edc989102cb444717cf7`, has consumed a66 as direct parent.
+Three files13+/46- restore all original main-only gates and byte-exact5d9
+`bin/check-release`/`docs/deployment.md`. Final workflow differs from5d9 only
+by the previously accepted `Package release` label. All1007othertracked modes/
+blobs remain unchanged. Scoped YAML, actual14-case/threegate matrix, native four
+release tests (0.229 s), whitespace and byte-equality checks pass; see
+`p24-restoration-quick-result.json`. Normal hooks were not bypassed, canonical
+worktree/index clean, index yielded. Whole0354..de63 history has26commits and no
+migrations; actual consumed exception/restoration must remain as lineage.
+Restoration is frozen for lead affectedreview/publicationrelease, not yet pushed.
+No default integration, CONFIG switch, proxy change, new service or session
+cleanup occurred; retained roots/fixtures/session remain open.
+
+
+P24 closure: lead accepted reviewer0 final GENERAL+RISK/HIGH review of exact
+`de63`/`97c5`, complete26-commit consumed history and no obsolete/repeated
+streams or migrations. Fresh clean/ref/default preflights passed; one ordinary
+SSH feature push advanced `a66` to `de63`. Independent after proof kept remote
+main/default HEAD at `0354dac281978867ea8c1553b092ce19bccb5ccd`, canonical clean.
+`p24-restoration-push-result.json` records exact commands and before/after refs.
+Owner0 received proof immediately after publication and before CI completion.
+The canonical source/index window was explicitly returned; portal comparison is
+exact `0354..de63`. The consumed a66 artifact/source/receipts remain unchanged.
+
+One fresh installed9yib/catalogf2d5 Luna/low watcher followed only restoration
+Build blog run `42527986836`, number12, attempt1, exact SHA
+`de63bad8deab97c0a081b9f1f1b19065f934806a`. It passed `bin/check`,
+`bin/check-release` and `nix build .#site`; package/artifact-upload/deploy skipped,
+artifact API total_count0. Watch command exited0; no owned cell/session remains.
+See `p24-restoration-ci-result.json`, `p24-restoration-ci-artifacts.json` and
+`p24-restoration-ci.log`. Owner0 separately reported exact temporary environment
+policy65980157 removed once with HTTP204, main65961671/custom selection retained,
+all other environment settings unchanged; authoritative proof remains in
+`p24-environment-allowance.json`. No environment API mutation was performed by
+implementer1. Both source and environment restrictions are restored to main-only.
+No selected-content rebuild/relabel, default integration, CONFIG/runtime/proxy,
+service, lifecycle or cleanup action occurred here. P24 execution evidence and
+source/findings ownership remain implementer1-owned; canonical window returned,
+sole utility slot free and capacity free. Owner3's independent private-content
+verification/runtime acceptance remains separate. All prior evidence, refs,
+roots, previews, fixtures and session remain open.
+
+
+## P25: public retention documentation companion
+
+Direct lead brief supplied writing-approved exact prose for two passages only.
+Normal commit `472c540b15b2f64c03bb31c873fc3102ec0615cd`, parent
+`de63bad8deab97c0a081b9f1f1b19065f934806a`, tree
+`0ffcafaa87ae8b30851d80ea515013dc55a050f0`, changes only
+`docs/deployment.md`,9+/6-. It replaces keep-all/no-GC promises with bounded
+payload retention, protected recovery/publication/shared-asset preservation,
+complete-release rollback limits and separate backups. Detailed retention policy
+and inspection remain owned by the existing linked CONFIG operations guide.
+Full design3873+4009 and current owner3 retention_plan/prune_releases source were
+read directly; the generic claims match the current implementation. Routine
+owner clarification was sent, with no new architecture or source scope.
+
+Light checks passed under explicit original BLOG Nix environment: exactly the
+two supplied replacements/rest-of-document byte equality, all link targets
+unchanged, one local discussion link resolves, original operations-guide link
+preserved, private identifiers absent, whitespace/one-file inventory/index and
+untracked cleanliness. See `p25-docs-quick-result.json`. Normal gitcommit-F ran
+without bypass; no hook framework/active hooks declared. Canonical clean/index
+empty, yielded and frozen for lead-invoked final docs review. All1009othertracked
+modes/blobs remain equal to parent. Whole0354..472 now27commits; prior26reviewed
+history, actually consumed a66 and its restoration remain unchanged, no
+migrations or pin-stream changes. No local render/build/fullcheck/persistenttest,
+network/server/utility/push/CONFIG/runtime/environment/default/lifecycle action.
+Selected Actions content remains a66. Capacity free after source report;
+implementer1 retains dependent docs fixes/publication/CI and findings ownership.
+Existing artifacts/receipts, refs, roots, services/fixtures and session stay open.
+
+
+P25 publication boundary: lead accepted reviewer0 GENERAL/LOW final docs review
+of exact472/tree0ff, complete27-commit history and no obsolete/repeated streams
+or migrations. Ordinary SSH feature FF de63->472 passed fresh clean/index/ref/
+expected-default preflight and independent afterproof; remote main/default HEAD
+remained0354. Canonical source/index window explicitly returned, comparison
+captured0354..472. See `p25-docs-push-result.json`. Exact automatic Buildblog
+run42529498664, number13, attempt1, pushhead472 is identified. CI observation
+alone is parked behind owner3's priority retention module/test utility; direct
+slot-yield request86762282 was sent, no watcher/reservation/duplicate polling
+runs here. Only this existing run will be observed after yield; checks/build and
+package/deploy skips/zero artifacts remain unverified at this boundary. Actual
+selecteda66 content/artifacts/receipts are unchanged. No extra local build/test,
+CONFIG/runtime/environment/default/lifecycle action. DependentCI/findings remain
+implementer1-owned; all roots/fixtures/services/refs/session stay open.
+
+
+P25 CI closure after owner3 explicit utility yield: exact existing Buildblog
+run42529498664/number13/attempt1/head472 completed SUCCESS. One bounded terminal
+metadata read inline (no watcher/poll/retry) proved normalcheck, releasecheck and
+Nixsitebuild success; Package release/artifactupload/deploy skipped. One artifact
+API read returned total_count0. Buildjob128880332483 took72s; deployjob128880666954
+skipped. See `p25-docs-ci-result.json` and `p25-docs-ci-artifacts.json`. No utility/
+command remains active, canonical source/index window was already returned, and
+comparison0354..472 retained. Actual selecteda66 artifact/source/receipts remain
+unchanged; no CONFIG/runtime/environment/default/lifecycle or cleanup action.
+P25 dependent documentation delivery is complete; capacityfree and findings
+ownership retained. Provider retention review/runtime remains owner3/lead scope.
+All prior artifacts/refs/roots/services/fixtures and session stay open.
+
+
+## P26: original favicon and wp-841 title correction
+
+Read-only identification used strict known-hosts BatchMode SSH to the already
+authorized retained WP listener, fixed Czech Host, two GETs/no redirects. Original
+homepage declares `https://blog.vpsfree.cz/wp-content/themes/flat/favicon.png`
+as shortcut icon/typeimagepng. Exactpublicbytes:607B,16x16PNG,SHA256
+`dfe1b759dd6db24982fb4844e514bebf102462ac8f54f16725e12cfea0105fe8`.
+Originalapple-touchlink metadata is preserved but that asset was not fetched.
+Evidence/binary/homepage metadata are in `theme-reference/p26-favicon/`.
+No WPconfig/DB/admin/privateexports/credentials or other host/asset access.
+
+Accepted4037/faviconaddendum led to two ordinary commits above472:
+`e78f8793c2421b9876111c6483a03d87e00cea26` restoresexacticon/sharedheadlink and
+MAINwriting-approvedNOTICE; `8e1a64de81e055f24f01147a60d3f204d95df039` corrects
+only the Czech titleword. Finaltree `1813fd7fc3418256f83c33efa0adfabc6eba84c4`,
+sixfiles10+/4- plus607B PNG. Both articlebodies/NBSP/publicidentity/dates/byline/
+feedGUID/privatebodyidentity and Englishhistoricalreviewmetadata are unchanged.
+NewCzechfullfileSHA `2c4db81d4ee1d0f8ab770a59eaefc72e3f6d038fb6bfbc4c8a4153beb9d772b0`
+is bound in bothmanifest locations and the pairedENtranslation_source_sha256.
+OriginalprivatebodySHA33d828... remainsunchanged; no newhumanreviewattestation.
+
+Lightchecks in explicit originalBLOGNixenv pass exactPNGidentity/signature/size,
+sharedheadone-local-iconline, exactapprovedNOTICEappend, title-only rawbyteproof,
+bodies+allothermetadata preservation, threefullhashbindings/manifest-onlychanges,
+whitespace/inventory. See `p26-source-quick-result.json` and
+`p26-source-commits.json`. Two normalgitcommit-F executions bypassed nohooks;
+none declared. Finalsource/indexclean,1005othertracked modes/blobs unchanged.
+Whole0354..8e1 has29commits with prior27reviewedhistory/consumeda66/restoration
+unchanged; no migrations/pinchanges. ExclusiveBLOGsource/indexwindow yielded,
+sourcefrozen for lead-invoked independentreview. No fullrender/build/bincheck/
+CI/push yet, no persistenttest or broadproofreading. P26 fix/build/publication/
+findings ownership retained. Currentmain-onlyworkflow/installedA66/CONFIG/runtime/
+previewservices/roots/session remain unchanged and open; no lifecyclecleanup.
+
+
+P26 native/publication boundary: lead accepted reviewer0 MEDIUM GENERAL/
+ARCHITECTURE/SCOPE review with no findings at8e1/tree1813, including exactasset,
+CS/fullhashbindings/sourcebody and coherent29commithistory/no migrations or
+obsolete/repeatedstreams. Onefreshselected9yib/catalogf2d5 Luna/low nativewatcher
+ran bin/check0/82.2s then nativebuild0/14.4s on cleanexact8e1 pre/post, allhandles
+terminal. `result-p26` retains `/nix/store/dfsza1mdhdj3hrkqyyqvqhiswrkrp9bv-vpsfree-blog-0`,
+outputNAR `sha256-0iR2Er9m5ZlmkqKmFgShdkbrWA2MXimrmw6W43w9FOk=`,115137752B.
+All2399servedfilehashes(CS1198/EN1201) matchmetadata/noextras; metadatasha
+`9d190aa997a679a6e5074c7f2bc22b79b447535c401ed37c0fdec305cbd28c26`.
+Bothlanguagehome/articleheads pointonlytoexact607B favicon with unchangeddigest.
+ActualCStitle/H1correctedwithNBSP/canonicalpreserved; ENtitle/canonicalunchanged.
+Source `/nix/store/bh6m75a91k392srkmd5z3wj3sf8hgqsa-source`, NAR
+`sha256-kUiGlZT6e39elI6HQFybQD++VAYof0Wd0R0gNwQQKVs=` matchesexactofflineflake;
+pinnednixpkgsf3a73/NARqVt97/Hugo0.167/Pagefind1.5.2 unchanged. See
+`p26-native-result.json`, nativecheck/buildlogs, `p26-artifact-result.json`,
+`p26-artifact-path-info.json` and `p26-exact-flake-metadata.json`.
+
+OneordinarySSHfeatureFF472->8e1passedfreshclean/index/remote/defaultpreflight
+andindependentafterproof; remotemain/defaultHEADremains0354. Canonicalsource/index
+window explicitlyreturned immediatelyafter nativeidentity+push, comparison0354..8e1
+captured. `p26-push-result.json` holdsproof. ExactautomaticBuildblogrun42535001579,
+number14,attempt1,head8e1identified; CIobservationaloneparked behindowner0earlier
+WEB-CIwatcher, directnativeutilityyield66bb12c7 andqueuedCIhandoff7ca56941 sent.
+No utility/reservation/duplicatepollinghere. P26 fixes/findings/dependentCI remain
+owned; authorsourceawaitsdirectleadrelease. No liveupload/tempworkflow/installedA66
+relabel/defaultintegration/previewservice/lifecyclecleanup. Alloldroots,assets,
+refs,fixtures andsession remainopen.
+
+
+## P26 authoring source milestone
+
+Accepted sufficient design4125/feature-observer correction4252 implemented in one
+ordinary commit `26fc4032d21713e12efab33bbb3a29fbcdad3aba`, parent8e1, tree
+`b270dababf824da0be4b84e119e4f15d6d8d42d9`.13files1079+/96- add actual-index
+bilingual metadata/introduced-word checks, opt-in ordinaryhook, pinned Hunspell
+CS/EN technical lists, original shared-row projections, bounded exactSHA main/
+feature observer, generic renderer expectations and one later authored render
+fixture. Existing guide/skill/AGENTS/README prose was rewritten directly by lead;
+final p26-authoring-main-prose.json hashes remain exact. No article publication.
+All250articlebytes/shareddata/manifest/reviewerhistory, appassets/layouts,
+workflow/client/protocol/lock inputs remain unchanged;1004otherexistingmodes/blobs
+match8e1. Whole0354..26fc is30commits, prior29reviewedhistory/consumeda66/restoration
+retained, no migrations/pinrefresh/repeated update stream.
+
+Initial9focusedfixtures passed58.566s through then-permitted parentfallback.
+Final12fixtures passed127.218s(command130.679s) in onefresh standalone Luna/low
+watcher, selected9yib/catalogf2d5/dw_e792 policy, explicitfullaccess/never. Parent
+5060/child73592 fullyjoined0, pre/post10inputhashes unchanged. Fixture coverage
+includes actual bad/good hook commits without unstaged mutation, index pairing/
+metadata/stalehash errors, CSfirst/ENfirst, realdictionary unknowns/code/link/alt,
+original-row additions versus tamper/deletion, and main/feature exactCI outcomes/
+timeout/rate limits/no feature site calls. Native import audit passed8tests plus
+125filehashes/107comments/569assets. Dictionary interface probes initially used a
+list then an absent wrapper.version; inspecting the pinned wrapper resolved the
+correct withDicts function, no alternate pin/dependency. ExactCS/ENsmoke passed.
+
+Verified no existinghookpath/activehook before installingcore.hooksPath=.githooks;
+its executable hook and explicit stagedcheck both passed125pairs, normal
+`git commit -F` bypassed nothing. Canonicalsource/indexclean and window explicitly
+returned, frozenfor lead-invoked independentcommittedreview. Evidence:
+p26-authoring-commit-result.json/review-packet.json/focused-final-result.json,
+focused-final.log/md, fixture-inputs.json/main-prose.json/dictionary.log.
+No fullbincheck/release/nativebatch or authoringpush before review; no runtime/
+settings/defaultintegration/lifecyclecleanup. Findings/fixes/nextchecks remain
+implementer1-owned. Tiny8e1CI dependency separatelyclosed: exactrun42535001579/14/1
+SUCCESSchecks/build, package/upload/deployskipped0artifacts, boundedinlineAPIproof
+p26-tiny-ci-result.json/artifacts.json. Currentselecteda66 and allrefs/roots/
+services/fixtures/session remainopen and unchanged.
+
+
+P26 authoring finalreview fixes: frozen26fc review returned ImportantG1/R2 and
+AdvisoryA1/A2; lead accepted exact narrow contracts. Ordinaryhook amend retained
+sameparent8e1 and owningcommit: old26fc ->
+`2ae365e1aeed79cd5a7e6d8a6f551b5ea18cc3a4`, tree
+`b095051fdf78149d38b0ddd8fb172956693c0cdf`. Semantic fixes are not called patch
+-equivalent. Oldreview/source/evidence remainretained; fullhistory still30commits,
+prior29consumedlineage unchanged/no migrations/pinstreams. Delta onlychecker,
+observer and focusedfixtures,183+/8-. G1conditionalmainarticleactualCLI covered;
+R2same-run prerequisiteattemptlookupvalidatescompletejobidentity, stopsfirstbuild,
+requiresreusedpackage/uploadsuccess and keepsunknownincompleteevidence. Current
+workflow/deploysuccessremainsrequired; build_attemptseparatefromdeploy_attempt.
+No artifactAPI/download/newauthority. A1newCSnumeric/wp-rootsreject; A2original
+observerallowclassplusunderscoreonly, repeatedhyphencompatibilityretained.
+
+Affected8testsPASS9.746s; final7observercasesPASS0.010safterexactA2correction.
+Logs p26-authoring-review-fixes.log/p26-authoring-observer-fixes-final.log; exact
+old/newpatch+result p26-authoring-review-fixes.patch/result.json. Installedordinary
+precommithookpassed125pairsduringnormalgitcommit--amend-F, nobypass. MAINprose
+hashesandarticle/data/app/pin/workflow/clientbytesunchanged. Canonicalclean/index
+empty/windowyielded, frozen forlead affectedGENERAL/RISKreviewplusdirectstep9
+checks. No push/fullsite/native/reviewreinvoke/runtime/default/lifecyclecleanup;
+no activeutility/command. Source/findings/fixes retained, services/roots/open.
+
+
+P26 authoring R3: affected immutable2ae review found CI proof persisted across
+freshpolls/attemptchanges. Lead accepted exact five-line reset of ci/run/build/
+deployproof before eachfreshAPIobservation. Focused transitionfixtures show
+success2/onesiteold then inprogress3/bothsitesready remainsunknown/CLI1; later
+terminal3success confirms, API failure clears oldgreen. Observer8testsPASS0.017s.
+First fixture command mistakenly used trackingCWD andfailedbeforetests; exact
+startup output retained, correctedonce to explicitBLOGCWD. No sourcefailure.
+Ordinaryhookamend2ae -> `d74801a81287bc0f6c29e4d0728a6eebc5998099`, tree
+`2befc63490d2b7c86c9d2247c978f6236c924511`, sameparent8e1, delta47+/0onlyobserver/
+fixtures. All G1/R2/A1/A2 and MAINprose retained. Real precommithookpassed125pairs;
+canonicalclean/indexempty/windowreturned, parent62255joined0/noactiveutility.
+Evidence p26-authoring-r3.patch/result.json/cli-final.log; old26fc/2aereviews/source
+remainretained, semanticfix notcalledpatchequivalent. Full30commits/no migrations/
+pinstreamchange, oneowning13file1301+/96-commit. Leadstep9acceptancepending; no new
+reviewcycle/fullsite/native/push/runtime/defaultintegration/lifecyclecleanup.
+
+
+P26 authoring firstnativefailure/fixture-onlyrepair: freshLuna parent91964/child
+41335 stoppedbincheckexit1/24.3s on unsupported pinnedHugo --dataDir. Releasecheck/
+sitebuildnotrun, result-p26-authoringabsent, sourcecleand748. Originalfailure/log/
+result retained. Small authorizedbincheckfix usesexisting JSONdataDirconfigoverlay;
+selectedfixturethenexposed its syntheticfuturedate, correctly excludedbyHugo.
+Thatselectedfailurelogalso retained. Onlythissyntheticbundle/date/lastmod moved
+tofixedpast2020-01-01, no buildFuture or appcontractchange.
+
+Actualcheck_authored_article plus existingunpairedworkingpreview block thenPASS
+25.271s: newCSENnon-draftpages/search126each, draft exclusion/search125each,
+unpairedpreview/localmedia/code preserved. Syntax/whitespacePASS, nofullbatch
+rerun. p26-authoring-fixture-repair-final-result.json/log binds sourceSHA986c40...
+Normalhookamendd748 -> `8b30ba027d3cedcc0b9bc10746a2dbc199b18aba`, tree
+`cb7280300126c9f5028f6df2c1fdbf7d13428336`, same8e1parent; deltaONLYbincheck
+fixture6+/4-. RealprecommithookPASS125pairs, mainprose/article/data/pins/workflow
+unchanged; canonicalclean/indexempty. Exactpatch/amendresult retained. Full30
+history/no migrations, owningauthoring13file1303+/96-. Step9fixacceptance/fullbatch
+releasepending, no push/buildretry/runtime/default/service/lifecyclecleanup.
+Alloldroots/fixtures/session/publicA66retainoriginalidentity.
+
+
+P26 authoring acceptedfixturefix/newnative/publication milestone: leadstep9
+acceptedexactbincheckoverlay/pastdatefix8b30/treecb728. ONEfresh9yib/catalogf2d5
+Luna/low nativeR2operationparent17589completed0 with rawtoolevidence check0/
+112186ms, release0/3097ms(4tests0.261s), nativebuild0/18746ms, pre/postexactclean.
+Watcherfailedtocreaterequestedseparatelogs/result; parentretainedactualexec/tool
+success+stdoutfromcompletewrapperwithout rerunning. Honestcapturelimit in
+p26-authoring-native-r2-retained-result.json; percommand-retained-output.log,
+wrapper.log/final.txt remain. Earlierd748failure and25.271sselectedrepair proof
+remainseparate; no relabeling.
+
+NEWresult-p26-authoring roots `/nix/store/sz9f1rw3rb3p2fp5cka2jqkhi69758dm-vpsfree-blog-0`,
+NAR `sha256-OpBPSSU65p8NFER1obA8zIZggCgLhX0C7KkChg7+ToA=`,115137752B.
+Source `/nix/store/xmqcdpkj3m8lsgrk8809r298cj8b2g9f-source`, revision8b30,
+NAR `sha256-dIdAHpb4rBbHzRMIEAYJt69GJdZjLQLPnL3PRypZ5Jg=`; lockednixpkgs
+f3a73/NARqVt97/Hugo0.167/Pagefind1.5.2 exactbindings. All2399servedhashes match
+metadata andbyteequalprior8e1site; metadatasha
+`6fc23740c6cd160442efd6085f8e112bf189f1660e7f681191a60214d53eff51` isnewsource
+identity. Bothfavicon/title/canonicals verified, all250articles/data/985protected
+modesblobsunchanged and10oldroots retained. p26-authoring-artifact-result.json/
+path-info.json/protected-source.json/exact-r2-flake-metadata.json holdproof.
+
+OrdinarySSHfeatureFF8e1->8b30passedfreshclean/index/ref/main0354checks andindependent
+afterproof, no force/defaultmutation. p26-authoring-push-result.json; source/index
+window explicitlyreturned, portalcomparison0354..8b30captured. Exactautomatic
+Buildblogrun42539900422/number15/attempt1/head8b30identified, onefreshLunaCIwatcher
+parent97444followsonlythatrun. FinalCIacceptancepending, no duplicatepush/dispatch/
+retry/liveupload/tempworkflow/runtime/settings/merge/lifecyclecleanup. CurrentA66
+source/artifactsreceiptsremainindependent; allservices/fixtures/roots/sessionopen.
+
+
+P26 authoring finaldelivery closure: exactfeatureBuildblog42539900422/number15/
+attempt1/head8b30 completedSUCCESS. Actualnormalcheck/releasecheck/nativebuild
+passed; Package release/artifactupload/deployskipped, artifactAPI0. Buildjob
+128912267397 took64s; deploy128912566581skipped. p26-authoring-ci-final-run.json,
+final-artifacts.json/final-result.json retainauthoritativeproof. FreshCLIwatcher
+parent97444hadstoppedbeforeanyGHrequestbecause9yibwas superseded; exactincomplete
+startuprecordretained separately. Parentordinarydev-sessioncurrent then matched
+sessionunderactualnew8p7package/bothenvabsent; oneboundedterminalrun+artifactAPI
+read provedCIwithoutwatcherretry/push/rerun. Noactivehandlesorutilityremain.
+
+Finalsource8b30/treecb728, acceptedreviewandstep9G1/R2/R3/A1/A2/fixturecorrection,
+oneordinaryowningauthoringcommitabove8e1, full30commits/no migrations/pinrefresh.
+Nativeartifact/source/fullhashes and10oldroots provenabove; all250articles/data/
+985protectedapp/workflow/lockmodesblobsunchanged, all2399servedbytesmatchprior8e1.
+OrdinaryfeatureFF/push/defaultproofandcomparison0354..8b30 retained; canonical
+source/indexwindowalreadyreturned beforeCI, clean. MAINprose+ordinaryhookproof
+unchanged. Existingnativewatchercapturelimit/rawtoolwalltimes retainedhonestly;
+priorfailedverificationidentitiesnotrelabeled. No currentarticlepublication,
+A66relabel/liveupload/tempworkflow/defaultintegration/CONFIG/runtime/settings/
+service/sessionlifecycleorcleanupaction. Capacityfree, P26source/findingsownership
+retained; allrefs/roots/services/fixtures/session stayopen. Mainacceptance/any
+futuredefaultintegration isseparate; no mergeapprovalinferred.
+
+
+### P27 three-state authoring delivery
+
+Accepted source `a24ed26f04ccdbf09684ad8e855c64b37d03aae4` / tree `0eaf28311e866c2591dc7d71b140edc4202c0724` is one coherent
+commit above8b30, full31-commit history/no migrations. Initial all-four-lane
+review of immutablee9d and direct step9G1/G2/G3 corrections are retained; successor
+is a changed bin/check-only delta, not an equivalence claim. Six MAIN prose
+hashes and ordinary hook proof remain exact. Prior21 focused passes retained.
+
+The released final-source batch passed once: bin/check113.094s (actual bilingual
+production/promotion/future-preview Pagefind/sitemap/feed/discussion fixtures and
+original archive audit), check-release2.921s, native build17.8s. New result-p27
+retains `/nix/store/sfvxlsvhzcaskhgz4zcc59zr54qmf54i-vpsfree-blog-0`; outputNAR `sha256-xrnRW4saTpSduoOoKqLwKMkB9U/ETH6rT+IeWumqG04=`.
+Source `/nix/store/95hihpdcsmnc9gn0kr22wj9pb8q25xxn-source` / NAR `sha256-yCbqJeXRCklSdn4vpLVuW46cG/LkpguutuSu51muaKU=`;
+full inputs in p27-exact-flake-metadata.json and p27-artifact-result.json.
+All2399 served hashes verified;385 protected source files including250 imported
+language files/data/manifest/pins/workflow/client byte-equal; favicon/title and
+canonicals proven. All11 old roots preserved. Native watcher72790/child28261
+terminal0, every handle joined; logs/status retain actual evidence.
+
+Ordinary SSH featureFF8b30->a24 passed fresh refs/clean/index checks and independent
+after-proof; main/defaultHEAD0354 unchanged. Portal comparison captured; source/
+index window returned immediately. Exact automatic CI[16](https://github.com/vpsfreecz/blog/actions/runs/42594078633)
+run42594078633/attempt1/heada24ed26f04ccdbf09684ad8e855c64b37d03aae4 completedSUCCESS:
+check/release/build passed, Package release/artifact upload/deploy skipped,
+zero artifacts. Fresh current8p7/f2d5 Luna watcher50510/child74314 terminal0/all
+joined, no duplicate push/watch/retry. p27-ci-final-run/jobs/artifacts/result.json,
+p27-native-status.json and p27-push-result.json bind delivery.
+
+Actual installed/selectedA66 artifact remains separate. No default integration,
+real article publication, temporary workflow exception, live upload, CONFIG,
+runtime/settings/service/lifecycle/cleanup or claim-release action. Source/findings
+ownership retained; execution complete/capacity free after this report. Session,
+all recovery refs/roots/fixtures/services stay open.
+
+
+## P30 source preparation accepted; deployment and pilot pending
+
+Published BLOG985d4eaa74309b219a762dcc02316df4a350065d/tree774efe50f4f24f5cf9945fa7b0271fec443ac54b
+and CONFIG0488276abb1c80bb8c13ce45e75cd9ab2bd2fe92/treeda3269a708eacbc54658dac80a1266bdea23a547.
+User-selected per-author identity, shared English forum source, one-batch forum
+reply labels and native full-app inline replies are prepared; Hugo opt-in stays
+false. Both host article allowlists and forum-wide SameSite=None/Secure prerequisites
+are explicit, with live browser authentication/pilot still unproven.
+
+Final reviewer0 Sol/xhigh BLOG all4/CONFIG affectedGENERAL-RISK found no Blocking/
+Important issue; sole G1 future-enable documentation remedy directly verified
+61e5..985d docs-only6+/3-, code unchanged. Complete33 BLOG/eight CONFIG histories,
+consumed a66/a24/source recovery boundaries, no repeated streams/migrations accepted.
+Normal hooks used throughout. Original250 content files/shared metadata/lock/client/
+workflow preserved; dev-only pinned Node is the deliberate flake source exception.
+
+BLOG batch check119.338s/release3.207s/native18.407s all0; ysy4 artifact, source ncya,
+all2399 served hashes,250 truthful heads,125 search pages/language and12 old roots
+bound. CONFIG final native107.841s/realized7w1m, source ba0l, compiled0488/fullgraph/
+12 rendered defaults verified; predecessorfalse41ca599.349s/mm19 proof retained
+separately. No actual forum/account/framing/login or live latency claim.
+
+Ordinary SSH feature FF publication passed for both repos; BLOG main/default0354
+and CONFIG master/default8d040ea remained unchanged. Exact automatic BLOG CI
+42613369754/#17/attempt1 SUCCESS (checks/release/build), packaging/upload/deploy
+SKIPPED and0artifacts. No Actions-artifact or delivery claim. All command/watcher
+handles joined; utility free, sources clean, source/index windows returned and
+owners parked retaining findings.
+
+No P30 system activation, forum UI/topic operation, live upload, merge, claim
+release or lifecycle cleanup. Live BLOG remains P29 a24/operator16.1, backend76d7/w3;
+blog claim4cd remains held for unmerged deployed lineage. web.int user-owned and
+untouched. Next: deploy reviewed Discourse config, operator category/hosts/account
+checks and two-domain pilot, then reviewed check-aware enablement. Details:
+state.md, final-review.md, p30-remaining-operator-setup.md and exact linked proofs.
+
+
+## P31 inert metadata delivery verified; browser pilot pending
+
+Live BLOG985d4eaa74309b219a762dcc02316df4a350065d selected as operator-local real
+CI17.1 release985d-55fba3cfd240b057, archive55fba3cf/ZIP99f43df9, currentreceipt
+9e962749a078c33c97dbac0e508da5feb15b63680609a8a1fc8d2a3a95ec2adc/floor17.1/RESUMED.
+Lead fixed-driver92342 joined0/19.978s, no reconciliation or outer retry. Private/
+public proof5f115392/all5links accepted:2399hashes/2401set/24normalCAobservations,
+both wp841 pilot heads JakubSkokan/aither/sharedEN, no embed/count HTML traffic.
+Backend76d7/w3/policy unchanged; WP/MySQL0700PID5181/receiver/timer/backups and
+retaineda24/16.1/A66 content/recovery intact. Operator reports Discourse deployed/
+hostsset/noexistingpilotdiscussion. Workspace strictSSH authentication refused
+before remotecommand; optionalservercheck is not a pilotgate. No agentDiscourse
+request/topic/reply. Exactguardedbrowser snippet prepared/syntaxchecked foruserEN
+thenCSpilot, globalenabledfalse. No source/build/CI/mainmerge/web/lifecycle/cleanup
+change; BLOG4cd held forunmergedlineage, ownersparked, allhandlesjoined/utilityfree.
+
+
+P32 final acceptance: native fullApp embeds and forum-only listing labels enabled
+for all eligible articles; reviewed host paths widened with slash normalization
+preserved. Both-language pilot user-confirmed. Exact BLOGc900/CONFIG4771/WEB7fec
+merged into remote defaults, protected-main Actions20.1 delivered genuinec900
+artifact, actual2401 served hashes/250payloads/1490markers and health/recovery
+verified. All claims/handles terminal and released. No web.int or systemactivation,
+archive/cleanup, source/corpus/media/byline changes or topic seeding. Actual
+Actions Pagefind output remains distinct from localnative; see current rollout
+and source/evidence qualification in release-preparation.md/state.md.

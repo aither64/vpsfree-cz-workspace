@@ -2924,3 +2924,2462 @@ English host are settled; category/review ownership remain lead decisions as
 needed. These facts constrain dependent releases, not the B0 scaffold.
 
 Session: <https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-11-06-multilingual-blog-migration/>.
+
+
+## P19 proxy deployment safety: sufficient read-only brief
+
+User constraint: “proxy is serving other websites and we don't want an outage
+there. Configuration switches are acceptable, shutting down nginx is not.”
+No nginx stop/restart is permitted; only a validated graceful reload. This
+supersedes P18's deployment ownership: the team may prepare deployment to
+`cz.vpsfree/containers/int.blog` and `cz.vpsfree/containers/prg/proxy` once access
+and staging prerequisites are met. The user handles tokens/GitHub settings and
+Discourse UI; no declarative forum source, other target or default merge is
+implied. Access is not yet verified. Architect owns this read-only brief only;
+lead owns the later preflight/deployment allocation. No source fix is presently
+justified.
+
+**Settled evidence.** Configuration `1e840b8056bbc700ca3e9cd832f0d9301da52652`
+retains `services.nginx.enableReload=true` in proxy `config.nix:127`; the proxy
+source delta moves the Czech blog block to `blog.nix` and adds the scoped hook/
+English/mode configuration, preserving other vhost definitions. Pinned nixpkgs
+`718f670e845328e9c2cecdd832835712b2cbd065`, nginx module lines 1483–1512 and
+1590–1646, generates a separate `nginx-config-reload.service`: config changes
+trigger that oneshot, which calls `systemctl reload nginx.service`. The actual
+accepted proxy system `a2b5d14vj9rkzlm8sv2j5v0kcf9vplc8` has `ExecReload` running
+nginx `-c /etc/nginx/nginx.conf -t`, then `kill -HUP $MAINPID`. The main binary is
+`/nix/store/smpkfhyjj22b4zy1f0cprzfhr0nimllr-nginx-1.30.6/bin/nginx`.
+New ACME dependencies attach to ACME units, avoiding a main-unit change merely
+for a new certificate. The reload oneshot waits for certificate paths; a missing
+certificate can postpone reload. ACME renewal itself uses
+`try-reload-or-restart`; verify the effective nginx unit remains active and
+reload-capable. A failed/withheld reload is not permission to restart.
+
+`enableReload` covers config changes only. The compiled main unit has
+`X-StopIfChanged=false`, but no reload-on-unit-change or restart prohibition.
+Pinned switch-to-configuration source `main.rs:727–754` defaults
+`X-RestartIfChanged=true`; with `X-StopIfChanged=false`, a changed unit is still
+**restarted**, rather than stopped in the early phase. Package/ExecStart,
+environment/dependency or unit changes can therefore violate the constraint.
+The accepted default-off build does not establish the live unit or the future
+enabled generation's safety. Preserve its complete input/system proof in the
+existing [native receipt](h18-refresh-config-build-proof.json).
+
+**Required later preflight and stop condition.** After access is authorized and
+verified, retain the actual current system/profile, nginx unit/drop-ins,
+executable, config/includes/cert paths and master PID/start time; compare them
+with the exact separately built enabled candidate. Inspect all unrelated vhost
+blocks and listener/upstream/TLS changes, plus the activation plan's effects on
+shared dependencies. Keep the original generation/config and its inputs rooted.
+The supported pinned confctl interface is a separate dry activation:
+
+```sh
+nix develop --no-write-lock-file --no-update-lock-file -c confctl deploy --generation '<prepared-generation>' cz.vpsfree/containers/prg/proxy dry-activate
+```
+
+This copies/selects the named built closure and invokes its native dry action;
+it is a later target operation, not something run for this brief. Inspect its
+actual complete output against the live state. `--dry-activate-first` alone
+proceeds after a successful dry action and does not reject restart plans;
+interactive confirmation is separate (`cli/cluster.rb:873–916`, pinned confctl
+`7bee58a52372b95c2198ce3f2a719807a3c2c66b`). Reject a plan that stops/restarts
+`nginx.service`, disrupts a shared serving dependency, or is ambiguous. Starting
+or restarting the separate reload oneshot is not a main nginx restart. Refresh
+preflight if the target/candidate changes; do not automatically confirm a switch.
+Native config testing must pass before HUP, with the intended certificates
+available; missing paths, failed syntax or a skipped reload stop progress.
+
+Before/after the eventual reload, use the existing proxy health checks for
+`vpsfree.cz`, `kb.vpsfree.cz`, and newadmin build-info/healthz, together with
+representative unchanged vhosts and the intended blog modes. Record TLS/status
+and expected content without secrets. Confirm the nginx master PID/start time
+stays unchanged, new workers load the intended config and old workers drain
+existing connections; inspect reload/error logs. Configuration comparison alone
+cannot promise zero outage.
+
+If the live comparison requires a restart, stop the planned switch. The smallest
+candidate is the blog-only configuration delta on the proven running input/unit
+baseline, preserving nginx binary/environment; any such source adjustment needs
+its own lead allocation and affected checks. Do not suppress restart flags or
+bypass switch checks. Recovery must also use the validated reload path; retain
+and inspect the old generation, and assess any configured confctl automatic
+rollback's return switch before using it. No blind full-generation rollback,
+nginx restart or data removal is authorized by this constraint.
+
+This pass read local source, existing compiled units and retained receipts only.
+No build/runtime-check execution, server/network/SSH, claim, application edit,
+deployment or lifecycle action occurred. The brief is sufficient; live comparison remains
+the dependency, and architect capacity is free.
+
+
+## P20 sufficient implementation brief: backend-owned routing
+
+User approved “yup, let's rework it”: both proxy domains forward to blog.int:80;
+cutover/recovery and the hook belong to the backend. Lead accepted this topology
+and the ordinary outer-proxy logging/limits change. Sole implementer3 owns the
+package and both repository source/index windows. This brief releases source
+work; later runbook reconciliation follows results. Predecessors are CONFIG
+`1e840b8056bbc700ca3e9cd832f0d9301da52652` and BLOG
+`82a1ee3c90990e56cfde0da28ababed8f0444441`; their proofs cover predecessor
+behavior only. Architect edits design/assigned rollout records, not application
+source. P19's no nginx stop/restart constraint on the shared proxy remains.
+
+Current steering supersedes the first P20 source/quick checkpoint at CONFIG
+`cba460554c8008a86cc349ef7308cd539ca75848`: the user rejected a temporary EN
+proxy option, and lead accepted unconditional CZ/EN vhosts. Reviewer Important
+P20-R1 also found internal nginx directory redirects exposing HTTP and internal
+ports. Owner3 alone owns both corrections; the exact old review completes before
+an affected review of the new committed contract. Existing source/check receipts
+remain historical evidence, not certification of these corrections.
+
+### Fixed interfaces and scope
+
+| Layer | Settled behavior |
+| --- | --- |
+| Shared proxy | CZ and EN vhosts are unconditional: both have HTTPS/ACME and one ordinary `/` forward to metadata-resolved blog IPv4 port80, with fixed matching Host. Remove `enableEnglish`, proxy `serveStatic` and the special hook location; there is no proxy enable or cutover toggle. Obsolete configuration must fail clearly rather than silently change behavior. Backend EN503 handles the prelaunch state. Unrelated vhosts, inputs and nginx service settings stay unchanged. |
+| Backend frontend | New small `blog-routing.nix`, imported unconditionally, owns IPv4 `0.0.0.0:80` and separate fixed CZ/EN server names. New `services.vpsfree-static-blog.serveStatic=false` selects CZ WordPress and EN503; true requires existing `enable=true` and selects the static listener for both. No fallback to WP when a selected static release is missing. Port80 remains reachable only from the exact proxy IPv4 plus local checks. |
+| WordPress | Keep the existing generated `blog.vpsfree.cz` vhost/key, PHP location/protection rules, package/settings, WP_HOME/SITEURL, cron, database and identities. Move only its serving listener to `127.0.0.1:8081` and adjust trusted local-hop real-IP handling. Frontend uses a distinct vhost key (`blog-front-cs`), avoiding replacement of generated WP location maps. |
+| Static content | Existing CS/EN roots and named vhost keys remain on `127.0.0.1:8080`, available for backend-local verification before cutover. Remove the proxy-to8080 firewall grant; no external8080/8081/8091 listener or firewall opening. Preserve RSS `try_files /feed/index.xml =404`, retained CSS and PHP rejection. CZ-only 540-alias maps remain in this layer; no EN aliases or map changes. |
+| Hook | Only frontend CZ exact `= /_hooks/github/build` reaches `127.0.0.1:8091` when webhook enable is true, in both route modes. Disabled exact hook and the reserved `^~ /_hooks/` namespace return404, including EN, so these requests never reach WP or static content. Keep backend1MiB/5s/body/header buffering/pinned Host/log suppression. Receiver, worker and HMAC policy remain unchanged. |
+| Defaults/rejection | Unknown Host on frontend80 and internal listeners returns444 through explicit default vhosts; never accidentally make WP the public default. EN ordinary traffic returns503 before static cutover. Static PHP requests return404; WP mode retains its intentional PHP behavior/protections. All listeners are explicit IPv4, avoiding accidental IPv6 exposure or port80 collision. |
+
+Use ordinary fixed `proxy_pass` locations without URI replacement: preserve raw
+request path/query/body for legacy matching and HMAC. Outer per-language forward
+sets fixed Host, `X-Real-IP $remote_addr` and `X-Forwarded-Proto $scheme` (HTTPS
+vhost); no untrusted X-Forwarded-For chain becomes client authority. Frontend
+trusts X-Real-IP only from the metadata-resolved proxy /32, with recursion off.
+Frontend→WP/static fixes the corresponding Host and forwards its resolved
+`$remote_addr` as X-Real-IP; set X-Forwarded-Proto to the fixed canonical `https`
+on this private hop, not the local HTTP `$scheme`. WP trusts this header only
+from loopback, with recursion off, preserving effective client IP and HTTPS
+administration. Its old direct proxy trust may be removed now that it cannot
+receive external connections. No URL/header chooses an upstream. Review the
+actual generated header inheritance so a second generic header include cannot
+overwrite these values. The hook uses its existing fixed-Host/raw-body policy.
+
+Set `absolute_redirect off;` on the retained WordPress and both static
+vhosts. Nginx-generated directory redirects must use relative Location values,
+so the public HTTPS hostname/port survives the loopback hops. Keep explicit
+legacy301 targets fixed to `https://blog.vpsfree.cz`; this correction does not
+rewrite WordPress application redirects or the captured alias map. Include
+focused generated-module and real-nginx slashless-directory coverage for WP
+and both static languages. The proxy's one-deployment P19 gate is unchanged.
+
+Outer policy compatibility is explicit: the accepted proxy currently uses
+10MiB global body limit, 60s generic proxy timeouts and ordinary `combined`
+access logging. Removing its special hook restores those defaults for this
+path; backend enforcement remains1MiB/5s. Ordinary combined logging records
+request/URI/status/referrer/user-agent, not HMAC headers or request bodies.
+Keep credentials/signatures out of URLs and do not add payload/header debug
+logging. No new outer hook rule, filter or dedicated logging framework is
+required; backend endpoint logging remains suppressed. This settled change is
+approved by lead, not an accidental weakening of an unstated contract.
+
+### Ownership and protected boundaries
+
+Owner3 files in configuration: `cluster/cz.vpsfree/containers/prg/proxy/blog.nix`;
+backend `config.nix`, new `blog-routing.nix`, `wordpress.nix`, `static-blog.nix`,
+`blog-webhook.nix`, `module.nix`; existing `tests/blog-{proxy,static,webhook,legacy}-module.nix`
+and `docs/operations/blog-static.md`. Change `legacy-routes.nix` only if strictly
+necessary for composition; keep its projection/data and matching semantics
+identical. Reuse current fixtures rather than add a new harness. Update the
+backend health commands to check public frontend CZ and retained loopback WP
+separately; current HTTP-health success must not imply WP recovery was checked.
+Proxy's existing unrelated-site health commands stay intact. The existing
+legacy-module fixture still expects the obsolete feed `alias`; reconcile it to
+the already accepted `try_files` contract when updating that affected fixture.
+
+Owner3 also owns the narrow BLOG `docs/deployment.md` correction for port roles,
+backend cutover/recovery and ordinary proxy forwarding. Read BLOG instructions
+before that edit; no article/template/assets/IDs/translation/feed/search changes.
+No forum source; setup stays in Discourse UI. Configuration publication Python,
+compiled-policy/schema/CLI/UID+lock/durability/queue contracts, Actions workflow,
+artifact format and inputs remain unchanged. No Hugo builds locally or on the
+backend: use the existing accepted artifact for routing fixtures and actual
+eligible Actions artifacts for later deployment. No new IDs/secrets are invented.
+
+### Operation, compatibility and recovery
+
+Three independent choices stay clear: static.enable installs storage/internal
+serving, publication.enable authorizes content selection only after explicit
+resume, and backend serveStatic exposes that selected content on frontend80.
+`prepare` still cannot provide a private preview until a valid current pointer
+is selected through the installed publication policy. Keep publication controls,
+root maintenance, retained-release rollback and all state unchanged. Every
+backend generation switch, including route cutover/return, follows the existing
+maintenance-enter/check/status and deliberate post-verification resume contract.
+No manual symlink/policy bypass or new switching daemon/CLI.
+
+Normal initial sequence: verify the actual old proxy forwards CZ to80; prepare
+and deploy backend coexistence with serveStatic=false, checking retained WP and
+EN503; then the one shared-proxy change adds EN TLS and ordinary80 forwarding
+under P19 preflight. Successful Actions publication can then be checked
+locally at8080 with fixed language Host while WP remains public. Once ready,
+only the backend serveStatic option changes. Returning it tofalse restores CZ
+WP/EN503 without another proxy change. Content rollback independently retains
+its pause semantics. Keep WordPress/PHP/MariaDB/data/keys/owners/backups, old
+systems, releases and forum replies. No retirement/cleanup belongs here.
+
+This intentionally replaces the unpublished/undeployed predecessor routing
+contract and its external8080 verification path. If live inspection instead
+finds a proxy pointing at8080 or an unexpected deployed predecessor, stop and
+sequence that concrete transition before making8080 loopback-only; do not assume
+the normal sequence applies. Pin/source drift and restart-required proxy plans
+remain blockers, not reasons to bypass checks. Preserve old/new review ranges
+and recovery refs; owner3 inventories obsolete unmerged layout history and lead
+chooses consolidation/publication under existing rules.
+
+### Minimum acceptance and checks
+
+Quick batch: normal hooks and the affected existing Nix module fixtures, using
+real composition to force nginx/unit generation. Cover default/coexistence,
+static selection, unconditional CZ/EN proxy vhosts, webhook off/on and invalid
+static-without-enable. Assert fixed host headers/proto/client-IP trust, no public WP collision,
+no external internal-port grant/IPv6 listener, exact hook only, generated WP
+protections/data/UID/service preservation, unchanged publication policy/helper
+bytes and removal of both proxy toggles/special hook. Assert `absolute_redirect off`
+on WordPress and both static vhosts, with fixed HTTPS legacy redirects intact. Prove unrelated proxy vhost
+configuration unchanged. Projection bytes stay identical; reuse its accepted
+540-map evidence where source identity allows. No broad publication test rerun
+is needed if its implementation is unchanged; re-run only affected module gates.
+
+After committed-source/affected independent review, build the two exact system
+targets and record new source/input/unit/config identities. The native proxy proof
+must show EN ACME configured by default; that does not prove a certificate was
+issued or that live TLS works. One bounded
+registered real-nginx routing batch may reuse the accepted static artifact:
+exercise the ordinary outer hop and frontend in both modes, fixed CS/EN Hosts,
+WP recovery path, direct/frontend RSS200+MIME, slashless directories through both
+public-host routes with no HTTP/internal-port Location leakage, representative query/fragment
+aliases and malformed/nonlegacy cases, unknown Hosts/PHP, hook off/on/EN reject,
+raw HMAC body/header preservation and backend body limit. Use unchanged accepted
+receiver code/synthetic secrets; no live GitHub/forum requests or new full
+publication harness. Prove preview checks do not require Hugo or public routing.
+Retain predecessor results only for unchanged scope; no claim of deployed
+WP/PHP or production TLS from synthetic upstreams. Later live preflight covers
+actual WP/client-IP/HTTPS behavior, unit/binary/config comparison, dry-activation
+plan, unrelated-vhost health and master/worker continuity under P19. Stop on any
+planned shared-proxy nginx restart or uncertain effect.
+
+No unresolved product choice blocks this source package. Access, live baseline,
+operator credentials/eligible main artifact and proxy certificate verification
+block only subsequent rollout. This design pass performed local reads and this
+addendum only, without evaluation/build/server/network/SSH/claim/source mutation.
+
+
+### P20 native output realization: accepted investigation boundary
+
+The original exact011151f native command returned0, but retained evidence shows
+its final9037 blog and5w86 proxy outputs absent locally. Pinned confctl7bee58
+requests real builds, then discards their returned JSON and separately evaluates
+output paths before creating generation/GC-root symlinks without target-validity
+checks. Its exit status and links alone do not certify local realization.
+The actual disappearance cause remains unknown; the proof-reader JSON schema
+correction is separate. Preserve the raw103.836s result as incomplete evidence.
+
+Lead released owner3 for one realization of only the two already-bound final
+derivations, capturing completed JSON and fresh explicit roots, without confctl
+reevaluation or source/pin changes. Acceptance requires exact expected outputs,
+local validity/NAR and native-root/compiled-content binding. A later pass is
+recovery evidence, not proof of the original cause. Recovery/runtime results
+remain pending; the one-proxy deployment and P19 no-restart gate are unchanged.
+No broader tooling investigation or implementation is part of this package.
+
+
+### P20 final preparation checkpoint
+
+Lead accepted CONFIG `011151f978eae435e1357ca00611726dbf501943` / tree
+`bb194867edee21017186a0af0471905da03869ca` and BLOG
+`7b0f3286ee11737e894f022bde0fce742a8a572d` / tree
+`e9bce05317dd1f55234779bb1608d4c171a300f7`: final affected review has no
+remaining findings; both feature heads are published with remote defaults/HEAD
+unchanged. Exact BLOG push CI [42470233945](https://github.com/vpsfreecz/blog/actions/runs/42470233945),
+attempt 1, passed checks/release checks/Nix build; trusted-main packaging/upload
+were skipped and artifact count is zero. CONFIG has no applicable push CI.
+See [final publication proof](p20-final-publication-proof.json).
+
+The earlier output-gap paragraph's recovery/runtime pending state is historical.
+The [final native proof](p20-config-build-proof.json) accepts the separately
+rooted 21.209-second realization of only the two exact drvs; the original
+103.836-second missing-output run remains incomplete and its cause unknown.
+[Blog proof](p20-blog-artifact-proof.json) binds all 2397 served files unchanged;
+[73 routing observations](p20-routing-runtime/result.json) passed for the
+actual adapted nginx/HMAC path. These establish their recorded local scope,
+not production TLS/PHP/systemd or a live generation switch. Unchanged A18I
+publication evidence is reused only for its identical implementation/policy.
+
+The [current staged rollout plan](release-preparation.md) now uses unconditional
+ordinary forwarding for both proxy domains, one proxy deployment under P19's
+live comparison/separate dry-activation/graceful-reload gate, and backend-only
+cutover/recovery. Internal WP/static ports stay loopback-only; publication
+maintenance, UID/lock/durability and recovery contracts are unchanged. The user
+handles tokens/GitHub/Discourse UI; team target access, live facts and eligible
+protected-main artifact remain later rollout dependencies. Chat proceeds one
+small step at a time. The complete prior receipt suffix is preserved, including
+failure/recovery lineage and route-coverage limits. No source change, new check,
+deployment, default integration or lifecycle action accompanies this checkpoint;
+all refs, roots, fixtures and the session remain open. Record ownership returns
+to lead for the handoff.
+
+
+### P21 proposal: synchronous authenticated HTTPS upload
+
+**Status: accepted for implementation.** The user said "ok, well, proceed with
+implementation" after the direct-upload proposal and 512 MiB choice. The accepted
+release checkpoint below supersedes proposal-only wording in this section. P20 CONFIG
+`011151f978eae435e1357ca00611726dbf501943` and BLOG
+`7b0f3286ee11737e894f022bde0fce742a8a572d` remain unchanged. This addresses the
+user's proposed workflow push through the existing proxy and requirement for a
+deployment secret. It replaces target-side GitHub credentials/API acquisition
+and webhook notification with one authenticated package upload. No App, OIDC,
+new framework, local Hugo build or background deployment queue is proposed.
+
+**Recommended boundary and authority change.** Make the protected-main workflow
+with the deployment secret the release authority. It runs existing checks/build,
+packages the site, retains its Actions artifact, then uploads as the last
+required step. A successful HTTP response means the exact validated release and
+its transaction receipt are durable and selected at response time. The workflow
+then reports delivery failure directly; it cannot report the overall run already
+completed successfully before this final step succeeds.
+
+This deliberately removes independent target verification of repository ID,
+protected/current main, workflow event/path/run success and GitHub artifact
+identity/digest. A signature proves possession of the deployment key; SHA,
+run identity, input graph and source NAR remain authenticated sender assertions,
+not independent GitHub evidence. The validator still proves package consistency,
+path safety, complete file hashes and fixed repository/workflow names. Anyone
+holding the key can authorize a conforming site, including arbitrary site
+JavaScript. Protect main/workflow changes and use an Actions environment restricted
+to main with the secret available only to the deploy job; PR/other-branch jobs
+must never receive it. Protecting main is still an operator setting, not a
+property the new target can observe.
+
+The genuine decision for the user is whether this conventional trusted-workflow
+boundary is acceptable in place of target-side current-main/API checks. If the
+target must independently prove GitHub's current main at commit time, a shared
+secret and package metadata alone cannot meet that requirement. Do not describe
+this proposal as retaining that guarantee or add another authority system without
+new scope. An optional sender-side current-main check narrows stale delivery but
+cannot make it atomic with a target switch.
+
+**Small fixed transport.** Propose exact Czech `POST /_deploy/blog`, forwarded
+through the same proxy → backend80 → loopback receiver path in either backend
+route mode. English, disabled deployment, other reserved deployment paths and
+the retired webhook path must not reach WordPress. Send one standard ZIP with
+exactly the existing `payload.tar.gz` and `receipt.json`, reusing the current
+strict ZIP member checks and schema-1 package. No multipart parser is needed.
+Use bounded Content-Length/application-zip handling, reject duplicate identity
+headers and unsupported transfer encodings, and cap both compressed/expanded
+sizes and file count before staging. Keep metadata outside served roots.
+
+Recommend HMAC-SHA256 with a high-entropy shared key, over a fixed versioned
+string binding method, exact path, workflow run number and SHA-256 of the exact
+ZIP body. The digest and run number are explicit headers; the target can verify
+the header signature before accepting application work, then verify the streamed
+body against that signed digest. The existing receipt inside that body binds
+source SHA, run ID and attempt. Use constant-time comparison. This keeps the
+key off the existing private HTTP proxy-to-backend hop; the public connection
+still requires verified HTTPS, no redirects and no insecure certificate option.
+A bearer secret over HTTPS is simpler but would traverse that private HTTP hop;
+HMAC adds only standard-library signing, not a new authority service.
+
+Store the target key in an external root-owned 0600 file, supplied by
+LoadCredential to a fixed `blog-release` upload service. Store the same key in
+the main-restricted Actions environment. No key in Nix/store, URL, command-line
+arguments, logs or artifacts; no debug HTTP headers/body. Rotate by replacing
+both copies in a coordinated pause, without a permanent dual-key mechanism.
+The fixed nonroot receiver now has publication authority and content access,
+unlike the old notification-only user. It never receives root/systemctl rights,
+controls maintenance, chooses arbitrary paths or executes uploaded content.
+
+**Ordering, retry and maintenance contract.** Use authenticated
+`GITHUB_RUN_NUMBER` plus receipt run ID/attempt as workflow-local ordering data,
+not numeric ordering of run IDs or commit SHAs. Official [variables documentation](https://docs.github.com/en/actions/reference/workflows-and-actions/variables)
+states that run number increments per workflow and does not change on rerun;
+attempt increments on rerun. Restrict automatic upload to protected-main push
+runs and retries of those runs; retain manual artifact builds without silently
+authorizing arbitrary manual historical deployments. Fix repository/workflow
+identity in policy. Recreating the workflow/order namespace requires explicit
+operator reinitialization, not a guessed reset.
+
+Under the existing stable transaction lock, retain the greatest successfully
+committed `(run_number, run_attempt)` and its run-ID/source/digest binding in
+transaction state. Reject lower order and conflicting reuse; for the same run
+number bind run ID/source across attempts. An identical retry succeeds only
+when that exact release remains selected. A previously deployed but now
+superseded or rolled-back request must not silently select itself again. A
+higher accepted order must be durable even if content selection is unchanged.
+Carry ordering state through pending/current receipt reconciliation and root
+rollback without reducing it; test interruption before/after pointer replacement.
+This rejects regressions behind an already committed newer upload. It cannot
+know about a newer main commit or workflow that has not successfully arrived.
+A stolen key can forge ordering claims; this is not a defense against its holder.
+
+Use one deployment concurrency group and avoid canceling an in-flight upload;
+keep concurrency as load control. GitHub's [concurrency documentation](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency)
+orders waiting jobs by when they enter the group, not workflow dispatch time.
+Serialization therefore does not replace the target ordering check. Bound active
+upload/validation work; reject busy requests rather than accumulating a queue.
+
+Keep immutable policy/implementation digest, starting-system identity, fixed UID,
+root-owned pause state and the same stable lock. Reject paused, disabled or stale
+policy/system uploads; recheck immediately before pointer mutation. No automatic
+resume, deferred upload or replay after maintenance-exit. Root rollback persists
+pause and leaves ordering intact; a queued/retried request cannot undo it. System
+switches still require maintenance. Network/body work stays outside the content
+lock; validation/staging and commit preserve fsync/retained CSS/media invariants.
+Reusing the current API-authorized switch by supplying receipt values as fake
+API facts is expressly excluded: add the named upload authority path around the
+same transaction primitives and document its changed proof.
+
+Return 2xx JSON with source/release/receipt identity only after durable commit,
+or for a verified identical currently selected release; never 202 merely for
+acceptance. Reject authentication, invalid/oversized packages and stale/conflict
+requests with explicit non-2xx status; paused/busy conditions are retryable.
+The client checks both HTTP status and returned identity and uses bounded retries
+of the exact same bytes. A lost connection/timeout can occur after commit, so
+Actions failure means delivery was not confirmed, not necessarily that serving
+is unchanged. Exact retry resolves that ambiguity; root status remains the
+recovery path. Once mutation starts, finish/reconcile it even if the client
+disconnects; do not promise rollback merely because its HTTP connection closed.
+
+**Size and finite synchronous budget.** Filesystem-only inspection of retained
+P20 output `vn73ycqnxdfj9a6flyz87jrbvk2lzrdj-vpsfree-blog-0` finds 2398 regular
+files including metadata, totaling 114,380,315 bytes. JPEG/PNG files account for
+102,221,554 bytes. These are uncompressed file sizes. Neither the
+[artifact receipt](p20-blog-artifact-proof.json) nor owner3's retained evidence
+contains an actual full-site transport ZIP/payload size or validation/staging
+latency. A18's 6.521575-second, 28-observation rehearsal used tiny synthetic
+archives; it is not a full-site timing. No package was generated for this study.
+
+Do not assume the current ordinary outer 10 MiB limit permits this upload.
+Plan one exact Czech upload-location allowance, still forwarding to backend80;
+backend settings alone cannot overcome an outer 413. The selected 512 MiB body
+cap applies only to the exact Czech endpoint at both hops, leaving room for more
+images as the site grows. It matches the existing 512 MiB expanded validation
+ceiling; unrelated request limits remain unchanged. Measure the actual transport
+package and full-size processing cost. Replace the old backend 1 MiB/5-second webhook
+budget. Keep the validator's bounded 512 MiB expanded limit and 25,000-file
+limit. Current validation holds expanded files in memory and staging/commit
+revalidates and fsyncs them; bound concurrent work and check target memory/disk.
+
+The ordinary 60-second proxy read timeout is an idle-read limit, not a total
+end-to-end deadline; a synchronous handler producing no response during
+validation can hit it. Propose a finite upload-specific budget, initially
+180-second proxy read/send limits and a 300-second client total limit, to be
+settled by a full-size controlled measurement before deployment. This is not a
+latency claim. If that budget cannot be met reliably, report the limit rather
+than silently returning early or adding an asynchronous platform. Preserve
+ordinary unrelated-vhost limits, fixed Host, secret-safe logging and P19's
+live-unit/config/binary comparison, separate dry activation and graceful reload
+only. This is an upload-capacity exception, not a return of proxy cutover modes;
+it should join the single eventual proxy deployment before any live rollout.
+
+**Candidate implementation package, only after choice.** Prefer one implementer
+(available owner3) for both repos and tests/docs: BLOG `.github/workflows/build.yml`,
+a small `bin/upload-release` client and existing release checks/docs; CONFIG
+`tools/blog-static-release.py`, replace the webhook receiver/module/tests with
+the fixed upload endpoint, `int.blog/{static-blog,blog-routing,module}.nix`, the
+proxy blog location, affected fixtures and `docs/operations/blog-static.md`.
+Retain Actions artifacts and schema-1 package validation. Remove obsolete GitHub
+API acquisition/token options, webhook queue/path/worker and manual pull flow;
+do not operate two permanent delivery mechanisms. Source is unmerged/undeployed,
+so consolidate its obsolete unconsumed approach after review under normal rules.
+Preserve old refs, retained artifacts/receipts and documented recovery.
+
+Keep existing root maintenance/status/content rollback and backend serveStatic
+cutover. New authority policy/state needs an explicit version/compatibility
+boundary: retained schema-1 content releases remain readable for rollback under
+P21. Backend `serveStatic=false` restores the retained WordPress route. Old system
+generations remain retained, but their activation/control-gate compatibility must
+be independently verified before any switch; no P21-to-P20 system switch is
+established by pausing. Old helpers must not write the new ordering state or
+silently revive the API-pull path.
+No deletion or conversion of WordPress, forum data or retained releases is needed.
+Operator work becomes the target runtime key, matching protected-main Actions
+secret/environment, access/TLS checks and explicit resume; no target PAT/App or
+repository webhook setup. Proxy/backend cutover remains separate from upload.
+
+Quick acceptance covers signed/tampered/missing headers/body, size/path/file
+validation, exact/conflicting retries, out-of-order attempts, pause/rollback and
+crash-order durability, generation refusal, workflow secret/event scoping and
+module removal/routing assertions. After committed affected review, one bounded
+registered full-size upload through generated proxy/backend config should measure
+body size, memory/duration, durable response, timeout/retry and root maintenance
+behavior; it reuses the accepted site artifact, not a new Hugo build. Required
+native builds bind the changed systems/source; live TLS/systemd/secret tests
+remain staged rollout work. This proposal ran only local source/evidence reads,
+filesystem size inspection and the two cited official documentation reads. It
+appends this design only; release-preparation/source/index/refs/settings and all
+services remain unchanged and open.
+
+
+### P21 sufficient implementation release
+
+The user accepted the changed authority: the main-restricted, secret-bearing
+Actions workflow authorizes publication; the target does not independently
+verify GitHub current main, run success or artifact API facts. No product choice
+remains. Lead allocated **implementer3 as sole complete cross-repo owner** of the
+files/tests/docs listed above, including removal of the API/webhook/pull path.
+Architect0 retains routine contract clarification; consequential deviations go
+to lead. CONFIG011151f/BLOG7b0 are the retained predecessor, not proof of P21.
+
+The fixed interface is Czech `POST /_deploy/blog` through proxy/backend80 to the
+nonroot loopback service, in either backend route mode. Upload one bounded ZIP
+containing exactly schema-1 `payload.tar.gz` and `receipt.json`; authenticate the
+versioned method/path/run-number/body-digest message with the shared-key HMAC
+and verify the actual body digest. Use fixed header names/encoding documented
+identically by client/server; owner3 may settle those routine details together.
+Only this exact endpoint gets 512 MiB at both hops. Expanded validation remains
+512 MiB/25,000 files. Keep unrelated limits, secret isolation, bounded concurrent
+work, provisional 180-second proxy and 300-second client budgets, and P19's
+shared-proxy no-stop/restart gate. These budgets require later measurement.
+
+Keep one publication transaction/state path. Reuse validator, immutable staging,
+retained CSS/media, fsync barriers, fixed UID and root maintenance/generation
+controls. Persist authenticated committed ordering and its identity binding in
+the existing transaction/reconciliation contract, carry it through rollback and
+never lower it when changing the selected content. Identical currently selected
+requests are idempotent; older/conflicting requests reject. Durable 2xx confirms
+the selected release/receipt; a lost reply remains ambiguous until exact retry
+or operator status. Paused/stale-system requests cannot publish, resume or enqueue
+future work. Concurrency is load control, not proof of current-main freshness.
+
+Retain readable schema-1 packages and old content releases for rollback under
+P21, plus backend `serveStatic=false` WordPress route recovery. Advisory D2
+clarifies the system boundary: P20 `control_state` (lines 577-585) and
+`check_maintenance` (697-707) require schema 1; P21 pause writes schema 2. Pausing
+therefore does not establish an ordinary P21-to-P20 system switch. Keep old
+systems retained, but independently verify activation/control-gate compatibility
+before any switch. No verified P20 switch, converter, dual writer, gate bypass
+or extra legacy support is claimed. Old helpers are not supported writers of
+new state and must not resume old pull or erase the committed ordering floor.
+Remove obsolete receiver/queue/path/worker/pull/token options rather than retain
+a second delivery mechanism; preserve prior refs, receipts, roots and services.
+Keep root maintenance/status/rollback and backend-only route cutover intact.
+
+Acceptance is the focused quick coverage listed above, normal hooks and a clean
+complete cross-repo history/review packet. After final committed affected review,
+lead releases required native builds and one bounded full-size generated-route
+upload measurement covering durable response/retry/ordering/maintenance. Reuse
+the accepted site artifact; no local Hugo build or broad new test platform.
+Operator secret/environment setup, TLS/access and live checks remain later work.
+This checkpoint releases implementation only: no deployment, default integration,
+cleanup or lifecycle action. Source/index work stays with owner3; the rollout
+record waits for actual accepted source/results.
+
+
+### P21 final delivery checkpoint
+
+Lead accepted final CONFIG `10e66efdffc586bdec8af82b3d0e17df59bee2d7` / tree
+`02c209571aaa791c29e08fc54d265b1139d2c628` and BLOG
+`e1bb2d2b43aeb7361ac72c4c565919f38daabb65` / tree
+`1f5798439460b8d2a879976dbbbcf1de1a3e43fd`: review/corrections, native builds,
+artifact identity, 45 scoped runtime observations and both feature publications
+are complete. [CI 42502157095](https://github.com/vpsfreecz/blog/actions/runs/42502157095)
+attempt 1 passed; main-only package/upload/deploy were skipped, with zero
+artifacts. [Final publication proof](p21-final-publication-proof.json) binds
+unchanged default refs/HEAD, all six recovery refs and the collector/receiver UID
+clarification; [verification proof](p21-final-verification-proof.json) remains
+immutable. P20's output gap/recovery is historical; P21 needed no realization
+recovery. Full-size measurements retain their private-namespace/CA limits.
+
+The [current rollout plan](release-preparation.md) now uses one root-owned
+external `/private/blog/deployment-key` and matching `BLOG_DEPLOY_KEY` in the
+main-restricted `blog-production` environment, with no target PAT/App/repository
+webhook. Provisioning of either copy is unconfirmed. Source defaults remain off;
+enabled policy requires explicit resume while WordPress stays public. One proxy transition
+carries unconditional EN TLS and the exact Czech 512 MiB/180-second exception
+under P19's no-stop/restart gate; backend-only cutover/recovery remains separate.
+P21 content rollback and WordPress routing are supported; old system activation
+still requires independent control-schema compatibility proof. Historical receipt
+bytes, failed evidence, roots, refs and services remain intact/open. Both features
+are unmerged awaiting named integration approval; readiness grants no deployment.
+Record writes return to lead for a short interactive handoff. No source,
+verification launch, network, deployment or lifecycle action accompanied this
+reconciliation.
+
+
+### P22 sufficient rollout brief: team backend, one user proxy activation
+
+**Authorization and ownership.** The user confirms blog access and states:
+"I'll just deploy the proxy.prg when you'll tell me -- I expect to do just one
+deploy. Otherwise you will handle the transition on your own." Owner3 is the
+sole complete CONFIG implementation/execution owner; lead sequences review,
+release and user handoff. Architect owns this brief only. User owns GitHub
+settings/secrets and Discourse UI; no default integration is approved. Later
+steering, "it will reload/restart nginx, that is fine and expected", permits
+normal nginx reload **or restart** during the config switch. This supersedes
+P19's no-restart/master-continuity gate for P22; keep P19 as historical evidence.
+Preserve unrelated sites and verify actual effects, without claiming zero outage
+or authorizing prolonged downtime/extra hosts.
+
+**Current evidence and source boundary.** Accepted predecessors are CONFIG
+10e66efd/BLOGe1bb2d2b and the P21 proofs. Owner3 reports strict-knownhosts,
+BatchMode access to declared `root@172.16.8.4`, hostname `blog.int.vpsfree.cz`.
+The key parent `/private/blog` is root:root 0700; deployment-key is a regular,
+nonsymlink root:root 0600 file of 128 bytes. These are metadata-only observations:
+no key content/hash/signature or matching Actions-secret proof. Remaining exact
+system/input, nginx/WP/PHP/database/accounts/data, active publication/control and
+recovery facts are owner3's already allocated read-only baseline; do not invent
+them from local builds.
+
+The minimal enabled-source package changes only existing
+`cluster/cz.vpsfree/containers/int.blog/config.nix`: static `enable=true`,
+`publication.enable=true`, `publication.secretFile="/private/blog/deployment-key"`
+and `serveStatic=false`. Keep P21 code/protocol, fixed paths/UID, schema-2
+control/order/fsync/rollback, existing inputs and all WordPress data intact.
+Once baseline shows this composition needs no unplanned migration or conflicting
+writer/listener, lead can release that source independently of forum setup,
+proxy certificates or actual Actions secret matching. Missing live settings
+block activation/resume/delivery as applicable, not this settled source contract.
+No pin refresh, frontend/Hugo/forum changes or setup framework is part of it;
+concrete baseline incompatibility goes to lead for the smallest necessary delta.
+
+**Build and deployment boundary.** Commit the intended settings, pass affected
+quick module/format checks and independent committed review before longer native
+verification. Reuse unchanged implementation proofs only within scope. Build the
+exact backend and final intended proxy configuration, retain complete source/input
+graphs, system/rollback outputs, validity and prior generations. Operator settings
+produce new outputs, not the already accepted default-off systems. Acquire and
+verify the exact blog machine claim only near the prepared copy/activation batch,
+without holding a repository claim for development or deployment. Preserve exact
+selector `cz.vpsfree/containers/int.blog`; no extra machine is inferred.
+
+Before switching, reconcile actual old publication/control state and writers,
+retain database/uploads/fonts/secret-key/account recovery and a compatible
+recovery route. If prior publication exists, require maintenance through its
+compatible installed interface; an unexpected schema/writer or missing recovery
+proof stops activation, never justifies conversion/bypass. New P21 policy starts
+paused. Deploy coexistence, verify frontend80 Czech WordPress, loopback8081
+WordPress/PHP/database/cron, English503, closed internal ports, data/accounts and
+credential/service health. Preserve working public Czech content; stop and
+recover a failed or uncertain switch before continuing.
+
+**One user proxy activation.** Prepare all required proxy changes together:
+unconditional Czech/English TLS/ACME, ordinary fixed-Host backend80 forwarding,
+and exact Czech upload exception 512 MiB/180 seconds. Backend route modes remain
+independent of proxy configuration. No proxy SSH credential/access is assumed.
+The user may first need bounded read-only baseline commands and a separate exact
+generation dry action; those are preflight, not additional activations. Compare
+actual live/candidate unit, binary, drop-ins, config/includes, certificates and
+unrelated vhosts; inspect syntax, the real activation/dry plan and recovery effects.
+Normal reload/restart is acceptable; record which happened. Block unexplained
+unrelated changes, failed syntax/certificate prerequisites or unsafe recovery,
+not an expected nginx restart. Verify both language TLS/status and representative
+existing-site health afterward. Lead tells the user to perform the one activation
+only when the complete candidate and relevant live facts are prepared; do not
+promise a second proxy deployment as a routine fix.
+
+**Content and cutover.** Keep backend `serveStatic=false` through policy/resume,
+real protected-main signed delivery and private loopback checks. GitHub environment
+must restrict `blog-production` to protected main with matching `BLOG_DEPLOY_KEY`;
+no PAT/App/webhook. Real main delivery requires separately explicit BLOG/main
+integration approval; deployment authority does not supply it. Keep embed off
+while user forum setup/pilot remains incomplete; it need not block source or
+private content preparation. Confirm exact response/receipt/order, both language
+roots/feeds/search/media and current WP delta/backups. Root maintenance surrounds
+each later backend generation change. Only after those checks, prepare the
+backend-only `serveStatic=true` change with its affected commit/check/review/build
+and exact-generation proof, switch, verify public routes plus retained WordPress,
+and deliberately resume. No further proxy mode change is required.
+
+Supported recovery is P21 retained-content rollback preserving committed order
+and pause, or a compatible backend `serveStatic=false` generation restoring
+WordPress/English503. Old systems remain retained, but P20 schema-1 maintenance
+cannot be presumed compatible with P21 schema-2 control; independently establish
+activation/control compatibility before any old-software switch. Preserve new
+articles/forum replies and every old ref/root/fixture. No cleanup or lifecycle
+action follows readiness, deployment or handoff.
+
+**Acceptance and claim retention.** Record exact deployed source/system/input
+identities, authoritative claim mapping/status, actual switch results, private
+and public health, selected content/receipt/order and recovery evidence in the
+existing rollout records. After effects are verified, retain deployed machine
+ownership until complete deployed lineage (including dependencies) is integrated
+into separately approved remote defaults. Then inspect the exact held claim,
+reconcile unfinished effects, verify lineage, release and confirm release
+promptly under the installed guide; no separate UI acceptance is needed. Missing
+merge approval/evidence keeps ownership held and does not authorize integration.
+The installed guide read for this brief is dev-workspace
+`/nix/store/b83kfhq5zrz88y3isspd8vga0ga36a9m-dev-workspace-0.2.0`.
+This pass records design and owner-supplied facts only; architect ran no SSH,
+network, evaluation, build, source/index/ref mutation or deployment.
+
+
+#### P22 accepted baseline and source release
+
+Lead accepted owner3's read-only baseline: selected system and profile agree on
+`y50f85…`, generation 16; booted `4nidz…` is older and must remain distinguished.
+Reported nixpkgs is `718f670`. Nginx, PHP, MariaDB, WordPress initialization and
+cron are healthy; only ports 22/80 listen. No publication policy/control/state,
+current pointer/static root, publication users or units exist. Thus no old-writer
+or publication migration conflict blocks the four-setting coexistence change.
+The protected key metadata above is confirmed. Reported capacity is 4 GiB RAM
+with about 3.7 GiB available and 53 GiB disk available; actual upload resource
+checks remain part of rollout verification.
+
+Lead released owner3's source package `28af1e1f`: only the four settings in
+`int.blog/config.nix` above CONFIG10e66, followed by scoped quick checks, normal
+commit and mandatory review before long build. Source preparation does not wait
+for backups, forum/UI, proxy facts or the bounded remaining `/etc/confctl`
+source/input provenance read. No activation or machine claim is released by
+this baseline acceptance.
+
+Before live activation, owner3 must complete and verify protected recovery
+material under the later execution release: a successful consistent native
+MariaDB backup of the actual WordPress database, site/uploads/fonts and required
+secret files with ownership/modes, account IDs, exact selected/profile/booted
+system identities and available source/input/generation recovery. Keep private
+backup paths outside served roots and Git; record metadata/results only. Verify
+backup command success, readable complete database/site archives and integrity,
+and a concrete compatible restore procedure/destination using the existing
+backup tools. A list of intended paths or old migration capture is insufficient.
+Account for writes between database and site capture and refresh the final
+article/comment delta before cutover. Missing backup/provenance or an unsafe
+restore path blocks activation, not the already released source change. No new
+migration, state converter, test platform or proxy no-restart restriction is
+introduced; normal nginx reload/restart remains allowed.
+
+#### P22 native dry-switch coverage: bounded source conclusion
+
+The captured [native dry log](p22-dry-plan-capture-native.log), SHA256
+`f08ea2a8c451cd3b4eb14126a0405042fe3fe6a15a8aef17865f9ef2cc501217`,
+line 80 proves pinned confctl `7bee58a5` invokes candidate
+`/nix/store/cqjh12xcn92cvnl7vd4gcv0j341fxd42-nixos-system-blog-26.05.20261026.718f670/bin/switch-to-configuration dry-activate`.
+This is already the native NixOS dry-switch interface. It includes active-unit
+comparison, rather than only running the candidate's `dry-activate` script.
+Pinned nixpkgs source `/nix/store/z40fynbhnw0d06q05mw2mznn49h1y9pk-source`,
+`pkgs/by-name/sw/switch-to-configuration-ng/src/main.rs:1136–1320,1941–1955`,
+compares currently active/activating NixOS-managed units. The dry branch at
+2049–2191 adds dry activation-script requests, prints its action maps, and exits
+before applying service jobs. It does not expand the future systemd dependency
+transaction; exit zero is not proof that every eventual service action appeared.
+
+This explains the missing nginx/upload lines. Owner3 found nginx's main unit and
+binary unchanged, the config-reload oneshot inactive/dead, and upload newly
+enabled. Both candidate `multi-user.target.wants` links are present. Active
+targets enter the start set but are hidden from ordinary output (1252–1277).
+The full switch reloads systemd's unit definitions, refreshes
+`sysinit-reactivation.target` (2433–2454), then starts active targets
+(2540–2577), allowing systemd to pull new/inactive dependencies. The nginx
+oneshot's `ExecStart` requests `systemctl reload nginx.service`; upload starts
+through its target dependency. `STC_DISPLAY_ALL_UNITS=1` reveals target names,
+not a complete expanded job plan, so repeating the dry run adds no needed proof.
+
+Owner3's retained [trigger comparison](p22-plan-trigger-comparison.txt) and
+[tmpfiles delta](p22-plan-tmpfiles.diff) close the concrete bookkeeping questions.
+The six added directory/file rules create publication state and the stable
+root:`blog-release` 0660 lock; no WordPress/database rule changes. The pinned
+tmpfiles module (253–281) reruns `systemd-tmpfiles --create --remove` through
+resetup on `sysinit-reactivation.target`, triggered by the tmpfiles directory.
+D-Bus main unit/binary and policy/service tree bytes are unchanged; only generated
+system-path references change, with `X-ReloadIfChanged=true`. Its reported reload
+is a derived config trigger, not an identified daemon/policy migration.
+
+The sufficient preflight is the captured native dry output plus the retained
+actual old/candidate unit, dependency, trigger and activation comparison; no
+alternative dry command, simulator, old-system build or pin refresh is needed.
+Actual switch/effect verification remains owner3's work under lead release and
+the held machine claim. Normal nginx reload/restart is permitted by the current
+user instruction. This source-only conclusion adds no outage, backup or service
+freeze gate and makes no deployment-success claim. Architect changed only this
+design note; all prior records, failures, roots and services remain retained.
+
+#### P22 feature publication without merging: sufficient continuation brief
+
+User explicitly requires feature deployment without merging and reports the one
+proxy deployment complete. This supersedes the earlier requirement for main
+integration before initial content delivery; automatic Actions publication stays
+protected-main-only. Lead accepted a one-time operator use of the existing
+key-holder authority. Owner3 owns packaging/copy, the ordinary HTTPS upload and
+private verification under a bounded lead release; architect owns this note only.
+No application, workflow, pin or default-branch change is needed for this phase.
+
+**Exact package and authority.** Use unchanged BLOG `bin/package-release` from a
+clean `e1bb2d2b43aeb7361ac72c4c565919f38daabb65` checkout against the already built
+`/nix/store/bi18fs5lxknk4j22sahyd8gp2qspwawr-vpsfree-blog-0`.
+[Accepted artifact proof](p21-blog-artifact-proof.json) binds source NAR
+`sha256-1MyrtJtrF6w9APGC+1Ar+frTj9r+ibmNB1Ewqry+nfc=`, inputs and all 2397 served
+file hashes. Package once with `--sha` that exact SHA, `--run-id 42502157095`
+and `--run-attempt 1`; select the existing site with `--site` and a fresh private
+output directory with `--output`. This is packaging, not a new Hugo/Nix build.
+Retain archive/receipt digests and copied client/package identity against that
+source. [Actual feature CI](p21-blog-ci-run.json) succeeded for run number **9**,
+ID **42502157095**, attempt **1**. Record this as an **operator-local package
+associated with that feature run**: CI packaging/deployment were skipped and
+[GitHub artifact count](p21-blog-ci-artifacts.json) was zero. Neither receipt
+labels nor upload success establish a protected-main or Actions-produced artifact.
+
+**Existing interfaces only.** CONFIG `tools/blog-static-release.py:669–687`
+exposes maintenance, status and rollback, with no public stage/activate command.
+Use unchanged `bin/upload-release --release <private-package-directory>` through
+its fixed verified HTTPS origin `blog.vpsfree.cz`, path `/_deploy/blog`, without
+redirects, insecure TLS or a loopback replacement. One fixed privileged process
+on blog.int reads the guarded root-owned `/private/blog/deployment-key` only
+into memory and invokes the actual client main. Its process-local inputs are
+`GITHUB_RUN_NUMBER=9`, `GITHUB_RUN_ID=42502157095`, `GITHUB_RUN_ATTEMPT=1`,
+`GITHUB_SHA=e1bb2d2b43aeb7361ac72c4c565919f38daabb65` and `BLOG_DEPLOY_KEY`.
+The client's UTF-8 key interface must preserve the file's exact bytes: no strip,
+newline removal or replacement decoding. Refuse an incompatible key locally;
+never print its contents/hash, signature, environment, request headers or body,
+or put the key in shell arguments. A small fixed launcher may read the file and
+invoke the unchanged main in the same process; no persistent service, custom
+signer, callback publication or new protocol is introduced. Authentication sends
+HMAC over HTTPS/private HTTP; the raw key remains on the target. Existing fixed
+receiver UID, policy/system binding, package validation, 512 MiB limits, finite
+300-second/three-attempt client and durable transaction remain authoritative.
+
+**Finite execution and stop conditions.** Lead accepted owner3's
+[post-proxy result](p22-public-after-proxy-result.json): verified CZ/EN TLS,
+CZ WordPress 200, EN 503, unsigned Czech upload 401, English upload and retired
+hook 404; backend cqjh/CONFIG1649 remains paused/empty and MySQL root 0700.
+This proves observed routing, not an independently identified proxy revision.
+Before mutation confirm those relevant source/policy/state/package facts still
+hold; stop on drift, a conflicting committed floor, credential-policy mismatch
+or route/TLS failure. Keep `serveStatic=false`. Root runs selected
+`blog-static-release maintenance-exit`, then the ordinary signed upload, then
+`maintenance-enter` after success or failure and checks `status`. Client success
+must match exact release/source/body/receipt/run identity; a lost reply is
+uncertain delivery, not proof of no commit. Inspect paused status and reconcile
+through the existing maintenance interface; if needed, resume and retry only
+the identical preserved package, never invent another run/attempt or edit state.
+
+The first committed ordering floor is `(9,1)` with the actual run/source/body
+binding. Later newly created runs of the same workflow naturally have larger
+run numbers; stale reruns and conflicting equal-order packages remain refused.
+Rollback retains this floor. Do not reset it or use synthetic run 101. The
+unchanged target trusts the authenticated operator assertion and package
+consistency; it adds no GitHub API/current-main claim.
+
+While paused, verify the selected receipt/floor and exact served hashes, both
+fixed Hosts on private 8080, roots/feeds/search/media and existing finite alias/
+rejection contracts. WordPress remains public on frontend80 and retained8081;
+private ports remain closed externally. Collect actual upload time/resources
+and safe identity evidence without expanding the verification platform. This
+phase ends paused with public WordPress intact. Public-only post/comment/media
+delta metadata and proportionate backup freshness govern later cutover, not
+independent private preparation; no private export or writer freeze is implied.
+Owner3's [live aggregate comparison](p22-live-content-metadata.json) reports
+125 published posts, 107 approved public comments and 144 attachments matching
+the accepted inventory, with no relevant modification/upload timestamp since the
+protected 18:19:55 UTC backup. Backup metadata remains unchanged. This is useful
+delta evidence, not proof against deletion, preserved-timestamp edits or exact
+live body/media differences; it creates no private-content export authority.
+
+**Later cutover and recovery.** After private acceptance and WP delta resolution,
+owner3 changes only backend `serveStatic=true`, then follows quick checks, normal
+commit, mandatory review, exact native generation/input proof and switch under
+held claim4cd. Maintenance brackets the switch; verify actual effects and the
+guarded MySQL root0700 postcondition established in P22. No second proxy deploy
+is planned. Retain WordPress/data/accounts/backups and compatible coexistence
+generation recovery; with no earlier static release, WordPress is recovery.
+Content rollback preserves order and pause, and old-software compatibility is
+still a separate requirement. Keep Discourse embed default off and existing
+Piwik/privacy gates unchanged; user owns forum/UI/settings. Known route inventory
+limits remain daily 0/124 and pagination 35/41. No merge is authorized; claim
+retention and all existing refs/roots/receipts/services remain unchanged.
+
+#### P22 visible Actions feature delivery: sufficient temporary release brief
+
+User now explicitly chooses “Keep main untouched; use an explicit feature
+deployment push” and permits temporarily changing the workflow's main-only
+restriction. This authorizes one exact-feature Actions delivery, not a merge,
+weaker main protection or arbitrary-branch secret access. Current BLOG
+`5d9cd0be0184c67e8d7c1cfbdbbe41da6acd5e48` is the published documentation
+descendant; its CI42524935636 passed with packaging/deployment skipped and zero
+artifacts. Selected operator content remains e1bb/bi18/floor `(9,1)` with its
+distinct provenance. This brief adds no implementation or execution by architect.
+
+**Owner/files and fixed contract.** Owner1 owns BLOG
+`.github/workflows/build.yml`, narrowly affected `bin/check-release` guard checks,
+necessary deployment-doc clarification, commits/review evidence, deliberate
+feature publication and exact CI/artifact evidence. Owner3 owns backend
+pause/resume/status, private content verification and recovery under claim4cd.
+Lead releases each phase and owns environment-setting coordination. Configuration
+cutover99c7 has its separate review; native build/switch remain held until the
+Actions upload is accepted. There is no new uploader or cross-owner source edit.
+
+Extend only the existing package, artifact-upload and deploy eligibility:
+preserve each existing protected-main condition **OR** admit repository
+`vpsfreecz/blog`, event **push**, and exact ref
+`refs/heads/2026-11-06-multilingual-blog-migration`, all three together. Parenthesize
+the alternatives explicitly. Main dispatch retains its existing packaging-only
+behavior; feature dispatch, PRs, other branches/tags and other repositories
+cannot deploy or package through the exception. Keep the same workflow path,
+action pins, main protection check, `blog-production` environment, environment
+secret, job dependency/concurrency, package/client and HTTPS protocol. No manual
+signature, secret transfer, target policy change or synthetic run identity.
+
+**Required setting and preparation.** The accepted
+[environment proof](p22-github-settings-proof.json) has selected branch policies
+with only `main`, and `BLOG_DEPLOY_KEY` present. Before the deliberate push, add
+only branch `2026-11-06-multilingual-blog-migration` to that same environment's
+deployment branch list, retaining `main`. This temporarily lets workflows on the
+exact feature branch receive the existing deployment secret. Do not move/read
+the secret, allow wildcards/all branches, change default branch or relax main
+protection. Lead handles this concrete user-owned setting after source preparation,
+unless an explicitly authorized existing tool performs precisely that change.
+Keep publication paused during preparation, checks, committed independent review
+and environment setup. Do not publish the exception early as an ordinary CI push:
+the approved push is the deployment trigger.
+
+Quick checks cover YAML validity and the actual guard matrix: protected-main
+push succeeds; existing protected-main dispatch packages but does not deploy;
+the exact repository/feature push succeeds; unprotected main, feature dispatch,
+PRs, foreign repositories, other branches and tags fail the relevant exception.
+Verify all three gates agree and action pins/client/protocol remain unchanged.
+Run the scoped release checks before independent committed review; no duplicate
+site build or broader suite is needed before that boundary. The ensuing exact
+Actions run supplies checks, native site build, packaging and actual delivery.
+
+**Finite live sequence and acceptance.** After review, environment readiness and
+lead release, owner3 confirms the expected selected system/policy, paused
+receipt/floor and public WordPress, then resumes immediately before owner1's
+deliberate ordinary feature push. A fresh verification utility follows only the
+new exact head/run. Keep current/default refs distinct. Use the same workflow's
+real new run number **greater than 9**, actual run ID/attempt and actual build
+head; never override these to label the old operator package as Actions output.
+Bind the genuine retained Actions artifact to its receipt, source/full inputs,
+archive/transport identity and client-confirmed durable target response. The
+workflow change produces a new source identity even if served file bytes match.
+
+Owner3 pauses after terminal success, failure or uncertain delivery, then records
+selected receipt/order and resolves any lost reply using the existing protocol.
+Failure is not proof that no commit occurred. A permitted retry must reuse the
+exact retained package and current same-run identity rules; no floor reset or
+invented attempt. Independently verify the newly selected package's complete
+served set/hashes and affected private fixed-host routes, while public Czech
+WordPress/English503 and retained recovery remain intact. Record real Actions
+job/artifact/response evidence separately from prior operator61038. Only accepted
+delivery/private verification releases the later backend cutover phase; no
+second proxy deployment or default integration follows from this success.
+
+**Restoration and consumed history.** After successful demonstration, owner1
+makes a normal follow-up commit restoring the original main-only workflow gates
+and matching tests/docs on the same feature branch. Keep the exact consumed
+upload commit as an ancestor, with its immutable run/artifact/source receipts
+and rooted content; do not amend, squash away or relabel that deployed identity.
+This two-commit exception/restoration records an actually consumed transition,
+not an unused final compatibility path; no extra branch machinery is needed.
+Apply the required scoped check/review boundary to restoration, then publish it;
+its feature CI must skip package/deploy again. Lead coordinates removal of only
+the environment's temporary feature allowance, leaving `main` and the secret.
+If the demonstration is abandoned, pause/reconcile effects and restore both
+restrictions before closing this temporary scope. No further feature pushes are
+delivery-authorized while restoration is pending. Retain all original recovery
+evidence, operator and Actions releases, refs/services and the held machine claim.
+
+#### P24 release retention: sufficient implementation and verification brief
+
+User requests pruning old release content and clarifies that deployment may
+wait for pruning's lock but must not fail merely because of that contention.
+This supersedes keep-all-release-payload wording only for the bounded operation
+below. It does not authorize pruning Nix roots, Git refs, WordPress, backups,
+private operator/Actions package copies or session files/services. Owner3 retains
+the complete CONFIG implementation/runtime package and canonical index; source
+work starts after lead release of this sufficient brief. Architect changes only
+this design. Current accepted Actions content is a66, floor `(11,1)`, paused on
+cqjh; owner3 knows two complete releases, so the five-release policy should remove
+none of those. No live inventory or deletion was performed for this brief.
+
+**Small interface and scheduling.** Extend the existing fixed-root helper with
+`blog-static-release prune [--dry-run]`, and add
+`services.vpsfree-static-blog.retention.keepReleases`, positive integer default
+**5**, to the existing module/compiled policy without changing persisted schema2.
+Install one ordinary daily systemd oneshot/timer when storage and publication
+are enabled. Use selected packaged helper, fixed `blog-release` UID/group,
+existing filesystem hardening and no credentials/network access; no dependency
+that makes upload/activation success depend on prune success. Root invocation
+delegates all content inspection/deletion through existing `content_as_release`;
+it must not delete as root. No post-upload cleanup hook, queue, daemon or new
+lock. Timer/manual actual pruning skips while paused/disabled or either lock is
+busy; normal resumed operation must schedule it. Dry-run may explain the keep/
+candidate set while paused, but changes no content, control or trash. Report
+kept/candidate/retired/deleted keys, skip reason and cleanup failures without
+payloads or secrets; do not claim logical byte counts equal freed disk blocks.
+
+**What is retained.** Existing `stage` creates `releases/KEY/`,
+`releases/KEY.tar.gz` and `receipts/KEY.json`; completed selections add UUID-named
+transaction receipts, while current/pending/order have separate fixed names.
+Rank distinct available complete releases by their latest valid **successful
+selection** transaction timestamp, with a deterministic tie-break, and keep five.
+Use completed activated/rollback/reconciled-activated records, not staging
+receipt mtimes or reconciled-before-switch attempts. Retained older schema1
+content remains supported; no receipt rewrite/backfill is needed. Always add
+the current release, its immediate `previous_release`/`old_pointer` recovery
+reference, and the upload-floor release to the keep set. Validate these references;
+there is no `current.previous` symlink. Do not recursively pin every historical
+previous link, which would defeat retention. An active/pending/uncertain pointer
+transaction means **no retirement**; preserve it for existing reconciliation.
+
+Only successfully selected, unprotected old payload directories and matching
+archives are eligible. Stage-only releases, `.incoming-*`, unknown/orphan content
+and small receipts are left untouched and reported where relevant. Preserve
+every per-release/UUID audit receipt, `current.json`, `upload-order.json`, pending
+and control state, both locks and all `assets/`. The shared fingerprinted CSS
+fallback serves cached pages and remains cumulative. Legacy media remains in
+the selected/kept trees; unchanged activation checks still require immutable
+paths/bytes and a media superset. Historical receipts do not promise that pruned
+payloads remain rollback targets: rollback is supported only for complete retained
+releases and must reject a pruned target before pointer change. The retained
+floor still rejects stale uploads after rollback or pruning. This bounds completed
+payload copies, not total disk use: audit/CSS, uncommitted staging and external
+recovery copies remain outside this policy.
+
+**Wait, retire, then delete.** Actual `Publication.lock` and `serialized` use
+blocking `flock(LOCK_EX)` today. Preserve blocking acquisition for upload,
+maintenance and rollback: no contention timeout, EBUSY, HTTP503 or new retry
+outcome from prune lock ownership. Prune alone tries the existing publication
+lock and then staging lock nonblocking; if either is busy, release and skip.
+This order does not invert an existing nested acquisition: upload releases the
+publication lock before staging, then reacquires it for commit. Do not take the
+receiver's busy flag. Under both locks do only bounded metadata/path inspection,
+selection and same-filesystem renames; do not hash/decompress entire archives,
+walk all payload files or recursively delete there. Recheck the selected policy/
+system and pause/transaction/current/floor state immediately before retirement.
+
+Retire eligible directory/archive entries into a private, non-served
+`releases/.trash` namespace using strict release keys and a simple per-pass
+directory. Rename under the locks, fsync changed parents, then release both
+locks **before** recursive disk deletion. The directory is a conventional
+retirement area, not a new journal/schema/tombstone subsystem. Existing audit
+receipts preserve identity. Interrupted tree/archive moves leave only an
+unprotected retired payload or matching leftover; the next locked pass can
+finish safe retirement, and the next cleanup can retry trash. Never restore a
+retired tree automatically, treat it as serving content, or remove a newly
+protected active-path counterpart. Missing protected content, malformed/conflicting
+references or ambiguous source/destination identity fail closed before new
+retirement. After an I/O error stop new moves, retain evidence/remaining entries
+and report prune failure; successful publication remains successful.
+
+Use real fixed state/releases/receipts directories and directory-relative,
+no-follow operations. Validate exact `RELEASE_KEY` basenames and regular archive/
+receipt types; reject symlink roots, traversal, devices and unexpected filesystem
+boundaries. Bulk deletion must use fd-safe traversal rooted in the opened trash
+directory, never shell globbing or unchecked recursive paths. Symlinks cannot
+lead deletion outside that namespace; an anomaly stays retained with an error.
+Handle already-removed trash entries idempotently if two prune invocations overlap
+after releasing locks; no third lock is needed. Upload may wait briefly for
+metadata retirement, but slow/failing deletion occurs outside its critical path.
+Existing finite 180/300-second network budgets remain: this removes deliberate
+prune contention failures, not a mathematical guarantee against stalled storage
+or unrelated network failure.
+
+**Files, compatibility and deployment.** Owner3 owns
+`tools/blog-static-release.py`, `cluster/cz.vpsfree/containers/int.blog/static-blog.nix`,
+affected `tests/blog-static-release.py`, `tests/blog-upload.py`/module fixtures
+and `docs/operations/blog-static.md`. Keep transport/client/Actions and proxy
+unchanged; other source files only if this implementation concretely requires
+them, through lead. Update documentation's keep-all and rollback promises.
+Combine reviewed retention with the already reviewed99c7 backend cutover settings
+before the first public switch, avoiding another activation. The helper change
+changes the immutable policy/source package, so obtain a fresh exact native
+generation/inputs/output proof after quick checks and independent review; retain
+99c7/4m7 as predecessor proof, not certification of retention. Pause surrounds
+switch and selected-policy resume as before. Timed pruning skips while paused;
+after acceptance/resume verify timer scheduling and a safe explicit dry-run/no-op.
+With two known releases, do not fabricate production victims to demonstrate
+deletion. Keep the P22 MySQL literal-root0700 postcheck, WP recovery and claim
+retention; no second proxy deployment or default merge is authorized here.
+
+**Meaningful checks.** Quick fixtures exercise more than five completed releases,
+deterministic newest-five selection, current older than five, immediate previous
+and floor pins, duplicate transactions, stage-only/incoming preservation, pending
+upload/rollback and malformed protected-state refusal. Verify archive and tree
+accounting together, retained receipts/control/order/CSS/media byte preservation,
+rollback to kept content and refusal for pruned content, plus stale retry/order
+behavior. Exercise real filesystem locks in separate processes: a genuine upload
+waits for a held prune metadata lock then commits without a lock-caused failure/
+retry; prune skips a busy publication/staging lock; slow or failing trash deletion
+outside those locks does not block publication. Test interruption between renames
+and during deletion, idempotent recovery, symlink/traversal/outside sentinel
+protection and fixed nonroot deletion. Module checks cover count/default/disabled
+mode, daily timer, UID/hardening, fixed helper and unchanged WP/proxy configuration.
+
+After committed independent review, run the affected native build and one bounded
+existing-fixture integration with actual fixed-UID CLI/receiver, synthetic old
+releases and contention/deletion failure injection. Reuse existing full-size
+upload/route proof where unchanged; no second complete delivery platform or broad
+site/CI rerun is justified. Acceptance requires demonstrated disk-payload removal,
+protected-state/rollback/order survival and deploy-waits-not-fails behavior,
+plus honest limits above. Lead accepts implementation and later live release;
+this brief performs neither deletion nor service/source mutation.
+
+#### P25 correction: preserve historical re-staging through commit
+
+Lead accepted this refinement of the released retention package. A previously
+successful release can be re-staged under a valid higher upload order; its old
+transaction receipts would otherwise let prune retire it between staging and
+commit. Upload must hold the **existing staging lock continuously through final
+publication-lock acquisition and commit**. Retain the ordinary locked `stage`
+wrapper and factor an internal already-locked body to avoid self-relocking.
+The initial publication/order check still releases before staging; body receipt
+and validation remain outside. Publication is not held throughout staging, so
+maintenance can still enter during staging and the final authority check refuses
+commit afterward.
+
+This supersedes the prior brief's lock-interleaving rationale. Prune tries both
+publication and staging locks **nonblocking**; if staging is busy it immediately
+releases publication and skips, never waits or spins while holding publication.
+Current maintenance/status/rollback paths acquire publication only, so none
+creates a blocking reverse edge. Add a concise implementation comment preserving
+that relationship. No new lock, marker or persisted schema is introduced.
+
+Owner3's focused multiprocess checks must hold a historical re-stage before final
+commit, demonstrate prune's busy-stage skip releases publication, and allow the
+upload to commit on its first attempt. Also demonstrate maintenance-enter during
+staging still prevents commit. Broader deletion and deployment-wait checks remain
+as specified above. Owner3 received the settled correction directly; no further
+source-release or investigation gate is required.
+
+#### P26 independent follow-ups: sufficient source boundaries
+
+P25 live cutover/retention is accepted. Lead may release these small independent
+packages while the authoring contract below is investigated. No default merge,
+new deployment or repeat proxy activation is implied; future authoring policy
+does not integrate this migration. Lead retains the context-owned final prose
+pass before commits. Architect owns design only; implementers own source/index.
+
+**Owner1, BLOG favicon and title.** Start from published472 and preserve the
+current restored main-only workflow. First identify the old WordPress favicon
+through a bounded read-only request to retained WP8081 with the fixed Czech Host,
+or an already retained public-asset archive: inspect its icon link and fetch only
+the referenced icon bytes. If no declaration exists, inspect its `/favicon.ico`
+response. Record source path, MIME/signature, dimensions and digest; refuse an
+HTML/error response or an unproven substitute. No private export or new graphic
+design. Once identified, copy those bytes to one ordinary `static/` icon path
+and add the matching root-relative icon declaration in
+`layouts/_default/baseof.html` for both language roots. Existing static asset
+propagation supplies the output; no runtime fetch or new dependencies.
+
+Correct only the title word `přihlášování` to `přihlašování` in
+`content/posts/2025-03-03-two-factor-login-with-passkeys/index.cs.html`.
+Preserve its nonbreaking space, public URL, wp-841 identity, dates, body, authors,
+feed GUIDs and translated meaning. Refresh the complete Czech-file digest in
+both `data/migration/source-manifest.json` locations (`articles[].cs_file_sha256`
+and `generated_files[cs_file]`) and paired English `translation_source_sha256`.
+The private original `source_body_sha256` and prior human-review provenance are
+unchanged; a mechanical title correction is not a new human-review attestation.
+Keep broader proofreading/metadata checker changes for the later authoring package.
+Files are the icon, base layout, these two article files and the manifest; no
+shared checker edit is required for these small fixes. Quick evidence checks
+actual icon identity/type, exact title-only body-preserving diff, both derived
+digest bindings and unchanged source-body identity. Normal review precedes the
+existing BLOG build/check output proving both icon paths/declarations and title/
+canonical URL. No extra test framework or full corpus rewrite.
+
+**Owner0, web link and workspace inventory.** Use isolated session worktrees and
+read current repository guidance after the ordinary fresh-ref preflight. Retained
+web origin/master307635a has three relevant English references:
+`en/hlavicka.html` navigation and feed, and `en/paticka.html` footer. Point them
+to `https://blog.vpsfree.org` and its `/feed/`, preserving layout, link attributes
+and Czech links. Current source has a pinned flake/dev shell; use it, not the old
+ambient `shell.nix` composer-install hook. This is a two-file link change, with
+source diff/link checks and normal reviewed package verification; the unrelated
+registration/cluster integration suite need not be expanded for it.
+
+The existing workspace feature already lists `blog` at
+`docs/agent-instructions/projects.md:53–58`, including its canonical SSH remote,
+two hosts and content/build ownership. Verify that committed feature entry and
+its ordinary publication status; do not duplicate it merely because shared
+master lacks the unmerged change. If current wording needs a narrow correction,
+edit only that project-map entry in the workspace feature worktree. Forum/UI
+setup remains user-owned; configuration owns hosting. Preserve the shared-master
+records and unrelated workspace source/index. Sequence only owner0's own indexes.
+
+**Owner3, dependent CONFIG web pin.** After the exact reviewed web feature is
+published, use the existing native channel command
+`confctl inputs channel set --commit vpsfree-web vpsfreeWeb <exact-web-SHA>` in
+the CONFIG Nix environment. The channel and role/input are **vpsfree-web →
+vpsfreeWeb**, a non-flake input currently pinned307635a; do not hand-edit lockfile
+or refresh unrelated inputs. `modules/services/vpsfree-web.nix` consumes it;
+`configs/webs/default.nix` assigns `vpsfree.org` to `en`, and the configured
+consumer is `cz.vpsfree/containers/int.web`. Development vhosts use an explicit
+directory override. Preserve all other graph nodes, routing and effective blog/
+proxy generation. Check native lock/source scope and hooks, then review before
+the affected native int.web build with exact source/input proof. Pinning does not
+authorize int.web activation, default integration or another blog/proxy switch.
+Retain prior web/input revisions for normal recovery. No new machine claim is
+needed merely for feature work/builds.
+
+Packages are independent except CONFIG's exact published-web dependency and
+BLOG's shared index: owner1 completes the tiny BLOG package before authoring
+source ownership begins. Lead may release the read-only favicon identification
+and these bounded source packages without waiting for the broader authoring
+design. No source, network, build or runtime action was performed by architect.
+
+P26 favicon identification is now settled by owner1's bounded WP8081 read:
+old public `/wp-content/themes/flat/favicon.png`, advertised as shortcut icon,
+is PNG16×16,607 bytes, SHA256
+`dfe1b759dd6db24982fb4844e514bebf102462ac8f54f16725e12cfea0105fe8`.
+Retained bytes are `theme-reference/p26-favicon/favicon.png`. Use those exact
+bytes as `static/favicon.png`, shared `rel="icon" type="image/png"` declaration,
+and one provenance entry in existing `static/theme/NOTICE.md`; no separate media
+license is inferred. The unrelated apple-touch link was not fetched or requested.
+This completes the tiny package's asset dependency. The manifest contains two
+Czech-file hash references plus the English translation reference: refresh all
+three for the title correction. No broader authoring rule change is included.
+
+
+#### P26 authoring: sufficient implementation and verification brief
+
+Settled source package, subject to lead allocation after the tiny BLOG8e1 review
+and build identity window. Owner1 owns BLOG source/index; architect owns this
+brief, lead the final context-owned prose pass. Web/workspace/CONFIG work is
+independent. No application, build, network or runtime action by architect.
+
+**Files and commands.** Add focused `bin/check-articles`, ordinary
+`.githooks/pre-commit`, small CS/EN technical wordlists under `tools/`, and one
+blog-specific `bin/observe-publication`. Update existing `flake.nix` devShell,
+`bin/check`, `tools/import-wordpress-check`, `AGENTS.md`, authoring skill and
+`docs/authoring.md`; adjust README/deployment/migration links or contradictory
+sentences only as needed. Keep workflow/client/protocol and application rendering
+unchanged except generic check expectations. No lockfile/pin refresh, new editor,
+attestation manifest, spelling API, server, token or publication authority.
+
+`nix develop -c bin/check-articles --staged` validates the actual Git index;
+plain invocation checks working source, with optional article IDs for focused
+proofreading. The hook invokes the staged command through the pinned environment
+and reports actionable path/language/field/word diagnostics. Document ordinary
+opt-in installation `git config --local core.hooksPath .githooks` and verification
+of configured path plus executable hook; do not silently overwrite an existing
+hook setup. Once installed, failed checks block commit. Read index blobs with
+Git, including staged additions/deletions/renames; do not stash/reset, silently
+stage corrections, or accept a working-tree fix absent from the index. Validate
+the staged metadata and companion language even if only one file was staged.
+No full Hugo/native build in the pre-commit hook.
+
+**Editorial flow and metadata.** The skill accepts either Czech or English as
+input, corrects title/prose typos contextually, generates the missing language,
+then compares both for meaning, chronology, attribution and archive voice. Keep
+commands, code, links, IDs, proper names and factual claims intact; do not guess
+private attribution. Finalize Czech as the existing hash source even when
+English was supplied first, then record its complete exact-file SHA256 in EN.
+Replace human-only review/draft gates and claims that metadata is unchecked.
+Retain genuine historical human review; new review fields name the actual agent
+identifier and timestamp, never an invented human. Existing `draft`/`reviewed`
+translation status semantics suffice: reviewed non-draft EN needs reviewer,
+RFC3339 review time and current CS hash; draft pairs may truthfully remain draft.
+Every committed real bundle, including drafts, has exactly CS and EN; uncommitted
+single-language preview remains supported.
+
+Executable checks cover valid TOML, nonempty title, timezone-bearing original
+`date`/`lastmod`, explicit boolean draft, stable matching translationKey/article_id,
+one bundle and one supported file per language, shared publication state and
+original date, unique explicit host-root URLs, and complete shared metadata.
+Require existing public author IDs, nonempty bylines/unique archive slugs, Czech
+absolute discussion URL matching the article, and unique immutable CS/EN feed
+GUIDs. New IDs stay outside `wp-`; new GUIDs use the documented URNs. Validate
+optional taxonomy references. Preserve existing IDs, published paths, dates,
+bylines/discussion/feed identity and private source-body digest. Any intentional
+historical correction remains an explicit scoped editorial change; no bulk
+metadata migration or automatic attribution/date rewrite.
+
+**Spelling is a diagnostic, not proof of language quality.** Use conventional
+`pkgs.hunspell.withDicts` with `hunspellDicts.cs_CZ` and `en_US` from the existing
+BLOG nixpkgs pin, exposed as `hunspell` in the devShell. These interfaces exist in
+retained local nixpkgs source; owner verifies their availability at BLOG's exact
+pin in the normal quick environment check, without refreshing inputs. The skill
+performs grammatical/semantic proofreading before the command; Hunspell reports
+unknown words only and must not silently autocorrect. A small explicit reviewed
+technical wordlist handles legitimate names/terms; never whitelist every error
+or require corpus-wide spelling cleanup. Check all prose/title of new articles;
+for existing articles check introduced prose/title words against the prior Git
+version so unchanged legacy noise or a source-hash-only edit does not block.
+Exclude code/pre blocks, inline code, URLs, markup/attributes and identifiers,
+but include visible link labels and image descriptions. Report unknowns for the
+agent to correct or justify with a precise dictionary entry. Do not claim this
+proves grammar, translation, language detection or absence of valid-word typos.
+
+**Preserve archive auditing while allowing authored rows.** The importer encoder
+is sorted JSON, ensure_ascii=false, indent=2 and final newline. For only the three
+shared generated JSON files, audit canonical projections of original rows
+against their EXISTING manifest digests: article IDs from manifest.articles;
+authors selected uniquely by manifest.archives.authors slugs; category/tag keys
+from their manifest archive paths. Require every original selector exactly once,
+then hash the original-key/value projection; altered/deleted original content
+still fails, while new unrelated entries can pass. All other generated-file,
+125-original-article, private source-body, comments/media and optional private
+source comparisons remain intact. Do not regenerate original metadata hashes to
+bless new rows. Keep the importer's current refusal to overwrite manual additions;
+reimport is an archive operation, not the authoring command. General renderer,
+search and feed checks derive eligible source counts; the exact historical link
+mapping/count audit remains scoped to manifest IDs. Keep intentional unpaired
+synthetic/working-preview tests outside commit-ready pair enforcement.
+
+**Publication and observation.** Optional preview uses existing `bin/preview`.
+After proofreading and staged checks, future approved non-draft content goes
+straight to fresh `main` with ordinary hooks/protections; drafts/preparation stay
+on a feature branch. This editorial policy does not merge the current migration,
+transfer feature infrastructure to main or grant server/settings changes. Respect
+an actual host refusal; do not weaken protections or introduce a feature-CI cycle
+as a compulsory step for a routine approved article.
+
+`bin/observe-publication --sha <pushed-SHA> --article <ID>` is a bounded read-only
+blog observer, not a publisher or generic poller. Prefer public GitHub REST for
+Build blog's exact SHA/workflow path/push/main identity; existing authenticated
+`gh` may be used if already available, never require login/new secrets. Bound
+requests and the overall wait (default ten minutes); identify run/attempt and
+terminal build AND deploy jobs. Skipped delivery is not publication success;
+retain failed/unknown outcomes without retrying a push or upload. If API/auth/
+rate limits prevent CI observation, check the expected CS/EN public article URLs
+with normal TLS and bounded polling. Compare exact built bytes when an existing
+artifact with matching source identity is available; otherwise report only the
+specified title/content/canonical observations and that deployed commit and CI
+are unproven. Site appearance never turns unknown/failed CI into green. The skill
+reports the exact pushed SHA, observed run/delivery result or limited fallback,
+and any timeout; no automatic resume, rollback or synthetic run identity.
+
+**Acceptance and checks.** Quick focused fixtures demonstrate staged bad versus
+unstaged fixed content fails, staged good versus unstaged bad uses the index,
+missing CS/EN fails even for drafts, malformed/missing metadata and stale hashes
+fail, CS-first/EN-first completed pairs pass, and new rows pass archive projection
+while an edited/deleted original row fails. Use real pinned dictionaries on a
+known CS/EN typo plus valid technical/code/link/name examples; verify old unrelated
+unknown words are not newly demanded. Observer fixtures cover exact run matching,
+failed/skipped deploy, timeout/rate-limit and site-only evidence without false CI
+success. No live publication needed for these checks. After quick checks, ordinary
+commits and mandatory review precede existing `bin/check`, `bin/check-release`
+and `nix build .#site` with one new bilingual article fixture, draft exclusion,
+unchanged original archive audit and optional unpaired-preview behavior. Evidence
+binds exact source, command/results and limits. No new long suite or actual
+article publication is needed merely to validate this tooling package. Lead owns
+later delivery and normal workflow observation; recovery is reverting tooling
+without touching current content, keys, receipt/order state or production services.
+
+
+#### P26 accepted correction: observe draft feature checks
+
+The existing observer also covers the user's draft-feature flow. Add
+`--branch <exact-pushed-branch>`, defaulting to `main`, to
+`bin/observe-publication`. Main retains strict successful workflow/build/deploy
+and the existing bilingual public-site checks. An explicit non-main branch uses
+the same bounded public REST/optional existing-gh observation, matching exact
+SHA, branch, repository, workflow path and push event. Report feature CI success
+only when the workflow and build succeed and deploy is terminal/skipped;
+publication is `not requested (draft feature)`. Unexpected delivery is a policy
+mismatch; failed, cancelled, unavailable or unknown CI remains nonzero.
+
+Feature observation bypasses public-article preparation (which rejects drafts)
+and makes **zero site requests**, including fallback. API failure or timeout
+reports unknown CI without searching for intentionally unpublished content.
+Skill/docs pass the explicit feature branch after a draft push and use the main
+path after publication. This corrects the earlier main-only observer boundary;
+no new poller, workflow/settings change or publication authority is introduced.
+
+Focused checks cover successful feature CI with skipped delivery and zero site
+calls, wrong SHA/branch rejection, failed/cancelled/unknown CI, unexpected feature
+delivery, and unchanged main skipped-deploy rejection. Owner1 retains the current
+source package and ordinary review boundary; lead accepted this interface delta.
+
+
+#### P26 R2 accepted correction: retained build on deploy-only rerun
+
+For main observation, current workflow and current-attempt deploy must be
+terminal/successful. If that attempt contains no build, inspect earlier attempts
+of the **same exact run ID** in descending order. Stop at the first actual build,
+whatever its outcome; require completed/success plus its actual `Package release`
+and artifact-upload steps completed/success. Do not skip failed, skipped,
+cancelled, incomplete or ambiguous builds to find an older green result. An
+older attempt's overall failure may be its deployment failure and does not
+invalidate an otherwise successful build/package.
+
+Retain exact selected SHA/main/push/workflow/repository matching. Validate jobs'
+`run_id`, `head_sha` and `run_attempt` against the queried run/attempt; real retained
+API jobs expose these fields. Missing or incomplete API evidence leaves CI
+unknown, not permission to skip an unexamined attempt. All lookups share the
+existing absolute deadline and request bounds. Report prerequisite `build_attempt`
+separately from the current deployment attempt. The unchanged deploy/client
+already downloads its own run's artifact and verifies source/run/original build
+attempt; add no artifact API, downloader, uploader or authority. Feature checks
+and zero-site-request behavior remain unchanged.
+
+Owner1's focused regressions cover deploy2 reusing successful build/package1;
+a newer failed/skipped/incomplete build preventing reuse of an older success;
+absent build, mismatched run/SHA/attempt, unavailable evidence and missing/skipped
+package or upload steps not confirming success. Lead accepted this source
+correction within the existing owner1 package and normal hooks/review boundary.
+
+
+#### P27 sufficient source brief: draft, unlisted and published articles
+
+Lead accepted the two-flag/filter approach and announcement-date correction.
+Relevant interfaces are settled; no essential investigation blocker remains.
+Owner1 may take the complete BLOG package from accepted8b30/treecb728 after lead
+allocation, retaining its source/index and active hooks. Lead owns the final
+contextual prose pass. Architect performs no application/runtime work. No CONFIG,
+proxy, workflow, secret, permission, production action or migration integration
+is part of this package; current no-merge direction remains in force.
+
+**One state contract, compatible defaults.** Keep explicit top-level `draft` and
+add optional boolean `params.unlisted`, default false. Reject non-booleans,
+`draft=true` with `unlisted=true`, or unequal CS/EN states. Derive the state with
+this truth table, use one Hugo state partial across templates and the same small
+rule in Python consumers; do not create another editable state field or general
+state engine. No author-managed `build.list`/sitemap knobs are required.
+
+| draft | unlisted | State and delivery |
+| --- | --- | --- |
+| true | absent/false | Draft: omitted from production; local/VPN preview, feature-branch CI only. |
+| false | true | Unlisted: normal direct URL in production, deployed through main for review, excluded from discovery. |
+| false | absent/false | Published: ordinary listed production article, delivered through main. |
+
+All 250 existing imported language files and shared metadata/review/body hashes
+remain untouched and published by default. Retain existing public IDs, URLs,
+bundles, bylines, discussion identities and feed GUIDs. This is visibility, not
+access control: anyone with an unlisted URL can read/share it, Git source remains
+public, and noindex cannot compel every crawler or recall previous copies.
+
+**Dates and transitions.** Permit date changes while the prior committed state
+is draft or unlisted, including on transition to published. On publication set
+the actual announcement time in both languages, so feed/order uses that date.
+Once published, ordinary authoring permits only published→published and freezes
+that original date. Reject published→draft/unlisted; this prevents a date-reset
+loophole without a new history journal. Preserve all existing/imported published
+dates. URL/ID/GUID/bundle remain stable through every transition; the dated bundle
+name keeps its initial name even when announcement date changes. Update lastmod
+for substantive edits/state promotion, not on each build. Re-finalize Czech and
+refresh the exact-file English hash after any CS metadata/state/date change;
+retain honest existing review semantics and non-draft reviewed-translation gate.
+
+Both languages must have the same state and date; both remain required for draft
+commits. Apply the comparison to staged metadata against HEAD, as existing hooks
+do. Non-drafts must not have a future announcement date; retain Hugo's normal
+production future-date exclusion and do not enable buildFuture there. Add
+`--buildFuture` alongside buildDrafts to BOTH local/VPN preview generation and
+server invocation so future-dated working drafts remain previewable. Explicit
+article publishDate/expiryDate or build/render/list overrides are unsupported
+within this finite contract and should be refused rather than creating a second
+publication schedule. No such overrides occur in the current corpus.
+
+**Production rendering and discovery.** Use conventional finite template filters,
+not an unverified Page.Build accessor. Filter before pagination, first-N limits,
+counts and grouping. Unlisted articles remain rendered at their exact CS/EN URLs
+with ordinary canonicals and reciprocal language links, but receive localized
+visible review banners and `noindex, nofollow` robots metadata. Published pages
+keep ordinary metadata. Do not list unlisted URLs in robots.txt or Disallow them
+there: compliant crawlers need to fetch the page to see noindex.
+
+Exclude unlisted from homepage/section lists, all author/date/category/tag archives,
+recent sidebar links, tag/category counts/clouds, RSS, sitemap and search. The
+source-scanning `content/_content.gotmpl` month/author discovery must use eligible
+articles rather than every non-draft file; do not generate unlisted-only month
+or author discovery. Filter taxonomy memberships/counts and omit empty/unlisted-only
+terms from public navigation and sitemap; do not remove shared source labels.
+Use a small custom sitemap preserving host/canonical/translation semantics and
+other normal routes, with no unlisted URL in loc or alternate links. Structural
+empty term pages need not be deleted if they expose no unlisted article/link.
+
+`bin/index-search` independently crawls rendered HTML: omit the
+`data-search-article` marker on unlisted pages and their Pagefind body/meta markers;
+the existing positive-file-list/zero-article guard must remain. Search-page
+availability and test counts use discoverable articles, not every rendered URL.
+Previews continue to show/index working drafts as before, but unlisted stays
+excluded from discovery and remains directly reviewable. Apply production-style
+unlisted exclusion to generated English target maps/recommendations; never add
+an unlisted target through automated related navigation. Preserve explicit source
+links and code: an author deliberately linking an unlisted URL can disclose it,
+which is documented rather than silently rewriting historical prose. Cross-language
+links within that same directly opened unlisted pair are intended.
+
+Discourse script/embed eligibility additionally requires published state, even
+when the global embed is enabled; unlisted/draft pages must not create topics or
+show an invitation implying article discussion is enabled. Keep existing archived
+comments intact where present. This does not change Discourse settings or erase
+existing topics, notifications, caches or other previously public copies.
+
+**Owned source boundary.** Existing `bin/check-articles`, `bin/check`,
+`tools/check-authoring.py`, `bin/observe-publication`, `bin/preview`;
+`content/_content.gotmpl`; base/single/list/archive/search templates, RSS,
+sidebar/article-html/discussion partials; small state/list partials and sitemap
+layout; `i18n/cs.toml`, `i18n/en.toml` and existing CSS only for banner styling.
+Update AGENTS, authoring skill/guide and minimal README/discussion/deployment
+sentences to describe the actual state flow. Existing indexer behavior should
+need no new service or index format. `bin/build`/package metadata hashes ALL
+rendered files, including unlisted direct pages; package/receipt schema, complete
+file accounting, uploader and target contract stay unchanged. Split expected
+rendered versus listed/search/feed counts in checks without weakening the exact
+original archive audit. Do not add state fields to every imported file.
+
+**Authoring and observation.** Draft preparation commits/pushes stay on features.
+When the user requests an unlisted review or publication, use the existing normal
+main path with intended article-only changes, hooks and host protections; review
+content is not forced onto a feature merely because it is still being prepared.
+On unlisted→published change flags/date/lastmod and refresh CS→EN hashes before
+checks/commit. This future editorial policy never merges this migration branch.
+The existing observer derives expected state from the exact requested commit,
+accepts unlisted on main and checks its banner/noindex/direct-page identity in
+both languages; published checks reject lingering unlisted markers/noindex.
+Expose a stable rendered state marker for this small comparison if useful. Keep
+exact CI/build/deploy and same-run rerun proof, deadline and honest site-only
+limits. Feature observation remains checks-only, zero site requests. No extra
+poller, authentication or automatic server/pause/settings change.
+
+**Acceptance and checks.** Quick fixtures exercise the state truth table, invalid
+booleans/combinations, staged CS/EN mismatch and missing companion, fresh/stale
+translation hashes, draft/unlisted date edits and promotion, frozen published
+date/state, and future-dated non-draft rejection. Source/ordinary hook checks and
+one tiny native-Hugo three-state fixture can settle template APIs before commit;
+record actual command/time and keep it bounded. Verify existing published files/
+metadata unchanged. Commit, then mandatory independent final review before long
+integration checks.
+
+Use the existing bin/check/bin/check-release/native site batch for meaningful
+three-state CS/EN fixtures with distinctive titles/terms/months, actual Pagefind
+indexes and emitted sitemap/feed HTML/XML. Draft has no production article;
+unlisted has exact direct pages, banner/noindex and translation/canonical links,
+but zero discovery entries/markers, including mixed and unlisted-only taxonomies,
+authors/months, sidebar counts, sitemap alternates and RSS. With global Discourse
+opt-in enabled in the fixture, only published embeds. After promoting unlisted
+at a recent actual date, the same URLs/GUIDs enter homepage/RSS/search/sitemap,
+lose the banner/noindex, and retain dates on later edits. Local/VPN preview still
+renders a future draft without production inclusion. Observer fixtures distinguish
+unlisted/published state and preserve all P26 main/feature/rerun regressions.
+No real article, live upload, server or external request is needed for acceptance.
+
+Evidence binds final commit/tree, focused checks, complete final review, native
+Hugo/Pagefind output and unchanged imported corpus. Before any later delivery,
+confirm the new renderer is the one carrying unlisted source: older code ignores
+this marker and could list it. Source rollback may revert the package before
+unlisted content is used; afterward keep the compatible renderer or explicitly
+remove the unpublished review content in a reviewed source change. Do not rebuild
+unlisted source with old templates. Existing exact-release rollback still restores
+its prior complete payload; no runtime schema migration or new recovery mechanism.
+
+
+#### P29 sufficient rollout contract: reviewed feature delivery before merge
+
+The user authorized switch-over and verification before merging. P25 already made
+both blogs static; this package updates their content and activates the English
+web links. No default integration, proxy change, workflow/environment exception,
+new source or new protocol is needed. Lead launches each released mutation driver;
+owner1 owns exact BLOG package/client preparation, owner3 CONFIG/native/copy/dry,
+held target ownership and live verification. Architect owns these records only.
+
+**Settled independent BLOG delivery.** Exact reviewed source is
+`a24ed26f04ccdbf09684ad8e855c64b37d03aae4`, tree
+`0eaf28311e866c2591dc7d71b140edc4202c0724`; accepted native artifact
+`/nix/store/sfvxlsvhzcaskhgz4zcc59zr54qmf54i-vpsfree-blog-0` is bound by
+[p27-artifact-result.json](p27-artifact-result.json), including its source/input
+NARs, metadata digest and all 2399 served hashes. Real push CI is
+run42594078633, run_number16, attempt1, same feature SHA/workflow/repository,
+terminal success ([run](p27-ci-final-run.json)); packaging/deploy were skipped
+and [Actions artifact count is zero](p27-ci-final-artifacts.json).
+
+The unchanged `bin/package-release` accepts a clean exact checkout plus this
+native artifact; it does not require an Actions-origin artifact. Owner1 runs its
+ordinary local interface with `--sha a24ed26f04ccdbf09684ad8e855c64b37d03aae4`
+`--run-id 42594078633 --run-attempt 1`, outside the clean checkout for output,
+then records archive/receipt/package identities, full file/hash accounting and
+exact source/input bindings in the preparation packet. This is **operator-local
+packaging associated with actual CI16.1**, not an Actions-produced/delivered
+artifact; the package's conventional artifact_name is not proof one existed.
+Package digest is a concrete release input supplied by that packet, never guessed.
+
+The unmodified client uses real GITHUB_RUN_NUMBER=16, GITHUB_RUN_ID=42594078633,
+GITHUB_RUN_ATTEMPT=1 and GITHUB_SHA=a24ed26f04ccdbf09684ad8e855c64b37d03aae4.
+Only the later authorized fixed root process on blog.int reads the existing
+`/private/blog/deployment-key`, validates exact UTF8 roundtrip without stripping,
+and invokes the unchanged client with the key solely in private process memory/
+environment. No secret contents/hash/signature, argument, environment dump or
+shell trace enters evidence. HTTPS uses normal hostname/CA verification to exact
+`https://blog.vpsfree.cz/_deploy/blog`; HMAC authenticates the existing method,
+path, run number and ZIP digest. No key crosses proxy→backend HTTP. Keep existing
+300-second/three-identical-byte-retry client limits; no outer blind retries or
+synthetic run numbers/attempts. The receiver proves key possession and package
+consistency, not independent protected-main eligibility; this is existing accepted
+operator authority, not a new delivery exception.
+
+Owner3's fresh preflight at cleanCONFIG9b0 already confirms heldblog4cd, current
+w3/oldsource76d7/policy4nby, selected A66/receiptd5649, floor11.1, RESUMED/no pending,
+MySQL0700, retained WP/services/key metadata. Recheck those exact guards and owned
+claim immediately before effect; a changed floor/current/policy/system or package
+is a concrete drift to reconcile, not permission to invent a higher run. The
+successful ordinary upload advances floor to16.1 and selects the new exact
+package atomically while **remaining RESUMED**. Do not copy P22's coexistence
+pause/resume sequence. No backend generation build/activation is needed for this
+content-only step, and w3 must not be relabeled as a9b0 build.
+
+After the durable client result, bind response source/run/attempt/release/body
+and current-receipt digest to root status and floor16.1. Verify every2399 declared
+file and metadata/input identity in the selected immutable release tree, plus
+complete declared set; shared retained immutable assets may legitimately exceed
+that set. Bracket this inspection and HTTP checks with matching current pointer/
+receipt/floor/policy/system/mode so a concurrent change cannot be certified as the
+same selection. Read-only verification needs no maintenance pause. Confirm public
+normal-CA CS/EN roots, exact favicon bytes/declaration, corrected passkey title and
+unchanged URL, feed/search/article/media/alias samples and private/reserved-route
+rejections against the accepted artifact. Check retained WP8081, MySQL0700/PID,
+receiver UID/GID, loopback/firewall and timer/control health. Do not run live prune
+or a gratuitous rollback test. Three-state capability is proven by the accepted
+P27 native fixtures and delivered source/artifact identity; do not publish a fake
+unlisted/draft article for a live demonstration. No forum embed is enabled.
+
+On success preserve RESUMED, previous A66 content/receipt and natural monotonic
+floor16.1. On lost response/uncertain client outcome inspect the exact original
+transaction/status before any retry; client failure alone does not prove the old
+selection remained. Conflicting/corrupt state stops further effects. If recovery
+is necessary, use the existing root rollback with exact retained A66 key and
+fresh expected-current receipt: it pauses before selection, preserves floor16.1,
+and requires deliberate verified resume. This recovery pause is justified by the
+failure, not routine success. No old-floor reset/reupload, private data rewrite,
+backend switch, key rotation or automatic cleanup. The retained WP route remains
+a separately prepared compatible system recovery, not an ordinary P20 switch.
+
+**Independent int.web preparation and switch.** CONFIG is exact
+`9b0cf03eb51cac24efb1b763b4349fae7c8d704d`, tree
+`eb5a392697c74746304ff3206f74725ba3c715a6`, with web input7fec3e3c in the existing
+vpsfree-web→vpsfreeWeb mapping. P28's message replay preserves source trees/patches
+but is not a new NAR/derivation receipt. Prefer one ordinary fresh native build of
+ONLY `cz.vpsfree/containers/int.web` at9b0, allowing normal cached substitution;
+record exact source NAR/full graph/effective inputs, generation/system/deriver and
+rollback output. Old95b/6vfm remains old evidence; reuse instead requires actual
+new-source graph/derivation binding, not tree equality. No blanket blog/proxy
+rebuild. The later web pin does not require changing an already suitable w3
+content receiver; any concrete backend semantic delta goes to lead first.
+
+Owner3 acquires a separate typedint.web claim with fresh UUID under its released
+preparation scope, preserving heldblog4cd; verify mapping once for this intended
+batch. Before copy/dry effects, bind actual target/address, selected/profile/live
+old system and recovery generation, vhost/PHP/service baseline, certificates and
+health. Copy exact prepared output and inspect generation-specific native dry
+activation plus relevant current/candidate unit/config differences; a quiet dry
+log alone is not full service-diff proof. Expected scope is web root/input
+replacement and its ordinary nginx reload/restart; preserve unrelated vhosts,
+accounts and services, no proxy, reboot or data migration. Unexpected substantive
+baseline/package/activation differences are reported for lead disposition rather
+than silently widening the switch.
+
+After a concrete ready packet, lead releases exact int.web activation. Verify
+selected/profile system/source/input graph, actual service effects and health,
+then normal public HTTPS vpsfree.org rendered RSS/nav/footer links to
+https://blog.vpsfree.org(/feed/) and unchanged Czech links/representative vhosts.
+Source SSI include bytes alone are not live link proof. Do not submit forms or
+trigger unrelated application operations. On failure use the retained exact
+int.web generation through normal confctl recovery and verify public health;
+retain both attempts and claim while uncertain. Blog delivery can be released
+and accepted without waiting for this independent web dry/build packet.
+
+**Release/evidence boundary.** BLOG ready means package digest+exact local inputs,
+actualCI16 identity and fresh target guards; WEB ready means exact9b0 native output,
+copy/dry/live comparison/recovery+held typed claim. Neither requires new source
+review for operational records alone. Owner1 coordinates known-small packaging
+inline without idle utility reservation; owner3 uses the ordinary watcher for
+long native work. No repeated broad CI/native campaign; source fixes, if needed,
+return to lead's normal review boundary. Each final receipt binds observed effects,
+all hashes, command outcomes and limits, preserving previous receipts/roots/refs/
+backups/fixtures. No operator-created package is relabeled Actions delivery.
+
+Machine claims remain held until effects are verified AND complete deployed
+feature lineage/dependencies are integrated under separately explicit approval.
+P28 successors require reviewed lineage evidence; old deployed SHAs are not
+literally merged merely because trees match. Then inspect authoritative exact
+claim status, reconcile uncertainty, release and verify as the installed guide
+requires. No current merge approval, release bypass or lifecycle cleanup follows
+from this rollout. Remaining preparation outputs are evidence inputs, not open
+product decisions; the next observable is owner1's hashed local package and
+owner3's separately bound web candidate/ready packet.
+
+
+#### P30 sufficient brief: explicit Discourse author metadata
+
+Owner1's dependent BLOG package starts from accepted a24. Lead retains source
+release and the final contextual prose pass. Scope is head metadata, one small
+mapping, focused checks and authoring/discussion instructions; no forum/API call,
+embed enable, source publication, live upload, CONFIG/web change or merge is
+released by this brief. Architect append preserves prior records.
+
+**Source contract.** Pinned Discourse v2026.9.1 at retained
+`/nix/store/30w0v0ml6xzhg6vj1zzzk92b77y8xhfm-source` parses the first
+`meta[name=discourse-username]`, falling back to `meta[name=author]` only if the
+former ELEMENT is absent (`topic_embed.rb:249–251`). It strips content and queries
+`username_lower` without lowercasing it. `import_remote` prefers that found user
+over the retrieval fallback; a host's explicit Post author overrides again in
+create/update. `lib/topic_retriever.rb:38–41` supplies the normal fallback from
+`embed_by_username`, then site-contact username, then system user. These are
+source facts, not proof of installed forum settings/account existence.
+
+**Data and exact user mappings.** Add `data/discourse-authors.json`, a plain
+optional author-ID→lowercase forum-username object, rather than adding fields to
+`data/authors.json`. Existing original-row digests and whole-row staged byline
+immutability must remain unchanged. User confirmed:
+
+| Existing author ID / public name | Article count | Forum username |
+| --- | --- | --- |
+| wp-user-1 / Petr Krčmář | 38 | krcmar |
+| wp-user-3 / Pavel Šnajdr | 38 | snajpa |
+| wp-user-6 / Jakub Skokan | 46 | aither |
+| wp-user-9 / Martin Myška | 1 | martyet |
+
+Jiří Medvěd/wp-user-2 and Jakub Jirůtka/wp-user-8 each have one article and remain
+unmapped, using the normal forum fallback. All125 current articles have exactly
+one author. User also confirmed Michal Janoušek=KerryCZE, canonically `kerrycze`
+for this parser; no matching author record exists in current public metadata.
+Do not invent an unused row/map key or reattribute any article. Preserve that
+confirmation here for a future real authored record. No WordPress slug/name
+inference or network identity lookup. No generic admin username has been supplied;
+it belongs to the forum's normal topic-creation setting, not this map.
+
+**Rendering and multi-author behavior.** In article heads only, emit one
+`author` meta tag containing the truthful public names from shared author_ids in
+existing order (join multiple names consistently), and one `discourse-username`
+tag. For a single author with an explicit mapping, its content is that username.
+For unmapped or multi-author articles, emit empty discourse-username content:
+the pinned element-presence precedence prevents a display name from accidentally
+selecting a forum username, leaving the existing global fallback in control.
+A short template comment and docs sentence explain this deliberate empty tag.
+Do not pick the first author or invent coauthored forum ownership. Both languages
+use identical shared identities. Hugo context-aware escaping must handle names
+and attributes; never use safeHTML/safeHTMLAttr or concatenated raw head markup.
+No metadata on homepage, archives or search; metadata itself is inert and does
+not enable embed/topic creation on drafts/unlisted/previews.
+
+**Checks and files.** Owner1 owns the new mapping, `layouts/_default/baseof.html`
+(with one small partial only if that is clearer), `bin/check-articles`, existing
+`tools/check-authoring.py`/`bin/check`, `docs/discussions.md`, `docs/authoring.md`
+and the related short skill instruction. Read mapping through the existing
+staged Source interface, validating an object with unique keys, keys in actual
+authors, and nonempty trimmed lowercase string usernames without whitespace or
+control characters. Absence is optional/no mapping; omission expresses fallback,
+not blank/null map entries. Do not validate live account existence or impose
+unverified forum length/account-policy rules. Duplicate target usernames may be
+intentional user mappings; do not infer one-to-one ownership. Do not weaken
+original import projection, existing names/slugs, shared article rows, source
+bodies/reviews/dates/URLs/GUIDs or translation hashes; all250 files remain intact.
+
+Correct the existing guide's advice to fill per-host Post author: user leaves it
+blank, including the English framing-only host, and sets the ordinary global
+Username for topic creation to their chosen fallback admin. Keep category/host/
+path/source-URL/CSP and pilot boundaries unchanged. Explain confirmed mapping,
+multi/unmapped fallback and adding a real future author's explicit username in
+the authoring flow. Changing this metadata does not retroactively prove or repair
+existing topic ownership; preserve existing discussions and verify intended
+identity during the separately authorized pilot, without mass retrieval/import.
+
+Quick focused fixtures cover valid/staged mappings, unknown IDs, duplicate keys,
+invalid/uppercase/blank values and staged-invalid versus unstaged-fixed behavior.
+One bounded real Hugo head fixture exercises both languages, single mapped,
+unmapped and multiple authors, special-character name escaping, exactly one of
+each meta tag, and absence on nonarticle pages. Confirm truthful visible bylines
+and unchanged draft/unlisted/embed guards. Reuse existing test harnesses and
+missing-map fixture support; no new identity service or test platform. Verify
+original corpus/metadata bytes and audit compatibility, then normal hooks/commit
+and mandatory review before the existing full bin/check/release/native build.
+Lead's current release may hold source commit/publication until its stated gate;
+this brief defines checks, not additional authority.
+
+Compatibility is additive HTML plus optional map. Removing the map falls back
+normally while preserving author names; reverting the whole feature restores
+the previous no-author-meta behavior. Host overrides/global fallback remain user
+settings and are never changed automatically. Embed opt-in and live publication
+remain separately settled actions. Known original mappings are sufficient now;
+only forum setting/account/pilot facts remain operational dependencies, not a
+reason to invent missing author data or block the structural source package.
+
+
+#### P30 sufficient CONFIG addendum: declarative Discourse embedding defaults
+
+Settled source package for retained owner3 after lead allocation, independent of
+owner1's BLOG metadata work. Only CONFIG
+`cluster/cz.vpsfree/containers/discourse/config.nix` changes: extend the existing
+`services.discourse.siteSettings` attrset, retaining all unrelated configuration,
+input pins, administrator definition and secret-file references. No new module,
+provisioner, database migration, API, secret, UI mutation or deployment is needed
+to prepare this source. Source release/commit/native work remains lead-owned.
+
+The machine selects `nixos-stable`; current CONFIG locks nixpkgsStable to
+718f670e845328e9c2cecdd832835712b2cbd065. The retained nixpkgs source
+`/nix/store/z40fynbhnw0d06q05mw2mznn49h1y9pk-source` owns the ordinary Discourse
+module and `nixos_defaults.patch`. Its siteSettings option generates
+`/run/discourse/config/nixos_site_settings.json` on service preparation, loaded
+as defaults by SiteSetting. Pinned v2026.9.1 source confirms these exact first-
+and second-level keys (UI area labels are not the Nix categories):
+
+```nix
+posting = {
+  allowed_embed_selectors = ".entry-content";
+  embed_any_origin = false;
+  embed_set_canonical_url = false;
+  embed_unlisted = false;
+  import_embed_unlisted = true;
+  embed_truncate = true;
+  embed_support_markdown = false;
+};
+embedding = {
+  blocked_embed_selectors = "";
+  embed_full_app = false;
+  embed_by_username = config.services.discourse.admin.username;
+};
+security.content_security_policy_frame_ancestors = true;
+```
+
+The admin reference currently resolves to the existing configured `admin`; it
+implements the user's requested fallback without inventing an account or adding
+a map entry. This supersedes the preceding BLOG brief's unspecified fallback.
+Configuration alone does not prove that the installed account exists/works.
+Keep four exact original-author mappings; no synthetic Michal author. Both
+languages retain the identical Czech discussion_url and one shared topic.
+
+These are declarative defaults, not forced DB reconciliation. The module docs
+explicitly permit UI overrides, and Discourse refresh merges stored values over
+defaults. User reports no embedding/site-setting changes; retain this as the
+user-supplied baseline, not live proof. No reset/remediation campaign follows.
+Owner1 updates the existing BLOG `docs/discussions.md` within its package to
+point to these CONFIG defaults and briefly explain precedence. Lead owns the
+contextual prose pass. The extraction, visibility and framing values preserve
+the accepted policy, including imported topics unlisted until a regular reply.
+
+The host editor stores EmbeddableHost rows separately. Exact Czech/English hosts,
+path allowlists, real category selection/permissions, optional tags and blank
+per-host Post author remain ordinary UI-owned records. The English reject-all
+import row still permits framing; it does not create a second topic. Account
+existence and any prior topic/source mappings also remain operator pilot facts.
+Do not encode these records as site settings or add automatic host/category/user
+provisioning. RSS importer reconciliation, notifications and site comment-count
+behavior are outside this CONFIG edit.
+
+Acceptance/quick checks: one-file intended Nix diff, repository nixfmt/ordinary
+hooks, actual option evaluation confirming the eleven values and the admin
+reference without printing secret-containing aggregate settings. Preserve the
+existing security.force_https default and all sibling attrs. Confirm pinned
+category/key spelling from source; no new test framework or production probes.
+Normal commit and independent final review precede the longer ordinary native
+`confctl build cz.vpsfree/containers/discourse` under the retained watcher policy.
+Native build is verification, not activation. Owner3 reports exact source/input/
+system and check evidence; no unrelated system needs a rebuild for this package.
+
+Later, only if deployment is released: normal claimed Discourse activation and
+service-health verification, then verify effective settings/accounts and the
+existing narrow pilot before BLOG embed opt-in. Delivering inert BLOG head
+metadata and preparing CONFIG source can proceed independently. No schema or
+protocol change is introduced. Reverting CONFIG restores old defaults on service
+restart but does not erase saved UI values, host rows, topics or replies; do not
+claim a system rollback undoes forum content. Current embed remains disabled and
+no forum operation or merge is authorized by this brief.
+
+
+#### P30 sufficient BLOG addendum: English discussion source and forum reply counts
+
+User explicitly chose Discourse reply counts and one shared ENGLISH discussion
+source/opening post. This supersedes previous Czech forum-source instructions,
+not archive provenance. Owner1 owns one dependent source package from committed
+3c48b874, after lead release; existing four author mappings/head metadata remain.
+CONFIG's generic settings package is independent. No enable, forum call, topic
+migration, deployment or merge is authorized here. Lead owns final prose.
+
+**Shared identity.** Add one small `layouts/partials/discussion-source.html`.
+Resolve the actual English page from the article's AllTranslations (including
+self), matching params.article_id and posts type; require published state and
+canonical HTTPS origin exactly `https://blog.vpsfree.org`. Return its real
+Permalink after validating no userinfo/port/query/fragment and the supported
+host-root route, otherwise empty. Never translate/guess a slug, substitute CS,
+or consult an override map. Both discussion.html and count markers consume this
+one result. Current125 EN routes are unique simple root slugs; future existing
+checker-approved underscore/nested routes remain supported. Missing/wrong-host/
+unpublished EN means no forum request. Existing production/not-server/explicit
+boolean enabled/matching current-language BaseURL gates remain necessary.
+
+Keep ALL existing content/data/import digests, dates, IDs, canonical URLs, feed
+GUIDs, review hashes and Czech discussion_url rows unchanged. That Czech field
+continues to identify original/source navigation for article-html.html rewriting;
+it is no longer active Discourse identity. Keep its checker requirement and new
+CS route policy, documenting the distinct purpose. New authoring supplies the
+ordinary paired EN URL; no new per-row discussion field or duplicated EN map.
+README, AGENTS, docs/authoring.md and skill must stop claiming that the Czech
+field is the runtime discussion source. No renderer provenance rewrite.
+
+**Forum guide.** Invert host roles: blog.vpsfree.org imports EN article paths;
+blog.vpsfree.cz has reject-all `\A(?!)\z` for framing only. Both host authors
+remain blank, with the same verified category. Use an anchored English rule
+matching existing explicit-route grammar (underscore/nesting allowed), excluding
+reserved first components already in the checker, cs/en prefixes and generated
+year/month archive paths. A concrete rule is:
+
+```text
+\A/(?!(?:cs|en|search|feed|author|authors|category|categories|tag|tags|archive|archives|page|posts|assets|images|pagefind|admin|login|logout|robots|sitemap)/|[0-9]{4}/[0-9]{2}/)(?:[a-z0-9]+(?:[-_][a-z0-9]+)*/)+\z
+```
+
+The numeric exclusion corresponds to actual content/_content.gotmpl month
+archives, not a ban on all numeric/wp-prefixed EN slugs. No new general EN slug
+restriction. URLs colliding with generated archive routes are not valid article
+routes; fixtures verify that concrete boundary. Preserve existing regex encoded/
+decoded/query caveats, exact HTTPS authority and CSP frame-ancestor settings.
+Both variants now import the same English article/opening post/source link.
+Unknown preexisting Czech TopicEmbed records require operator reconciliation
+before enabling; changing source does not merge, retag or delete topics. User
+reports untouched settings and our embed remains off; do not claim no historical
+forum mappings exist. No automatic reimport/migration or new forum locale setting.
+
+**Byline/client scope.** Count only published article links actually rendered on
+home/list/taxonomy/author/month pagination pages. Pass an explicit listing context
+to the shared byline from list.html/archive.html; single.html must not launch a
+redundant count batch beside its native embed. Replace the published byline's
+ambiguous legacy numeric count with a localized plain discussion/Discourse link
+to that language's article discussion anchor; eligible listing links additionally
+carry the exact shared EN URL and an empty reply-label span. A successful label
+is visibly identified as Discourse/forum replies, never an archive or combined
+total. Keep historical comment bodies/anchors and ordinary access; draft/unlisted
+pages gain no forum invitation, count marker or request. Off/preview/server/
+wrong-origin pages have no count client/markers. No-JS/error/unknown stays a usable
+plain link. No fabricated zero/loading number or mandatory layout spinner.
+
+Use a small local fingerprinted `assets/js/discourse-counts.js`, loaded once with
+defer on eligible listing pages, following existing hashed asset conventions.
+No full-site enumeration or search/sidebar follow-up. Deduplicate explicit DOM
+markers; at most one asynchronous JSONP GET after page load to the literal
+`https://discourse.vpsfree.cz/embed/count`, with one fixed callback identifier
+and repeated embed_url[] parameters built using URL/URLSearchParams. No arbitrary
+endpoint/callback from HTML, retry, polling, local storage or credentials/API key.
+Cap the one batch (50 unique displayed URLs and 8KiB encoded request URL suffice
+for current pagination); if exceeded leave plain links, do not split into more
+requests. Five-second client deadline, script error, absent/malformed callback or
+CSP failure leaves links alone; late/duplicate callbacks are inert. A no-op fixed
+callback may remain after timeout so an already fetched late script cannot cause
+an uncaught missing-callback error. This is finite UI waiting, not a guarantee of
+network cancellation or forum latency. No measured latency is claimed.
+
+Pinned EmbedController#count:145–166 removes terminal #discourse-comments, then
+one trailing slash from requested URLs; returned key is normalized URL, except
+it appends #discourse-comments when the normalized URL was not in the request.
+Therefore keep the exact canonical EN URL for association, but request its
+single-trailing-slash-stripped form, and accept ONLY that exact normalized key
+for each known DOM group. Both languages bind the same key even though their
+local link hrefs differ. Stock count.js cannot do this correctly for translated
+hrefs, hence the tiny adaptation rather than its unchanged loader.
+
+Response is `{counts: {url: localized_reply_phrase}}`, not numeric counts.
+Accept only own-property string values for requested keys, with a small reasonable
+length bound; display via textContent only. Never innerHTML, evaluate response
+strings, parse numbers, add legacy counts, rewrite hrefs or accept extra keys.
+Known explicit zero phrase is displayable; an omitted key is unknown/not visible,
+not zero. Endpoint uses posts_count minus opening post and guardian visibility;
+it does not enqueue topic creation. Its semantics need not exactly equal visible
+regular comments after moderation. Current-user effective locale wins; otherwise
+anonymous locale follows enabled preferences/default. Native `tl=cs/en` is only
+honored with set_locale_from_param=true, which defaults false. Do not promise
+page-language phrases or mutate this global setting: localize the static forum
+context in BLOG i18n, display the returned phrase unchanged, explain upstream
+locale in docs. No guessed plural rules or localized integer parsing.
+
+JSONP intentionally executes JavaScript from the same fixed forum origin already
+trusted by native embed. Payload shape checks/textContent prevent data-to-HTML
+injection, not execution of a compromised trusted endpoint. No wildcard CSP,
+unsafe-eval or CORS/proxy workaround; preserve existing policies and treat blocked
+script as plain-link fallback. HTTPS exact origin only; never load remote count.js
+or script URLs supplied by a response. Count stays behind the SAME embed opt-in,
+so this package generates no forum traffic while current production setting is
+false. The later opt-in pilot should include one listing per language.
+
+**Files/checks/release.** Owner1 owns the helper, discussion/byline/list/archive/
+single/baseof integration as needed, one JS asset, i18n/cs.toml and en.toml,
+existing bin/check/check-authoring fixtures, and concise discussions/authoring/
+skill/README/AGENTS corrections. bin/check-articles changes only if needed for
+an actually identified route collision check/message; preserve original-field
+and archive audit invariants. No CONFIG, pins, workflow, packager or content edits.
+A tiny JS execution fixture under tools (Node built-in vm/assert plus stub DOM,
+no browser framework or npm dependencies) may use dev-only Node from the existing
+nixpkgs pin if no declared interpreter exists; no lock/runtime package change.
+
+Quick acceptance: synthetic real-Hugo CS/EN pair resolves identical EN source;
+self/matching-ID/missing EN/wrong canonical, underscore+nested routes, every
+existing disable/state gate, list-only markers and no marker on unlisted/draft/
+nonarticle entries. Keep original bytes/audits and four author metadata checks.
+One executable DOM/request fixture covers multiple/duplicate links → one request,
+EN mapping independent of href, normalized returned keys, localized/zero phrase,
+missing/restricted/extra/malformed results, literal HTML-like text, deadline/error/
+late callback and no retry. No live forum or network needed. Normal hooks and
+separate coherent count/source commit, combined intended BLOG final review, then
+existing full checks/native build under watcher rules; no broad new campaign.
+
+Compatibility is optional additive client plus changed pre-enable forum source.
+Old archive data and disabled builds remain usable. Turning opt-in off removes
+traffic; rolling code back does not undo any future forum topics and could switch
+source back to Czech if enabled, so any later rollback must keep embed off until
+identity is reconciled. Existing topic/account/category/installed-settings pilot
+facts are deployment dependencies only. Sufficient for source release now; no
+unresolved design prerequisite blocks owner1.
+
+
+#### P30 full-app delta: supported source switches and live compatibility limits
+
+User chose replying directly on the blog. Owner1's existing BLOG package adds
+boolean `fullApp: true` to the JSON-serialized DiscourseEmbed object in
+`layouts/partials/discussion.html`, updates its exact payload assertion in
+`bin/check`, and corrects the mode/pilot text in `docs/discussions.md`. Owner3's
+existing CONFIG package changes only
+`services.discourse.siteSettings.embedding.embed_full_app` to true in
+`cluster/cz.vpsfree/containers/discourse/config.nix`. Lead releases implementation.
+Do not alter source under the running false-mode41ca build: first join it, retain
+its actual evidence, then normal hooks/commit amendment or successor and new
+review/native identity. Old successful native evidence never certifies the new
+flag. English identity, mappings, counts, historical corpus and embed opt-in
+remain unchanged; `hugo.toml` still has enabled=false.
+
+Pinned v2026.9.1 native embed.js supports fullApp, sends full_app=true, uses
+scrolling=yes, default height600px and lazy iframe loading. Use these defaults;
+no custom resizing, login widget, cookie/session bridge or new client options.
+EmbedController redirects a visible mapped topic to its normal URL with
+embed_mode=true only when both server setting and client request are enabled.
+An unmapped source still follows native topic retrieval/loading. Native reply
+UI checks user and normal posting permissions. Existing sign-in flow defaults
+true and can use a top-level login tab/Storage Access API; those upstream flows
+are not proof of browser authentication or a new BLOG poller.
+
+Two concrete limits must remain explicit, with material policy resolution via
+lead before any live pilot/enable claims:
+
+- Full-app `lib/embed_mode_handler.rb` removes X-Frame-Options only when the
+  parent referrer matches EmbeddableHost.record_for_url, including allowed_paths
+  (or embed_any_origin, which must remain false). The current Czech reject-all
+  framing row therefore works for the classic embed CSP but BLOCKS full-app
+  framing. Both hosts being in frame-ancestors alone is insufficient. Do not
+  silently broaden Czech import paths or claim that this two-flag change solves
+  both-domain framing. Guide must distinguish this unresolved full-app condition
+  from the earlier classic-only host recipe until lead settles it.
+- Pinned same_site_cookies defaults Lax, and auth/session cookies honor it.
+  forum.vpsfree.cz here means the actual discourse.vpsfree.cz origin: Czech blog
+  is same-site, English .org is cross-site. Under unchanged Lax, .org iframe
+  authentication is not supported merely by logging into a top-level tab;
+  upstream embed-auth-flow explicitly assumes same-site or SameSite=None.
+  Actual installed value is unverified. Preserve cookie/security settings;
+  source tests cannot waive this or browser third-party-cookie restrictions.
+
+The narrow two-flag source preparation is independent of deciding those live
+policies; it introduces no database/schema migration or topic rewrite. Keep
+CSP, embed_any_origin=false, exact origins/referrers, category permissions and
+normal top-level forum access. No source-field mass edit or automatic topic
+repair. CONFIG defaults remain subject to saved UI overrides.
+
+Quick verification reuses existing tiny Hugo cases: enabled production payload
+contains boolean fullApp=true with the same English identity in CS/EN; disabled,
+server, preview, wrong-base, draft/unlisted and missing-EN outputs remain inert.
+Retain count fixture success for unchanged client scope. CONFIG normal nixfmt/
+hooks and scoped setting evaluation verify true without reading secret fields.
+Review final changed heads before the required ordinary native builds. No new
+browser platform or live/forum test in source preparation.
+
+After separately resolved host/auth policy and explicit deployment release,
+activate reviewed CONFIG and verify effective setting before BLOG opt-in. Pilot
+one shared English source from both blog domains: anonymous rendering, normal
+login transition, actual inline reply with ordinary account permissions, same
+topic identity, CSP and cookie-restricted-browser behavior, plus working top-level
+forum fallback. Actual replies/topic creation require that operational release;
+no source/native result proves them. User's chosen inline UX remains pending this
+pilot, especially .org. In mixed deployment either missing switch retains classic
+embed behavior; both true selects full app. Reverting either switch reverts mode,
+not topics/replies, and keeps the same English source. Disable BLOG opt-in for
+recovery when framing/auth is uncertain. No deployment, UI mutation or merge is
+implied by this source-only brief.
+
+
+#### P30 full-app resolution: native host rules and cross-site session cookies
+
+Lead accepted the smallest native host-policy change for user's inline-reply
+choice. This resolves the preceding full-app note's pending host/cookie design;
+its source/build sequencing and live-pilot limits still apply. Both exact blog
+hosts need article-path allowlists because native full-app checks the parent
+referrer against allowed_paths. Keep the accepted EN underscore/nested rule;
+use the existing CS root-slug namespace rule for blog.vpsfree.cz:
+
+```text
+\A/(?!(?:feed|search|author|authors|category|categories|tag|tags|archive|archives|page|posts|assets|images|pagefind|admin|login|logout|robots|sitemap)/|wp-|[0-9]+/)[a-z0-9]+(?:-[a-z0-9]+)*/\z
+```
+
+This supersedes CS reject-all framing-only instructions. Keep blank host authors,
+verified category, exact HTTPS hosts, native referrer policy and frame-ancestors;
+embed_any_origin remains false. Both BLOG variants still pass only the actual
+shared EN canonical to embed/count, producing one topic during normal browsing.
+Native allowlists now permit manual/external Czech-source imports too, which can
+create another topic. State that limit plainly; no claim of server-enforced
+EN-only identity, no dual RSS importer, no plugin/proxy/custom source gate. Before
+later enable, reconcile existing source mappings without deleting topics/replies.
+
+Add one standard CONFIG setting alongside embed_full_app=true:
+`services.discourse.siteSettings.security.same_site_cookies = "None";`.
+Pinned config/site_settings.yml places it in security, with exact enum values
+Lax/Strict/Disabled/None. None is necessary for ordinary cross-site iframe
+sessions on blog.vpsfree.org; do not choose Disabled. This intentionally changes
+the forum-wide SameSite cookie policy, not only the blog. Existing Discourse
+module derives security.force_https=true from configured enableACME=true;
+DefaultCurrentUserProvider and DiscourseCookieStore consequently emit Secure
+session/auth cookies (auth token remains HttpOnly). Verify those effective values
+when later authorized; do not read token values. Do not add a duplicate force_https
+override, change cookie domains or relax CSRF/origin/CSP protections.
+
+Native embed_full_app_signin_flow defaults true and stays unchanged. Its own
+source assumes same-site or SameSite=None, then uses normal user-driven login/
+Storage Access API where supported. ApplicationController's existing CSRF token
+protection and BAD CSRF refusal remain intact. SameSite=None permits eligible
+cross-site use; it does not override browser third-party-cookie blocking or grant
+storage access. Full-app success on .org remains an actual browser-pilot fact.
+Retain top-level forum navigation for blocked/denied login, and document that
+sign-in may open a tab even though writing can remain inline once authenticated.
+No custom authentication, browser-setting workaround or CORS change.
+
+Final small ownership: owner1 discussion.html adds fullApp=true, bin/check's
+existing exact payload fixture includes it, docs/discussions.md changes both
+host rules/mode/pilot wording and explains cookie/fallback limits. Owner3's same
+config.nix package changes embed_full_app and adds same_site_cookies only after
+joining false-mode41ca native work. No edit under its running build; preserve
+that receipt as false-mode evidence, then normal hook/commit/review and the new
+native identity. Lead prose pass/release retained. Existing EN helper/count/maps
+and disabled Hugo opt-in are untouched.
+
+Quick CONFIG evaluation checks embed_full_app=true, same_site_cookies="None"
+and inherited force_https=true without dumping secret attrs. BLOG tiny fixture
+checks real boolean fullApp and all existing disable guards; no new auth test
+platform. Native/source tests establish wiring only. Later authorized operator
+pilot verifies actual framing, anonymous/read state, login plus inline reply on
+both domains, same English topic, and top-level fallback under blocked cookies.
+Do not enable publicly before that accepted result. Reverting the mode leaves
+forum topics/replies intact; reverting cookie policy to Lax can make .org iframe
+sessions unavailable and UI overrides can outlive a system rollback. No runtime,
+UI, topic, deployment or merge action is authorized by this design. No further
+product decision is required to prepare this conventional source package.
+
+
+#### P31 sufficient operations brief: inert metadata delivery, then one EN pilot
+
+User reports Discourse deployed and pilot hosts configured. Treat that as user
+report until owner3's read-only proof, not permission for another deployment or
+settings change. Owner1 prepares one exact existing package/client/driver; lead
+launches the released mutation after concrete guards; owner3 owns fresh BLOG
+baseline/heldclaim and forum/post-delivery verification. Architect records only.
+No source edit, rebuild, new CI, global enable, merge, web.int, system switch,
+account/cookie reset, importer or topic migration. Forum authentication and actual
+inline posting remain the user's browser operation, not an agent-authored reply.
+
+**Independent BLOG delivery.** Accepted final head
+985d4eaa74309b219a762dcc02316df4a350065d/tree774efe50f4f24f5cf9945fa7b0271fec443ac54b
+and `/nix/store/ysy4gaydzzh17z07xyrdnl2vky3in38k-vpsfree-blog-0` are bound by
+p30-artifact-result.json, p30-output-head-proof.json and native/review receipts:
+2399 served hashes, metadata SHA256
+487527c20c60a5eaed61112315a27efbec084abc428f5ea7820366b73a352af9, all250 article
+heads verified, protected corpus unchanged, Hugo enabled=false and zero production
+count markers. Real successful feature push CI42613369754 is run17/attempt1;
+package/upload-artifact/deploy skipped, zero Actions artifacts. Package this exact
+local native artifact with unchanged bin/package-release and real identities;
+record archive/receipt/ZIP hashes and bytes in owner1's preparation packet.
+It is operator-local associated with actual CI17.1, never an Actions artifact.
+
+Reuse P29's finite fixed driver/auth process, updating ALL concrete old/current/
+new identity guards, not the uploader protocol. Current accepted P29 selection is
+a24ed26f04ccdbf09684ad8e855c64b37d03aae4-4050259213d48748, receipt
+64d240fd7e1c5d56c028e4113633657b73b94843ac69d9c9b9f18092b40a31e8, floor16.1
+(run42594078633), body
+0fbcba40ea03eaae82a8538d4ee3bc873831674a9c8a7cca5e878b0f48980a69. Owner3 freshly
+binds held blog4cd, intended current CONFIG mapping proof, actual w3/76d7/policy4nby,
+RESUMED/no pending and current receipt/floor; current CONFIG source must not be
+mistaken for a newly activated backend generation. Drift stops effects until
+reconciled. Keep retention lock behavior and WP8081/MySQL0700/backups/old roots.
+
+After lead accepts concrete package/driver/preflight, copy exact bytes using
+existing strict trusted BLOG access and run the unchanged client once. Its fixed
+root process reads existing key only into authentication memory/environment,
+never prints key/signature, strips bytes or exports secrets. Normal CA+hostname
+HTTPS to blog.vpsfree.cz/_deploy/blog, real17/42613369754/1/985d identity, existing
+300s/at-most-three-identical-byte client retries; no outer blind rerun. Successful
+selection advances floor17.1 and remains RESUMED; no routine pause/resume. Bind
+durable response/current receipt/pointer/body/source/order and full2399 declared
+file/hash set plus metadata/input identities. Bracket read-only verification with
+matching policy/system/current/floor/mode. Public checks compare both pilot pages
+and root/favicons to built bytes, correct author tags, sharedEN source and continued
+absence of embed/count scripts. No forum request is needed to publish this inert
+release. Preserve prior16.1 package/receipts/recovery and normal timer health.
+
+Lost reply requires exact original transaction/status reconciliation before any
+retry. Do not invent a higher run/reset floor or assume failure kept old content.
+If actual content recovery is required, existing root rollback to retained a24
+uses expected-current receipt, pauses and preserves floor17.1; verified deliberate
+resume follows. No rollback rehearsal, live prune, backup extraction or cleanup.
+
+**Forum proof and the one pilot.** Pilot is actual article wp-841:
+EN `https://blog.vpsfree.org/two-factor-login-with-passkeys/`, paired CS
+`https://blog.vpsfree.cz/dvoufaktorove-prihlasovani-s-passkey/`. Both delivered heads
+must show truthful author Jakub Skokan and discourse-username=aither. Expected
+shared source is the exact EN URL, never the Czech provenance URL.
+
+Owner3's p31-forum-local-trust.json proves an existing known-host entry for
+`discourse.vpsfree.cz`, not the raw IP. Use ordinary hostname access with strict
+host-key checking/batch authentication, verified declared address37.205.13.116
+and finite bounds; no keyscan/accept-new/trust edits. That receipt does not prove
+remote authentication. If accessible, read running/profile/source/service and
+only whitelisted nonsecret default/DB-override settings, the two host rows,
+category public-read/member-reply permissions, blank host authors, and pilot
+account/mapping metadata through ordinary existing local access/SELECTs. No
+secret-file dump, private user fields, content bodies or write-capable repair.
+Native7w1/source0488276 proves built defaults only; actual live identity may differ.
+Required pilot settings include full-app=true, same_site_cookies=None,
+force_https=true, protected CSP/any-origin=false, body extraction, configured
+fallback and accepted unlisted-import policy. Record actual overrides separately.
+
+Check exact normalized EN and pairedCS TopicEmbed identities (and trailing-slash
+variants), including conflicting/deleted mapping if present, with topic/category/
+owner IDs only. No broad enumeration. Reuse a safely matching existing English
+topic; an unexpected owner, conflicting Czech discussion or ambiguous source is
+not permission to rewrite ownership/create replacement. Lead/operator resolves
+that concrete conflict first. Check no second blog RSS importer will race it;
+retain notification implications. Public /embed/count may show visible known
+mappings but absent keys do not prove absence; /embed/info requires an API key,
+and /embed/comments can create topics, so neither is a read-only shortcut. If
+strict existing access fails, one focused operator request asks for the relevant
+settings/host/mapping confirmation through their ordinary admin UI/console.
+No credential request or new access platform; BLOG delivery proceeds independently.
+
+Once metadata delivery and forum/mapping conditions are accepted, the lead may
+provide this exact native console snippet for ONE English pilot, then the same
+snippet on its paired Czech page. It changes only the current tab. Do not run it
+on indexes/other articles; scroll to the discussion to trigger native lazy iframe.
+The first load can create one English topic and notifications; it is an explicit
+pilot effect, not a read-only page check. Let first EN creation settle before CS.
+
+```javascript
+(() => {
+  const source = 'https://blog.vpsfree.org/two-factor-login-with-passkeys/';
+  const here = location.origin + location.pathname;
+  const allowed = [source, 'https://blog.vpsfree.cz/dvoufaktorove-prihlasovani-s-passkey/'];
+  const target = document.querySelector('#respond');
+  if (!allowed.includes(here) || !target ||
+      document.querySelector('#comments')?.dataset.discussionUrl !== source ||
+      document.querySelector('meta[name="discourse-username"]')?.content !== 'aither' ||
+      document.querySelector('#discourse-comments, #discourse-embed-frame')) {
+    throw new Error('Wrong pilot page, missing reviewed metadata, or embed already present');
+  }
+  const container = document.createElement('div');
+  container.id = 'discourse-comments';
+  target.appendChild(container);
+  window.DiscourseEmbed = {
+    discourseUrl: 'https://discourse.vpsfree.cz/',
+    discourseEmbedUrl: source,
+    fullApp: true
+  };
+  const loader = document.createElement('script');
+  loader.async = true;
+  loader.src = 'https://discourse.vpsfree.cz/javascripts/embed.js';
+  document.head.appendChild(loader);
+})();
+```
+
+No API key, custom login or source opt-in change. Reload removes the injected DOM,
+not a created topic. User checks one shared topic URL, aither attribution, English
+opening excerpt/source link, body/media extraction, normal anonymous access,
+login transition and their own authorized inline reply from both domains. Keep
+top-level forum fallback for blocked cookies; SameSite=None/native source tests
+do not prove browser authentication. Owner3 may verify the resulting public topic
+and exact mapping metadata read-only after the browser effect. Do not mass-open
+archives, post for someone else, force ownership or delete the pilot to hide it.
+Current source/global counts remain false; separately reviewed enablement with
+updated production assertions is a later package, not part of this pilot.
+
+Sufficient preparation is settled now. Concrete package digest, fresh live BLOG
+state and live forum/mapping facts are execution inputs owned above, not reasons
+for new design/testing phases. Report proof versus user report versus untested
+browser outcomes distinctly. No new Discourse activation/merge is implied.
+
+
+P31 lead clarification: server readback and p31-forum-readonly.sh are OPTIONAL
+for diagnosis, not pilot acceptance gates. Accept the user's deployment/host
+setup reports as operator facts, explicitly leaving unobserved settings/source
+identity unverified. After metadata delivery, ask only whether the passkey article
+already has a Czech or English Discourse topic (URL if present). If the user
+reports none, proceed with the one English native browser pilot; existing or
+unknown topics require focused operator UI reconciliation, not DB absence proof.
+The browser pilot establishes effective framing/login/reply behavior. This
+supersedes the preceding brief's mandatory settings/readback wording; no SSH
+retry, access provisioning or agent topic creation follows.
+
+
+P31 pilot 404 diagnosis (source facts, cause not yet observed): pinned full-app
+comments returns 404 for a mapped missing/deleted or guardian-inaccessible topic;
+invalid host/path is 400, while no mapping returns loading200 with native30s
+refresh. Guardian permits direct unlisted topics in public categories, so
+import_embed_unlisted alone is not the cause and listing changes are unwarranted.
+Comments selects the oldest normalized HTTP/HTTPS mapping; public count uses the
+exact requested key and cannot prove absence. Native anonymous cache stores only
+200 responses. Next evidence is the existing pilot topic URL/category in admin
+UI and direct logged-out visibility; no recreate/reimport/delete, cookie/CSP
+change or source patch before resolving that concrete branch.
+
+
+#### P31 confirmed correction: host matching after URL normalization
+
+Lead accepted owner3's actual read-only proof: TopicEmbed1→topic374 is active and
+undeleted, category=-1, visible=false; both host rows select public Blog10. Their
+single-backslash anchored path rules require a terminal slash. Six running source
+files match the pinned code and uncategorized_category_id is -1. This confirms
+the mechanism: TopicEmbed.import normalizes away the terminal slash (:72), then
+looks up the host (:81); matching fails, category:nil falls back to -1. The earlier
+slash-required host-rule design was wrong. Unlisted state is not this failure.
+
+Proposed exact pilot path corrections (ordinary host editor; writes still need
+lead/user release) accept both the canonical and importer-normalized forms:
+
+```text
+blog.vpsfree.org: \A/two-factor-login-with-passkeys/?\z
+blog.vpsfree.cz:  \A/dvoufaktorove-prihlasovani-s-passkey/?\z
+```
+
+Keep category10, blank host authors, exact hosts and all security/settings intact.
+Separately propose the normal existing-topic move of topic374 to Blog10, preserving
+TopicEmbed1, shared English source, author, posts/replies and visible=false.
+Changing the host rule alone does not repair the existing category. No delete,
+reimport, replacement topic, owner rewrite or listing toggle. User authorized root
+QUERY only; this note authorizes no runtime write or retry of the import endpoint.
+After an explicitly released repair, read back the two rules and topic/category/
+mapping/visibility before resuming the same browser pilot.
+
+Bounded source follow-up for owner1 after lead allocation: correct the published
+BLOG docs/discussions.md broader CS/EN article rules too, keeping their existing
+namespace restrictions while allowing optional terminal slash. Reserved-root,
+numeric-CS and generated-month-archive exclusions must match both `/` and end of
+string, so slashless reserved paths cannot slip through. Preserve canonical
+article URLs and discussion-source.html's canonical validation; no corpus/checker
+schema/client change is needed. Update retained operator setup instructions under
+lead-owned record scope. Add a focused executable regression using the actual
+published regexes and Ruby's native matching: pilot canonical and normalized
+paths both select the same host/category; valid EN nested/underscore paths remain
+accepted; roots, reserved paths with/without slash, queries, numeric CS and actual
+month archives stay rejected. Test the importer order (normalize then host match),
+not only the initial canonical request. No full forum test platform or new build
+campaign. Source fix/review and runtime repair are distinct releases; no source
+implementation or runtime mutation has occurred in this correction.
+
+
+#### P32 all-article enablement and normal main delivery — sufficient brief
+
+User confirms both browser pilots work and requests embedding on all articles
+and integration. Lead accepts BLOG→main and CONFIG→master; web.int deployment
+stays excluded. P29/P31 public switchover and the browser pilots satisfy the
+previous switch-and-verify-before-merge requirement. The selected delivery is
+ONE ordinary protected-main Actions push, after the source checks below and
+host widening. No preliminary operator upload, workflow exception or new gate.
+This supersedes the earlier proposed P32 enabled-feature-upload-before-merge
+order. Current live BLOG remains 985d/operator17.1 until actual new delivery.
+
+**Source package: settled, independent and ready for lead release to owner1.**
+Baseline is clean BLOG620f14cc96cdc14792a9e26ed3de204f90aa04bb,
+tree014c8dec9662a12866e75afebcc1a0b8e09ca114. Owner1 owns its source/index/commit
+window; lead retains the final contextual prose pass. Files:
+
+- `hugo.toml`: change only explicit boolean `params.discourse.enabled` to true.
+- `bin/check`: update `check_search_script`, `check_roots` and their affected
+  callers to distinguish production-enabled output from isolated preview output.
+  Keep a finite script inventory: existing Piwik, existing search module only on
+  search pages, one native inline embed loader only on eligible article pages,
+  and the fingerprinted deferred/SRI count script only on eligible production
+  listing kinds. Reject unexpected scripts; do not merely ignore Discourse text.
+  Validate decoded payload equality: fixed forum origin, boolean `fullApp:true`,
+  and the exact matching published EN canonical derived from source article
+  identity/URL, for BOTH rendered language variants. Require the comments target
+  and forbid listing-count scripts/markers on article pages. For listing markers,
+  require eligible rendered article identity, its paired EN source and unchanged
+  local `#comments` link. Roots/search/redirects must not acquire article embeds.
+  A count script on an empty eligible listing is harmless; the existing client
+  performs no request without markers. Production synthetic tracking fixtures
+  must explicitly permit the expected listing script, not bypass script checks.
+- Minimal matching prose in `README.md`, `AGENTS.md`, `docs/authoring.md` and
+  `docs/discussions.md`: describe the enabled production default and retained
+  suppression elsewhere, remove the now-obsolete disabled-output assertion
+  instruction. Keep setup/pilot instructions useful for a fresh installation
+  temporarily configured false. Distinguish Discourse enablement from the
+  separate target-publication default-off contract; do not rewrite that contract
+  or turn these project docs into a session deployment receipt.
+
+Keep templates/client, author map, content/data/import hashes, public URLs,
+feed GUIDs, package metadata contract, pins and workflow unchanged. Preserve
+production exact-origin, Hugo-server, preview/VPN, draft/unlisted, missing or
+invalid EN counterpart guards; no wider permission from the flag. Existing
+`check_discussions` already exercises both modes, shared EN/fullApp payload,
+author metadata and state/origin isolation. Reuse it and the JS DOM fixture.
+If an actual implementation defect requires another file, report the concrete
+boundary change to lead rather than expanding this package speculatively.
+
+Quick boundary: ordinary staged article hook, Python syntax, existing tiny
+real-Hugo discussion/tracking/script checks plus the Node count fixture; add only
+focused negative assertions needed to prove the changed production inventory
+rejects a wrong source/fullApp value or script on the wrong page. Reuse native
+`tools/check-discussion-paths.rb` against the unchanged guide rules when touching
+that guide. Commit intended files with hooks; independent final review follows.
+Then run the established `nix develop -c bin/check`, `nix develop -c
+bin/check-release`, `nix build .#site` and exact feature push CI, under the ordinary
+watcher/ownership rules. No forum calls in these checks. Native output must bind
+exact final source/input/NAR and all served hashes; enabled output file totals
+are observed, not forced to the old 2399. Reuse prior evidence for unchanged
+scope honestly. No extra test platform or corpus-wide language work.
+
+**Independent operations: owner3 prepares; lead releases effects.**
+Widen ONLY `allowed_paths` on existing host1 `blog.vpsfree.cz` and host2
+`blog.vpsfree.org`, before any enabled public payload can arrive. Exact desired
+rules are the two normal-operation Ruby expressions in BLOG620f
+`docs/discussions.md` (EN first in the guide); copy their actual bytes, not a
+reconstructed variant. They end in optional `/?\z` and exclude reserved roots
+at either slash or end. CS retains its root-slug/numeric/wp exclusions; EN retains
+supported underscore/nested routes and calendar-month exclusions.
+
+Prepare one ordinary installed Discourse Rails runner/app wrapper, using its
+existing service user/environment/application and `EmbeddableHost` model, or
+normal staff UI. No raw SQL writes or new installed service/tool. Before release,
+owner3 records exact invocation and guards: fresh exact host IDs/names, current
+pilot regexes, category10/blank user, unrelated host rows/tags preserved, public
+Blog10 and existing TopicEmbed1→topic374 healthy. In one model transaction lock
+both rows, verify expected current values, `update!` only `allowed_paths`, and
+read back. Allow an already-identical desired value as no-op; any other drift
+stops before mutation. Model validations remain active. Preserve all settings,
+topic/mapping/owner/posts and the actual pre-write listed/unlisted state (do not
+force false if the user's pilot reply legitimately changed it). Read back only
+those invariants after commit; timestamps may change normally. Unexpected or
+uncertain outcome is reconciled before any retry or main push. Host-rule rollback
+restores the captured pilot expressions through the same model boundary; it
+never deletes hosts/topics or resets settings. No seeding, archive opening,
+reimport, automatic reply, notification/auth change or source-host migration.
+
+**Delivery, verification and integration order.**
+Owner1 supplies final reviewed source/native/feature-CI identity; owner3 supplies
+host readback and fresh BLOG current/floor/RESUMED/policy guards. Host expansion
+and final source readiness precede the protected-main push. The unchanged
+`.github/workflows/build.yml` packages on protected main, then deploys only on a
+protected-main PUSH via blog-production and the unchanged authenticated uploader.
+Lead confirms final approval/lineage and launches integration; release the short
+repository claim after FF/push/remote proof, before observing Actions. Observe
+that exact main SHA/run/attempt and required build/package/artifact/deploy result
+with the existing observer (including its accepted same-run deploy-rerun rules).
+This is a genuine Actions artifact, unlike prior operator-local17.1. Do not
+invent a run number or claim selected content from CI alone; bind target response,
+current receipt/release/body hash and monotonic order to the actual new run.
+Healthy existing w3/4nby remains RESUMED; no artificial pause/resume/backend switch.
+
+Post-delivery owner3 verifies normal-CA public roots and paired existing pilot
+HTML, exact EN/fullApp payload, author metadata, listing markers and fingerprinted
+count asset, full served manifest hashes at the backend, fresh current/floor and
+receiver/retention health. Ordinary raw HTML/hash checks execute no embed. Use
+only the already-mapped pilot for any live iframe follow-up; no crawling to
+create topics. Existing pilot success is user browser evidence, not a universal
+cookie guarantee. Count error/unknown still leaves a plain link and never a
+fabricated zero. Record final source/run/deployed identity and any genuine gap.
+
+Prepare BLOGmain and CONFIGmaster independently from fresh defaults with hooks
+and complete final base-to-head/history review. Owner3 owns CONFIG rebase and
+lineage evidence; unrelated CONFIG drift does not block owner1 coding. Review
+any final refreshed shape, preserving required consumed refs and exact old/new
+ranges, range-diff/equivalence and migration conclusions. Do not relabel consumed
+BLOG0354/A66/a24/985d or CONFIG76d7/0488 as a new source, nor assert literal
+ancestry for an equivalent successor. CONFIG integration implies no web.int,
+backend or Discourse system activation. For reused native results, require
+actual derivation/input binding, not tree equality alone. FF-only integration
+claims cover only fresh target check/merge/hooks/SSH push/remote proof; release
+before waits or record work. No source merge before its final checks/review.
+
+Keep current17.1 and earlier selected release roots, receipts, WP8081/MySQL0700,
+keys/backups and schema2 recovery. On uncertain upload inspect current/floor;
+never substitute a new payload into an old order. Existing rollback selects a
+retained release, pauses and preserves the greatest floor; explicit normal
+resume binds the selected policy afterward. Forum topics/replies survive blog
+rollback. A later corrective upload needs a newer authorized actual order.
+Retain machine4cd until verified deployed lineage is integrated under the
+installed coordination contract. No session cleanup/lifecycle action follows.
+
+No design blocker remains for source release. Concrete app-wrapper invocation,
+fresh baselines, final hashes, rebase equivalence and actual CI identities are
+owned execution inputs, not another design phase. Lead owns state/portal updates;
+this append records the bounded technical contract only.

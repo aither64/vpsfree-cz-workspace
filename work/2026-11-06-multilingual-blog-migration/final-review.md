@@ -1,4 +1,731 @@
+## Direct step9 G1 final identity
+
+FinalBLOG985d4eaa74309b219a762dcc02316df4a350065d/tree774efe50f4f24f5cf9945fa7b0271fec443ac54b,
+same metadata3c48 parent. Lead independently verified exactonlydoc delta6+/3- from
+reviewed61e5 and allotherblobsidentical, clean/indexempty; MAINdiscussionhash
+9d248c93657cb49ec4b48febc8e896533270c4e7857655d93dd906d52993661c matched. Normal
+125bundlehook passed duringordinaryamend. This is the requestednarrowdocremedy,
+no newdesign/assertion/optin behavior; no reviewer rerun understep9. Finalnative/
+featurepublication must bind985d, not prior61e5. Exactdelta/receipt:
+[p30-g1-amended-source-result.json](p30-g1-amended-source-result.json).
+
+# P30 final cross-project source review accepted with one narrow doc remedy
+
+Reviewer0 retained Sol/xhigh/read_only, thread01a1b293-016d-7f41-95f0-b2c1da14ee3e,
+assignment6f37a49f: BLOG allfour lanes on a24..61e5fd48265e25652449c74e6ba100a0b41ade64,
+treeb086ee812120185274bff34559682826326dcc6c; CONFIG affectedGENERAL/RISK on
+41ca..0488276abb1c80bb8c13ce45e75cd9ab2bd2fe92/treeda3269a708eacbc54658dac80a1266bdea23a547.
+NoBlocking/Important findings. SoleAdvisoryG1: docs/discussions.md laterenable step
+must require affectedproduction script/root check updates and enabledproduction
+checks, rather than oneflag-onlyrelease. Lead applied exactdoccorrection; owner1
+normalhookamend pending, then directstep9delta/prosehash/finalidentitybinding.
+No codeassertionweakening/liveenable or reviewer rerun required for this remedy.
+
+Reviewer independently checked mappedauthor parser, actualpublishedENsourcehelper,
+listingonlyboundedJSONP count/text/unknown semantics, nativefullApp+bothhostpath
+policy and forum-wideSameSiteNone/Secure+CSRF/origin/CSP behavior. Browsercookies/
+login/inlinepost performance remain explicit livepilot limits, not sourceproof.
+CurrentHugooptinfalse, noforumrequest/account/mappingmigration/DBreset/provisioner.
+SevenMAINprosehashes andCONFIGd4246fee/all15links matched; scopedfailures/hookproofs
+retainedhonestly. Nativefalse41ca/mm19 is predecessoronly, not final0488 evidence.
+
+CompleteBLOG0354..61e5 33commits/1014paths27017+/230- and CONFIG5941..0488 eight/
+23paths6410+/25- independently reconciled. Noobsolete/fixup/conversionapproach,
+repeateddependency/pin/generatedstreams or migrations in either lineage. BLOG
+Pagefind/Hunspell/devNode select distinct existingpin capabilities; CONFIGoneweb7fec
+streamunchanged. Actualconsumeda66/Actions11.1+a24/operatorlocal16.1 boundaries and
+de63restoration preserved; oldCONFIG1649/76d7/95b identities retain originalroots/
+refs/receipts, no native/artifact/literalmerged relabeling. Earlier sourceconclusions
+reused only unchangedbytes. Metadata3c48 and finalsource/count coherentmilestones.
+
+Lead accepted completed review; CONFIGfinalnative c612f6ce released. BLOGnative
+waits docamend/sourcebinding and utilityyield. No live deployment/defaultmerge or
+lifecycle approval; userweb.int remains stopped. Packet:
+[p30-final-review-packet.md](p30-final-review-packet.md).
+
+# P30 CONFIG declarative defaults review accepted
+
+Reviewer0 retained Sol/xhigh/read_only, thread01a1b293-016d-7f41-95f0-b2c1da14ee3e,
+assignment69b4d1ac: GENERAL/ARCHITECTURE/SCOPE/RISK NO FINDINGS on committed
+9b0cf03eb51cac24efb1b763b4349fae7c8d704d..41ca287dc84d57e9ab3ee8ed970c84c389704aab,
+tree6f810a49997278bc28c0b9363a25d846fbb696c8. Source clean/indexempty, onefile18+/0,
+eleven ordinary settings defaults. Exact pinned provider/YAML/loader/native consumer
+semantics confirmed: DB/UI values override Nix defaults; hosts/category/permissions
+and actual account existence remain operator checks. No reset/provisioner or runtime
+action. Current admin reference, force_https, unrelated settings/secrets/pins unchanged.
+
+Whole5941..41ca eight commits/23paths6407+/25- independently reconciled, priorseven
+literal unchanged P28 ancestors. Coherent supported boundaries, no obsolete pull/API/
+queue/fixup approach or transitional migrations. One unchanged web7fec pin stream,
+no repeated streams/no migrations; existing schema2 publication and schema1 content
+recovery unchanged. Original1649/76d7/95b identities remain distinct from P28 replay,
+no new NAR/native/literal-merged claim. Source proofde10113d/all13links matched;
+scoped eval17.73s/hook7.63s inspected, initial pre-check timing-wrapper127 retained.
+
+Lead accepted review and released ONE Discourse-only native verification98f0e1b6.
+No deployment/defaultintegration/lifecycle approval. BLOG English-source/counts remain
+pending and outside this completed CONFIG certification. Full packet:
+[p30-config-review-packet.md](p30-config-review-packet.md), exactproof
+[p30-config-source-proof.json](p30-config-source-proof.json).
+
 # Final source-preparation review packet
+
+## P28 final history publication accepted
+
+Message-only old95b -> final9b0cf03eb51cac24efb1b763b4349fae7c8d704d/treeeb5a392
+source-equaltrees across all7 commits; only10e66->5e66462b message corrected.
+Reviewer0 GENERAL/history10ae2c6c NO FINDINGS andleadindependent proof accepted;
+normalhooks passed, exactsourceunchanged. One SSH feature push with explicit95b
+lease PASS4.749s; independentremoteafter feature9b0/master+default9e25 unchanged,
+localclean. Genuine5941..9b0 comparison captured; no defaultancestor/equivalence
+claim. No featurepushCI declared, no dispatch/build/runtime action. Recovery95b
+and all original deployed/native refs/roots/receipts preserve exactold identities;
+no newsourceNAR/native/equivalence certification implied. User switch+verify then
+merge sequencing recorded; no immediate default integration authorized.
+
+
+## P28 final message/history review accepted
+
+Reviewer0 retainedSol/xhigh/read_only10ae2c6c GENERAL/history NO FINDINGS, exact
+5941..old95b -> ..new9b0/treeeb5a identical. All7 correspondingtrees/rawpatches,
+authorheaders/othermessages independentlymatched; only10e66->5e664 wordingchanged.
+Parent8a4 verifiedpublisher-free, newsubject/bodyaccurate; whole7series22paths/
++6389/-25 coherent, no obsoletepullapproach/repeatedpin streams/migrations. Old
+4362refs/recovery95b/deployed1649/76d7/native95b provenance unchanged, no newNAR/
+source-equivalence/machine-release certification. ExactleaseSSHfeaturepublication
+released54882df5, master/default preserved; no code or runtimechecks required.
+
+## P28 message-only CONFIG history review in progress
+
+User requests accurate upload commit history; actualparent8a4 contains no pull
+implementation. Abandoned approach already absent, only message stale. Final
+5941..9b0cf03eb51cac24efb1b763b4349fae7c8d704d replaces old..95b with exactsame
+finaltreeeb5a392 and all7correspondingtrees/rawpatches/patchIDs. Only10e66->5e66462b
+message changed to "blog: add authenticated release uploads" and body drops
+nonexistent predecessor-removal claims. Normalhooks/rebase passed, clean/indexempty;
+lead matched p28-history-proof.json df94ad45/all10links and actual7tree/patch/message
+proof. Reviewer0 Sol/xhigh/read_only assigned10ae2c6c GENERAL/history, unchanged
+sourceHIGH reviews retained. Original1649/76d7/95b actualdeploy/native identities,
+alloldrefs/roots and new95brecoveryref preserved; no newsourceNAR/native proof or
+runtime/default approval inferred. Unpushed until review; exactold95blease required.
+
+
+## P27 final source and delivery accepted
+
+Final BLOGa24ed26f04ccdbf09684ad8e855c64b37d03aae4/tree0eaf28311e866c2591dc7d71b140edc4202c0724,
+parent8b30, clean/indexempty. Reviewer0 HIGH/all4 source/full31history accepted
+with G1/G2/G3 requested narrowbin/check corrections. Exact amendeddelta43+/11-
+onlybin/check, no otherblobs/prose change; leadstep9 actualfocusedHugo4.351s/
+1.397s/normalhook/protectedhash verification accepted without newreviewcycle.
+Original21tests215.074s/tiny1.256s retained; no migrations/repeatedstreams or
+rewritten consumedA66/restoration lineage. Fullcheck113.094s/release2.921s/native
+17.8s PASS, actualPagefind/sitemap/feed/discussion/futurepreview states covered.
+Artifactsfvxlsvh/all2399hashes/source95hihpdc exactinputs/NAR and385protectedpaths
+incl250articles/sixMAINhashes/11oldroots verified.
+
+OrdinaryfeatureFF8b30->a24/fresh independentmain0354unchanged; source/indexreturned.
+Exact Buildblog#16/run42594078633/attempt1/heada24 terminalSUCCESS, normalcheck/
+releasecheck/nativebuild passed; package/upload/deploy skipped0artifacts. All
+watcher/ownhandles joined; no newactionneeded. Existingreceipt closure preserved
+114265 priorbytes exactly (owner's earliercounttypo withdrawn), appended2414B.
+All source/review/localbuild/CI readiness complete; remains unmerged under user
+"no merge yet". No live unlisted article, defaultintegration, runtime/settings/
+CONFIG change or lifecycle/claim release inferred. PublicA66 remains distinct.
+
+
+## P27 full verification and feature publication accepted
+
+Exacta24/tree0eaf fullcheck113.094s/release2.921s/native17.8s PASS. Actualthree-state
+Pagefind/sitemap/feed/discussion/future-preview andoriginalcorpus checks passed;
+watcher72790/child28261 alljoined0. New result-p27/sfvxlsvh nativeoutput NARxrnRW4sa,
+source95hihpdc/NARyCbqJeXR pinnedHugo0.167/Pagefind1.5.2/nixpkgsf3a73, all2399served
+hashes/metadata b1766060 verified.385protectedpaths/all250articles/data/pins/
+workflow/client/sixMAINhashes unchanged;11oldroots preserved. OrdinarySSH feature
+FF8b30->a24 PASS2.148s/fresh independentmain0354unchanged. Source/index returned,
+comparison captured; exactautomaticBuildblog#16/run42594078633/attempt1/heada24
+inprogress, CIclosure only remains. No liveartifact/actualarticlepublication.
+
+## P27 source review/finding closure accepted
+
+Authoritative final a24ed26f04ccdbf09684ad8e855c64b37d03aae4 /
+tree0eaf28311e866c2591dc7d71b140edc4202c0724 parent8b30, clean/indexempty. The
+expanded successorSHA in one owner chat was mistyped and explicitly withdrawn;
+actualJSON/Git/proof agree. Finaldelta onlybin/check43+/11- requestedG1/G2/G3,
+all otherblobs/sixMAINprosehashes/protectedcorpus equalreviewede9d. Lead inspected
+directstep9: actualdiscussionguards4.351s + taxonomy/futurefixture1.397s passed,
+preview-onlybuildFuture andeligibleexpectations, normalhook125pairs/syntax/diff.
+No new design/affected contract, so no review rerun. Originalall4/full31history
+review retained, all findings resolved. Released851f2c13 existingfullcheck actual
+Pagefind/states+releasecheck+native.site newroot/result-p27, exactartifactproof
+thenordinaryfeaturepublication/CI. No actualarticlepublication/defaultmerge.
+
+## P27 immutable review complete; narrow check fixes pending final binding
+
+Reviewer0 HIGH/all4 at e9d completed with only Important G1/G2/G3, no Blocking or
+other architecture/scope/security findings. Full0354..e9d31-commit history,
+1010paths/+26580/-223 independently reconciled; no obsolete/fixup approaches,
+repeated pin/generated streams or migrations. Prior30 exact ancestry including
+consumedA66/de63 restoration retained. Optionalflag compatibledefault and old
+renderer limitation documented; no source conversion/runtime/schema change.
+
+Requested bin/check consumer fixes already passed focused published/nonpublished
+discussion checks4.351s and actual taxonomy/future-state fixture1.397s. Lead
+inspected exactdelta (preview-only flags/eligiblemembership assertions/discussion
+positive-negatives). Normalhookamend permittedd363d4a0; direct step9 after final
+head/clean/proof binding, no new review cycle unless new design. Other source,
+prose, quick21tests and reviewer conclusions retained for unchanged scope.
+
+## P27 three-state final review in progress
+
+Important G1/G2/G3 (GENERAL/RISK) accepted: stale existing bin/check consumers
+require forum links on nonpublished pages; preview taxonomy/VPN omit buildFuture;
+taxonomy expectations include ineligible terms. Owner1 narrow correction b6e4bc35
+keeps positive published embed/link and negative nonpublished assertions, future
+preview flags only, eligible term/nav assertions with unlisted negatives/empty
+structural pages allowed. No product behavior expansion. Immutable e9d review
+continues; affected quick/Hugo proofs and normalhook amendment before step9.
+
+Committed BLOG8b30..e9d241f4243a4098e669da0d9f7caf2d85976a9f/treef5d604099c704fba343e6c88529129bd2643a984,
+clean/indexempty, one28-file feature commit. Reviewer0 saved Sol/xhigh/read_only
+thread01a1b293-016d-7f41-95f0-b2c1da14ee3e verified fresh, assigned355ddc8c HIGH/all4
+lanes for public visibility/date/rollback compatibility. Scope first; no auth or
+new publication platform. Actual31-commit full0354..e9d history/finaldiff, prior30
+unchanged/consumedA66-restoration boundaries and explicit no migrations/streams
+included. Protected385paths/all250articlebytes/data/pins/protocol unchanged.
+Quick21tests PASS215.074s plus actual tinyHugo three-state production/promotion/
+future-preview PASS1.256s; normal retainedhook125pairs/syntax/diff passed. Six
+MAIN prose hash records exact; test helper/root/probe/count failures retained,
+no whole quick repeat. Packet p27-review-packet.md/source/protected/commit proofs.
+Fullcheck/Pagefind/release/native/featurepublication held pending review. No merge.
+
+
+## P26 final delivery accepted
+
+Final BLOG8b30/treecb728 source review/finding reconciliation and native proof
+accepted. Ordinary feature FF8e1->8b30/fresh independent remote main0354 unchanged.
+Exact Build blog#15/run42539900422/attempt1/head8b30 terminal SUCCESS: normalcheck,
+releasecheck and nativebuild passed; package/upload/deploy skipped0artifacts.
+All handles terminal; no source freeze. Evidence p26-authoring-ci-final-result.json
+and final-run/artifacts, native-r2-retained-result/artifact/push proofs. Current8p7
+session command verified after old9yib watcher refused superseded generation before
+any GitHub request; one exact terminal read, no duplicate run/watch/push. Full
+reviewed30logicalhistory/prior29 consumed ancestry retained; no migrations/pins.
+
+WEB7fec review/fullCI42534786341 and CONFIG95b mechanical/history/native6vfm proof
+accepted independently. Existing workspaceentryc379 satisfied. All feature heads
+remain unmerged under explicit no-merge boundary. P26 sources are ready, awaiting
+merge approval; no P26 actual live artifact, int.web activation, lifecycle cleanup
+or machine claim release is claimed. Existing P25 live A66 remains distinct.
+
+
+## P26 full verification and artifact accepted
+
+Exact8b30 fullcheck112186ms/release3097ms/native18746ms all0, freshLunaparent17589
+joined. Watcher omitted requested separate log/result; parent preserved actual
+exec/tooloutputs from wrappertranscript under *-retained-output.log and
+native-r2-retained-result.json withoutrerun, approximateprosetimings excluded.
+Artifact sz9f1/result-p26-authoring sourcexmqcdpkj/NARdIdAHpb4, outputNAROpBPSSU6/
+115137752B, all2399servedhashes andmetadata6fc23740 bound. Entire servedbytes equal
+prior8e1 output;250articles/data/985protectedpaths and10oldroots unchanged, both
+favicon/title/canonical outputs verified. OrdinaryfeatureFF/CIclosure next,
+no liveupload/defaultmerge/actualarticlepublication.
+
+## P26 authored-render fixture followup accepted
+
+First fullcheck atd748 stopped1/24.3s because newfixture used unsupported
+Hugo--dataDir; releasecheck/native notrun. Exactselectedrepair then exposed
+future syntheticpublicationdate, retained separately. Final8b30ba027d3cedcc0b9bc10746a2dbc199b18aba/
+treecb7280300126c9f5028f6df2c1fdbf7d13428336 normalhookamend: onlybin/check6+/4-
+uses existingJSONconfigoverlay and fixedpast2020 syntheticdate. Exactfailedfixture
+plus existingunpairedpreview PASS25.271s, production126perlanguage/draft125,
+sourceSHA986c40ae/syntax/diff/normalhook passed; no app/article/data/pin/prose change.
+Lead directstep9 inspected actualdelta/quickproof andaccepted; no newreviewcycle.
+Fullsource stilloneauthoringcommit13paths1303+/96-/30logicalhistory/prior29exact.
+Releasedc6c05190 one exact8b30 fullcheck/release/nativebatch then ordinaryfeature
+publication/CI. Oldfailedproof retained, not retroactivelyconverted tosuccess.
+
+## P26 final source review accepted
+
+Original reviewer0 HIGH/all4 lanes at26fc and affectedGENERAL/RISK at2ae completed;
+allG1/R2/R3/A1/A2 resolved. R2core, G1/A1/A2 accepted by reviewer. Requested R3 direct
+step9 correction finald74801a81287bc0f6c29e4d0728a6eebc5998099/tree2befc63490d2b7c86c9d2247c978f6236c924511,
+parent8e1: exact5linefresh-observation reset plus42fixturelines, two-path47+/0.
+Lead independently matched committeddelta/cleanhead/all4MAINprosehashes;8Observer
+PASS0.017s includes actualCLIexit1 for success2->inprogress3, eventual3success and
+subsequentAPIfailure unknown. Ordinaryhookamend passed125pairs; no bypass/equivalence
+claim. Reviewer explicitly permits directstep9; no unrelatedlane/fullreview rerun.
+Finalowningcommit13paths1301+/96-, full30logicalcommits/prior29exactancestors,
+no migrations/repeatedpins/rewrittenconsumedlineage. One startupfixtureCWD failure
+beforetests retained, corrected explicitBLOGCWD once; no productfailure hidden.
+Releasedbfcfae77 existingfullcheck/releasecheck/native onebatch, freshLuna, then
+exactartifact/sourceproof and ordinaryfeaturepublication/CI. No defaultmerge,
+liveupload/tempworkflow/settings/runtime/lifecycle authority.
+
+## P26 corrected observer delta review
+
+All four findings corrected in amended owning unpublishedcommit2ae365e1aeed79cd5a7e6d8a6f551b5ea18cc3a4,
+treeb095051fdf78149d38b0ddd8fb172956693c0cdf,parent8e1 unchanged, clean/indexempty.
+Final13paths1254+/96-; semantic old26fc->2ae delta only checker/observer/fixtures,
+183+/8-, no patch-equivalence claim. Affected8tests9.746s plus final7Observer0.010s
+passed, normalhook amend passed125pairs. Main4prosehashes unchanged. Lead directly
+inspected G1/A1/A2 exact requested narrow fixes; R2 changes supported retry
+interpretation so same verified reviewer0 assignede5b07a9f GENERAL/RISK delta only.
+Prior complete source architecture/scope/history conclusions remain unchanged;
+old original report/evidence retained. Affected review found ImportantR3: old green
+CI/prerequisite state survives into a newer in-progress attempt when pages match
+later. Direct requested clear/rebind current proof plus two-poll negative assigned
+858693ef; lead step9 verification of final committed fix, no new interface/review
+cycle. No full checks/native/push until correction accepted.
+
+## P26 authoring original review complete; remediation in progress
+
+Important G1 (GENERAL): `bin/observe-publication` unconditionally required
+`--article` although the documented draft feature command omits it. Lead accepts
+reviewer remediation: require only main, add actual CLI argument regression and
+main-missing-article negative; feature zero-site behavior preserved. Assigned
+owner1 2956ac21; immutable26fc review continues, narrow fix folded through ordinary
+hook into owning unpublished commit and directly inspected under step9.
+
+Important R2 (GENERAL/RISK): supported deploy-only reruns omit the successful
+build/package job from their current attempt. Latest-attempt-only observer cannot
+recognize success. Same exact run/SHA prerequisite resolution is required, with
+failed/skipped/absent or different-run builds rejected. Owner1 and architect0
+accepted design4277: first actual earlier build only, same run/SHA/attempt job
+identity and actual Package/upload completed-success, no skip bad build; current
+workflow/deploy success, missing evidence unknown. No artifactAPI/new authority.
+Advisory A1 accepted for NEW Czech URL numeric/wp- exclusions already documented;
+imported/existing paths unchanged. Owner1 folds fixes into owning commit with
+focused regressions. R2 supported retry interpretation gets only affected
+GENERAL/RISK delta review; other completed lanes/history retained.
+
+Reviewer0 completed immutable26fc all4 lanes: no Blocking, two Important G1/R2
+and two Advisory A1/A2 as recorded above. Architecture/scope/integrity otherwise
+accepted. Explicit complete0354..26fc30-commit history1007paths/+25998/-213 has no
+obsolete approach/consolidation need/repeated update stream/migrations. Genuine
+consumedA66/main-onlyrestoration lineages remain necessary and distinct. A2 fixes
+observer underscore path support already permitted by checker, no new route
+framework. Original review does not certify unfinished remedies. Final committed
+fixes/focused regressions and affected observer GENERAL/RISK review precede full
+checks/native; other completed lanes/history retained.
+
+Exact8e1..26fc4032d21713e12efab33bbb3a29fbcdad3aba/treeb270dababf824da0be4b84e119e4f15d6d8d42d9,
+clean/indexempty,13paths1079+/96-. One coherent authoring/tooling/test/docs commit;
+all250 article bytes/shared data/import manifest/lock/workflow/client unchanged.
+Main final prose hashes in p26-authoring-main-prose.json match committed files.
+Pinned Hunspell CS/EN smoke passed; initial9 fixtures58.566s, final12 fixtures
+127.218s/command130.679s passed with actual installed-hook/index and feature CI
+cases; original archive audit8tests/125hashes/107comments/569assets passed.
+Normal gitcommit-F hook passed with no bypass. Packet p26-authoring-review-packet.json
+and commit-result/focused-final-result/input hashes/logs provided.
+
+Assigned reviewer0 saved Sol/xhigh/read_only thread01a1b293-016d-7f41-95f0-b2c1da14ee3e
+8659a006 for HIGH/all4 lanes: archive metadata integrity and publication workflow
+contract, scope first. Includes actual full0354..26fc30commits/finaldiff and explicit
+obsolete/consolidation/repeated-stream/migration conclusion; genuine consumedA66
+and restoredmain lineage retained, no migration/pin refresh/new authority. Existing
+full checks/release/native and feature publication held until review. No merge.
+
+
+## P26 delivery and mechanical pin checkpoint
+
+BLOG8e1 reviewed source now passed bin/check and exact native build; both favicon
+assets/head declarations, corrected title/canonical and complete2399-file digest
+inventory bind dfsza1 output/source bh6m. Feature push passed, main0354 unchanged;
+CI42535001579/#14/attempt1/head8e1 SUCCESS: normal check/release check/native
+build passed, package/upload/deploy skipped0artifacts. WEB7fec published,
+CI42534786341/attempt1/head7fec SUCCESS: validator48s/full integration876s,
+evaluation/summary passed, artifacts0; owner0 native observer fully joined.
+CONFIG95b/treeeb5a392 is native generated web-only lock update. Lead independently
+matched packetd4a41302/all8 evidence links, actual one-file diff and63 unchanged
+nodes; mandatory-change-review mechanical-content exemption applies. Complete
+5941..95b seven-commit independent GENERAL/history assessment by reviewer0
+969b6b46, retained Sol/xhigh/read_only: NO FINDINGS, 22paths/+6389/-25, inventory
+a55a2ec2170e1116f7646fda20353743a8e76c1718f4590fec0c865b7c2137dc. Explicit first
+and only web input stream, no obsolete history/consolidation need/migrations.
+Exact95b int.web native PASS95.467s, rooted6vfm/rollbackyl9v. Lead matched
+p26-config-final-proof.json c56d374c/all12 links: source/full64/effective9/NAR,
+builtEN3href+CZequality and configured nginxENroot/SSI. No actualHTTP/live
+activation claim; source, review, feature publication and build accepted.
+Authoring source released owner1 from8e1 under design4125; main prose pass applied
+and hashed p26-authoring-main-prose.json. Draft-CI gap corrected before commit via
+architect4252 addendum and explicit --branch; main strict delivery unchanged,
+feature requires successful CI/skipped deploy with no site fallback. Initial9
+focused fixtures passed58.566s; branch/hook/deletion focused completion pending,
+then independent committed review. No merge/activation approval supplied.
+
+
+## P26 English web links source accepted
+
+Reviewer0 saved Sol/xhigh/read_only, GENERAL LOW, no findings at WEB307635a96bc3532af51ff5d08206d920704eee00..7fec3e3ccc5a1aa41bad7f06f83d01fa6cd15fe9,
+treefd5ac3449e2f4a5de4d8097fa9e1c615d365cd94. Onecommit/twofiles3+/3-, nav/RSS/footer
+Englishhrefs only, attrs/layout/Czech links and allotherbytes unchanged. Fullonecommit
+history/no obsolete/repeatedstreams/migrations. Direct sourceparser/byte/whitespace
+checks accepted; pinnedNixenvironment404 beforecommand remains limitation, not
+buildpass or pin-repair scope. Ordinaryfeaturepublication and exactCI observation
+released7a79a9c5 with utilitysequencing; CONFIGpin follows publishedSHA, no int.web
+activation/defaultintegration. Existingworkspaceblogentryc379 correctpublished,
+no duplicateedit needed. Source/context-independent writing is literaluserURLs.
+
+
+## P26 favicon/title source accepted
+
+Reviewer0 saved Sol/xhigh/read_only, MEDIUM GENERAL/ARCHITECTURE/SCOPE, no findings
+at BLOG472..8e1a64de81e055f24f01147a60d3f204d95df039/tree1813fd7fc3418256f83c33efa0adfabc6eba84c4.
+Two independent commits/sixfiles10+/4-+607BPNG, exactoldFlatfavicon dfe1b759 and
+one sharedlocaldeclaration; titlewordonly/NBSP/body/URL/provenancepreserved, current
+CSfullhash2c4db81d allthreebindingsverified. Full0354..8e1 history29commits/1001paths/
++24968/-166/inventory56b1925f, no obsoletehistory/repeatedstreams/migrations.
+Nativeexistingcheck/build releasede2f980a1 beforefeaturepublication/CI; liveA66
+notrelabelled and no defaultintegration/liveupload inferred.
+
+
+## P25 retention source review accepted
+
+Reviewer0 saved Sol/xhigh/read_only/thread01a1b293-016d-7f41-95f0-b2c1da14ee3e,
+HIGH/all4 lanes, NO FINDINGS at CONFIG99c7..76d7fcf191045ea5ddce332dce341a67610e0315,
+tree25a86a6c1333c587500837cc0d318600771a734d. Seven paths720+/71-,491others identical,
+all27 evidence/changed hashes independently matched reviewer and lead. Existing
+provider/two locks/daily fixedUID job, keep5+current/previous/floor, metadata-only
+retirement and fd-safe out-of-lock deletion, no post-upload failure coupling.
+Stage lock spans stage→commit, prune try-lock skip breaks reverse edge, maintenance
+pause interleaving preserved. Missing pruned target rejects before pointer work.
+Full5941..76d7 history6commits/21paths/+6386/-22/inventoryc10a0795, no obsolete
+approaches/repeated update streams/migrations. Immutable policy/helper/trash layout
+changes require fresh exact proof; schema2 control/order/receipts and retained
+schema1 content remain supported, pruned payloads cease rollback eligibility.
+Quick96.830s all0,6 actualUID tests skipped honestly; native+fixedUID integration
+releasedbcbb2a2b, then copy-only/ordinary feature publication with fresh drift
+assessment. No activation/live pruning/resume yet, old cqjh/4m7/A66/backups retained.
+
+
+## P25 companion retention documentation accepted
+
+Reviewer0 saved Sol/xhigh/read_only, GENERAL LOW, no findings at BLOGde63..472c540b15b2f64c03bb31c873fc3102ec0615cd,
+tree0ffcafaa87ae8b30851d80ea515013dc55a050f0. One file docs/deployment.md9+/6-,
+exact lead prose and quick checks, other1009 blobs/modes identical. Full0354..472
+history27commits/1000paths/+24962/-166/inventory2c51178b: no obsolete approaches,
+repeated update streams or migrations; consumed a66 and restored de63 remain
+ancestors. Only explanatory retention/retained-payload rollback wording changed;
+unfinished CONFIG pruning receives its separate committed HIGH review.
+Ordinary feature publication completed, default0354 unchanged; exact CI13/
+42529498664 observation parked behind owner3's priority affected test utility.
+No new selected artifact or runtime identity follows from this docs successor.
+
+
+## P24 restored main-only source accepted
+
+Reviewer0 saved Sol/xhigh/read_only, affected GENERAL+RISK HIGH, no findings at
+BLOGa66..de63bad8deab97c0a081b9f1f1b19065f934806a/tree97c5cfaf651564f10e71edc989102cb444717cf7.
+Tests/docs exact5d9 originals; workflow exact5d9 except Package release label,
+1007 other blobs/modes unchanged. Scoped YAML/parity/14-case matrix/4tests0.229s
+passed, normal commit. Full0354..de63 series26commits/1000paths/+24959/-166,
+no obsolete history/repeated streams/migrations. Consumed a66 direct parent is
+justified by actual successful Actions11/42526944434/artifact13635427642 and
+selected a66-393eb311/floor11.1; do not squash/relabel consumed source.
+Restoration ordinary feature push completed, default0354 unchanged; exact final
+feature CI pending, package/deploy must skip. Owner0 precise temporary policy
+removal65980157 released after confirmed push; no other settings authorized.
+
+
+## P24 temporary Actions source review accepted
+
+Reviewer0 saved Sol/xhigh/read_only/thread01a1b293-016d-7f41-95f0-b2c1da14ee3e,
+HIGH/all four lanes, no findings at BLOG5d9..a66b7a0102a369a7d9f8fba2ef548319b5508d0f,
+tree636ccf1a7addda8084cb51fdc1d1c2dc964024d6. Exact three-file47+/14- change,
+1007 other blobs/modes unchanged. Original protected-main gates preserved OR
+exact repository/push/session-feature alternative in three places; Package release
+label, focused14-case matrix and minimal deployment prose accepted. Parsed YAML
+parity and four release tests passed. Lead writing pass applied before commit.
+Full0354..a66 history25commits/1000paths/+24992/-166, inventory2c51178b;
+no obsolete history/repeated updates/migrations. Temporary source not consumed
+at review: real upload run must precede consumed-history retention rationale;
+ordinary successor must restore main-only gates/tests/docs after success.
+
+User authorizes exact feature environment allowance and answers "Handle it for
+me". Owner0 released only precise policy creation/preservation/readback; later
+remove only own created ID. Owner3 guarded resume/pause scripts inspected, no
+key read/output; owner1 push held until confirmed setting and successful resume.
+No default integration, broader branches, protocol or main-protection changes.
+
+
+## P22 cutover routing source review accepted
+
+Reviewer0 saved Sol/xhigh/read_only/thread01a1b293-016d-7f41-95f0-b2c1da14ee3e,
+HIGH/all4 lanes, no findings at CONFIG1649..99c7d5ec122aa8b32aeb45fcc12bf19719c86287,
+tree1330ed41bbda8bfe77a1add5c91c88e1ae3bc35f. Actual one-setting serveStatic
+false->true only,497 other blobs/modes identical; checked81394484; composition
+PASS16.687s and normal hooks. Lead independently matched packetb562e3e3 and all16
+linked hashes/sizes plus actual cleanhead/tree/delta. Full5941..99c7 series
+5commits/21paths/+5737/-22, inventoryc10a0795; no obsolete history, repeated
+updates or migrations. Retained deployed1649/cqjh is coherent recovery boundary.
+Existing operations guide covers mode/recovery. User requires REAL ACTIONS upload
+before publiccutover: operator61038 is not that proof. Lead released only backend
+native/copy-only/ordinary feature publication to owner3, no resume/switch/proxy.
+Workflow exception source/review and actualActionsdelivery are separate later gates.
+
+
+## P23 documentation review accepted
+
+Reviewer0 (thread01a1b293-016d-7f41-95f0-b2c1da14ee3e), saved
+Sol/xhigh/read_only, GENERAL only/LOW, independently reviewed committed
+BLOG e1bb2d2b43aeb7361ac72c4c565919f38daabb65..5d9cd0be0184c67e8d7c1cfbdbbe41da6acd5e48,
+tree52fdec72f80c9583c69df11cacb3268690fdac77: no findings. Exact3docs,
+14+/33-, remaining1007 blobs/modes identical; ordinary standalone authoring and
+private restore safety preserved. Complete0354..5d9 series24commits/1000paths
+inspected, inventorySHA2c51178bf9ee09927eb248e4b11fabfe1d952347bd45a32bacc5937c2ca05329;
+no obsolete approaches, repeated update streams or migrations. Prior P21 review
+reused only unchanged scope. Lead accepts; owner3 yielded canonical BLOG window,
+owner1 released FF adoption/feature push/exactCI. No render/site identity change
+or default integration. User-facing writing pass was applied before commit.
+
+
+## P22 enabled coexistence review and narrow fix accepted
+
+Final corrected CONFIG `16496060da4faf81acc7173c5a070dc0f1d39c36` / tree
+`26e353072799b954fc37d1ccba5801bc0c84212f`, parent10e66, accepted after lead
+step9 direct inspection of [R1 packet](p22-r1-review-evidence.json), SHA256
+`9fd360b89cce9f7e08b5f9eaf510444dd888cd965e2627d049eb898965c63af9`.
+Actual fix removes only the machine static-blog opt-in subtree from two reusable
+fixture adapters; every assertion/result suffix remains byte-identical7880/2247
+bytes. Actual enabled composition checked separately13.070s with unchanged config
+blob. Focused static/upload batch PASS71.224s binds exact final hashes; normal
+hooks passed. Lead verified all498 hashes, clean exact head/tree, product identity
+and original559 recovery ref. No new behavior/design; original four-lane review
+plus direct narrow fix closes R1 without another reviewer turn. Four coherent
+owning commits remain, no pin/migration/update stream/obsolete stack added.
+
+Native build/graph-NAR-output proof, copy-only/preflight and normal feature FF
+released. Claim/backup writes/activation remain held pending prepared evidence.
+Actual old-system comparison/protected recovery and live health gates remain;
+user permits normal nginx reload/restart and owns one proxy activation. No
+default integration/proxy execution/reboot/lifecycle authority inferred.
+
+Current CONFIG `5598334eec676209a68daddfae3a721a81c4d9e8` / tree
+`b69a4f1509eb65063c8ead45132ac7fa12b610da`, parent10e66, adds nine lines only
+to int.blog/config.nix: enable static storage/publication with literal runtime
+secret path and keep serveStatic=false. BLOGe1bb unchanged. Complete CONFIG
+master5941..5598 series has exact prior DNS/hosting/publication plus explicit
+operational opt-in. No pin, DB migration or protocol changes; first schema2
+control remains paused because live publication state/writers are absent.
+
+Lead verified [packet](p22-source-review-evidence.json), SHA256
+`d0f949e5273964cc865359f179846f0246200183b411b99ebfe688d8bcda529b`, all498
+tracked hashes, actual single-file delta, clean exact head/index, ordinary hooks
+and safe baseline08cf. One actual-composition check PASS13.070s validates enabled
+unit/key path/fixed UID/private ports/WP retention; P21 reuse is exact unchanged
+source/input scope. Setup failures remain retained, no remote mutation.
+
+Retained reviewer0/thread01a1b293-016d-7f41-95f0-b2c1da14ee3e,
+gpt-6.1-sol/xhigh/read_only/review/ready verified and assigned all four HIGH lanes
+before long verification, messageb8090df0,17:52–17:53 UTC. Whole final history/
+migration/stream conclusion required, with prior P21 conclusions reused only
+where identical. Latest user explicitly permits ordinary nginx reload/restart;
+one proxy activation user-owned. No old no-restart gate or inferred merge approval.
+
+Actual baseline root access/key metadata healthy, existing WP/PHP/database,
+ports22/80 only/no publication state. Current configc040/systemy50 generation16/
+nixpkgs718f/osb45 identities recorded. Full old graph/NAR/recovery backup integrity
+and restore method, exact enabled build, runtime credentials/live health and
+separate main delivery/integration remain operational gates, not claimed proof.
+Important P22-R1 (GENERAL/ARCHITECTURE) accepted for correction: existing committed
+static/upload mode fixtures import the concrete machine config and conflict with
+the new enabled values, invalidating disabled/selected/negative cases. Preserve
+their assertions with explicit four-setting modes/separate default fixture scope;
+the independent actual enabled-composition check alone is insufficient. Owner3
+fixes only two test files, then scoped batch/normal amendment with recovery ref.
+Reviewer final report complete on originals: no other findings across all four
+lanes. Exact CONFIG full range5941..5598334 has four coherent commits/21 paths/
++5733/-22 and path inventory SHA256c10a0795f59f7f217805316fc8f708e99708d3ceecc681b2c20f647e055b9060.
+Separate operational opt-in is a real runtime-key/machine boundary, no obsolete
+stack; no repeated pin/input/generated streams or DB/conversion migrations.
+Initial schema2 state remains paused because live publication state is absent;
+retained schema1 content recovery and unsupported P20 software writers remain
+explicit. Report/settings/clean heads independently bound, no source/test/network
+actions by reviewer. Live sourcec040 int.blog source matches base5941 per reviewer;
+complete old graph/NAR/runtime equivalence remains an activation obligation.
+Owner fixes only two fixture adapters, retaining every assertion and negative
+case verbatim; removes only the machine opt-in subtree before explicit per-case
+settings. Actual enabled-composition check stays separate with identical config
+blob. Affected static/upload batch running under owner exec69561 with fresh
+current-policy watcher; no passing result or unseen fix acceptance claimed.
+Native build/copy/backup/claim/activation
+not released. Product runtime settings themselves remain minimal/coherent.
+
+## P21 final review and narrow corrections accepted
+
+Independent P21 review is complete on the originals below. Lead directly
+verified H1/R1/D1/D2 under mandatory-change-review step9 and accepted final
+corrected CONFIG `10e66efdffc586bdec8af82b3d0e17df59bee2d7` / tree
+`02c209571aaa791c29e08fc54d265b1139d2c628`, BLOG
+`e1bb2d2b43aeb7361ac72c4c565919f38daabb65` / tree
+`1f5798439460b8d2a879976dbbbcf1de1a3e43fd`. Native/artifact/full-size testing
+is complete and accepted in [combined proof](p21-final-verification-proof.json),
+SHA256 `1a936a71c61041e301ca837ea92259a37580c87ad615ec1c3b1aa48db30f160b`.
+Nativeb59a/full inputs/valid rooted systems, BLOGb071/new identity/2397 byte
+parity, enabled-source fxg8d2 and actual fixed-UID/private-HTTPS upload/client/
+root-rollback proof bind these exact heads. Runtime partial10/resumed25/distinct10
+observations preserve fixture failure separately; all five skipped UID cases
+were exercised. Final paused, both archives retained, no utility left running.
+Both exact feature heads are now published with unchanged defaults/HEAD;
+BLOG [CI42502157095](https://github.com/vpsfreecz/blog/actions/runs/42502157095)
+attempt1/exact e1bb passed checks, release/client checks and Nix build. Packaging,
+artifact upload and deploy job skipped;0 artifacts. Final publication
+[proof](p21-final-publication-proof.json), SHA256
+`761d57824f005ddd72c386bf7da8e848933f9c55642f78b8c2f31467bac793e3`,
+and compact receipt accepted after lead verified exact remote before/after/
+default/symref data, current heads/trees/clean indexes, six recovery refs and
+authoritative CI hashes. All utilities ended; owner3 delivered/free. No production or integration
+authority follows; live systemd/keys/TLS/network and P19 continuity remain gates.
+
+Correction evidence: [packet](p21-remediation-evidence.json), SHA256
+`2ef55a848b466b13dedbae1847a49969d879161b13bf9cda04f3a49c52d8d192`;
+exact narrow diffs and old/new range histories alongside it. Lead checked all
+498/1010 tracked hashes, clean exact heads/trees, complete inventories/series,
+H1 drop92ed/exact prefix14da/replayed four patches and history-only tree parity,
+R1 actual client/workflow/test source and checked ff3214e equality. Four focused
+offline checks PASS0.225s include original attempt1 under execution2 with exact
+request equality and rejection of future/invalid/conflicting identities.
+CONFIG correction is documentation only; executable/module/test/pins remain
+reviewed bytes. BLOG changes only requested workflow/client/test and three docs.
+D1 terminology/link and D2 supported content/WP recovery wording are correct.
+All findings closed; no contract expansion or reviewer rerun required.
+CONFIG `5941cdb3dda259e91c6a988a7dbf08c84700b326` to
+`5f3055432cf4aeec249b9af5c1ba253c7df2fc8a` / tree
+`5f45e4af642b9354cf79a68feb35acfa1bdca3ea` has three commits: exact DNS b4a7,
+publisher-free hosting 8a4eee00, signed upload/publication 5f305543. BLOG
+`0354dac281978867ea8c1553b092ce19bccb5ccd` to
+`c76e35bcfb9dab8281b180a0ceada78351798d6f` / tree
+`f8dc9eb0985053c131694773306151e5d64b4284` has 24 commits: exact through
+5032d82, then final workflow/client/docs delivery. P20 remains historical below.
+
+The user authorized authenticated synchronous upload, a 512 MiB exact-endpoint
+allowance at both hops and the workflow-secret authority boundary. No independent
+target GitHub current-main/run proof is claimed. Root maintenance, fixed UID,
+package validation/fsync/atomic rollback and explicit ordering/retry rules remain
+required. No PAT/App/webhook/queue or local Hugo build; no live deployment or
+default integration approval. Preserve the shared proxy reload-only preflight.
+
+Lead accepted [the packet](p21-source-review-evidence.json), SHA256
+`f567c22510a5bf7f38fa55fb72a1515b14c346dd29d470aec0748fd1d5383037`, after
+checking clean trees/indexes, complete Git inventories/series and all 498/1010
+tracked file hashes. Quick evidence: three generated modules PASS96.414s;
+13 validation/stage/durability PASS with five actual-UID skips; nine upload
+PASS3.174s; three BLOG release/client checks PASS0.216s. Normal hooks and
+candidate/final tree equality recorded. Changed publication is not certified by
+old tests; only named identical primitive bytes are reusable.
+
+Retained reviewer0, gpt-6.1-sol/xhigh/read_only, thread
+`01a1b293-016d-7f41-95f0-b2c1da14ee3e`, assigned all four HIGH lanes at
+16:11–16:12 UTC on 2026-11-08, message ID
+`bf3f7f06-cffb-45ad-9b3f-f6cd1c8e66bd`. Whole history, superseded API/webhook
+lineage (including retained earlier BLOG docs92ed3dca), migration/state writer
+compatibility and repeated streams require independent conclusions. Packet has
+full histories/diffs/range-diffs and recovery refs. No DB migrations/pin streams;
+schema-2 policy/control/order state deliberately rejects old writers while old
+release packages remain readable. All rewritten lineage is unmerged/undeployed.
+
+Interim findings: Important P21-H1 (GENERAL/history), unconsumed docs-only
+BLOG 92ed3dca preserves the abandoned webhook/API preparation approach, accepted
+for consolidation with exact refs/ranges retained. Important P21-R1
+(GENERAL/RISK), client/workflow on c76e35bc rejects deploy-only reruns because
+the new execution attempt differs from the retained artifact's build attempt.
+Accepted for narrow exact-package retry correction and focused offline coverage;
+full-workflow rerun artifact naming/replacement must also be coherent. Both
+assigned owner3 while reviewer continues on immutable 5f305543/c76e35bc;
+canonical source stays frozen, isolated preparation allowed. No fix is certified.
+Advisory D1 (GENERAL/docs) accepted for correction: BLOG authoring guide and
+authoring skill retain stale webhook wording; deployment operations-guide link
+contains a newline within its URL. Narrow phrase/link repairs and main writing
+pass assigned to owner3 in the same owning delivery commit.
+Advisory D2 (RISK/docs) accepted for correction: P20's old native maintenance
+check requires schema-1 control state, so pausing P21 with schema 2 is insufficient
+to establish an ordinary P21-to-P20 system switch. Document supported content
+rollback under P21 and WordPress routing recovery; retain old systems but require
+separate target activation/control compatibility proof. No converter/old-writer
+support requested or added. Owner3 fixes prose; architect aligns the design.
+H1 isolated history replay reported as 50610b646690c80b5b34aa0dc06c85c2969c19d3,
+with exact c76 final-tree equality before the separate R1/D1/D2 corrections.
+
+Final reviewer conclusion: no other Blocking/Important findings across GENERAL,
+ARCHITECTURE, SCOPE and RISK. The CONFIG three-commit final design is coherent;
+BLOG retains only H1 as a whole-history consolidation finding. No repeated
+dependency/channel/pin/generated update streams or DB/transitional conversion
+migrations. Policy/control schema 2 and upload-order state are intentional
+persisted-state boundaries, not a claim of no state change. Schema-1 content
+remains readable; unsupported old writers and separate old-system activation
+gate are explicit. No merged/released/deployed/externally consumed P21 lineage.
+
+Independently recorded newline inventories: CONFIG 3 commits/21 paths/+5721/-22,
+SHA256 `c10a0795f59f7f217805316fc8f708e99708d3ceecc681b2c20f647e055b9060`;
+BLOG 24 commits/1000 paths/+24916/-150, SHA256
+`2c51178bf9ee09927eb248e4b11fabfe1d952347bd45a32bacc5937c2ca05329`.
+Reviewer retained exact settings, performed the review directly, read all four
+lane references and applicable guidance, and ran only source/history/metadata
+reads. No writes, tests/evaluation/build/network/services. No unseen fixes
+certified. Lead will inspect the requested narrow corrections and focused
+evidence under mandatory-change-review step 9; affected rerun only if design
+or accepted contract expands.
+
+Native systems, full-size signed HTTPS upload through both
+nginx hops, real-UID checks, memory/latency and failure/retry evidence remain
+post-review. Live TLS/credentials/environment restrictions and continuity remain
+operator gates. Source owner3 retains findings and dependent verification.
+
+## P20 accepted final review and verification
+
+Final reviewed/published CONFIG is
+`011151f978eae435e1357ca00611726dbf501943` / tree `bb194867edee21017186a0af0471905da03869ca`,
+range `5941cdb3..011151f9` (eight commits, 21 paths). BLOG is
+`7b0f3286ee11737e894f022bde0fce742a8a572d` / tree `e9bce05317dd1f55234779bb1608d4c171a300f7`,
+range `0354dac2..7b0f3286` (25 commits, 999 paths).
+
+Retained independent reviewer0, `gpt-6.1-sol`/xhigh/read_only, thread
+`01a1b293-016d-7f41-95f0-b2c1da14ee3e`, performed the original all-four-lane HIGH
+review of CONFIGcba46055/BLOG7b0. Important P20-R1 identified absolute internal
+nginx directory redirects exposing HTTP/8080/8081. Owner3 set generated directory
+redirects relative on WordPress and both static language vhosts; fixed legacy
+HTTPS301s remain unchanged. The user also required unconditional English proxy
+configuration, removing all temporary proxy options and compatibility declarations.
+The committed corrected source and focused three-fixture PASS132.465s received
+an affected general/architecture/risk rerun. R1 is resolved; no remaining
+Blocking, Important or Advisory findings. Prior scope conclusion was reused for
+the unchanged topology and smaller proxy interface. No nested reviewers.
+
+Reviewer independently reconciled complete histories/parents/final diffs,
+checked-source/protected publisher/security/input bytes and documentation.
+First six CONFIG commits remain exact; final H18/A18 owners contain the final
+routing directly. Old reviewed versions/recovery refs remain retained and are
+not falsely claimed as ancestors. No obsolete stack, repeated update streams,
+database/schema/transitional migration or deployed/externally-consumed rewritten
+lineage remains. Publication/control/receipt/queue formats are unchanged.
+Source packets: [original](p20-source-review-evidence.json),
+[corrected](p20-r1-source-review-evidence.json).
+
+Postreview verification is accepted in its actual scope:
+
+- [Native proof](p20-config-build-proof.json), SHA256 `7028b0b5...`: exact source,
+  full64/per-node8/16 inputs and valid rooted system outputs9037/5w86. Original
+  confctl103.836s exit0 had missing outputs and remains incomplete original-run
+  proof, cause unknown. Separate exact-derivation recovery PASS21.209s supplied
+  completed JSON/explicit roots/validity/NARs without source or generation changes.
+- [BLOG artifact](p20-blog-artifact-proof.json), SHA256 `99ce918b...`: final source,
+  full inputs/NAR and all2397 served paths/digests identical to accepted82a.
+- [Routing](p20-routing-runtime/result.json), SHA256 `2b6184c4...`:73 requests,
+  real nginx WP/feed/article relative redirects, both route modes, fixed headers,
+  RSS/aliases/HMAC/body limits/unknown/PHP and configured return-to-WP path.
+  Synthetic loopback fixture; no live generation activation/PHP/TLS/host proof.
+- [Publication/CI](p20-final-publication-proof.json), SHA256 `e78e35ae...`: both
+  exact feature heads published, remote default/HEADs5941/0354 unchanged,
+  BLOG run42470233945 attempt1 SUCCESS. Check/check-release/Nix build passed;
+  trusted-main package/upload skipped,0 artifacts. CONFIG has no applicable push
+  CI and none was dispatched. No source changes after accepted review.
+
+Actual access/live baseline/certificates/systemd credentials/protected-main
+eligible delivery/forum pilot/cutover remain future operational gates. P19's
+shared-proxy no-stop/no-restart forward and recovery preflight is mandatory.
+No default integration, deployment or lifecycle authority follows from this gate.
+
+Earlier packets and receipts below are historical at their recorded revisions.
 
 R0 owner: `implementer2`. **FINAL packet, ready for lead completeness check.**
 All intended source is committed, owner quick checks passed and final histories
@@ -1473,3 +2200,70 @@ Finalnativeidentityrefreshandrealfeed14remainingcaseprobe released aftercommit. 
 Final CONFIG1e840b8056bbc700ca3e9cd832f0d9301da52652/tree6f6d2020345f731370698be3ed2ff7fe25ac637e and BLOG82a1ee3c90990e56cfde0da28ababed8f0444441/treed23e142cee504f6284ed0bbc4b028be6b8935e8c accepted after corrected source review/narrow feed fix. Native2node refreshed98.235s/full64inputgraph/sourceNAR/pernode/system+rollback compiledproof9fb8163e; BLOGrooted2397hash17.789s/full2node/sourceNAR/125each/feed10/protectedbytes+privacyproof; realnginx540alias+18unchangedcases/14newRSS+modes; actualfixedCLI28obs6.522s with realprivateNSS/fixedexpectedHTTPS syntheticAPI and finalpause accepted. Previoussetup/mode/labelerrors were fixture-only with original evidence retained; actualfeed500 led to committednativefix. Realhostsystemd/LoadCredential/NixOSswitch/liveGitHub/forum/deployment remain user-run, not certifiedbylocalrehearsal.
 
 Bothfeaturebranches normalcanonicalSSHpublished exactheads/defaultsunchanged; BLOGCI42411255497attempt1SUCCESS/check/check-release/Nixbuild, trustedmainpack/uploadskipped0artifacts. CONFIGnopushworkflow/no dispatch. Independentreview/history/migration conclusions preserved; no remaining sourcefinding. User-runproductionplan reconciles finalsource/evidence and the testedroutecoverage limits, credentials/verifiedIDs/mainartifact/TLS/webhook/Discoursepilot/privatechecks/cutover/recovery. No defaultintegration/deploy/lifecycleauthority inferred; allrefs/roots/services/session retainedopen.
+
+
+## P32 committed all-article enablement and approved three-repository integration
+
+Final independent reviewer0/thread01a1b293-016d-7f41-95f0-b2c1da14ee3e,
+retained gpt-6.1-sol/xhigh/read_only; no model/effort override or fallback.
+Overall High due production embed/count activation, source-host permissions,
+persisted topic identity/category and protected-main automatic delivery. BLOG
+and prepared host operation GENERAL/ARCHITECTURE/SCOPE/RISK, CONFIG affected
+GENERAL/RISK/history and exact unchanged WEB GENERAL/history: COMPLETE, no findings.
+All intended source committed/quickgreen before review; long/native checks
+followed acceptance. Reviewer performed direct immutable inspection, no commands
+that built/tested/evaluated or touched network/runtime/source/index/records.
+
+BLOG620f..c90026d54839cc367b375fa741396b738947c92e tree0551f2eb1a37836de22f9a83ec52f658d0cbd013:
+seven files151+/52-, enabled boolean + finite script/root checks + five MAIN
+prose files, every other source blob unchanged. Full0354..c900=35 commits,
+prior34 literal prefix. No obsolete unconsumed history, repeated updates or
+migrations; exact consumed a66/11.1, a24/16.1 and985d/17.1 preserved. Final scripts
+validate exact shared EN source/fullApptrue and local listing associations,
+retain finite script inventory, all preview/state/origin guards and checked
+explicitfalse recovery. Required contextual writing pass/hashes matched.
+
+CONFIG8d040ea..4771ff84e56de349bdde71bc221c62ccd4190f1b treeb6f1a48773a20927bec8dab78306bde5788a07af:
+eight ordered patches/messages exactly match prior5941..0488; no conflict/skip.
+Full23 paths+6410/-25, single web7fec stream/no migrations or obsolete approach.
+Upstream three lock-node updates are inherited, actual machine effective8-node
+graphs unchanged. Actual deployed BLOG76d7 six patches map through916a2c15 prefix;
+actual Discourse0488 eight patches map to4771. Reviewer explicitly accepted
+supported equivalent FEATURE-lineage for manual-claim integration, preserving
+original w3/7w1 source/system/NAR identity, not literal ancestry or newoutput claims.
+
+WEB307635..7fec3e3ccc5a1aa41bad7f06f83d01fa6cd15fe9 treefd5ac3449e2f4a5de4d8097fa9e1c615d365cd94:
+one coherent commit, two files3+/3-, three English blog links. Exact prior review,
+CI and native scope reused; no obsolete history/repeated updates/migrations.
+User explicitly approved WEBmaster as an addition; web.int deployment excluded.
+
+Prepared native-model host update independently reviewed: only host1/2
+allowed_paths, exact corrected guide rules, guarded identities/category10/blank
+user and mapping1/topic374; one model transaction, active validations, same-row
+no-op, drift rollback, preserved tags/other attributes/current topic state. No
+SQL writer, settings/security/auth/notifications/topic/import mutation. Actual
+lead execution and readback are rollout evidence in release-preparation.md.
+Reusable guide/authoring/deployment explanations stay in project docs; individual
+approvals/source lineage/claims/results stay in session records. Placement and
+preservation explicitly accepted; existing G1 enablement assertion correction
+now implemented, not weakened.
+
+Postreview checks: BLOG check119.185s/release1.185s/native18.791s all0; exact
+featureCI42643617990/#19/1 passed. CONFIG exact int.blog+discourse native140.844s
+all0, actual compiled4771/output/NAR/input proof bound. WEB postmergeCI42642858318/
+#54/1 succeeded. BLOG protected-main actual42644841964/#20/1 succeeded build,
+package, artifact and upload/deploy. This genuine Actions package uses its own
+metadata6bdcd620 and2401-file manifest: source inputs match local native9m28,
+non-Pagefind bytes match, but cross-build Pagefind generated bytes/path names
+vary. The too-strict proof-adapter assertion failed after successful delivery;
+no build/upload rerun occurred. Scoped existing search check on actual Actions
+package passed125 articles each and entry references. Local/native and actual
+Actions artifact identities stay distinct. No new source change or review gate
+arises from correcting that evidence assumption.
+
+All three exact final heads were fast-forwarded/pushed to approved remote defaults
+by lead under separate short repository claims, remote-ref proof obtained and
+claims released before CI/records. WEB precedes its CONFIG pin integration.
+Actual live package selection/postverification and remaining machine release
+are recorded in state.md/release-preparation.md. No system or web.int activation,
+cleanup or archival was part of these integrations.
