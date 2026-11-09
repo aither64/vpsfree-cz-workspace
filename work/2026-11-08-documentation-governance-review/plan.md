@@ -25,7 +25,8 @@ So I'd like to improve rules for writing docs, improve the review process to cat
 Read-only investigation: this workspace's documentation/team procedures;
 `dev-workspace` documentation skill; `vpsfree-dev-workspace` review/writing
 skills; `vpsadminos` and `vpsfree-cz-configuration` default-branch docs.
-No feature repositories or branches registered for this proposal.
+The original proposal was read-only; implementation now registers feature
+branches in all five repositories listed above (including workspace).
 
 ## Approach
 
@@ -36,8 +37,11 @@ role support. The lead accepts findings and presents the recommendation.
 
 ## Decisions
 
-- Scope is investigation and suggestion, without applying governance edits,
-  moving project documentation, or adding/reconfiguring team members.
+- Initial scope was investigation and suggestion. The user subsequently
+  authorized governance/review edits and targeted documentation moves; adding or
+  reconfiguring members remains excluded.
+- User additionally requested an explicit directory/file convention separating
+  end-result documentation, operations, upgrade guidance and rollout records.
 - Distinguish durable system explanations, reusable operational procedures,
   supported upgrade paths and individual rollout evidence.
 - Evaluate a specialized role by its unique contribution and coordination cost;
@@ -55,12 +59,38 @@ No merge, deployment or lifecycle action is authorized or planned.
 
 Readers: the workspace owner deciding documentation policy and team structure.
 Findings and proposed packages belong in this session's `design.md`; current
-status belongs in `state.md`. Applied policy and repository documentation are
-possible follow-up work, not deliverables of this investigation.
+status belongs in `state.md`. The subsequent implementation delivers policy at canonical generic/site sources,
+local workspace mappings/editor conventions and the two targeted documentation
+cleanups; no installed package selection is changed.
 
 ## Testing plan
 
 Read source guidance and named examples at recorded revisions; verify claims
 and recommended destinations against the actual layout. No builds or runtime
-tests are useful for a proposal. Routine investigation/findings/session records
-do not trigger automatic substantive-change review.
+tests were useful for the original proposal. Implementation quick checks,
+independent final review and pinned documentation builds apply under the
+authorized implementation scope. Routine investigation/findings/session records
+alone do not trigger automatic substantive-change review.
+
+## Investigation outcome
+
+D1 accepted: see [design.md](design.md) for exact evidence, directory convention,
+README contract, example mapping, seven review questions and proposed P1–P4
+follow-ups. Recommend routing/review improvements first and an optional existing-
+implementer editor pilot; no default new member or extra mandatory review stage.
+
+## Implementation authorization, 2026-11-09
+
+User: "ok, implement it", referring to the proposed documentation structure,
+review contract and targeted example cleanup. Implement P1–P3 on feature branches
+and record optional existing-implementer editorial packages as a pilot convention.
+No new role/catalog/runtime mechanism, package activation, deployment, integration
+or lifecycle operation is included. Generic and site skills change at canonical
+sources; installed package adoption remains a separate delivery decision.
+
+Work packages are split by disjoint repository ownership in state.md. Architect
+updates the settled implementation brief, implementers own diagnosis through
+checks/commits/evidence, and reviewer0 independently reviews the complete final
+series. The lead applies the user-facing writing skill directly before commits
+where appropriate. Preserve existing useful layout equivalents, recovery and
+upgrade semantics and old anchors. No production operation is executed.
