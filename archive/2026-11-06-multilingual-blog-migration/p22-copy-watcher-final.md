@@ -1,0 +1,5 @@
+- **Result:** Passed; exact process exit status `0`.
+- **Identity:** Revision `16496060da4faf81acc7173c5a070dc0f1d39c36`; generation `2026-11-08--19-02-09`; command run: `python3 /home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p22-copy-operation.py`.
+- **Elapsed:** 15.1715 seconds, as reported by the operation.
+- **Logs:** No separate log file was created. The command’s JSON output is retained in session `10365`.
+- **Reported effects:** Target NAR matched the local NAR (`sha256:1dr653j3cnr3mhmj6s0v78ybnp3snwmgbl8zhkjgy18bc47ldlbm`); profile and running system unchanged; source clean; activation not performed. No operation remains running.

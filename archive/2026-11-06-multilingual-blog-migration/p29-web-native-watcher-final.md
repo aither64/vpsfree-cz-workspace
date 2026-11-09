@@ -1,0 +1,4 @@
+- **Result:** Passed; raw exit status `0`.
+- **Revision:** `9b0cf03eb51cac24efb1b763b4349fae7c8d704d`. Command: `python3 /home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p29-web-native-operation.py`, run once from the specified canonical working directory. Elapsed time: `79.881` seconds.
+- **Evidence:** The command reported `preserved_prior_roots: true` and `kernel_cancellation: null`. Logs: `/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p29-web-native.log`; status: `/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p29-web-native-status.json`.
+- **Remaining effects:** The command’s tool session completed; no still-running process was reported.

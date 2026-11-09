@@ -1,0 +1,6 @@
+**Result: incomplete.** The status file says `command_complete=true`, but `exit_status` is `null`, so it does not provide the required exact exit status. The recorded command PID `1445160` was absent from `/proc` at both checks; the status remained unchanged during the 10-second observation.
+
+- **Status identity:** stage `operator-private`; status `passed`; claim `4cd048eb-8e8b-492c-bbad-ad01cba45b92`; run `42502157095`, number 9, attempt 1; source revision `e1bb2d2b43aeb7361ac72c4c565919f38daabb65`.
+- **Timing:** operation start recorded as `2026-11-08T21:12:38.210338Z`; watcher observed from `21:13:16.347172Z` through `21:13:26.350212Z`.
+- **Evidence path:** `/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p22-operator-upload-status.json`. No `log_path` is recorded. The file includes `auth_result.status="passed"` and `seconds=16.575774794910103`, but no exact command exit status.
+- **stillRunning:** command PID `1445160` is absent; no other operation-owned session identity is available from the status file. No operation was launched, resumed, or altered by this watcher.

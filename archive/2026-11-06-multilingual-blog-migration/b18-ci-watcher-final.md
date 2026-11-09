@@ -1,0 +1,5 @@
+Result: **passed**. Run `42411255497` completed with conclusion `success`; actual head `82a1ee3c90990e56cfde0da28ababed8f0444441` matches the expected head.
+
+- Watch exit: `0`; elapsed: `0.81s`; no operation remains running.
+- Jobs: `1`; artifacts: `0`.
+- Evidence: [watch log](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/b18-ci-watcher-check.log), [run](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/b18-feature-ci-run.json), [jobs](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/b18-feature-ci-jobs.json), [artifacts](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/b18-feature-ci-artifacts.json), [status summary](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/b18-ci-status.json).

@@ -1,0 +1,6 @@
+- **Result:** Passed, exit status 0.
+- **Tested head:** `314f3881366c7315f8c3d64b43ef80a027a52fa0` (`tree95ff7c958c27d85da6b0bfec1aa798c2a98469ca`).
+- **Command:** `nix develop --no-write-lock-file --no-update-lock-file --command confctl --color never build --yes cz.vpsfree/containers/int.blog`
+- **Elapsed:** 84.397 seconds. Prior roots were preserved; no kernel cancellation occurred.
+- **Artifacts:** [build log](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/c13-int-blog-build.log) · [status JSON](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/c13-int-blog-build-status.json)
+- No operation remains running.

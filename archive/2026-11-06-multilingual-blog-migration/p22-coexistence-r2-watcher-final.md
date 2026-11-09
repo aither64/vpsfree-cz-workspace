@@ -1,0 +1,4 @@
+- **Result:** Passed, exit status 0; elapsed time 13.075 seconds.
+- **Invocation:** Ran `python3 /home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p22-coexistence-r2-operation.py` once from the specified canonical working directory. Tested base revision: `10e66efdffc586bdec8af82b3d0e17df59bee2d7`.
+- **Output:** The operation reported its Nix evaluation passed with exit status 0. `before_sha256` and `after_sha256` both equal `3fe23eecc239524dbc8e306240dbcdb66f3147c8eadd97ec436f8ed8feac3905`.
+- **Logs and remaining effects:** No separate log file was created; the complete command output is retained in this session. The command exited, with no reported remaining effects.

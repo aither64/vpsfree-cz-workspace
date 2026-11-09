@@ -1,0 +1,5 @@
+- **Result:** Passed; raw exit status `0`. The batch reported `BATCH PASS exact source clean`.
+- **Command:** Ran once from the canonical blog directory: `python3 /home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p32-native-batch.py`
+- **Elapsed time:** About 142 seconds from launch to completion.
+- **Evidence:** `check` and `release` exited `0`; `build` exited `0`. Logs: [check](</home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p32-native-check.log>), [release](</home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p32-native-release.log>), [build](</home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p32-native-build.log>).
+- **Remaining effects:** None reported. The batch says old root `/nix/store/9m28jfpcwmp9421z77pxr2iaarqap8zd-vpsfree-blog-0` was preserved.

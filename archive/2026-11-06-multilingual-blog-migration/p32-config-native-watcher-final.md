@@ -1,0 +1,6 @@
+- **Result:** Passed; raw exit status `0`. The operation reported `status: passed`, `preserved_prior_roots: true`, and `kernel_cancellation: null`.
+- **Revision:** `4771ff84e56de349bdde71bc221c62ccd4190f1b`
+- **Command:** Ran the specified Python script once in the canonical configuration worktree. Input identity: `flake.lock` SHA256 `8dd4828ea1ed3113f71b7f058c8069969388c8fdb1dec66f517239dd07ae7fda`.
+- **Elapsed:** `140.844` seconds.
+- **Evidence:** Log at `/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p32-config-native.log`; status at `/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p32-config-native-status.json`.
+- **Remaining effects:** The command reached terminal status; no running session remains.

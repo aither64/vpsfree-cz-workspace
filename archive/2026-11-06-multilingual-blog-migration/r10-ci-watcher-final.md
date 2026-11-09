@@ -1,0 +1,4 @@
+- **Result:** Passed. Run `42370490884` completed successfully for commit `b29f21bfa084d3b99e83d07ca8feb0b57afcfa6d`, branch `2026-11-06-multilingual-blog-migration` (`push` event).
+- **Watch:** Exit status 0; completed immediately because the run was already finished. The CI job ran `bin/check`, `bin/check-release`, and `nix build .#site` successfully. Trusted main packaging and artifact upload were skipped on this feature branch. Artifact count: 0.
+- **Evidence:** [watch log](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/r10-feature-ci-watch.log), [run details](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/r10-feature-ci.json), [artifact listing](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/r10-feature-ci-artifacts.json).
+- No operation remains. No matching session/workspace identity variables were present in the environment.

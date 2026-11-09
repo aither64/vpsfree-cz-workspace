@@ -1,0 +1,6 @@
+- **Result:** passed; exit status 0.
+- **Revision:** `e1bb2d2b43aeb7361ac72c4c565919f38daabb65`
+- **Command:** `python3 /home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p21-distinct-operation.py`
+- **Elapsed:** 44.75530468893703 seconds.
+- **Logs:** command produced no separate log file; captured output reported `status: passed`, `source_metadata_equal: true`, 10 observations, and archive hashes A `87cdaaa1621b1208f9daf325073c56782e296e722cce9cb1c19d2b593f1cff41` and B `c0ce46d4339b512c3a04218e6fd180ec8b9e505b531275b22d64436c5d508e20`.
+- **Remaining effects:** none reported by the completed command.

@@ -1,0 +1,5 @@
+- **Result:** Passed; exit status `0`, conclusion `success`.
+- **Run:** `vpsfreecz/blog` run `42470233945`, attempt `1`; tested head `7b0f3286ee11737e894f022bde0fce742a8a572d`. [GitHub Actions run](https://github.com/vpsfreecz/blog/actions/runs/42470233945)
+- **Elapsed:** 2.523 seconds.
+- **Job:** `build` succeeded. `bin/check`, `bin/check-release`, and `nix build .#site` succeeded. “Package trusted main build” and artifact upload were **skipped**; artifact count `0`.
+- **Logs:** The assigned operation reported no log paths. No operation remains running.

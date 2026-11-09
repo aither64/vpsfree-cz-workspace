@@ -1,0 +1,5 @@
+- Result: **passed**, raw exit status `0`.
+- Tested revision: `16496060da4faf81acc7173c5a070dc0f1d39c36`.
+- Command: `python3 /home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p22-config-build-operation.py`, run once from the specified canonical working directory. Elapsed time: `102.619` seconds.
+- Logs: [p22-config-build.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p22-config-build.log) and [p22-config-build-status.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p22-config-build-status.json). The operation reported `preserved_prior_roots: true` and `kernel_cancellation: null`.
+- No remaining session was reported.

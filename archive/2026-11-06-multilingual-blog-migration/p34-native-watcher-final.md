@@ -1,0 +1,5 @@
+- **Result:** Passed; raw batch exit status `0`.
+- **Run:** `p34-native-batch.py`, launched once in the canonical blog workspace. The batch reports `BATCH PASS exact source clean`; build output was linked at `result-p34`.
+- **Stages:** `check` exit `0` (115.378s), `release` exit `0` (3.29s), `build` exit `0` (18.286s). The batch’s total elapsed time was approximately 2m 15s from launch to terminal result.
+- **Logs:** [check log](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p34-native-check.log), [release log](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p34-native-release.log), [build log](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p34-native-build.log).
+- **Remaining effects:** No command session remains running. Batch output says old roots were preserved at `/nix/store/9znfkd74jy4njmpmx44bccni4lm8kdac-vpsfree-blog-0`.

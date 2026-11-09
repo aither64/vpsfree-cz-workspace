@@ -1,0 +1,4 @@
+- Result: **passed**; exit status `0`, `command_complete=true`.
+- Status identity: parent PID `2121317`, command PID `2127732`.
+- Duration observed: `10.0s`. Result summary and log path were absent from the status file.
+- `stillRunning`: none. The only tool session I started completed; I did not launch or interact with the operation itself.

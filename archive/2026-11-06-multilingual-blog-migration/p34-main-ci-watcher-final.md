@@ -1,0 +1,5 @@
+- **Result:** passed; script exit status `0`, CI conclusion `success`.
+- **Run:** `42665721131`, run `22`, attempt `1`, tested revision `1e3082c7e24c1b341df5d859cc964c1797714294`. The single observation took `98.591` seconds.
+- **Evidence:** build and deploy succeeded; all `2,401` Actions file hashes verified. Actions outputs were not byte-identical to native output. The selected response was marked selected and bound to the same run and revision.
+- **Artifact:** ID `13696361729`, `blog-1e3082c7e24c1b341df5d859cc964c1797714294`; artifact ZIP SHA256 `1d737e8a876373d60f4ececad4a5096c7cfca43b97abf2d32cd91ffcf80093af`. Result artifacts are under `/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/`, including `p34-main-actions-served-hashes.json`.
+- **Still running:** none; process session `4238` completed.

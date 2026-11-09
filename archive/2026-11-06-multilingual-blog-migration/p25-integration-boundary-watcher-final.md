@@ -1,0 +1,4 @@
+- Result: **failed**, exit status `1`; elapsed time `3.1262150530237705` seconds.
+- Source: `76d7fcf191045ea5ddce332dce341a67610e0315`. Ran the assigned Python command once in the canonical workspace.
+- The command reported `command_complete: true`; its result artifact is `p25-retention-runtime/output/boundary-result.json` (path as reported by the operation). Captured output: `{"status": "failed", "exit_status": 1, "seconds": 3.1262150530237705, "command_complete": true, "command": ["/run/current-system/sw/bin/nsenter", "--target", "2001458", "--user", "--mount", "--net", "--pid", "--", "/nix/store/jy00n3jp5xj8s40n1fbldmkcr5n7avxc-python3-3.13.15/bin/python3", "/fixture/driver/boundary-probe.py"], "result": "p25-retention-runtime/output/boundary-result.json"}`.
+- No operation remains running; no cancellation was taken.

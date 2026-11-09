@@ -1,0 +1,5 @@
+- **Result:** Failed; raw exit status **1**.
+- **Revision:** `76d7fcf191045ea5ddce332dce341a67610e0315`
+- **Command:** Ran the specified Python script once from the canonical working directory. It reported `command_complete: true` after **1.3383081320207566 seconds**.
+- **Output:** `p25-retention-runtime/output/continued-r2-result.json`. The command’s captured output is the JSON result shown above; no separate log path was reported.
+- **Remaining effects:** The script reported completion. No other operation status was available.

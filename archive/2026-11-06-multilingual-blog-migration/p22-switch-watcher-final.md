@@ -1,0 +1,6 @@
+- **Result:** Passed; exact command exit status `0`.
+- **Operation:** `parent-exec79093`, confctl switch, generation `2026-11-08--19-02-09`; source revision `16496060da4faf81acc7173c5a070dc0f1d39c36`.
+- **Timing:** Started `2026-11-08T18:31:16.624841Z`, finished `2026-11-08T18:31:46.354415Z` (29.729 seconds). My observation lasted 5 seconds.
+- **Status evidence:** Atomic status file reports `command_complete=true`, `status=passed`, `exit_status=0`.
+- **Logs:** [p22-switch.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p22-switch.log), [p22-switch-native.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p22-switch-native.log); native logger: `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-11-06-multilingual-blog-migration/vpsfree-cz-configuration/.confctl/logs/2026-11-08--19-31-24-confctl-deploy.log`.
+- **Still running:** None reported. Status identified command PID `3475255` and parent PID `3474845`; terminal status file confirms completion.

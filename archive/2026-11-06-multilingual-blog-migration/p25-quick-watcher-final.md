@@ -1,0 +1,5 @@
+- **Result:** Passed; exact exit status `0`, `command_complete: true`.
+- **Operation:** `parent-exec59844`, P25 quick batch; status identities were `parent_pid: 1860887`, `command_pid: 1867021`.
+- **Results:** All four summaries—primitives, upload, static-module, and upload-module—reported exit status `0`.
+- **Watcher duration:** The terminal status was already present at the first readable poll, so observed duration was under five seconds. The status file had no `log_path` value.
+- **Still running:** None reported.

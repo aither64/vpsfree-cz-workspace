@@ -1,0 +1,5 @@
+- **Result:** Passed, exit status 0.
+- **Operation:** One run of `python3 /home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p21-module-quick.py` from the canonical configuration cwd.
+- **Elapsed:** 96.414 seconds total. The proxy, static, and upload fixture evaluations each exited 0.
+- **Evidence:** The command printed `STATUS passed elapsed 96.414`; no separate log path was reported.
+- **Still running:** None.

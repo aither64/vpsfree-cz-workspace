@@ -1,0 +1,5 @@
+- **Result:** Failed. Run `42697676516`, attempt 1, completed with conclusion `failure`; observer exit status **1**.
+- **Revision:** `ccf639134124eedd88d668c356de2e907cd091ca`. Elapsed time: **32.727 seconds**.
+- **Job status:** build succeeded; deploy failed. One artifact was reported.
+- **Evidence:** `/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p36-main-ci-final-result.json`; run and job logs: `p36-main-ci-build-job.log` and `p36-main-ci-deploy-job.log` in the same directory. Other retained CI metadata and watcher records are also under `p36-main-*`.
+- **Still running:** None reported; the observer session completed.

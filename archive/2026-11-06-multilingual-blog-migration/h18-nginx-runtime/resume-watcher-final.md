@@ -1,0 +1,4 @@
+- **Result:** passed; exit status `0`. The operation completed in `0.275s`.
+- **Command:** `python3 /home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/h18-nginx-runtime/run_resume.py`
+- **Source and result:** the driver reports it ran `probe-resume.py`. Status: [resume-operation-status.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/h18-nginx-runtime/resume-operation-status.json); result: [resume-result.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/h18-nginx-runtime/resume-result.json); log: [resume-probe.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/h18-nginx-runtime/resume-probe.log).
+- **Bounded evidence:** status reports `"status": "passed"` and `"exit_status": 0`. No operation remains running.

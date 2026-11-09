@@ -1,0 +1,7 @@
+- **Result:** Passed, raw exit status `0`.
+- **Revision:** `10e66efdffc586bdec8af82b3d0e17df59bee2d7`
+- **Command:** `python3 /home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p21-generated-operation.py`
+- **Working directory:** `/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-11-06-multilingual-blog-migration/vpsfree-cz-configuration`
+- **Elapsed:** 18.792 seconds (reported by the operation).
+- **Evidence:** Output reported `status: passed`, `source_clean: true`, and completed Nix evaluation and build. No log or artifact path was reported.
+- **Remaining effects:** The command session `94351` terminated with exit status `0`; no still-running operation was reported.

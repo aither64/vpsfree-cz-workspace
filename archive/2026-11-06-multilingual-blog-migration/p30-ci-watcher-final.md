@@ -1,0 +1,5 @@
+- **Result:** Passed; observer exit status 0. CI concluded `success`, and the run identity matched.
+- **Run:** `vpsfreecz/blog` run 42613369754, #17, attempt 1; tested SHA `985d4eaa74309b219a762dcc02316df4a350065d`. Elapsed time: 37.025 seconds.
+- **Evidence:** `check`, `check-release`, and site build succeeded; deploy and artifact upload were skipped; 0 artifacts.
+- **Logs/results:** `/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p30-ci-watch.log`, `p30-ci-final-run/jobs/artifacts/result.json`, and `/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p30-ci-watcher-output.log`.
+- **Still running:** None.

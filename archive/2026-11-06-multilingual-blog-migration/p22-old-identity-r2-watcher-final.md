@@ -1,0 +1,5 @@
+- **Result:** Passed, raw exit status `0`; command-reported duration `16.183822627994232` seconds.
+- **Revision:** `c040c14cdbacc07998700b524996a89306188d7f`
+- **Command:** `python3 /home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p22-old-identity-r2-operation.py`
+- **Session:** `88895` (completed; no known remaining operation-owned work).
+- **Logs:** Captured in the command session; no separate log path was provided. Output reported status `passed` and these artifacts: rollback `/nix/store/yl9vnin9wlv04cip0sqpkisk80xmccwh-auto-rollback.rb`, rollback drv `/nix/store/za41c9rsf8k0qv0ay8svf4kc4y2x0q51-auto-rollback.rb.drv`, system `/nix/store/y50f85i2dgycjk5kpbgwxd8ww2j9f0n4-nixos-system-blog-26.05.20261026.718f670`, system drv `/nix/store/zgi631nxbfy52f697k4azlkbg8qzls48-nixos-system-blog-26.05.20261026.718f670.drv`.

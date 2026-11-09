@@ -1,0 +1,5 @@
+- **Result:** Passed; exit status `0`, elapsed `10.31s`.
+- **Revision:** `92ed3dca3120ffa3acae1b6efda6dfa974fb9dce` (tree `cd8e3e7de8434fefd391e7ccf7706b74801fe019`).
+- **Output:** `/nix/store/wmfrxjri1d8mss04l8n4bz05mm3dpngc-vpsfree-blog-0`; `result-d15` points to it.
+- **Evidence:** [Build log](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/d15-blog-build.log) and [result JSON](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/d15-blog-build-result.json).
+- Post-build status is clean; the four existing result roots are unchanged. No operation remains running.

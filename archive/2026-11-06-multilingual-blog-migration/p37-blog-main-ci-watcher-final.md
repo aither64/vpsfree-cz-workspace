@@ -1,0 +1,5 @@
+Result: **passed** (exit status 0). The single observation took 117.04 seconds and verified main run **42710410294**, run 28, attempt 1, for revision `567455a67bdc9ee73e56450f299d8c71724c0007`. Build and deploy succeeded; the downloaded Actions artifact and selected response were validated against the committed source and locked input graph.
+
+The result records artifact ID `13715692864`, archive SHA256 `d7f561a87810f0aae32298f2d550b7abc18fef5967b2d16f4598f66c41dc4d61`, and Actions metadata SHA256 `e3e788a7be67e4affc4a0c4d30e0b72ff7d69b22bf7918644f0ae025b237f707`. Both public language pages were observed. The recorded limit is that no exact artifact was supplied, so public bytes alone do not prove the deployed commit.
+
+The result names `p37-blog-main-actions-served-hashes.json`; other status, logs, and result artifacts are under `/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p37-blog-main-*`. No operation remains running.

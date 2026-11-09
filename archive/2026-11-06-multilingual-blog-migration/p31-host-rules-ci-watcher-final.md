@@ -1,0 +1,4 @@
+- **Result:** Passed; exact command exit status `0`.
+- **Revision:** `620f14cc96cdc14792a9e26ed3de204f90aa04bb`. Run `42635047506`, attempt `1`; elapsed `20.625` seconds.
+- **Evidence:** The observed CI run completed with success. `bin/check`, `bin/check-release`, and `nix build .#site` succeeded; deploy was skipped. Raw command output is retained in this conversation; no separate log path was produced.
+- **Remaining effects:** None reported; the command terminated.

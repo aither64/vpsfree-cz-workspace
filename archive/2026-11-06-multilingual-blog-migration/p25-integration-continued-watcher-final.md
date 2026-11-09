@@ -1,0 +1,5 @@
+- **Result:** Failed; raw exit status `1`.
+- **Revision:** `76d7fcf191045ea5ddce332dce341a67610e0315`.
+- **Command:** Ran the assigned Python script once from the specified canonical working directory. Tool session `32929` completed; elapsed time reported by the script was `1.6004131300142035` seconds.
+- **Output:** The command returned `{"status":"failed","exit_status":1,"seconds":1.6004131300142035,"command_complete":true,...}`. Its reported result artifact is `p25-retention-runtime/output/continued-result.json`.
+- **Remaining effects:** The command reports complete; no process remains running.

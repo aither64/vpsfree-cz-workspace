@@ -1,0 +1,6 @@
+- **Result:** Passed, exit status `0`.
+- **Revision:** `76d7fcf191045ea5ddce332dce341a67610e0315`
+- **Command:** Ran once in the canonical configuration workspace; elapsed time `82.032` seconds. Session `69683` terminated.
+- **Logs:** `/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p25-native.log`; status: `/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p25-native-status.json`
+- **Raw result:** `{"status":"passed","exit_status":0,"elapsed_seconds":82.032,"preserved_prior_roots":true,"kernel_cancellation":null}`
+- **Remaining effects:** The result reports prior roots preserved; no running command remains.

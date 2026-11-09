@@ -1,0 +1,6 @@
+- **Result:** Passed; `command_complete=true`, exit status `0`.
+- **Identity:** `parent-exec48010`, `bin/package-release`, run `42502157095` attempt `1`, run number `9`; revision `e1bb2d2b43aeb7361ac72c4c565919f38daabb65`; operator-local, `Actions_artifact=false`.
+- **Duration:** 11.98 seconds (21:08:28.893–21:08:40.874 UTC).
+- **Artifact:** `/nix/store/bi18fs5lxknk4j22sahyd8gp2qspwawr-vpsfree-blog-0`; package at `/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p22-operator-run9/release`.
+- **Evidence:** Status file `/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p22-operator-package-status.json` records the exact command, PID `1407889`, exit status, receipt, and package hashes. No log path was provided in the status file.
+- **Still running:** None indicated; the status file is terminal.

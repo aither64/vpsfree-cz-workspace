@@ -1,0 +1,5 @@
+- **Result:** Passed; exact exit status `0`.
+- **Identity:** Head `16496060da4faf81acc7173c5a070dc0f1d39c36`, generation `2026-11-08--19-02-09`, claim `4cd048eb-8e8b-492c-bbad-ad01cba45b92`. Command was `confctl deploy … cz.vpsfree/containers/int.blog dry-activate`.
+- **Duration:** 19.046 seconds, per the terminal status file.
+- **Evidence:** Status `/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p22-dry-plan-capture-status.json` records `command_complete=true`; before and after system paths match. Logs: `/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p22-dry-plan-capture.log` and retained native log `/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p22-dry-plan-capture-native.log`.
+- **stillRunning:** None reported by the terminal status.

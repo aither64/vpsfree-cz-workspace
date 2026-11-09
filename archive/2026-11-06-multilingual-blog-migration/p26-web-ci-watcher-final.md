@@ -1,0 +1,4 @@
+- **Result:** passed; CI conclusion `success`, watch exit status `0`.
+- **Run:** `42534786341`, attempt `1`; actual head matched `7fec3e3ccc5a1aa41bad7f06f83d01fa6cd15fe9`. Elapsed: 775.3 seconds.
+- **Evidence:** status [p26-web-ci-status.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p26-web-ci-status.json), complete watch log [p26-web-ci-watch.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p26-web-ci-watch.log), run [JSON](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p26-web-ci-run.json), jobs [JSON](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p26-web-ci-jobs.json), and artifact index [JSON](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p26-web-ci-artifacts.json). One job; zero artifacts.
+- **Still running:** none. The sole watcher session completed; no failure log was requested.

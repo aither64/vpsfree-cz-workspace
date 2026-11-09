@@ -1,0 +1,4 @@
+- Result: **passed**, exit status `0`; `command_complete=true`.
+- Status identity: `parent_pid` and `command_pid` are both `null`; results summary and raw result are absent.
+- Duration observed: `0.0` seconds. Log path: unavailable. `stillRunning=false`.
+- I only read the specified status file; I launched no sessions or commands.

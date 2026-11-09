@@ -1,0 +1,5 @@
+- **Result:** Passed, exit status 0; elapsed 10.79 seconds.
+- **Revision:** `6dae2b146b4ad73df8f4bcf2b8d7fdacd830d344`, tree `c28f761c78714715a2c22e455782fa325188f12e`. The worktree remained clean.
+- **Output:** `/nix/store/5bs03cb3g49iyl4gb81sd6kma06bcmyk-vpsfree-blog-0`
+- **Evidence:** Full build log at [b16-blog-build.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/b16-blog-build.log); result record at [b16-blog-build-result.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/b16-blog-build-result.json).
+- The existing `result`, `result-d9`, `result-d10`, `result-d12`, and `result-d15` targets are unchanged. No operation remains running.

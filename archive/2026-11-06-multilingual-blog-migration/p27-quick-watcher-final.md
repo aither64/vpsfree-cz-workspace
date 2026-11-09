@@ -1,0 +1,5 @@
+- **Result:** Failed, exit status `1`.
+- **Run:** `nix develop -c python3 /home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p27-quick-r1.py`, run once in the specified working directory against baseline `8b30ba027d3cedcc0b9bc10746a2dbc199b18aba` plus current P27 uncommitted owned files.
+- **Elapsed:** 215.4 seconds. Session `12676` completed; no operation remains running.
+- **Evidence:** 21 tests passed. The script then raised `AssertionError` at `bin/check:420` in `check_article_states`.
+- **Artifacts:** [full captured log](tracking/p27-quick-r1.log) · [compact result](tracking/p27-quick-r1-result.json)

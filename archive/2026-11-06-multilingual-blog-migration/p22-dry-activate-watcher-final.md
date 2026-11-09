@@ -1,0 +1,5 @@
+- **Result:** passed; exact command exit status `0`.
+- **Identity:** `parent-exec11375`, generation `2026-11-08--19-02-09`, action `dry-activate`, config head `16496060da4faf81acc7173c5a070dc0f1d39c36`.
+- **Status evidence:** `/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p22-dry-activate-status.json` reports `command_complete=true`, status `passed`, and command PID `3410743` / parent PID `3410730`. Command duration: `17.574s`; watcher observation duration: under one second.
+- **Logs:** no log path was present in the status file.
+- **stillRunning:** none reported by the status file.

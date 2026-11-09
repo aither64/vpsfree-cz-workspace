@@ -1,0 +1,7 @@
+- **Result:** passed; exit status `0`, `command_complete=true`.
+- **Operation:** `lead-exec-session-59843`. Parent PID `2252334`; command PID `2255351`.
+- **Duration:** 28.94 seconds.
+- **Result summary:** both reported system paths match; `local_source_clean=true`.
+- **Status file:** `/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p25-switch-status.json`
+- **Log:** `/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p25-switch.log`
+- **stillRunning:** none reported. I observed the already-terminal status; no operation sessions were launched.

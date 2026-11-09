@@ -1,0 +1,6 @@
+- **Result:** Passed; raw exit status `0`.
+- **Revision:** `e1bb2d2b43aeb7361ac72c4c565919f38daabb65`.
+- **Command:** Ran `p21-package-operation.py` once from the canonical blog directory. It invoked `nix develop ... bin/package-release --site result-p21` with run ID `101`, attempt `1`.
+- **Elapsed time:** 11.866 seconds overall; command reported 11.520 seconds.
+- **Logs/evidence:** The command emitted a JSON result to the tool output; no separate log path was reported. Receipt: 872 bytes, SHA-256 `f42b9c948f695cbe47fababa4aceac65cc92320693923ce58bba18111e715c64`. Payload: 102,337,731 bytes, SHA-256 `87cdaaa1621b1208f9daf325073c56782e296e722cce9cb1c19d2b593f1cff41`.
+- **Remaining effects:** None reported. The result also notes a synthetic fixture; it is not a real build identity.

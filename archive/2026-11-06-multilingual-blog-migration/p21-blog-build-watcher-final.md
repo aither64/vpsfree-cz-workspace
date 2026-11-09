@@ -1,0 +1,5 @@
+- Result: **passed**, exact exit status `0`; elapsed time `18.381` seconds.
+- Revision: `e1bb2d2b43aeb7361ac72c4c565919f38daabb65`.
+- Command, run once from the canonical workspace: `python3 /home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p21-blog-build-operation.py`
+- Log evidence: command output was `{"status": "passed", "exit_status": 0, "elapsed_seconds": 18.381, "output": "/nix/store/bi18fs5lxknk4j22sahyd8gp2qspwawr-vpsfree-blog-0", "old_roots_retained": true}`. No separate log or artifact path was reported.
+- The command session `85457` exited. No operation remains running.

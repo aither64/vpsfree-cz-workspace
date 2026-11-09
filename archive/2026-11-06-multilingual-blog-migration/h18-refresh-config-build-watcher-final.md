@@ -1,0 +1,4 @@
+- Result: passed; raw status `passed`, exit status `0`, elapsed `98.235` seconds.
+- Command: the assigned `python3 .../h18-refresh-config-build-operation.py`, run once in the specified configuration workspace.
+- Evidence: log at `/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/h18-refresh-config-build.log`; status at `/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/h18-refresh-config-build-status.json`.
+- Utility reported `preserved_prior_roots: true` and `kernel_cancellation: null`. No process remains running.

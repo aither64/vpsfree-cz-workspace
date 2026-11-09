@@ -1,0 +1,6 @@
+- Result: **passed**, raw exit status `0`.
+- Tested revision: `5598334e-with-two-fixture-corrections`.
+- Command: `python3 /home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p22-r1-module-quick.py`, run once from the canonical checkout.
+- Elapsed time: `71.224` seconds.
+- Captured output: static check exit `0` (`38.852s`); upload check exit `0` (`32.37s`). The command emitted no separate log file.
+- Remaining effects: none reported; the command session exited.

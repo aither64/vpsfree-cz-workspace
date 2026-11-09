@@ -1,0 +1,4 @@
+- **Result:** Passed; exact exit status `0`.
+- **Operation:** Parent-launched `nix develop … confctl build --yes cz.vpsfree/containers/int.blog`; configuration worktree head `99c7d5ec122aa8b32aeb45fcc12bf19719c86287`; PID `1541295`.
+- **Status identity:** The requested status file reports `status=passed`, `command_complete=true`, PID `1541295`, started `2026-11-08T21:30:59.743216+00:00`, finished `2026-11-08T21:32:20.642115+00:00` (about 81 seconds).
+- **Evidence:** [p22-cutover-build-status.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p22-cutover-build-status.json). It contains no log path. `stillRunning`: none known; the status file does not provide a separate process identity beyond that PID.

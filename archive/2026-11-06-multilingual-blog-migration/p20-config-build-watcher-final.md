@@ -1,0 +1,3 @@
+- **Result:** Passed; raw exit status `0`, elapsed `103.836s`.
+- **Operation:** Ran the assigned Python operation once from the canonical cwd. It reported `preserved_prior_roots: true` and `kernel_cancellation: null`.
+- **Evidence:** [Build log](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p20-config-build.log) and [status JSON](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p20-config-build-status.json).

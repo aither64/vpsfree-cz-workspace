@@ -1,0 +1,4 @@
+- **Result:** passed; raw process exit status `0`.
+- **Operation:** `python3 /home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p21-runtime-resume-operation.py`, run once from the specified canonical cwd. Elapsed time: `62.437898834003136` seconds.
+- **Output:** no stdout or stderr while running; terminal output reported `status: passed`, `observations: 25`, and result artifact at [result-resumed.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p21-upload-runtime/output2/result-resumed.json).
+- **Remaining effects:** the command’s session reached exit status `0`; no still-running session was reported.

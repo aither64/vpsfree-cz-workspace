@@ -1,0 +1,7 @@
+- **Result:** Failed; raw exit status `1`.
+- **Revision:** `76d7fcf191045ea5ddce332dce341a67610e0315`
+- **Command:** `python3 /home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p25-integration-operation.py`
+- **Elapsed:** 2.256568889017217 seconds.
+- **Evidence:** The command reported `AssertionError` for `root-six`: UID/GID were `[0, 0, 0]`, six runs were expected and observed, zero skipped, and `passed` was false. It also reported one observation and retained service ID `93a7eaf2-ae91-4d98-a394-5e6140449b1d`.
+- **Result artifact:** `/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p25-retention-runtime/output/result.json`
+- **Remaining effects:** The command reported `command_complete: true`; no still-running operation was reported.

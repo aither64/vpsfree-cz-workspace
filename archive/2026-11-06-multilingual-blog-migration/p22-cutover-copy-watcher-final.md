@@ -1,0 +1,5 @@
+- Result: **incomplete** — the status file is still `"running"` and does not yet include `command_complete=true` or an exact `exit_status`.
+- Operation identity: parent operation `parent-exec51472`; generation `2026-11-08--22-31-33`; expected config head `99c7d5ec122aa8b32aeb45fcc12bf19719c86287`. Target: `cz.vpsfree/containers/int.blog`, copy-only.
+- Elapsed: status reports 25.402 seconds. I observed for one five-second interval.
+- Status evidence: `/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/p22-cutover-copy-status.json`. No log path is present in the status file.
+- `stillRunning`: command completion is unconfirmed; the status file provides no PID identities to check. My observation command finished; no deployment command was launched or altered.

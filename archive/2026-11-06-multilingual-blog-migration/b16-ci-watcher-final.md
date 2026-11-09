@@ -1,0 +1,7 @@
+**Result: passed.** Build blog run [42398048773](https://github.com/vpsfreecz/blog/actions/runs/42398048773) completed successfully on branch `2026-11-06-multilingual-blog-migration`. The watch exited 0 in 0.79 seconds.
+
+The run’s reported head SHA is `6dae2b146b4ad73df8f4bcf2b8d7fdacd830d344`, which differs from the supplied expected SHA `6dae2b146b4ad73df8f4bcf2b8d7fdacd830d344e` (expected value has an extra trailing `e`). The run completed on the reported SHA.
+
+All executed steps passed, including `nix develop -c bin/check`, `nix develop -c bin/check-release`, and `nix build .#site`. “Package trusted main build” and artifact upload were skipped; the artifact index reports 0 artifacts.
+
+Evidence saved in `/home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/`: [watch log](</home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/b16-ci-watch.log>), [watch result](</home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/b16-ci-watch-result.json>), [run metadata](</home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/b16-feature-ci.json>), and [artifact index](</home/aither/workspace/ai/vpsfree.cz/work/2026-11-06-multilingual-blog-migration/b16-feature-ci-artifacts.json>). No operation remains running.
