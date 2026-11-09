@@ -1,13 +1,17 @@
 # Documentation governance: findings and implementation brief
 
-Status: approved implementation scope; D2 release brief, 2026-11-09.
+Status: D3 merge and user-profile activation release brief, 2026-11-09.
 Design owner: architect0. D1 findings below remain the investigation baseline.
 The lead's D2 assignment records the user's authorization, "ok, implement it",
 after acceptance of the proposal and explicit directory/file structure. This
 authorizes P1–P3 and documentation of optional editor-package pilot conventions.
-It does not authorize a new role, catalog/runtime changes, package deployment,
-integration or session lifecycle actions. Architect0 edits this design only;
-implementation owners and release conditions are recorded below.
+That D2 authorization did not include deployment or integration. The user's
+subsequent "okay, so proceed with activation & merge", recorded in the lead's
+D3 assignment, now authorizes the five targets and aitherdev user-profile
+activation specified in D3 below. It does not authorize a new role,
+catalog/runtime redesign, full NixOS deployment or session lifecycle action.
+Architect0 edits this design only; implementation owners and release conditions
+are recorded below. D3 supersedes D2's delivery exclusions for this approved batch.
 
 ## Recommendation
 
@@ -329,5 +333,174 @@ Source freshening, factual/link checks and committed delivery belong to each
 implementation owner. No further architect investigation blocks these packages;
 legacy-transition uncertainty is handled by preservation, not unsupported
 retirement. Integration, deployment and lifecycle actions remain outside scope.
+
+## D3 approved merge and profile activation
+
+The lead reports explicit user approval, "okay, so proceed with activation &
+merge", after explaining integration of all five repositories followed by the
+aitherdev user-profile application rollout, with no full NixOS deployment
+expected. Approval covers these targets: generic dev-workspace/master,
+vpsfree-dev-workspace/master, workspace/master, vpsadminos/staging, and
+vpsfree-cz-configuration/master. The lead owns approval provenance, claims,
+merges, activation, verification and release. No lifecycle action is approved.
+
+Session identity and saved roster settings were verified again. D3 read the
+deployment/lifecycle/coordination procedures, selected coordination and update
+instructions, current state/design, current workspace/configuration input graph
+and installed package provenance. No package, pin, claim, source or team mutation
+was performed. D3 findings are a bounded release brief, not another source audit.
+
+### Reviewed baseline and selected installation
+
+The original independently reviewed heads remain the baseline for refreshes:
+
+| Repository / target | Reviewed base | Reviewed head |
+| --- | --- | --- |
+| dev-workspace / master | `d2cb9975a88079d79f361c5b4c65836ba0835821` | `6587c4c1cedabee95bcc52f4667e7d33e3a82859` |
+| vpsfree-dev-workspace / master | `f8da821e3c76e26e73aa9d89a712eab0e0faa319` | `0c7168f352f6d4f11c46368e702b9356d81012c6` |
+| workspace / master | `992ce14f295c16bcf395f25107b1fd60f0923ad8` | `1a3a10d9c9e5ef7ef7da05dc42459cf6871b6d4d` |
+| vpsadminos / staging | `4bfed8ba8ddfec49e5a3909df5ede733ea762c99` | `6154dbcd5eaea4a505168f2a7f4fdc25aed4c96d` |
+| vpsfree-cz-configuration / master | `9e25b996034f8e05f4858dc5ec1f1246a516b109` | `f3149765d2db49c5556983df2954cd368a7b0800` |
+
+State records passing final independent review, both exact-head CI runs and both
+docs builds. These results cover those exact ranges, not an arbitrary refreshed
+composition. Original owners refresh their own branches and record old/new
+base/head, range-diff/patch-equivalence and no-migration conclusions. Preserve
+unrelated newer remote work; material changes require applicable review and
+approval reassessment, not an automatic reuse of the old result.
+
+Observed selected installation:
+
+- User profile: `/home/aither/.local/state/dev-workspaces/profile`, selected
+  generation `profile-228-link`.
+- Package: `/nix/store/8p7fs26ja6flmlgc886ddfgpprdkhfjy-dev-workspace-0.2.0`;
+  deriver `/nix/store/ks9kg3a1lrs97sk4q6afl4hwlpgn5v1h-dev-workspace-0.2.0.drv`.
+- Generic source: `/nix/store/abs5b1fpah3dni4s82rxlx8rq0yvryiz-source`;
+  computed NAR hash `sha256-wIpgY4N4irf+2EjbNLiT7041fob+zlcV1AiYJFe3rqA=`
+  matches the locked `d2cb9975a88079d79f361c5b4c65836ba0835821` source.
+- Extension catalog's site skill source:
+  `/nix/store/y01y2bs4mar8zq9s72npz3lrmlsjvasa-source`;
+  computed `sha256-U5y/TEny6nsyXWNlCMktmxTZhpVO0QY4kOo/qgwsapM=` matches
+  `f8da821e3c76e26e73aa9d89a712eab0e0faa319`.
+- Installed codex-web source:
+  `/nix/store/xhjvnra2pf6f65yjlplgqh56yxhxnsys-source`;
+  computed `sha256-JcQLZ4GPc5fOy2r4/iM4nhzqVTPWgZb6sNhJFd2nX+g=` matches
+  locked `dd90fb4308ba85617ee2a4267cc835aa9a4f11ce`.
+- Running system: `/nix/store/xwldgxzayy9113ljd57ib70vwrbksgp0-nixos-system-aitherdev-26.05.20261026.718f670`.
+
+These source hashes establish that the intended reviewed generic/site changes
+extend the selected source baseline. Implementer0 must still capture the complete
+final graph, derivation inputs and actual selected profile immediately before
+deployment preparation; these observations do not prove that a concurrent
+package switch or later rebase cannot add a regression.
+
+### Composition and system-activation boundary
+
+The root workspace flake independently selects extension source
+`inputs.vpsfree-dev-workspace.url` and generic runtime through
+`inputs.vpsfree-dev-workspace.inputs.dev-workspace.url`. Its root nixpkgs follows
+`vpsfree-dev-workspace/nixpkgs`. Both workspace locks inspected currently select
+generic `d2cb9975…`, site `f8da821e…`, codex-web `dd90fb43…`; the configuration
+feature's `devWorkspace` also selects `d2cb9975…`. Configuration `flake.nix`
+maps channel `dev-workspace`, role `devWorkspace`, to that input. Aitherdev imports
+its host module and Codex builder from the selected generic input.
+
+Select the exact final reviewed generic and extension heads, using the original
+reviewed heads above if no refresh is required. Preserve the direct nested
+override, independent extension selection, sibling identities and all follows
+paths; do not add a top-level runtime or rewrite the extension's own lock.
+Generate the workspace lock through the normal narrowly targeted Nix updates;
+inspect semantic paths rather than assuming node labels are stable.
+
+**A configuration source pin update is required** when selecting the new generic
+head: the deployment checker requires exact generic GitHub type/owner/repo/rev
+agreement between workspace nested input and configuration `devWorkspace`.
+Implementer3 uses the existing confctl channel (`inputs channel set --commit
+dev-workspace devWorkspace <exact-final-generic-head>` while the exact feature
+revision is selected), preserves generated history, and verifies no unrelated
+channel or dependency changes. Never hand-edit the lock or disable the checker.
+
+**No full NixOS activation is indicated by the inspected delta.** Generic
+`d2cb9975…` to `6587c4c1…` changes only `docs/dev-sessions.md` and the documentation
+skill; site `f8da821e…` to `0c7168f3…` changes only the review skill and general
+lane reference. Host-module code, runtime protocols, executable code and their
+locks are unchanged. The configuration update aligns source selection for the
+host contract; it does not install the application. Source/store identity changes
+alone are not evidence of a required system activation.
+
+Implementers must verify that this remains true after refresh: compare effective
+host contract, native/Codex selection, lifecycle/cluster/maintenance/claim
+descriptors, machine identity bridge and runtime inputs with the selected
+baseline. Any required host option, substrate, permission, service or protocol
+change is a blocker to this profile-only batch; report the concrete evidence to
+the lead instead of silently deploying NixOS. Do not reinterpret a refusal as
+permission to drop a compatibility check.
+
+### Sufficient execution packages
+
+| Package / owner | Files and deliverable | Dependencies and acceptance |
+| --- | --- | --- |
+| A1 — implementer0 | Workspace feature `flake.nix` and generated `flake.lock`; own generic/workspace refresh; composition/build/check evidence in the existing session verification/rollout receipt, with lead-owned tracking. | Fix exact reviewed generic/site heads after original owners refresh. Preserve complete graph and selected-baseline lineage; run `bin/check-dev-workspace-deployment --workspace-root <workspace-feature> --configuration-root <configuration-feature>` after A2. Verify host/profile compatibility and candidate skill contents. Commit/publish and supply review/history evidence before the package build. |
+| A2 — implementer3 | Configuration feature's generated `dev-workspace` channel pin/lock and generated changelog; own configuration branch refresh and matching-pin evidence. | Depends on A1's final generic revision, not A1's completed build. Pin through confctl; preserve other channels/follows. Verify matching lock identity, no unexpected transitive change, host delta limited to documented source selection. Commit/publish through hooks; report exact final head and applicability evidence to implementer0/lead. |
+| R1/R2 — implementer1 / implementer2 | Their site-extension / vpsAdminOS branches and refresh evidence only. | Freshen their own targets if needed; retain reviewed patch, anchors and recovery semantics; report final exact heads promptly. No new feature or tooling edits. |
+
+Technical peer clarification uses existing same-session addresses/stable IDs.
+The lead accepts packages, coordinates final index/commit windows, consolidates
+any superseded pin updates and invokes the applicable review. A1/A2 add source
+composition not covered by the original docs review: assess the final committed
+complete ranges under mandatory review and its permitted mechanical-equivalence
+rules; do not simply claim that earlier CI certifies the new package.
+
+After applicable final committed review and quick checks, a fresh watcher runs
+the exact workspace package build and required composition checks selected from
+its flake/repository guidance. Preserve successful prior evidence for unchanged
+inputs, but establish new derivation/input identity for the candidate. Check
+installed documentation skill, review skill/questions, catalog/role settings,
+cluster provider composition and unchanged native invocation. No runtime redesign,
+full VM/ZFS campaign or unrequested system deployment is part of this package.
+Prepare the closure and any supported copies before machine ownership.
+
+### Lead integration, activation and recovery
+
+1. Integrate the approved source repositories and final workspace/configuration
+   composition using five short, separate repository claims, fresh target checks,
+   fast-forward merge with hooks, SSH push and remote proof. Shared workspace
+   integration takes the tracking lock after the claim without waiting; release
+   a claim if preparation is stale or that lock is busy. Release repository
+   ownership before records, CI or repairs. Preserve original reviewed ranges
+   and final remote heads. Activation follows integration of its complete graph.
+2. With checks/build/copies complete, acquire a fresh machine claim for registered
+   `vpsfree-cz-configuration`, selector `cz.vpsfree/machines/aitherdev`, adapter
+   `confctl`. Verify the held exact binding; retain the `machine:vpsfree:aitherdev`
+   compatibility alias through the unchanged policy. Use ordinary
+   `workspace-host switch --source <prepared-source>` with the exact session
+   environment and `DEV_WORKSPACE_CLAIM_ID`. Do not use private lifecycle helpers.
+3. The selected package's `workspace-updates.md` and coordination guides govern
+   activation. Unchanged validated native invocation should avoid restarting
+   Codex; let ordinary admission prove this, never bypass it. Verify selected
+   package/skill bytes, profile and system identities, portal health, session and
+   conversation continuity, native registration, and absence of unfinished
+   maintenance/pending activation effects. Confirm system selection stayed
+   unchanged for this profile-only batch.
+4. Retain existing recovery contracts and journals. Workspace selection is
+   forward-only while coordinated state exists; do not use raw profile rollback
+   or choose an incompatible old package. If interrupted, inspect the original
+   status/effects and recover that operation through its owning package; keep
+   machine ownership for uncertain effects. A remedial forward package needs its
+   own ordinary preparation/review and verified deployment as applicable.
+5. In existing rollout/review receipts, record old/new profile/store paths,
+   running system, full source/input graph, exact candidate derivation, canonical
+   repositories/targets, deployed and final heads, claim/machine mapping and
+   fresh remote ancestry/equivalence evidence. Inspect authoritative status for
+   this exact owned machine claim, reconcile effects, prove deployed lineage is
+   integrated, release promptly and verify the released state. Do not wait for
+   separate UI acceptance; session stays open. A later deployment needs a fresh
+   claim.
+
+Release is sufficient for A1/A2 and original-owner refreshes. Remaining execution
+evidence is exact refreshed heads, generated locks, applicable committed review,
+candidate derivation/closure and compatibility checks, then lead activation and
+remote/deployment proof. No extra design investigation is required unless those
+checks reveal an actual contract change.
 
 Session: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-11-08-documentation-governance-review/

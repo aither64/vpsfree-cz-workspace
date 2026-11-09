@@ -94,3 +94,25 @@ checks/commits/evidence, and reviewer0 independently reviews the complete final
 series. The lead applies the user-facing writing skill directly before commits
 where appropriate. Preserve existing useful layout equivalents, recovery and
 upgrade semantics and old anchors. No production operation is executed.
+
+## Merge and activation approval, 2026-11-09
+
+User: "okay, so proceed with activation & merge", after explanation that all
+five source branches need merge and packaged skills need a workspace application
+user-profile rollout on aitherdev, not a full NixOS deployment. Targets:
+dev-workspace/master, vpsfree-dev-workspace/master, workspace/master,
+vpsadminos/staging and vpsfree-cz-configuration/master. Prepare necessary exact
+composition pins, preserving unrelated current source/pins and host/profile
+compatibility; verify D3 design and final changed-source review before long
+package checks. A demonstrated system-deployment requirement must be surfaced
+rather than silently added. No lifecycle or team reconfiguration approval.
+
+## Delivered and activated
+
+All five exact final heads are integrated; profile generation229 installs the
+reviewed composed application with updated authoring/review skills. Independent
+review, source/graph compatibility, required package/check outputs and installed
+health/current-thread/native/system evidence passed. Typed aitherdev reservation
+released and verified. Full rollout/source/store/lineage evidence in rollout.md;
+current summary state.md. No full system deployment, new member, lifecycle action
+or remaining operator step. Preserve branches/session for follow-up.
