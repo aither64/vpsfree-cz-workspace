@@ -16,11 +16,11 @@ needed for these aliases. Preserve intentional private addresses and unrelated D
 ## Delivery
 
 Architect investigates the relevant definitions and records a bounded brief in
-[design.md](design.md). One implementer owns zone edits, relevant quick checks,
+[design.md](design.md), accepted for implementation. One implementer owns zone edits, relevant quick checks,
 hooks, commit, feature publication and evidence. Lead accepts the package and
 assigns independent final review after the commit and quick checks. Publish the
-feature branch; integration into master requires explicit user direction.
-Production deployment is outside this request's current delivery step.
+feature branch; user approved integration into configuration master once verified.
+User will deploy; no deployment is assigned to this session.
 
 ## Compatibility and recovery
 
