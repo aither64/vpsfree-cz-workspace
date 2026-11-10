@@ -73,3 +73,48 @@ modify the live selected package as a test. Record concise evidence only.
 
 Runtime session/portal guides own behavior, limits and recovery. Workspace
 instructions own batch stopping criteria and the normal-index-metadata rule.
+
+
+## Follow-up: cold observers and session settings
+
+Live investigation found all four user-selected observers ready/enabled but
+absent from recovery active_threads. The scheduler returns before recording
+cadence because it requires recoveryHeld(observer)==false. The existing
+SendProgressCheck/sendWithRecovery boundary already durably queues then activates
+cold recipients, preserving submission identity and recovery permission. Remove
+that premature observer-only gate; retain root/session admission and activity
+checks. Test with actual RecoverSessions=true and cold member permission, plus
+native cold progress dispatch. Do not hand-edit recovery records or send manual
+work to the four sessions as a workaround.
+
+User additionally requests moving Progress checks from Team to Settings,
+per-session cadence and a Check now button. Keep the member in Team. Store
+optional intervalMinutes in progress state (absent/zero means 15); accept whole
+minutes 1..1440, bounded by the worker's one-minute visit cadence. GET exposes
+the effective value; POST can update enabled and/or intervalMinutes, or request
+checkNow alone (the user explicitly requested a Check now button). Reject invalid/ambiguous requests. No lifecycle/roster schema or
+Codex version change. Old packages ignore the new optional field; rollback uses
+the old 15-minute behavior and may drop the custom interval when rewriting
+progress state. No irreversible state conversion is involved.
+
+Check now explicitly requests one observation and may run while idle or paused;
+it never unpauses automatic scheduling. Reuse normal admission, ownership,
+manual-work deferral, stable pending IDs and deadlines. Automatic scheduling
+still requires active development. Check now refuses another pending check or
+an active manual observer turn. Quiet/concern settlement remains shared; results
+may update the portal while idle, but never wake an idle lead. Unknown dispatch
+is observed without automatically repeating the manual request.
+
+Use existing settings panel, number input and button styles. Keep the recurring
+concern banner above Codex. Runtime guides own the controls and scheduling
+semantics; site team docs link there and state Settings for pause/configuration.
+No KB publication is involved.
+
+Acceptance: each of the four ready observers can be scheduled without an earlier
+manual assignment; auto idle/human-wait gates hold; old state defaults15;
+per-session intervals persist and isolate; Check now submits once and remains
+paused/idle afterward; duplicate/pending/manual work is protected; controls appear
+only under Settings. Quick regression batch should take under one minute; one
+composed build after independent review is sufficient. No system VM rerun is
+needed for unchanged host/lifecycle behavior. Deployment uses normal owned
+profile switch with matching consumer pins and unchanged native executable.

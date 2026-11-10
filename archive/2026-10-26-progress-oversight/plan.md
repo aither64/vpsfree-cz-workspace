@@ -38,8 +38,8 @@ changes its existing runtime-channel selection and workspace user profile.
 The user initially authorized implementation; later explicitly authorized
 “you can deploy aitherdev using vpsfree-cz-configuration”. This adds the
 configuration repository's ordinary runtime-channel pin and aitherdev deployment,
-plus workspace user-profile activation after review/checks. Default-branch
-integration remains unapproved. Prepare outputs before machine ownership;
+plus workspace user-profile activation after review/checks. The later direction “ok, merge it and release aitherdev” explicitly approved
+all three master integrations and the retained machine release. Prepare outputs before machine ownership;
 retain the machine after deployment until verified effects and approved integrated
 lineage satisfy the installed retention rule. Preserve selected runtime/native
 behavior and assess the actual live baseline before activation.
@@ -56,3 +56,21 @@ justified-long-check scenarios. Complete quick checks, commit, independent final
 whole-branch review, then applicable longer checks/pilot. Preserve normal hooks.
 Keep command/revision/result/log evidence concise. Runtime behavior belongs in
 its session/portal guides; site policy belongs in workspace guidance.
+
+
+## Follow-up requested after release
+
+Investigate observers that remain stopped in the four named sessions and fix
+cold activation in the scheduler. Move Progress checks to Settings, configure
+frequency per session, and add Check now, as explicitly requested. Keep automatic
+idle protection. Follow-up design and acceptance criteria are in design.md.
+Use existing worktrees and append commits after merged heads; never rewrite
+merged history. Preserve the prior deployment identity and active conversations.
+No system activation is required for unchanged host behavior. The user's earlier
+aitherdev deployment authorization continues for this corrective application
+rollout. New expanded feature scope needs renewed master integration direction
+under the Git procedure; previous merge approval was consumed by that release.
+
+User subsequently directed “ok, merge and release”, approving the expanded
+follow-up master targets in all three repositories and machine release. All
+three merges and release completed; only post-merge CI observation remains.
