@@ -3,6 +3,8 @@
 This workspace coordinates independent vpsFree.cz Git repositories. It is not
 a monorepo. Track work, affected repositories, worktrees, and known compatibility
 and deployment constraints here.
+See [observability access](docs/how-to/observability-access.md) for reading central
+logs and querying monitoring metrics from aitherdev.
 
 ## Required procedure routing
 

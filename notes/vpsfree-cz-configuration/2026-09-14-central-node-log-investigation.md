@@ -1,7 +1,9 @@
 # Central node logs and livepatch attribution
 
-For read-only investigations from aitherdev, use
-`ssh root@log.int.prg.vpsfree.cz`. The shorthand `log.int` and
+For routine log reads from aitherdev, use the
+[observability access guide](../../docs/how-to/observability-access.md).
+The investigation below used `ssh root@log.int.prg.vpsfree.cz`.
+The shorthand `log.int` and
 `log.int.vpsfree.cz` did not resolve in this environment.
 
 Kernel/authentication logs are under
