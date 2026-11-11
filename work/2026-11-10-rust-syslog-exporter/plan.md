@@ -21,11 +21,21 @@ suggest a solution, prepare a plan for implementation, integration into vpsfree-
 
 ## Approach
 
-This phase produces a proposed solution and an executable implementation plan.
-It does not change application code, configuration, production or default
-branches. Establish the Ruby input/metrics contract and actual consumer graph,
-then choose a small Rust design with measurable burst throughput and explicit
-backpressure and loss semantics. Architect owns [design.md](design.md).
+The initial proposal phase is complete. The user then authorized implementation
+and preparation, explicitly requiring a stop before deploying log.int without
+approval. Complete the Rust replacement, configuration preparation, independent
+reviews, local builds and measured verification on published feature branches.
+Default-branch integration and deployment each need separate explicit direction.
+Architect owns the accepted [design.md](design.md); lead owns scope and acceptance.
+
+Implemented solution: a single Rust binary with a dedicated ordered FIFO reader,
+reusable bounded framing, indexed host routing, cached metric handles and
+monotonic flare expiry. Serve Prometheus text separately with `prometheus` and
+Axum/Tokio. Preserve all 18 families and the JSON/FIFO/9102 contracts. Replace
+Overcommit with `.githooks` calling shared Cargo checks; replace configuration's
+local Ruby package with `rustPlatform.buildRustPackage` and the Puma command with
+the Rust CLI. Full interfaces, package sequence, intentional fixes, performance
+targets and remaining gates are in the design.
 
 The reference confctl session is inspiration, not authorization to access its
 private records or worktrees. Use published/default project sources where useful.
@@ -41,6 +51,11 @@ private records or worktrees. Use published/default project sources where useful
   Actions. No crates.io publication is needed.
 - Replace Overcommit and remove Ruby source/build/runtime dependencies from the
   exporter. Do not remove unrelated Ruby infrastructure in consumer repositories.
+- User added disk management: inspect free space and session-owned Cargo target,
+  temporary and benchmark output sizes; reuse outputs where useful and remove
+  proven owned disposable data promptly once no longer needed. Avoid redundant
+  debug/incremental artifacts. Preserve needed source/evidence/recovery data and
+  other sessions' files; do not use broad cleanup or Nix-store deletion.
 
 ## Compatibility and deployment
 
@@ -54,14 +69,19 @@ future operations requiring the applicable authorization.
 
 Readers: exporter maintainers and log-host operators. Current investigation and
 proposal belong in this session; lasting input/metric contracts and performance
-instructions will belong in exporter docs, and site operations in configuration
+instructions are in exporter docs, and site operations are in configuration
 docs. Evidence owners write ruby-contract.md and configuration-integration.md.
+
+- [Ruby behavior and removal inventory](ruby-contract.md).
+- [Configuration, package graph and rollout investigation](configuration-integration.md).
 
 ## Testing plan
 
-Plan parity fixtures from the existing Ruby implementation; parser/state/HTTP and
-real rsyslog transport tests; formatter/lint/tests in local hooks and Actions;
-release-mode flood benchmarks against Ruby on the same corpus and hardware;
-configuration evaluation/build and a bounded staged rollout. Acceptance must cover
-count correctness, queue/loss observation, scrape latency and memory as well as
-messages per second. Exact commands and thresholds follow inspected evidence.
+Coverage includes real pinned Ruby parity fixtures, parser/state/HTTP and FIFO
+regressions, formatter/lint/tests in hooks and Actions, release-mode flood
+comparisons on matched inputs/resources, configuration evaluation/package/host
+builds, and pinned rsyslog failure experiments. Acceptance covers count correctness,
+loss observation, scrape latency and memory as well as messages per second.
+Design contains targets; state and linked owner/review/verification records contain
+actual commands, results and limitations. A staged production rollout is prepared
+only; execution and live usability verification wait for deployment approval.
