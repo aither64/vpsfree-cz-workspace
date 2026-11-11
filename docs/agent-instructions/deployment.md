@@ -15,6 +15,13 @@ profile activation. Deployment and release supply no merge or lifecycle approval
 Legacy jobs and reservations retain their original approval, integration-proof
 and recovery requirements through the runtime's operations guide.
 
+For new or changed shared machine references in confctl configuration, use
+existing authoritative machine module fields through the established
+`confLib.findMetaConfig` lookup (`cluster = config.cluster`, machine `name`),
+for example `.addresses.primary.address`. Document intentional exceptions beside
+the configuration. This rule does not require refactoring unrelated constants
+or unchanged references.
+
 In every confctl-managed configuration repository, inspect its defined
 channels and the channel-to-input mapping before updating a flake input. For a
 normal update to a published upstream revision, run
