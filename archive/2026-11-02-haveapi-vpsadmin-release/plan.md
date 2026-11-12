@@ -13,7 +13,7 @@ long CI. Leave this session open.
 
 - vpsadmin (master), consuming published HaveAPI 0.32.2.
 - vpsadmin-go-client (master), vpsadmin-rust-client (main),
-  vpsadmin-ts-client (main), exact repository identities to confirm in design.
+  vpsadmin-typescript-client (main), exact repository identities to confirm in design.
 - vpsfree-cz-configuration (master), vpsadmin channel only.
 - HaveAPI upstream publication belongs to the cooperating release session.
 

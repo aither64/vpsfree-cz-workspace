@@ -1,0 +1,6 @@
+- Result: **passed**, exit status 0.
+- Tested revision: `1ab58627a225589fefc983829de5c4cfee770b3b`.
+- Command: `nix develop --no-update-lock-file --command bash /home/aither/workspace/ai/vpsfree.cz/work/2026-11-02-haveapi-vpsadmin-release/rust-bundle-setup.sh`
+- Elapsed time: about 40 seconds.
+- Log: `/home/aither/workspace/ai/vpsfree.cz/work/2026-11-02-haveapi-vpsadmin-release/rust-bundle-setup.log`
+- No operation remains running.

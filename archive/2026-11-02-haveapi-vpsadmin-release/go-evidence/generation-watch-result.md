@@ -1,0 +1,4 @@
+- **Result:** Passed (exit status `0`); completed in about 19 seconds. No process remains running.
+- **Revision:** `1ef9b204ba45bb261d3334be5c555cc1856b713b`.
+- **Command identity:** The requested `nix develop .#client-go --command bash …/go-evidence/generate-fresh.sh`, with the specified environment, run from `haveapi-go-tools`.
+- **Evidence:** Full log at [`generate-fresh.log`](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-02-haveapi-vpsadmin-release/go-evidence/generate-fresh.log); exit status recorded in [`generate-fresh.exit`](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-02-haveapi-vpsadmin-release/go-evidence/generate-fresh.exit). The log ends with generated Go file names and hashes for `Gemfile.lock` and `schema-api-7.0.json`. No failure excerpt; no unexpected local kernel build observed.
