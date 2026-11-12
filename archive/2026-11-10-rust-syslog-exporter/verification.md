@@ -4,23 +4,39 @@ Owner implementer0. Evidence-only package, dispatched after I/C2 acceptance.
 No production access, deployment, dry activation, copy to production, machine or
 merge claim, default integration or new shipped source is authorized.
 
-## Phase and measurement gate
+## Current V3 disposition
 
-**V complete and accepted for measured-envelope preparation on final faf/3hk.**
-The corrected two-consumer gate passed:42/42responses200,1.04Mrecords,gap0.
-All final comparison, transport and lifecycle cases have ended; evidence is
-accepted by the lead with explicit limits below. Final receipts live in
-`measurements/final`.
-No shipped source changes are part of V. Historical8ef/4gb results below retain
-their original scope and do not certify the corrected artifact. Current build
-and source identities are in the final-gate section and
-`c2-artifacts/i2-build-verification-summary.json` (19tests, corrected host653paths).
-Earlier187.714s package/127.576s host and rollback-transfer results belong to
-75b/4gb and remain in `c2-artifacts/retained-build-recovery-summary.json`.
+**V3 COMPLETE, READY FOR LEAD ACCEPTANCE.** Final source
+`891db6b82ccd37e985507c654050143e165041a7`, tree
+`4b28b6924e042ebf7582b9a0a91eea0bbbddc429`, configuration
+`dda57166bd8bb6d85a74decdd05a8810933bdecc`, actual Nix release package
+`gv3akrpsz9skwi7skkbkf0kb0wskbzn8` passed the assigned focused verification.
+R3 had no findings; local hooks/25 tests, exact CI43116296064 and C4 release25
+checks passed before this evidence-only batch. Both measured gates were explicitly
+released. No shipped source, driver, dependency, index or commit changed.
 
-The goal is a bounded local measured envelope, not an all-load losslessness or
-exclusive-hardware claim. Unexpected failures stop the current batch for diagnosis.
-Deliberate saturation loss is retained as evidence and cannot be relabeled a pass.
+- Parity:17 paired legacy deltas agree with retained actual Ruby, plus one
+  explicit replacement-label policy case. Raw-FF intact alerts are retained;
+  interrupted ASCII signatures do not become false alerts.
+- All12 matched100,000-record cases completed with exact counts, zero reader
+  gap, no scrape errors and no forced shutdown. Median ordinary rates:
+  Rust66,435/s, Ruby8,502/s; median OOM:Rust32,313/s, Ruby3,963/s.
+- Final65-second fixture processed1,040,000 records at offered16,000/s with
+  all42 paired/60-second consumer responses200, maximum6.627ms, zero gap.
+  RSS settled at8.106MB(decimal); no monotonic growth after the warm-up plateau.
+- Every one of20 exact launched V3 units has MainPID0 and empty ControlGroup;
+  all watcher command cells/sessions are joined. Retained active/exited or failed
+  registration records do not represent running processes. No known V3 effect
+  remains. The never-launched planned UUID is separately not-found.
+
+Detailed V3 results and limitations are at the end of this record, with compact
+receipts in `measurements/v3-final/`. No production access or mutation occurred;
+current3hk/gsw and C4 recovery roots remain untouched. Lead owns acceptance,
+retention release and any subsequent rollout/integration. Production peak and
+isolated causal normal-scrape capacity impact remain unestablished. Historical
+8ef/faf/6ec/3hk evidence below retains only its original scope. The original
+measurement paragraphs in the commit message still refer to their original
+faf/6ec-equivalent3hk binary, not this substantive891 successor.
 
 ## Historical8ef measurement identities
 
@@ -578,5 +594,195 @@ after compact receipts; only small useful wire/trace/log evidence remains. The
 GC or session lifecycle was touched. C2 stable retention cleanup remains the
 lead's next dependency; V authorizes none. No production access, deployment,
 dry activation, default integration or claim occurred. Session stays open.
+
+Session: <https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-11-10-rust-syslog-exporter/>.
+
+
+## Historical V3 preparation: C4 delivered, lead gate still held
+
+C4 delivered complete/quiescent configdda57166/treef56d93 over e91, provider891/
+tree4b28. Final release package is
+`/nix/store/gv3akrpsz9skwi7skkbkf0kb0wskbzn8-syslog-exporter-0.14.0`, binarySHA
+`14b542eb040024f0245a645d4ec338c5bdb52b502eb8f520669f410737500bd4`, NAR
+`sha256-ea5OgznIj3F/HV/RH2VReomvJCWiIpPSSKYC3CXv2GU=`. All25 release tests
+passed172.706s; Rust1.95 release build/check with unchanged manifests/lock/profile/
+driver, seven-path runtime without Ruby/Python. K5/67host JSON remains exact.
+
+Normal host is
+`/nix/store/79kkfqwr8mc82g5si9ifzkl9ygaqys5r-nixos-system-log-26.05.20261026.718f670`,
+NAME`2026-11-12--00-30-03`, NAR
+`sha256-KtlZ05Wflr7PywgK7JEyXuURrqY8zslMg4cdO+t6U2c=`,653valid paths,120.117s.
+Exact complete graph/profile/closure/root/effect identities remain C4-owned in
+`c2-artifacts/c4-prepared-summary.json` and linked receipts. All C4 parents and
+watchers ended; no queued cleanup or local debug-target need. Immediate3hk/gsw
+and originalkgr recovery roots remain retained.
+
+Only `c4_gate_released` is nowtrue in the V3 manifest; `lead_gate_released` remains
+false, so every recipe still refuses before candidate launch. No measured work
+or local target cleanup has begun. Explicit lead release remains required.
+
+
+## V3 execution gate and one focused environment correction
+
+Lead explicitly released measured execution after C4's complete/quiescent
+both-build receipt. Final identity guard passed gv3 SHA14b542/NAR ea5O,891/
+dda57166, exact driver/lock/K5/67hosts and release25 profile. Before any measured
+candidate, removed only the exact owned Cargo target after633owned-process
+reference checks (zero references/unreadable), R3/Nix25/no-rerun proof:
+391,073,792allocated bytes /384,496,114apparent; absence asserted. Exact receipt
+is `measurements/v3-final/target-cleanup.json`. No C4/store/peer root touched.
+
+First registered parity campaign d37b1c0f-0ca8-4223-b782-eeda67442ca9 exited2 in
+5.015s, MainPID0/emptycgroup. Nested P2-derived commands used baredev-session,
+which was absent in the public service environment PATH. commands[] and the
+planned Ruby UUIDc403e364-e614-404a-b392-95464ef22038 LoadState=not-found/
+MainPID0 prove no application or payload was launched. The failed raw receipt's
+reaped=false reflects a planned unregistered service and failed lookup, not a
+live child. Failure/journal/fixture scratch remain preserved under
+`parity-attempt1` and `parity-environment-correction.json`. Comparisons and normal
+smoke had not launched.
+
+One operational environment correction uses the exact public absolute CLI path
+and a finite registration-ack handoff before nested services. No source, input,
+metric, driver or transport change. Fresh focused retry UUID
+d545db88-2ab6-48d4-b279-c5fd0a49383d first repeats parity only; remaining stages
+can start only after it passes. Their original IDs are retained. This is not
+a repeated measured matrix. Current3hk/gsw and all C4 roots remain untouched.
+
+
+## V3 decisive parity result on final gv3
+
+Focused corrected parity campaign passed. Main group19.389s and fresh svlogd
+group18.855s yielded17 paired cases with equal legacy deltas in actual retained
+Rubyw7 and final891/gv3. Both exact233byte supplied frames remain program1 and
+leave the null-pointer gauge0; direct kernel/FQDN control raises1. Corrected
+Unicode PID/svlogd/namespace, NBSP/ASCII+NUL LXC strip and colon-zero/no-colon/
+ordinary-colon cases agree. Interrupted rawFF crash signature remains0; an
+intact signature followed by rawFF gives0→1, and before-signature corruption is
+accepted too. Replacement diagnostic increments once per invalid-body record.
+
+One additional Rust-only policy case sends FF, FE and literalUFFFD namespace
+bodies: all share the documented replacement label and count3, while exactly
+the two invalid bodies increment the diagnostic (3→5 in the group). This is
+explicitly not an arbitrary Ruby binary-label equivalence claim. New source's
+strict-header/borrowed-body/byte-bound properties retain committed Nix25 tests.
+
+All four parity application UUIDs are inactive/dead, MainPID0, empty cgroups
+and reaped; owned successful scratch was removed only after that proof by the
+finite parity recipe. Parent inspected actual receipts, summarized in
+`measurements/v3-final/parity-summary.json`; raw main/svlogd configs, commands,
+input hashes, before/after/deltas and reaping remain linked. The failed startup
+attempt remains separate. Comparison and normal stages follow sequentially
+under the existing watcher; no parity matrix was blindly repeated.
+
+
+## V3 final matched comparison on891/gv3
+
+Actual commands were `python3 measurements/v3-final/campaign.py parity`, then
+`comparisons`, then `two_consumers`, launched by the fresh installed-policy
+Luna/low native watcher `/root/v3_parity_retry`. Each campaign receipt records
+its exact absolute argv, UUID, GNU outer deadline, source/input guard, load and
+unit effects. The first startup environment failure and focused correction are
+preserved above and in `parity-attempt1/`; no candidate or payload ran in that
+failure. Successful campaign elapsed times were44.233s parity,161.140s
+comparisons and72.638s normal smoke (278.011s combined command-stage time;
+not a claim about total wall time including diagnosis or reporting).
+
+Each profile ran Ruby then Rust, repeated three times,100,000 records per run,
+seed20261110/cardinality1, exact67-host JSON and reviewed driver. Candidate
+CPUs60,61, generator62, controller/sampler0 were identical. Both request1MiB;
+Rust reports effective1,048,576 bytes, while Ruby's healthy startup requires its
+unrescued1MiB pipe resize to succeed, as established by the retained source and
+shared allowed-capacity preflight. Ruby has no capacity metric. The one-second
+comparison scrape interval is stress relative to production60s, and short Rust
+runs expose fewer scrape samples than longer Ruby runs. Shared load1 ranged
+about9–15 at comparison boundaries; CPUs are affinities, not exclusive hardware.
+
+| Profile / implementation | Records/s, median (range) | Sampled peak RSS, MB range | Candidate CPU seconds, median (range) |
+| --- | --- | --- | --- |
+| Ordinary Ruby |8,502 (8,076–8,570)|36.962–37.220|11.68 (11.61–12.79)|
+| Ordinary Rust |66,435 (63,051–71,926)|7.528–7.639|0.55 (0.55–0.56)|
+| OOM Ruby |3,963 (3,960–4,115)|38.138–38.199|25.10 (24.12–25.14)|
+| OOM Rust |32,313 (32,152–33,246)|8.004–8.176|2.97 (2.00–2.98)|
+
+Ratios of medians are7.81 ordinary and8.15 OOM. These are finite processing/drain
+observations on the same shared host; generator limits and host scheduling can
+limit rates. They do not establish sustained maximum or production-peak capacity,
+or isolate performance changes against the old3hk artifact across different
+host-load periods. CPU/RSS are finite samples, not exclusive-host accounting.
+All12 runs accepted exactly100,000 workload records after first-line warm-up;
+marker/diagnostic traffic is distinguished by the reviewed driver. Submitted
+unique sequence count is100,000; FIFO/exporter unique-ID stages are unavailable.
+Zero count gaps do not prove duplicate-free delivery or arbitrary losslessness.
+
+All six Ruby runs ended with pinned Puma's expected TERM status-15 after complete
+counts and final exposition, promptly reaped without forced kill (31.9–32.3ms).
+All six Rust runs ended0, no forced kill (15.5–15.8ms). This preserves the legacy
+shutdown disposition instead of normalizing it. Every finite enclosing service
+returned0 with no remaining PID. Exact results, per-run commands/samples/unit
+properties and summary are `v3-{ordinary,oom}-{1,2,3}-{ruby,rust}.*` and
+`comparison-summary.json` under `measurements/v3-final/`.
+
+## V3 normal dual-consumer result
+
+The final release binary processed1,040,000 workload records, offered16,000/s,
+with write65.000015s and drain65.002292s (observed15,999.44/s), exact count and
+zero reader-stage gap. Driver periodic HTTP was disabled. After warm-up,
+20 barrier-started request pairs and two legitimate60-second consumer requests
+at60.270s all returned200; the final marker was later at65s, avoiding a third
+implicit consumer. The startup diagnostic also ended before paired requests.
+All42 requests returned valid exposition with progressing ingestion counts.
+
+Median latency was4.048ms; maximum and finite nearest-rank p99 were6.627ms.
+With only42 observations, that p99 equals the maximum and is not a tail guarantee.
+No503 or scrape error occurred. Candidate CPU was11.35s for the65s workload.
+The323 RSS samples show7.975–8.106MB after5s,8.106MB throughout25–35s and55–65s;
+final RSS and VmHWM were both8,105,984 bytes. This is a bounded fixed-cardinality
+plateau, not a lifetime leak proof. Candidate/driver exited0, no forced kill,
+shutdown15.55ms. Details are `two-consumers.json`, `two-consumers-driver.json`
+and `two-consumers.samples.csv`.
+
+This closes normal two-consumer compatibility for the actual891/gv3 candidate
+at the measured16k/s envelope. Isolated causal<=10% throughput impact of normal
+scraping and production peak remain unestablished. Historical1Hz stress/noise,
+old high-cardinality and pinned producer/overload/short-write/restart/backlog
+results retain only their original artifact and unchanged-path scope; none was
+rerun or claimed as a new891 transport certification. No new promtool/tool build,
+cache fetch or release build occurred during V3. The inherited literal-counter
+naming lint remains distinct from parse errors.
+
+## V3 final identities, effects and handoff
+
+`release.json`, `verified-release.json` and C4's
+`c2-artifacts/c4-prepared-summary.json` bind the actual891/tree4b28 source,
+dda57166/treef56 configuration, Rust1.95 release/strip profile and package/host
+NARs. Binary SHA256 is
+`14b542eb040024f0245a645d4ec338c5bdb52b502eb8f520669f410737500bd4`;
+package NAR is `sha256-ea5OgznIj3F/HV/RH2VReomvJCWiIpPSSKYC3CXv2GU=`.
+Exact final host79kk/NAME2026-11-12--00-30-03 and its653-path graph remain C4-owned.
+The final source is clean at891/tree4b28; unchanged source/driver/lock/profile
+hashes and complete reviewed7c5..891 / affected6ec..891 lineage are preserved in
+`exporter-review.md` and `final-effects-and-source.json`. This is a substantive
+successor to deployed6ec/3hk, not a tree-equivalent metadata successor. There are
+no migrations and no new history amendment in V3.
+
+Parent independently queried all20 exact launched V3 unit UUIDs after the watcher
+joined all commands: every MainPID0 and empty ControlGroup. Current display is
+15 retained active/exited, four inactive/dead and the single preserved failed
+pre-application startup; these are registration states, not running children.
+The watcher's earlier inactive/dead wording for retained root units is superseded
+by this exact parent query. The planned, never-launched Ruby UUID is not-found.
+No candidate, generator, sampler, timer, command cell or cleanup is left running.
+Full per-unit authoritative properties are in `final-effects-and-source.json`.
+No stop/retire action was used merely to change a displayed registration state.
+
+Final free space was108,416,884,736 bytes (~101GiB), V3 receipts about1.63MB before
+this final summary. Successful disposable corpus/FIFO directories were removed
+by their finite recipes after counts and reaping; compact raw frames and the
+small failed startup scratch remain as diagnosis evidence. The own Cargo target
+is absent, as its pre-batch exact ownership/reference receipt proves. No peer
+file, store path, C4 root, session lifecycle, production machine or default branch
+was touched. C4 retention cleanup remains held for lead disposition; I0 starts
+no subsequent package or action implicitly.
 
 Session: <https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-11-10-rust-syslog-exporter/>.

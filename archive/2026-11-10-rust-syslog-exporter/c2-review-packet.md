@@ -1,5 +1,8 @@
 # C2 final consumer review packet
 
+Current successor: see the C4 binding section at the end. The original C2 packet
+and exact review range below are retained as historical evidence.
+
 Status: ready for lead acceptance and independent consumer review. Implementation
 owner implementer1 retains C2 and its follow-up fixes. No long candidate package
 or host build, activation, deployment, dry-activation, copy or default-branch
@@ -214,3 +217,56 @@ output deletion or duplicate release build. All operation-owned commands/watcher
 have completed.
 
 Session: <https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-11-10-rust-syslog-exporter/>.
+
+## C4 final binding, reviewed ranges and delivery boundary
+
+Current consumer is **e91c8d21055b7110182fd4c531389947f180e359..dda57166bd8bb6d85a74decdd05a8810933bdecc**
+(one commit; treef56d93d060cc9e0e44917a32452d8a9c3bccbab9).
+The original reviewed C2 range3c..75b and affected I2/M proofs remain unchanged.
+Deployed consumer3c..ebe/provider6ec/current3hk remains a supported exact recovery
+boundary, protected by refs and local source/output/host-drv roots. The clean
+rebase ontoe91 preserves the exact deployed patch; only upstream public DNS,
+health checks and unselected vpsfStatus changed. No selected logging input drift.
+
+After that rebase, only packages/syslog-exporter/default.nix changes revision
+6ec→891db6b82ccd37e985507c654050143e165041a7 and source hash
+sha256-eWPE7ZtE8d4+D8Jr0Dm40ykjoW6PBtLGqMI2GJLhDNI=.
+The native alternate-index full reconstruction equals the final tree and lead's
+independent expected tree/recipe blobdf91bac5a20cb62951f94d035a3b3f378fcd520e.
+Lead accepted this review binding in c4-lead-expected-tree.json and released local
+builds. There is no obsolete pin stream, migration, extra module/docs/test/lock
+change or new shipped operational instruction. Existing operations guide remains
+applicable; no additional writing pass is required for unchanged prose.
+
+Accepted independent R3 source range7c5a8e74..891db6b8 (affected6ec..891) is
+substantive, with no findings,25 source tests/hooks and exact-head CI success.
+See r3-final-review.md and design.md D7. Manifest/lock/toolchain/profile/driver/
+HTTP/CLI identities are unchanged, but src/parser/input/collector changes require
+new package and live-readiness verification; prior3hk/V numbers are historical.
+No universal parser parity or new production peak/losslessness claim is made.
+
+Quick consumer check and all active hooks pass; SSH publication/remote verification
+passes; worktree clean. Normal package zrd9→gv3 and Git-confctl host7sxm→79kk
+identities, source and complete raw input graphs are saved. Typed vendor staging
+hashdvnEE and processed outputdfpq/NAR+zko stay distinct. Full Nix package25tests,
+version/config, runtime closure and normal host/source/unit/policy/closure checks
+are executing next, followed by lead-gated focused V3 using that exact binary.
+Current production stays3hk/gsw. No new production probe/copy/switch/claim/default
+merge by I1. Both immediate Rust rollback and original Ruby rollback stay rooted.
+
+Documentation inventory: parser/encoding behavior belongs to provider
+`docs/reference.md` and its tests; reusable site operations remain unchanged in
+`docs/operations/syslog-exporter.md`; current revisions/results/recovery are in
+this session packet, c2-evidence.md and c2-artifacts. Lead owns rollout/state and
+review acceptance. Original receipts are preserved rather than rewritten.
+
+Session: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-11-10-rust-syslog-exporter/
+
+C4 local verification now complete: new gv3 Nix package passed all25 RELEASE
+tests; normal79kk host built with NAME2026-11-12--00-30-03, all653 runtime paths
+valid. Version/config67/runtime7path checks pass; no Ruby/Python in package
+runtime. Host unit/JSON/FIFO/state/logging-policy checks preserve reviewed
+contracts. Both builds and all effects quiescent. Exact binary/NAR/profile/full
+input/closure/root receipts are linked in c2-artifacts/c4-prepared-summary.json.
+Immediate deployedRust and originalRuby fallbacks remain rooted. V3 and cutover
+remain lead-gated; no production or default-branch action by this owner.

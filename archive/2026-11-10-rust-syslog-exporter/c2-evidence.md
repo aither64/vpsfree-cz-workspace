@@ -1,5 +1,72 @@
 # C2 configuration preparation evidence
 
+Current C5 integration preparation is complete: fresh mastere91/fixed clean
+dda, clean detached configuration-merge-target and retained declared hook/tools
+environment are ready for lead. See `c2-artifacts/c5-integration-ready.json`.
+D4 subsequently passed the single gated240s live window:5healthy snapshots,
+HTTPall200, natural intake/filelogging, strict79kk/system145/cleandda/PID69580,
+unchangedsyslog63415; rejected/reconnect/body_decoded0. All known verifier effects
+joined; no mutation/claim/source change by I1. See
+[deployment verification](deployment-verification.md),
+`deployment/d4-verification-summary.json` and C5 receipts. Existing18 roots/
+generations unchanged, with accepted auxiliary c5-dev-env; no cleanup/probe queued.
+Accepted C4 checkpoint follows.
+
+Current C4: **final pin/rebase, both local builds, required checks and stable
+retention complete; all C4 build/command effects quiescent**. Configuration
+**dda57166bd8bb6d85a74decdd05a8810933bdecc** over fresh e91, provider
+**891db6b82ccd37e985507c654050143e165041a7**. New package **gv3akrps** passed
+all25 release tests; normal host **79kkfqwr** is retained under local confctl
+NAME **2026-11-12--00-30-03**. Production remains3hk/gsw; lead gates V3 and any
+cutover. ImmediateRust and originalRuby rollback roots remain intact. See
+`c2-artifacts/c4-prepared-summary.json` and the C4 section below.
+
+Historical C3 checkpoint follows.
+
+C3 checkpoint: **prepared successor built, verified and stably retained; all C3
+effects quiescent**. Configuration **ebe9248d7f57f1cec22089d40432aa95b3b93f60**
+and provider **6ecada0a9d2f6457a11031a3a4ffc341584fb29c** remain unmerged.
+The retained base is3c; fresh upstream e91 was deliberately not adopted per lead
+scope decision. Lead accepted exact whole-tree/provenance reconstruction in
+`c2-artifacts/c3-lead-pin-reconstruction.json`, binding original reviews and no
+migrations. Only the provider recipe revision changes froma839; sourcehash, full
+provider tree, source/dependency/profile contents and actual3hk binary are equal.
+Original a839/faf review/build/V and distinct typed vendor receipts remain valid
+within the accepted content-equivalence boundary. Literal drv IDs differ.
+
+The fresh Luna/low watcher built normal host lr1ivf06→gsw7sx6v in162.683s, exit0;
+actual local confctl NAME **2026-11-11--21-51-14**. Host NAR is
+`sha256-n9ngXaq/qLjOCvcD39XUEfpuZFKPdchFP2uSUEyNWxo=` (15488bytes).
+All653 runtime closure paths are locally valid. Compared with measurednw3, only
+the system, etc and configuration-info JSON paths differ. Whole systemd unit
+directory, package3hk, JSON67, FIFO/state modes, rsyslog and logrotate identities
+remain exact. Provenance is schema1 cleanebe. Old Ruby exporter/gem and superseded
+Rust4gb are absent; unchanged app3hk uses its accepted19tests/NAR/V evidence.
+No Rust compilation, vendor fetch or benchmark was repeated.
+
+Only three existing own stable roots were updated after new-target validity:
+`retained/candidate-system`→gsw, `retained/configuration-source`→4lkw and
+`retained/normal-confctl-host-drv`→lr1. All10 stable targets are locally valid.
+Exact oldkgr/production959e rollback and3hk package roots remain unchanged.
+Final NAME/generation links are retained. Commands, targets, full graph/closure,
+NAR and native effect receipts are `c3-stable-root-update.json`,
+`c3-host-verification.json`, `c3-host-graph-delta.json`, `c3-host-runtime-closure.txt`
+and `c3-normal-host-build*` under c2-artifacts. Captured combined build output is
+complete; the separately emitted relative confctl log path was absent at the
+watcher's postcheck and was not investigated.
+
+The single fresh authorized read-only preflight at2026-11-11T20:33:19Z found
+actualkgr/profile143/clean959e and unchanged services/FIFO/empty state metadata/
+selected logging identities. No production messages or mutation occurred.
+`c3-deployment-driver-plan.json` now contains exact copy/dry-activate/switch argv
+for the final NAME and exact old-store rollback argv, all unexecuted by this
+owner. Lead owns machine claim, near-activation current check and the driver.
+Source-derived node2.stg command/metric/expiry evidence is in
+`c3-manual-alert-evidence.json`; no test alert was injected. Deployment is
+user-approved; integration remains unapproved. C3 is ready for lead acceptance.
+
+## Accepted C2 checkpoint before C3 (historical)
+
 Owner: implementer1. Current phase: **corrected builds and stable retention complete;
 all C2 command effects quiescent**. Current configuration head
 **a839ccf7e7ff07ac616ad7994af33f07975bd1b5**, provider
@@ -618,3 +685,168 @@ are in `c2-artifacts/stable-retention-cleanup.json`. Existing NAR/source/build
 proofs were reused without rehashing, rebuilding, fetching or production access.
 No GC/global-root query/store-path deletion or peer/lifecycle change occurred.
 C2 has no pending command, transfer, build or cleanup effect.
+
+C3 build release: lead accepted exact tree/package/input proof and released only
+normal host realization. Fresh installed-policy Luna/low watcher
+`/root/c3_normal_host_build_watch` owns the exact normal confctl command and logs.
+Dry-run lists9 small metadata/system derivations and4 tiny wrapper-hook
+substitutions, no kernel or Rust/application compile. Current3hk remains rooted;
+all existing stable root links remain unchanged until the new output is valid.
+Launch/policy/plan receipt: `c2-artifacts/c3-host-watcher-launch.json`.
+
+
+C3 final boundary: build and root/receipt commands ended, watcher stillRunning is
+empty. Free space at final check is95,294,574,592bytes (91% used); own temporary
+log directory is348,160allocated bytes, up4KiB from prebuild. Shared filesystem
+free space varied by about9.52GiB during the batch; only the exact own-file
+measurements are attributable here. No broad storage investigation, cleanup, GC,
+global-root query, store deletion or peer/lifecycle action occurred. No C3 owner
+copy, dry activation, switch, machine claim or default integration was performed.
+
+D3 follow-up: C3 accepted. A separate lead-released read-only240s deployment
+verification window is complete; see [deployment verification](deployment-verification.md).
+No C3 source or retention changes accompany this check.
+
+D3 final: all5 snapshots passed/HTTP200 over241.078s; current/profilegsw, cleanebe,
+exporter68364/syslog63415 and18legacy contracts stable. Natural known-host/byte/
+kernel counters and exact archive metadata progressed; no rejections/reconnects.
+Unknown-host trend remains unexplained, optional mon1/mon2 probes were refused,
+and no node2 trigger was observed. All D3 SSH/sampler/native/watch effects joined.
+No additional production probe, mutation or source/root action followed.
+
+
+## C4 independent preparation (historical)
+
+Ownerimplementer1 retains C4. D7 brief read at SHA256
+`c63269ba0005b647836f8b8e718e33d368c22e145588790d57739e68eff50f65`.
+One finite authorized read-only essentialservice check at22:38:01/06UTC confirms
+current/profilegsw/system144, cleanebe, unchanged exporter68364/3hk and
+syslog63415, HTTP200both, +1,199records/+730knownmessages/+584kernelmessages
+with zero rejections/reconnects. SamePID/exe allowed priorbinaryhash reuse.
+Exact command/result: `c2-artifacts/c4-essential-health-{command,result}.json`.
+No further production probe or ongoing sampler was started.
+
+Fresh remote master is e91c8d21055b7110182fd4c531389947f180e359. Its3changes are
+publicDNS/health checks and unselectedvpsfStatus; selectedstable/os/confctl nodes
+are unchanged. The ownbranch is clean and locally rebased, **unpublished**
+`dda99b7917fe1ce524cc1ec1dd82a4a78c2ece3d` over e91. Entire tree
+`0918a5fd5b4b6fb7d0c8807bb012db7bc65d3cd1` equals native reconstruction from
+e91 plus the exact deployed3c..ebe patch; old/new patch bytes and SHA256 match.
+Old/new ranges and deployed commit object are preserved. No migration, conflict,
+new providerpin or module behavior change occurred. Existing executable hooks
+and unchanged Gemfile/lock/Overcommit config remain; final pin must run active
+quick hooks. No reinstall or bypass occurred.
+
+Pure pre-I3 evaluation proves4075→4075 input graph paths; only4 provenance
+derivations (configuration-info JSON, etc, activation and system) change. Each
+whole derivation reconstructs exactly under configrevision/output substitutions.
+Existing packagefsb→3hk, unit/JSON/logging-policy outputs and selected logger
+inputs are unchanged. These evaluated zyaw/6d0 paths are **not final C4
+candidates and were not built or rooted**. No old-source app compile/vendor
+fetch or interim pin was published. Receipts: `c4-rebase-preparation.json`,
+`c4-rebase-runtime-equivalence.json`, `c4-pre-I3-host-evaluation.json` and graph.
+
+I3 implementer0 and R3 reviewer0 own the pending finalsource/review; lead owns
+release. C4 will use only that exact reviewed head for final pin/checks/review
+packet and Nix package/normalhost builds. Existing healthy3hk/gsw is the immediate
+rollback alongside originalkgr/Ruby/959e. Current source/input/output recovery
+roots are unchanged; dedicated currentRust rollback aliases must precede any
+future candidate-root replacement. No claim/defaultmerge/copy/activation/restart
+or recovery cleanup was performed. All current preparation commands are ended;
+C4 remains owned and waiting on its reviewed source dependency.
+
+## C4 final consumer binding and local build phase
+
+Final head dda57166bd8bb6d85a74decdd05a8810933bdecc, tree
+f56d93d060cc9e0e44917a32452d8a9c3bccbab9, is one commit above freshe91.
+SSH exact-ebe lease push and post-push feature/master verification passed.
+Native e91 + exact deployed3c..ebe patch + only provider revision/hash substitutions
+reconstructs the entire final tree. The lead independently matched it and accepted
+mechanical/rebase review reuse in c4-lead-expected-tree.json. No migrations or
+superseded pin chain remain; deployed ebe is protected at
+refs/dev-sessions/2026-11-10-rust-syslog-exporter/deployed-pre-c4.
+
+The provider891 tree4b28 is the accepted substantive D7/I3/R3 correction; all25
+source tests and exact CI43116296064 passed. Configuration only changes the
+recipe revision/hash after the equivalent rebase. The independently unpacked
+source hash is sha256-eWPE7ZtE8d4+D8Jr0Dm40ykjoW6PBtLGqMI2GJLhDNI=.
+Manifest/lock/toolchain/profile/driver/HTTP/CLI inputs remain byte-identical.
+Cargo.lock SHA256 remains031d0b542c8a95a8e0293cd7c62aa3c052b17c29342bbec4d4195feabb78ea1e.
+Typed vendor proof keeps staging cargoHashdvnEE distinct from processed dfpq
+NAR+zko. Package environment differs from old fsb only in src/out. This does not
+make old and new binaries equivalent: the final Nix package must pass25 tests.
+
+Scoped configuration check, Nix parse/whitespace and active Nixfmt/commit-message
+hooks passed. Full comparison captured. Exact pending package is zrd9c2lp→gv3akrps;
+normal Git-confctl host is7sxmmai9→79kkfqwr, source6cfcfq5j, clean final head.
+Dry package plan contains12 vendor/package/small-helper derivations and30 cached
+paths (443.5KiB download,2.2GiB unpacked), no kernel build; initial headroom108.56GB.
+The current exact input paths need reconstruction after previous store absence;
+no duplicate local Cargo release or generic vendor campaign was launched.
+
+Seven ordinary local roots now preserve explicit currentRust rollback systemgsw,
+configuration4lkw, exporter1if and hostdrvlr1, plus final C4 input/source targets.
+Each target was locally valid before registration and each link was checked.
+Originalkgr/Ruby/959e and existing generic current roots remain unchanged; no
+root was unlinked. Receipt c4-fallback-and-input-roots.json records exact argv.
+No further production access, source edit, default integration or deployment
+mutation by this owner. Build results will append below; V3 stays gated until
+both builds and all effects are quiescent.
+
+Receipts under c2-artifacts: c4-final-tree-reconstruction.json,
+c4-ssh-publication.json, c4-provider-input-proof.json,
+c4-typed-package-input-proof.json, c4-package-full-inputs.txt,
+c4-host-derivation-requisites.txt, c4-final-lock.json and c4-host-evaluation.json.
+
+C4 package milestone: exact zrd9→gv3 built in172.706s, exit0, all25 release tests
+passed; watcher cells/sessions joined. Actual binary SHA256
+14b542eb040024f0245a645d4ec338c5bdb52b502eb8f520669f410737500bd4;
+package NARsha256-ea5OgznIj3F/HV/RH2VReomvJCWiIpPSSKYC3CXv2GU=,
+6,425,384bytes. Version0.14.0 and --check-config on actual K5/67hosts pass;
+JSONSHA2561bbd6ae370b21067145c78cf68b21b0e7257549327cf7beb280f671c618426f9.
+Runtime closure7paths excludes Ruby/Python. Both Cargo build/check types are
+release, Rust1.95.0; Python is build-time only. Staging and processed vendor
+NAR metadata are saved separately. Headroom after build106.02GB. Fresh normal
+host watcher now runs normal confctl build (maxjobs2/cores4), dryplan13small
+metadata/unit helpers and3cached paths, no app/kernel compile. V3 remains gated.
+
+C4 final build/readiness checkpoint: normal host7sxm→79kk passed in120.117s,
+actual NAME2026-11-12--00-30-03, NARsha256-KtlZ05Wflr7PywgK7JEyXuURrqY8zslMg4cdO+t6U2c=.
+All653 runtime paths valid. Exactly6old/6new runtime paths account for package,
+exporterunit, systemunits, configinfo, etc and system. Exporter unit is identical
+after only exact3hk→gv3 replacement; syslog/logrotate unit bytes, direct immutable
+policy paths, K5JSON, FIFO/state rules and selected inputs-info are unchanged.
+Provenance is schema1 cleandda57166. OldRuby exporter/gem and old3hk are absent
+from the candidate closure; unrelatedRuby/Python remain for other services.
+
+Five ordinary stable candidate links now target the verified new host, package,
+configuration source, exporter source and normal host drv. All18 owned root
+targets locally valid; explicit gsw/4lkw/1if/lr1 Rust fallback, originalkgr/959e
+and normal old/new confctl generation links preserved. No root unlink, scratch
+cleanup, GC, production read/mutation, copy, activation, default merge or claim
+operation occurred. Final head/index/worktree clean, both native watchers and
+all parent command sessions joined. No C4 use of I0's debug target is needed.
+Final free space108.04GB; owned compact C2 artifact allocation4,268,032bytes at
+measurement. No ongoing local effect or sampler remains. V3 awaits lead release.
+
+Evidence harness limitations were corrected without rerunning builds: host log
+wrapper missed `sys` on its final exit after saving the successful subprocess
+exit0/result; complete combined log is retained. Confctl's separately named
+internal log was absent. A supplementary assertion incorrectly expected policy
+files in /etc; actual unchanged unit store references were checked, reusing the
+already successful closure/unit predicates. No source/runtime issue was found.
+Details are preserved in c4-normal-host-build-result.json and
+c4-host-verification.json. Final rootmap, build/NAR/closure/source graphs and
+quiescence are linked by c4-prepared-summary.json; original receipts remain.
+
+C6 accepted-scope auxiliary cleanup: after lead's C5/D4 acceptance, default
+integration/machine release and all reported shell/command exits, removed only
+retained/c5-dev-env and its exact owned generation/root symlink
+retained/c5-dev-env-1-link (both pointed to y90v3dxkpg33x4ar6vn968cdflwn5wwi-nix-shell-env).
+74 symlink-text bytes,0 allocated data bytes removed; no Nix store bytes claimed
+reclaimed. Exact owned command checks are quiescent; all18 preserved current/
+recovery/source root links still match and all targets are locally valid. No
+confctl generation, feature branch/worktree, source, evidence, gsw/kgr recovery,
+store path, GC/global-root query, profile selection, production or lifecycle
+action touched. Existing c5-integration-preparation.json records exact paths,
+checks/correction and empty stillRunning. No further action queued.
