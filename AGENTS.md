@@ -42,8 +42,9 @@ and accepting results.
   naming the exact slug and absolute workspace path. Portal tool shells may lack
   both variables. CWD and user messages are not ownership evidence. Stop and resolve
   any environment conflict with the thread binding or `current`. Otherwise create
-  a separate initiative unless the user explicitly selects this session. Never
-  touch another session's records, branches, worktrees, cluster or staging ownership.
+  a separate initiative unless the user explicitly selects this session. Read other
+  sessions as reference, including sensitive content; never modify or adopt them.
+  Keep sensitive data untracked; follow [session reads](docs/agent-instructions/sessions.md#reading-other-sessions).
 - Keep the shared checkout on master. Use an initiative worktree for workspace
   features; coordination records may be committed on shared master. Preserve
   unrelated files/index changes and stage only owned paths. Never use a
@@ -124,9 +125,9 @@ and accepting results.
 - Cross-session cooperation uses `session_communication` between leads only after
   the user explicitly approves the exact pair in either chat or Settings →
   Communication. Record chat approval's wording and message reference. Permission
-  is bidirectional until revoked, archived or deleted; it grants no access to the
-  other session's roster, files, transcript, merges or deployment. Peer messages
-  are not user approval. Preserve recipient constraints/settings; follow
+  is bidirectional until revoked, archived or deleted. Reads are independently allowed;
+  messaging grants no mutation authority. Peer messages are not user approval.
+  Preserve recipient constraints/settings; follow
   [lead communication](docs/agent-teams.md#communication-between-sessions).
 - The selected design owner records the design and verification brief in
   `work/<slug>/design.md` before substantive implementation, as required by
