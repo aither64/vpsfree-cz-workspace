@@ -1,0 +1,9 @@
+# Final affected E2 review
+
+Reviewer0 retainedSol/xhigh/read_only, verifiedsame thread/binding, general+risk. No newsourcefindings; range7f6fb0e5f58c5f76b573dc4df7124a4cae744dfd..f15bf5577924da84be217dcd925ab337e1c5c3c5 acceptedforscopedactualpushacceptance. Observerirc-hook-validation-coverage VALID/OPEN untilrealpositive/refrejectproof, nowaiver/runtimeclaim.
+
+Actualcleanstatus/HEAD/mergebase/fullsessionhistory/diff/workflow/flake/hookconfig/brief/evidence/probeloginspected. Onlybarepush→nixdevelop-cbundleexecgitpush originHEAD:master, exacttruegate/output/schedule/manual/checkout/actions/permissions/auth/nonforceunchanged. FlakelockedRuby/tools independentgeneratedgemset; E1leavesflakeinputsunchanged, shellHookselectsrefreshbundle andbundleexecpassesit toGit/hookchildren. No streams/stdin/argsrewrite, skip/config/manualGEMPATH/Ruby/profile/authframework. Hostgeneration+bundledcommitpassedbeforeambientpushfailure; bootstrapprobeisnotpushproof.
+
+Protectedmerged7f6retained; oneadditivef15bf55commit,nonoise/transitional/migrations/newupdate streams. PriorcheckoutstreamstaysprotectedE1. NoAPI/schema/state/protocolchange. Workflowownscommand,READMEunchangedaccurate; individualfailure/identity/acceptanceinsessionevidence. AdditiverevertpreservesE1/generatedpublishedhistory; no lostrecovery/docs moves.
+
+Quicksyntax/actions/gate/normalhooks+exactRSpec recordednotrerun. Requiredrealretainedbundle/localbareorigin exactcommandpositiveadvance+realOvercommitprepush, thenfurtherlocalcommit/fixtureRejectPrePush failure+unchangedremote withnormalstdin/args andexactRuby/bundle/SHAs. Onlyobservedresultscloseconcern; noregeneration/GitHubpushforthisproof. Thenleadapprovedintegration+freshmasterworkflowincludespush. Readonlyreview,noedits/tests/builds/dispatch/claims/merge/lifecycle. OriginalE1all-lane/followupsunchanged.
