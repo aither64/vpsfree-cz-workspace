@@ -130,14 +130,22 @@ directory as a sandbox writable root. Resolve member failures to use Nix,
 network or direct peer messaging instead of treating lead-only checks as normal.
 
 Use the generic `dev-session-monitor` skill for authorized tests, CI checks and
-builds expected to exceed one minute, and delegate uncertain-duration integration
-tests and builds before launching them. Resolve the fresh verification watcher
-from the installed catalog's separate utility policy. It is not a team member
+builds expected to exceed one minute. For an existing CI run, inspect the monitor
+tool's acknowledged execution owner. `runtime-ci` requires durable registration
+of the exact source and uses bounded runtime-owned reads; it has no native utility
+turn receipt. Do not start another watcher for that observation. Existing native
+operations retain their original owner and recovery contract. An unsupported
+provider refusal does not authorize a different driver or remote mutation.
+
+Delegate uncertain-duration native integration tests and builds before launching
+them. Resolve the fresh verification watcher from the installed catalog's separate
+utility policy. It is not a team member
 and must not edit source, diagnose, retry, approve, or deploy.
 For authorized lead-owned checks, use `monitor_operation` when available to the
-exact current lead. Verify the durable operation/source, frozen installed utility
-policy and native launch receipt before relying on continuation after the turn
-ends. Each new managed watcher uses the current validated installed catalog;
+exact current lead. Verify the durable operation/source and acknowledged owner.
+For native-owned operations, also verify the frozen installed utility policy and
+native launch receipt before relying on continuation after the turn ends.
+Each new native watcher uses the current validated installed catalog;
 recovery retains its original operation snapshot and saved team settings stay
 unchanged. A team catalog digest alone is not a utility package pin. Inspect
 uncertain status and retry unchanged IDs; never repeat a command to repair
