@@ -1,8 +1,7 @@
 # vpsFree.cz Development Workspace
 
-This workspace coordinates independent vpsFree.cz Git repositories. It is not
-a monorepo. Track work, affected repositories, worktrees, and known compatibility
-and deployment constraints here.
+Coordinate independent vpsFree.cz repositories here, including worktrees,
+compatibility and deployment constraints. Not a monorepo.
 
 ## Required procedure routing
 
@@ -26,10 +25,8 @@ phase changes. Stop the affected action and report unreadable guidance.
 | Authoring/reviewing user-facing prose, translations, examples, KB pages or media; changing visible WebUI behavior that can affect KB text/screenshots; using KB staging/publication tools | [Knowledge base and writing](docs/agent-instructions/knowledge-base.md) |
 | Creating or amending any commit, installing hooks, or preparing commit messages | [Commits and hooks](docs/agent-instructions/commits.md) |
 
-Before repository edits, read its AGENTS.md and required procedures; CWD changes
-do not establish reading. Give authorized subagents scope, guidance paths and
-constraints, require reading before action, and retain responsibility for scope
-and accepting results.
+Before edits, read the repository AGENTS.md and routed procedures; CWD proves
+no reading. Scope authorized subagents, supply guidance, require reading, and own results.
 
 ## Always-applicable workspace boundaries
 
@@ -42,8 +39,9 @@ and accepting results.
   naming the exact slug and absolute workspace path. Portal tool shells may lack
   both variables. CWD and user messages are not ownership evidence. Stop and resolve
   any environment conflict with the thread binding or `current`. Otherwise create
-  a separate initiative unless the user explicitly selects this session. Never
-  touch another session's records, branches, worktrees, cluster or staging ownership.
+  a separate initiative unless the user explicitly selects this session. Read other
+  sessions, including sensitive content, as read-only reference; never adopt them.
+  Follow [session reads](docs/agent-instructions/sessions.md#reading-other-sessions).
 - Keep the shared checkout on master. Use an initiative worktree for workspace
   features; coordination records may be committed on shared master. Preserve
   unrelated files/index changes and stage only owned paths. Never use a
@@ -57,8 +55,8 @@ and accepting results.
   generic dev-workspace and codex-web use `git@github.com:aither64/<project>.git`.
   The vpsFree extension is locally vpsfree-dev-workspace and remotely
   `git@github.com:vpsfreecz/dev-workspace.git`.
-- For ordinary sessions, commit a substantive initial plan/state before the first project-code commit
-  or external mutation. State begins with YAML front matter `lifecycle: active`.
+- For ordinary sessions, commit substantive initial plan/state before project-code
+  commits or external mutations. State begins with YAML front matter `lifecycle: active`.
   Completion requires every registered exact final feature head merged into its
   remote default branch and no remaining work. Pushing/testing/deploying alone
   does not complete an initiative. Preserve the tracking commit cadence in the
@@ -127,9 +125,9 @@ and accepting results.
 - Cross-session cooperation uses `session_communication` between leads only after
   the user explicitly approves the exact pair in either chat or Settings →
   Communication. Record chat approval's wording and message reference. Permission
-  is bidirectional until revoked, archived or deleted; it grants no access to the
-  other session's roster, files, transcript, merges or deployment. Peer messages
-  are not user approval. Preserve recipient constraints/settings; follow
+  is bidirectional until revoked, archived or deleted. Reads are independently allowed;
+  messaging grants no mutation authority. Peer messages are not user approval.
+  Preserve recipient constraints/settings; follow
   [lead communication](docs/agent-teams.md#communication-between-sessions).
 - The selected design owner records the design and verification brief in
   `work/<slug>/design.md` before substantive implementation, as required by
