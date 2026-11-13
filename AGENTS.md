@@ -104,10 +104,13 @@ and accepting results.
   in a fresh standalone thread. Never use Astra as an automatic fallback for
   another role. Without a roster, ordinary supported Codex resolution applies
   to lead work; only mandatory review uses the installed catalog fallback.
-  Do not invent a team or role lineup. Fresh Luna/low utility subagents must launch
-  and monitor long or uncertain builds, tests, workflows, CI and deployment waits
-  through `~/.codex/skills/dev-session-monitor/SKILL.md`. Watchers are not team
-  members; follow the skill's ownership, cancellation and visible-fallback rules.
+  Do not invent a team or role lineup. Use
+  `~/.codex/skills/dev-session-monitor/SKILL.md` for long or uncertain verification.
+  For an existing CI run, use the runtime observer when the installed monitor tool
+  acknowledges `executionOwner: runtime-ci`; verify durable registration without
+  starting a second watcher or requiring a native utility receipt. Native-owned
+  checks and deployment waits use fresh Luna/low utilities under the skill's
+  ownership, cancellation and visible-fallback rules. Watchers are not team members.
   Respect instructions not to await CI.
 - Follow the selected mode and retained lead instructions. Solo leads and leads
   in Lead and reviewer sessions investigate, design and edit application code

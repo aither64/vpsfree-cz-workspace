@@ -38,7 +38,9 @@ variants offer two through six implementers. Leads and implementers use GPT-6.1
 Sol (`gpt-6.1-sol`); Full-team leads use high effort, implementers use xhigh,
 architects use GPT-6 Astra/xhigh and reviewers use Sol/xhigh. The selectable
 Lead and reviewer preset retains its Sol/xhigh lead and Astra/xhigh reviewer.
-A separate GPT-6 Luna/low utility watches long checks.
+A separate GPT-6 Luna/low utility watches native-owned long checks. Existing CI
+runs use the monitor tool's acknowledged runtime observer when supported; that
+observer creates no model thread and occupies no team slot.
 
 | Preset | Persistent members | Design owner | Application edits | Specialist slots |
 | --- | --- | --- | --- | --- |
