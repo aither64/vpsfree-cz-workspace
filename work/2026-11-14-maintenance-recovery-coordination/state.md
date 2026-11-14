@@ -6,10 +6,11 @@ lifecycle: active
 
 ## Status
 
-Independent review completed and its one Important finding fixed. Package build
-and packaged checks are running under a fresh verification watcher. No package selected by this
-conversation. Original source/system remain running. Original operation remains
-held in cancellation recovery.
+Original maintenance cancellation completed successfully through the reviewed
+repair executor. Phase `cancelled`, revision 55, continuations settled and
+restoration complete. Portal recovery reports active with executionHeld false.
+Source native and portal PIDs are unchanged. Native communication initialization
+and the original session's intended activation remain next.
 
 - [x] Investigate original failure and verify system/profile identities.
 - [x] Retry public recovery once: repeated pause-interrupt-timeout after 30 sec.
@@ -18,8 +19,8 @@ held in cancellation recovery.
 - [x] Implement focused source fixes and bounded cancellation repair candidate.
 - [x] Finish quick tests and commit/publish the repair branch.
 - [x] Independent review and focused finding remediation.
-- [ ] Package build and packaged checks.
-- [ ] Build reviewed candidate; recover original cancellation; verify portal.
+- [x] Package build and packaged checks.
+- [x] Build reviewed candidate; recover original cancellation; verify portal hold released.
 - [ ] Establish approved communication and coordinate original deployment.
 - [ ] Verify intended profile/native activation and original lead completion.
 
@@ -98,3 +99,44 @@ the original session. No repository or machine claim acquired by this session.
 ## Open questions
 
 ## Cleanup
+
+## Live repair admission follow-up
+
+The `e9f1b002` package build passed in 761 seconds, output
+`/nix/store/3dgqicban6vn4migrwfkz00q149f2zfi-dev-workspace-0.2.0`. Full log:
+`/tmp/maintenance-pause-recovery-build-e9f1b002.log`. All watcher cells and
+exec session 57439 completed.
+
+The candidate cancellation command exited 1 before a journal mutation:
+“workspace maintenance must finish or recover before another transition”.
+Original revision 34, source package/PID, phase and holds remained unchanged.
+The lifecycle preflight ran before setting the validated operation's local
+identity, so it treated its own worker-locked operation as foreign. Moving that
+assignment before preflight fixes the order without bypassing any guard. The
+regression now exercises real lifecycle/foreign-maintenance admission; it failed
+before and passes after the fix. Five focused Ruby cases: 56 assertions, no
+failures/errors, 0.823 seconds. No interface or authority change; this is a
+narrow correction within the reviewed recovery design.
+
+Amended final head: `0bc9dfc4d6670f1610ef3ea4eff2a8b089958b41`, published with
+exact lease on e9f1b002. The prior CI run is being canceled; fresh watcher
+`/root/repair_build_admission` runs the same full package build at the amended
+head under unchanged installed gpt-6-luna/low/full-access policy.
+
+## Cancellation restored, 2026-11-15
+
+Final repair build at `0bc9dfc4` passed in 764 seconds, output
+`/nix/store/9k7xnvf1j5hlqf99d0fggm1zxkfis2v4-dev-workspace-0.2.0`; full log
+`/tmp/maintenance-repair-build-0bc9dfc4.log`. Watcher session 97604 and all
+owned cells completed. The exact candidate `maintenance recover-cancel`
+command exited 0 (live exec session 73775 completed). Original operation
+`b4682829-f783-4cb1-91e1-5b4b39a4b77b` is cancelled at revision 55 with
+continuationsSettled, noticeCleanupComplete and restoration.completed true;
+no blockers, source shutdown, cutover or activation. Source profile remains
+`/nix/store/5m8f4f6g27mnsrwpn904pm61ljra9isf-dev-workspace-0.2.0`.
+Codex PID 1309145 and portal PID 870257 remain active. Health returns ok and
+the original session recovery endpoint returns active, executionHeld false.
+The ordinary active query retains the terminal cancelled operation; this is
+not an execution hold. Full intended deployment still belongs to the original
+lead. This final handoff checkpoint is required for the native endpoint's
+committed tracking baseline.
