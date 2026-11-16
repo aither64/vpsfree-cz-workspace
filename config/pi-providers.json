@@ -1,0 +1,119 @@
+{
+  "schema": 1,
+  "catalog": {
+    "schema": 1,
+    "providers": [
+      {
+        "id": "codex-lb",
+        "label": "Snajpa codex-lb",
+        "native_id": "openai",
+        "runtime_config_ref": "builtin"
+      }
+    ],
+    "accounts": [
+      {
+        "ref": "aither-on-snajpa",
+        "provider_id": "codex-lb",
+        "credential_ref": "canonical",
+        "credential_key": "openai",
+        "auth_kind": "api_key"
+      }
+    ],
+    "models": [
+      {
+        "kind": "physical",
+        "provider_id": "codex-lb",
+        "id": "gpt-6.1-sol",
+        "label": "GPT-6.1 Sol",
+        "thinking_levels": [
+          "high"
+        ],
+        "inputs": [
+          "text",
+          "image"
+        ],
+        "tools": true,
+        "evidence_ref": "pi-snajpa-sol-high-image-2026-11-17"
+      },
+      {
+        "kind": "physical",
+        "provider_id": "codex-lb",
+        "id": "gpt-6.2-sol",
+        "label": "GPT-6.2-Sol",
+        "thinking_levels": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "inputs": [
+          "text",
+          "image"
+        ],
+        "tools": true,
+        "evidence_ref": "pi-codex-lb-62-high-tools-2026-11-18"
+      },
+      {
+        "kind": "physical",
+        "provider_id": "codex-lb",
+        "id": "gpt-6.2-astra",
+        "label": "GPT-6.2-Astra",
+        "thinking_levels": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "inputs": [
+          "text",
+          "image"
+        ],
+        "tools": true,
+        "evidence_ref": "pi-codex-lb-62-high-tools-2026-11-18"
+      }
+    ],
+    "routes": [
+      {
+        "provider_id": "codex-lb",
+        "account_ref": "aither-on-snajpa",
+        "model_id": "gpt-6.1-sol",
+        "state": "available",
+        "reason_code": "verified",
+        "evidence_ref": "pi-snajpa-sol-high-tools-2026-11-16"
+      },
+      {
+        "provider_id": "codex-lb",
+        "account_ref": "aither-on-snajpa",
+        "model_id": "gpt-6.2-sol",
+        "state": "available",
+        "reason_code": "verified",
+        "evidence_ref": "pi-codex-lb-62-high-tools-2026-11-18"
+      },
+      {
+        "provider_id": "codex-lb",
+        "account_ref": "aither-on-snajpa",
+        "model_id": "gpt-6.2-astra",
+        "state": "available",
+        "reason_code": "verified",
+        "evidence_ref": "pi-codex-lb-62-high-tools-2026-11-18"
+      }
+    ]
+  },
+  "default": {
+    "chain": [
+      {
+        "provider_id": "codex-lb",
+        "account_ref": "aither-on-snajpa",
+        "model_id": "gpt-6.1-sol",
+        "thinking": "high"
+      }
+    ],
+    "budget": {
+      "max_extra_attempts": 0,
+      "max_hops": 0
+    },
+    "fallback_on": []
+  }
+}

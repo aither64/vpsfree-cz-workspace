@@ -29,6 +29,9 @@
           relative != "work" && relative != "archive";
       };
       teamConfig = import ./config/agent-teams.nix;
+      piModelConfig = builtins.fromJSON (builtins.readFile ./config/pi-models.json);
+      piProviderConfig = builtins.fromJSON (builtins.readFile ./config/pi-providers.json);
+      piWorker = vpsfree-dev-workspace.inputs.dev-workspace.packages.${system}.pi-worker;
       siteConfig = {
         kb = {
           cz = {
@@ -59,6 +62,7 @@
           integrationConfig = import ./config/integration.nix;
         }).override
           (previous: {
+            inherit piModelConfig piProviderConfig;
             extensions = previous.extensions // {
               skills = previous.extensions.skills // {
                 update-codex = "${workspaceSource}/skills/update-codex";
@@ -77,6 +81,63 @@
         program = "${package}/bin/workspace-host";
       };
       checks.${system} = {
+        pi-runtime-composition =
+          pkgs.runCommand "workspace-pi-runtime-composition-tests"
+            {
+              nativeBuildInputs = [ pkgs.jq ];
+            }
+            ''
+              expectedModels=${pkgs.writeText "workspace-pi-models-expected.json" (builtins.toJSON piModelConfig)}
+              expectedProviders=${pkgs.writeText "workspace-pi-providers-expected.json" (builtins.toJSON piProviderConfig)}
+              cmp "$expectedModels" ${package}/share/dev-workspace/pi-models.json
+              cmp "$expectedProviders" ${package}/share/dev-workspace/pi-providers.json
+              test "$(${pkgs.coreutils}/bin/stat -c %a ${package}/share/dev-workspace/pi-models.json)" = 444
+              test "$(${pkgs.coreutils}/bin/stat -c %a ${package}/share/dev-workspace/pi-providers.json)" = 444
+              ${package}/bin/workspace-portal pi-providers validate --package-root ${package}
+              test -x ${package}/libexec/vpsfree-dev-workspace-migrate
+              catalog=${package}/share/dev-workspace/extensions.json
+              ${pkgs.jq}/bin/jq -e '
+                [.commands[].name] == [
+                  "kb-cleanup", "kb-contract-build", "kb-contract-fetch",
+                  "kb-contract-manifest", "kb-contract-reconcile", "kb-page",
+                  "kb-release", "kb-stage"
+                ] and ([.skills[].name] | index("update-codex") != null)
+              ' "$catalog" >/dev/null
+              ${pkgs.jq}/bin/jq -r '.commands[].path' "$catalog" |
+                while IFS= read -r command; do test -x "$command"; done
+              test -d ${package}/share/codex/skills/update-codex
+              export HOME="$TMPDIR/home"
+              mkdir -m700 -p "$HOME"
+              ${pkgs.coreutils}/bin/env -i HOME="$HOME" PATH=/empty TMPDIR="$TMPDIR" PI_OFFLINE=1 \
+                ${piWorker.nodejs}/bin/node --input-type=module - <<'JS'
+              import assert from 'node:assert/strict';
+              import {mkdtempSync, readFileSync, writeFileSync} from 'node:fs';
+              import {join} from 'node:path';
+              import {loadSDK} from '${package}/libexec/pi-runtime/package.mjs';
+              const metadata = JSON.parse(readFileSync('${package}/share/dev-workspace/pi-worker.json', 'utf8'));
+              assert.equal(metadata.pi_package_root, '${piWorker.piPackage}');
+              assert.equal(metadata.node_executable, '${piWorker.nodejs}/bin/node');
+              const sdk = await loadSDK(metadata.pi_package_root);
+              const root = mkdtempSync(join(process.env.TMPDIR, 'pi-composition-'));
+              const authPath = join(root, 'auth.json');
+              writeFileSync(authPath, '{}', {mode: 0o600});
+              const runtime = await sdk.ModelRuntime.create({authPath,
+                modelsPath: '${package}/share/dev-workspace/pi-models.json',
+                modelsStorePath: join(root, 'models-store.json'), allowModelNetwork: false});
+              const model = runtime.getModel('openai', 'gpt-6.1-sol');
+              assert.equal(model.id, 'gpt-6.1-sol');
+              assert.equal(model.api, 'openai-responses');
+              assert.deepEqual(model.input, ['text', 'image']);
+              assert.equal(model.baseUrl, 'http://172.16.106.12:2455/v1');
+              assert.equal(model.samplingParams.parallel_tool_calls, false);
+              assert.equal(runtime.models.modelsStore.path, join(root, 'models-store.json'));
+              assert.deepEqual(runtime.getRegisteredProviderIds(), []);
+              await runtime.settleCredentialWrites();
+              assert.deepEqual(JSON.parse(readFileSync(authPath, 'utf8')), {});
+              // Native metadata resolution proves no real account entitlement.
+              JS
+              touch "$out"
+            '';
         tracking-source = pkgs.runCommand "workspace-tracking-source-tests" { } ''
           test ! -e ${workspaceSource}/work
           test ! -e ${workspaceSource}/archive
@@ -98,7 +159,10 @@
         storage-retention =
           pkgs.runCommand "workspace-storage-retention-tests"
             {
-              nativeBuildInputs = [ pkgs.ruby pkgs.git ];
+              nativeBuildInputs = [
+                pkgs.ruby
+                pkgs.git
+              ];
               DEV_WORKSPACE_RUNTIME_SOURCE = vpsfree-dev-workspace.inputs.dev-workspace;
             }
             ''
