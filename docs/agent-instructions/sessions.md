@@ -135,10 +135,12 @@ lifecycle: active
 ---
 ```
 
-An initiative remains `active` while any registered feature branch is
-unmerged or the session still owns work. Set it to `complete` only after every
+An initiative remains `active` while any registered branch lacks its delivery
+proof or the session still owns work. Set it to `complete` only after every
 registered branch's exact final head is merged into its configured remote
-default branch and no review, CI, deployment, approval, or cleanup remains.
+default branch, subject only to the
+[Linux kernel source publication exception](git.md#linux-kernel-source-publication),
+and no review, CI, deployment, approval, or cleanup remains.
 Pushing, testing, deploying, or temporarily removing worktrees does not make an
 initiative complete. Use `abandoned` only when the work is explicitly
 discarded; abandoned work does not have to be merged. Coordination-only

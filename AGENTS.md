@@ -57,10 +57,10 @@ no reading. Scope authorized subagents, supply guidance, require reading, and ow
   `git@github.com:vpsfreecz/dev-workspace.git`.
 - For ordinary sessions, commit substantive initial plan/state before project-code
   commits or external mutations. State begins with YAML front matter `lifecycle: active`.
-  Completion requires every registered exact final feature head merged into its
-  remote default branch and no remaining work. Pushing/testing/deploying alone
-  does not complete an initiative. Preserve the tracking commit cadence in the
-  session procedure.
+  Completion requires every registered exact final head merged into its remote
+  default ([Linux exception](docs/agent-instructions/git.md#linux-kernel-source-publication))
+  and no work left. Pushing/testing/deploying alone is insufficient. Preserve
+  tracking cadence.
 - Launch every new session-owned temporary local server, preview and candidate
   with `dev-session service run`; follow
   [temporary services](docs/agent-instructions/lifecycle.md#temporary-services).

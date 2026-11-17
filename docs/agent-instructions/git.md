@@ -33,6 +33,28 @@ Read each affected repository's instructions separately. Repository-specific PR,
 branch naming, commit and tooling requirements apply only in that repository;
 do not carry them into another project.
 
+## Linux kernel source publication
+
+Downstream kernel ports in `vpsfreecz/linux` follow the
+[vpsAdminOS kernel update process](https://github.com/vpsfreecz/vpsadminos/blob/staging/docs/os/kernel-updates.md)
+for version branches, replay and publication. Publish the exact final reviewed
+and tested Linux head on the prescribed version branch instead of merging it
+into a default or series branch. Record the remote, full branch ref, freshly
+verified remote-head equality with that Linux SHA, and consuming OS catalog
+revision and archive-byte hash in the existing review or rollout receipts.
+
+For Linux kernel source only, this publication proof replaces the default-merge
+delivery proof. Describe the head as published, not merged. Every other
+repository retains its exact-final-head default-merge requirement and explicit
+integration approval gate. Review, verification and unfinished-work obligations
+still apply.
+
+Publication does not authorize a session lifecycle action. If the installed
+runtime or a retained recovery contract cannot represent this endpoint, report
+the limitation and leave lifecycle state unchanged. Do not bypass it through
+metadata, registration, private helpers or runtime changes; preserve the existing
+recovery contract.
+
 ## Feature integration approval
 
 Before any operation that places feature content on a repository's default
