@@ -196,6 +196,27 @@ Allow guards only for intentionally supported multiple predecessor schemas;
 record that requirement in the initiative plan and test every supported path.
 Keep integrity and conversion checks for real persisted content.
 
+## Portal backend interfaces
+
+New and changed portal features must use explicit backend-neutral interfaces. Keep
+native protocols, authentication, provider details and state translation inside the
+owning backend adapter. Shared UI, routing and team orchestration must consume
+declared capabilities and handle unsupported operations explicitly; they must not
+call another backend as an implicit fallback.
+
+Extend the existing operation interfaces for current features. Do not introduce a
+speculative framework or duplicate a native client in shared code. Adding or
+removing a backend should require changes to its adapter, intentional registration
+and configuration, and relevant tests, without changing unrelated portal features.
+Keep backend-name checks at those boundaries or at documented compatibility
+boundaries.
+
+When an interface changes, update its adapters and check the shared contract with
+representative consumers. Preserve authorization, cancellation, identities, history
+and receipt semantics across backend implementations. Document supported
+capabilities and any retained-state or mixed-version limitations beside the owning
+interface and adapter.
+
 ## Mandatory Change Review
 
 Run the `mandatory-change-review` skill for completed substantive deliverables:
