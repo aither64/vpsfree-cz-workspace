@@ -47,8 +47,8 @@ normal authorized forward package workflow. No coordinated node update is needed
 
 | Package | Owner | Acceptance / dependencies | Status |
 | --- | --- | --- | --- |
-| Plan, state, design and single handoff | This lead | Commit initial records before allow/send; check paths and invariants; record actual delivery ID/status | In progress |
-| Implementation and bounded tests | Migration lead, through its own roster | Design proposal; deterministic real-pass counters plus one short before/after benchmem comparison | Handoff only |
+| Plan, state, design and single handoff | This lead | Commit initial records before allow/send; check paths and invariants; record actual delivery ID/status | Accepted; delivered once, receipt in state |
+| Implementation and bounded tests | Migration lead, through its own roster | Design proposal; deterministic real-pass counters plus one short before/after benchmem comparison | Delivered to migration lead; not awaited |
 
 Use local synthetic settled history and fake time through the real worker pass.
 Require zero repeated history body reads/decodes or terminal-only action calls
