@@ -124,12 +124,28 @@
               const runtime = await sdk.ModelRuntime.create({authPath,
                 modelsPath: '${package}/share/dev-workspace/pi-models.json',
                 modelsStorePath: join(root, 'models-store.json'), allowModelNetwork: false});
-              const model = runtime.getModel('openai', 'gpt-6.1-sol');
-              assert.equal(model.id, 'gpt-6.1-sol');
-              assert.equal(model.api, 'openai-responses');
-              assert.deepEqual(model.input, ['text', 'image']);
-              assert.equal(model.baseUrl, 'http://172.16.106.12:2455/v1');
-              assert.equal(model.samplingParams.parallel_tool_calls, false);
+              const {getSupportedThinkingLevels} = await import('${piWorker.piPackage}/lib/pi/node_modules/@earendil-works/pi-ai/dist/index.js');
+              const configured = JSON.parse(readFileSync('${package}/share/dev-workspace/pi-providers.json', 'utf8'));
+              const expected = ['gpt-6-astra', 'gpt-6.1-sol', 'gpt-6.1-terra', 'gpt-6-sol', 'gpt-6-luna',
+                'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna', 'gpt-5.5', 'gpt-6.2-sol', 'gpt-6.2-astra'];
+              assert.deepEqual(configured.catalog.models.map(model => model.id).sort(), [...expected].sort());
+              for (const id of expected) {
+                const model = runtime.getModel('openai', id);
+                const declared = configured.catalog.models.find(model => model.id === id);
+                const levels = ['low', 'medium', 'high', 'xhigh', ...(id === 'gpt-5.5' ? [] : ['max'])];
+                assert.equal(model.id, id);
+                assert.equal(model.api, 'openai-responses');
+                assert.deepEqual(model.input, ['text', 'image']);
+                assert.equal(model.baseUrl, 'http://172.16.106.12:2455/v1');
+                assert.equal(model.samplingParams.parallel_tool_calls, false);
+                assert.deepEqual(declared.thinking_levels, levels);
+                const supported = getSupportedThinkingLevels(model);
+                assert(levels.every(level => supported.includes(level)));
+                assert(!supported.includes('ultra'));
+                if (id === 'gpt-5.5') assert(!supported.includes('max'));
+                for (const level of levels) assert.equal(model.thinkingLevelMap[level], level);
+                assert(configured.catalog.routes.some(route => route.model_id === id && route.state === 'available'));
+              }
               assert.equal(runtime.models.modelsStore.path, join(root, 'models-store.json'));
               assert.deepEqual(runtime.getRegisteredProviderIds(), []);
               await runtime.settleCredentialWrites();
