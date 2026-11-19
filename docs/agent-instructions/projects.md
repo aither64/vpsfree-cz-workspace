@@ -72,3 +72,64 @@ systems, usually with confctl. Status, exporters, web, IRC bot, mail templates,
 and maintenance tasks support operations around the core platform. This
 coordination workspace selects `dev-workspace`, which in turn consumes
 `codex-web`; keep that dependency direction one-way.
+
+## Compatibility And Deployment
+
+Treat vpsFree.cz as live infrastructure with persistent state and staggered
+updates. Every feature plan must assess backward/forward compatibility of old
+and new affected components, including:
+
+- persisted state and on-disk formats;
+- database schemas, migrations, seeds, and rollback behavior;
+- API contracts, generated clients, CLI behavior, and Terraform provider
+  behavior;
+- protocol or message format changes between services and daemons;
+- generated NixOS/vpsAdminOS configuration and module options;
+- deployment ordering, rolling upgrades, and mixed-version operation;
+- whether a rollback can load state created by the new version.
+
+Prefer incremental deployment. Allow intentional incompatibility only when the
+plan records its reason, impact, required ordering, rollback implications and
+operator action.
+
+For vpsAdminOS changes, state when all running machines or nodes need coordinated
+updates and why that cost is worthwhile, or choose a compatible design.
+
+For unmerged, unreleased and undeployed database migrations, assume the exact
+schema of the immediately preceding migration. Reset stale disposable dev/test
+databases after rewrites; do not add `table_exists?`, `column_exists?`,
+`index_exists?`, `if_exists`, `if_not_exists` or equivalent guards for this purpose.
+Allow guards only for intentionally supported multiple predecessor schemas;
+record that requirement in the initiative plan and test every supported path.
+Keep integrity and conversion checks for real persisted content.
+
+## Portal backend interfaces
+
+The portal owns common UI, workflows and explicit backend-neutral operation
+interfaces. Backend adapters implement those interfaces, keeping native protocols,
+authentication, provider details and state translation inside the adapter. Shared
+UI, routing and team orchestration consume declared capabilities and handle
+unsupported operations explicitly. Never silently fall back to another backend or
+present an absent capability as available.
+
+The same supported user operation must have the same presentation and interaction
+across backends, including Team and Fork. Reuse or extend current interfaces and
+UI components; avoid parallel backend-specific forms and backend-name branches in
+shared UI. Keep backend-name checks at adapter registration, configuration or
+documented compatibility boundaries. Native implementations may differ; do not
+introduce a speculative framework or duplicate a native client in shared code.
+Adding or removing a backend should require changes to its adapter, intentional
+registration and configuration, and relevant tests, without changing unrelated
+portal features.
+
+A genuine capability or semantic constraint may justify a conscious exception.
+Record its rationale, affected UX and contract, and capability decision in the
+owning interface and design documentation, and cover it in applicable checks.
+Missing implementation or historical divergence alone does not justify an
+exception.
+
+When an interface changes, update its adapters and compare representative adapters
+through shared consumer behavior. Preserve authorization, cancellation, identities,
+history and receipt semantics across backend implementations. Document supported
+capabilities and retained-state or mixed-version limitations beside the owning
+interface and adapter.
