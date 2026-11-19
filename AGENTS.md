@@ -198,23 +198,33 @@ Keep integrity and conversion checks for real persisted content.
 
 ## Portal backend interfaces
 
-New and changed portal features must use explicit backend-neutral interfaces. Keep
-native protocols, authentication, provider details and state translation inside the
-owning backend adapter. Shared UI, routing and team orchestration must consume
-declared capabilities and handle unsupported operations explicitly; they must not
-call another backend as an implicit fallback.
+The portal owns common UI, workflows and explicit backend-neutral operation
+interfaces. Backend adapters implement those interfaces, keeping native protocols,
+authentication, provider details and state translation inside the adapter. Shared
+UI, routing and team orchestration consume declared capabilities and handle
+unsupported operations explicitly. Never silently fall back to another backend or
+present an absent capability as available.
 
-Extend the existing operation interfaces for current features. Do not introduce a
-speculative framework or duplicate a native client in shared code. Adding or
-removing a backend should require changes to its adapter, intentional registration
-and configuration, and relevant tests, without changing unrelated portal features.
-Keep backend-name checks at those boundaries or at documented compatibility
-boundaries.
+The same supported user operation must have the same presentation and interaction
+across backends, including Team and Fork. Reuse or extend current interfaces and
+UI components; avoid parallel backend-specific forms and backend-name branches in
+shared UI. Keep backend-name checks at adapter registration, configuration or
+documented compatibility boundaries. Native implementations may differ; do not
+introduce a speculative framework or duplicate a native client in shared code.
+Adding or removing a backend should require changes to its adapter, intentional
+registration and configuration, and relevant tests, without changing unrelated
+portal features.
 
-When an interface changes, update its adapters and check the shared contract with
-representative consumers. Preserve authorization, cancellation, identities, history
-and receipt semantics across backend implementations. Document supported
-capabilities and any retained-state or mixed-version limitations beside the owning
+A genuine capability or semantic constraint may justify a conscious exception.
+Record its rationale, affected UX and contract, and capability decision in the
+owning interface and design documentation, and cover it in applicable checks.
+Missing implementation or historical divergence alone does not justify an
+exception.
+
+When an interface changes, update its adapters and compare representative adapters
+through shared consumer behavior. Preserve authorization, cancellation, identities,
+history and receipt semantics across backend implementations. Document supported
+capabilities and retained-state or mixed-version limitations beside the owning
 interface and adapter.
 
 ## Mandatory Change Review
