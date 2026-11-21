@@ -75,7 +75,9 @@
         default = package;
         vpsfree-dev-workspace = package;
       };
-      devShells.${system}.default = pkgs.mkShell { inputsFrom = [ package ]; };
+      devShells.${system}.default = pkgs.mkShell {
+        inputsFrom = [ (package.override { doCheck = true; }) ];
+      };
       apps.${system}.workspace-host = {
         type = "app";
         program = "${package}/bin/workspace-host";
