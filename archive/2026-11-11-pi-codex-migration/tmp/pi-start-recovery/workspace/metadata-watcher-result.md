@@ -1,0 +1,5 @@
+- **Result:** Incomplete; the command was still active at 120 seconds. No exit status or output was available.
+- **Command:** `python3 /home/aither/workspace/ai/vpsfree.cz/work/2026-11-11-pi-codex-migration/tmp/pi-start-recovery/workspace/project-metadata.py`
+- **Tested revision:** `We821b41184c3d71baed74e392d8062bd543db50b`
+- **Active session:** `85484`. Four 30-second waits returned the same active session with no output. I did not cancel it.
+- **Artifacts:** [metadata.stdout](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-11-pi-codex-migration/metadata.stdout), [metadata.stderr](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-11-pi-codex-migration/metadata.stderr), [metadata.result.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-11-pi-codex-migration/metadata.result.json).

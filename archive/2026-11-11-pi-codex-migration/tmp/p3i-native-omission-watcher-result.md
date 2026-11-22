@@ -1,0 +1,5 @@
+Result: **failed**, exit status **1**. The requested command completed in about 16 seconds (the test reported 17.01 seconds).
+
+The manifest SHA256 matched, all 121 listed file hashes matched, and the current session and workspace binding matched the requested values. Full captured output is at `/home/aither/workspace/ai/vpsfree.cz/work/2026-11-11-pi-codex-migration/tmp/p3i-native-omission-actual.log`.
+
+Failure excerpt: `TestNativeRoutingActualOriginalReceiptSDKChargeAndRoute` reported “Pi runtime has unresolved work binding” and “original native arm held”; the test failed. No operation-owned session remains running (`stillRunning`: none). This is only the finite current-original omission witness described in the assignment; it does not establish B1, restart/later-input, or production behavior.

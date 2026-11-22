@@ -1,0 +1,5 @@
+- **Result:** Failed, exit status 1; elapsed 42.84 seconds.
+- **Run:** Graph `fadd09a090d3d10d33dac79679b89f8137384b609760048ee39069c02f45ca82`; invoked the specified Python script once from `/tmp/pi-r4p2-ai7xjg5h`.
+- **Bounded output:** The script reported `source_unchanged: true` and the `go test -mod=readonly ... -run '^TestPiCentralNativeRoleRecovery$' -count=1 -v` command exited 1. No further failure details were emitted.
+- **Artifacts:** `review-r4-p2-native.log` and `result.json` were not present in the requested working directory when checked.
+- **Still running:** None. The invocation’s tool session `91025` completed.

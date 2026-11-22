@@ -1,0 +1,4 @@
+- **Result:** passed; exit status `0`, elapsed `7.91s`.
+- **Operation:** Ran the assigned checker once from `/tmp/pi-r4p2-v4-0n7uwwbe`. It reports the expected graph hash and `source_unchanged: true`.
+- **Artifacts:** [log](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-11-pi-codex-migration/tmp/review-r4-p2-native-fourth.log) · [result JSON](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-11-pi-codex-migration/tmp/review-r4-p2-native-fourth-result.json)
+- **Bounded error excerpt:** none reported. No operation-owned work remains running.

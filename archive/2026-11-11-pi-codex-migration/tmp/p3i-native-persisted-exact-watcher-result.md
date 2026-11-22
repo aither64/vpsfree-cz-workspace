@@ -1,0 +1,4 @@
+- **Result:** Passed; check exit status 0.
+- **Elapsed:** 9.992 seconds. Tested graph: `c05cd5693f7dab0b9a881d5128f1383c67944130ebb60970cd7c51e2a93f4644`.
+- **Log:** `/home/aither/workspace/ai/vpsfree.cz/work/2026-11-11-pi-codex-migration/tmp/p3i-native-persisted-actual.log`. The SDK case passed.
+- **Still running:** none. No cancellation taken.

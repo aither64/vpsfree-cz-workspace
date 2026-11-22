@@ -1,0 +1,5 @@
+- **Result:** Failed; batch command exit status `1`.
+- **Revision/input:** `fe384323fbab2722b5a5fb3b7e0e520f6fd80ac4` plus the specified three cache-v70 template overlays; input SHA `3d6abcac789b74fae795e5df7da725cb92eddd12437e743a9418af3e70e9bab0`.
+- **Command:** Ran the assigned batch once. Elapsed time: about 83 seconds. Shell session `41977` exited; no work remains running.
+- **Log:** [p2-upstream-refresh-go-checks.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-11-pi-codex-migration/tmp/p2-upstream-refresh-go-checks.log). Its tail shows `go test` failed for `github.com/aither64/dev-workspace/portal/internal/web`; preceding listed tests passed.
+- **Result JSON:** The requested file was not present at the specified path.

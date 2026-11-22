@@ -1,0 +1,4 @@
+- **Result:** Passed; command exit status `0`. `TestPiCentralWorkflowNativeComposition` ran and passed (not skipped).
+- **Revision:** `7e6229da4745db05484864107c03a9c72ab06dfc` plus the specified exact19 overlay manifest.
+- **Command:** Invoked exactly once; tool session `79907` completed. No operation-owned work remains.
+- **Evidence:** Full log at [p2central-native-fourth.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-11-pi-codex-migration/tmp/p2central-native-fourth.log); exit status at [p2central-native-fourth-result.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-11-pi-codex-migration/tmp/p2central-native-fourth-result.json).

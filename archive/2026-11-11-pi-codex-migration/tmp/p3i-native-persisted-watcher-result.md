@@ -1,0 +1,1 @@
+I did not run the verification script. Its SHA256 matches, but the session context check failed: `DEV_SESSION_CURRENT` is absent while `DEV_SESSION_WORKSPACE` is set to `/home/aither/workspace/ai/vpsfree.cz`. No verification log was created.

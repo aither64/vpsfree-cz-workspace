@@ -1,0 +1,4 @@
+- Result: **passed** (CHECK exit 0; elapsed 12.415s).
+- Command: `python3 /home/aither/workspace/ai/vpsfree.cz/work/2026-11-11-pi-codex-migration/tmp/p3i-r4-component-check.py`, run from `/tmp/pi-r4-component-s4qwzrt7`.
+- Log: [p3i-r4-component.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-11-pi-codex-migration/tmp/p3i-r4-component.log). The named Go component passed, including the reported receipt, reopen, refusal, reap, held-intent, and legacy checks.
+- No operation-owned work remains running.

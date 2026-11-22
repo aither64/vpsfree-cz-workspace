@@ -1,0 +1,243 @@
+# Git and worktrees
+
+Required workspace procedure, selected by the routing table in `AGENTS.md`.
+Its rules retain workspace scope and precedence. Paths and commands are relative
+to the coordination workspace unless the text specifies another repository.
+
+Before feature integration, read [coordination](../coordination.md) in full.
+Complete preparation, verification and review without repository claims. Editing,
+commits, rebases, feature-branch pushes and hook preparation are independent work.
+After explicit integration approval, acquire one repository merge claim immediately
+before the fresh target check, ordinary merge/hooks, SSH push and remote proof.
+For integration from the shared workspace master, take the repository claim first,
+then try `dev-session-tracking.lock` without waiting. If busy, release the claim
+and retry after the tracking writer finishes. Hold both through the final target
+check, merge/hooks, push and remote proof. Preserve unrelated dirty paths and index
+entries; disposable targets must be clean. Release before CI, records and checkout
+cleanup. If the baseline moved or a hook
+needs intervention, stop commands, inspect effects and release before repairing
+outside the claim. Reconcile uncertain shared mutations before release. Never hold
+repository ownership for development, review, tests or approval waits. Waiting merge
+requests notify their retained session; independent work can continue meanwhile.
+Older selected packages and retained operations keep their installed recovery
+workflow. A busy merge resource does not restrict feature development.
+
+## Published branches and pull requests
+
+Ordinary workspace projects use published development branches. Do not create or
+manage pull requests unless the user explicitly requests them or the affected
+repository's own instructions require them. For example, vpsadmin-webui's PR
+workflow applies only to vpsadmin-webui.
+
+Read each affected repository's instructions separately. Repository-specific PR,
+branch naming, commit and tooling requirements apply only in that repository;
+do not carry them into another project.
+
+## Feature integration approval
+
+Before any operation that places feature content on a repository's default
+branch, obtain the user's explicit direction to integrate the named repository
+and target branch. This applies to local merges, direct default-branch pushes,
+and pull-request merges, even when review and CI have passed. An up-front
+instruction that explicitly directs that integration counts; accepting a plan,
+asking to implement it, accepting review, or authorizing deployment does not.
+Do not infer approval from completion criteria or from a prior merge of a
+different initiative. If approval is missing, push only feature branches and
+leave the initiative active as ready for integration, awaiting user approval.
+
+After that approval, integrate locally with `git merge --ff-only` and push the
+target branch directly over SSH, following the applicable worktree procedure
+below. Use this method even when a repository requires a PR. Do not create merge
+commits locally or through GitHub.
+
+Approval covers the named repository/target set, not exact commit IDs. Record
+its source and scope in the initiative state before integration. A clean rebase
+that preserves the reviewed patch may keep that approval: verify patch
+equivalence with `git range-diff` or patch IDs, re-run checks and CI for the new
+head as appropriate, and record the new final head. If conflict resolution or
+another edit materially changes the patch, scope, repository set, or target,
+obtain renewed approval. Do not silently expand a multi-repository approval.
+This gate does not apply to tracking-only coordination commits on the shared
+workspace `master`; stage only owned tracking paths and never include feature
+content in that exception.
+
+For deployed-lineage evidence and machine release, follow the authoritative
+runtime policy referenced by [machine retention](../coordination.md#machine-retention).
+Repository merge claims remain short and separate; release them before CI or
+records.
+
+## Git And Worktrees
+
+The top-level workspace repository has two distinct workflows:
+
+- Keep the shared checkout on `master` at all times. Ordinary use of the
+  workspace happens there: maintain initiative tracking under `work/`, archive
+  terminal initiatives, add durable notes, and coordinate independent project
+  worktrees. These coordination changes may be committed directly to `master`.
+- Treat changes to the workspace itself as feature work. Changes to its rules,
+  scripts, tests, documentation, skills, or other reusable behavior normally
+  require a dated initiative branch and a dedicated worktree at
+  `worktrees/<slug>/workspace`. Develop and rewrite those commits there before
+  integrating them into `master`.
+- Record the workspace feature branch and worktree in the initiative's
+  `state.md`, which remains part of the shared coordination checkout. Fetch and
+  rebase the workspace feature branch onto current `master` before final review.
+- After the workspace feature's final rebase and review, run
+  `dev-session worktree capture-comparison <slug> workspace --as-is` before
+  integration. Repeat the capture after any head change.
+- After feature integration approval, integrate a reviewed workspace feature
+  from the shared `master` checkout after confirming that it descends from current
+  `master`. Preserve unrelated working-tree changes, stage nothing during the
+  integration, and use `git merge --ff-only <feature-branch>`. Do not try to
+  check out `master` in a second worktree because it is already checked out in
+  the shared root. Keep the feature branch after integration unless the user
+  explicitly asks for its deletion.
+- Multiple sessions share the top-level `master` branch, index, and working
+  tree. Before editing or committing coordination records, inspect the current
+  status, preserve unrelated changes, and stage only the paths belonging to the
+  current task. Never use a repository-wide reset, clean, or stash operation,
+  and never switch branches out from under another session.
+- Fetch `origin` before a top-level `master` commit and keep it linear. If local
+  or remote `master` advanced, reconcile it without discarding shared
+  working-tree changes. Do not rewrite published `master` history unless the
+  user explicitly directs that exact operation.
+
+The explicit top-level workflow above is complete for workspace changes. The
+bare-repository, per-initiative worktree, and temporary target-worktree rules
+below apply only to the independent project repositories.
+
+Clone and push repositories over SSH. Use remotes in this form:
+
+```text
+git@github.com:vpsfreecz/<project>.git
+```
+
+The reusable workspace components are narrow exceptions to the organization
+rule above. Use these exact SSH remotes:
+
+```text
+git@github.com:aither64/dev-workspace.git
+git@github.com:aither64/codex-web.git
+```
+
+The organization extension repository has the same basename as the generic
+runtime. Refer to it as `vpsfree-dev-workspace` in local project names,
+worktrees, and session registration, while keeping its canonical remote as
+`git@github.com:vpsfreecz/dev-workspace.git`.
+
+Do not use HTTPS remotes for normal development pushes. If an existing checkout
+uses HTTPS, switch `origin` to the SSH URL before pushing. GitHub tokens may be
+used for API access, metadata, pull requests, and CI checks, but must not be
+embedded in remotes, committed to files, or recorded in work notes.
+
+Multiple Codex instances may work in this workspace at the same time. Keep
+`repos/<project>.git` bare, and do not reuse another initiative's branch or
+worktree. Use feature branches and separate worktrees so concurrent work does
+not conflict over checked-out branches, index state, or uncommitted changes.
+
+For feature work in the independent project repositories:
+
+- Keep `repos/<project>.git` as the canonical bare clone for fetching,
+  inspecting refs, and creating worktrees.
+- Before pushing or updating downstream configuration pins, fetch upstream
+  and rebase feature branches when appropriate. Several repositories use
+  scheduled GitHub workflows to update dependencies, inputs, or generated
+  metadata, so default branches may advance while feature work is in progress.
+- Create feature branches named `<yyyy>-<mm>-<dd>-<slug>`, for example
+  `2026-05-27-api-token-rotation`, unless a repository-local rule requires a
+  different name.
+- Create worktrees under `worktrees/<yyyy-mm-dd-slug>/<project>` so all changes
+  for one initiative are easy to inspect together.
+- After the final rebase and commit, and before integrating each feature
+  branch, save its comparison with
+  `dev-session worktree capture-comparison <slug> <name> --as-is`. Repeat after
+  any head change. This keeps the Repositories tab useful after integration
+  even if nobody opened it before merging. For a historical recovery, supply
+  both `--base <SHA>` and `--head <SHA>` from recorded integration revisions;
+  never guess the pre-merge base from the current default branch.
+- After feature integration approval, create a fresh temporary worktree from
+  the target branch, usually the upstream default branch. Fetch it first,
+  rebase the feature branch onto the current target branch if needed, and merge
+  only when it can fast-forward, using `git merge --ff-only <feature-branch>` or
+  an equivalent fast-forward-only command. Do not create merge commits in normal
+  feature integration history. Test and push from the temporary worktree, then
+  remove it after the merge is complete.
+- Record every affected repository, branch, and worktree path in
+  `work/<yyyy-mm-dd-slug>/state.md`.
+- Archive the initiative after the work is merged or abandoned, as described
+  under Planning And Tracking, so its clean worktrees are removed and its
+  durable record is committed under `archive/`.
+- Keep feature branches after merge, both locally and remotely, unless the user
+  explicitly asks for branch deletion. Cleanup means removing worktrees and
+  transient build/cache files, not deleting branch refs.
+
+Feature branch history may be rewritten while the branch is under development
+and has not been merged into the main branch. Use this to keep functional
+commits, generated updates, and follow-up fixes reviewable. Do not rewrite
+history that has already been merged.
+
+## Final branch history and merge readiness
+
+For a later mechanical refresh of a fully independently reviewed branch,
+review reuse requires the applicable independent-review policy. Retained
+integration runs may use their installed certified-equivalence workflow.
+The certificate must bind the original exact range, reviewer, final range,
+reconstruction or installed pin proof, and migration conclusion. Changes outside
+that boundary require the applicable independent review. Preserve the original
+report and revisions. A certificate never grants integration approval or permits
+rewriting master. Sessions own new operation batches and command retries. Retain the original
+individual recovery commands for existing uncertain operations.
+
+Before final review of an unmerged branch, compare its complete base-to-head
+commit series and final diff with the intended result. Identify superseded
+approaches, follow-up fixes, unused compatibility paths, and every migration.
+Establish whether each migration version was merged, released, deployed, or
+externally consumed before rewriting it. Consolidate obsolete, unapplied branch
+history while preserving supported paths. Give this inventory to the dedicated
+independent reviewer for an explicit whole-branch history and migration
+conclusion under the mandatory-change-review workflow. Earlier incremental
+reviews do not complete this gate.
+
+Consolidate repeated dependency or channel-pin updates in one logical update
+stream into one final update, including generated lockfiles and metadata.
+Identify streams by the dependency, channel/role or input and their logical
+purpose. Branch publication, development deployment and earlier incremental
+review do not justify retaining superseded pins. Preserve supported deployed
+behavior and migration lineage; that compatibility obligation does not require
+keeping each intermediate pin commit. Retain separate updates only when a
+concrete release, supported consumer or state boundary requires them, with
+evidence explaining why the final update alone is insufficient. Keep rollout
+SHAs and execution evidence in rollout records. If a supported consumer needs
+an exact source revision, preserve its required ref as part of consolidation.
+Existing published-history protections still apply.
+
+Include these streams and their commit dispositions in the review packet under
+the mandatory-change-review skill. The reviewer must independently assess
+consolidation and any retained boundary; a mechanical-content review exemption
+does not exempt commits from whole-branch history assessment.
+
+Immediately before an approved merge, the lead checks the current complete
+base-to-head series and final diff against the final review. Confirm that
+superseded updates were consolidated and any retained updates have the required
+evidence and reviewer conclusion. Record the checked final heads and history
+conclusion in session state. For later changes, apply the skill's existing
+narrow-fix and affected-lane review rules and this procedure's patch-equivalent
+rebase rules; do not substitute an earlier incremental review for the final
+series check. Integration still requires explicit user approval.
+
+Before changing code in a repository, read its local `AGENTS.md` if present.
+When a repository has no `AGENTS.md`, infer commands and style from its
+existing files, history, and manifests.
+
+
+## Retained branches with unknown historical bases
+
+An ordinary registration may omit `initial_base_sha` honestly. Re-add its exact
+existing branch without supplying a guessed base; missing retained refs require
+explicit recovery and cannot become new branches at today's default. Registration
+and sync do not infer historical starts from merge-base or current tips. `--base`
+selects a genuinely new branch's start. For a retained historical base, use the
+workspace's [dated source-only repair](../maintenance/repair-legacy-sessions-2026-10-04.md)
+with exact structured commit/blob and repository/branch evidence. Finalization
+still requires the exact final head; unknown bases do not earn the unpushed-initial-head archive exception. A saved
+exact comparison remains useful, otherwise archived comparison is unavailable.
