@@ -61,6 +61,16 @@ When retirement evidence is unknown, preserve the instructions and mark
 applicability unresolved. Finishing one rollout does not retire its supported
 upgrade or recovery path.
 
+**Reader and ownership check.** Keep a paragraph only if it helps the intended
+reader use the feature, interpret its output, or recover from a failure, and
+this is the project and page that own that guidance. Technical accuracy or a
+review comment alone is not a reason to add prose. In standalone project docs,
+state compatibility requirements without prescribing a downstream project's
+pins or rollout steps. Keep needed rollout instructions in the owning deployment
+documentation or session plan. Omit internal mechanisms from man pages unless
+they change how users should interpret output or what they should do. Apply this
+check during copy approval and independent review without adding a new form.
+
 Before mandatory review and handoff, reconcile documentation with the final
 implementation and actual deployment evidence. Check placement as well as
 completeness. Split mixed passages without burying feature contracts or losing
