@@ -21,7 +21,7 @@ selected kernel provides the module and dependencies without a kernel change.
 No persisted state, API, protocol or migration changes are expected. Record
 activation and rollback implications in the design. Staggered updates should
 remain supported; no coordinated fleet update is expected. Deployment is a
-separate operation; integration requires explicit approval for vpsadminos/master.
+separate operation; integration requires explicit approval for vpsadminos/staging.
 
 ## Documentation and checks
 
