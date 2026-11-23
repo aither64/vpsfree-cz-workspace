@@ -14,7 +14,7 @@ phase changes. Stop the affected action and report unreadable guidance.
 | Before this activity | Read |
 | --- | --- |
 | Updating Codex | [Update skill](skills/update-codex/SKILL.md) |
-| Selecting affected projects or changing cross-project scope | [Project map](docs/agent-instructions/projects.md) |
+| Selecting affected projects or changing cross-project scope; planning feature compatibility; designing, implementing or reviewing portal/backend interfaces | [Project map](docs/agent-instructions/projects.md) |
 | Starting/resuming an initiative; writing plans, state, notes or handoffs | [Session setup and tracking](docs/agent-instructions/sessions.md) |
 | Cloning repositories; updating downstream configuration pins; creating/reusing worktrees or branches; fetching, pushing, rebasing, merging or cleaning them; committing coordination records; declaring an unmerged branch ready | [Git and worktrees](docs/agent-instructions/git.md) |
 | Launching, listing or stopping registered temporary session services; any session mutation; archiving, deleting, reviving, enabling auto-archive or changing its hold; creating/accessing/resetting development clusters; implementing/reviewing session, cluster or package-transition behavior; switching/rolling back workspace packages; suspending/unregistering workspaces or reconciling Codex | [Lifecycle and package transitions](docs/agent-instructions/lifecycle.md) |
@@ -163,69 +163,18 @@ final pre-merge checks under mandatory-change-review.
 
 ## Compatibility And Deployment
 
-Treat vpsFree.cz as live infrastructure with persistent state and staggered
-updates. Every feature plan must assess backward/forward compatibility of old
-and new affected components, including:
-
-- persisted state and on-disk formats;
-- database schemas, migrations, seeds, and rollback behavior;
-- API contracts, generated clients, CLI behavior, and Terraform provider
-  behavior;
-- protocol or message format changes between services and daemons;
-- generated NixOS/vpsAdminOS configuration and module options;
-- deployment ordering, rolling upgrades, and mixed-version operation;
-- whether a rollback can load state created by the new version.
+Before planning any feature, read the complete
+[compatibility and deployment requirements](docs/agent-instructions/projects.md#compatibility-and-deployment).
 
 Follow the mandatory Git procedure for repository claims; only approved merges
 need them. For machine reservations and release, follow
 [machine retention](docs/coordination.md#machine-retention), preserving existing
 recovery contracts.
 
-Prefer incremental deployment. Allow intentional incompatibility only when the
-plan records its reason, impact, required ordering, rollback implications and
-operator action.
-
-For vpsAdminOS changes, state when all running machines or nodes need coordinated
-updates and why that cost is worthwhile, or choose a compatible design.
-
-For unmerged, unreleased and undeployed database migrations, assume the exact
-schema of the immediately preceding migration. Reset stale disposable dev/test
-databases after rewrites; do not add `table_exists?`, `column_exists?`,
-`index_exists?`, `if_exists`, `if_not_exists` or equivalent guards for this purpose.
-Allow guards only for intentionally supported multiple predecessor schemas;
-record that requirement in the initiative plan and test every supported path.
-Keep integrity and conversion checks for real persisted content.
-
 ## Portal backend interfaces
 
-The portal owns common UI, workflows and explicit backend-neutral operation
-interfaces. Backend adapters implement those interfaces, keeping native protocols,
-authentication, provider details and state translation inside the adapter. Shared
-UI, routing and team orchestration consume declared capabilities and handle
-unsupported operations explicitly. Never silently fall back to another backend or
-present an absent capability as available.
-
-The same supported user operation must have the same presentation and interaction
-across backends, including Team and Fork. Reuse or extend current interfaces and
-UI components; avoid parallel backend-specific forms and backend-name branches in
-shared UI. Keep backend-name checks at adapter registration, configuration or
-documented compatibility boundaries. Native implementations may differ; do not
-introduce a speculative framework or duplicate a native client in shared code.
-Adding or removing a backend should require changes to its adapter, intentional
-registration and configuration, and relevant tests, without changing unrelated
-portal features.
-
-A genuine capability or semantic constraint may justify a conscious exception.
-Record its rationale, affected UX and contract, and capability decision in the
-owning interface and design documentation, and cover it in applicable checks.
-Missing implementation or historical divergence alone does not justify an
-exception.
-
-When an interface changes, update its adapters and compare representative adapters
-through shared consumer behavior. Preserve authorization, cancellation, identities,
-history and receipt semantics across backend implementations. Document supported
-capabilities and retained-state or mixed-version limitations beside the owning
-interface and adapter.
+Before designing, implementing or reviewing portal/backend interfaces, read the
+[portal backend interface requirements](docs/agent-instructions/projects.md#portal-backend-interfaces).
 
 ## Mandatory Change Review
 
