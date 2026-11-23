@@ -4,7 +4,7 @@
   inputs = {
     nixpkgs.follows = "vpsfree-dev-workspace/nixpkgs";
     vpsfree-dev-workspace = {
-      url = "github:vpsfreecz/dev-workspace/d76bd681c6db981907a52c187a3298549af87ab0";
+      url = "github:vpsfreecz/dev-workspace/bf12ac71a8a00b1581eed5352f99c1b2daaeff5b";
       inputs.dev-workspace.url = "github:aither64/dev-workspace/0abe5fe48955b1bcdc8cc368fcb27e11e0676f70";
     };
   };
