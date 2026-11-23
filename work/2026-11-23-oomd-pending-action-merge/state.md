@@ -16,11 +16,22 @@ lifecycle: active
   isolated fixture correction, including real RTNL distress.
 - [x] User authorized the vpsAdminOS staging merge in this conversation with
   “so merge your changes, i'll think about the follow-up”.
-- [ ] Publish the reviewed feature, capture comparison, integrate and confirm
-  the remote staging head. Check CI after releasing the repository claim.
+- [x] Published branch `2026-11-23-oomd-pending-action-merge` and captured its
+  staging comparison. Fast-forwarded remote `staging` to
+  `b86287c105b749827cd63632ac35936533910f63`. Verified the remote head and
+  released the merge claim. Production deployment is outside this delivery.
 
-The tracking session was created with the CLI after the previous portal
-preparation compatibility error cleared. The registered feature worktree belongs
-under worktrees/2026-11-23-oomd-pending-action-merge/vpsadminos. The published
-operational documentation accompanies the code in docs/os/oomd.md. Full local
-verification evidence is available in the portal file verification.tar.gz.
+## GitHub checks on staging
+
+The following links identify the runs triggered by the staging push.
+
+- [CI (ci)](https://github.com/vpsfreecz/vpsadminos/actions/runs/45252903685) — queued as of the merge handoff.
+- [RSpec](https://github.com/vpsfreecz/vpsadminos/actions/runs/45252903796) — in progress as of the merge handoff.
+- [RuboCop](https://github.com/vpsfreecz/vpsadminos/actions/runs/45252903731) — success as of the merge handoff.
+
+## Evidence
+
+The registered repository is available in the portal. The Files tab includes
+`verification.tar.gz` with the focused guest output, staging controls and
+watchdog follow-up. The initiative was created in shell-only mode. The existing
+chat transcript is separate. The interactive Top proposal was deferred.
