@@ -1,0 +1,4 @@
+- Result: **passed**, exit status `0`.
+- Revision: `058efbd5ca185669db12cd5acf384c9968d87ea6`; command: `make OUTPUT=ci-toplevel-kernel-6_12_119 toplevel`.
+- Elapsed: **4,481 seconds**. The build log shows Linux `6.12.119` and the requested derivation `/nix/store/dshy6qvqzd2mwmkjvrpnmyliqydmi5rl-vpsadminos-system-vpsadminos-26.05.git.058efbd.drv`.
+- Log: [kernel-build.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-23-stable-kernel-update/kernel-build.log). No operation remains running; no cancellation was needed.

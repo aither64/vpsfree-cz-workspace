@@ -1,0 +1,10 @@
+**Result: incomplete.** Target discovery succeeded, but VM execution stopped before the first case completed. I did not start `zfs/boot-modes`.
+
+The sole attempted test was `./test-runner.sh test 'osctl/nfs-cancellation'` in the requested vpsadminos worktree at `058efbd5ca185669db12cd5acf384c9968d87ea6`; Linux was pinned at `36574eefad15c11d26ad7adb0b8e15e6bcfe2ec5`. After about 65 seconds, I stopped the run when its QEMU command line showed kernel `6.12.117`, with another pre-existing VM using `6.12.118`. Neither matches the requested `6.12.119`. The test emitted no booted release or source provenance before stopping, so that evidence is unavailable. The failed discovery output and test log are preserved at [vm-discovery.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-23-stable-kernel-update/vm-discovery.log) and [vm-nfs-cancellation.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-23-stable-kernel-update/vm-nfs-cancellation.log); status is recorded in [vm-nfs-cancellation.status](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-23-stable-kernel-update/vm-nfs-cancellation.status).
+
+The test runner process exited with status 130 after the stop. No process for this test remained in the follow-up check. The fresh watcher process was still alive but had not reported completion; its log showed repeated expired-token 401 errors. No retry, deployment, or exploit reproduction was performed.
+
+- [x] **Phase:** VM verification attempted; escalated on unexpected guest kernel identity.
+- [x] **Completed:** Pattern discovery and the single authorized test attempt; preserved logs and status.
+- [ ] **Remaining:** Both VM cases remain unverified.
+- **Next action:** Resolve why the run selected kernels 6.12.117/6.12.118; rerun only with explicit authorization after the exact 6.12.119 guest selection is established.
