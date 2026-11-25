@@ -9,8 +9,9 @@ outside version control and retain only sanitized technical findings.
 
 ## Affected repositories
 
-vpsadmin is the initial candidate; architect0 confirms scope from the stack and
-current source before application changes. No integration or deployment is approved.
+vpsadmin is confirmed from the email and unchanged affected source on current
+origin/master. Go, Rust and TypeScript clients require revision-specific no-change
+assessment under the API contributor procedure. No integration or deployment is approved.
 
 ## Approach and ownership
 
@@ -33,3 +34,23 @@ verification and branch status; source comments or project docs only when useful
 for a lasting invariant. First establish a faithful regression check, then run
 applicable quick checks/hooks, commit all changes, obtain mandatory independent
 review and run required longer verification. Publish the feature branch only.
+
+## Accepted brief and supporting assessment
+
+[design.md](design.md) records the accepted root cause, scope, source lineage,
+compatibility and verification brief. Implementer1 owns the required client
+freshness comparisons using implementer0's final committed API export, under
+each client repository's own guidance. Source edits remain restricted to the
+incident-report resource and its existing request spec. Report unexpected
+client drift before adding application scope.
+
+## User-requested rule correction (supersedes client follow-up)
+
+User rejected unrelated SDK refresh and requested improvement of the blanket
+rule. D cancelled; no client commits/push, exact original sources restored.
+Final6c16d045 changes only ordering/specs plus authoritative contract-first
+synchronization procedure and routing label. Declaration-neutral tasks now
+record exact-revision source assessment and stop before any export/client
+worktree/generation/comparison/refresh; unrelated baseline drift separate.
+Actual contract changes retain full synchronization safeguards. Both committed
+deliverables independently reviewed with no findings.
