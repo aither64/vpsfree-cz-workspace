@@ -10,7 +10,9 @@ coordination and real dependencies, and respect sensitive-source restrictions.
 
 Affected repository: this workspace (AGENTS.md, docs/agent-teams.md and selected
 routed guidance; config/agent-teams.nix catalog prompts). No runtime features,
-new telemetry, team reconfiguration, deployment or default-branch integration.
+new telemetry or team reconfiguration. Later user additions authorize workspace/master
+integration after checks/review and workspace application activation; full system
+deployment remains outside scope.
 Readers: future workspace leads and members. Authoritative rules stay in existing
 instruction homes; session-specific evidence stays here.
 
@@ -29,7 +31,8 @@ review independence, approvals and lifecycle/resource safety. Shared instruction
 apply when read; catalog prompt changes require separate package deployment and
 do not rewrite retained sessions. No persistent schema/API change or migrations.
 Develop in worktrees/2026-11-25-team-lead-delegation/workspace on its dated branch.
-Publish feature branch; explicit workspace/master integration approval required.
+Publish feature branch; workspace/master integration and application activation
+now explicitly approved in this conversation after checks/review.
 Recovery is reverting the instructions/catalog patch before a future deployment.
 
 ## Verification
