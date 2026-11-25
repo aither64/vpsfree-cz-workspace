@@ -1,0 +1,18 @@
+# Exact-session cluster stop and release — ROOT ONLY
+
+The user's explicit “stop and release the dev cluster” was executed for session `2026-10-30-oomd-abuse-policy`. Session identity/roster44/Sol xhigh/workspace_write/full_access verified. No repository Ruby/GEM/BUNDLE environment was inherited. Installed generic `/nix/store/6n59yywfx9k07gxnfx81hz4nymi2xbs3-dev-workspace-0.2.0`, provider `/nix/store/q2navyh7mqpqmyrm87hwa041s8ay073n-vpsfree-dev-workspace-tools-0.1.0`.
+
+- Before: running owned runner2458866, single/bridge, ready, appliedpendingnull; exact recorded socket `/tmp/vpsfree-devcluster-e0942bcace59`;21 owned runner/guest/virtiofs processes.
+- Ordinary `vpsadmin-devcluster stop 2026-10-30-oomd-abuse-policy` **exit0/23.078511s**, provider “stopped” with no timeout/kill result. All21 recorded processes exited. Stop retained disk inode/size, as documented.
+- Ordinary `vpsadmin-devcluster reset 2026-10-30-oomd-abuse-policy` **exit0/1.819221s**, provider “state removed”. This is the public CLI implementation of portal Release, explicitly accepted by root after clarifying destructive semantics; no private helper or arbitrary deletion.
+- After: provider status exit0 gives exactly `{"schema":2,"found":false,"kind":"vpsadmin"}`. Exact cluster directory and recorded socket directory absent; no original owned process or process referencing that socket remains. No cluster runner/guest/socket/runtime ownership is retained.
+
+Release inherently removed services-root.img12GiB and node1-tank.img20GiB, cluster config/applied selection/credentials/logs/runtime and retained cluster-root links. Existing external SQL/native Mailpit backups and old rollout packet were hash-verified unchanged (`external-recovery-refs.json`); shared cluster SSH keys/certificates remain. Source/worktrees/refs and session records were untouched. No fresh backup/build/test campaign, reset/recreate workaround, host/profile/default/npm/prod operation, session stop/archive/delete or unrelated cleanup ran. The **development session stays active/open**.
+
+Installed semantics: provider README “Portal controls and retained starts”, lines3–14, states Stop keeps disks/config and Release stops/removes them. Generic installed source `docs/workspace-portal.md`, “Cluster provider status and shutdown contract”, lines2370–2387, states public `release-cluster` invokes provider `reset <slug>`. Public provider `bin/devcluster:1583–1589` and guarded shared `lib/runtime.sh:485–517,577–588` implement exact recorded socket/cluster-state removal. These instructions were inspected before reset. No separate physical-machine claim was required; ordinary provider lifecycle/cluster locks guarded the exact session.
+
+Evidence: `before.json`, `preserved-paths-before.json`, private status/command logs, `commands.json`, `stop-result.json`, `release-result.json`, `after-stop.json`, `after.json`, `semantics.json`. First after-helper incorrectly expected a state field after `found:false`; it exited1 after actual valid provider status. Corrected the assertion using saved output, without replaying stop/reset. Original result remains literal.
+
+Native stop42852/release44584/after63729 are terminal and joined. One fresh installed Luna/low observer80913 monitored this related batch; final join/result is in `result.json`. No observer churn or duplicate source command. All runtime/effects windows and capacity return ROOT ONLY. Recovery references remain historical; releasing the cluster does not claim a recoverable live disk or future restart availability.
+
+Session: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-30-oomd-abuse-policy/

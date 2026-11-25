@@ -1,0 +1,5 @@
+- **Result:** Passed, exit status 0; elapsed 31.22 seconds.
+- **Command:** `python3 /tmp/react-rework-install.py` from `/home/aither/workspace/ai/vpsfree.cz`, run once.
+- **Log:** [root-dependency-install.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-30-oomd-abuse-policy/react-rework-verification/root-dependency-install.log). It records 407 packages added and no BFF or `dist` output created.
+- **Allocation:** Root allocation increased from 0 to 293,654,528 bytes. The script’s JSON result is in the log.
+- **Operation status:** No operation remains running; no cancellation.

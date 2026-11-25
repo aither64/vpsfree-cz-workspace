@@ -1,0 +1,6 @@
+- **Result:** Passed, exit status 0. Both authorized commands ran once, sequentially; total elapsed time was 9.467 seconds.
+- **Tested revision:** `bf32762126f21fb7fc825fac25b5b45d075a2681`, tree `7fc30ef781a878c50a1e003600be2ab8131106f0`. Final head and tree match; the working tree is clean.
+- **Evidence:** Renderer passed 32 render cases, 16 first/repeat equivalence cases, and 1 fallback render. Checker validated 77 templates and 383 files.
+- **Logs and receipt:** [template-render.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-30-oomd-abuse-policy/nov13-owner3-rebase-evidence/template-render.log), [template-check.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-30-oomd-abuse-policy/nov13-owner3-rebase-evidence/template-check.log), [template-check-result.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-30-oomd-abuse-policy/nov13-owner3-rebase-evidence/template-check-result.json).
+- **Watcher settings verified:** Catalog SHA256 matched the supplied value; utility `dw_e792014d07f1ab00a4e052aeb6fbc575674f9dbc9073f569`, `gpt-6-luna`/low, `full_access`/never. The current session slug also matched.
+- **Outstanding work:** None. No operation-owned commands or sessions remain running.

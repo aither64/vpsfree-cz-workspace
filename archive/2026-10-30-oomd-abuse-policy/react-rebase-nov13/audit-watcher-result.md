@@ -1,0 +1,4 @@
+- Result: **passed**, exit status 0.
+- Tested revision: `574b1166`. The requested audit command completed once in 39.518 seconds.
+- Full output: [quick-audits.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-30-oomd-abuse-policy/react-rebase-nov13/quick-audits.log).
+- All checks passed, including structural budgets, component contracts, UI strings, and mutation audit. No operation-owned process remains running.

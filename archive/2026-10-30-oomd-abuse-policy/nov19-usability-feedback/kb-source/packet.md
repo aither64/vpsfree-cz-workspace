@@ -1,0 +1,20 @@
+# Nov19 KB source alignment — implementation complete
+
+Owner implementer3; verified session, roster44 Sol/xhigh/workspace_write/full_access.
+Exact final KB head `ca66b0f90a9a5174cf76cc05f6718d344ecf794a`, tree `79b4d13fe656497cc3a4409dba5d706879c739f5`, direct base `ce9387f5472574cdb047d6ffcb611cc766313f8c`. Source/index/evidence window and capacity are returned after this packet. All native effects are terminal; concrete SDK fixes remain owned and parked KB runtime/media/capacity fences remain untouched.
+
+Only `cluster/fixtures/incident_escalation.rb` warning5→3 and root-approved matching `cluster/README.md` literal changed. Stop10, selector, labels/templates/suppression and non-screenshot test configuration are unchanged. Site source is exact `1b4052c798c0496369c5c67a55d2626f5fe2ecfb`. Both navigation fingerprints already match immutable backend `ea978fe3d4ab5b3b3a0e9b112174a474940fd1aa` / tree `bee1770ec176c91cad888eda473403a1d0a3885c`; no artificial metadata edit was made. All five canonical pin files, IDs/routes/bindings, scenario/capture/media bytes stay unchanged.
+
+## Checks and inputs
+
+[Checks](checks.json) bind the retained pinned-shell Ruby3.4.9/Minitest5.26.1 subset and the exact local-source override. The [19 source files](source-inputs.json) came only from immutable Git objects, never the moving backend checkout/index. Contract47controls/38paths/35concepts/3selectors; contract8runs50assertions; annotation inventory98bindings/9exceptions; annotation10runs22assertions; syntax and pure parser fixture metadata3/10 plus9selectorcases (2true/7false) all pass in about6seconds. No failures/errors/skips. The README-only literal followed these passes; no checked input changed before commit. No aggregate, Nix evaluation/build, API/database boot or browser was run.
+
+[Root candidate return](root-writing-return.json) remains final at EN `0eb5754d5452fca2bb9092265e8b5daa2c9d6ac75cb3868565177b8e4ab682e0` and CS `a446c602aad9ac44856f4cecee3fa6f37f7a2b89a27942c7f7386ce60858e95f`. [Scoped candidate proof](candidate-proof.json) verifies actual hashes, one reports and one policies paired tag per language, known path/page bindings, manual action coverage and exact historical prefix/Accessible-MySQL tail. Technical facts match settled PHP/default/member-privacy controls; no prose was rewritten by implementer3. This is not a full fetched production corpus or release validation claim. Root's writing skills own candidate wording; the README preserves the returned exact literal and all surrounding facts.
+
+## History and remaining delivery
+
+[Complete six-commit series](full-series.json) and [complete recorded-base diff](full-final.diff) bind `ce2c8cd9..ca66b0f90a9a5174cf76cc05f6718d344ecf794a`; [current purpose](owning-purpose.diff) is exactly two one-line substitutions over accepted ce9387f. No migration/schema/API/client change exists. Accepted merged d3af/f977/cb782 and independent runtime91d remain literal ancestors. ce9387f is the exact direct parent, not rewritten. No pins were folded; the historical merged pin boundary and current pending public-final pin stream remain separate. All preexisting refs are unchanged except this assigned feature-head advance, proven by refs-before/after. No declared hook framework or active non-sample hooks exists; normal commit completed0 with no bypass.
+
+[Source/geometry impact](impact.md) preserves three existing bilingual concepts and records actual header/table/perex selection, threshold icon/zero states and excluded policy/filter forms. No new concept, capture or pixel acceptance follows. Final public backend identity/coherent five-pin update, normal pinned aggregate, combined independent affected-source/history review, canonical bilingual media/runtime and full-page/staging/production approval remain root-owned and separately held. Existing public/deployed/merged/runtime evidence is retained at its original identities. No fetch/push, CI, default/registry release, resource or lifecycle action occurred.
+
+Session: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-30-oomd-abuse-policy/

@@ -1,0 +1,5 @@
+# KB source history boundary
+
+Recorded basece2c8cd9358c3636e5d39343e595df813a0b197f is retained from portal.yml and accepted g-kb-source/final-history-receipt.json. Alreadymerged d3af1d16/f97785c2/cb782524 remain byte/history-exact, as do local/default refs; no new historicalbase is inferred. Independent runtimepurpose91d349c8 remains identical with its original parent and patch.
+
+Only the unmerged4be305f source/fixture/navigation/pin stream and this new source-only followup are consolidated into one final owning source commit after normal quick checks/rootprose. Old4be and final source-beforehistory refs must be preserved first, together with prior preservation refs. Allfive publicpins remain literal5aa1; new sourcecontract is tested only with localde4 override and carries finalpin/publicationpending dependency. No merge/push or runtime operation. Completece2..final series and unmerged91d..final source diff/purpose mapping will distinguish the mergedpinboundary and pending finalpin stream. No migrations.

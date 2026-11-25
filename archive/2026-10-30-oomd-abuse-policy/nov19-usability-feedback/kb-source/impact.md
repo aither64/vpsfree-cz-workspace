@@ -1,0 +1,21 @@
+# Nov19 KB source and capture impact
+
+Source is immutable backend `ea978fe3d4ab5b3b3a0e9b112174a474940fd1aa`, tree `bee1770ec176c91cad888eda473403a1d0a3885c`; only the 19 unique navigation/catalog/parser files needed by the allocated pure checks were read from Git objects. No moving backend checkout or index was consumed. `source-inputs.json` binds their digests. Prior [PHP impact](../../nov18-php-policy-presentation/kb-impact.md) and [current PHP impact](../../nov19-php-usability/kb-impact.md) remain literal.
+
+The two policy/report controls preserve intent, separate routes, return/history helpers, labels, semantic paths and article bindings. Both exact radius-one fingerprints remain valid, including every related route occurrence; `navigation-contexts.json` records the actual fragments and source line numbers. No navigation edit is justified. This is current-source comparison with an explicit local-source override, not a check of the old pinned backend.
+
+The site-shaped screenshot fixture changes warning 5 to 3, retaining stop 10 and the exact trusted creation-time selector, metadata and suppression. The pure parser check proves 3/10 and the existing nine membership cases (restart/stop true; seven lookalike/missing/wrong/generated cases false). Generic backend test declarations and other policies remain untouched. Current counts/settings can still reflect global/VPS overrides. No saved incident or running fixture was reset or reclassified.
+
+## Existing bilingual capture concepts
+
+| Concept (CS and EN) | Actual source/selector | Source and geometry assessment |
+| --- | --- | --- |
+| `getting-started/vps-details` | `scenarios/getting-started.cjs`: `titleAndFirstTable`, selecting `#content-in h1` plus the first content table | Policy sidebar IDs/labels/routes stay stable. The sidebar and expanded policy forms/report details are not directly selected by this checkpoint. A reached-threshold perex between heading/table can change the union crop height or text wrapping. Zero-count absence remains a separate required state. Final-source visual assessment is still needed; no pixels were accepted here. |
+| `getting-started/vps-list` | `navigationTitleAndFirstTable`; sidebar explicitly hidden; top navigation, heading, first content table | No new list column/row or fetch is introduced. Reached thresholds retain the hostname warning icon with changed localized alt/title; no icon for zero counts. The site warning base can change which nonzero fixture counts reach threshold unless overrides apply. Existing bilingual final-source crop/fixture assessment remains required; unchanged structure does not certify media. |
+| `restore-backups/playground-vps-list` | `scenarios/storage.cjs`: `titleAndFirstTable` on the existing VPS list | Same list icon/threshold/zero-state considerations, without top-navigation selection. Preserve recovery VPS selection intent, existing concept, output and media IDs. No scenario or fixture membership change is warranted. |
+
+This is three existing concepts with two languages (six existing obligations). Their 1440x1100 capture viewport and semantic paths remain unchanged. Policy settings, report filters and saved membership tables are article/source impacts, not new capture concepts in this package. The inherited 1150px WebUI layout is not redesigned. No capture, browser, PNG, inventory update, capacity admission, runtime/staging/production action or media certificate occurred.
+
+## Root-owned candidate scope
+
+Both existing unmanaged incident candidates stay in `nov18-kb-source`. Root owns the bilingual rewrite after the factual handoff. Changes are limited to current report filter/matched membership and neutral member-empty state, explicit admin inheritance/custom controls and reset/pending/readback behavior, the site 3/7 and 10/30 defaults with override precedence, and concise Sent/Odesláno status without the SMTP/inbox caveat. Preserve `<page>`, original section boundaries outside the escalation section, exact semantic IDs, owner privacy, confirmed-action and immutable historical facts. New action instructions must be covered by existing paired navigation tags. This is not a complete production page-corpus/release check; full candidates, annotation discovery, coherent final pins, media and production approval remain separate allocations.

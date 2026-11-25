@@ -1,0 +1,7 @@
+**Result: passed.** Hosted run 41187229710 completed with CI conclusion `success` and native watcher exit code `0`. It tested head `7bdee285d62343c653b5a8c5cfdeab2d97ef7f4d` and ran for 33m30s.
+
+- Runtime log evidence: 100.0 GiB memory assigned, with a 90.4 GiB limit; all 12 scripts ran, and the final summary reports “4 tests successful.” The run JSON shows the test and evaluation steps succeeded.
+- The hosted log identifies `./test-runner.sh test --state-dir ... --fresh --jobs auto`. It does not include a source-check step.
+- No local runtime was inspected. No cancellation or retry occurred.
+
+Evidence is saved under [kb-shared-source-evidence](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-30-oomd-abuse-policy/kb-shared-source-evidence): [starting snapshot](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-30-oomd-abuse-policy/kb-shared-source-evidence/ci-managed-start.json), [final run JSON](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-30-oomd-abuse-policy/kb-shared-source-evidence/ci-managed-final.json), [native CI log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-30-oomd-abuse-policy/kb-shared-source-evidence/ci-managed-native.log), [watch output](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-30-oomd-abuse-policy/kb-shared-source-evidence/ci-managed-watch.log), and its [native exit status](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-30-oomd-abuse-policy/kb-shared-source-evidence/ci-managed-watch.log.exit).

@@ -1,0 +1,6 @@
+- Result: **passed**, exit status `0`.
+- Operation: `143a9b01-7ded-4d66-9664-5e581055bf27`; command `/nix/store/d03w3zbz989f0z703ii6735ixsgascsg-prefetch-npm-deps-0.1.0/bin/prefetch-npm-deps package-lock.json`; lock SHA-256 matched `eee6460485c5aea039721b682839b58d44ce19b7acb3e42f50c59650cd9d429d`; lock unchanged. Elapsed: `3.0475275018252432` seconds.
+- Output: `sha256-yAOJrTTzxZeveFPN7kCFHA/0t0r+G2aoz2hqSL19+iI=`
+- Warning: 6 of 485 packages (1.2%) lack `resolved` URLs and will not be cached. The stderr log lists those packages.
+- Artifacts: [result JSON](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-30-oomd-abuse-policy/nov24-react-registry-adoption/prefetch-result.json), [stdout](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-30-oomd-abuse-policy/nov24-react-registry-adoption/prefetch.stdout), [stderr](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-30-oomd-abuse-policy/nov24-react-registry-adoption/prefetch.stderr). Hashes respectively: `1f459cee1fd64dc461d26ab12c761d4961568e01cc518815eaa850dee3b49ec4`, `1bdb779f9129620da26ac19e9afe8f084d03e2816d129962ac42b4c7327c379c`, `45ad74b970bedc83444023919ebf78a0db05f618946205f754a81044057a11b1`.
+- No watcher-owned command or other handles were launched.

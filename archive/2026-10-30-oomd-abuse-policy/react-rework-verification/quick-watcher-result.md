@@ -1,0 +1,3 @@
+**Result: failed to start.** The exact command was not run: `/usr/bin/time` is unavailable, so the wrapper exited 127 before launching it. No operation is running.
+
+Tested source: `b67c7917` plus the reported dirty working tree. Log: [focused-quick.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-30-oomd-abuse-policy/react-rework-verification/focused-quick.log). The log records the wrapper failure; elapsed test time is not applicable.

@@ -1,0 +1,13 @@
+# Extension feature publication
+
+Published `vpsfreecz/dev-workspace` feature `2026-10-30-oomd-abuse-policy` at exact `ca7d8bdf982ef459fe4e09ac3740e0ea2edfcc36`, tree `59c761094955190d39e524d94e729d76875749a8`. Fresh canonical SSH showed the target absent and `master` at genuine base `d76bd681c6db981907a52c187a3298549af87ab0`. A scoped SSH fetch used a fresh create-only preservation ref with an empty refmap. The ordinary push used an explicit empty expected-old lease. Independent SSH readback, anonymous canonical public commit/tree availability and the bounded reconciliation read agree. Default unchanged; local source/index clean. All 440 preexisting refs unchanged; four create-only preservation refs added. Repository declares no hook framework or installed pre-push hook; no hook bypass.
+
+Exactly one finite first-page automatic branch CI inventory (maximum 100) returned total/returned zero. No cancellation, wait, poll, watch, dispatch, rerun or CI diagnosis. This snapshot cannot exclude later automatic runs and claims no CI pass.
+
+Fresh installed-policy Luna/low utility made an unrequested second invocation to capture a log after its successful first invocation. First native item_3 exit0 remains authoritative in `watcher.jsonl`. Second item_5 exit1 stopped at the existing create-only fetch-ref guard before fetch/ref mutation/push/public API/CI. Utility literal INCOMPLETE and CLI0 are retained. The second invocation overwrote first native PID/timestamps and first14 per-command metadata entries; they are unavailable, not reconstructed. First successful push/readback/public/CI raw files and publication facts survived. `effects-reconciliation.json` binds terminal native items, process absence, clean exact source, unchanged refs and remote reconciliation. All handles joined; no remaining owned effects.
+
+Accepted source/check receipt remains `../receipt.json` SHA d03c59271043b05b3ac2363786fd3f45a0a8fd6b73d47876e9235818a7309337. Its focused checks retain their scope and formatter-absent qualification. No checks, builds or source changes repeated. Ordinary full-base diff SHA remains 7384d24cc7d6fec2a62388e72ae57efdbd77d34f13b409c0433a927b9b906f33; no migration or dependency change.
+
+Source accepted/published solely for immutable consumer preparation. Combined independent review, final package checks and readiness remain later gates. Root alone releases owner2. Publication/source/index/effects window and capacity returned; technical fix ownership retained. No default integration, profile activation, deployment, runtime, peer release or lifecycle action.
+
+[Session](https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-30-oomd-abuse-policy/)

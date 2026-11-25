@@ -1,0 +1,6 @@
+**Result: both authorized CI runs passed** on commit `56d716e0806fe9c5167f4b55750e5532767ae0ba` in `vpsfreecz/vpsfree-kb-contracts`.
+
+- **Check — run `41198860086`, job `124530470856`:** passed in 6m42s. Started at 11:55:37 UTC and completed at 12:02:19 UTC.
+- **Managed page runtime — run `41198859903`, job `124530470283`:** passed. It waited queued until 12:37:07 UTC, then completed at 13:07:38 UTC. The job ran for 30m31s; total time from trigger was 1h12m01s. GitHub reported runner ID `10916`, name `gh-runner3.int.vpsadminos.org`, label `self-hosted`. That metadata does not establish physical host or filesystem state.
+
+Complete status, event, job, and native log evidence is in [ci-fixed-source](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-30-oomd-abuse-policy/kb-tracker-repair-evidence/ci-fixed-source). The Managed log records successful test summaries; it also contains repeated virtiofs fixture cleanup refusal messages during repository checks, followed by passing test totals. No runs were cancelled, dispatched, or retried.

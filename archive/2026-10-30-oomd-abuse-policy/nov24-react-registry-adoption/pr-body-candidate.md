@@ -1,0 +1,13 @@
+Add administrator Incidents Overview and History alongside the existing Reports page (REQ-051). The pages use generated SDK operations and server-provided counts and outcomes. Existing Reports links and shared pagination remain unchanged.
+
+Overview shows VPS and policy, incident counts, status and the latest outcome in four columns, with secondary facts in Details. History separates the saved decision and counts from the current action and email outcome. More filters retains active values. Both views preserve missing values and distinguish mail acceptance from a confirmed shutdown without inventing reasons for no action.
+
+The branch has two logical purposes: select published `vpsadmin-typescript-client@0.6.0`, then implement the complete UI. The manifest, npm lock, provenance and frontend cache hash use the verified registry archive, satisfying the published-SDK prerequisite. HaveAPI and BFF dependencies are unchanged. Small fact and route modules keep the implementation within existing structural limits while preserving function bodies, route order and administrator guards.
+
+The existing Reports policy selector also gets local minimum dimensions of 44 pixels high and 160 pixels wide, matching the filter layout contract. This corrects an inherited sizing defect without changing shared styles, filter behavior, roles or test assertions.
+
+Final verification at `b09d8dfd`: the complete CI workflow passed, including unit/script/BFF suites, required audits and typing, production build and Chromium script regression. Both broad-smoke workflows and the full PR smoke suite passed on desktop Chromium, mobile Chrome and mobile WebKit. The eight original desktop sizing failures also passed in focused local verification. Local WebKit could not open a page because of a WPE graphics error; the final hosted WebKit result supplies that browser coverage.
+
+The final Nix frontend and BFF builds and all three provenance/source/package-content checks passed, with clean commit metadata and the verified registry SDK archive. Independent review covered the complete two-purpose history, registry adoption, module extraction and final sizing correction. The two script-fixture findings were corrected and verified; no review findings remain. There are no database migrations.
+
+The [gallery](docs/work-log/screenshots/2026-11-24-admin-incidents-compact/README.md) shows synthetic data and identifies its earlier capture revisions. English/Czech desktop/mobile interaction and spacing results retain their recorded source scope. The demo remains deployed at `f7d28572`; this preparation does not claim a new deployment or live API verification.

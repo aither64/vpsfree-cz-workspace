@@ -1,0 +1,4 @@
+- **Result:** Passed; exit status 0, elapsed 88.28 seconds.
+- **Identity:** Operation `6f2c8a28-1d95-4d3d-8748-72b54267df2b`, revision `6c6792a62d5bb1193b1ce96c0d6ff9167341de49`, with the five planned frontend/BFF/provenance/source/package outputs.
+- **Evidence:** [build-result.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-30-oomd-abuse-policy/nov24-react-registry-adoption/final-packaging/build-result.json), [build.stdout](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-30-oomd-abuse-policy/nov24-react-registry-adoption/final-packaging/build.stdout), [build.stderr](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-30-oomd-abuse-policy/nov24-react-registry-adoption/final-packaging/build.stderr). Logs show six planned derivations; package contents reports 389 public assets with matching revision provenance.
+- **Watcher:** Observation handle joined; no work remains running.

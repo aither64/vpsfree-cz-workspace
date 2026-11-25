@@ -1,0 +1,3 @@
+Result: **incomplete**. The session binding matched `2026-10-30-oomd-abuse-policy`, but the required plan and watcher policy files were not present in the repository cwd or tracking workspace root. A workspace-wide search produced no paths before it was interrupted.
+
+I did not observe operation `46a04342-bf8a-4398-9508-bb781cc7472c`; without the required watcher inputs, its observation scope and result locations could not be verified. The search session was joined and ended with exit status 130. No test exit, elapsed time, case outcomes, or artifacts were available.

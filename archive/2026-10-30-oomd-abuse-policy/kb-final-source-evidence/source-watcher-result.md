@@ -1,0 +1,5 @@
+- **Result:** Passed (exit status 0).
+- **Command:** `nix develop -c bin/check --allow-missing`
+- **Tested:** HEAD `197b3544546a793d3d489c951e4b06bb9c3038f5`, staged tree `651f1834f002bde1200118761a6725e1f3865678`; selected app `4d72e3e754fd47b598de1e54e05b3c5d26c62200`.
+- **Elapsed:** 559.474 seconds.
+- **Evidence:** [complete log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-30-oomd-abuse-policy/kb-final-source-evidence/source-check.log) and [result JSON](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-30-oomd-abuse-policy/kb-final-source-evidence/source-check-result.json). Final output reports valid inventory: 60 concepts, 120 variants, 66 Czech references, 61 English references, and 120 PNGs.

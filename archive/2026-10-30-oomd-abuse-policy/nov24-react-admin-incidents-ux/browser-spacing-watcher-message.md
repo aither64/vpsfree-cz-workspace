@@ -1,0 +1,6 @@
+**Result: incomplete.** The specified operation is not confirmed; the two case outcomes and final geometry artifact are unavailable. The logs show both tests passed, but the command’s raw exit status and elapsed time could not be verified.
+
+- Operation: `819d29f0-44cf-4fca-acd9-203825b14268`; service: `81483fe5-f58a-405c-bb1c-f359e2cf40dc`; source revision: `d92652cb90b460b4bcf6adfc3e40922c90558196`.
+- Log excerpt: `2 passed (24.2s)`; stderr is empty. No matching Playwright or Vite process was visible at inspection.
+- Artifacts: [stdout](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-30-oomd-abuse-policy/nov24-react-admin-incidents-ux/browser-spacing.stdout), [stderr](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-30-oomd-abuse-policy/nov24-react-admin-incidents-ux/browser-spacing.stderr), and the two case artifact directories under `browser-spacing-artifacts`.
+- The specified `browser-spacing-result.json` and `browser-spacing-cases.json` were absent. The logs do not include geometry measurements. No command was launched or canceled.

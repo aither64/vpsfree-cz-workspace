@@ -1,0 +1,4 @@
+- **Result:** Passed (exit status 0); the original full check remains **FAILED**.
+- **Last phase:** The exact suffix command completed after 386.11 seconds. Session slug and staged tree matched the requested values.
+- **Evidence:** Full log at [suffix-check.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-30-oomd-abuse-policy/kb-shared-source-evidence/suffix-check.log); command, staged tree, exit status, and elapsed time at [suffix-check-result.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-30-oomd-abuse-policy/kb-shared-source-evidence/suffix-check-result.json). Tail shows all reported checks passing, including the final inventory.
+- **Live handle:** None.

@@ -1,0 +1,7 @@
+- **Result:** Failed; exit status 1.
+- **Revision:** `b67c7917e8758e707e0b88512f055eab9fbd8529`
+- **Command:** `python3 /tmp/react-rework-quick-runner.py` (run once from `/home/aither/workspace/ai/vpsfree.cz`)
+- **Elapsed:** 18.39 seconds, as reported by the runner.
+- **Runner output:** It reports the verification command was `nix develop --command bash -c 'npm test -- src/lib/api/vps.incident.test.ts src/lib/api/vps.blocking.test.ts src/pages/app/vps/vpsIncidentEscalation.test.ts src/pages/app/vps/VpsIncident.test.tsx src/pages/app/vps/VpsIncidentFilters.test.tsx src/pages/app/vps/useVpsListSmartFilters.test.tsx && npm run typecheck && npm run typecheck:e2e:core'`; `inputs_unchanged: true`.
+- **Log/failure excerpt:** The runner output contained no log paths or failure excerpt, only the JSON above.
+- **Running operation:** None.

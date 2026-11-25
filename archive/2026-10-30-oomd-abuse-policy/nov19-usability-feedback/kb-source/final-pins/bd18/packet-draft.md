@@ -1,0 +1,19 @@
+# Final public-backend KB pins
+
+This package mechanically completes the accepted reviewed KB source by selecting exact public backend `bd18b570300d1b66fbe29fac1b74ce93e4768ae1` / tree `6f453a1c522de83f7a42dd7c7379fe17207edfec` in its five canonical pin files. The starting independently reviewed KB head is `a7a5fd00d8ce6ebceefcb20f57a3c18bfb505a3e`, tree `79b4d13fe656497cc3a4409dba5d706879c739f5`, genuine recorded base `ce2c8cd9358c3636e5d39343e595df813a0b197f`.
+
+Only `flake.nix`, `flake.lock`, `captures.json` (`vpsadmin_commit`), `contract/navigation.yml` (`vpsadmin_revision`) and `contract/pages.yml` (`revisions.vpsadmin`) change. Four literal revisions change once each. Canonical `nix flake update vpsadmin` supplies exactly four lock metadata changes: `locked.rev`, `locked.lastModified`, `locked.narHash` and `original.rev`. Every unrelated lock node/edge/OS input, semantic fingerprint, fixture, prose/candidate, media and non-pin file remains unchanged. `reviewed-lock-equality.json` compares directly against the reviewed source, retaining the intermediate bcc5 resolution separately.
+
+The actual resolved source `/nix/store/hmrbh8plnsj1hpy4g84ssmiyi0fswk81-source` equals all3226 canonical immutable Git archive paths, file bytes, symlinks and executable modes. Its independently calculated NAR is `sha256-/bFnoYd4XEATc3/Xfs8NDxkBQ9zimfgRzuxjpBjvoQg=`, exactly the canonical lock value. No mutable backend checkout supplied these identities. `resolved-backend-source.json` and actual metadata/NAR output bind this proof. Root's accepted narrow-correction equivalence is bound by `dependency-disposition.json` and its original SHA.
+
+## Preparation and scheduling boundaries
+
+Original bcc5 preparation is preserved in the parent directory. The first failed fetch remains FAILED: stale local origin036bb refused a non-fast-forward update despite the expected public ce938 feature/defaultcb782. No source changed in that failed phase. A separate bounded forward fetch used new observation refs, retained stale tracking036bb and completed canonical bcc5 preparation. Both source commands/observers joined; `../preparation-effects.json` records actual failed and passed outcomes separately. The later bd18 preparation preserved original hashes, changed only the same five pins, and joined source77862/utility9948 with zero unsettled items. No realization occurred during either pin preparation.
+
+The original PHP-PASS-before-KB scheduling condition was superseded only by root's explicit current02d6f0e5 dependency disposition, recorded in `heavy-window-return.json`. Owner4's final bd18 attempt remains **TERMINAL INCOMPLETE_RESOURCE_DRIFT** and provides no runtime PASS. Root established that this source/fixture/contract aggregate does not require the PHP VM admission gate. This check does not waive or certify final PHP runtime verification, canonical media/runtime, strict corpus, deployment or integration readiness. No PHP retry, capacity read, threshold reduction or resource action was performed by this package.
+
+## One normal pinned check
+
+The parent runs exactly one ordinary pinned `nix develop` with max-jobs1/cores1. Its instrumentation leaf records actual source/tool/input identity, verifies the exact262 input hashes, then `exec bin/check --allow-missing`. It uses the normal shell and command semantics, with stop-first-failure and no alternate source override. `pin-ready-inputs.json`, `pinned-check-command.sh`, `pinned-check-leaf.sh` and `pinned-shell-identity.json` retain actual inputs and argv. The shell names the proved bd18 source and exact lock hash; Ruby3.4.9, Minitest5.26.1 and actual node/jq/Nix/shellcheck store paths are recorded.
+
+Terminal result, final history, reconstruction and effects will be added after the current authoritative terminal. This draft is not a check-success or final-delivery claim.

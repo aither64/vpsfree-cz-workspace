@@ -1,0 +1,4 @@
+- Result: **passed**, exit status `0`.
+- Tested revision: `574b1166`. The supplied typecheck and seven-file test command ran once and completed in **72.712 seconds**.
+- Log: [quick-types-wire-fixed.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-30-oomd-abuse-policy/react-rebase-nov13/quick-types-wire-fixed.log)
+- Evidence: typecheck succeeded; **7 test files and 88 tests passed**. No operation-owned work remains running.

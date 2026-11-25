@@ -1,0 +1,5 @@
+- Result: **passed**, exit status `0`; elapsed time approximately **62 seconds**.
+- Command: `python3 /tmp/react-shared-desktop-capture.py`, run once in session `2026-10-30-oomd-abuse-policy`.
+- Tested revision: committed head `4343a02cb13ba42ae50a3276715f1c8e5b7765ea`; tested tree `4bee7d1455f35cd422fc385fafda18486f6ee3ea`. Both E2E typecheck and the specified desktop admin case passed.
+- Receipt: [capture-desktop-result.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-30-oomd-abuse-policy/react-rework-verification/capture-desktop-result.json). Logs: [capture-e2e-types.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-30-oomd-abuse-policy/react-rework-verification/capture-e2e-types.log), [capture-desktop.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-30-oomd-abuse-policy/react-rework-verification/capture-desktop.log).
+- No failure excerpt; neither run failed. Receipt reports source tree unchanged. Port 5197 remained connectable afterward (`connect_ex` result `111`); I did not attempt cleanup.

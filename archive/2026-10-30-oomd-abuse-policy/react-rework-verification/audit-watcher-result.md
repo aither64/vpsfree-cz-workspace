@@ -1,0 +1,5 @@
+- **Result:** Passed. Exit status 0; elapsed 20.6 seconds.
+- **Revision:** `b67c7917e8758e707e0b88512f055eab9fbd8529`. The runner reports `inputs_unchanged: true`.
+- **Command:** One run of `python3 /tmp/react-rework-audit-runner.py`. Its Nix command completed `format:check` and all listed audits.
+- **Evidence:** The runner’s completion record is the output above; no failure excerpt or log path was reported.
+- **Running operation:** None.

@@ -1,0 +1,17 @@
+# Existing-demo refresh — terminal partial handback
+
+The corrected ordinary services update completed successfully. Services now runs exact backend0d1 and externally source-bound React25c8; the node payload, running kernel, host tools, exports and reused disk selection remain old/exact. Applied pending is null. Actual configuration/system derivations belong to the retained complete6201-derivation graph. All3226 tracked backend source entries and2844 React entries match; four React omissions follow its declared source filter. Embedded React metadata remains unknown/dirty/sourceunavailable.
+
+The normal provider did not select final templates. One supported manual reconciliation loaded exact64665, updating11translations; all77 templates' stored metadata/variant fields then matched. It was not repeated. Original build1 and helper failures remain literal and linked by the receipts. The confirmed ignored libnodectld cache remains intact outside the backend root, with no replacement symlink or deletion.
+
+Actual report22 now renders its saved matched policy,10/10 counts,5/10 limits and links for both administrator and authorized EN owner in PHP and React; the actual screenshots were inspected. PHP foreign CS displays `objekt nebyl nalezen` and no saved facts. The PHP script's missing Czech regex phrase remains exit1; React's foreign capture ended at Loading and is incomplete. No synthetic UI, rematch or new incident campaign was used. Login effects are real and separate. Final data/mail/session/node comparison and remaining CS/EN settings/warnings/forms/filter/API checks are pending, not passed.
+
+Config activation correctly stopped at a managed-symlink guard. The new services selection links all3components to test declaration5bc3d69c (oomd5/10 plus two manual fixture policies). Normal preStart relinks that immutable configDirectory, so manual replacement followed by restart would not select the reviewed site declaration. No managed-link write, config install/restart/signal, provider edit or bypass occurred. Root accepted the concrete gap and parked dependent work while architect settles the minimal provider optional-file selector and supported execution path. Backend0d1/KB pins remain unchanged.
+
+**Heavy/build window explicitly returned.** Every owned build/copy/activation/read/browser/utility command is terminal/joined, with no known unsettled effect. Demo ownership and all four exact application source freezes stay with implementer0. Final declaration/authenticated acceptance is parked until root's provider selection release. No guest polling/mutation, repeat reconciliation/update/build, reset, cleanup, lifecycle or integration action is authorized by this handback. The session remains open.
+
+Private recovery SQL/BFF sessions/Mailpit baseline, original config, sole approved CS seed metadata correction, OAuth/signing bundle and original receipts remain retained. Host credential bundle and applied seed config are exact. This packet does not certify final full data equality or production/media/runtime readiness.
+
+Exact results/scopes are in partial-receipt.json; partial-manifest.json binds the compact evidence. No project documentation change was useful for this operational partial result; architect/root own the provider limitation/design addendum and session tracking.
+
+Session: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-30-oomd-abuse-policy/

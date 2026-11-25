@@ -1,0 +1,6 @@
+- **Result:** Failed, exit status `2`.
+- **Revision:** `574b1166`. The exact requested command ran once and stopped at `npm run typecheck`; tests did not run.
+- **Elapsed:** 58.871 seconds.
+- **Log:** [quick-types-wire.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-30-oomd-abuse-policy/react-rebase-nov13/quick-types-wire.log)
+- **Failure excerpt:** TypeScript errors in `VpsListPage.tsx:152`, `VpsIncidentSettingsForm.tsx:101`, and `VpsLayout.tsx:103`, all involving nullable values incompatible with the expected types.
+- **Still running:** None. Tool session `19018` completed; no other operation-owned sessions were started.

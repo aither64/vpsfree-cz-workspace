@@ -1,0 +1,11 @@
+# Accepted combined selector and consumer review
+
+Reviewer0 assignment `7a4f1718-0768-4aad-a389-c4fd7bac021a` completed with no Blocking, Important or Advisory findings. Retained independent Sol/xhigh/read_only settings, all four HIGH lanes. This is a compact record of the reviewer report supplied in the lead conversation, not a new review or operational approval.
+
+Reviewed extension `d76bd681c6db981907a52c187a3298549af87ab0..ca7d8bdf982ef459fe4e09ac3740e0ea2edfcc36`, tree `59c761094955190d39e524d94e729d76875749a8`, and consumer new purpose `749e4cc3639649711f2fa10327153ca759976c06..fdcca6c8147d5f8a2e8636480458a4a3c094fb07`, tree `a0c897e749797131b06b4dfa8edad63cae9e62d4`. Full workspace comparison is `9610ea74a70d4b9b9d0f2d9296ea4908c0d4725b..fdcca6c8`, preserving inherited deployed/unmerged W749 lineage.
+
+The review accepted the optional single-file closure snapshot, absent/null identity, all-three-component configuration selection, storage-profile siblings and normal preStart ownership. Complete history, distinct generic/extension pin streams, no obsolete history and no new migrations were explicitly assessed. The seven documentation questions were answered with adequate placement and preservation. All other 37 lock nodes, edges/follows and protected settings remain unchanged.
+
+Evidence qualifications remain literal: formatter absent; publication utility INCOMPLETE and overwritten first invocation accounting unavailable; consumer dirty Nix label despite clean Git; quick no-build checks evaluate rather than execute. At review time the historical tiny outputs and cached consumer source had been reclaimed. Historical bound results were reviewed, not freshly rerun or restored. Later full candidate source/input/artifact proof and declared checks remain required.
+
+Root accepts source review and separately released owner1's required extension check first, followed by owner2's seven checks and package build only after root accepts owner1's terminal handback. Owner2 may publish exact fdcca independently. Shared user-profile switch still requires a built candidate, separate user approval, current machine ownership and ordinary public transition/recovery checks. No default integration, host deployment, demo activation or lifecycle release follows from this review.

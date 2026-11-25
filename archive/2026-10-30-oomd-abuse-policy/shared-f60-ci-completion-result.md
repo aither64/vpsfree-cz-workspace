@@ -1,0 +1,6 @@
+**Observation complete** for both existing runs on `f60d41a453b1703e42de4341285bdc6ba339aff0`.
+
+- **API specs aggregate 41185457084: passed.** All 26 RSpec topic jobs succeeded: 9,456 examples, 0 failures, 412 pending. Results, environment files, and manifests are in [the API artifacts](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-30-oomd-abuse-policy/shared-f60-api-completion-artifacts). Downloading all artifacts at once hit a filename collision, so I downloaded the affected artifacts into separate directories.
+- **Integration CI 41185457135: failed.** `Run tests` exited 1 after 18,752.4 seconds. The final runner summary reports 118 tests successful and one expected-success test failed: `webui#incident-escalation`. `webui#vps-admin-ops` also appeared in the runner’s failed-script list, though it is not named as the expected-success failure in the final summary. The selected `alerts/incident-escalation` scenario completed successfully; that does not establish success for the WebUI scenario.
+
+The native status, full log, and downloaded test logs and artifacts are preserved in [the integration evidence directory](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-30-oomd-abuse-policy). No runs were retried, canceled, or diagnosed.

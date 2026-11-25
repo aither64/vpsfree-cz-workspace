@@ -1,0 +1,5 @@
+- **Result:** Failed, exit status `1`; elapsed `18.49s`.
+- **Operation:** `4636dfc4-e40c-4dd1-9802-2544030c9f2f`, service `eabe2a67-1b98-4b68-8fba-eedd96a68222`; tested head `6c6792a62d5bb1193b1ce96c0d6ff9167341de49`.
+- **Evidence:** The single Chromium case failed at `remaining_filter_rhythm.spec.ts:372`: expected height `44`, received `36`. Stderr was empty.
+- **Artifacts:** [repro-result.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-30-oomd-abuse-policy/nov24-react-smoke-fix/repro-result.json), [repro.stdout](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-30/oomd-abuse-policy/nov24-react-smoke-fix/repro.stdout), [repro.stderr](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-30-oomd-abuse-policy/nov24-react-smoke-fix/repro.stderr), [repro-cases.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-30-oomd-abuse-policy/nov24-react-smoke-fix/repro-cases.json).
+- **Still running:** None reported by the result artifacts.

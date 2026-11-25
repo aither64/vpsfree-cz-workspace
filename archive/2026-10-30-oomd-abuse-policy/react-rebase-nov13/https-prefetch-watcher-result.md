@@ -1,0 +1,5 @@
+- **Result:** Passed, exit status 0.
+- **Revision:** `574b1166`.
+- **Command:** `nix develop --command prefetch-npm-deps package-lock.json`, run once; elapsed **7.596 seconds**.
+- **Log:** [https-npm-deps-prefetch.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-30-oomd-abuse-policy/react-rebase-nov13/https-npm-deps-prefetch.log). Output includes the hash `sha256-Q1gWCIYoWlM0eiagOEcIDNBTRvocm5urw64AkCLBlTc=` and a warning that six packages lack resolved URLs and won’t be cached.
+- **Still running:** None.
