@@ -111,17 +111,20 @@ no reading. Scope authorized subagents, supply guidance, require reading, and ow
   ownership, cancellation and visible-fallback rules. Watchers are not team members.
   Respect instructions not to await CI.
 - Follow the selected mode and retained lead instructions. Solo leads and leads
-  in Lead and reviewer sessions investigate, design and edit application code
+  in Lead and reviewer sessions investigate, design and implement
   without automatic specialists; the latter retain an independent reviewer.
-  Lead-designed leads own design and delegate application edits;
+  Lead-designed leads own design and delegate execution;
   Full-team leads delegate investigation, design and execution under
-  [Site team roles](docs/agent-teams.md). Team changes require explicit user
-  direction. Before each substantive team work item, check the live same-session
+  [Site team roles](docs/agent-teams.md), including substantive instructions,
+  configuration, technical docs, diagnosis, checks and evidence. Follow its
+  triage and acceptance stopping rules; return substantive gaps to their owner.
+  Team changes require explicit user direction. Before each substantive team
+  work item, check the live same-session
   roster with `dev-session team list <verified-slug> --as-is`. Use saved addresses,
   purposes and access; verify workspace-write before assigning edits. If access or
   session identity fails, resolve that failure rather than taking over delegated
-  application work. Report owners, assess results, and keep tracking and short
-  coordination steps yourself. Never invent members or use another session's roster.
+  work. Report owners, assess results, and keep tracking and short coordination
+  steps yourself. Never invent members or use another session's roster.
 - Cross-session cooperation uses `session_communication` between leads only after
   the user explicitly approves the exact pair in either chat or Settings →
   Communication. Record chat approval's wording and message reference. Permission
@@ -134,10 +137,11 @@ no reading. Scope authorized subagents, supply guidance, require reading, and ow
   [Site team roles](docs/agent-teams.md). Cover scope, interfaces, invariants,
   compatibility, deployment and recovery, acceptance criteria, and quick/longer
   checks. Architects may edit assigned design documents and prototypes;
-  implementers edit application code from architect-owned or lead-owned briefs.
+  implementers execute assigned packages from architect-owned or lead-owned briefs.
   Route material design deviations through the lead. A bounded small edit may
-  use a direct lead brief without a separate design document. Preserve retained
-  instructions and the current collaboration mode.
+  use a direct lead brief without a separate design document; this does not
+  change the selected mode's execution ownership. Preserve retained instructions
+  and the current collaboration mode.
 - Use the dev-session-documentation skill for substantive work, and the
   dev-session-handoff skill after material changes/review/status requests. Keep
   tracking and the portal manifest current and include the stable session URL.

@@ -68,7 +68,12 @@ Use one implementer for narrow work unless independent execution packages justif
 more. Give complete packages with acceptance criteria; avoid per-command releases
 and repeated status documents. Follow the [package workflow](../agent-teams.md#package-workflow)
 for release boundaries, evidence ownership, capacity and same-repository sequencing.
-Keep the existing team and ownership rules.
+Keep its triage/acceptance stopping rules: substantive diagnosis, check preparation,
+evidence assembly and follow-up fixes remain with the assigned owner. Watchers
+observe under the monitor skill; the appropriate implementation/design owner
+diagnoses failures and proposes the next check. The lead checks completeness and
+coordinates acceptance and authority-sensitive actions without repeating unchanged
+passing checks or recreating the owner's evidence.
 
 Independent review starts with scope and proportionality before detailed
 hardening, even when an internal design already approved the mechanism. Prefer

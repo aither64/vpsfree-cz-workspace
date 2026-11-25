@@ -119,8 +119,8 @@ class AgentInstructionsTest < Minitest::Test
     teams = File.read(File.join(ROOT, 'docs/agent-teams.md'), encoding: 'UTF-8').gsub(/\s+/, ' ')
 
     assert_match(/selected design owner records the design and verification brief/, core)
-    assert_match(/implementers edit application code from architect-owned or\s+lead-owned briefs/, core)
-    assert_match(/resolve that failure\s+rather than taking over delegated application work/, core)
+    assert_match(/implementers execute assigned packages from architect-owned or\s+lead-owned briefs/, core)
+    assert_match(/resolve that failure\s+rather than taking over delegated work/, core)
     assert_match(/At the end of every lead turn.*current\s+phase.*completed work.*remaining work.*next\s+action/m, core)
     assert_match(/phase\s+checklist in `state\.md`/, sessions)
     assert_match(/Solo leads investigate, design and implement without automatic specialists/, teams)
@@ -139,9 +139,9 @@ class AgentInstructionsTest < Minitest::Test
     end
     assert_includes(teams, 'Direct team registration still requests zero native child threads')
     assert_includes(teams, 'now delegated\'s Sol/xhigh reviewer')
-    assert_includes(teams, 'Dependent implementation stays with an implementer')
-    assert_includes(teams, 'live roster without implementation members')
-    assert_includes(teams, 'Busy, unready or inaccessible members')
+    assert_includes(teams, 'Dependent work stays with its assigned owner after delivery as well as while the lead is waiting')
+    assert_includes(teams, 'Fallback to lead investigation/design or execution requires both a verified roster genuinely lacking the relevant purpose and authorization within saved instructions')
+    assert_includes(teams, 'Busy, unready, blocked or inaccessible members require resolving or explicitly parking the dependency rather than taking their assignments')
   end
 
   def test_final_readiness_requires_complete_history_and_migration_lineage

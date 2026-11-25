@@ -42,7 +42,7 @@ A separate GPT-6 Luna/low utility watches native-owned long checks. Existing CI
 runs use the monitor tool's acknowledged runtime observer when supported; that
 observer creates no model thread and occupies no team slot.
 
-| Preset | Persistent members | Design owner | Application edits | Specialist slots |
+| Preset | Persistent members | Design owner | Execution owner | Specialist slots |
 | --- | --- | --- | --- | --- |
 | `solo` | lead (1 total) | lead | lead | 0 |
 | `lead_reviewed` (Lead and reviewer) | lead, reviewer, observer (3 total) | lead | lead | 2 |
@@ -75,22 +75,50 @@ reviewer for independent final review. Lead-designed leads write the design
 and verification brief before substantive implementation. Full-team architects
 write that brief. The brief lives in
 `work/<slug>/design.md`; implementers accept either owner's brief. A bounded
-small edit may use a direct lead brief. Leads report a compact progress
-checklist at the end of every turn and integrate member reports.
+small edit may use a direct lead brief without a separate design document;
+execution ownership still follows the selected mode. Leads report a compact
+progress checklist at the end of every turn and integrate member reports.
 
 Full-team leads coordinate and communicate with the user. The architect owns
 substantive investigation and design and identifies independent implementation
 packages. The lead allocates packages and accepts their results under the
 [package workflow](#package-workflow) below.
-Dependent implementation stays with an implementer. Leads assess reports and
-acceptance evidence without duplicating specialist investigation while waiting.
+Execution includes substantive instructions, configuration, technical documentation,
+diagnosis, checks, evidence and fixes, regardless of file extension. Dependent work
+stays with its assigned owner after delivery as well as while the lead is waiting.
 
 Lead-designed sessions use the same execution ownership with lead-owned design.
-The lead keeps brief scoping, acceptance inspection, session tracking,
-approval-bound coordination and user communication, including required
-context-dependent writing. A live roster without implementation members leaves
-implementation with the lead. Busy, unready or inaccessible members require
-resolving that condition rather than taking their assignments.
+The lead keeps scope, priority, allocation, acceptance, compact session tracking,
+user communication and required context-dependent writing. It retains approval
+interpretation, repository/machine coordination, freshness and ownership checks,
+and drivers that also approve, submit, integrate or activate operations. Preparing
+build, test, review and rollout evidence can be delegated within authorized scope;
+approval authority and claim-release requirements remain unchanged.
+
+Fallback to lead investigation/design or execution requires both a verified roster
+genuinely lacking the relevant purpose and authorization within saved instructions.
+An absent design file or pending deliverable does not establish that exception.
+Busy, unready, blocked or inaccessible members require resolving or explicitly
+parking the dependency rather than taking their assignments. Do not add or
+replace members without explicit user direction.
+
+For initial triage, read enough to state a bounded question, deliverable, owner
+and acceptance condition, then assign it. Technical uncertainty can itself be an
+investigation package; the lead need not solve it before delegation. Release
+sufficient independent packages promptly under the release rules below, without
+inventing work or splitting a narrow package to occupy more members.
+
+For acceptance, identify the criterion or concrete uncertainty, inspect supplied
+evidence and a targeted source/diff/result sample where needed, then accept or
+return a specific gap to its owner. Stop once the criterion is established or
+the gap needs substantive investigation, reproduction, correction, broad source
+reading or repeated checks. Do not repeat the owner's investigation, repair its
+patch, assemble the same evidence or rerun unchanged passing checks for personal
+confidence. Contradictory evidence, changed inputs or a required unrun check
+justify further work; name the reason and assign its execution. This requires
+neither a separate inspection document nor per-command permission. The lead
+remains responsible for acceptance. These limits preserve the lead's actual
+design/implementation duties in modes that assign those responsibilities to it.
 
 Solo and Full-team leads default to high effort and allow high/xhigh;
 the lead in Lead-designed and Lead and reviewer sessions defaults to xhigh
@@ -108,13 +136,22 @@ The lead retains scope, priority, allocation, acceptance, user reporting and
 approval-bound integration/deployment coordination.
 
 Implementers own complete packages through diagnosis, assigned source, tests,
-technical documentation, quick checks, commits and follow-up fixes, including
-review findings. They prepare evidence with the work: changed-file inventory,
+technical documentation/instructions, configuration, preparing and running quick
+checks, commits and follow-up fixes, including review findings. They prepare
+evidence with the work: changed-file inventory,
 exact base/head revisions, check commands/results, known gaps and whole-branch
 history/migration provenance. One existing implementer may assemble repository
-evidence as a bounded package after the execution work. This does not add a role
+evidence as a bounded package after capacity is confirmed. This does not add a role
 or independent review: the lead checks final packet completeness and invokes
 the mandatory-review skill; the independent reviewer remains read-only.
+Missing evidence, check failures and review findings return to the package owner
+for diagnosis, applicable checks, corrections and revised evidence. The lead
+ensures the complete branch history/migration inventory and any consolidation
+are supplied, rather than recreating or repairing that analysis in delegated modes.
+Long or uncertain verification keeps the monitor skill's execution/observation
+ownership. Watchers do not diagnose, modify, retry or deploy; the appropriate
+implementation/design owner diagnoses observed failures and proposes the next
+check while the lead coordinates dependencies and acceptance.
 
 ### Optional documentation editor package
 
@@ -261,7 +298,9 @@ guidance applies as it is read; catalog edits affect future selections only afte
 the package is deployed separately. They do not silently refresh retained lead,
 architect, implementer or reviewer prompts, or change existing rosters. Use
 explicit bounded assignments within saved role authority; prompt or roster
-reconfiguration still requires explicit user direction. Before a new progress
+reconfiguration still requires explicit user direction. Surface an actual conflict
+between saved instructions and an assignment to the lead for resolution; do not
+silently change settings or take over the work. Before a new progress
 check, recognized stock observer instructions are refreshed
 on the same idle native thread, preserving history, model and effort. Manual work
 or uncertain submissions defer the refresh. Custom instructions remain unchanged.
@@ -334,6 +373,16 @@ that check provides and the remaining integration requirement. It also
 challenges redundant evidence work and unnecessary approval checkpoints.
 Existing timestamps and results are sufficient; this guidance adds no timing
 collector and does not let the observer cancel checks or waive acceptance.
+
+For delegation concerns, identify the concrete work, assigned ownership and
+missing reason from existing assignments, reports, conversations or diffs. Flag
+repeated specialist investigation/checks, substantive work retained despite an
+available authorized package, or a settled package held without a dependency.
+Account for acceptance inspection, mode-specific lead duties, approval/safety
+actions, required writing and actual blockers. Larger lead clocks, idle members
+or roster `ready` alone prove neither duplication nor capacity. Suggest a bounded
+handoff or justification through the existing concern workflow; this grants no
+reassignment authority or new gate.
 
 ## Communication between sessions
 
