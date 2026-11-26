@@ -1,0 +1,5 @@
+**Result: incomplete; stopped after cache preflight.** The exact packet digest matched. Source identity also matched: head `e303d336c538a75938eba08e646fbd9501afe124`, tree `eaa2b1a7bf030b91815e90ff0159a1c5cfc045b9`, clean status, and all six declared file hashes and Git object IDs.
+
+The preflight exited **0** after 180 seconds. Its full plan lists **714 derivations for local build**, including Linux kernel derivations `linux-6.12.118-modules.drv`, `linux-6.12.118-modules-shrunk.drv`, and `initrd-linux-6.12.118.drv`. Per packet policy, I stopped before selection and VM launch; no test runner was launched.
+
+Logs: [/tmp/backup-disable-storage-e303d336-run1-cache.log](/tmp/backup-disable-storage-e303d336-run1-cache.log). The selection log and exit receipt were not produced. Preflight process PID/PGID `2719931` exited; no test runner or VM was started.

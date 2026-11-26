@@ -1,0 +1,6 @@
+- **Result:** Passed; exit status `0`.
+- **Run:** API specs at head `81e930b25fa3252d7e849aff4819e663cec37b07`, staged tree `41954b892c94241b30d75bc36f3da629aa0f8e71`. The exact specified command ran once; no command-owned work remains.
+- **Timing:** Started `2026-11-25 20:56:03 UTC`, ended `20:58:48 UTC`; elapsed `164.4s`.
+- **Counts:** 69 examples, 0 failures, 0 pending, 0 errors outside examples.
+- **Evidence:** Log at [/tmp/backup-disable-api-runtime.log](/tmp/backup-disable-api-runtime.log); JSON at [/tmp/backup-disable-api-runtime.json](/tmp/backup-disable-api-runtime.json). Bounded log excerpt: `69 examples, 0 failures`.
+- **Watcher policy:** Package `qgza552gsjwlbyqxrzrv50mz69z1bd9l`, utility `dw_c699c3bf36ffc569cca1d7f83580bf68e6fffbb536cfad0d`, model `gpt-6-luna/low`; CLI used `danger-full-access` and `ask-for-approval never`.

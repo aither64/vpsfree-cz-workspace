@@ -1,0 +1,5 @@
+**Result: passed** — Nix build exit status `0`, revision `18597f1df0e610a2d4177609626a27565581deeb`, elapsed `207s`.
+
+- Logs: [build log](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-25-backup-disable-design/i4-logs/local-sdk-nix-build.log) · [outputs JSON](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-25-backup-disable-design/i4-logs/local-sdk-nix-build-outputs.json) · [status receipt](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-25-backup-disable-design/i4-logs/local-sdk-nix-build-status.json)
+- All five requested outputs were produced and retained under `/home/aither/workspace/ai/vpsfree.cz/work/2026-11-25-backup-design/i4-logs/nix-result-b7c97152`’s specified prefix (`.../backup-disable-design/...`).
+- No retries or source/input changes. Parent post-build proof remains outstanding.

@@ -1,0 +1,1 @@
+Incomplete: the frozen packet hash did not match the supplied value (`ff1497…` observed; `1497c1…` expected). I stopped before launching Nix. No build ran and no build roots or outputs were created.

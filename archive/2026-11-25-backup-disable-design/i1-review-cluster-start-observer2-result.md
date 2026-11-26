@@ -1,0 +1,3 @@
+**Result: incomplete — readiness preflight passed; the cluster operation has not started.** The requested receipt is at [i1-review-cluster-start-observer2-ready.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-25-backup-disable-design/i1-review-cluster-start-observer2-ready.json).
+
+The driver hash and private ownership/modes matched, and both start and exit records were absent. No driver or cluster command was executed. This receipt signals readiness only; it does not authorize or launch the operation.

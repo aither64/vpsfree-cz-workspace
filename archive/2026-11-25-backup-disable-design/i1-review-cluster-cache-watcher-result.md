@@ -1,0 +1,5 @@
+- Result: **passed**, exit status 0; elapsed 134.8 seconds. The assigned command ran once and joined with `noVM: true`.
+- Revision: `140f0769e222dd2aa51e64d08f11cd5e8dae397b`. Start PID/PGID: `1299843` / `1299843`.
+- Log: `work/2026-11-25-backup-disable-design/i1-review-cluster-cache.log`. The allowlisted log reports 347 paths to fetch, 367.3 MiB download and 1.6 GiB unpacked; it includes `/nix/store/rv8xhbjzky1119jd32208w47f0ddhimg-vpsadmin-source-140f0769e222dd2aa51e64d08f11cd5e8dae397b.drv`.
+- I could not collect the complete planned derivation list or identify kernel derivations: the packet’s `planJSON` path was not present when read. No substitutions count is available from the collected evidence.
+- No operation-owned session remains running. This dry-run is cache evidence only; it does not establish build, test, or cluster readiness.

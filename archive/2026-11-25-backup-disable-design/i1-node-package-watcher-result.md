@@ -1,0 +1,4 @@
+- **Result:** Passed; Nix build exit status 0.
+- **Revision:** `e303d336c538a75938eba08e646fbd9501afe124`; elapsed 147.1 seconds.
+- **Evidence:** The matching packet and preconditions were verified. Output: `/nix/store/9iv9bmradw9zppi1hky2kd2qzz3sylli-libnodectld-4.2.1`. Build log lists `libnodectld-4.2.1.drv`; no VM or socket activity appeared in the log. The owned command was joined and its PID exited.
+- **Artifacts:** [build log](/tmp/backup-disable-libnodectld-package-preflight.log), [receipt](/tmp/backup-disable-libnodectld-package-preflight-exit.json). Log SHA256: `9cbf00782339c57343bbacab06f0b03f1a74dcf8a866ae53001539f5bef9c2cb5`.

@@ -1,0 +1,1 @@
+I did not dispatch the build. The frozen packet’s source revision, tree, clean status, and input hashes match, but the launch refresh contains no `inputHashes` field, and the required stdout, stderr, timing, and root-prefix paths already exist. Those pre-dispatch checks failed, so I stopped without running the command or writing a terminal status.

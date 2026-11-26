@@ -1,0 +1,5 @@
+**Result: incomplete.** The packet preflight passed for revision `1d895a5746561d15413f42afd83678b898de3b45` and tree `1e52746fdf08f561e70efdbee6e7bbd22a57aebd`; all listed input hashes matched, the worktree was clean, and the build output paths were absent.
+
+The build command was **not dispatched**: the packet-selected package contains no `dev-workspace` launcher at the expected path, and this session has no verified native launch receipt. No build effects are running; exit status and elapsed time are unavailable.
+
+The status record is retained at [inline-nix-build-status.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-25-backup-disable-design/i4-logs/inline-nix-build-status.json). The expected stdout, stderr and timing log paths are recorded there; those build logs were not created.

@@ -1,0 +1,4 @@
+- **Result:** Passed. Script status and CLI exit status were both 0; elapsed time was 33 seconds.
+- **Tested:** HEAD `6d4941bbf617a0d1e1c131a2bf14ca6476389809`; API `50aa37aede8926965598f4f8fb0782dce377afb6`; archive SHA-256 `671b54f52da297cd465c1b7516841a859c84099ab30d776e5086802559d19a10`.
+- **Evidence:** “Packed ESM, strict types and executor consumer passed. Final metadata-bound TS deterministic and retained archive checks passed.”
+- **Files:** [log](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-25-backup-disable-design/i3-final-ts-verify.log), [status](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-25-backup-disable-design/i3-final-ts-verify.status), [exit record](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-25-backup-disable-design/i3-final-ts-watcher-exit.json). No operation-owned work remains running.

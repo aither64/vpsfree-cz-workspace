@@ -1,0 +1,5 @@
+- **Result:** Passed, native exit status `0`; elapsed **11m 36s**.
+- **Verified:** Default and blocking tests with Rust 1.98, docs, package, and default and blocking tests with Rust 1.95. The opt-in real-vpsadmin tests were ignored. No failures reported.
+- **Identity:** Head `f03bab11b7dd6d88281e334790d6b3897ed33e46`; script SHA256 matched the frozen identity.
+- **Evidence:** [verification log](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-25-backup-disable-design/i3-final-rust-verify.log), [status](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-25-backup-disable-design/i3-final-rust-verify.status), [watcher exit record](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-25-backup-disable-design/i3-final-rust-watcher-exit.json).
+- **Still running:** None.

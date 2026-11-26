@@ -1,0 +1,3 @@
+The single authorized quick gate exited 0 in 120.006 seconds. HEAD, write-tree, and receipt hashes matched before execution; all seven staged paths matched the owned paths. Source session `45128` is joined.
+
+Logs: [gate output](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-25-backup-disable-design/i4-logs/defaults-cleanup-ci-quick.log), [timing](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-25-backup-disable-design/i4-logs/defaults-cleanup-ci-quick-timing.log), [status](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-25-backup-disable-design/i4-logs/defaults-cleanup-ci-quick-status.json).

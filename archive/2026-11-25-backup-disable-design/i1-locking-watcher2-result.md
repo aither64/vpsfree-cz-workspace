@@ -1,0 +1,3 @@
+Incomplete; the verification command was **not launched**. The packet SHA256 matches the supplied value, and both `DEV_SESSION_SLUG` and `DEV_SESSION_WORKSPACE` are absent. But the required `/run/current-system/sw/bin/bash` environment has no `python3` or `git`, so I could not verify the packet’s scripts, repository head/tree, or owned-file identities as required before launch.
+
+No test command or session was started. The only tool session completed; no child processes were created. Logs, result JSON, and exit receipt remain untouched.
