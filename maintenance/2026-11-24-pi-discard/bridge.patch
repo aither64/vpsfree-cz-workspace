@@ -1,0 +1,3189 @@
+diff --git a/docs/session-preparations.md b/docs/session-preparations.md
+index efd1d5dd006173db837bdef92ea27f9ecec994c7..d1634c917b5318c4717e9c6bc5508f9bf699e608 100644
+--- a/docs/session-preparations.md
++++ b/docs/session-preparations.md
+@@ -462,8 +462,8 @@ selected files. It does not silently pick an owner or release pending retention.
+ 
+ A compatible [workspace update](workspace-updates.md#prepare-and-follow-an-update)
+ can preserve a failed or paused Pi creation that stopped before native Create.
+-The update leaves the request unexecuted. After activation, use **Retry creation**
+-on the original request.
++The update leaves the request unexecuted. If you intend to finish the creation,
++use **Retry creation** on the original request after activation.
+ 
+ A saved intent without a catalog claim is not completed acceptance. Recovery
+ finishes the same intent or reports unavailable files. A pending claim without
+@@ -517,6 +517,51 @@ the new endpoints and recovery. Workspace application switches remain
+ forward-only; operational recovery uses a newer package with the required
+ behavior and state readers.
+ 
++### Discard a failed request before session creation
++
++Only the dated epoch-2 bridge can discard a failed Pi request through a
++root-owned startup grant. There is no browser discard or recovery action.
++The grant names the exact request, receipt, preparation attempt and creation
++attempt. The two attempts can differ. A different request with the same name
++cannot authorize or resume the discard.
++
++This bridge only handles stopped, failed Pi new-session requests whose exact
++creating journal and unbound binding show that no native conversation was
++created. It also requires absence of any launch reservation, runtime authority,
++tracking, prior removal history, or lifecycle and resource ownership. The
++bridge refuses attachments and apparent attachment references in either saved
++creation goal. An unused draft ID is not an attachment claim, and the bridge
++does not change or release the draft. An unreadable or mismatched record is a
++reason to stop, not permission to discard it.
++
++Before changing any active records, the selected portal saves a private audit
++of their digests and the intended result and syncs the pending marker. The
++marker holds that name, the original retry, upload collection, and workspace
++package selection across interruption. Reading the original request status
++does not authorize recovery. Do not delete the marker or move the records by
++hand.
++
++The bridge keeps the original records privately and removes the pending marker
++only after the snapshot-free `cancelled` mapping and completion audit are
++durable. If removal succeeds but the portal cannot sync the marker's directory,
++the request has been discarded, but cleanup is unconfirmed. Other commands can
++admit work once the marker is absent. That does not prove cleanup, and replay
++of the original discard does not change a later owner of the name.
++
++Keep the bridge selected until it confirms cleanup for the original request.
++The portal checks the completed mapping and audit, syncs the marker's directory,
++and verifies that the marker is absent. If the original marker reappears after
++restart, only startup with the same verified grant can remove it, without
++retiring the request's records again. Starting the portal without a grant does
++not discard anything.
++
++If the portal cannot verify the grant, original owner or cleanup, it stops
++before serving. It does not retry creation or automatically restart to repeat
++the operation. Keep the bridge selected and reconcile only the original grant.
++The machine administrator removes that exact grant only after verifying its
++completed audit, terminal mapping and marker cleanup. A missing grant is not
++proof that the discard happened.
++
+ ## Focused compatibility fixture
+ 
+ After mandatory review, run `bash test/preparation_compatibility.sh` from the
+diff --git a/docs/workspace-updates.md b/docs/workspace-updates.md
+index 5e8a950998dc6cc968e2bf97e1718ae88bd5ac57..8e5b9c5386c9be6a92c616190ec4e2f819ea250c 100644
+--- a/docs/workspace-updates.md
++++ b/docs/workspace-updates.md
+@@ -313,3 +313,35 @@ conversations, queue/goal state, model settings and responsible-thread ownership
+ Verification must cover actual Ruby worker, systemd and profile activation,
+ including failures that must not send a resume. Focused checks and a local native
+ fixture alone do not establish those outcomes.
++
++### The epoch-2 discard bridge
++
++The separately built discard bridge uses the normal preserving epoch-2 to
++epoch-2 update. It does not change the native executable, retained registration,
++or reporting contract. It handles only the pre-session request described in
++[Discard a failed request before session creation](session-preparations.md#discard-a-failed-request-before-session-creation).
++Do not select it to recover a running or materialized session.
++
++Keep the exact bridge build selected until it confirms cleanup of the original
++request. Profile preparation, validation and activation refuse while the marker
++exists, even after the original records have moved. If unlink succeeded but the
++marker directory sync was not confirmed, those commands can admit a transition.
++Admission and the saved `cancelled` mapping do not confirm cleanup. Resume only
++with the same verified startup grant. Do not roll back to an older reader,
++retry creation, or remove the marker to force an update.
++
++For an administratively scheduled discard, select the bridge with no grant
++present. Verify that the stock transition finished and the new portal replaced
++its predecessor. An independently authenticated machine administrator can
++then schedule the one exact original request and restart only that portal.
++The portal checks the root-owned grant, selected package, registered service
++and retained typed machine claim before it discards anything. An unconfirmed
++startup stops without repeating the operation. Keep the same bridge and claim
++while it is held, and do not start an update to recover it.
++
++Completion leaves only the ordinary terminal preparation mapping in the live
++inventory. For a scheduled discard, also verify the original audit and marker
++cleanup, then have the administrator retire the same grant. An absent grant or
++an active systemd unit does not establish completion. Verify that the next
++package understands the mapping and cannot replay the retired request before
++preparing the next ordinary switch.
+diff --git a/libexec/dev-session b/libexec/dev-session
+index 1e100c9ebc0169b9989f97570d804fe9701cefb9..de6d84506e7452479f4bfad498b8ab685941932c 100755
+--- a/libexec/dev-session
++++ b/libexec/dev-session
+@@ -938,10 +938,12 @@ module DevSession
+       elsif execution_generation
+         raise Error, 'Pi tracking preparation cannot select execution generation'
+       end
++      require_no_pi_discard!(slug)
+       with_host_lock(session_lock_file(slug, kind: 'creation'), 'Pi creation lock', wait: true) do
+         generation_check.call
+         with_host_lock(session_lock_file(slug), 'Pi runtime lock', wait: true) do |runtime_lock|
+           generation_check.call
++          require_no_pi_discard!(slug)
+           previous = @held_slug_lock
+           @held_slug_lock = {slug:, path: session_lock_file(slug), file: runtime_lock, mode: File::LOCK_EX}
+           begin
+@@ -9325,7 +9327,29 @@ module DevSession
+       request && request[:slug] == slug && %w[archive delete revive].include?(request[:operation]) && pi_lifecycle_selected?(slug)
+     end
+ 
++    # The selected bridge fences this target even when no portal state root or
++    # creation receipt is available. Presence, not successful decoding, blocks.
++    def require_no_pi_discard!(slug)
++      raise Error, 'invalid session name for Pi discard admission' unless valid_part?(slug)
++
++      worktrees = File.join(workspace, 'worktrees')
++      root = File.join(worktrees, '.locks')
++      [worktrees, root].each do |path|
++        stat = File.lstat(path)
++        unless stat.directory? && stat.uid == Process.euid && (stat.mode & 0o022).zero?
++          raise Error, 'cannot trust Pi discard marker directory'
++        end
++      end
++      File.lstat(File.join(root, "#{slug}.pi-discard.json"))
++      raise Error, 'a Pi request discard is pending'
++    rescue Errno::ENOENT
++      nil
++    rescue SystemCallError
++      raise Error, 'cannot inspect Pi discard admission'
++    end
++
+     def require_lock_session_backend!(slug)
++      require_no_pi_discard!(slug)
+       return require_codex_session_backend!(slug) unless pi_lifecycle_lock_owner?(slug)
+       operation = @lifecycle_access.fetch(:operation)
+       path = lifecycle_journal_file(slug, operation)
+diff --git a/libexec/workspace-host b/libexec/workspace-host
+index a59edf72efc0a8a6cca49e1b69e0daf737d86dd7..b239e385ed96a3dfe5b7dd5757925a75e9911f55 100755
+--- a/libexec/workspace-host
++++ b/libexec/workspace-host
+@@ -450,6 +450,7 @@ module DevWorkspaceHost
+         activate(argv)
+       when 'run-router' then run_router(argv)
+       when 'run-portal' then run_portal(argv)
++      when '_verify-pi-discard-startup' then verify_pi_discard_startup(argv)
+       when 'run-codex' then run_codex(argv)
+       when 'provider' then provider_command(argv)
+       when 'maintenance' then maintenance_command(argv)
+@@ -1777,6 +1778,63 @@ module DevWorkspaceHost
+       )
+     end
+ 
++    # Private read-only proof for the selected serving portal. The root grant
++    # is checked by that portal; nothing written here can authorize a discard.
++    def verify_pi_discard_startup(argv)
++      raise Error unless argv.empty?
++      request = parse_strict_json_object(@input.read(8193) || '', 'Pi discard startup proof', 8192)
++      raise Error unless request.keys.sort == %w[claim owner package profileToken service system workspaceName workspaceRoot].sort
++      with_current_generation_lock(mode: File::LOCK_SH) do
++        entry = registry.entries.find { |item| item.fetch('name') == request['workspaceName'] }
++        raise Error unless entry && entry.fetch('root') == request['workspaceRoot'] && request['package'] == package_root &&
++                           request['system'] == File.realpath('/run/current-system')
++        profile = File.lstat(@profile)
++        profile_token = 'pi-profile-v1:' + Digest::SHA256.hexdigest(JSON.generate([
++          1, profile.dev, profile.ino, profile.ctime.to_i, profile.ctime.nsec,
++          profile.mtime.to_i, profile.mtime.nsec, File.readlink(@profile)
++        ]))
++        raise Error unless request['profileToken'] == profile_token
++        unit = "workspace-portal@#{entry.fetch('name')}.service"
++        raise Error unless request['service'] == unit
++        parent = Process.ppid
++        state = portal_service_state(unit)
++        raise Error unless parent > 1 && state['ActiveState'] == 'active' && state['ControlPID'] == '0' &&
++                           state['MainPID'] == parent.to_s && File.identical?("/proc/#{parent}/exe", File.join(package_root, 'bin/workspace-portal'))
++        verify_pi_discard_claim!(entry, request.fetch('owner'), request.fetch('claim'))
++      end
++      @out.puts '{"verified":true}'
++    rescue Error, WorkspaceCoordination::Error, SystemCallError, Psych::Exception, KeyError, TypeError
++      raise Error, 'the original Pi discard authority could not be verified'
++    end
++
++    def verify_pi_discard_claim!(entry, owner, claim)
++      raise Error unless owner.is_a?(Hash) && owner.keys.sort == %w[id slug] && claim.is_a?(Hash) &&
++                         claim.keys.sort == %w[adapter id repository selector] &&
++                         WorkspaceCoordination::UUID.match?(owner['id'].to_s) && WorkspaceCoordination::PART.match?(owner['slug'].to_s) &&
++                         WorkspaceCoordination::UUID.match?(claim['id'].to_s) && WorkspaceCoordination::PART.match?(claim['repository'].to_s) &&
++                         %w[selector adapter].all? { |key| claim[key].is_a?(String) && !claim[key].empty? }
++      workspace = entry.fetch('root')
++      runtime = instance_runtime(entry)
++      engine = WorkspaceCoordination::Engine.new(state: @state, package: package_root, profile: @profile,
++        workspace:, entry: entry.merge('socket' => runtime.fetch(:codex), 'authority' => runtime.fetch(:authority),
++          'portalUrl' => "https://#{entry.fetch('hostname')}"), env: codex_environment(entry).merge(
++          'DEV_WORKSPACE_NAME' => entry.fetch('name'), 'DEV_SESSION_SLUG' => owner['slug'], 'DEV_SESSION_WORKSPACE' => workspace))
++      retained = engine.store.read.fetch('owners')[owner['id']]
++      raise Error unless retained && retained['id'] == owner['id'] && retained['workspace'] == workspace &&
++                         retained['workspaceName'] == entry.fetch('name') && retained['slug'] == owner['slug'] &&
++                         retained['bootstrap'] == false && !retained['thread'].to_s.empty? && !retained['fence']
++      resource = coordination_machine_policy.profile_resource
++      raise Error unless resource
++      held = engine.profile_claim!(claim['id'], resource, native: true)
++      expected = claim.slice('repository', 'selector', 'adapter')
++      raise Error unless held['id'] == claim['id'] && held['ownerId'] == owner['id'] && held['state'] == 'held' &&
++                         held.dig('request', 'schema') == 2 && held.fetch('machineBindings', []).any? { |binding|
++        binding.slice('repository', 'selector', 'adapter') == expected &&
++          coordination_machine_policy.canonical(WorkspaceCoordination::MachineIdentity.resource(binding.fetch('identity'))) ==
++            coordination_machine_policy.canonical(resource)
++      }
++    end
++
+     def run_portal(argv)
+       entry = instance_argument(argv, 'run-portal')
+       runtime = instance_runtime(entry)
+@@ -2670,12 +2728,33 @@ module DevWorkspaceHost
+       File.symlink?(@profile) ? File.realpath(@profile) : package_root
+     end
+ 
++    def require_no_pending_pi_discard!(workspace)
++      worktrees = File.join(workspace, 'worktrees')
++      root = File.join(worktrees, '.locks')
++      [worktrees, root].each do |path|
++        stat = File.lstat(path)
++        unless stat.directory? && stat.uid == Process.euid && (stat.mode & 0o022).zero?
++          raise Error, 'cannot trust Pi discard marker directory'
++        end
++      end
++      Dir.each_child(root).with_index do |name, index|
++        raise Error, 'Pi discard marker inventory exceeds limit' if index >= 65_536
++        # Even an invalid name or unreadable marker reserves this transition.
++        raise Error, 'a Pi request discard is pending' if name.end_with?('.pi-discard.json')
++      end
++    rescue Errno::ENOENT
++      nil
++    end
++
+     def require_no_unfinished_lifecycle_operations!(
+       entries = registry.entries,
+       operation: 'workspace operation', preserved_pi_creations: {}
+     )
+       require_no_foreign_maintenance!
+-      entries.each { |entry| require_provider_admission!(entry) }
++      entries.each do |entry|
++        require_no_pending_pi_discard!(entry.fetch('root'))
++        require_provider_admission!(entry)
++      end
+       operations = entries.flat_map do |entry|
+         root = File.join(entry.fetch('root'), 'worktrees', '.locks')
+         lifecycle = LIFECYCLE_JOURNALS.map { |journal| journal.fetch('name') }.flat_map do |kind|
+diff --git a/portal/cmd/workspace-portal/main.go b/portal/cmd/workspace-portal/main.go
+index 84e1ba376c547ca93988909e153deda754446c61..0165d49c7eea68f812c4ae14c70ee0d61b55bf62 100644
+--- a/portal/cmd/workspace-portal/main.go
++++ b/portal/cmd/workspace-portal/main.go
+@@ -432,10 +432,11 @@ func serve(args []string) error {
+ 	closeClient := sync.OnceFunc(func() { closePortalResource(logger, "client", codexClient.Close) })
+ 	defer closeClient()
+ 	application, err := portalweb.NewContext(stopContext, portalweb.Config{
+-		ObserveActivity: true,
+-		HistoryReader:   history,
+-		CollectUploads:  true,
+-		Workspace:       options.workspace, BaseURL: options.baseURL, DisplayLabel: options.displayLabel,
++		ObserveActivity:          true,
++		HistoryReader:            history,
++		CollectUploads:           true,
++		UsePiDiscardStartupGrant: true,
++		Workspace:                options.workspace, BaseURL: options.baseURL, DisplayLabel: options.displayLabel,
+ 		TrustedOrigins: options.trustedOrigins,
+ 		HostLabel:      options.hostLabel, SSHHost: options.sshHost, DevSession: options.devSession,
+ 		HostProfile: options.hostProfile, GH: options.gh, Tmux: options.tmux, AuthorityDir: options.authorityDir,
+@@ -451,6 +452,12 @@ func serve(args []string) error {
+ 		Logger:           logger, Codex: codexClient,
+ 	})
+ 	if err != nil {
++		if errors.Is(err, portalweb.ErrPiDiscardStartupHeld) {
++			// An unconfirmed grant is held for the original operator. Do not
++			// start HTTP, and do not let Restart=on-failure retry it.
++			logger.Print("pi_discard_startup=held: ", portalweb.ErrPiDiscardStartupHeld)
++			return nil
++		}
+ 		if stopContext.Err() != nil && errors.Is(err, stopContext.Err()) {
+ 			return nil
+ 		}
+diff --git a/portal/internal/session/backend_publication.go b/portal/internal/session/backend_publication.go
+index 61e81423f68ec3ad9cf259153fc9664aee456c27..5662f9c8d5f657210cf666bbd107e85709565e32 100644
+--- a/portal/internal/session/backend_publication.go
++++ b/portal/internal/session/backend_publication.go
+@@ -130,6 +130,28 @@ func (s BackendBindingStore) publish(ctx context.Context, slug string, change fu
+ 	return next, nil
+ }
+ 
++// WithPiDiscardBindingLock serializes the bridge's exact retirement against
++// binding publication. The caller holds creation/runtime exclusion and must
++// compare the expected old or retired bytes; this does not grant ownership.
++func (s BackendBindingStore) WithPiDiscardBindingLock(ctx context.Context, slug string, retire func(string) error) error {
++	if !errors.Is(RequireNoPiDiscard(s.Workspace, slug), ErrPiDiscardPending) {
++		return agentbackend.ErrBindingConflict
++	}
++	directory, err := s.publicationDirectory(slug)
++	if err != nil {
++		return err
++	}
++	lock, err := lockRuntimeContext(ctx, directory, slug, ".binding.lock", unix.LOCK_EX)
++	if err != nil {
++		return err
++	}
++	defer lock.Close()
++	if !errors.Is(RequireNoPiDiscard(s.Workspace, slug), ErrPiDiscardPending) {
++		return agentbackend.ErrBindingConflict
++	}
++	return retire(filepath.Join(directory, slug+".json"))
++}
++
+ // PublishPiRuntimeAuthority writes only a same-generation projection. Runtime
+ // replacement is P3-owned and needs separate proof. Call with runtime EX held,
+ // after the binding CAS; a failed write leaves the binding for reconciliation.
+diff --git a/portal/internal/session/pi_creation_discard.go b/portal/internal/session/pi_creation_discard.go
+new file mode 100644
+index 0000000000000000000000000000000000000000..921bf59dca94208f5f7d9a7ce3e933f2886a9367
+--- /dev/null
++++ b/portal/internal/session/pi_creation_discard.go
+@@ -0,0 +1,159 @@
++package session
++
++import (
++	"crypto/sha256"
++	"encoding/hex"
++	"errors"
++	"io"
++	"os"
++	"path/filepath"
++	"regexp"
++	"strings"
++	"syscall"
++
++	"golang.org/x/sys/unix"
++)
++
++const (
++	PiDiscardMarkerSuffix = ".pi-discard.json"
++	PiDiscardMarkerLimit  = 4096
++)
++
++var ErrPiDiscardPending = errors.New("a Pi request discard is pending")
++
++var piDiscardRequestID = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$`)
++
++// PiDiscardMarker is the bridge-only live fence. The private audit holds the
++// original records and the intended terminal mapping, not this inventory.
++type PiDiscardMarker struct {
++	Schema             int    `json:"schema"`
++	WorkspaceSHA256    string `json:"workspace_sha256"`
++	Slug               string `json:"slug"`
++	RequestID          string `json:"request_id"`
++	ReceiptID          string `json:"receipt_id"`
++	PreparationAttempt int    `json:"preparation_attempt"`
++	CreationAttempt    int    `json:"creation_attempt"`
++	AuditSHA256        string `json:"audit_sha256"`
++}
++
++func (m PiDiscardMarker) Validate(workspace, slug string) error {
++	sum := sha256.Sum256([]byte(workspace))
++	if m.Schema != 1 || !backendCanonicalPath(workspace) || !ValidSlug(slug) || m.Slug != slug ||
++		m.WorkspaceSHA256 != hex.EncodeToString(sum[:]) || !piDiscardRequestID.MatchString(m.RequestID) ||
++		!isLowerHex(m.ReceiptID, 64) || !isLowerHex(m.AuditSHA256, 64) ||
++		m.PreparationAttempt < 1 || m.CreationAttempt < 1 {
++		return errors.New("invalid Pi discard marker identity")
++	}
++	return nil
++}
++
++func inspectPiDiscardDirectory(path string) (os.FileInfo, error) {
++	info, err := os.Lstat(path)
++	if err != nil {
++		return nil, err
++	}
++	stat, ok := info.Sys().(*syscall.Stat_t)
++	if !ok || !info.IsDir() || stat.Uid != uint32(os.Geteuid()) || info.Mode().Perm()&0o022 != 0 {
++		return nil, errors.New("cannot trust Pi discard marker directory")
++	}
++	return info, nil
++}
++
++// Loose read-only stock lock directories may still be scanned. A marker is
++// admitted for recovery only in its private mode-0700 directory.
++func piDiscardLockDirectory(workspace string) (string, error) {
++	if !backendCanonicalPath(workspace) {
++		return "", errors.New("invalid Pi discard workspace")
++	}
++	root := filepath.Join(workspace, "worktrees")
++	if _, err := inspectPiDiscardDirectory(root); err != nil {
++		return "", err
++	}
++	directory := filepath.Join(root, ".locks")
++	if _, err := inspectPiDiscardDirectory(directory); err != nil {
++		return "", err
++	}
++	return directory, nil
++}
++
++// RequireNoPiDiscard is used under existing admission, after any lock waits.
++// Any kind of marker at the selected name fences effects, even if malformed.
++func RequireNoPiDiscard(workspace, slug string) error {
++	if !ValidSlug(slug) {
++		return errors.New("invalid Pi discard slug")
++	}
++	directory, err := piDiscardLockDirectory(workspace)
++	if errors.Is(err, os.ErrNotExist) {
++		return nil
++	}
++	if err != nil {
++		return err
++	}
++	_, err = os.Lstat(filepath.Join(directory, slug+PiDiscardMarkerSuffix))
++	if errors.Is(err, os.ErrNotExist) {
++		return nil
++	}
++	if err != nil {
++		return err
++	}
++	return ErrPiDiscardPending
++}
++
++// ReadPiDiscardMarkers is an early reader for the selected bridge only. An
++// invalid or unassignable marker must never turn into an empty inventory.
++func ReadPiDiscardMarkers(workspace string) (map[string]PiDiscardMarker, error) {
++	markers := make(map[string]PiDiscardMarker)
++	directory, err := piDiscardLockDirectory(workspace)
++	if errors.Is(err, os.ErrNotExist) {
++		return markers, nil
++	}
++	if err != nil {
++		return nil, err
++	}
++	fd, err := unix.Open(directory, unix.O_RDONLY|unix.O_DIRECTORY|unix.O_NOFOLLOW|unix.O_CLOEXEC, 0)
++	if err != nil {
++		return nil, err
++	}
++	file := os.NewFile(uintptr(fd), directory)
++	defer file.Close()
++	count := 0
++	for {
++		names, err := file.Readdirnames(128)
++		if err != nil && !errors.Is(err, io.EOF) {
++			return nil, err
++		}
++		count += len(names)
++		if count > 65536 {
++			return nil, errors.New("Pi discard marker inventory exceeds limit")
++		}
++		for _, name := range names {
++			slug, ok := strings.CutSuffix(name, PiDiscardMarkerSuffix)
++			if !ok {
++				continue
++			}
++			// The bridge supports one unfinished discard; an additional
++			// marker needs operator review, not a second pending owner.
++			if !ValidSlug(slug) || len(markers) != 0 {
++				return nil, errors.New("invalid Pi discard marker inventory")
++			}
++			data, err := readBackendRecord(directory, name)
++			if err != nil {
++				return nil, err
++			}
++			var marker PiDiscardMarker
++			if len(data) > PiDiscardMarkerLimit {
++				return nil, errors.New("Pi discard marker exceeds limit")
++			}
++			if err = decodeBackendRecord(data, &marker, []string{"schema", "workspace_sha256", "slug", "request_id", "receipt_id", "preparation_attempt", "creation_attempt", "audit_sha256"}); err != nil {
++				return nil, err
++			}
++			if err = marker.Validate(workspace, slug); err != nil {
++				return nil, err
++			}
++			markers[slug] = marker
++		}
++		if errors.Is(err, io.EOF) {
++			return markers, nil
++		}
++	}
++}
+diff --git a/portal/internal/session/pi_creation_discard_test.go b/portal/internal/session/pi_creation_discard_test.go
+new file mode 100644
+index 0000000000000000000000000000000000000000..af381f4474ecad58dde72cda5a04f1ebc5fe9c4e
+--- /dev/null
++++ b/portal/internal/session/pi_creation_discard_test.go
+@@ -0,0 +1,81 @@
++package session
++
++import (
++	"crypto/sha256"
++	"encoding/hex"
++	"encoding/json"
++	"errors"
++	"os"
++	"path/filepath"
++	"strings"
++	"testing"
++)
++
++func TestPiDiscardMarkerFencesWithoutAnyOtherSessionFiles(t *testing.T) {
++	workspace := t.TempDir()
++	slug := "pending-discard"
++	if err := RequireNoPiDiscard(workspace, slug); err != nil {
++		t.Fatal(err)
++	}
++	dir := filepath.Join(workspace, "worktrees", ".locks")
++	if err := os.MkdirAll(dir, 0o700); err != nil {
++		t.Fatal(err)
++	}
++	digest := sha256.Sum256([]byte(workspace))
++	marker := PiDiscardMarker{
++		Schema: 1, WorkspaceSHA256: hex.EncodeToString(digest[:]), Slug: slug,
++		RequestID: "6a9711c1-ff69-400b-8c70-4bcd95fabea4", ReceiptID: strings.Repeat("a", 64),
++		PreparationAttempt: 1, CreationAttempt: 2, AuditSHA256: strings.Repeat("b", 64),
++	}
++	data, err := json.Marshal(marker)
++	if err != nil {
++		t.Fatal(err)
++	}
++	path := filepath.Join(dir, slug+PiDiscardMarkerSuffix)
++	if err = os.WriteFile(path, data, 0o600); err != nil {
++		t.Fatal(err)
++	}
++	if err = RequireNoPiDiscard(workspace, slug); !errors.Is(err, ErrPiDiscardPending) {
++		t.Fatal("sole marker failed to fence the target", err)
++	}
++	if err = RequireNoPiDiscard(workspace, "unrelated"); err != nil {
++		t.Fatal("unrelated target was blocked", err)
++	}
++	markers, err := ReadPiDiscardMarkers(workspace)
++	if err != nil || len(markers) != 1 || markers[slug] != marker {
++		t.Fatal("restart did not recover exact marker", err)
++	}
++	for _, tc := range []struct {
++		name string
++		data []byte
++	}{
++		{"duplicate", append([]byte(`{"schema":1,`), data[1:]...)},
++		{"foreign-workspace", []byte(strings.Replace(string(data), marker.WorkspaceSHA256, strings.Repeat("c", 64), 1))},
++		{"oversize", append(append([]byte(nil), data...), make([]byte, PiDiscardMarkerLimit)...)},
++		{"wrong-attempt", []byte(strings.Replace(string(data), `"creation_attempt":2`, `"creation_attempt":0`, 1))},
++	} {
++		t.Run(tc.name, func(t *testing.T) {
++			if err := os.WriteFile(path, tc.data, 0o600); err != nil {
++				t.Fatal(err)
++			}
++			if _, err := ReadPiDiscardMarkers(workspace); err == nil {
++				t.Fatal("invalid marker was admitted to recovery")
++			}
++			if err := RequireNoPiDiscard(workspace, slug); !errors.Is(err, ErrPiDiscardPending) {
++				t.Fatal("invalid marker did not fence the target", err)
++			}
++		})
++	}
++	if err = os.Remove(path); err != nil {
++		t.Fatal(err)
++	}
++	if err = os.Symlink(filepath.Join(dir, "missing"), path); err != nil {
++		t.Fatal(err)
++	}
++	if _, err = ReadPiDiscardMarkers(workspace); err == nil {
++		t.Fatal("symlink marker was accepted")
++	}
++	if err = RequireNoPiDiscard(workspace, slug); !errors.Is(err, ErrPiDiscardPending) {
++		t.Fatal("dangling marker did not fence the target", err)
++	}
++}
+diff --git a/portal/internal/web/creation.go b/portal/internal/web/creation.go
+index 165fa448b5c25c2cf087d6e2ac79f4eb933dd469..9b841192c5ae743f93cf941891af33f6708df3fa 100644
+--- a/portal/internal/web/creation.go
++++ b/portal/internal/web/creation.go
+@@ -313,6 +313,9 @@ func (s *Server) acceptCreation(request creationRequest) (creationReceipt, error
+ // Exact-owner installation must not retire or adopt an equal-content receipt.
+ // Call with operationMu and, for preparations, both destination locks held.
+ func (s *Server) installCreationLocked(request creationRequest, receiptID, expectedEpoch string, destinationLocked bool) (creationReceipt, error) {
++	if err := s.requireNoPiDiscardLocked(request.Slug); err != nil {
++		return creationReceipt{}, err
++	}
+ 	if request.Backend == "pi" {
+ 		if request.Kind == "fork" {
+ 			return s.installPiForkLocked(request)
+@@ -537,6 +540,9 @@ func (s *Server) currentCreation(slug string) (creationReceipt, bool) {
+ 	}
+ 	s.operationMu.Lock()
+ 	defer s.operationMu.Unlock()
++	if s.requireNoPiDiscardLocked(slug) != nil {
++		return creationReceipt{}, false
++	}
+ 	if admissionErr != nil {
+ 		receipt, ok := s.creations[slug]
+ 		return receipt, ok
+@@ -645,6 +651,9 @@ func (s *Server) retryCreationReceipt(slug, receiptID string, attempt int) (crea
+ 	}
+ 	s.operationMu.Lock()
+ 	defer s.operationMu.Unlock()
++	if err := s.requireNoPiDiscardLocked(slug); err != nil {
++		return creationReceipt{}, http.StatusConflict, err
++	}
+ 	current := s.creations[slug]
+ 	if receiptID != current.ReceiptID || attempt != current.Attempt || receipt.ReceiptID != current.ReceiptID {
+ 		return creationReceipt{}, http.StatusConflict, errors.New("Creation status changed. Reload before retrying.")
+@@ -802,6 +811,9 @@ func (s *Server) updateCreation(receipt creationReceipt) error {
+ 	}
+ 	s.operationMu.Lock()
+ 	defer s.operationMu.Unlock()
++	if err := s.requireNoPiDiscardLocked(receipt.Request.Slug); err != nil {
++		return err
++	}
+ 	current := s.creations[receipt.Request.Slug]
+ 	if current.ReceiptID != receipt.ReceiptID || current.Attempt != receipt.Attempt {
+ 		return errors.New("creation attempt changed")
+diff --git a/portal/internal/web/creation_store.go b/portal/internal/web/creation_store.go
+index b48577dfa18504287fc9a7345a7a9f4327391cf3..a8a7eb53b79c1f935615b5653d4fb0d39f8e63e4 100644
+--- a/portal/internal/web/creation_store.go
++++ b/portal/internal/web/creation_store.go
+@@ -199,6 +199,9 @@ func (s *Server) retireIdleCreation(receipt creationReceipt) error {
+ // Call with operationMu held. Removing the receipt last keeps an interrupted
+ // retirement recoverable; a ready receipt no longer needs CLI binding evidence.
+ func (s *Server) retireCreation(receipt creationReceipt) error {
++	if err := s.requireNoPiDiscardLocked(receipt.Request.Slug); err != nil {
++		return err
++	}
+ 	if receipt.Schema == 4 || receipt.Schema == 5 {
+ 		return s.retirePiCreation(receipt)
+ 	}
+@@ -242,6 +245,9 @@ func (s *Server) retireCreation(receipt creationReceipt) error {
+ // Existing tracking, authority and journals preserve the old identity until
+ // their owning lifecycle operation has finished.
+ func (s *Server) retireAbsentCreation(slug string) error {
++	if errors.Is(s.requireNoPiDiscardLocked(slug), session.ErrPiDiscardPending) {
++		return nil
++	}
+ 	receipt, ok := s.creations[slug]
+ 	// A cancelled schema-2 plan has no destination to keep this receipt alive,
+ 	// but it remains the user-visible record of the failed request. Capacity
+@@ -787,6 +793,38 @@ func (s *Server) loadCreations() error {
+ 		if err := readCreationJSON(s.creationPath(slug), &receipt); err != nil {
+ 			return fmt.Errorf("load creation %s: %w", slug, err)
+ 		}
++		parked := false
++		for _, audit := range s.piDiscards {
++			if audit.Terminal.Slug != slug {
++				continue
++			}
++			parked = true
++			if receipt.ReceiptID == audit.Owner.ReceiptID {
++				data, err := readPiDiscardBytes(s.creationPath(slug), maxCreationReceiptBytes, false)
++				if err != nil || piDiscardHash(data) != audit.Original[0] {
++					return errPiDiscardOwner
++				}
++				break
++			}
++			// A completed old marker can outlive its original selector. Do
++			// not hide or retire the current later owner during boot.
++			_, digest, err := s.loadPiDiscardAudit(audit.Owner.RequestID)
++			if err != nil {
++				return err
++			}
++			if done, err := s.confirmPiDiscardComplete(audit, digest); err != nil || !done {
++				return errPiDiscardOwner
++			}
++		}
++		if parked {
++			skip := false
++			for _, audit := range s.piDiscards {
++				skip = skip || (audit.Terminal.Slug == slug && audit.Owner.ReceiptID == receipt.ReceiptID)
++			}
++			if skip {
++				continue
++			}
++		}
+ 		if (receipt.Schema != 1 && receipt.Schema != 2 && receipt.Schema != 3 && receipt.Schema != 4 && receipt.Schema != 5) || receipt.Workspace != s.config.Workspace || receipt.Request.Slug != slug ||
+ 			!messageDigestPattern.MatchString(receipt.ReceiptID) || !messageDigestPattern.MatchString(receipt.DeletionHistorySHA256) || receipt.Attempt < 1 ||
+ 			(receipt.Request.Kind != "new" && receipt.Request.Kind != "fork" && receipt.Request.Kind != "plan") ||
+@@ -818,6 +856,9 @@ func (s *Server) loadCreations() error {
+ 			receipt.Phase = "Initialization was interrupted. Retry to continue."
+ 		}
+ 		s.creations[slug] = receipt
++		if parked {
++			continue
++		}
+ 		if receipt.State == "paused" || receipt.State == "failed" {
+ 			if err := s.retireAbsentCreation(slug); err != nil {
+ 				return err
+diff --git a/portal/internal/web/pi_creation_discard.go b/portal/internal/web/pi_creation_discard.go
+new file mode 100644
+index 0000000000000000000000000000000000000000..9ce15de111e89d8aaa7c65bd373a72be7a2309da
+--- /dev/null
++++ b/portal/internal/web/pi_creation_discard.go
+@@ -0,0 +1,797 @@
++package web
++
++import (
++	"context"
++	"crypto/sha256"
++	"encoding/hex"
++	"encoding/json"
++	"errors"
++	"io"
++	"os"
++	"path/filepath"
++	"reflect"
++	"strings"
++	"syscall"
++	"time"
++
++	"github.com/aither64/dev-workspace/portal/internal/piruntime"
++	"github.com/aither64/dev-workspace/portal/internal/session"
++	"github.com/aither64/dev-workspace/portal/internal/userstate"
++	"golang.org/x/sys/unix"
++)
++
++var errPiDiscardOwner = errors.New("The portal could not verify that this failed request is safe to discard.")
++
++const piDiscardAuditLimit = 64 << 10
++
++// The authenticated startup grant supplies this immutable intent.
++type piDiscardIntent struct {
++	RequestID          string `json:"requestId"`
++	ReceiptID          string `json:"receiptId"`
++	PreparationAttempt int    `json:"preparationAttempt"`
++	CreationAttempt    int    `json:"creationAttempt"`
++}
++
++func (r piDiscardIntent) valid(id string) bool {
++	return validPreparationID(id) && r.RequestID == id && messageDigestPattern.MatchString(r.ReceiptID) &&
++		r.PreparationAttempt > 0 && r.CreationAttempt > 0
++}
++
++type piDiscardAudit struct {
++	Schema      int                `json:"schema"`
++	Owner       piDiscardIntent    `json:"owner"`
++	Incarnation string             `json:"incarnation"`
++	Terminal    sessionPreparation `json:"terminal"`
++	Original    [5]string          `json:"original"`
++}
++
++type piDiscardFile struct {
++	name, path string
++	limit      int
++}
++
++func piDiscardHash(data []byte) string {
++	sum := sha256.Sum256(data)
++	return hex.EncodeToString(sum[:])
++}
++
++func (s *Server) piDiscardDirectory(id string) string {
++	return filepath.Join(s.operationStore.directory, "pi-creation-discards", id)
++}
++
++func (s *Server) piDiscardMarkerPath(slug string) string {
++	return filepath.Join(s.config.Workspace, "worktrees", ".locks", slug+session.PiDiscardMarkerSuffix)
++}
++
++func (s *Server) piDiscardFiles(record sessionPreparation) [5]piDiscardFile {
++	receipt := creationReceipt{Request: creationRequest{Slug: record.Slug}, ReceiptID: record.ReceiptID}
++	binding := filepath.Join(s.config.UserStateRoot, "session-backends", piDiscardHash([]byte(s.config.Workspace)), record.Slug+".json")
++	return [5]piDiscardFile{
++		{"receipt", s.creationPath(record.Slug), maxCreationReceiptBytes},
++		{"companion", s.creationEvidencePath(receipt) + ".request", maxCreationReceiptBytes},
++		{"journal", piJournalPath(s.config.Workspace, record.Slug), maxCreationReceiptBytes},
++		{"binding", binding, 64 << 10},
++		{"preparation", s.preparationPath(record.RequestID, false), maxPreparationBytes},
++	}
++}
++
++// piDiscardHasNoAttachmentClaim is a conservative negative check, not a
++// decoder. Call only for the confirmed original tuple under creation/upload
++// exclusion and the supported stock writer lineage. Zero accepted file IDs
++// could not create a preparation claim (the writer returns before the store).
++// RetainCreations also keys on BOTH receipt goals, which could collide with a
++// different prepared initial submission. Every supported nonempty-file wire
++// contains this header, even when initial text is empty.
++func piDiscardHasNoAttachmentClaim(preparation sessionPreparation, receipt creationReceipt) bool {
++	const attachmentHeader = "Attached local files"
++	return preparation.Snapshot != nil && len(preparation.Snapshot.Input.Attachments) == 0 &&
++		!strings.Contains(receipt.Request.Goal, attachmentHeader) && !strings.Contains(receipt.Goal, attachmentHeader)
++}
++
++// Read exact bounded bytes without following a link, blocking on a FIFO, or
++// inferring genuine absence from an aliased parent.
++func readPiDiscardBytes(path string, limit int, durable bool) ([]byte, error) {
++	parent := filepath.Dir(path)
++	resolved, err := filepath.EvalSymlinks(parent)
++	if err != nil || resolved != parent {
++		if errors.Is(err, os.ErrNotExist) && requirePiDiscardAbsent(path) != nil {
++			return nil, errPiDiscardOwner
++		}
++		if err == nil {
++			err = errPiDiscardOwner
++		}
++		return nil, err
++	}
++	fd, err := unix.Open(path, unix.O_NOFOLLOW|unix.O_NONBLOCK|unix.O_RDONLY|unix.O_CLOEXEC, 0)
++	if err != nil {
++		return nil, err
++	}
++	file := os.NewFile(uintptr(fd), path)
++	defer file.Close()
++	info, err := file.Stat()
++	if err != nil {
++		return nil, err
++	}
++	stat, ok := info.Sys().(*syscall.Stat_t)
++	if !ok || stat.Uid != uint32(os.Geteuid()) || !info.Mode().IsRegular() || info.Mode().Perm() != 0600 || info.Size() > int64(limit) {
++		return nil, errPiDiscardOwner
++	}
++	data, err := io.ReadAll(io.LimitReader(file, int64(limit)+1))
++	if err != nil || len(data) > limit {
++		return nil, errPiDiscardOwner
++	}
++	if durable {
++		if err = file.Sync(); err != nil {
++			return nil, err
++		}
++	}
++	return data, nil
++}
++
++// No old selector may move unless this atomic publication and containing
++// directory sync succeed. A lost acknowledgement keeps the published bytes.
++func writePiDiscardExclusive(path string, data []byte) error {
++	directory := filepath.Dir(path)
++	if err := privatePreparationDirectory(directory); err != nil {
++		return err
++	}
++	file, err := os.CreateTemp(directory, ".pi-discard-*.tmp")
++	if err != nil {
++		return err
++	}
++	defer os.Remove(file.Name())
++	if _, err = file.Write(data); err == nil {
++		err = file.Sync()
++	}
++	if closeErr := file.Close(); err == nil {
++		err = closeErr
++	}
++	if err != nil {
++		return err
++	}
++	if err = unix.Renameat2(unix.AT_FDCWD, file.Name(), unix.AT_FDCWD, path, unix.RENAME_NOREPLACE); err != nil {
++		return err
++	}
++	return syncPreparationDirectory(directory)
++}
++
++func requirePiDiscardAbsent(path string) error {
++	// Check existing ancestors too; a missing target below a dangling link
++	// cannot prove absence. The workspace and state paths are trusted config.
++	for parent := filepath.Dir(path); parent != "/"; parent = filepath.Dir(parent) {
++		info, err := os.Lstat(parent)
++		if errors.Is(err, os.ErrNotExist) {
++			continue
++		}
++		if err != nil || !info.IsDir() {
++			return errPiDiscardOwner
++		}
++	}
++	if _, err := os.Lstat(path); !errors.Is(err, os.ErrNotExist) {
++		return errPiDiscardOwner
++	}
++	return nil
++}
++
++func (s *Server) readPiDiscardPreparation(id string, compact bool) (sessionPreparation, error) {
++	path := s.preparationPath(id, compact)
++	if _, err := readPiDiscardBytes(path, maxPreparationBytes, false); err != nil {
++		return sessionPreparation{}, err
++	}
++	return readPreparation(path, s.config.Workspace)
++}
++
++func piDiscardTerminal(record sessionPreparation, updatedAt string) sessionPreparation {
++	record.State, record.Terminal, record.Phase, record.UpdatedAt = "terminal", "cancelled", "initializing", updatedAt
++	record.Snapshot, record.Handoff = nil, nil
++	record.Base, record.SnapshotDigest, record.Error = "", "", ""
++	return record
++}
++
++// Admission runs before publishing any discard intent and after waiting for
++// every ordinary owner. Never use status helpers that can repair or publish.
++func (s *Server) provePiDiscard(ctx context.Context, req piDiscardIntent, record sessionPreparation) (piDiscardAudit, error) {
++	var audit piDiscardAudit
++	if record.Schema != 3 || record.State != "handed_off" || record.ReceiptID != req.ReceiptID || record.Attempt != req.PreparationAttempt ||
++		record.Snapshot == nil || record.Snapshot.Input.Sensitive || !session.ValidSlug(record.Slug) || s.preparationUnconfirmed[req.RequestID] != "" {
++		return audit, errPiDiscardOwner
++	}
++	if work, exists := s.preparationWork[req.RequestID]; exists && work.dispatched && !work.stopped {
++		return audit, errPiDiscardOwner
++	}
++	files := s.piDiscardFiles(record)
++	for i, file := range files {
++		data, err := readPiDiscardBytes(file.path, file.limit, true)
++		if err != nil {
++			return audit, err
++		}
++		audit.Original[i] = piDiscardHash(data)
++		if err := syncPreparationDirectory(filepath.Dir(file.path)); err != nil {
++			return audit, err
++		}
++	}
++	original, err := readPreparation(files[4].path, s.config.Workspace)
++	if err != nil || preparationDigest(original) != preparationDigest(record) {
++		return audit, errPiDiscardOwner
++	}
++	inventory, err := readPreparations(ctx, s.operationStore.directory, s.config.Workspace)
++	if err != nil {
++		return audit, err
++	}
++	for id, other := range inventory {
++		if id != req.RequestID && other.State != "terminal" && other.Slug == record.Slug {
++			return audit, errPiDiscardOwner
++		}
++	}
++	receiptBytes, err := readPiDiscardBytes(files[0].path, files[0].limit, true)
++	if err != nil {
++		return audit, err
++	}
++	var raw map[string]json.RawMessage
++	var receipt creationReceipt
++	if rejectDuplicateCreationJSONKeys(receiptBytes) != nil || json.Unmarshal(receiptBytes, &raw) != nil ||
++		validateCreationReceiptShape(raw) != nil || json.Unmarshal(receiptBytes, &receipt) != nil ||
++		receipt.Schema != 4 || receipt.State != "failed" || !receipt.Validated || receipt.Request.Kind != "new" || receipt.Attempt != req.CreationAttempt ||
++		!preparationReceiptMatches(original, receipt) || !piDiscardHasNoAttachmentClaim(original, receipt) {
++		return audit, errPiDiscardOwner
++	}
++	if cached, found := s.creations[record.Slug]; !found || preparationDigest(cached) != preparationDigest(receipt) {
++		return audit, errPiDiscardOwner
++	}
++	intent, err := receipt.piIntent()
++	if err != nil || intent.ValidateShape() != nil || intent.Sensitive || intent.Workspace != s.config.Workspace {
++		return audit, errPiDiscardOwner
++	}
++	companion, err := readPiCreationIntent(files[1].path)
++	if err != nil || !reflect.DeepEqual(companion, intent) {
++		return audit, errPiDiscardOwner
++	}
++	journal, err := readPiCreationJournal(files[2].path)
++	if err != nil || journal.State != "creating" || journal.NativeCreateStarted || journal.NativeGeneration != "" || journal.Native != nil ||
++		!reflect.DeepEqual(journal.PiCreationIntent, intent) {
++		return audit, errPiDiscardOwner
++	}
++	binding, err := (session.BackendBindingStore{Root: s.config.UserStateRoot, Workspace: intent.Workspace}).Load(intent.Slug)
++	if err != nil || !reflect.DeepEqual(binding, intent.Binding()) {
++		return audit, errPiDiscardOwner
++	}
++	if err = s.provePiDiscardNoEffects(ctx, receipt, intent); err != nil {
++		return audit, err
++	}
++	audit.Schema, audit.Owner, audit.Incarnation = 1, req, intent.SessionIncarnation
++	audit.Terminal = piDiscardTerminal(original, time.Now().UTC().Format(time.RFC3339Nano))
++	return audit, validatePreparation(audit.Terminal, s.config.Workspace)
++}
++
++func (s *Server) provePiDiscardNoEffects(ctx context.Context, receipt creationReceipt, intent session.PiCreationIntent) error {
++	workspace, slug := intent.Workspace, intent.Slug
++	roots := []string{
++		filepath.Join(workspace, "work", slug), filepath.Join(workspace, "archive", slug), filepath.Join(workspace, "worktrees", slug),
++		filepath.Join(s.config.AuthorityDir, slug+".json"), filepath.Join(s.config.AuthorityDir, slug+".start.json"),
++		filepath.Join(userstate.WorkspaceDirectory(s.config.UserStateRoot, "codex-teams", workspace), slug+".json"),
++		filepath.Join(userstate.WorkspaceDirectory(s.config.UserStateRoot, "session-services", workspace), slug+".json"),
++		s.creationEvidencePath(receipt),
++	}
++	for _, suffix := range []string{".fork.json", ".start.json", ".archive-cleanup.json", ".services-registration.json", ".services-cleanup.json"} {
++		roots = append(roots, filepath.Join(workspace, "worktrees", ".locks", slug+suffix))
++	}
++	for _, path := range roots {
++		if err := requirePiDiscardAbsent(path); err != nil {
++			return err
++		}
++	}
++	// Match the host's <provider>/clusters/<slug> state layout without
++	// loading extension code or invoking a provider to discover state.
++	clusterRoot := filepath.Join(workspace, ".dev-clusters")
++	info, err := os.Lstat(clusterRoot)
++	if err == nil {
++		if !info.IsDir() {
++			return errPiDiscardOwner
++		}
++		providers, err := os.ReadDir(clusterRoot)
++		if err != nil || len(providers) > 128 {
++			return errPiDiscardOwner
++		}
++		for _, provider := range providers {
++			if err := requirePiDiscardAbsent(filepath.Join(clusterRoot, provider.Name(), "clusters", slug)); err != nil {
++				return err
++			}
++		}
++	} else if !errors.Is(err, os.ErrNotExist) {
++		return err
++	}
++	if owner, err := session.PendingLifecycle(workspace, slug); err != nil || owner != "" {
++		return errPiDiscardOwner
++	}
++	// A previous incarnation's retained ownership is outside this bridge.
++	history, err := session.CompletedRemovalHistory(workspace, slug, s.config.UserStateRoot)
++	if err != nil || history != intent.DeletionHistorySHA256 || history != piDiscardHash(nil) {
++		return errPiDiscardOwner
++	}
++	if _, exists := s.operations[slug]; exists {
++		return errPiDiscardOwner
++	}
++	// Ensure reserves the exact scoped runtime under its own lock before any
++	// frozen requests or host launch. This is its retained absence classifier,
++	// not a PID test or a mutating runtime probe.
++	if _, err := piruntime.InspectRetainedCurrentRuntime(ctx, s.config.UserStateRoot, intent.SessionRef()); !errors.Is(err, os.ErrNotExist) {
++		return errPiDiscardOwner
++	}
++	return nil
++}
++
++func (s *Server) loadPiDiscardAudit(id string) (piDiscardAudit, string, error) {
++	var audit piDiscardAudit
++	directory := s.piDiscardDirectory(id)
++	if err := privatePreparationDirectory(directory); err != nil {
++		return audit, "", err
++	}
++	data, err := readPiDiscardBytes(filepath.Join(directory, "intent.json"), piDiscardAuditLimit, false)
++	if err != nil {
++		return audit, "", err
++	}
++	if session.DecodePiCreationJSON(data, &audit, piDiscardAuditLimit) != nil || audit.Schema != 1 || !audit.Owner.valid(id) || !messageDigestPattern.MatchString(audit.Incarnation) ||
++		validatePreparation(audit.Terminal, s.config.Workspace) != nil || audit.Terminal.Schema != 3 || audit.Terminal.State != "terminal" || audit.Terminal.Terminal != "cancelled" ||
++		audit.Terminal.RequestID != id || audit.Terminal.ReceiptID != audit.Owner.ReceiptID || audit.Terminal.Attempt != audit.Owner.PreparationAttempt || !session.ValidSlug(audit.Terminal.Slug) {
++		return audit, "", errPiDiscardOwner
++	}
++	for _, digest := range audit.Original {
++		if !messageDigestPattern.MatchString(digest) {
++			return audit, "", errPiDiscardOwner
++		}
++	}
++	return audit, piDiscardHash(data), nil
++}
++
++func (s *Server) stagePiDiscard(audit piDiscardAudit) (piDiscardAudit, string, error) {
++	directory := s.piDiscardDirectory(audit.Owner.RequestID)
++	if err := os.MkdirAll(directory, 0700); err != nil {
++		return audit, "", err
++	}
++	device := func(path string) (uint64, error) {
++		info, err := os.Lstat(path)
++		if err != nil {
++			return 0, err
++		}
++		stat, ok := info.Sys().(*syscall.Stat_t)
++		if !ok || !info.IsDir() || stat.Uid != uint32(os.Geteuid()) || info.Mode().Perm()&0022 != 0 {
++			return 0, errPiDiscardOwner
++		}
++		return uint64(stat.Dev), nil
++	}
++	destination, err := device(directory)
++	if err != nil {
++		return audit, "", err
++	}
++	for _, file := range s.piDiscardFiles(audit.Terminal) {
++		if source, err := device(filepath.Dir(file.path)); err != nil || source != destination {
++			return audit, "", errPiDiscardOwner
++		}
++		if err := requirePiDiscardAbsent(filepath.Join(directory, file.name+".json")); err != nil {
++			return audit, "", err
++		}
++	}
++	if err := requirePiDiscardAbsent(filepath.Join(directory, "complete")); err != nil {
++		return audit, "", err
++	}
++	if err := os.MkdirAll(s.preparationDirectory(true), 0700); err != nil {
++		return audit, "", err
++	}
++	if dest, err := device(s.preparationDirectory(true)); err != nil || dest != destination {
++		return audit, "", errPiDiscardOwner
++	}
++	for _, path := range []string{directory, filepath.Dir(directory), s.operationStore.directory, s.preparationDirectory(true), filepath.Dir(s.piDiscardMarkerPath(audit.Terminal.Slug))} {
++		if err := privatePreparationDirectory(path); err != nil {
++			return audit, "", err
++		}
++		if err := syncPreparationDirectory(path); err != nil {
++			return audit, "", err
++		}
++	}
++	data, err := json.Marshal(audit)
++	if err != nil {
++		return audit, "", err
++	}
++	if err := writePiDiscardExclusive(filepath.Join(directory, "intent.json"), data); err != nil && !errors.Is(err, os.ErrExist) {
++		return audit, "", err
++	}
++	staged, digest, err := s.loadPiDiscardAudit(audit.Owner.RequestID)
++	if err != nil {
++		return audit, "", err
++	}
++	audit.Terminal.UpdatedAt = staged.Terminal.UpdatedAt
++	if !reflect.DeepEqual(audit, staged) {
++		return audit, "", errPiDiscardOwner
++	}
++	if _, err := readPiDiscardBytes(filepath.Join(directory, "intent.json"), piDiscardAuditLimit, true); err != nil {
++		return audit, "", err
++	}
++	return audit, digest, syncPreparationDirectory(directory)
++}
++
++func (s *Server) piDiscardMarker(audit piDiscardAudit, digest string) session.PiDiscardMarker {
++	return session.PiDiscardMarker{Schema: 1, WorkspaceSHA256: piDiscardHash([]byte(s.config.Workspace)), Slug: audit.Terminal.Slug,
++		RequestID: audit.Owner.RequestID, ReceiptID: audit.Owner.ReceiptID, PreparationAttempt: audit.Owner.PreparationAttempt,
++		CreationAttempt: audit.Owner.CreationAttempt, AuditSHA256: digest}
++}
++
++func (s *Server) confirmPiDiscardComplete(audit piDiscardAudit, digest string) (bool, error) {
++	path := filepath.Join(s.piDiscardDirectory(audit.Owner.RequestID), "complete")
++	data, err := readPiDiscardBytes(path, 65, true)
++	if errors.Is(err, os.ErrNotExist) {
++		return false, nil
++	}
++	if err != nil || string(data) != digest+"\n" {
++		return false, errPiDiscardOwner
++	}
++	mapped, err := s.readPiDiscardPreparation(audit.Owner.RequestID, true)
++	if err != nil || preparationDigest(mapped) != preparationDigest(audit.Terminal) {
++		return false, errPiDiscardOwner
++	}
++	if err := requirePiDiscardAbsent(s.preparationPath(audit.Owner.RequestID, false)); err != nil {
++		return false, err
++	}
++	for i, file := range s.piDiscardFiles(audit.Terminal) {
++		data, err := readPiDiscardBytes(filepath.Join(filepath.Dir(path), file.name+".json"), file.limit, false)
++		if err != nil || piDiscardHash(data) != audit.Original[i] {
++			return false, errPiDiscardOwner
++		}
++	}
++	return true, syncPreparationDirectory(filepath.Dir(path))
++}
++
++func movePiDiscardOriginal(original piDiscardFile, destination, digest string, allowProjectedPreparation bool) error {
++	source, sourceErr := readPiDiscardBytes(original.path, original.limit, true)
++	retired, retiredErr := readPiDiscardBytes(destination, original.limit, true)
++	switch {
++	case sourceErr == nil && piDiscardHash(source) == digest && errors.Is(retiredErr, os.ErrNotExist):
++		if err := unix.Renameat2(unix.AT_FDCWD, original.path, unix.AT_FDCWD, destination, unix.RENAME_NOREPLACE); err != nil {
++			return err
++		}
++	case retiredErr == nil && piDiscardHash(retired) == digest && (errors.Is(sourceErr, os.ErrNotExist) || (sourceErr == nil && allowProjectedPreparation && piDiscardHash(source) != digest)):
++		// An exact audit-side selector is durable proof of an interrupted
++		// move. Only the exact checked terminal projection may coexist.
++	default:
++		return errPiDiscardOwner
++	}
++	if err := syncPreparationDirectory(filepath.Dir(destination)); err != nil {
++		return err
++	}
++	return syncPreparationDirectory(filepath.Dir(original.path))
++}
++
++func (s *Server) finishPiDiscard(ctx context.Context, audit piDiscardAudit, digest string) error {
++	id, slug := audit.Owner.RequestID, audit.Terminal.Slug
++	directory := s.piDiscardDirectory(id)
++	complete, err := s.confirmPiDiscardComplete(audit, digest)
++	if err != nil {
++		return err
++	}
++	if !complete {
++		// Confirm marker durability even after an uncertain publication reply.
++		if err := syncPreparationDirectory(filepath.Dir(s.piDiscardMarkerPath(slug))); err != nil {
++			return err
++		}
++		active, activeErr := s.readPiDiscardPreparation(id, false)
++		mapped, mappedErr := s.readPiDiscardPreparation(id, true)
++		projected := activeErr == nil && preparationDigest(active) == preparationDigest(audit.Terminal)
++		mapping := mappedErr == nil && preparationDigest(mapped) == preparationDigest(audit.Terminal)
++		if (mappedErr == nil && !mapping) || (mappedErr != nil && !errors.Is(mappedErr, os.ErrNotExist)) ||
++			(activeErr != nil && !errors.Is(activeErr, os.ErrNotExist)) || (mapping && activeErr == nil) {
++			return errPiDiscardOwner
++		}
++		for i, file := range s.piDiscardFiles(audit.Terminal) {
++			retire := func(path string) error {
++				if path != file.path {
++					return errPiDiscardOwner
++				}
++				return movePiDiscardOriginal(file, filepath.Join(directory, file.name+".json"), audit.Original[i], projected && file.name == "preparation")
++			}
++			if file.name == "binding" {
++				store := session.BackendBindingStore{Root: s.config.UserStateRoot, Workspace: s.config.Workspace}
++				err = store.WithPiDiscardBindingLock(ctx, slug, retire)
++			} else {
++				err = retire(file.path)
++			}
++			if err != nil {
++				return err
++			}
++			if err := s.piCreationPoint("discard_" + file.name); err != nil {
++				return err
++			}
++		}
++		if !mapping && !projected {
++			if err := s.savePreparation(audit.Terminal); err != nil {
++				return err
++			}
++		} else {
++			s.preparations[id] = audit.Terminal
++			publication := s.preparationPath(id, mapping)
++			s.preparationUnconfirmed[id] = publication
++			if err := s.confirmPreparationLocked(id); err != nil {
++				return err
++			}
++		}
++		if err := s.piCreationPoint("discard_mapping"); err != nil {
++			return err
++		}
++		if current, ok := s.creations[slug]; ok && current.ReceiptID != audit.Owner.ReceiptID {
++			return errPiDiscardOwner
++		}
++		delete(s.creations, slug)
++		delete(s.preparationWork, id)
++		if err := writePiDiscardExclusive(filepath.Join(directory, "complete"), []byte(digest+"\n")); err != nil {
++			return err
++		}
++	}
++	if err := s.piCreationPoint("discard_complete"); err != nil {
++		return err
++	}
++	return s.confirmPiDiscardCleanup(audit, digest, true)
++}
++
++// After completion, never inspect or retire live session selectors. A later
++// owner may legitimately have acquired the slug while the marker was absent.
++// Call only with the selected-generation and ordinary destination locks held,
++// and after proving the audit and compact mapping durable.
++func (s *Server) confirmPiDiscardCleanup(audit piDiscardAudit, digest string, allowUnlink bool) error {
++	path := s.piDiscardMarkerPath(audit.Terminal.Slug)
++	parent := filepath.Dir(path)
++	if err := privatePreparationDirectory(parent); err != nil {
++		return err
++	}
++	data, err := readPiDiscardBytes(path, session.PiDiscardMarkerLimit, false)
++	if err == nil {
++		var marker session.PiDiscardMarker
++		if session.DecodePiCreationJSON(data, &marker, session.PiDiscardMarkerLimit) != nil || marker != s.piDiscardMarker(audit, digest) {
++			return errPiDiscardOwner
++		}
++		if !allowUnlink {
++			return session.ErrPiDiscardPending
++		}
++		if err := os.Remove(path); err != nil {
++			return err
++		}
++		if err := s.piCreationPoint("discard_marker_unlink"); err != nil {
++			return err
++		}
++	} else if !errors.Is(err, os.ErrNotExist) {
++		return err
++	}
++	if err := s.piCreationPoint("discard_cleanup_sync"); err != nil {
++		return err
++	}
++	if err := syncPreparationDirectory(parent); err != nil {
++		return err
++	}
++	if err := requirePiDiscardAbsent(path); err != nil {
++		return err
++	}
++	delete(s.piDiscards, audit.Owner.RequestID)
++	s.preparations[audit.Owner.RequestID] = audit.Terminal
++	return nil
++}
++
++func (s *Server) lockPiDiscardDestination(slug string) (func(), error) {
++	creation, err := session.LockCreation(s.config.AuthorityDir, slug)
++	if err != nil {
++		return nil, err
++	}
++	runtime, err := session.LockRuntimeExclusive(s.config.AuthorityDir, slug)
++	if err != nil {
++		creation.Close()
++		return nil, err
++	}
++	unlock := func() { runtime.Close(); creation.Close() }
++	if err := s.requireCurrentHostProfile(); err != nil {
++		unlock()
++		return nil, err
++	}
++	return unlock, nil
++}
++
++// Preparation GET may confirm an already absent marker, but only an exact
++// confirmed POST may unlink a matching marker. The compact mapping alone is
++// not proof of cleanup, including just after restarting the bridge.
++func (s *Server) confirmPiDiscardStatusLocked(record sessionPreparation, id string) (*preparationStatus, error) {
++	pending, parked := s.piDiscards[id]
++	if !parked && (record.Schema != 3 || record.State != "terminal" || record.Terminal != "cancelled") {
++		return nil, nil
++	}
++	audit, digest, err := s.loadPiDiscardAudit(id)
++	if err != nil || (parked && !reflect.DeepEqual(audit, pending)) ||
++		(!parked && preparationDigest(audit.Terminal) != preparationDigest(record)) {
++		return nil, errPiDiscardOwner
++	}
++	unlock, err := s.lockPiDiscardDestination(audit.Terminal.Slug)
++	if err != nil {
++		return nil, ErrPiDiscardStartupHeld
++	}
++	defer unlock()
++	complete, err := s.confirmPiDiscardComplete(audit, digest)
++	if err != nil {
++		return nil, ErrPiDiscardStartupHeld
++	}
++	status := piDiscardPendingStatus(audit)
++	if !complete {
++		if !parked {
++			return nil, errPiDiscardOwner
++		}
++		return &status, nil
++	}
++	if err := s.confirmPiDiscardCleanup(audit, digest, false); err != nil {
++		if errors.Is(err, errPiDiscardOwner) {
++			return nil, err
++		}
++		status.Detail = "The request was discarded. The portal has not confirmed cleanup."
++		return &status, nil
++	}
++	return nil, nil
++}
++
++// The grant-backed startup caller holds transition SH. There is no request
++// path that can execute the discard without revalidating the retained claim.
++func (s *Server) executePiDiscard(ctx context.Context, startup piDiscardStartup) (sessionPreparation, error) {
++	var zero sessionPreparation
++	request := startup.target.intent()
++	if startup.verify == nil || !request.valid(request.RequestID) {
++		return zero, errPiDiscardOwner
++	}
++	if err := s.uploadCreationMu.Lock(ctx); err != nil {
++		return zero, err
++	}
++	defer s.uploadCreationMu.Unlock()
++	s.operationMu.Lock()
++	defer s.operationMu.Unlock()
++	if s.closing {
++		return zero, errPiDiscardOwner
++	}
++	id := request.RequestID
++	record, active := s.preparations[id]
++	pending, inProgress := s.piDiscards[id]
++	if !active && !inProgress {
++		return zero, errPiDiscardOwner
++	}
++	if inProgress {
++		record = pending.Terminal
++	}
++	if request.ReceiptID != record.ReceiptID || request.PreparationAttempt != record.Attempt || !session.ValidSlug(record.Slug) {
++		return zero, errPiDiscardOwner
++	}
++	unlock, err := s.lockPiDiscardDestination(record.Slug)
++	if err != nil {
++		return zero, err
++	}
++	defer unlock()
++	if record.Slug != startup.target.Slug || record.Epoch != startup.target.Epoch {
++		return zero, errPiDiscardOwner
++	}
++	if record.State == "terminal" && !inProgress {
++		audit, digest, err := s.loadPiDiscardAudit(id)
++		if err != nil || audit.Owner != request || !startup.matches(audit) || preparationDigest(record) != preparationDigest(audit.Terminal) {
++			return zero, errPiDiscardOwner
++		}
++		if done, err := s.confirmPiDiscardComplete(audit, digest); err != nil || !done {
++			return zero, errPiDiscardOwner
++		}
++		if !startup.authorized(ctx) {
++			return zero, errPiDiscardOwner
++		}
++		return audit.Terminal, s.confirmPiDiscardCleanup(audit, digest, true)
++	}
++	var audit piDiscardAudit
++	var digest string
++	markers, err := session.ReadPiDiscardMarkers(s.config.Workspace)
++	if err != nil {
++		return zero, err
++	}
++	if marker, exists := markers[record.Slug]; exists || inProgress {
++		audit, digest, err = s.loadPiDiscardAudit(id)
++		if err != nil || audit.Owner != request || !startup.matches(audit) || (exists && marker != s.piDiscardMarker(audit, digest)) {
++			return zero, errPiDiscardOwner
++		}
++		if !exists {
++			if done, err := s.confirmPiDiscardComplete(audit, digest); err != nil || !done {
++				return zero, errPiDiscardOwner
++			}
++		}
++		if !startup.authorized(ctx) {
++			return zero, errPiDiscardOwner
++		}
++	} else {
++		if len(markers) != 0 {
++			return zero, session.ErrPiDiscardPending
++		}
++		// Startup has not run the ordinary creation loader (which can
++		// retire unrelated receipts). Read just this failed owner under
++		// the same locks as normal admission and confirm it below.
++		if err := s.loadPiDiscardStartupReceipt(record, startup.target); err != nil {
++			return zero, err
++		}
++		audit, err = s.provePiDiscard(ctx, request, record)
++		if err != nil {
++			return zero, err
++		}
++		if !startup.matches(audit) || !startup.authorized(ctx) {
++			return zero, errPiDiscardOwner
++		}
++		audit, digest, err = s.stagePiDiscard(audit)
++		if err != nil {
++			return zero, err
++		}
++		marker, err := json.Marshal(s.piDiscardMarker(audit, digest))
++		if err != nil {
++			return zero, err
++		}
++		path := s.piDiscardMarkerPath(record.Slug)
++		writeErr := writePiDiscardExclusive(path, marker)
++		if writeErr == nil || errors.Is(session.RequireNoPiDiscard(s.config.Workspace, record.Slug), session.ErrPiDiscardPending) {
++			s.parkPiDiscard(audit)
++		}
++		if writeErr != nil {
++			return zero, writeErr
++		}
++		if err := s.piCreationPoint("discard_intent"); err != nil {
++			return zero, err
++		}
++	}
++	if err := s.finishPiDiscard(ctx, audit, digest); err != nil {
++		return zero, err
++	}
++	return audit.Terminal, nil
++}
++
++func (s *Server) parkPiDiscard(audit piDiscardAudit) {
++	if s.piDiscards == nil {
++		s.piDiscards = make(map[string]piDiscardAudit)
++	}
++	id, slug := audit.Owner.RequestID, audit.Terminal.Slug
++	s.piDiscards[id] = audit
++	if receipt, ok := s.creations[slug]; ok && receipt.ReceiptID == audit.Owner.ReceiptID {
++		delete(s.creations, slug)
++	}
++	delete(s.preparations, id)
++	delete(s.preparationWork, id)
++}
++
++func (s *Server) loadPiDiscards() error {
++	markers, err := session.ReadPiDiscardMarkers(s.config.Workspace)
++	if err != nil {
++		return err
++	}
++	for _, marker := range markers {
++		audit, digest, err := s.loadPiDiscardAudit(marker.RequestID)
++		if err != nil || marker != s.piDiscardMarker(audit, digest) {
++			return errPiDiscardOwner
++		}
++		s.parkPiDiscard(audit)
++	}
++	return nil
++}
++
++// Call under operationMu (or before the server starts accepting requests).
++func (s *Server) requireNoPiDiscardLocked(slug string) error {
++	for _, audit := range s.piDiscards {
++		if audit.Terminal.Slug == slug {
++			return session.ErrPiDiscardPending
++		}
++	}
++	return session.RequireNoPiDiscard(s.config.Workspace, slug)
++}
++
++func (s *Server) pendingPiDiscardStatus(id string) (preparationStatus, bool) {
++	s.operationMu.Lock()
++	defer s.operationMu.Unlock()
++	audit, exists := s.piDiscards[id]
++	if !exists {
++		return preparationStatus{}, false
++	}
++	return piDiscardPendingStatus(audit), true
++}
++
++func piDiscardPendingStatus(audit piDiscardAudit) preparationStatus {
++	id := audit.Owner.RequestID
++	return preparationStatus{Backend: "pi", RequestID: id, ReceiptID: audit.Owner.ReceiptID, State: "discard_pending", Phase: "initializing",
++		Attempt: audit.Owner.CreationAttempt, PreparationAttempt: audit.Owner.PreparationAttempt, URL: "/creations/" + id + "/",
++		StartedAt: audit.Terminal.StartedAt, UpdatedAt: audit.Terminal.UpdatedAt}
++}
+diff --git a/portal/internal/web/pi_creation_discard_test.go b/portal/internal/web/pi_creation_discard_test.go
+new file mode 100644
+index 0000000000000000000000000000000000000000..d5d9b01399117ebd5aadccf43ae5a89ef66f3c16
+--- /dev/null
++++ b/portal/internal/web/pi_creation_discard_test.go
+@@ -0,0 +1,651 @@
++package web
++
++import (
++	"bytes"
++	"context"
++	"crypto/sha256"
++	"encoding/hex"
++	"encoding/json"
++	"errors"
++	"net/http"
++	"net/http/httptest"
++	"os"
++	"path/filepath"
++	"reflect"
++	"strings"
++	"testing"
++	"time"
++
++	"github.com/aither64/codex-web/conversation"
++	"github.com/aither64/dev-workspace/portal/internal/agentbackend"
++	"github.com/aither64/dev-workspace/portal/internal/piruntime"
++	"github.com/aither64/dev-workspace/portal/internal/session"
++	"github.com/aither64/dev-workspace/portal/internal/teamruntime"
++	"github.com/aither64/dev-workspace/portal/internal/uploads"
++	"golang.org/x/sys/unix"
++)
++
++// Start with the stock preparation-to-creation owner and fail after the
++// companion, journal and binding are confirmed but before Runtime.Ensure.
++// No manually fabricated runtime/effect absence is accepted as success here.
++func newPiDiscardFixture(t *testing.T) (*Server, sessionPreparation, creationReceipt, *piCreationRuntimeFixture) {
++	t.Helper()
++	s, receipt, native := newPiCreationFixtureForSlug(t, "2026-10-03-pi-discard")
++	t.Cleanup(s.Close)
++	preset := piCreationSoloPreset()
++	preset.LeadModel = "saved-lead"
++	s.installedTeams = piCreationTeamCatalogFixture(t, preset)
++	preset, err := teamruntime.FindCatalogPreset(*s.installedTeams.Catalog, preset.ID)
++	if err != nil {
++		t.Fatal(err)
++	}
++	configuration := piProviderPackageFixture(t)
++	services, err := newPiSelectionServices(Config{Workspace: s.config.Workspace,
++		UserStateRoot: s.config.UserStateRoot, PiAuthDirectory: filepath.Join(t.TempDir(), "auth"),
++		PiHostStateRoot: filepath.Join(t.TempDir(), "host"), PiProviderConfig: &configuration})
++	if err != nil {
++		t.Fatal(err)
++	}
++	services.Runtime, services.StartRequest = native, s.config.PiCreation.StartRequest
++	s.config.PiCreation = services
++	s.piWorkflows = newPiWorkflowComposition(s)
++	s.piCreationCheckpoint = func(point string) error {
++		if point == "binding" {
++			return errors.New("fixture stops before reserving any runtime")
++		}
++		return nil
++	}
++	ctx := context.Background()
++	draft, err := s.uploadStore.NewDraft(ctx)
++	if err != nil {
++		t.Fatal(err)
++	}
++	catalogPath := filepath.Join(s.uploadStore.Directory, "catalog.json")
++	catalogBefore, err := os.ReadFile(catalogPath)
++	if err != nil {
++		t.Fatal(err)
++	}
++	frozen := services.providers.preparationProvider()
++	prepared := fixturePreparation(t, s, 801, "running")
++	prepared.Schema, prepared.InputVersion = 3, 3
++	prepared.ReceiptID, prepared.Epoch = receipt.ReceiptID, receipt.DeletionHistorySHA256
++	prepared.Base, prepared.Slug, prepared.NamingOutcome = "pi-discard", receipt.Request.Slug, "custom"
++	input := prepared.Snapshot.Input
++	input.Backend, input.CustomName, input.PiProviderDigest = "pi", prepared.Base, piPreparationProviderDigest(frozen)
++	input.Team, input.Catalog = preparationValue{true, preset.ID}, preparationValue{true, preset.CatalogDigest}
++	input.Model, input.Effort = preparationValue{true, preset.LeadModel}, preparationValue{true, preset.LeadEffort}
++	input.UploadScope = draft.ID // Explicitly exercise a draft with no attachments.
++	goal, err := s.uploadStore.ClaimPreparation(ctx, prepared.RequestID, draft.ID, input.RawPrompt, input.Attachments)
++	if err != nil {
++		t.Fatal(err)
++	}
++	prepared.Snapshot = &preparationSnapshot{Input: input, Goal: goal, Preset: &preset, Pi: &frozen}
++	prepared.InputDigest, prepared.SnapshotDigest = versionedPreparationDigest(input, 3), preparationDigest(prepared.Snapshot)
++	request := preparationCreationRequest(prepared)
++	prepared.Handoff = &request
++	receipt.Request, receipt.DirectTeam, receipt.Goal = request, &preset, prepared.Snapshot.Goal
++	receipt.Attempt = 2 // The original preparation and creation attempts differ.
++	receipt.Model, receipt.Effort = preset.LeadModel, preset.LeadEffort
++	ref := agentbackend.SessionRef{Workspace: receipt.Workspace, Slug: prepared.Slug, Incarnation: receipt.Pi.SessionIncarnation}
++	policy, err := services.Selection(ctx, ref, receipt.Pi.Conversations, preset)
++	if err != nil {
++		t.Fatal(err)
++	}
++	receipt.Pi.Selection, err = session.FreezePiCreationSelection(services.Catalog, policy, receipt.Pi.Conversations)
++	if err != nil {
++		t.Fatal(err)
++	}
++	receipt.Pi.Provider = receipt.Pi.Selection.Members[0].Settings.Provider
++	if err = s.saveCreation(receipt); err != nil {
++		t.Fatal(err)
++	}
++	s.creations[prepared.Slug] = receipt
++	if err = s.savePreparation(prepared); err != nil {
++		t.Fatal(err)
++	}
++	if err = s.handoffPreparationLocked(&prepared, prepared.Slug); err != nil {
++		t.Fatal(err)
++	}
++	if err = s.savePreparation(prepared); err != nil {
++		t.Fatal(err)
++	}
++	s.operationWG.Add(1)
++	s.runCreation(receipt)
++	failed, ok := s.currentCreation(prepared.Slug)
++	if !ok || failed.State != "failed" || failed.Attempt != receipt.Attempt || prepared.State != "handed_off" ||
++		!preparationReceiptMatches(prepared, failed) || native.ensures != 0 || native.creates != 0 || native.sends != 0 {
++		t.Fatalf("fixture did not leave a stopped pre-runtime original: state=%s error=%s", failed.State, failed.Error)
++	}
++	catalogAfter, err := os.ReadFile(catalogPath)
++	if err != nil || !bytes.Equal(catalogBefore, catalogAfter) {
++		t.Fatal("empty attachment selection changed the draft catalog", err)
++	}
++	return s, prepared, failed, native
++}
++
++func TestPiDiscardFixtureStartsFromDurableFailedOwner(t *testing.T) {
++	s, preparation, receipt, _ := newPiDiscardFixture(t)
++	intent, err := receipt.piIntent()
++	if err != nil {
++		t.Fatal(err)
++	}
++	companion, err := readPiCreationIntent(s.creationEvidencePath(receipt) + ".request")
++	if err != nil || !reflect.DeepEqual(companion, intent) {
++		t.Fatal("fixture companion is not exact", err)
++	}
++	journal, err := readPiCreationJournal(piJournalPath(intent.Workspace, intent.Slug))
++	if err != nil || journal.State != "creating" || journal.NativeCreateStarted || journal.NativeGeneration != "" || journal.Native != nil || !reflect.DeepEqual(intent, journal.PiCreationIntent) {
++		t.Fatal("fixture journal is not pre-native", err)
++	}
++	binding, err := (session.BackendBindingStore{Root: s.config.UserStateRoot, Workspace: intent.Workspace}).Load(intent.Slug)
++	if err != nil || !reflect.DeepEqual(binding, intent.Binding()) {
++		t.Fatal("fixture has no exact creating binding", err)
++	}
++	if _, err = piruntime.InspectRetainedCurrentRuntime(context.Background(), s.config.UserStateRoot, intent.SessionRef()); !errors.Is(err, os.ErrNotExist) {
++		t.Fatal("fixture runtime is not absent", err)
++	}
++	if preparation.Snapshot.Input.UploadScope == "" || !piDiscardHasNoAttachmentClaim(preparation, receipt) {
++		t.Fatal("an empty attachment selection with a draft was refused")
++	}
++}
++
++func TestPiDiscardRefusesLegacyWireCollisionInEitherGoal(t *testing.T) {
++	s, prepared, receipt, _ := newPiDiscardFixture(t)
++	ctx := context.Background()
++	s.uploadStore.MinFreeBytes = 0
++	otherDraft, err := s.uploadStore.NewDraft(ctx)
++	if err != nil {
++		t.Fatal(err)
++	}
++	other := &uploads.Backend{Store: s.uploadStore, ScopeID: otherDraft.ID}
++	data := []byte("fixture input")
++	file, err := other.Create(ctx, conversation.UploadRequest{ClientID: preparationTestID(802), Name: "input.txt", Size: int64(len(data))})
++	if err != nil {
++		t.Fatal(err)
++	}
++	digest := sha256.Sum256(data)
++	if _, err = other.Append(ctx, file.ID, 0, hex.EncodeToString(digest[:]), bytes.NewReader(data)); err != nil {
++		t.Fatal(err)
++	}
++	if _, err = other.Complete(ctx, file.ID); err != nil {
++		t.Fatal(err)
++	}
++	// This is an actual persisted legacy initial submission, owned by a
++	// different draft/attempt. The stock wire starts with the attachment
++	// header when the other request contains only files.
++	wire, err := s.prepareCreationAttachments(ctx, "legacy-owner", otherDraft.ID, "", []string{file.ID})
++	if err != nil || !strings.HasPrefix(wire, "Attached local files") {
++		t.Fatal("could not prepare the legacy attachment wire", err)
++	}
++	catalogPath := filepath.Join(s.uploadStore.Directory, "catalog.json")
++	before, err := os.ReadFile(catalogPath)
++	if err != nil {
++		t.Fatal(err)
++	}
++	requestMatch, effectiveMatch := receipt, receipt
++	requestMatch.Request.Goal, effectiveMatch.Goal = wire, wire
++	if piDiscardHasNoAttachmentClaim(prepared, requestMatch) || piDiscardHasNoAttachmentClaim(prepared, effectiveMatch) {
++		t.Fatal("ambiguous wire did not refuse one of the collector's goal selectors")
++	}
++	// A positive header is refused even if it is only quoted plain text.
++	effectiveMatch.Goal = "Quote the label Attached local files in documentation."
++	if piDiscardHasNoAttachmentClaim(prepared, effectiveMatch) {
++		t.Fatal("ambiguous plain text was allowed")
++	}
++	withAttachments := prepared
++	snapshot := *prepared.Snapshot
++	snapshot.Input.Attachments = []string{file.ID}
++	withAttachments.Snapshot = &snapshot
++	if piDiscardHasNoAttachmentClaim(withAttachments, receipt) {
++		t.Fatal("nonempty attachment selection was allowed")
++	}
++	after, err := os.ReadFile(catalogPath)
++	if err != nil || !bytes.Equal(before, after) {
++		t.Fatal("the attachment check changed the catalog", err)
++	}
++}
++
++// Exercise exactly the writer locks and typed intent after a synthetic
++// startup verifier; the production constructor tests own the grant loader.
++func executePiDiscardFixture(s *Server, target piDiscardStartupTarget) error {
++	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
++	defer cancel()
++	_, unlock, err := s.acquireTransitionContext(ctx, unix.LOCK_SH)
++	if err != nil {
++		return err
++	}
++	defer unlock()
++	_, err = s.executePiDiscard(ctx, piDiscardStartup{target: target, verify: func(context.Context) error { return nil }})
++	return err
++}
++
++func TestPiDiscardRemovedBrowserActionCannotDispatch(t *testing.T) {
++	s, preparation, receipt, native := newPiDiscardFixture(t)
++	req := fixturePiDiscardStartupGrant(s, preparation, receipt).Target
++	// The exact former body, including confirmation and a valid origin,
++	// must not pass the action whitelist or fall through to Retry.
++	data, err := json.Marshal(map[string]any{"requestId": req.RequestID, "receiptId": req.ReceiptID, "preparationAttempt": req.PreparationAttempt,
++		"creationAttempt": req.CreationAttempt, "confirmed": true})
++	if err != nil {
++		t.Fatal(err)
++	}
++	before, err := os.ReadFile(s.creationPath(preparation.Slug))
++	if err != nil {
++		t.Fatal(err)
++	}
++	r := httptest.NewRequest(http.MethodPost, "/api/session-creations/"+req.RequestID+"/discard", bytes.NewReader(data))
++	r.Header.Set("Origin", s.config.BaseURL)
++	r.Header.Set("Content-Type", "application/json")
++	w := httptest.NewRecorder()
++	s.Handler().ServeHTTP(w, r)
++	if w.Code != http.StatusNotFound {
++		t.Fatal("retired public action reached dispatch", w.Code)
++	}
++	after, err := os.ReadFile(s.creationPath(preparation.Slug))
++	if err != nil || !bytes.Equal(before, after) || native.ensures != 0 || native.creates != 0 || native.sends != 0 {
++		t.Fatal("retired action changed the original request", err)
++	}
++	if err := requirePiDiscardAbsent(s.piDiscardDirectory(req.RequestID)); err != nil {
++		t.Fatal("retired action staged an audit", err)
++	}
++	if err := session.RequireNoPiDiscard(s.config.Workspace, preparation.Slug); err != nil {
++		t.Fatal("retired action published a marker", err)
++	}
++}
++
++func TestPiDiscardExactOwnerAndReplay(t *testing.T) {
++	s, preparation, receipt, native := newPiDiscardFixture(t)
++	req := fixturePiDiscardStartupGrant(s, preparation, receipt).Target
++	for _, variant := range []struct {
++		name   string
++		change func(*piDiscardStartupTarget)
++	}{
++		{"wrong receipt", func(r *piDiscardStartupTarget) { r.ReceiptID = strings.Repeat("a", 64) }},
++		{"wrong preparation attempt", func(r *piDiscardStartupTarget) { r.PreparationAttempt++ }},
++		{"wrong creation attempt", func(r *piDiscardStartupTarget) { r.CreationAttempt-- }},
++		{"wrong request", func(r *piDiscardStartupTarget) { r.RequestID = preparationTestID(820) }},
++	} {
++		t.Run(variant.name, func(t *testing.T) {
++			wrong := req
++			variant.change(&wrong)
++			if err := executePiDiscardFixture(s, wrong); err == nil {
++				t.Fatal("wrong owner was accepted")
++			}
++			if err := session.RequireNoPiDiscard(s.config.Workspace, preparation.Slug); err != nil {
++				t.Fatal("refused request published a marker", err)
++			}
++		})
++	}
++	if err := executePiDiscardFixture(s, req); err != nil {
++		t.Fatal("exact discard did not complete", err)
++	}
++	assertPiDiscardCompleted(t, s, preparation, native)
++	// The path can later contain a different owner's work. Replay is bound to
++	// the old completed audit, not to any live slug lookup or retirement.
++	preset, err := teamruntime.ProjectPiPreset(*receipt.DirectTeam)
++	if err != nil {
++		t.Fatal(err)
++	}
++	request := receipt.Request
++	request.directTeam = &preset
++	accepted, err := s.acceptCreation(request)
++	if err != nil {
++		t.Fatal("ordinary admission refused the replacement", err)
++	}
++	replacement := awaitCreation(t, s, preparation.Slug)
++	if replacement.ReceiptID != accepted.ReceiptID || replacement.ReceiptID == receipt.ReceiptID || replacement.State != "failed" ||
++		native.ensures != 0 || native.creates != 0 || native.sends != 0 {
++		t.Fatal("replacement did not reach the separate synthetic pre-runtime failure")
++	}
++	before, err := os.ReadFile(s.creationPath(preparation.Slug))
++	if err != nil {
++		t.Fatal(err)
++	}
++	if err := executePiDiscardFixture(s, req); err != nil {
++		t.Fatal("exact completed replay changed", err)
++	}
++	after, err := os.ReadFile(s.creationPath(preparation.Slug))
++	if err != nil || !bytes.Equal(before, after) {
++		t.Fatal("old replay touched replacement", err)
++	}
++	// Simulate a durable completed audit with the old reservation visible
++	// again after interruption. Boot must retain the newer live owner.
++	audit, digest, err := s.loadPiDiscardAudit(req.RequestID)
++	if err != nil {
++		t.Fatal(err)
++	}
++	marker, err := json.Marshal(s.piDiscardMarker(audit, digest))
++	if err != nil {
++		t.Fatal(err)
++	}
++	if err := writePiDiscardExclusive(s.piDiscardMarkerPath(preparation.Slug), marker); err != nil {
++		t.Fatal(err)
++	}
++	config := s.config
++	config.PackageRoot = ""
++	s.Close()
++	restarted, err := New(config)
++	if err != nil {
++		t.Fatal(err)
++	}
++	defer restarted.Close()
++	status := piDiscardHTTPStatus(t, restarted, req.RequestID)
++	if status.State != "discard_pending" || status.Detail == "" {
++		t.Fatal("status did not separate durable discard from confirmed cleanup")
++	}
++	if data, err := os.ReadFile(restarted.piDiscardMarkerPath(preparation.Slug)); err != nil || !bytes.Equal(marker, data) {
++		t.Fatal("status unlinked the restored marker without confirmation", err)
++	}
++	if err := executePiDiscardFixture(restarted, req); err != nil {
++		t.Fatal("old completed marker could not be acknowledged", err)
++	}
++	current, exists := restarted.currentCreation(preparation.Slug)
++	after, err = os.ReadFile(restarted.creationPath(preparation.Slug))
++	if !exists || current.ReceiptID != replacement.ReceiptID || err != nil || !bytes.Equal(before, after) {
++		t.Fatal("old completed marker changed replacement", err)
++	}
++	foreign := restarted.piDiscardMarker(audit, digest)
++	foreign.ReceiptID = replacement.ReceiptID
++	foreignBytes, err := json.Marshal(foreign)
++	if err != nil {
++		t.Fatal(err)
++	}
++	path := restarted.piDiscardMarkerPath(preparation.Slug)
++	if err := writePiDiscardExclusive(path, foreignBytes); err != nil {
++		t.Fatal(err)
++	}
++	if err := executePiDiscardFixture(restarted, req); !errors.Is(err, errPiDiscardOwner) {
++		t.Fatal("old grant accepted a foreign marker", err)
++	}
++	if data, err := os.ReadFile(path); err != nil || !bytes.Equal(data, foreignBytes) {
++		t.Fatal("old confirmation touched a foreign marker", err)
++	}
++}
++
++func piDiscardHTTPStatus(t *testing.T, s *Server, id string) preparationStatus {
++	t.Helper()
++	w := httptest.NewRecorder()
++	s.Handler().ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/api/session-creations/"+id, nil))
++	var status preparationStatus
++	if w.Code != http.StatusOK || json.Unmarshal(w.Body.Bytes(), &status) != nil {
++		t.Fatal("unexpected original status", w.Code, w.Body.String())
++	}
++	return status
++}
++
++func assertPiDiscardCompleted(t *testing.T, s *Server, preparation sessionPreparation, native *piCreationRuntimeFixture) {
++	t.Helper()
++	mapped, err := readPreparation(s.preparationPath(preparation.RequestID, true), s.config.Workspace)
++	if err != nil || !reflect.DeepEqual(mapped, piDiscardTerminal(preparation, mapped.UpdatedAt)) {
++		t.Fatal("missing exact terminal preparation mapping", err)
++	}
++	for _, file := range s.piDiscardFiles(preparation) {
++		if err := requirePiDiscardAbsent(file.path); err != nil {
++			t.Fatal("live selector survived", file.name, err)
++		}
++	}
++	if err := session.RequireNoPiDiscard(s.config.Workspace, preparation.Slug); err != nil {
++		t.Fatal("marker survived confirmed completion", err)
++	}
++	history, err := session.CompletedRemovalHistory(s.config.Workspace, preparation.Slug, s.config.UserStateRoot)
++	if err != nil || history != preparation.Epoch || native.ensures != 0 || native.creates != 0 || native.sends != 0 {
++		t.Fatal("discard changed epoch or reached native effects", err)
++	}
++}
++
++func TestPiDiscardRecoversAfterPublicationStops(t *testing.T) {
++	for _, point := range []string{"discard_intent", "discard_receipt", "discard_companion", "discard_journal", "discard_binding", "discard_preparation", "discard_mapping", "discard_complete", "active_mapping_sync", "completed_mapping_sync"} {
++		t.Run(point, func(t *testing.T) {
++			s, preparation, receipt, native := newPiDiscardFixture(t)
++			req := fixturePiDiscardStartupGrant(s, preparation, receipt).Target
++			s.piCreationCheckpoint = func(step string) error {
++				if step == point {
++					return errors.New("fixture publication stopped")
++				}
++				return nil
++			}
++			if point == "active_mapping_sync" || point == "completed_mapping_sync" {
++				projection := s.preparationPath(req.RequestID, point == "completed_mapping_sync")
++				s.preparationSync = func(dir string) error {
++					if _, err := os.Lstat(projection); err == nil {
++						return errors.New("fixture directory sync failed")
++					}
++					return syncPreparationDirectory(dir)
++				}
++			}
++			if err := executePiDiscardFixture(s, req); err == nil {
++				t.Fatal("expected uncertain publication")
++			}
++			if err := session.RequireNoPiDiscard(s.config.Workspace, preparation.Slug); !errors.Is(err, session.ErrPiDiscardPending) {
++				t.Fatal("interruption left no fence", err)
++			}
++			config := s.config
++			// As in the existing Pi preparation restart fixture, the mock
++			// package view is installed after the real constructor.
++			config.PackageRoot = ""
++			s.Close()
++			restarted, err := New(config)
++			if err != nil {
++				t.Fatal("boot failed to keep owner ingress available", err)
++			}
++			defer restarted.Close()
++			if status, ok := restarted.pendingPiDiscardStatus(req.RequestID); !ok || status.State != "discard_pending" || status.Attempt != req.CreationAttempt || status.PreparationAttempt != req.PreparationAttempt {
++				t.Fatal("boot lost pending owner status")
++			}
++			body, _ := json.Marshal(map[string]any{"receiptId": req.ReceiptID, "attempt": req.CreationAttempt})
++			r := httptest.NewRequest(http.MethodPost, "/api/session-creations/"+req.RequestID+"/retry", bytes.NewReader(body))
++			r.Header.Set("Origin", config.BaseURL)
++			r.Header.Set("Content-Type", "application/json")
++			w := httptest.NewRecorder()
++			restarted.Handler().ServeHTTP(w, r)
++			if w.Code != http.StatusConflict {
++				t.Fatal("ordinary retry escaped the fence", w.Code)
++			}
++			if err := restarted.collectUploads(context.Background()); !errors.Is(err, session.ErrPiDiscardPending) {
++				t.Fatal("collector escaped the fence", err)
++			}
++			if err := executePiDiscardFixture(restarted, req); err != nil {
++				t.Fatal("same-grant recovery failed", err)
++			}
++			assertPiDiscardCompleted(t, restarted, preparation, native)
++		})
++	}
++}
++
++func TestPiDiscardUncertainMarkerUnlink(t *testing.T) {
++	s, preparation, receipt, native := newPiDiscardFixture(t)
++	req := fixturePiDiscardStartupGrant(s, preparation, receipt).Target
++	s.piCreationCheckpoint = func(step string) error {
++		if step == "discard_marker_unlink" {
++			return errors.New("fixture lost final directory sync")
++		}
++		return nil
++	}
++	if err := executePiDiscardFixture(s, req); err == nil {
++		t.Fatal("final directory sync failure acknowledged")
++	}
++	if _, pending := s.pendingPiDiscardStatus(req.RequestID); !pending {
++		t.Fatal("missing pending status before confirming marker removal")
++	}
++	// The terminal mapping and audit already prove cancellation. Other
++	// processes can now see marker absence while cleanup is unconfirmed.
++	assertPiDiscardCompleted(t, s, preparation, native)
++	audit, digest, err := s.loadPiDiscardAudit(req.RequestID)
++	if err != nil {
++		t.Fatal(err)
++	}
++	if complete, err := s.confirmPiDiscardComplete(audit, digest); err != nil || !complete {
++		t.Fatal("unlink preceded durable discard", err)
++	}
++	config := s.config
++	config.PackageRoot = ""
++	s.Close()
++	restarted, err := New(config)
++	if err != nil {
++		t.Fatal(err)
++	}
++	defer restarted.Close()
++	if _, pending := restarted.pendingPiDiscardStatus(req.RequestID); pending {
++		t.Fatal("fresh portal unexpectedly had a cached pending entry")
++	}
++	barriers := 0
++	restarted.piCreationCheckpoint = func(step string) error {
++		if step == "discard_cleanup_sync" {
++			barriers++
++			return errors.New("fixture failed directory sync again")
++		}
++		if strings.HasPrefix(step, "discard_") {
++			t.Fatalf("completed replay reached %s", step)
++		}
++		return nil
++	}
++	if status := piDiscardHTTPStatus(t, restarted, req.RequestID); status.State != "discard_pending" || status.Detail == "" {
++		t.Fatal("fresh status mistaken for confirmed cleanup")
++	}
++	if err := executePiDiscardFixture(restarted, req); err == nil || barriers != 2 {
++		t.Fatal("fresh replay failed to honor the repeated barrier failure", err, barriers)
++	}
++	restarted.piCreationCheckpoint = func(step string) error {
++		if step == "discard_cleanup_sync" {
++			barriers++
++		}
++		return nil
++	}
++	if status := piDiscardHTTPStatus(t, restarted, req.RequestID); status.State != "cancelled" || barriers != 3 {
++		t.Fatal("successful status did not confirm cleanup", status.State, barriers)
++	}
++	if err := executePiDiscardFixture(restarted, req); err != nil || barriers != 4 {
++		t.Fatal("exact operation did not confirm final directory sync", err, barriers)
++	}
++	assertPiDiscardCompleted(t, restarted, preparation, native)
++}
++
++func TestPiDiscardFailsClosedBeforeIntent(t *testing.T) {
++	for _, blocked := range []string{"runtime reservation", "runtime artifact", "authority", "tracking", "service", "cluster", "companion", "newer attempt"} {
++		t.Run(blocked, func(t *testing.T) {
++			s, preparation, receipt, native := newPiDiscardFixture(t)
++			intent, err := receipt.piIntent()
++			if err != nil {
++				t.Fatal(err)
++			}
++			ref := intent.SessionRef()
++			var path string
++			switch blocked {
++			case "runtime reservation", "runtime artifact":
++				dir, err := piruntime.SessionStateDirectory(s.config.UserStateRoot, ref)
++				if err != nil {
++					t.Fatal(err)
++				}
++				if blocked == "runtime artifact" {
++					path = filepath.Join(dir, "requests", "retained")
++				} else {
++					path = filepath.Join(dir, "runtime.json")
++				}
++			case "authority":
++				path = filepath.Join(s.config.AuthorityDir, ref.Slug+".json")
++			case "tracking":
++				path = filepath.Join(ref.Workspace, "work", ref.Slug, "plan.md")
++			case "service":
++				path = filepath.Join(ref.Workspace, "worktrees", ".locks", ref.Slug+".services-registration.json")
++			case "cluster":
++				path = filepath.Join(ref.Workspace, ".dev-clusters", "fixture", "clusters", ref.Slug, "state.json")
++			case "companion":
++				if err := os.Remove(s.creationEvidencePath(receipt) + ".request"); err != nil {
++					t.Fatal(err)
++				}
++			case "newer attempt":
++				newer := receipt
++				newer.Attempt++
++				if err := s.saveCreation(newer); err != nil {
++					t.Fatal(err)
++				}
++				s.creations[ref.Slug] = newer
++			}
++			if path != "" {
++				if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
++					t.Fatal(err)
++				}
++				if err := os.WriteFile(path, []byte(`{"schema":1}`), 0o600); err != nil {
++					t.Fatal(err)
++				}
++			}
++			before, err := os.ReadFile(s.creationPath(ref.Slug))
++			if err != nil {
++				t.Fatal(err)
++			}
++			req := fixturePiDiscardStartupGrant(s, preparation, receipt).Target
++			if err := executePiDiscardFixture(s, req); err == nil {
++				t.Fatal("ambiguous owner was allowed")
++			}
++			if err := requirePiDiscardAbsent(s.piDiscardDirectory(req.RequestID)); err != nil {
++				t.Fatal("refusal staged audit", err)
++			}
++			if err := session.RequireNoPiDiscard(ref.Workspace, ref.Slug); err != nil {
++				t.Fatal("refusal published intent", err)
++			}
++			after, err := os.ReadFile(s.creationPath(ref.Slug))
++			if err != nil || !bytes.Equal(before, after) || native.ensures != 0 || native.creates != 0 || native.sends != 0 {
++				t.Fatal("refusal changed owner or reached effects", err)
++			}
++		})
++	}
++}
++
++func TestPiDiscardSerializesRetryAndDuplicate(t *testing.T) {
++	s, preparation, receipt, native := newPiDiscardFixture(t)
++	req := fixturePiDiscardStartupGrant(s, preparation, receipt).Target
++	atIntent, proceed := make(chan struct{}), make(chan struct{})
++	var released bool
++	defer func() {
++		if !released {
++			close(proceed)
++		}
++	}()
++	s.piCreationCheckpoint = func(step string) error {
++		if step == "discard_intent" {
++			close(atIntent)
++			<-proceed
++		}
++		return nil
++	}
++	first, duplicate, retry := make(chan error, 1), make(chan error, 1), make(chan int, 1)
++	go func() { first <- executePiDiscardFixture(s, req) }()
++	select {
++	case <-atIntent:
++	case <-time.After(3 * time.Second):
++		t.Fatal("discard never held durable intent")
++	}
++	// Use the original creation's legacy retry endpoint here to exercise its
++	// downstream CAS, not only the preparation route's first check.
++	go func() {
++		data, _ := json.Marshal(map[string]any{"receiptId": req.ReceiptID, "attempt": req.CreationAttempt})
++		r := httptest.NewRequest(http.MethodPost, "/api/sessions/"+preparation.Slug+"/creation/retry", bytes.NewReader(data))
++		r.Header.Set("Origin", s.config.BaseURL)
++		r.Header.Set("Content-Type", "application/json")
++		w := httptest.NewRecorder()
++		s.Handler().ServeHTTP(w, r)
++		retry <- w.Code
++	}()
++	go func() { duplicate <- executePiDiscardFixture(s, req) }()
++	close(proceed)
++	released = true
++	for name, done := range map[string]<-chan error{"first": first, "duplicate": duplicate} {
++		select {
++		case err := <-done:
++			if err != nil {
++				t.Fatal("grant incorrectly refused", name, err)
++			}
++		case <-time.After(3 * time.Second):
++			t.Fatal("discard race stuck", name)
++		}
++	}
++	select {
++	case code := <-retry:
++		if code < 400 {
++			t.Fatal("ordinary retry escaped the writer exclusion", code)
++		}
++	case <-time.After(3 * time.Second):
++		t.Fatal("retry race stuck")
++	}
++	assertPiDiscardCompleted(t, s, preparation, native)
++}
+diff --git a/portal/internal/web/pi_creation_flow.go b/portal/internal/web/pi_creation_flow.go
+index 5c01bfb4f1e9890a9db8ac638a444f26499d71e4..0be526903c3a7b9cf9be069d540c8f28128a7c6e 100644
+--- a/portal/internal/web/pi_creation_flow.go
++++ b/portal/internal/web/pi_creation_flow.go
+@@ -125,6 +125,9 @@ func (s *Server) installPiCreationLocked(request creationRequest, receiptID, exp
+ 	if err := s.requireCurrentHostProfile(); err != nil {
+ 		return creationReceipt{}, err
+ 	}
++	if err := s.requireNoPiDiscardLocked(request.Slug); err != nil {
++		return creationReceipt{}, err
++	}
+ 	if err := s.requireCodexSessionBackend(request.Slug); err != nil {
+ 		return creationReceipt{}, err
+ 	}
+@@ -335,6 +338,9 @@ func (s *Server) withPiCreationOwner(ctx context.Context, receipt creationReceip
+ 	if err = s.requireCurrentHostProfile(); err != nil {
+ 		return err
+ 	}
++	if err = session.RequireNoPiDiscard(s.config.Workspace, receipt.Request.Slug); err != nil {
++		return err
++	}
+ 	var current creationReceipt
+ 	var raw map[string]json.RawMessage
+ 	if err = readCreationJSON(s.creationPath(receipt.Request.Slug), &raw); err != nil {
+diff --git a/portal/internal/web/pi_discard_startup_grant.go b/portal/internal/web/pi_discard_startup_grant.go
+new file mode 100644
+index 0000000000000000000000000000000000000000..c267b2ea9cd5a4756d5c4181fa9aac2b23972df0
+--- /dev/null
++++ b/portal/internal/web/pi_discard_startup_grant.go
+@@ -0,0 +1,271 @@
++package web
++
++import (
++	"bytes"
++	"context"
++	"encoding/json"
++	"errors"
++	"io"
++	"os"
++	"os/exec"
++	"os/user"
++	"path/filepath"
++	"regexp"
++	"strconv"
++	"strings"
++	"time"
++
++	"github.com/aither64/dev-workspace/portal/internal/session"
++	"golang.org/x/sys/unix"
++)
++
++const piDiscardStartupGrantPath = "/var/lib/dev-workspace-pi-discard/startup-grant.json"
++const piDiscardStartupGrantLimit = 8192
++
++// ErrPiDiscardStartupHeld stops this invocation from opening the portal or
++// attempting the same startup mutation again via Restart=on-failure.
++var ErrPiDiscardStartupHeld = errors.New("The portal could not confirm the authorized startup discard.")
++
++var piDiscardStorePath = regexp.MustCompile(`^/nix/store/[0-9abcdfghijklmnpqrsvwxyz]{32}-[A-Za-z0-9+._?=-]+$`)
++var piDiscardStartupName = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_-]*$`)
++
++// PiDiscardStartupAuthority is the read-only proof subset sent to the host
++// verifier. The strict codec requires an exported embedded wire structure.
++type PiDiscardStartupAuthority struct {
++	System        string `json:"system"`
++	Package       string `json:"package"`
++	ProfileToken  string `json:"profileToken"`
++	WorkspaceName string `json:"workspaceName"`
++	WorkspaceRoot string `json:"workspaceRoot"`
++	Service       string `json:"service"`
++	Owner         struct {
++		ID   string `json:"id"`
++		Slug string `json:"slug"`
++	} `json:"owner"`
++	Claim struct {
++		ID         string `json:"id"`
++		Repository string `json:"repository"`
++		Selector   string `json:"selector"`
++		Adapter    string `json:"adapter"`
++	} `json:"claim"`
++}
++
++type piDiscardStartupGrant struct {
++	Schema int `json:"schema"`
++	PiDiscardStartupAuthority
++	Target piDiscardStartupTarget `json:"target"`
++}
++
++type piDiscardStartupTarget struct {
++	RequestID          string `json:"requestId"`
++	ReceiptID          string `json:"receiptId"`
++	PreparationAttempt int    `json:"preparationAttempt"`
++	CreationAttempt    int    `json:"creationAttempt"`
++	Slug               string `json:"slug"`
++	Incarnation        string `json:"incarnation"`
++	Epoch              string `json:"epoch"`
++}
++
++func parsePiDiscardStartupGrant(data []byte) (*piDiscardStartupGrant, error) {
++	var grant piDiscardStartupGrant
++	if session.DecodePiCreationJSON(data, &grant, piDiscardStartupGrantLimit) != nil || grant.Schema != 1 ||
++		!piDiscardStorePath.MatchString(grant.System) || !piDiscardStorePath.MatchString(grant.Package) ||
++		!strings.HasPrefix(grant.ProfileToken, "pi-profile-v1:") || !messageDigestPattern.MatchString(strings.TrimPrefix(grant.ProfileToken, "pi-profile-v1:")) ||
++		!piDiscardStartupName.MatchString(grant.WorkspaceName) || !filepath.IsAbs(grant.WorkspaceRoot) || filepath.Clean(grant.WorkspaceRoot) != grant.WorkspaceRoot ||
++		strings.ContainsAny(grant.WorkspaceRoot, "\x00\uFFFD") ||
++		grant.Service != "workspace-portal@"+grant.WorkspaceName+".service" || !validPreparationID(grant.Owner.ID) || !session.ValidSlug(grant.Owner.Slug) ||
++		!validPreparationID(grant.Claim.ID) || !piDiscardStartupName.MatchString(grant.Claim.Repository) ||
++		!validCreationRequestText(grant.Claim.Selector, piDiscardStartupGrantLimit) || strings.ContainsRune(grant.Claim.Selector, '\uFFFD') || !piDiscardStartupName.MatchString(grant.Claim.Adapter) ||
++		!grant.Target.intent().valid(grant.Target.RequestID) || !session.ValidSlug(grant.Target.Slug) ||
++		!messageDigestPattern.MatchString(grant.Target.Incarnation) || !messageDigestPattern.MatchString(grant.Target.Epoch) {
++		return nil, ErrPiDiscardStartupHeld
++	}
++	return &grant, nil
++}
++
++// The fixed grant is visible to every managed portal. Only proven separation
++// of both workspace selectors makes it inert; a partial match or alias is an
++// ambiguous target, not permission to start outside grant admission.
++func (g *piDiscardStartupGrant) targetsWorkspace(name, root string) (bool, error) {
++	if g == nil {
++		return false, nil
++	}
++	checkRoot := func(path string) (os.FileInfo, error) {
++		resolved, err := filepath.EvalSymlinks(path)
++		if err != nil || !filepath.IsAbs(path) || resolved != path {
++			return nil, ErrPiDiscardStartupHeld
++		}
++		info, err := os.Stat(path)
++		if err != nil || !info.IsDir() {
++			return nil, ErrPiDiscardStartupHeld
++		}
++		return info, nil
++	}
++	if !piDiscardStartupName.MatchString(name) {
++		return false, ErrPiDiscardStartupHeld
++	}
++	portalRoot, err := checkRoot(root)
++	if err != nil {
++		return false, err
++	}
++	grantRoot, err := checkRoot(g.WorkspaceRoot)
++	if err != nil {
++		return false, err
++	}
++	sameRoot := root == g.WorkspaceRoot
++	if (name == g.WorkspaceName) != sameRoot || os.SameFile(portalRoot, grantRoot) != sameRoot {
++		return false, ErrPiDiscardStartupHeld
++	}
++	return sameRoot, nil
++}
++
++func readPiDiscardStartupGrant() (*piDiscardStartupGrant, error) {
++	return readPiDiscardStartupGrantAt(filepath.Dir(piDiscardStartupGrantPath), filepath.Base(piDiscardStartupGrantPath))
++}
++
++// Root owns every directory. Descriptor-relative no-follow opens avoid
++// treating symlinks, inaccessible ancestors or malformed records as absence.
++func readPiDiscardStartupGrantAt(base, name string) (*piDiscardStartupGrant, error) {
++	if !filepath.IsAbs(base) || filepath.Clean(base) != base || filepath.Base(name) != name {
++		return nil, ErrPiDiscardStartupHeld
++	}
++	flags := unix.O_RDONLY | unix.O_DIRECTORY | unix.O_NOFOLLOW | unix.O_CLOEXEC
++	fd, err := unix.Open("/", flags, 0)
++	if err != nil {
++		return nil, ErrPiDiscardStartupHeld
++	}
++	defer func() { unix.Close(fd) }()
++	var stat unix.Stat_t
++	if unix.Fstat(fd, &stat) != nil || stat.Uid != 0 || stat.Mode&0022 != 0 {
++		return nil, ErrPiDiscardStartupHeld
++	}
++	for _, component := range strings.Split(strings.TrimPrefix(base, "/"), "/") {
++		next, err := unix.Openat(fd, component, flags, 0)
++		if errors.Is(err, unix.ENOENT) {
++			return nil, nil
++		}
++		if err != nil {
++			return nil, ErrPiDiscardStartupHeld
++		}
++		unix.Close(fd)
++		fd = next
++		if unix.Fstat(fd, &stat) != nil || stat.Uid != 0 || stat.Mode&0022 != 0 {
++			return nil, ErrPiDiscardStartupHeld
++		}
++	}
++	if stat.Mode&07777 != 0750 {
++		return nil, ErrPiDiscardStartupHeld
++	}
++	group, err := user.LookupGroup("workspace-portal-owner")
++	if err != nil {
++		return nil, ErrPiDiscardStartupHeld
++	}
++	gid, err := strconv.ParseUint(group.Gid, 10, 32)
++	if err != nil || uint32(gid) != stat.Gid {
++		return nil, ErrPiDiscardStartupHeld
++	}
++	return readPiDiscardStartupGrantFile(fd, name, 0, stat.Gid)
++}
++
++func readPiDiscardStartupGrantFile(fd int, name string, uid, gid uint32) (*piDiscardStartupGrant, error) {
++	grantFD, err := unix.Openat(fd, name, unix.O_RDONLY|unix.O_NOFOLLOW|unix.O_NONBLOCK|unix.O_CLOEXEC, 0)
++	if errors.Is(err, unix.ENOENT) {
++		return nil, nil
++	}
++	if err != nil {
++		return nil, ErrPiDiscardStartupHeld
++	}
++	file := os.NewFile(uintptr(grantFD), name)
++	defer file.Close()
++	var grantStat unix.Stat_t
++	if unix.Fstat(grantFD, &grantStat) != nil || grantStat.Mode != unix.S_IFREG|0440 || grantStat.Uid != uid ||
++		grantStat.Gid != gid || grantStat.Nlink != 1 || grantStat.Size < 1 || grantStat.Size > piDiscardStartupGrantLimit {
++		return nil, ErrPiDiscardStartupHeld
++	}
++	data, err := io.ReadAll(io.LimitReader(file, piDiscardStartupGrantLimit+1))
++	if err != nil {
++		return nil, ErrPiDiscardStartupHeld
++	}
++	return parsePiDiscardStartupGrant(data)
++}
++
++func (t piDiscardStartupTarget) intent() piDiscardIntent {
++	return piDiscardIntent{t.RequestID, t.ReceiptID, t.PreparationAttempt, t.CreationAttempt}
++}
++
++type piDiscardStartup struct {
++	target piDiscardStartupTarget
++	verify func(context.Context) error
++}
++
++func (startup *piDiscardStartup) authorized(ctx context.Context) bool {
++	return startup.verify(ctx) == nil
++}
++
++func (startup *piDiscardStartup) matches(audit piDiscardAudit) bool {
++	return startup.target.intent() == audit.Owner && startup.target.Slug == audit.Terminal.Slug &&
++		startup.target.Epoch == audit.Terminal.Epoch && startup.target.Incarnation == audit.Incarnation
++}
++
++func (s *Server) loadPiDiscardStartupReceipt(record sessionPreparation, target piDiscardStartupTarget) error {
++	data, err := readPiDiscardBytes(s.creationPath(record.Slug), maxCreationReceiptBytes, false)
++	var raw map[string]json.RawMessage
++	var receipt creationReceipt
++	if err != nil || rejectDuplicateCreationJSONKeys(data) != nil || json.Unmarshal(data, &raw) != nil ||
++		validateCreationReceiptShape(raw) != nil || json.Unmarshal(data, &receipt) != nil || receipt.Schema != 4 ||
++		receipt.State != "failed" || receipt.ReceiptID != target.ReceiptID || receipt.Attempt != target.CreationAttempt ||
++		receipt.Pi == nil || receipt.Pi.SessionIncarnation != target.Incarnation || !preparationReceiptMatches(record, receipt) {
++		return ErrPiDiscardStartupHeld
++	}
++	s.creations = map[string]creationReceipt{record.Slug: receipt}
++	return nil
++}
++
++// Called at most once by the serving constructor, before the ordinary
++// creation loader, upload retention, reconciliation or publication of HTTP.
++func (s *Server) runPiDiscardStartupGrant(ctx context.Context, grant *piDiscardStartupGrant, verify func(context.Context, PiDiscardStartupAuthority) error) error {
++	if grant == nil {
++		return nil
++	}
++	if verify == nil || grant.Package != s.config.PackageRoot || grant.ProfileToken != piProfileToken(s.hostProfile) ||
++		grant.WorkspaceName != s.config.WorkspaceName || grant.WorkspaceRoot != s.config.Workspace {
++		return ErrPiDiscardStartupHeld
++	}
++	ctx, cancel := context.WithTimeout(ctx, 75*time.Second)
++	defer cancel()
++	_, unlock, err := s.acquireTransitionContext(ctx, unix.LOCK_SH)
++	if err != nil {
++		return ErrPiDiscardStartupHeld
++	}
++	defer unlock()
++	_, err = s.executePiDiscard(ctx, piDiscardStartup{target: grant.Target, verify: func(ctx context.Context) error {
++		return verify(ctx, grant.PiDiscardStartupAuthority)
++	}})
++	if err != nil {
++		return ErrPiDiscardStartupHeld
++	}
++	return nil
++}
++
++func (s *Server) verifyPiDiscardStartupAuthority(ctx context.Context, authority PiDiscardStartupAuthority) error {
++	input, err := json.Marshal(authority)
++	if err != nil || len(input) > piDiscardStartupGrantLimit {
++		return ErrPiDiscardStartupHeld
++	}
++	command := exec.CommandContext(ctx, filepath.Join(s.config.PackageRoot, "bin/workspace-host"), "_verify-pi-discard-startup")
++	command.Stdin = bytes.NewReader(input)
++	// Use the existing registered host configuration and wrapper defaults.
++	// Keep caller-only claims, shell injection flags, and private payloads out
++	// of arguments, environment and diagnostics.
++	for _, key := range []string{"HOME", "PATH", "XDG_RUNTIME_DIR", "DBUS_SESSION_BUS_ADDRESS", "DEV_WORKSPACES_CONFIG", "DEV_WORKSPACES_RUNTIME_DIR", "DEV_WORKSPACES_SYSTEM_CODEX"} {
++		if value, present := os.LookupEnv(key); present {
++			command.Env = append(command.Env, key+"="+value)
++		}
++	}
++	command.Env = append(command.Env, "DEV_WORKSPACES_STATE="+s.config.UserStateRoot, "DEV_WORKSPACES_PROFILE="+s.config.HostProfile)
++	output, err := command.Output()
++	if err != nil || string(output) != "{\"verified\":true}\n" {
++		return ErrPiDiscardStartupHeld
++	}
++	return nil
++}
+diff --git a/portal/internal/web/pi_discard_startup_grant_test.go b/portal/internal/web/pi_discard_startup_grant_test.go
+new file mode 100644
+index 0000000000000000000000000000000000000000..b2dd41752283af54f6b473b375e63f09a0ab5146
+--- /dev/null
++++ b/portal/internal/web/pi_discard_startup_grant_test.go
+@@ -0,0 +1,354 @@
++package web
++
++import (
++	"bytes"
++	"context"
++	"encoding/json"
++	"errors"
++	"os"
++	"path/filepath"
++	"strings"
++	"testing"
++
++	"github.com/aither64/dev-workspace/portal/internal/session"
++	"golang.org/x/sys/unix"
++)
++
++func fixturePiDiscardStartupGrant(s *Server, preparation sessionPreparation, receipt creationReceipt) piDiscardStartupGrant {
++	grant := piDiscardStartupGrant{Schema: 1, Target: piDiscardStartupTarget{
++		RequestID: preparation.RequestID, ReceiptID: receipt.ReceiptID, PreparationAttempt: preparation.Attempt,
++		CreationAttempt: receipt.Attempt, Slug: preparation.Slug, Incarnation: receipt.Pi.SessionIncarnation, Epoch: preparation.Epoch,
++	}}
++	grant.System = "/nix/store/" + strings.Repeat("1", 32) + "-system-fixture"
++	grant.Package = "/nix/store/" + strings.Repeat("2", 32) + "-bridge-fixture"
++	grant.ProfileToken = piProfileToken(s.hostProfile)
++	grant.WorkspaceName, grant.WorkspaceRoot = "fixture", s.config.Workspace
++	grant.Service = "workspace-portal@fixture.service"
++	grant.Owner.ID, grant.Owner.Slug = preparationTestID(877), "fixture-owner"
++	grant.Claim.ID, grant.Claim.Repository, grant.Claim.Selector, grant.Claim.Adapter = preparationTestID(878), "config", "test/machine", "confctl"
++	return grant
++}
++
++func TestPiDiscardStartupGrantStrictWire(t *testing.T) {
++	s, preparation, receipt, _ := newPiDiscardFixture(t)
++	grant := fixturePiDiscardStartupGrant(s, preparation, receipt)
++	data, err := json.Marshal(grant)
++	if err != nil {
++		t.Fatal(err)
++	}
++	parsed, err := parsePiDiscardStartupGrant(data)
++	if err != nil || *parsed != grant {
++		t.Fatal("shared root publisher envelope did not round-trip", err)
++	}
++	for _, input := range [][]byte{
++		append([]byte(`{"schema":1,`), data[1:]...),
++		bytes.Replace(data, []byte(`"workspaceRoot"`), []byte(`"workspaceroot"`), 1),
++		bytes.Replace(data, []byte(`"preparationAttempt":1`), []byte(`"preparationAttempt":null`), 1),
++		bytes.Replace(data, []byte(`"creationAttempt":2`), []byte(`"creationAttempt":"2"`), 1),
++		bytes.Replace(data, []byte(`"selector":"test/machine"`), []byte(`"selector":"test/\ud800"`), 1),
++		bytes.Replace(data, []byte(`"schema":1,`), nil, 1),
++		append(append([]byte(nil), data...), '{', '}'),
++		append(append([]byte(nil), data...), bytes.Repeat([]byte{' '}, piDiscardStartupGrantLimit)...),
++	} {
++		if _, err := parsePiDiscardStartupGrant(input); !errors.Is(err, ErrPiDiscardStartupHeld) {
++			t.Fatal("invalid root grant accepted", err)
++		}
++	}
++	// Nothing under the disposable user-writable temp tree can be trusted
++	// as root authority, irrespective of valid bytes or final file mode.
++	leaf := t.TempDir()
++	if err := os.Chmod(leaf, 0750); err != nil {
++		t.Fatal(err)
++	}
++	if err := os.WriteFile(filepath.Join(leaf, "startup-grant.json"), data, 0440); err != nil {
++		t.Fatal(err)
++	}
++	if _, err := readPiDiscardStartupGrantAt(leaf, "startup-grant.json"); !errors.Is(err, ErrPiDiscardStartupHeld) {
++		t.Fatal("a writable ancestor conferred grant authority", err)
++	}
++	// Exercise sealed leaf validation against a private disposable directory.
++	// Site-shaped guest tests must prove the complete UID 0 ancestry + GID.
++	fd, err := unix.Open(leaf, unix.O_RDONLY|unix.O_DIRECTORY|unix.O_NOFOLLOW|unix.O_CLOEXEC, 0)
++	if err != nil {
++		t.Fatal(err)
++	}
++	defer unix.Close(fd)
++	var parent unix.Stat_t
++	if err := unix.Fstat(fd, &parent); err != nil {
++		t.Fatal(err)
++	}
++	read := func(name string) (*piDiscardStartupGrant, error) {
++		return readPiDiscardStartupGrantFile(fd, name, uint32(os.Geteuid()), parent.Gid)
++	}
++	if parsed, err := read("startup-grant.json"); err != nil || *parsed != grant {
++		t.Fatal("sealed fixture file did not validate", err)
++	}
++	if got, err := read("missing"); got != nil || err != nil {
++		t.Fatal("genuine absence is not no grant", err)
++	}
++	if err := os.Symlink("missing", filepath.Join(leaf, "link")); err != nil {
++		t.Fatal(err)
++	}
++	if _, err := read("link"); !errors.Is(err, ErrPiDiscardStartupHeld) {
++		t.Fatal("dangling symlink masqueraded as absence", err)
++	}
++	if err := os.Link(filepath.Join(leaf, "startup-grant.json"), filepath.Join(leaf, "alias")); err != nil {
++		t.Fatal(err)
++	}
++	if _, err := read("startup-grant.json"); !errors.Is(err, ErrPiDiscardStartupHeld) {
++		t.Fatal("multi-link grant accepted", err)
++	}
++}
++
++func TestPiDiscardStartupGrantDoesNotHoldAnUnrelatedPortal(t *testing.T) {
++	s, preparation, receipt, native := newPiDiscardFixture(t)
++	grant := fixturePiDiscardStartupGrant(s, preparation, receipt)
++	grant.WorkspaceRoot = t.TempDir()
++	config := s.config
++	config.WorkspaceName = "other-workspace"
++	config.CodexSocket = filepath.Join(t.TempDir(), "app-server.sock")
++	config.RegistrationMarker = filepath.Join(filepath.Dir(config.CodexSocket), "registration.json")
++	metadataDir := filepath.Join(config.PackageRoot, "share/dev-workspace")
++	if err := os.MkdirAll(metadataDir, 0700); err != nil {
++		t.Fatal(err)
++	}
++	metadata := `{"schema":1,"activationEnvironmentAliases":[],"routerSocket":"/fixture/router.sock","userNamespace":"fixture","agent_teams":{"managed":false}}`
++	if err := os.WriteFile(filepath.Join(metadataDir, "package.json"), []byte(metadata), 0600); err != nil {
++		t.Fatal(err)
++	}
++	parse := func(candidate piDiscardStartupGrant) *piDiscardStartupGrant {
++		t.Helper()
++		data, err := json.Marshal(candidate)
++		if err != nil {
++			t.Fatal(err)
++		}
++		checked, err := parsePiDiscardStartupGrant(data)
++		if err != nil {
++			t.Fatal("fixture grant is not structurally valid", err)
++		}
++		return checked
++	}
++	s.Close()
++	before, err := os.ReadFile(s.creationPath(preparation.Slug))
++	if err != nil {
++		t.Fatal(err)
++	}
++	boot, err := newContextWithPiDiscardStartupGrant(context.Background(), config, parse(grant))
++	if err != nil {
++		t.Fatal("grant for a positively different name and root blocked ordinary startup", err)
++	}
++	if boot.uploadStore == nil || boot.conversation == nil {
++		boot.Close()
++		t.Fatal("non-target did not finish normal startup")
++	}
++	boot.Close()
++
++	alias := filepath.Join(t.TempDir(), "workspace-alias")
++	if err := os.Symlink(config.Workspace, alias); err != nil {
++		t.Fatal(err)
++	}
++	for _, tc := range []struct {
++		name, workspaceName, workspaceRoot, service string
++	}{
++		{"matching-name-only", config.WorkspaceName, grant.WorkspaceRoot, "workspace-portal@other-workspace.service"},
++		{"matching-root-only", grant.WorkspaceName, config.Workspace, grant.Service},
++		{"root-alias", grant.WorkspaceName, alias, grant.Service},
++		{"matching-target-wrong-generation", config.WorkspaceName, config.Workspace, "workspace-portal@other-workspace.service"},
++	} {
++		t.Run(tc.name, func(t *testing.T) {
++			candidate := grant
++			candidate.WorkspaceName, candidate.WorkspaceRoot, candidate.Service = tc.workspaceName, tc.workspaceRoot, tc.service
++			server, err := newContextWithPiDiscardStartupGrant(context.Background(), config, parse(candidate))
++			if server != nil {
++				server.Close()
++			}
++			if server != nil || !errors.Is(err, ErrPiDiscardStartupHeld) {
++				t.Fatal("ambiguous or superseded scope admitted", err)
++			}
++		})
++	}
++	after, err := os.ReadFile(s.creationPath(preparation.Slug))
++	if err != nil || !bytes.Equal(before, after) || native.ensures != 0 || native.creates != 0 || native.sends != 0 {
++		t.Fatal("non-target or refused startup changed the original request", err)
++	}
++	if err := requirePiDiscardAbsent(s.piDiscardDirectory(preparation.RequestID)); err != nil {
++		t.Fatal("non-target or refused startup staged an audit", err)
++	}
++	if err := session.RequireNoPiDiscard(s.config.Workspace, preparation.Slug); err != nil {
++		t.Fatal("non-target or refused startup published intent", err)
++	}
++}
++
++// Supply the synthetic grant and authority verifier only to the unexported
++// constructor seam. Production always reads the fixed root-owned input and
++// executes the private verifier from its selected immutable package.
++func openPiDiscardStartupFixture(t *testing.T, old *Server, grant *piDiscardStartupGrant, checkpoint func(string) error, verify func(context.Context, PiDiscardStartupAuthority) error) (*Server, error) {
++	t.Helper()
++	config := old.config
++	config.PackageRoot = ""
++	old.Close()
++	return newContext(context.Background(), config, func(s *Server, ctx context.Context) error {
++		if s.creations != nil || s.uploadStore != nil || s.conversation != nil {
++			t.Fatal("ordinary rehydration or serving started before the grant")
++		}
++		if grant != nil {
++			if _, pending := s.piDiscards[grant.Target.RequestID]; !pending {
++				if _, exists := s.preparations[grant.Target.RequestID]; !exists {
++					t.Fatal("grant ran before the read-only preparation cache load")
++				}
++			}
++			packageRoot, workspaceName := s.config.PackageRoot, s.config.WorkspaceName
++			s.config.PackageRoot, s.config.WorkspaceName = grant.Package, "fixture"
++			defer func() { s.config.PackageRoot, s.config.WorkspaceName = packageRoot, workspaceName }()
++		}
++		s.piCreationCheckpoint = checkpoint
++		return s.runPiDiscardStartupGrant(ctx, grant, func(ctx context.Context, authority PiDiscardStartupAuthority) error {
++			if grant == nil || authority != grant.PiDiscardStartupAuthority {
++				t.Fatal("wrong exact authority reached verifier")
++			}
++			if lock, err := session.LockCreation(s.config.AuthorityDir, grant.Target.Slug); err == nil {
++				lock.Close()
++				t.Fatal("writer did not retain the destination exclusion until revalidation")
++			}
++			return verify(ctx, authority)
++		})
++	})
++}
++
++func TestPiDiscardStartupOneShotAndReplay(t *testing.T) {
++	s, preparation, receipt, native := newPiDiscardFixture(t)
++	grant := fixturePiDiscardStartupGrant(s, preparation, receipt)
++	calls := 0
++	verify := func(context.Context, PiDiscardStartupAuthority) error { calls++; return nil }
++	without, err := openPiDiscardStartupFixture(t, s, nil, nil, verify)
++	if err != nil || calls != 0 {
++		t.Fatal("no grant attempted an operation", err, calls)
++	}
++	defer without.Close()
++	if err := requirePiDiscardAbsent(without.piDiscardDirectory(preparation.RequestID)); err != nil {
++		t.Fatal("no grant staged an audit", err)
++	}
++	boot, err := openPiDiscardStartupFixture(t, without, &grant, nil, verify)
++	if err != nil || calls != 1 {
++		t.Fatal("exact root grant did not reach the same writer once", err, calls)
++	}
++	defer boot.Close()
++	assertPiDiscardCompleted(t, boot, preparation, native)
++	audit, digest, err := boot.loadPiDiscardAudit(preparation.RequestID)
++	if err != nil {
++		t.Fatal(err)
++	}
++	// Stock typed reader accepts a wholly different later owner of the slug.
++	// The armed grant replay cannot stage a new audit or retire it again.
++	replacement := receipt
++	replacement.ReceiptID = strings.Repeat("c", 64)
++	if err := boot.saveCreation(replacement); err != nil {
++		t.Fatal(err)
++	}
++	before, err := os.ReadFile(boot.creationPath(preparation.Slug))
++	if err != nil {
++		t.Fatal(err)
++	}
++	replay, err := openPiDiscardStartupFixture(t, boot, &grant, func(step string) error {
++		if strings.HasPrefix(step, "discard_") && step != "discard_cleanup_sync" {
++			t.Fatal("completed grant resumed retirement", step)
++		}
++		return nil
++	}, verify)
++	if err != nil || calls != 2 {
++		t.Fatal("exact root grant replay failed revalidation", err, calls)
++	}
++	defer replay.Close()
++	after, err := os.ReadFile(replay.creationPath(preparation.Slug))
++	if err != nil || !bytes.Equal(before, after) || native.ensures != 0 || native.creates != 0 || native.sends != 0 {
++		t.Fatal("grant replay changed the later owner or invoked effects", err)
++	}
++	got, gotDigest, err := replay.loadPiDiscardAudit(preparation.RequestID)
++	if err != nil || !grant.Target.intent().valid(got.Owner.RequestID) || gotDigest != digest || got.Incarnation != audit.Incarnation {
++		t.Fatal("grant replay changed the immutable audit", err)
++	}
++}
++
++func TestPiDiscardStartupResumesExactInterruptedGrant(t *testing.T) {
++	for _, point := range []string{"discard_receipt", "discard_marker_unlink"} {
++		t.Run(point, func(t *testing.T) {
++			s, preparation, receipt, native := newPiDiscardFixture(t)
++			grant := fixturePiDiscardStartupGrant(s, preparation, receipt)
++			calls := 0
++			verify := func(context.Context, PiDiscardStartupAuthority) error { calls++; return nil }
++			boot, err := openPiDiscardStartupFixture(t, s, &grant, func(step string) error {
++				if step == point {
++					return errors.New("fixture interrupted startup publication")
++				}
++				return nil
++			}, verify)
++			if boot != nil || !errors.Is(err, ErrPiDiscardStartupHeld) || calls != 1 {
++				t.Fatal("interrupted startup became ready or retried", err, calls)
++			}
++			resumed, err := openPiDiscardStartupFixture(t, s, &grant, nil, verify)
++			if err != nil || calls != 2 {
++				t.Fatal("exact armed grant did not reconcile after revalidation", err, calls)
++			}
++			defer resumed.Close()
++			assertPiDiscardCompleted(t, resumed, preparation, native)
++		})
++	}
++}
++
++func TestPiDiscardStartupRefusesRacingDestinationOwner(t *testing.T) {
++	s, preparation, receipt, native := newPiDiscardFixture(t)
++	grant := fixturePiDiscardStartupGrant(s, preparation, receipt)
++	lock, err := session.LockCreation(s.config.AuthorityDir, preparation.Slug)
++	if err != nil {
++		t.Fatal(err)
++	}
++	defer lock.Close()
++	boot, err := openPiDiscardStartupFixture(t, s, &grant, nil, func(context.Context, PiDiscardStartupAuthority) error {
++		t.Fatal("claim verifier ran before obtaining the destination lock")
++		return ErrPiDiscardStartupHeld
++	})
++	if boot != nil || !errors.Is(err, ErrPiDiscardStartupHeld) || native.ensures != 0 || native.creates != 0 || native.sends != 0 {
++		t.Fatal("racing destination admitted startup discard", err)
++	}
++	if err := requirePiDiscardAbsent(s.piDiscardDirectory(preparation.RequestID)); err != nil {
++		t.Fatal("racing destination staged an audit", err)
++	}
++}
++
++func TestPiDiscardStartupRefusesWrongOwnerBeforeEffects(t *testing.T) {
++	for _, reason := range []string{"generation", "workspace", "epoch", "incarnation", "attempt", "claim"} {
++		t.Run(reason, func(t *testing.T) {
++			s, preparation, receipt, native := newPiDiscardFixture(t)
++			grant := fixturePiDiscardStartupGrant(s, preparation, receipt)
++			calls := 0
++			switch reason {
++			case "generation":
++				grant.ProfileToken = "pi-profile-v1:" + strings.Repeat("0", 64)
++			case "workspace":
++				grant.WorkspaceRoot += "-other"
++			case "epoch":
++				grant.Target.Epoch = strings.Repeat("0", 64)
++			case "incarnation":
++				grant.Target.Incarnation = strings.Repeat("0", 64)
++			case "attempt":
++				grant.Target.CreationAttempt++
++			}
++			boot, err := openPiDiscardStartupFixture(t, s, &grant, nil, func(context.Context, PiDiscardStartupAuthority) error {
++				calls++
++				if reason == "claim" {
++					return errors.New("fixture foreign or released claim")
++				}
++				return nil
++			})
++			if boot != nil || !errors.Is(err, ErrPiDiscardStartupHeld) || native.ensures != 0 || native.creates != 0 || native.sends != 0 {
++				t.Fatal("foreign grant reached serving or effects", err)
++			}
++			if (reason == "claim" && calls != 1) || (reason == "generation" && calls != 0) {
++				t.Fatal("wrong claim-verification boundary", calls)
++			}
++			if err := requirePiDiscardAbsent(s.piDiscardDirectory(preparation.RequestID)); err != nil {
++				t.Fatal("refusal staged an audit", err)
++			}
++		})
++	}
++}
+diff --git a/portal/internal/web/preparation.go b/portal/internal/web/preparation.go
+index 676d1a3d11c7f8b89e5d06fa53046067ccd06175..c4716858d7e700bc62899bdc248f78242b9421a4 100644
+--- a/portal/internal/web/preparation.go
++++ b/portal/internal/web/preparation.go
+@@ -54,9 +54,10 @@ type preparationWork struct {
+ // work and existence together so response projection never rereads preparation
+ // state after confirmation releases its locks.
+ type preparationStatusSnapshot struct {
+-	record sessionPreparation
+-	work   preparationWork
+-	exists bool
++	record  sessionPreparation
++	work    preparationWork
++	exists  bool
++	discard *preparationStatus
+ }
+ 
+ var errPreparationPiStale = errors.New("Pi settings changed. Start a new request to use the current settings.")
+@@ -89,6 +90,13 @@ func (s *Server) confirmPreparationStatus(ctx context.Context, id string) (prepa
+ 	defer s.uploadCreationMu.Unlock()
+ 	s.operationMu.Lock()
+ 	defer s.operationMu.Unlock()
++	status, err := s.confirmPiDiscardStatusLocked(s.preparations[id], id)
++	if err != nil {
++		return preparationStatusSnapshot{}, err
++	}
++	if status != nil {
++		return preparationStatusSnapshot{discard: status}, nil
++	}
+ 	if err := s.confirmPreparationLocked(id); err != nil {
+ 		return preparationStatusSnapshot{}, err
+ 	}
+@@ -137,7 +145,9 @@ func (s *Server) preparationRoute(w http.ResponseWriter, r *http.Request) {
+ 	}
+ 	if r.Method == http.MethodPost && action != "" {
+ 		s.withCreationMutation(w, r, func() {
+-			if action == "name" {
++			if _, pending := s.pendingPiDiscardStatus(id); pending {
++				s.writeError(w, r, http.StatusConflict, session.ErrPiDiscardPending.Error())
++			} else if action == "name" {
+ 				s.setPreparationName(w, r, id)
+ 			} else {
+ 				s.retryPreparation(w, r, id)
+@@ -175,6 +185,9 @@ func (s *Server) preparationStatus(id string) (preparationStatus, bool) {
+ }
+ 
+ func (s *Server) preparationStatusFromSnapshot(id string, snapshot preparationStatusSnapshot) (preparationStatus, bool) {
++	if snapshot.discard != nil {
++		return *snapshot.discard, true
++	}
+ 	if !snapshot.exists {
+ 		return preparationStatus{}, false
+ 	}
+@@ -402,6 +415,11 @@ func (s *Server) createPreparation(w http.ResponseWriter, r *http.Request) {
+ 	}
+ 	defer s.uploadCreationMu.Unlock()
+ 	s.operationMu.Lock()
++	if _, pending := s.piDiscards[id]; pending {
++		s.operationMu.Unlock()
++		s.writeError(w, r, http.StatusConflict, session.ErrPiDiscardPending.Error())
++		return
++	}
+ 	record, exists := s.preparations[id]
+ 	catalogRejected, piRejected := false, false
+ 	digest := inputPreparationDigest(input)
+@@ -539,6 +557,9 @@ func (s *Server) pendingPreparationLocked(record sessionPreparation) {
+ }
+ 
+ func (s *Server) launchPreparationLocked(record sessionPreparation) {
++	if _, pending := s.piDiscards[record.RequestID]; pending {
++		return
++	}
+ 	work := s.preparationWork[record.RequestID]
+ 	if s.closing || record.State != "running" || work.attempt != record.Attempt || work.dispatched || s.preparationUnconfirmed[record.RequestID] != "" {
+ 		return
+@@ -567,6 +588,9 @@ func (s *Server) mutatePreparation(ctx context.Context, id string, attempt int,
+ 	s.operationMu.Lock()
+ 	defer s.operationMu.Unlock()
+ 	record, ok := s.preparations[id]
++	if _, pending := s.piDiscards[id]; pending {
++		return session.ErrPiDiscardPending
++	}
+ 	if !ok || record.Attempt != attempt || record.State == "terminal" || s.closing {
+ 		return errors.New("session preparation attempt changed or stopped")
+ 	}
+@@ -637,6 +661,9 @@ func (s *Server) runPreparation(id string, attempt int) {
+ }
+ 
+ func (s *Server) destinationOccupiedLocked(slug, owner string) (bool, error) {
++	if err := s.requireNoPiDiscardLocked(slug); err != nil {
++		return errors.Is(err, session.ErrPiDiscardPending), err
++	}
+ 	if receipt, ok := s.creations[slug]; ok && receipt.ReceiptID != owner {
+ 		return true, nil
+ 	}
+@@ -711,6 +738,9 @@ func (s *Server) reservePreparationCandidateLocked(record *sessionPreparation, s
+ var errPreparationOccupied = errors.New("session name already exists")
+ 
+ func (s *Server) handoffPreparationLocked(record *sessionPreparation, slug string) error {
++	if err := s.requireNoPiDiscardLocked(slug); err != nil {
++		return err
++	}
+ 	if previous, ok := s.creations[slug]; ok && record.Slug != "" {
+ 		if !preparationReceiptMatches(*record, previous) {
+ 			return errors.New("session receipt does not match the accepted reservation")
+@@ -957,6 +987,14 @@ func (s *Server) reconcilePreparations(ctx context.Context) error {
+ }
+ 
+ func (s *Server) reconcilePreparationsLocked(ctx context.Context) error {
++	if len(s.piDiscards) != 0 {
++		return session.ErrPiDiscardPending
++	}
++	if markers, err := session.ReadPiDiscardMarkers(s.config.Workspace); err != nil {
++		return err
++	} else if len(markers) != 0 {
++		return session.ErrPiDiscardPending
++	}
+ 	for _, record := range s.preparations {
+ 		if err := ctx.Err(); err != nil {
+ 			return err
+@@ -1042,6 +1080,9 @@ func (s *Server) reconcilePreparationsLocked(ctx context.Context) error {
+ }
+ 
+ func (s *Server) compactPreparationsLocked(ctx context.Context, receipt creationReceipt) error {
++	if err := s.requireNoPiDiscardLocked(receipt.Request.Slug); err != nil {
++		return err
++	}
+ 	if receipt.State != "ready" && receipt.State != "conflict" && receipt.State != "cancelled" {
+ 		return nil
+ 	}
+diff --git a/portal/internal/web/preparation_store.go b/portal/internal/web/preparation_store.go
+index ed6794beab920b80cd0cfeed3063ad01ead21fa7..1e5a7c46d8bcc665c41cbd30b7151fb62d165f84 100644
+--- a/portal/internal/web/preparation_store.go
++++ b/portal/internal/web/preparation_store.go
+@@ -328,6 +328,10 @@ func readPreparation(path, workspace string) (sessionPreparation, error) {
+ // readPreparations is the single read-only traversal for boot and transition
+ // inspection. Publication, pausing and recovery remain owned by the Server.
+ func readPreparations(ctx context.Context, baseDirectory, workspace string) (map[string]sessionPreparation, error) {
++	return readPreparationsExcept(ctx, baseDirectory, workspace, nil)
++}
++
++func readPreparationsExcept(ctx context.Context, baseDirectory, workspace string, parked map[string]piDiscardAudit) (map[string]sessionPreparation, error) {
+ 	records := map[string]sessionPreparation{}
+ 	unfinished, totalBytes := 0, 0
+ 	for _, completed := range []bool{false, true} {
+@@ -361,6 +365,11 @@ func readPreparations(ctx context.Context, baseDirectory, workspace string) (map
+ 			if !strings.HasSuffix(entry.Name(), ".json") || !validPreparationID(id) {
+ 				return nil, errors.New("invalid preparation filename")
+ 			}
++			if _, held := parked[id]; held {
++				// The pending owner compares both exact selectors on recovery.
++				// Do not expose a partial record to an ordinary boot reader.
++				continue
++			}
+ 			if _, duplicate := records[id]; duplicate {
+ 				return nil, errors.New("duplicate preparation identity")
+ 			}
+@@ -387,7 +396,7 @@ func readPreparations(ctx context.Context, baseDirectory, workspace string) (map
+ }
+ 
+ func (s *Server) loadPreparations() error {
+-	records, err := readPreparations(context.Background(), s.operationStore.directory, s.config.Workspace)
++	records, err := readPreparationsExcept(context.Background(), s.operationStore.directory, s.config.Workspace, s.piDiscards)
+ 	if err != nil {
+ 		return err
+ 	}
+diff --git a/portal/internal/web/server.go b/portal/internal/web/server.go
+index e029c4365f5383a7a261400c3d647a185ef06b64..84708c7037d0822b39fe6b74a6f1bd1cca60e386 100644
+--- a/portal/internal/web/server.go
++++ b/portal/internal/web/server.go
+@@ -106,6 +106,10 @@ type Config struct {
+ 	Codex                  codexController
+ 	VerifyThread           func(context.Context, string, string) error
+ 	ReadThread             func(context.Context, string) (codex.Transcript, error)
++
++	// Only the managed serve entry enables the fixed administrative grant.
++	UsePiDiscardStartupGrant bool
++
+ 	// SessionNamer injects the isolated naming boundary in tests. Normal server
+ 	// construction uses the owned naming socket/catalog and resolves the accepted
+ 	// provider selection. Missing inputs leave naming unavailable.
+@@ -236,6 +240,7 @@ type Server struct {
+ 	displayFullPending     bool
+ 	creations              map[string]creationReceipt
+ 	preparations           map[string]sessionPreparation
++	piDiscards             map[string]piDiscardAudit // protected by operationMu
+ 	preparationUnconfirmed map[string]string
+ 	preparationWork        map[string]preparationWork
+ 	preparationSync        func(string) error
+@@ -408,6 +413,37 @@ func New(config Config) (*Server, error) {
+ // NewContext permits canceling initialization while a package transition owns
+ // admission. After initialization, Close owns worker shutdown and its ordering.
+ func NewContext(ctx context.Context, config Config) (*Server, error) {
++	if !config.UsePiDiscardStartupGrant {
++		return newContext(ctx, config, nil)
++	}
++	grant, err := readPiDiscardStartupGrant()
++	if err != nil {
++		return nil, ErrPiDiscardStartupHeld
++	}
++	return newContextWithPiDiscardStartupGrant(ctx, config, grant)
++}
++
++func newContextWithPiDiscardStartupGrant(ctx context.Context, config Config, grant *piDiscardStartupGrant) (*Server, error) {
++	targeted, err := grant.targetsWorkspace(config.WorkspaceName, config.Workspace)
++	if err != nil {
++		return nil, err
++	}
++	if !targeted {
++		return newContext(ctx, config, nil)
++	}
++	server, err := newContext(ctx, config, func(s *Server, ctx context.Context) error {
++		return s.runPiDiscardStartupGrant(ctx, grant, s.verifyPiDiscardStartupAuthority)
++	})
++	if err != nil {
++		// An armed startup must not start again automatically even when a
++		// preceding cache read (e.g. an unassignable marker) failed.
++		return nil, ErrPiDiscardStartupHeld
++	}
++	server.config.Logger.Print("pi_discard_startup=cancelled_cleanup_confirmed")
++	return server, nil
++}
++
++func newContext(ctx context.Context, config Config, startupDiscard func(*Server, context.Context) error) (*Server, error) {
+ 	if err := ctx.Err(); err != nil {
+ 		return nil, err
+ 	}
+@@ -567,10 +603,20 @@ func NewContext(ctx context.Context, config Config) (*Server, error) {
+ 	if config.SessionNamer == nil && (config.NamingSocket != "" || config.NamingModelCatalogFile != "") {
+ 		server.config.SessionNamer = server.normalSessionName
+ 	}
++	if err := server.loadPiDiscards(); err != nil {
++		cancelOperations()
++		return nil, err
++	}
+ 	if err := server.loadPreparations(); err != nil {
+ 		cancelOperations()
+ 		return nil, err
+ 	}
++	if startupDiscard != nil {
++		if err := startupDiscard(server, ctx); err != nil {
++			cancelOperations()
++			return nil, err
++		}
++	}
+ 	if err := server.loadCreations(); err != nil {
+ 		cancelOperations()
+ 		return nil, err
+@@ -594,7 +640,7 @@ func NewContext(ctx context.Context, config Config) (*Server, error) {
+ 		return nil, err
+ 	}
+ 	server.initNotifications()
+-	if err := server.reconcilePreparations(ctx); err != nil {
++	if err := server.reconcilePreparations(ctx); err != nil && !errors.Is(err, session.ErrPiDiscardPending) {
+ 		cancelOperations()
+ 		return nil, err
+ 	}
+diff --git a/test/dev_session/preparation_reservation_test.rb b/test/dev_session/preparation_reservation_test.rb
+index 22258b1e669cb4bc59bee258d48eee08ff68e941..0661a26c272622aa556786daeaf624014e0b2167 100644
+--- a/test/dev_session/preparation_reservation_test.rb
++++ b/test/dev_session/preparation_reservation_test.rb
+@@ -3,6 +3,50 @@
+ require_relative '../support/dev_session_test_case'
+ 
+ class DevSessionTest < Minitest::Test
++  def test_pi_discard_marker_fences_start_and_fork_without_portal_state
++    with_workspace do |workspace|
++      runner = runner_for(workspace)
++      slug = '2026-10-03-pending-discard'
++      locks = File.join(workspace, 'worktrees', '.locks')
++      FileUtils.mkdir_p(locks, mode: 0o700)
++      marker = File.join(locks, "#{slug}.pi-discard.json")
++      File.symlink('missing', marker) # Unreadable/malformed is still a fence.
++
++      error = assert_raises(DevSession::Error) do
++        runner.start(slug, as_is: true, new: false, attach: false, run_codex: false)
++      end
++      assert_includes(error.message, 'Pi request discard is pending')
++      error = assert_raises(DevSession::Error) do
++        runner.fork('missing-source', slug, as_is: true, json: true)
++      end
++      assert_includes(error.message, 'Pi request discard is pending')
++      refute_path_exists(File.join(workspace, 'work', slug))
++      refute_path_exists(runner.send(:fork_journal_file, slug))
++      assert File.symlink?(marker)
++
++      # The standalone reservation check can lack a portal state root. The
++      # lock admission itself must still find the shared workspace marker.
++      state = runner.instance_variable_get(:@workspace_state_root)
++      runner.instance_variable_set(:@workspace_state_root, nil)
++      error = assert_raises(DevSession::Error) { runner.send(:with_creation_lock, slug) { flunk 'pending slug admitted' } }
++      assert_includes(error.message, 'Pi request discard is pending')
++
++      # Model unlink before confirmation, then a crash that restores the old
++      # filename. Real CLI admission depends on presence, not portal memory.
++      runner.instance_variable_set(:@workspace_state_root, state)
++      File.unlink(marker)
++      assert_equal(:admitted, runner.send(:with_creation_lock, slug) do
++        runner.send(:with_slug_lock, slug) do
++          runner.send(:guard_portal_preparation_reservation!, slug, nil)
++          :admitted
++        end
++      end)
++      File.symlink('missing', marker)
++      error = assert_raises(DevSession::Error) { runner.send(:with_creation_lock, slug) { flunk 'restored marker admitted' } }
++      assert_includes(error.message, 'Pi request discard is pending')
++    end
++  end
++
+   def test_preparation_reservation_refuses_unrelated_start_and_fork_before_effects
+     with_workspace do |workspace|
+       runner = runner_for(workspace)
+diff --git a/test/workspace_host/live_switch_test.rb b/test/workspace_host/live_switch_test.rb
+index 1a2e58cf2d7670cd592abf18b1355c1500ef24f2..1d524b3751445d3ca40e33ead3bf4f74dab4f275 100644
+--- a/test/workspace_host/live_switch_test.rb
++++ b/test/workspace_host/live_switch_test.rb
+@@ -439,6 +439,51 @@ class WorkspaceHostTest < Minitest::Test
+     end
+   end
+ 
++  def test_pi_discard_startup_verifier_refuses_malformed_stdin_without_admission
++    with_transition_host do |host, _paths|
++      host.define_singleton_method(:with_current_generation_lock) { |**| raise 'unexpected admission' }
++      %w[{} [] malformed].push('', 'a' * 8193, '{"owner":{},"owner":{}}').each do |document|
++        out, err = StringIO.new, StringIO.new
++        host.instance_variable_set(:@input, StringIO.new(document))
++        host.instance_variable_set(:@out, out)
++        host.instance_variable_set(:@err, err)
++        assert_equal 1, host.run('workspace-host', ['_verify-pi-discard-startup'])
++        assert_empty out.string
++        assert_equal "error: the original Pi discard authority could not be verified\n", err.string
++      end
++    end
++  end
++
++  def test_pi_discard_marker_alone_refuses_package_transition
++    with_ready_coordination_session do |host, entry, _slug, _path, _journal, _manifest_path, _engine|
++      # No live creation or portal record for this target remains. Presence
++      # must hold the transition even when private audit can't be read here.
++      lock_root = File.join(entry.fetch('root'), 'worktrees', '.locks')
++      marker = File.join(lock_root, '2026-11-24-pending-discard.pi-discard.json')
++      File.write(marker, '{}', mode: 'w', perm: 0o600)
++      error = assert_raises(DevWorkspaceHost::Error) do
++        host.send(:require_no_unfinished_lifecycle_operations!, [entry],
++                  operation: 'workspace package transition', preserved_pi_creations: {})
++      end
++      assert_includes(error.message, 'Pi request discard is pending')
++      bytes = File.binread(marker)
++      assert_equal('{}', bytes)
++
++      # No portal state or second fence is visible to host admission once
++      # unlink publishes absence, even if a subsequent sync was uncertain.
++      File.unlink(marker)
++      assert_nil host.send(:require_no_unfinished_lifecycle_operations!, [entry],
++                           operation: 'workspace package transition', preserved_pi_creations: {})
++      File.write(marker, bytes, mode: 'w', perm: 0o600)
++      error = assert_raises(DevWorkspaceHost::Error) do
++        host.send(:require_no_unfinished_lifecycle_operations!, [entry],
++                  operation: 'workspace package transition', preserved_pi_creations: {})
++      end
++      assert_includes(error.message, 'Pi request discard is pending')
++      assert_equal(bytes, File.binread(marker))
++    end
++  end
++
+   def test_collection_uses_strict_pending_parser_and_retries_legacy_roots_after_recovery
+     with_ready_coordination_session do |host, _entry, _slug, _path, _journal, _manifest_path, engine|
+       host.define_singleton_method(:coordination_engine) { |_selected| engine }
