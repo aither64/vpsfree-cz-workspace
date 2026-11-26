@@ -1,4 +1,243 @@
-# I2 PHP backup cleanup: D3 correction
+# I2 vpsAdmin source and PHP backup cleanup evidence
+
+## Integration target hook readiness: passed in declared shell
+
+Root's default push outside the declared shell was refused without a remote
+update. Bounded inspection of the existing clean integration target confirmed
+head 99207a8dcd92f5907c52dbc99af52b30aa7ecac1, tree
+3f3cd9a11eec7d8694bc6c1777adf708239a56c3. Committed .overcommit.yml and all four
+custom hooks match their trusted source; no local configuration override exists.
+Ambient Ruby loads Overcommit 0.71.0, which looks for the legacy Git-config
+signature key. The declared Nix shell loads repository Overcommit 0.76.0, which
+uses the retained signature-history store. Its existing configuration signature
+is present and verified with verification enabled. No signing, reinstall or trust
+bypass is required or was performed.
+
+Bundle check and the installed pre-push entry passed inside the normal target
+Nix shell with the exact HEAD99207-to-master9e98 ref tuple and canonical origin
+arguments. This was git hook run pre-push with prepared stdin, not git push; no
+network/default update, source/history mutation or passed-spec repeat occurred.
+No PrePush task is enabled in the owning configuration. Diagnosis native 11937
+and readiness native 57852 both joined exit0. Logs are
+/tmp/i2-integration-hook-diagnosis.log and
+/tmp/i2-integration-prepush-readiness.log. Source/index and target remain clean.
+
+Root's normal push command, after its fresh claim/target checks, is:
+
+    # cwd: /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-11-25-backup-disable-design/vpsadmin-integration
+    nix develop .#vpsadmin --command git push origin HEAD:refs/heads/master
+
+The verified Ruby is
+/nix/store/fk9isw27bmbdkwrchszx1mnv3qgw2kbf-ruby-3.4.12/bin/ruby; Overcommit 0.76.0
+resolves through the prepared owning .gems symlink. Root retains the fresh
+claim/no-op FF/push/remote-proof driver. I2 has no active operation and retains
+fix ownership; source/history, passed checks and prior receipts are unchanged.
+
+## Endpoint coverage correction: committed and published
+
+The required exact-head API Specs run 45887308287, attempt 1, failed job
+140141109113 (full/foundation) with one failure among 1626 examples and four
+unrelated pending examples. The sole failure was endpoint_coverage_spec.rb[1:1:1]:
+Missing scopes: dataset#disable_backups. Its existing request spec already tests
+authorization, options and ordinary receipts, but covered_endpoints.yml omitted
+the new scope. The coverage check/manifests are unchanged from upstream base;
+this was a feature inventory omission, not a runner or upstream baseline failure.
+Native result/environment artifacts and the job log were inspected before any
+correction or retry. Verified result ZIP 15149968462 SHA256 is
+aae1b342f1a145399beaa28422abff7bed65380379c2661151105e2b1fe8aca4. Exact CI
+Ruby/Bundler/RSpec and effective lock identity remain in the preserved receipt.
+
+The entire 5725a099-to-final delta is one added dataset#disable_backups line in
+api/spec/api/covered_endpoints.yml; every other tree entry is equal. Root and
+architect accepted this small fix boundary before implementation. Full-plugin
+endpoint coverage plus the existing action request spec pass: **12 examples,
+zero failures/pending**, 111.380 seconds, native handle 93570/exit0. No full
+foundation/suite, VM, browser, live action or old CI retry was launched.
+
+Final frozen/published head is **99207a8dcd92f5907c52dbc99af52b30aa7ecac1**, tree
+**3f3cd9a11eec7d8694bc6c1777adf708239a56c3**, on unchanged fresh base
+9e98d254277114535715353edfd5ddd77fab235e. Four logical commits remain:
+
+| Purpose | Final commit |
+| --- | --- |
+| API including coverage inventory | 4dfdf09e360107ce4db0a737991bb03607944a64 |
+| PHP feature | 1ae664c6287cec399d63188f7c3c4f80fcbd46d3 |
+| Storage fixtures | 2e8f87484d37322fca97c34b1238f45c86a4de00 |
+| Separate Incidents menu deletion | 99207a8dcd92f5907c52dbc99af52b30aa7ecac1 |
+
+The YAML line was folded into its owning API commit. All other patches have
+range-diff equality, and the full final tree equals the checked pre-fold tree.
+Old 5725 and the checked fixup are retained by refs ending
+pre-endpoint-inventory-5725 and endpoint-inventory-before-fold. No migrations,
+obsolete fixups or repeated dependency streams entered the final branch. The
+feature diff is 33 files, 2198 insertions / 84 deletions. Menu raw patch SHA256
+3852cbc02b096bce46c757fd0b414cc57cdaa0fd2397e85715e380a034ead67d and fixture
+patch ID 3afcd907d568eaf98de00c49c2d1521dd95dfbea remain unchanged. Raw correction
+patch SHA256 is b96640b6dad31b66db8bed3e8b598e9e909abebf7eecab5b27dfd4e4af31cdae.
+
+Normal pre-commit and commit-message hooks passed without bypass. The temporary
+fixup message had two preferred-72-column advisories, within repository 80-column
+limits; folding retained the original API message. Commit/fold native 32675
+joined exit0. Fresh SSH fetch verified unchanged master and lease head 5725;
+publication with that explicit lease succeeded, native 28299/exit0. Fresh remote
+feature equals 99207a8d, master remains 9e98d254. Source/index are clean and the
+exclusive source/index/history window was returned to root. The prepared clean
+integration target and declared hook environment from the previous packet remain
+available; root owns final freshness/comparison/claim/fast-forward/default push.
+
+Exact new-head initial CI, all attempt 1:
+
+| Workflow | Workflow ID | Run ID |
+| --- | --- | --- |
+| API Specs | 234996228 | 45890220538 |
+| libnodectld Specs | 247475646 | 45890220531 |
+| Webui PHPUnit | 283542743 | 45890220513 |
+| CI | 228803702 | 45890220654 |
+| RuboCop | 229534945 | 45890220577 |
+| i18n health | 307073542 | 45890220510 |
+
+Root owns observation; these initial reads are pending/in progress. Only two
+superseded active same-branch runs were selected for cancellation. CI 45887308301
+accepted cancellation; API 45887308287 completed cancellation before the manual
+request, which returned already-completed. Both were independently read as
+completed/cancelled on old 5725. No current-head or other-branch run was cancelled,
+and the failed old attempt was not rerun. Passing node/PHP evidence is retained;
+full CI and original parked VM suites are outside the user's wait scope.
+
+The API declarations, models, schema, configuration, fixture support, plugins,
+exporter/tools, packages and flake inputs are byte-identical to 5725. The complete
+range only alters test inventory, so no declared contract change or new schema
+acquisition is required for this correction. I3 received the exact final head,
+whole delta and input-tree correspondence directly. Its actual 5725 export stays
+immutable and is not relabelled; I3 owns global final-schema/client freshness.
+The whole API tree changes only because it contains the test manifest. Existing
+feature guides and all KB-impact/capture limits remain unchanged; no new prose,
+translation, documentation contract or runtime behavior was authored.
+
+[Single failure/correction receipt](captures/api-foundation-45887308287-attempt1/receipt.json)
+binds the original failure, native artifacts/environment, checked fix, full series,
+input equivalence, hooks, publication, CI IDs and terminal effects. Its directory
+is ignored/untracked and private (0700/files0600). Root retains narrow-fix review
+acceptance and integration; I2 retains fixes with no active operation. No source,
+CI, runtime or evidence expansion follows this consolidation. Session remains
+open; the cluster remains released and untouched.
+
+## vpsAdmin integration preparation: frozen, published, window returned
+
+User authorized all initiative merges and the configuration vpsadmin channel update;
+root retains comparison capture, repository claims, fast-forward/default pushes and
+configuration coordination. I2 completed the one integration-preparation/rebase
+package. No merge or runtime action was performed here. The source/Git window was
+returned with all owned handles joined; only this evidence consolidation followed.
+
+Fresh SSH master is 9e98d254277114535715353edfd5ddd77fab235e, eleven commits after
+reviewed base 81e930b25fa3252d7e849aff4819e663cec37b07. They add typed/localized
+system configuration, incident ordering and packaged gem updates. The accepted old
+head 3a647f64da783e85ff38c570d6c8f75ab993670e remains at preserved ref
+2026-11-25-backup-disable-design-pre-integration-3a647f64. Original live/reviewed
+refs and all evidence below remain historical, unchanged.
+
+Final frozen/published head is **5725a0996fb60767511bfc86482acefdec9eb9d9**, tree
+**1ab250e6875ff737b74e7b9cf02ca5eda7bd5b64**, on fresh base 9e98d254. Complete series:
+
+| Logical commit | Reviewed old | Final |
+| --- | --- | --- |
+| API | 8485ffe9f5f81d3b426814a467de1c52a594ca0a | 6809b562b4d87f1107dc9f4790fc92a35c1e423c |
+| PHP feature | 696efd350054ff183f92bf01ffdb7e790b0c06a8 | c423a329c20d16ca64a649e10efe6d04fe7d5bf0 |
+| Storage fixtures | ac4be5ed380236a16f96e527d55a84c00425c7fc | 5de3f6675ad579c40f9614f75ccf3272da842f2a |
+| Separate Incidents menu removal | 3a647f64da783e85ff38c570d6c8f75ab993670e | 5725a0996fb60767511bfc86482acefdec9eb9d9 |
+
+All four entries are equal in git range-diff; log /tmp/i2-integration-range-diff.txt.
+The sole conflict was generated Czech MO. PO/POT, API locales and docs index merged
+automatically; the repository locales-generate script compiled the merged PO. A
+separate git merge-tree composition of old accepted feature with fresh baseline,
+then compiling its independently merged PO and replacing only MO in a temporary
+index, reconstructs the exact final full tree above. No handwritten conflict,
+new feature contract or scope change was introduced. Root owns affected review or
+certified-equivalence acceptance; I2 does not substitute self-review for that gate.
+
+Final feature diff remains 32 files, 2197 insertions / 84 deletions. There are
+**no migrations**, superseded implementation/fixup commits, repeated dependency or
+pin streams. The menu stays its separate one-line deletion; raw patch SHA256 is
+3852cbc02b096bce46c757fd0b414cc57cdaa0fd2397e85715e380a034ead67d, identical to the
+reviewed patch. Fixture patch ID remains 3afcd907d568eaf98de00c49c2d1521dd95dfbea.
+Previously deployed commits are retained provenance, not claimed literal ancestors
+of the rebased final branch or already merged.
+
+Focused current-input PHP batch passes **12 tests / 143 assertions** in 3.584s
+(PHP 8.4.28, PHPUnit 13.4.8), plus three PHP syntax checks. The tested PHP renderer,
+page dispatcher, regression and menu bytes are identical at the final head. Final
+gettext freshness/health, compiled locale and whitespace checks pass. Normal
+staged pre-commit hooks all pass: API/WebUI i18n, PHP formatter, Nixfmt and migration
+coverage; log /tmp/i2-integration-staged-hooks.log. No hooks were bypassed. API
+53+3 and node46 remain earlier accepted feature evidence; updated upstream packaged
+gems mean this packet does not relabel those as a fresh exact-final dependency run.
+Final API/libnodectld specs CI supplies current-head verification.
+
+Local setup initially lacked API gems and WebUI vendor. Declared Nix/API and locked
+composer preparation succeeded before the final pass; neither setup error was a
+failed correctness assertion. The first manual overcommit --run selected all
+tracked files. I2 stopped that owned batch after the missing-bundle error, joined
+handle 53277/exit143 and verified process group 9598 empty with no unstaged source
+change. The subsequent ordinary staged hook invocation passed. The owned PHPUnit
+cache was moved intact to /tmp/i2-integration-phpunit-cache-run1. No reset, clean,
+stash or unrelated source alteration occurred. Logs remain /tmp/i2-integration-*;
+the final source/checks, dependency identities and initial CI are linked below.
+
+The feature did not previously exist on origin. SSH publication with an explicit
+empty/absence lease succeeded, and fresh remote feature equality was verified;
+master remained 9e98d254. No superseded current-branch CI run existed to cancel.
+Exact initial CI at final head, all attempt 1:
+
+| Workflow | Workflow ID | Run ID |
+| --- | --- | --- |
+| API Specs (topic parallel) | 234996228 | 45887308287 |
+| libnodectld Specs | 247475646 | 45887308305 |
+| Webui PHPUnit | 283542743 | 45887308318 |
+| CI | 228803702 | 45887308301 |
+| RuboCop | 229534945 | 45887308303 |
+| i18n health | 307073542 | 45887308297 |
+
+These were queued/in progress at the bounded read; root owns observation. User
+explicitly excluded waiting for full CI; relevant specs are the wait gate. No
+unchanged storage/PHP VM, browser/live check or cluster recreation was run.
+
+Clean disposable target is
+/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-11-25-backup-disable-design/vpsadmin-integration,
+detached at 9e98d254. Common Overcommit hooks are active; ignored root/API .gems
+symlinks use the prepared owner bundles and bundle check passed. Root's normal
+merge environment is nix develop .#vpsadmin at this target. No repository claim
+was acquired by I2. Native handle 85986 completed publication/target preparation
+with exit0; every other owned handle is terminal/joined. Both source/index and
+target are clean. Root owns the fresh target/remote check before integration.
+
+[Final source/input/CI packet](i2-integration-final-inputs.json) binds exact API tree
+64c1026d505d678c303054d7d7687467cc5eb6ee, resource tree
+597b95cf8850dd49fb310941685d432b84788d03 and unchanged exporter tree
+5d291b4cc5c6c3c59bcef42fa0399a15bfe88b62. Export profile, all seven fixture inputs,
+tracked exporter/config/flake and API Gemfile identities are recorded. I3 owns the
+new exact-final export and client synchronization for upstream SystemConfig
+choices/value_nullable; historical eb8/cbe3 acquisition remains immutable. This
+packet is not global schema/client freshness certification.
+
+Documentation routing is unchanged: storage behavior/recovery remains in
+[the storage guide](../../worktrees/2026-11-25-backup-disable-design/vpsadmin/docs/storage/disable-backups.md),
+PHP form/ordinary action/defaults remain in
+[the PHP guide](../../worktrees/2026-11-25-backup-disable-design/vpsadmin/docs/webui-backup-cleanup.md),
+and this record owns temporary revisions/checks/integration preparation. The two
+feature guides are byte-identical to accepted 3a647f64; merged docs index retains
+both feature and upstream system-configuration links. No new prose or translation
+was authored. Previous KB impact assessment remains bounded; exact published-pin,
+external contract and capture certification are still unperformed, with no KB
+writes. Earlier live GET/hash proof remains its recorded source/default proof,
+not an actual mutation-response or new rebased runtime deployment proof.
+
+Remaining dependencies are root's affected review/equivalence decision, relevant
+specs outcomes and I3's final-source schema/client work, then root-owned comparison,
+claim, fast-forward/default push and configuration update. I2 retains fixes with
+no active operation. Current user data and released cluster are untouched; session
+stays open. Stable portal:
+https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-11-25-backup-disable-design/
 
 ## Ordinary PHP action flow and unified defaults: accepted and parked
 

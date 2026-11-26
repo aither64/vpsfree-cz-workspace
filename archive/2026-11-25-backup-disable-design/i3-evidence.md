@@ -1,5 +1,281 @@
 # I3: final generated-client synchronization packet
 
+## Final rebased-source synchronization: accepted and integrated
+
+Reviewer0 completed all four affected lanes at exact final Go c91/Rust1ea/TS c4e
+with no findings, including complete histories, generated-contract scope and
+new handwritten tests. Root fast-forwarded all three canonical remote defaults,
+freshly verified exact SSH equality and released each repository claim:
+
+- Go master: `c91d9aeb04c21f6a491f2703f707a661323aec61`, claim48c32340 released;
+  [integration receipt](vpsadmin-go-client-integration-receipt.json).
+- Rust main: `1ea32ccac64e35e325ae6bc47af1149ba5d89d17`, claim81d739fa released;
+  [integration receipt](vpsadmin-rust-client-integration-receipt.json).
+- TypeScript main: `c4e0b85b9f12656500b3acf9b9786cecc3c3c5c1`, claim4e9f8837 released;
+  [integration receipt](vpsadmin-typescript-client-integration-receipt.json).
+
+Rust/TS final comparisons are captured and root removed its temporary integration
+targets. Required Rust unit steps passed without waiting for the full matrix.
+No new client release, tag, deployment or consumer/runtime update occurred.
+Root retains final helper-registration retargets and preserves actual1ef9/eb8/
+5725 refs; API99207 specs remain separately observed by their owner. I3 only
+records this accepted outcome, parks execution and retains fix ownership.
+
+Root released one dependent package under
+`design.md#minimal-final-schema-synchronization-after-rebase`. I1 froze API
+`5725a0996fb60767511bfc86482acefdec9eb9d9`, tree
+`1ab250e6875ff737b74e7b9cf02ca5eda7bd5b64`. I3 preserved the historical eb8 head
+under an own preservation ref, then retargeted only its clean exporter branch
+through normal declared-shell signing and an empty-range rebase. Native14337
+exited0 and exact head/tree/clean assertions preceded all dependent commands.
+The missing local root hook bundle was prepared normally; no hook was bypassed.
+I1's checkout, index and feature ref were never modified.
+
+Historical untracked raw captures, archives and dependency directories were
+already absent at this phase's start. Root confirmed no relocation is known.
+Their historical Markdown statements and committed actual50aa input bytes remain
+truthful; no eb8 capture or old archive was reconstructed, relabeled or claimed
+present. This is a retained-evidence limit, not permission to substitute a new
+acquisition identity. The new comparison uses the committed original50aa/cbe3
+schema/provenance/tooling and preserves the published TS release identity.
+
+One new actual export succeeded from exact clean5725 into
+`i3-schema-final-5725a099/`. It reports API7.0/protocol2.0, full six-plugin fixture,
+English, mount `/`, 156 application resources, 530 application actions and9044
+parameters. Canonical schema SHA256 is
+`7088ef00b82964437746ad3e46b3ca78da515b8fde18cae46f1c275ef68f9bf9`;
+raw provenance is
+`2dc3ebd685f416b8099cd23fe4c9f14ea6c0342a2eed117323988f34268a1e76`;
+exporter lock remains
+`dd5db5ca44bb69ca2ae0244515103146f17b7621f12ca34c3dec6950f4455aaf`.
+[Canonical/provenance comparison](i3-final-sync-schema-comparison.json) proves
+**exactly six additions**: SystemConfig Index/Show/Update outputs each gain
+nullable Custom `choices` and nullable Boolean `value_nullable`. No other
+canonical value, route, input, action, output or metadata changed. Source/input/
+plugin hashes change honestly; full tooling/database/profile/runtime sections
+equal the original committed acquisition. Exporter, test-db, declared Gemfiles,
+flake, config, db and spec-support objects match eb8; no new determinism trigger
+was found, so no repeat export was run.
+
+The fresh installed3y9/catalog1184/schema6 Luna/low utility stopped before
+launch because its identity read used the shared root, which has no current
+session. Its final report confirms zero command/export effects. The monitor
+skill's visible active-parent fallback then ran the prepared batch **once**,
+native9194, exit0. It restored the original frozen exporter/Go/Rust dependency
+locks, made the single export, restored isolated tools and installed the locked
+TS dependencies; five owned source checkouts were clean afterward. Logs/receipt:
+[command](i3-final-sync-provision-export-command.json),
+[log](i3-final-sync-provision-export.log),
+[terminal effects](i3-final-sync-provision-export-exit.json).
+No live API, cluster, fixture mutation outside the ordinary disposable exporter
+database or product dependency change occurred.
+
+All three owned generators remain at actual HaveAPI
+`1ef9b204ba45bb261d3334be5c555cc1856b713b`. The Go OAuth projection, copied Rust
+runtime, formatter/configuration, JS peer0.32.0, Cargo/npm graphs and package
+versions are unchanged. Fresh Go output was compared completely before copying
+its three changed SystemConfig files. Rust inventory came from the maintained
+IR. [Complete owned-file accounting](i3-final-sync-owned-file-inventory.json)
+records Go698/Rust703/TS692 files, **zero additions/deletions**, actual changed
+names and manifest hashes. Only SystemConfig output modules and bound schema
+metadata change. Go retains the existing fixed generator's Custom-output
+omission and Boolean zero-value behavior; no choices shim or nullability
+redesign was introduced. Rust retains JSON scalar identities/optional booleans;
+TS retains unknown Custom data and Boolean/null/absence.
+
+Current committed ranges, complete file sets, diffstats, old/new range-diffs,
+hook environments and input identities are in
+[source-series packet](i3-final-sync-source-series.json):
+
+| Repository/default | Base | Complete new series / final tree |
+| --- | --- | --- |
+| Go/master | `5934903568862a95b688479f0b13e11e4a36692f` | `8a569fc02651fd04e5decda17a4fcbd4ffdcc4fe` → `c91d9aeb04c21f6a491f2703f707a661323aec61`; tree `753c6895dbb31d3b4efdb1072a41f93d5c030c45` |
+| Rust/main | `15db0ffd95ccd34247de9f839c906d860afb1b69` | `c883ca3f71951ed471df81a8fef2535d0bfd262a` → `1ea32ccac64e35e325ae6bc47af1149ba5d89d17`; tree `8d9476a9e5beccf50358337e2fcee8355cd50ea7` |
+| TS/main | published `0f1cde21a6e3b64a06389d21a5a5124093520724` | one source commit `c4e0b85b9f12656500b3acf9b9786cecc3c3c5c1`; tree `8eb24898718cdd1b5d8028c39c28ebb5b6db2543` |
+
+Go/Rust's new generated refreshes were folded into their existing unmerged
+generated streams; handwritten smoke and source-reference docs remain separate.
+Prior exact70a/f03 heads have own preservation refs. This is an expected additive
+contract refresh, **not unchanged patch equivalence**. No obsolete D2, fixup,
+redundant pin/dependency/generated stream or migration remains. TS is one new
+source commit after published0f1; version0.7 is unchanged and unreleased source
+ahead of that tag. Nothing rewrites/replaces the published tag or npm artifact.
+
+Quick results: Go's four helper tests and all Go tests passed. Rust format,
+shell and seven provenance tests passed. TS offline `--check`, one build, source
+and strict consumer types and20tests passed. Focused handwritten tests exercise
+SystemConfig scalar choices/null/absence and each client's modeled behavior.
+The first TS CI-placement move put the test into a one-import entry file, causing
+`ReferenceError: test is not defined` (native79310/exit1). I3 incorrectly allowed
+an unpublished amend after receiving that failure; it was joined and reported
+before any push. Correction moved the case into existing consumer/runtime helpers,
+restored the entry file, passed20tests native39489, and required an explicit
+successful-result guard before the next normal amend. Transient unpublished
+7dc/552 commits were consolidated away. Failure and corrected logs are retained;
+no source failure is concealed as a successful run.
+
+TS then packed the existing checked build **once**, passed exact packed
+ESM/strict-types/executor-consumer and receipt checks (native54022/exit0).
+The unreleased local artifact in `i3-ts-final-sync-source-validation/` binds
+sourcec4e0/tag:null, SHA256
+`b88206ea1a82776cb371f700fb0860699f61dc884a7cc13ed62edd24a80cfa9e`.
+It is distinct from immutable published0.7 artifact19fed and is not a publication
+candidate or consumer update. No broad1392-file archive audit or rebuild stream
+was run. Logs use `i3-final-sync-{go,rust,ts}-quick.log`,
+`i3-final-sync-ts-{test-selection,corrected-selection,package}.log` and normal
+`i3-final-sync-{go,rust}-commit.log`.
+
+**Rust verification passed:** fresh current-policy Luna/low watcher ran exact
+Rust1ea offline check, one blocking-feature all-target compiler/unit/examples
+lane (includes async coverage), docs and package. Native46357 joined exit0 and
+the utility delivered its final report. Authoritative log time is20:12:55–20:20:40Z
+(465s); watcher estimates were approximate. No MSRV matrix or live acceptance
+was run; two opt-in real-server cases remain ignored. Only ordinary generated
+dead-code/package-exclusion warnings appeared. Parent did not poll its logs
+during execution. [Terminal/effects receipt](i3-final-sync-rust-verify-exit.json).
+Go/Rust's explicit old70a/f03 feature leases and TS's fast-forward feature push
+passed; fresh remote feature equality is recorded for all three. TS exact branch build-only run
+45890018561/attempt1/c4e passed, build job140150089331 passed, publish skipped.
+Go has no Actions workflows. Rust exact branch run45890499683/attempt1/1ea
+passed both requested unit steps: async job140151691268 at20:24:34Z and blocking
+job140151691394 at20:28:01Z. Scoped observation is complete; remaining remote
+matrix jobs are left untouched. No complete matrix wait or default
+merge/tag/release is included. Only superseded active branch CI may be canceled.
+
+I1's frozen final source is99207a8dcd92f5907c52dbc99af52b30aa7ecac1,
+tree3f3cd9a11eec7d8694bc6c1777adf708239a56c3. I3 independently verified the
+complete5725→99207 delta is only `api/spec/api/covered_endpoints.yml` +1/-0,
+and16 runtime/resource/profile/fixture/export/tooling objects are identical;
+every other tree entry is unchanged. [Final-source equivalence](i3-final-sync-final-api-equivalence.json)
+preserves actual5725 acquisition and proves its unchanged contract scope at99207.
+No repeat export, relabeling or nonancestor-literally-merged claim is made.
+Root owns affected independent review of new handwritten tests plus generated
+contract/history, integration targets/claims/default drivers and final helper
+registration reconciliation. The actual1ef9 generator checkout stays pinned
+until all generation checks finish. Root may later preserve historical refs and
+retarget only the helper branches through ordinary empty-range history work;
+never merge obsolete acquisition history or privately edit registration bases.
+No additional integration target worktree or cleanup/lifecycle operation is
+created by this package.
+
+Documentation routing: maintainers/reference -> actual `schema/` receipts and
+generator identity; Go consumers/source provenance -> existing README acquisition
+hash only; regeneration/recovery -> existing client development guides unchanged;
+current executions/failures/history -> this session packet. Product examples,
+warnings, supported recovery and authorization/capability limits are preserved.
+Root retains merges, release interpretation and acceptance; I3 retains fixes.
+All I3 local operations, utilities and native handles are terminal. Final exact
+heads, clean source/index and full-range whitespace are checked; fresh remote
+feature equality and current target refs are in the source-series packet.
+[Completion/effects receipt](i3-final-sync-completion.json). The earlier I3 remote
+snapshot showed Go master=c91 and TS main=c4e while Rust main was15db. Root's
+final integration receipts above supersede it: all three defaults match their
+exact final heads, comparisons are captured and claims released. Root owns
+helper-registration continuation; I3 does not duplicate that driver. I3 stops
+source/check work and retains this package's review/CI-fix ownership.
+
+## Go/Rust integration preparation: complete, scoped unit CI passed
+
+The lead released this sole package after capacity confirmation. Root retains
+default integration, repository claims and tooling-registration changes; I3 owns
+the two client feature branches and evidence/fixes. Configuration is a later
+package. No release, deployment, live API, consumer or lifecycle work is included.
+
+Fresh SSH fetches found both defaults unchanged. Exact base/head/tree and complete
+two-commit ranges match the original independently reviewed and checked objects:
+
+| Repository/default | Base | Feature head | Feature tree |
+| --- | --- | --- | --- |
+| Go/master | `5934903568862a95b688479f0b13e11e4a36692f` | `70a29effc9832c5c4d055b53501671ad34608a5c` | `2b37be6ab4af454f062c0101b317d84c00d3faa6` |
+| Rust/main | `15db0ffd95ccd34247de9f839c906d860afb1b69` | `f03bab11b7dd6d88281e334790d6b3897ed33e46` | `3dcaa72fa38d8ada7832f1f685625d5982d8c466` |
+
+```text
+Go:   b98943d103f9fea010594589cee201212bb10362 Regenerate client for the backup-disable API contract
+      70a29effc9832c5c4d055b53501671ad34608a5c Verify backup-disable options and the ordinary receipt
+Rust: 63027b689b444f92c7c493fc6cb0b0e8661cde87 Regenerate client for the backup-disable API contract
+      f03bab11b7dd6d88281e334790d6b3897ed33e46 Verify backup-disable options and the ordinary receipt
+```
+
+Go's full range is14 files/+4361/-25; Rust's is15 files/+3157/-32. Complete
+names/statuses, series, defaults and unchanged review/check basis are in
+[integration source receipt](i3-go-rust-integration-prep.json). No rebase,
+source/index edit, new commit, generator refresh or local test rerun was needed.
+Exact original source/configuration/tests/locks/generator graphs preserve the
+passing evidence below, including destructive-action omission/explicit-false/
+recursive/ordinary-receipt coverage and Rust's pinned/MSRV matrix. Prior reviewer0
+four-lane complete-range conclusions and no-client-findings remain in
+[review.md](review.md). There are no migrations, obsolete D2/fixup paths or
+unconsolidated dependency/generated streams in either final range. The earlier
+normal-hook/commit evidence remains valid; ordinary SSH pushes used no bypass.
+
+Both attached feature branches are named `2026-11-25-backup-disable-design` in
+their existing own worktrees. Canonical remotes remain
+`git@github.com:vpsfreecz/vpsadmin-go-client.git` and
+`git@github.com:vpsfreecz/vpsadmin-rust-client.git`. Push sessions13468/40468
+joined exit0 and created only those feature refs. No default/tag/release was
+written. Go's explicit comparison capture succeeded at the exact base/head.
+Rust's capture and one exact retry refused before mutation because another
+session command held the short writer window. Root can capture the final range
+after the dependent synchronization; no repeated writer wait was started.
+
+Go has no local or GitHub Actions workflows, so there is no unit CI to await.
+Rust exact run45885851668/workflow389779539/attempt1/headf03bab11 started from
+the feature push. Only async/blocking `Test client and examples` steps are the
+requested observation target; MSRV, regeneration, docs/package and the complete
+workflow were not waited on. Runtime observation is unavailable to this member;
+bounded active-parent exact-job reads were used without another watcher.
+Blocking job140136244059 unit step passed UTC19:46:20–19:48:09; async
+job140136244273 unit step passed UTC19:50:38–19:52:21. Scoped observation ended
+at19:53:00Z with both requested unit steps successful. [CI job snapshots](i3-go-rust-ci-jobs.json)
+and [source/completion receipt](i3-go-rust-integration-prep.json) retain evidence.
+Other remote CI jobs remain outside this wait and were left untouched.
+
+**Current-source boundary:** upstream API81e930b→9e98d254 includes two concrete
+declared SystemConfig output additions: nullable Custom `choices` and nullable
+Boolean `value_nullable`. Thus older rawcbe3/actualeb8 proofs are historical
+scoped evidence, not global freshness certification for a future rebased API.
+I1 owns the backend rebase and exact final source; the concrete additions were
+reported directly to I1/architect and root before any freshness claim. Existing
+backup-disable client additions remain forward compatible and independently
+reviewed. No export, new TS release or schema/generator change was started.
+Architect/root accepted the scoped additive finding. The separately allocated
+next package will export final clean rebased source once and synchronize all
+three client streams under `design.md#minimal-final-schema-synchronization-after-rebase`.
+It will add no TS version/tag/release and preserve published0.7.0. This preparation
+package does not start that work. Root accepts existing forward-compatible
+source preparation without requiring interim Go/Rust integration.
+
+**Tooling registrations:** clean `haveapi-i3` is still its initial pinned
+`1ef9b204ba45bb261d3334be5c555cc1856b713b`, tree
+`fda4d5c159746ffa91887ead63197e7b788e0a64`; clean exporter remains historical
+`eb8d111b6e0c318336b818aabeacc3d575ac3279`, tree
+`84a4bded3a29dc0789723574212638fcf38b8935`, initialbase46a4a1c0. Neither
+historical head is an ancestor of fresh default4c126e3b/9e98d254. No authored
+tooling feature requires merging. [Reconciliation recommendation](i3-tooling-registration-reconciliation.json)
+records exact identities and a root-owned ordinary zero-range branch retarget
+after final delivered-default/source assessment, preserving old immutable refs,
+pins, raw receipts and worktree files. It does not propose an obsolete API merge,
+private metadata rewrite, unregister, branch deletion or worktree cleanup. No
+registration/ref mutation was performed by I3. **The actual1ef9 generator checkout
+must remain at its pin until dependent regeneration is finished**; the retarget
+recommendation is deferred, not an immediate action. The generator's newer default
+differs in version/source metadata and is not claimed identical to the fixed pin.
+
+Before each root integration, acquire only that repository's short merge claim,
+freshly check target/head/clean effects, fast-forward with normal hooks, push
+over SSH and verify remote equality, then release before CI or records. Existing
+comparison captures bind these feature ranges; refresh after any actual change.
+No repository claim is held by I3. User's no-full-CI-wait limit remains in force.
+Product docs need no edit for unchanged source; acquisition/recovery docs and
+immutable raw archives remain with their owners, while this integration record
+stays in session evidence. Release-fix and current-package fix ownership retained.
+Final exact-head, clean-worktree/index and complete-range whitespace checks
+passed for both clients. Every local source/push/read command is terminal;
+there is no owned background process, utility or pending native handle. Current
+preparation is delivered/parked with fixes retained. Capacity is available for
+the separately released dependent schema package; no export or regeneration has
+started. Preserve generator1ef9 and all historical raw acquisition/archive refs.
+
 ## TypeScript 0.7.0 published: public artifact identity verified
 
 Root reports protected tag run45804226215/attempt1 terminal success at source

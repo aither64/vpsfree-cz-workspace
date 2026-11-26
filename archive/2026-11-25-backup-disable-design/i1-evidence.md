@@ -1,5 +1,148 @@
 # I1 verification and retained review-runtime evidence
 
+## Configuration vpsAdmin channel — generated, checked and published
+
+The resumed package now pins root's SSH-verified merged vpsAdmin source
+`99207a8dcd92f5907c52dbc99af52b30aa7ecac1` (API tree
+`3f3cd9a11eec7d8694bc6c1777adf708239a56c3`). Configuration's fresh remote master
+remained the clean prepared base `2f470c0fe7745d7dcebfba382df28e9ad367a884`, so
+no rebase was required. Final feature head is
+`2f264616638f4baa464692c02bea9ea76d7ffdde`, tree
+`8880e91d90729afb6137557d4f5b7a32c7ff4b0d`. Its complete one-commit series is
+`inputs: update vpsadminServices to 99207a8d`.
+
+The first normal pinned-shell `confctl inputs channel update --commit vpsadmin
+vpsadmin` completed exit0/39.410s, handle38499. `GIT_EDITOR=true`/`EDITOR=true`
+preserved the generated message noninteractively. Precommit/Nixfmt and commit-msg
+hooks passed; generated72-column advisories were retained. The useful changelog
+contains the four integrated API/PHP/test/menu commits. No message rewrite,
+manual lock edit, hook bypass or unrelated dependency update occurred.
+
+The complete delta is only `flake.lock`,3 insertions/3 deletions. Only the existing
+`vpsadminServices` node's `locked.rev`, `lastModified` and `narHash` change;
+no nodes were added/deleted. All sibling/transitive nodes, originals and follows
+remain equal. Final hash is `sha256-DD4ivXsh7taeFo18M3lgXJuNUqrWfl5lyOM/oFo/krE=`.
+Existing WebUI/vpsAdmin and notification-template/vpsAdmin follows resolve the
+new service input as expected; their channels were not independently updated.
+
+Bounded validation13261 passed exit0/29.922s: normal `confctl inputs check-update`
+against retained baseline, exact `vpsadmin` channel list, direct Nix mapping/revision/
+NAR evaluation and whitespace check. The evaluated mapping remains
+`vpsadmin/vpsadmin` → `vpsadminServices`, exact revision99207. No package/system
+build, deployment/dry-activation, broad tests or full CI wait was run.
+
+Normal pinned-shell SSH publication89657 exited0. Fresh `ls-remote` proves
+`refs/heads/2026-11-25-backup-disable-design` equals exact2f264616 and remote
+`master` remains exact2f470c0f. Feature and prepared detached target are clean.
+The target is
+`worktrees/2026-11-25-backup-disable-design/vpsfree-cz-configuration-integration-target-20261126`
+at2f470c0f. Its existing normal checkout hook and own Bundler setup passed; no
+refresh was needed. Enter `nix develop --no-write-lock-file --command bash`
+before root's claim, then use normal root-owned fresh checks/FF/push/proof.
+Overcommit0.76.0/signature verification1 and all normal hooks remain active;
+Gemfile.lock/hook/config bytes are unchanged. Public session CLI stays outside
+project GEM_PATH, as established by the accepted registration recovery.
+
+Exact base/head/tree, full generated message/series/diff, lock comparison, hook
+identities/trust, resolved source, command logs, prepared target and remote proof
+are in `i1-configuration-final-receipt.json`, `i1-configuration-final.diff`,
+`i1-configuration-{update,validation}.log` and retained baseline/final locks.
+The prior `i1-configuration-prep-receipt.json` preserves the diagnosed startup
+refusal and successful normal existing-registration recovery without recreation.
+
+This is one mechanical generated pin stream with no migrations, fixups, repeated
+updates, host/module changes or new logic; standalone content review is exempt,
+subject to root's final complete history/diff assessment. No new project docs are
+needed for this ordinary channel update. Current source defines only scheduled/
+manual Daily update workflow166934900; no applicable push/spec workflow wait was
+introduced. Root retains comparison capture, claim, default integration and CI
+observation. All I1 update/check/publish/read handles are terminal/joined, with no
+active utility or unknown effect. Source/fix ownership remains I1; no deployment,
+workspace-package, cluster, service, lifecycle or cleanup action occurred.
+
+## Infra integration preparation — published, root merge handoff
+
+The lead released these two independent infra branches for integration preparation
+under the user's explicit all-initiative merge instruction. Root retains comparison
+capture, independent mechanical-equivalence acceptance/certificate, short claims,
+final default comparison/merge/push and CI observation. This packet performs no
+merge, deployment, selected-package switch or cluster operation.
+
+| Repository / SSH origin | Fresh target → published final head / tree |
+| --- | --- |
+| `dev-workspace` / `git@github.com:aither64/dev-workspace.git` | `master` `2a1d58df7c3bb845da4d286ef38989bae01da4a0` → `009e90de32cb926b97f5994c6a46fbeab68c4743`; tree `4a9e89eae30086137fe3ee48e284164cbd199e54` |
+| `vpsfree-dev-workspace` / `git@github.com:vpsfreecz/dev-workspace.git` | `master` `bf12ac71a8a00b1581eed5352f99c1b2daaeff5b` → unchanged `39e7a09eb6afbf14fc5a6b6bea74fd1c0a568b55`; tree `24bdf603f7b7d4951e28198715c7c59a959d2920` |
+
+Both feature refs are `refs/heads/2026-11-25-backup-disable-design`.
+Ordinary SSH pushes succeeded; fresh `ls-remote` verified both exact feature heads
+and targets above. Feature and prepared target worktrees are clean. Generic master
+advanced nine commits; the ordinary conflict-free rebase preserves its one reviewed
+commit. `range-diff` reports `15511ef8 = 009e90de`; stable patch IDs both equal
+`f57c36a02806488c84dbc0b8e0d3ab294d0df5dd`. `git merge-tree --write-tree
+15511ef8 2a1d58df` reconstructs the exact final tree above. The reviewed head is
+retained at `refs/heads/2026-11-25-backup-disable-design-reviewed-15511ef8`.
+The provider needed no rebase; its A1-reviewed predecessor ref is retained.
+
+Complete final series: generic `009e90de host: preserve standard streams for
+cluster SSH`; provider `39e7a09e devcluster: prepare React sources before first
+boot`. Generic remains three paths,117+/4-; provider only its README,28+.
+No obsolete/fixup commits, migrations, repeated dependency/generated-input streams,
+pin changes or deployed infra lineage exist. The relevant SSH dispatch, guard,
+interactive, streaming and capture helper methods are byte-equal to reviewed
+15511ef8. Upstream's host changes concern separate Pi transition compatibility;
+its other documentation/monitor/UI changes do not alter this patch. `flake.nix`,
+`flake.lock` and the affected test fragment/helper inputs are unchanged upstream.
+
+Both Ruby syntax checks and the exact32-method fragment selection through the
+normal aggregate entrypoint PASS on the rebased head:420 assertions, zero
+failures/errors/skips,12.588083s test time; full inline batch52.999s. Both whitespace
+checks PASS. Exact argv, outputs and SHA are retained in
+`i1-integration-prep-quick.log` and `i1-integration-prep-packet.json`.
+Provider unchanged review/organization-source evidence retains its exact scope;
+no unchanged provider test was rerun. The prior four-lane reviewer0/Sol/xhigh
+acceptance and direct narrow A1 acceptance remain the review basis; root owns the
+independent reconstruction/certificate for the mechanical generic refresh.
+
+The historical736.836s package PASS applies to exact15511ef8 only. A changed full
+package derivation is not claimed equal or passed on009e90de. No new package build
+or full CI wait was run, as directed for this specs-only integration release.
+Historical raw JSON/log receipts linked below are unavailable in the present
+tracking directory; the accepted Markdown record remains. They have not been
+silently replaced with fresh or reconstructed execution evidence.
+
+Prepared detached targets under `worktrees/2026-11-25-backup-disable-design/`:
+`dev-workspace-integration-target-20261126` at2a1d58df and
+`vpsfree-dev-workspace-integration-target-20261126` atbf12ac71. Their normal pinned
+Git/Ruby environments were entered successfully; neither repository declares a
+hook framework, installs executable hooks or overrides `core.hooksPath`. No hook
+was disabled. Root should enter the cached environment before taking each claim:
+
+```sh
+# Generic target, then root's normal claim/freshness/ff-only merge/push/proof.
+nix develop --no-write-lock-file --command bash
+# Provider target has no declared devShell; use its pinned nixpkgs tools.
+nix shell --no-write-lock-file --inputs-from . nixpkgs#git nixpkgs#ruby --command bash
+```
+
+Actual workflow identities: generic `Check` ID354263807, feature run45886262132
+(head009e90de); automatic jobs `Essential application contracts` and `Session
+creation smoke`, other three jobs manual-only. Provider `Check` ID355130097,
+feature run45886260143 (head39e7a09e), job `flake`; `Host migration` ID355898750
+has a path filter excluding this README-only patch. One metadata read supplied
+these IDs; no polling, waiting, dispatch or cancellation was performed. Root owns
+which relevant spec job to observe and the user-directed wait boundary.
+
+Complete series, full binary diffs, range-diff, workflow blobs/IDs, exact remotes,
+cleanliness, relevant-method equality, environment paths and effects are in
+`i1-integration-prep-packet.json` and its linked `i1-integration-prep-*.diff` files.
+Project docs remain the accepted provider how-to and generic provider-contract
+reference; no new project-doc change is needed for this unchanged patch refresh.
+All fetch/rebase/quick/environment/push/read handles are terminal/joined; no active
+utility or unknown effect remains. Retained source/fix ownership remains I1.
+Next dependency is root acceptance and normal integration drivers; no I1 default
+branch or runtime action is authorized by this packet. The cluster stays released;
+the session remains open: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-11-25-backup-disable-design/ .
+
 ## Dev cluster stopped and released — accepted terminal outcome
 
 The user explicitly requested stopping and releasing this session's dev cluster.

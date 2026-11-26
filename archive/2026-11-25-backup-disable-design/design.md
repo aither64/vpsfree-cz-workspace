@@ -12,6 +12,169 @@ The user-approved locking simplification below supersedes the broad SQL-lock and
 arbitrary enclosing REPEATABLE-READ guarantees in the initial D3 implementation.
 It preserves the public contract, durable resource locks and safety checks.
 
+## All-source integration and published SDK adoption
+
+**Sufficient settled brief; latest user approval covers all initiative source
+merges and the configuration's `vpsadmin` channel update, with no deployment.**
+Do not wait for full CI; relevant specs workflows are the requested CI gate.
+Root owns merge/push drivers and final acceptance. Owners prepare source and
+evidence in their own worktrees/indexes. Accepted reviews/checks remain reusable
+within their proven scope. Current state records the separately user-requested
+cluster release as complete: prior live-service/fixture descriptions below are
+historical, not authorization to recreate or activate anything.
+
+### Independent I4 published 0.7.0 adoption package
+
+Release this package independently of backend rebase, helper registrations and
+configuration preparation. Start from accepted React
+`39a1f17ce859600d10276da0fe29bfb1593c8132`, branch `dev/disable-backups`, target
+`main`, reconciling fresh upstream under the normal owner workflow. npm 0.7.0 is
+already published and verified from merged/tagged TS
+`0f1cde21a6e3b64a06389d21a5a5124093520724`; public tarball SHA256
+`19fedf46dc72f902fedb055595d1b4de18af58d121bc9dd2ff6bc0234abdafdd` matches its
+retained tag receipt. Reuse that release proof, verifying the selected lock and
+installed dependency against its exact registry SHA512 identity.
+
+I4 owns `package.json`, npm-generated `package-lock.json`,
+`packages/frontend.nix`, removal of the tracked
+`packages/development-sdk/vpsadmin-typescript-client-0.6.0.tgz` and
+`packages/vpsadmin-typescript-client-development.json`, plus directly affected
+`docs/design/{PACKAGING,HAVEAPI_CLIENT}.md` and existing feature work-log text.
+Use pinned npm's ordinary exact-version install/lock operation for
+`vpsadmin-typescript-client@0.7.0`; preserve unrelated lock records and the
+HaveAPI peer. Keep standard `importNpmLock { npmRoot = source; }` and its matching
+`npmConfigHook`, removing only the SDK `packageSourceOverrides` entry. No return
+to an aggregate frontend hash is necessary. BFF dependency inputs/behavior,
+source boundaries, registry guards and UI behavior remain unchanged. Modify
+guard tests only if an actual obsolete archive assertion needs updating; do not
+invent a new provenance or dependency framework. Preserve the separate session
+archive/receipts and retained refs as historical evidence when removing the
+development archive from final source.
+
+Prove exact registry/installed 0.7.0 action, declarations and ordinary wire
+behavior; run focused policy/type/source/package checks and normal quick checks.
+The new dependency inputs require their applicable package-consumption proof;
+old local-archive evidence is not proof of registry consumption. Commit the
+final dependency change and reconcile the complete branch history so temporary
+dependency selection is not left as redundant update commits. Preserve reviewed
+old/new ranges and deployed-source equivalence records. Root reuses accepted UI
+reviews and requests only affected dependency/build/history review as required;
+no repeat browser/OAuth/VM matrix or runtime deployment. This satisfies React's
+published-SDK-before-merge rule without a new TS release or backend integration.
+
+### Source order, owners and final proof
+
+| Owner | Source/default target | Remaining dependency |
+| --- | --- | --- |
+| implementer0 | generic `dev-workspace` 15511ef8 and provider `vpsfree-dev-workspace` 39e7a09e → `master` | Independent; fresh target/rebase equivalence, retained accepted source/package review/checks. No workspace package switch. |
+| implementer1 | `vpsadmin` 3a647f64 → `master` | Fresh upstream/rebase and final specs evidence; preserve separate API/PHP/fixtures/Incidents logical changes. |
+| implementer2 | Go 70a29eff → `master`; Rust f03bab11 → `main`; TS source successor to 0f1cde21 → `main` | Forward-compatible feature plus minimal final-schema refresh below. No release/version bump. |
+| implementer3 | React published-SDK successor → `main` | Independent package above, fresh upstream/PR workflow, final affected review/checks. |
+| implementer0 | `vpsfree-cz-configuration` → `master` | Normal recovery/preparation complete; awaits root's actual merged vpsAdmin SHA, then only the requested channel update. |
+
+The addresses above use the retained implementer numbering; existing team package
+names I1–I4 remain lead-owned. TS 0.7.0 and workspace instruction changes are
+already integrated; verify their remote evidence rather than merge/release again.
+The HaveAPI generator checkout has no initiative delta. The exporter checkout is
+an acquisition helper, not a second application patch to merge. Root/implementer2 reconcile
+those registrations through supported ordinary operations with retained
+provenance; never merge obsolete exporter history or relabel its raw acquisition.
+
+No cross-repository atomic update is required. Infra and React preparation can
+proceed independently; final backend then corresponding Go/Rust and the service
+channel is the straightforward dependency order. Client-first integration also
+remains compatible if its input correspondence is already established. Existing
+capability gating prevents generated members from claiming server availability.
+After any backend rebase, implementer2 binds the new head's complete relevant API/export/
+fixture/tooling graph to the retained schema or reports a real changed contract;
+do not regenerate unchanged schema or republish TS solely because a commit ID
+changed. Conflicting semantic changes return to their owner for focused correction.
+
+### Minimal final-schema synchronization after rebase
+
+Implementer2's bounded comparison found real upstream declarations added to
+`SystemConfig`: nullable Custom `choices` and nullable Boolean `value_nullable`.
+The retained `cbe3` snapshot is therefore not the complete final rebased schema.
+The reviewed backup-disable clients remain forward-compatible, so root may merge
+those exact packages independently; that is not completion of current-source
+synchronization. `docs/api-schema-export.md` requires the final API snapshot and
+affected generated outputs. The smallest sufficient follow-up is source-only:
+
+1. After implementer1 freezes the final clean rebased API, root allocates
+   implementer2 one normal export and canonical comparison against retained raw
+   `50aa`/`eb8` evidence. Preserve old receipts; capture the actual new source.
+   Repeat determinism only when the exporter/fixture/tooling changed or existing
+   determinism proof no longer applies. Use the ordinary disposable exporter
+   database, not a cluster or live API; no broad acquisition audit.
+2. In the existing Go/Rust/TS branches, update saved schema/provenance and their
+   bound generator-input digests, then use the already-pinned generators to
+   regenerate owned outputs. Keep the existing Go input projection. Expected
+   contract delta is only the two additive SystemConfig outputs; inspect the
+   complete canonical/output diff and stop for a consequential unexpected delta.
+   No handwritten transport, generator, peer dependency or API redesign.
+3. Keep TypeScript package version 0.7.0 unchanged in source. Its published tag,
+   tarball and registry entry remain immutable; source ahead of that tag is
+   unreleased synchronization, not a republished 0.7.0 artifact. React continues
+   to consume the actual published 0.7.0, which already includes its required
+   cleanup action. **No new TS release or React version churn is required.**
+4. Run saved-input/offline regeneration checks, focused new-field typing/wire
+   assertions and each changed client's normal compiler/consumer/package tests;
+   preserve full generated-file/deletion accounting. Reuse unchanged feature
+   semantics and accepted reviews. Mechanical generated metadata can use the
+   review exemption, while whole-branch history and any new handwritten behavior
+   still receive their applicable assessment. Wait only relevant specs/unit
+   workflows, not full backend VM CI. Root integrates final source successors
+   with fresh exact remote proof and records completed synchronization separately
+   from already-completed npm publication.
+
+This is a sufficient next source package, not dispatch or permission for architect
+execution. Root sequences it after the current client-prep milestone; configuration
+preparation remains a separate allocation. No stale-schema equality claim or
+silent synchronization waiver is part of this route.
+
+Root accepts routine patch-equivalent rebases under current approval. Owners
+retain exact old/new base/head ranges, range-diff/input evidence and no-migration
+conclusions; accepted final reviews are not restarted for unchanged scope.
+Use the review skill's certified-equivalence or narrow-fix rules where applicable;
+substantive conflicts/new dependency packaging receive affected review. Merge
+claims stay confined to fresh target check, fast-forward merge/push and remote
+verification; release before checks or records. Preserve refs and complete final
+registration/provenance evidence, including any historical nonancestor sources.
+
+### Configuration update and remaining checks
+
+The actual mapping in configuration `flake.nix` is
+`channels.vpsadmin.vpsadmin = "vpsadminServices"`; target is `master`. Once root
+verifies the merged vpsAdmin revision on remote master, the separately allocated
+owner uses its own configuration worktree and normal
+`confctl inputs channel update --commit vpsadmin vpsadmin`. Keep the generated
+history/changelog, inspect the exact resulting revision and transitive lock delta,
+and preserve unrelated inputs/follows. No staging/production, WebUI or workspace
+channel update; no manual lock edits, new host/module change or deploy command.
+If upstream moves before resolution, report the extra range instead of silently
+accepting unrelated source. Run normal hooks and bounded channel/lock evaluation;
+a mechanical pin needs no new standalone content review, but remains in final
+history assessment. Root integrates the prepared configuration commit under the
+same approval; rollback is a new conventional pin change, never a hidden reset.
+Root reports configuration checkout creation stopped in its post-checkout hook
+with missing `bundle`; the clean checkout exists but registration may be absent.
+Its owner must prepare the declared environment and reconcile the existing
+checkout/registration through ordinary commands before a retry. Do not bypass the
+hook, recreate over the checkout or edit private registration state. This does
+not block independent React or other source packages.
+
+Still required: applicable final specs workflows, quick checks for actual changed
+inputs, affected SDK/package-consumption proof, final freshness/history and review
+evidence. Existing API 53+3/node46, PHP actual-client 12/143, React defaults and
+infra package results remain valid only for their proven inputs. I1 reports no
+unresolved failed correctness assertion. Original full storage/PHP VM suites and
+external KB capture certification remain **unrun/uncertified limits**, not source
+merge gates under the latest user direction; do not launch them or recreate the
+released cluster. Do not wait for the broad integration CI workflow or infer its
+success. User CI-wait limits do not turn a failed required spec into a pass.
+No production/development activation, lifecycle cleanup or further registry
+publication follows these merges automatically.
+
 ## TypeScript client 0.7.0 release brief
 
 **Sufficient release-preparation brief; user authorized merging and publishing

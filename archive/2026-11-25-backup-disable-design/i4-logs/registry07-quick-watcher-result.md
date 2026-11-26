@@ -1,0 +1,1 @@
+The single authorized attempt did not start. The specified executable `/bin/bash` is missing, so the wrapper returned exit code 127 before running `nix develop` or writing the requested log and status files. I did not retry or run anything else.

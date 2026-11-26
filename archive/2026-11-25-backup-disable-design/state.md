@@ -1,8 +1,97 @@
 ---
-lifecycle: active
+lifecycle: archived
 ---
 
-# Disable VPS backups: changes verified; TypeScript0.7 published; dev-cluster released
+# Disable VPS backups: source integration complete
+
+**All authorized source and configuration integration is complete.** The final
+SSH audit verifies all 11 registered exact final heads are contained in their
+configured remote defaults and every owning feature worktree is clean. Workspace
+head `56aadac5` is an ancestor of current remote master `6bb0b605`; the other ten
+registrations equal their defaults. No owned claims, reservations, jobs or
+integration operations remain. The session stays open; the development cluster
+remains stopped and released.
+
+- [x] Implementation, applicable independent reviews and required checks accepted.
+- [x] All registered source heads delivered to their remote defaults.
+- [x] Configuration channel `vpsadmin` / role `vpsadmin` updated and merged.
+- [x] Final remote-head audit and handoff recorded; no remaining authorized work.
+
+Configuration master is `2f264616638f4baa464692c02bea9ea76d7ffdde`, selecting
+vpsAdmin `99207a8dcd92f5907c52dbc99af52b30aa7ecac1`. The one generated commit
+changes only `vpsadminServices.locked.rev`, `lastModified` and `narHash`; all
+other nodes and follows are unchanged. Normal channel checks and hooks passed.
+Root inspected its full history/diff and applied the mechanical lock-update
+review exemption: one consolidated stream, no migrations or new logic. Normal
+Nix-shell fast-forward and SSH push passed, fresh remote equality was proved,
+and claim `08bce3fe` was released before the disposable target was removed.
+[Configuration receipt](vpsfree-cz-configuration-integration-receipt.json),
+[owner evidence](i1-evidence.md), [all registered heads](final-registered-heads-audit.json).
+
+Requested verification passed on the delivered heads: API Specs run
+45890220538 has all 27 jobs successful (26 topics and exact-once coverage);
+libnodectld run 45890220531 and WebUI PHPUnit run 45890220513 also succeeded.
+Client local/package checks and scoped Rust unit CI passed; TS build CI passed
+with publication skipped. The reviewed React registry selection passed the
+matching five-target Nix package proof. Full CI and the parked storage/PHP VM
+suites were not additional wait gates under the user's instruction. No new live
+API/storage or external KB certification is claimed.
+
+Published TypeScript 0.7.0, its tag and archive remain immutable. The later
+SystemConfig source synchronization is merged without another release or React
+version change. Its raw schema truth remains actual API acquisition `5725`,
+with final `99207` input equivalence proved for the sole test-inventory change.
+Historical missing untracked raw captures remain a disclosed evidence limit.
+No production deployment or package activation was performed in this final
+integration phase. There are no remaining merge blockers or operator actions.
+
+| Registration | Final head | Remote default |
+| --- | --- | --- |
+| dev-workspace | `009e90de32cb` | `master` |
+| haveapi-i3 | `4c126e3b0ed2` | `master` |
+| vpsadmin | `99207a8dcd92` | `master` |
+| vpsadmin-export-i3 | `99207a8dcd92` | `master` |
+| vpsadmin-go-client | `c91d9aeb04c2` | `master` |
+| vpsadmin-rust-client | `1ea32ccac64e` | `main` |
+| vpsadmin-typescript-client | `c4e0b85b9f12` | `main` |
+| vpsadmin-webui | `ed4e67a9db36` | `main` |
+| vpsfree-cz-configuration | `2f264616638f` | `master` |
+| vpsfree-dev-workspace | `39e7a09eb6af` | `master` |
+| workspace | `56aadac5808e` | `master` |
+
+
+Documentation and ownership: accepted project documentation/review conclusions
+remain linked in [API/PHP evidence](i2-evidence.md), [client evidence](i3-evidence.md),
+[React evidence](i4-evidence.md) and [infrastructure/configuration evidence](i1-evidence.md).
+The routine channel update needs no separate product document. Implementers
+retain fixes; all packages are accepted and execution is parked. Historical
+checkpoints below preserve their original evidence and are superseded by this
+completion summary wherever they describe pending work.
+
+Portal: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-11-25-backup-disable-design/
+
+## Integration authority and earlier milestones
+
+User clarified: “there's probably been a misunderstanding. i wanted all the changes merged, not just the typescript client”. This explicitly authorizes the remaining registered initiative changes into their configured remote defaults: vpsadmin/master, Go client/master, Rust client/main, React WebUI/main, generic dev-workspace/master and vpsfree-dev-workspace/master; TypeScript/main and workspace rules are already integrated. Retained HaveAPI/export registrations will be reconciled without merging obsolete acquisition history. User additionally requested “vpsadmin channel updated in vpsfree-cz-configuration”; this adds its normal channel update and master integration. User directed rebasing as necessary and “we won't wait for full CI, specs workflows are fine.” Wait only for relevant specs workflows; preserve other CI results as pending where applicable. No production deployment, package selection, cluster recreation or session lifecycle action is authorized or planned.
+
+Historical tooling reconciliation complete: registered HaveAPI helper now equals remote master `4c126e3b`; exporter helper equals delivered API `99207a8d`. Both used ordinary empty-range rebases with clean final trees. Actual generator `1ef9`, exporter `eb8` and acquisition `5725` refs and truthful receipts are preserved. Client generator pins remain unchanged. No obsolete history was merged and no private registration metadata was rewritten. [Reconciliation record](i3-tooling-registration-reconciliation.json).
+
+vpsAdmin integration complete: remote master is exact `99207a8dcd92f5907c52dbc99af52b30aa7ecac1`, tree `3f3cd9a11eec7d8694bc6c1777adf708239a56c3`. All26 API topics plus coverage pass, as do node/PHP specs. The initial ambient push refusal was diagnosed as Overcommit0.71 versus the declared0.76 trust store; I1 proved normal pre-push readiness without changing signatures/hooks/source. Root final push69188 ran inside the pinned shell, passed normal hooks and fresh SSH equality; both claims released and temporary target removed. [Integration](vpsadmin-integration-receipt.json), [API specs](vpsadmin-final-api-specs.json). I0 has received the actual merged SHA and resumed the normal configuration channel update; no deployment.
+
+Final client review accepted: reviewer0 (saved Sol/xhigh/read-only) reports no findings in all four affected lanes on Go c91d9aeb, Rust1ea32cca and TS c4e0b85b, including complete histories, no migrations, consolidated streams and unchanged release boundaries. Go c91d9aeb is now FF merged into remote master with exact SSH equality; claim48c32340 released and disposable target removed. [Go integration](vpsadmin-go-client-integration-receipt.json). TS c4e0b85b is now FF merged into remote main with exact SSH equality; claim4e9f8837 was granted, used and released. Disposable target removed. [TS source integration](vpsadmin-typescript-client-integration-receipt.json). Published0.7/tag0f1 remains untouched. Rust async and blocking unit steps passed on45890499683. Rust1ea32cca is now FF merged into remote main with exact SSH equality; claim81d739fa released and disposable target removed. [Rust integration](vpsadmin-rust-client-integration-receipt.json). All local client checks passed, including TS exact branch build. [Source series](i3-final-sync-source-series.json), [final API correspondence](i3-final-sync-final-api-equivalence.json).
+
+React integration complete: `ed4e67a9db36758a7b3549141a0e348a4acf03be` is now fast-forward merged into canonical remote main, with fresh SSH equality. PR337 belongs to this task. Matching five-target Nix build passed once in108.769s; realized registry SDK hash/integrity and frontend/BFF clean metadata match the reviewed source. Root rechecked the complete two-commit history and unchanged final range, then ordinary merge8825/push1555 both exited0. Claim7b8cf6c4 was released immediately. No deployment or full-CI success claim. [Package proof](i4-logs/registry07-nix-output-receipt.json), [integration](vpsadmin-webui-integration-receipt.json).
+
+React published-SDK review: reviewer0 (retained Sol/xhigh/read-only, four lanes) reports no findings on final `ed4e67a9db36758a7b3549141a0e348a4acf03be`, tree `385d8e6e28a7bc641d748f80166a31e3c05defc8`. Complete e311 → unchanged37a2 UI → consolidateded4e SDK history accepted, no migrations or obsolete dependency stream. Root inspected exact two lock records, Nix override removal and documentation fidelity; 12 policy +41 wire tests and one158.062s quick pass bind final tree. Matching five-target package-consumption proof is complete; no runtime action. New actual API5725 export schema7088ef00 adds only nullable `choices` and `value_nullable` on SystemConfig index/show/update outputs; I3 is generating final corresponding sources without a new publication.
+
+Integration milestone: provider `39e7a09eb6afbf14fc5a6b6bea74fd1c0a568b55` and generic runtime `009e90de32cb926b97f5994c6a46fbeab68c4743` are now fast-forward merged into their remote masters, with exact SSH equality and released claims. [Provider receipt](vpsfree-dev-workspace-integration-receipt.json), [runtime receipt](dev-workspace-integration-receipt.json), [root review-reuse proof](i1-integration-review-reuse.json). Root independently reconstructed generic final tree and confirmed the complete single-commit patch is unchanged. No activation occurred. I0 now owns configuration hook recovery/channel preparation; I2 owns the required final-schema source refresh; I1 final vpsAdmin head is5725a099 on9e98, published and clean. Node-daemon specs45887308305 and PHP tests45887308318 pass; API Specs45887308287 remain in progress. Runtime monitor refused caller authority before registration, so root uses bounded direct reads of only the requested specs. Full integration CI remains outside the wait gate.
+
+Current integration findings: vpsAdmin master advanced to `9e98d254277114535715353edfd5ddd77fab235e` (11 commits); normal rebase has only the expected generated Czech MO conflict. Generic runtime master advanced to `2a1d58df7c3bb845da4d286ef38989bae01da4a0` (9 commits); provider, Go, Rust and React bases are unchanged. Upstream vpsAdmin adds `SystemConfig.choices` and `value_nullable`, so the architect's [minimal final-schema synchronization brief](design.md#minimal-final-schema-synchronization-after-rebase) requires one actual final-source export and generated Go/Rust/TS source refresh. Published TS 0.7.0 remains immutable and sufficient for React; no additional release. Original full storage/PHP VM and external KB certification remain disclosed limits rather than merge gates under the user's latest instruction.
+
+Configuration setup: normal `dev-session worktree add` created the clean checkout at `2f470c0fe7745d7dcebfba382df28e9ad367a884` but its existing post-checkout hook failed because its bundle is not installed (tool93998 exit1, Git78). No source change or hook bypass occurred. Owner will prepare the declared environment and reconcile registration through the ordinary command; do not recreate the checkout or edit private records. TS main and peeled tag were freshly verified at0f1; workspace master6bb0b605 retains integrated56aadac5.
+
+Package owners: architect0 dependency/verification brief; implementer0 configuration channel update after actual API merge; implementer1 vpsadmin inventory correction/specs; implementer2 client synchronization and historical source mapping; implementer3 accepted React package with retained fix ownership. Root owns approval interpretation, final merges and coordination. Prior snapshots below are historical and their merge-approval limits are superseded by this explicit instruction.
+
 
 **CURRENT OUTCOME: user-requested dev-cluster stopped and released, verified.**
 Root normalservice edge/BFF51266 and Vite99611 stops passed; exact remote

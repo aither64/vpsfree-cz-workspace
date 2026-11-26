@@ -1,5 +1,241 @@
 # I4 consolidated history and verification packet
 
+Status: **React integration preparation is accepted and integrated; implementer3
+is parked with fix ownership retained.** Reviewed/built final source
+`ed4e67a9db36758a7b3549141a0e348a4acf03be`, tree
+`385d8e6e28a7bc641d748f80166a31e3c05defc8`, is now remote `main` following the
+lead's ordinary fast-forward integration. [PR337](https://github.com/vpsfreecz/vpsadmin-webui/pull/337)
+reports merged at2026-11-26 20:16:55Z. All owned verification/publication handles
+were terminal/joined before handoff. No new checks, publication, browser, VM,
+fixture or runtime action followed acceptance. Full CI and deployment are not
+claimed. Earlier live-service descriptions below are historical; this package
+did not recreate the released cluster.
+
+## Accepted root integration
+
+The lead accepted the exact reviewed source and actual five-target package proof,
+captured the final comparison, verified PR/head/main and performed the claimed
+fast-forward plus SSH default push. The
+[integration receipt](vpsadmin-webui-integration-receipt.json) binds repository
+`git@github.com:vpsfreecz/vpsadmin-webui.git`, target `main`, base
+`e311b1c0af0f50fa4c6f6ce83c514c1a866eb042` and final fullhead/tree above.
+Root's merge session8825 and push/remote-proof session1555 exited0; fresh remote
+main equality is recorded. Claim `7b8cf6c4-aa32-4866-9567-f33e85fa65b8` is
+released. Root removed the clean disposable merge target. Final two-commit history,
+single SDK stream and no-migrations conclusions remain accepted. Older deployed
+nonancestor refs remain historical provenance, without relabeling them as merged.
+
+Only this existing evidence consolidation followed the root's integration
+acceptance. Source, retained refs/output roots and runtime/user data were not
+changed by implementer3. No local operation remains active. Any later relevant
+finding returns to implementer3; no further work is queued or launched.
+
+## Actual matching registry build and publication
+
+Reviewer0's affected four-lane final review was accepted without findings,
+including full history/single dependency stream/no migrations/docs/checked-tree.
+Root released frozen build packet SHA256
+`8ede91fce05b6fe2c8e89b9955602e14ccd1b560a78733eb2d33a39e367eae91`.
+Fresh admission resolved actual3y9/schema6/catalog1184/native84d96 Luna/low,
+full-access/never, existing absolute Bash,44.9GiB available RAM and83.4GiB free
+disk. Fresh native01a21979 ran the first actual exact five-target command once,
+jobs2/cores2, rooted outputs, under active parent: **exit0,108.769s**.
+No watcher fallback, retry, full suite or runtime action was needed.
+
+[Actual output receipt](i4-logs/registry07-nix-output-receipt.json), SHA256
+`e3d26fba10057fbae55d3ba9ed567266d9eeed2847309cbf5abde10eb3fcabc5`,
+binds all five actual outputs/derivations, actual clean matching metadata,
+registry acquisition, source/content markers, NAR and effects:
+
+| Target | Actual output |
+| --- | --- |
+| Frontend | `/nix/store/5nc9lzj7rh912rdsvvfmzy8c9wjw7sjp-vpsadmin-webui-frontend-1.0.0` |
+| BFF | `/nix/store/jxx07agpbj5fzp050jfg992v96gsw7jb-vpsadmin-webui-bff-0.1.0` |
+| Provenance | `/nix/store/p3vlsh9drr8mjjvahb4h4sy3r915n6sn-vpsadmin-webui-provenance` |
+| Source contents | `/nix/store/f38j96p03ab34nz6akw6j6sxzgqpk9i9-vpsadmin-webui-source-contents` |
+| Package contents | `/nix/store/jpvbvk8inc81vqkg1fral78klswmd44s-vpsadmin-webui-package-contents` |
+
+Actual output paths equal the frozen packet. Actual derivations and paths also
+match [post-terminal Git-aware evaluation](i4-logs/registry07-post-evaluated-identities.json).
+The initial prepared evaluation used `outPath` as an attribute, so Nix JSON
+coerced those objects to paths; only output paths were frozen, not separate drv
+fields. Postproof records the actual derivations and uses distinct field names.
+The first reader also assumed the older `nix derivation show` JSON layout; its
+read-only KeyError was corrected for version4's structured envelope. Neither
+correction reran a build or changed source or the frozen packet.
+
+Both actual metadata files parse equally to full clean
+`ed4e67a9db36758a7b3549141a0e348a4acf03be`, short `ed4e67a9db36`, false dirty,
+source `environment`. Exact copies:
+[frontend](i4-logs/registry07-frontend-build-info.json),
+[BFF](i4-logs/registry07-bff-build-info.json).
+The realized frontend's npm-dependency derivation selects actual SDK fetch drv
+`/nix/store/y2yrsmbwdikyd7asfks7qlfalzs45hjy-vpsadmin-typescript-client-0.7.0.tgz.drv`.
+Its URL and fixed SHA512 equal the lock. The realized archive
+`/nix/store/5shrdsvmj4wiv26gjz70ppd2lca6aw4n-vpsadmin-typescript-client-0.7.0.tgz`
+is348596 bytes and has SHA256
+`19fedf46dc72f902fedb055595d1b4de18af58d121bc9dd2ff6bc0234abdafdd`.
+The actual cleaned source selects registry0.7 and has no temporary SDK
+archive/provenance/override. Compiled assets contain the public operation's
+endpoint, `backup_first` and retained backup control. Prior installed method,
+declaration and wire checks are bound to these exact archive bytes; no1392-file
+reaudit or new UI/browser proof was claimed.
+
+[Effects](i4-logs/registry07-build-effects.json) and
+[native command items](i4-logs/registry07-native-command-effects.json) establish
+all three native commands terminal, parent tool74427 joined and exact
+CLI509552/parent509506/runner513494 absent. Postproof27430 and publication
+7957/71405/69853 also joined. All five new roots beginning
+`i4-logs/nix-result-registry07-ed4e67a9-1547d2` and all older roots/refs remain.
+[NAR/reference receipt](i4-logs/registry07-nix-path-info.json) is retained.
+
+The exact feature branch was pushed over SSH, then only this task's normal
+[PR337](https://github.com/vpsfreecz/vpsadmin-webui/pull/337) was created against
+`main`, with scoped behavior/dependency/history and actual validation. No GitHub
+merge was used. [Final publication proof](i4-logs/registry07-final-publication.json)
+binds fresh SSH branch ed4e, remote main e311, PR head/base/state and clean source.
+Clean disposable target `worktrees/2026-11-25-backup-disable-design/vpsadmin-webui-merge`
+remains detached at exactmain e311 with prepared normal hook/identity environment.
+At publication handoff, root retained the fresh claim/target check/comparison
+capture/FF merge/default push; the accepted integration above completes them.
+Automatic current-head nonbrowser/build/browser jobs were in progress/queued at
+handoff; no full CI wait, extra observer or cancellation of current runs occurred.
+
+## Published 0.7.0 adoption: final source and review packet
+
+The user authorized all initiative source integration. The accepted
+[architect brief](design.md#all-source-integration-and-published-sdk-adoption)
+requires replacing the development SDK with published `0.7.0` before React merge.
+This package follows that brief without UI, API, SDK generation, BFF behavior,
+HaveAPI, other dependency, generic-component or runtime changes.
+
+Repository `git@github.com:vpsfreecz/vpsadmin-webui.git`, branch
+`dev/disable-backups`, target `main`; worktree
+`/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-11-25-backup-disable-design/vpsadmin-webui`.
+Fresh SSH checks before and after the change resolve default `main` to
+`e311b1c0af0f50fa4c6f6ce83c514c1a866eb042`; no rebase was needed. No remote
+feature ref or existing PR for `dev/disable-backups` exists yet. Unrelated PRs,
+branches and worktrees were left intact.
+
+Complete final base-to-head series:
+
+1. `37a2ff84faa1aef9579fd4cac1dca41989888ff5` — accepted cleanup UI, unchanged.
+2. `ed4e67a9db36758a7b3549141a0e348a4acf03be` — one final published SDK selection.
+
+The owning dependency commit was amended rather than leaving repeated temporary
+selection/adoption commits. Old reviewed/deployed `39a1f17c` is retained at
+`refs/dev-session/2026-11-25-backup-disable-design/i4-registry07-reviewed-39a1f17c`;
+UI `37a2ff84` has a separate retained ref. Original `1d895`, checked pre-fold,
+ff2/18597 refs, roots and historical receipts remain retained. The old deployed
+heads are nonancestors, not literally merged. Final tree and full binary delta
+exactly equal the checked frozen source. There are **no migrations**, obsolete
+fixups, duplicate dependency streams or newly retained compatibility paths.
+Full branch delta is 26 files, +1209/-87; the final history contains no local SDK
+archive. The preserved archive/provenance copy remains ignored in session logs.
+
+Evidence: [source/effects receipt](i4-logs/registry07-final-source-receipt.json),
+[complete series](i4-logs/registry07-final-series.txt),
+[full final diff](i4-logs/registry07-final-full.diff),
+[affected diff from39a1](i4-logs/registry07-final-review.diff),
+[old/new range diff](i4-logs/registry07-final-range.diff), and
+[checked binary delta](i4-logs/registry07-checked-full.diff).
+
+Only ten paths differ from39a1: root manifest/lock, frontend Nix, deletion of the
+local SDK archive/development provenance, PACKAGING/HAVEAPI_CLIENT, REQ-068's
+status clause, feature work-log and WORK_LOG index. The manifest selects exact
+`vpsadmin-typescript-client@0.7.0`; npm changed only the root SDK selector and
+SDK lock record. All other lock records and the exact HaveAPI0.32.0 peer remain
+unchanged. `importNpmLock { npmRoot = source; }` and its matching hook remain;
+only the SDK archive override was removed. BFF graph/hash and source guards
+are unchanged. `src/`, BFF, scripts, E2E, Nix source/provenance helpers, flake
+inputs and workflows all match39a1 byte for byte. Prior accepted UI/defaults
+reviews and visual evidence retain that precise scope; the old local-archive
+acquisition proof is not claimed as registry consumption evidence.
+
+Actual registry archive: 348596 bytes, SHA256
+`19fedf46dc72f902fedb055595d1b4de18af58d121bc9dd2ff6bc0234abdafdd`.
+Its SHA512 exactly equals the npm-generated lock:
+`sha512-dZ1ZfGkrnd0V7jZgLnkaMOIlTYTjz8p16IJjKieHIIUzWLQ3FYsq50i+U2q3PPxCunJNRnmjbhDj+kCPE6mVCw==`.
+Accepted source/tag release proof binds SDK `0f1cde21a6e3b64a06389d21a5a5124093520724`;
+this package did not regenerate, rebuild or publish the SDK. Pinned npm performed
+ordinary exact lock selection, clean installation and registry packing. Installed
+public JS/declaration entries and cleanup action JS/declarations match the archive;
+actual `createClient().dataset.disable_backups` is a public function. The
+[registry input receipt](i4-logs/registry07-input-receipt.json) records these
+bounded proofs without repeating a full generated-file audit.
+
+Quick results on the checked source:
+
+- Source/package-content checker fixtures: **12/12 PASS**.
+- Existing actual SDK/HaveAPI adapter/wire tests: **41/41 PASS**, three files,
+  9.65s. Includes omitted/false/true cleanup booleans, one ordinary POST, empty
+  dataset plus action-state receipt and missing-receipt uncertainty.
+- First actual `nix develop --command npm run ci:quick`: **exit0,158.062s**,
+  including installed declaration/type checks and required audits. No unchanged
+  full unit/browser matrix, audit expansion or second quick run.
+
+Logs: [focused](i4-logs/registry07-focused.log),
+[quick](i4-logs/registry07-ci-quick.log),
+[timer](i4-logs/registry07-ci-quick-timing.log),
+[status](i4-logs/registry07-ci-quick-status.json), and
+[frozen input](i4-logs/registry07-final-quick-input.json).
+Configured contributor author/committer identities were verified in the pinned
+shell. No Git hook framework, hooksPath override or executable non-sample hooks
+were declared/installed; the normal commit ran without bypass.
+
+The fresh current3y9/schema6/catalog1184/native84d96 Luna/low/full-access/never
+watcher was launched under active parent. The parent's brief chose missing
+`/bin/bash`; native command item3 returned127 before any Nix/quick dispatch.
+All check log/timer/status paths were absent and native CLI102671/parent102649
+were absent after tool93297 joined. The raw refusal is preserved; no replacement
+or repair loop ran. Visible parent fallback used verified existing
+`/run/current-system/sw/bin/bash` for the first actual quick command.
+[Zero-dispatch receipt](i4-logs/registry07-quick-zero-dispatch.json) and
+[current policy](i4-logs/registry07-current-utility-policy.json) preserve the
+correction. Parent quick95556, commit9017, evaluation29120 and all earlier owned
+handles are terminal/joined; no active watcher/check remains.
+
+Documentation routing and fidelity:
+
+| Topic | Reader/class | Authoritative home | Evidence/boundary |
+| --- | --- | --- | --- |
+| Published SDK/artifact/action contract | Developers/reference | HAVEAPI_CLIENT.md + exact manifest/lock | Registry digest, installed action/types/wire; published release proof reused |
+| Reproducible dependency selection and rollback | Maintainers/how-to | PACKAGING.md | Standard importer/hook, BFF isolation; supported optional unpublished recipe preserved |
+| Package requirement | Maintainers/reference | REQ-068 | Status-only published-prerequisite correction; generic optional archive contract retained |
+| Development acquisition and adoption history | Contributors/execution record | Existing 2026-11-25 feature work-log + WORK_LOG index | Historical identities and failed prefetch truth preserved; current runtime not implied |
+| Review/build/effects evidence | Lead/reviewer/session record | This packet and linked receipts | Actual checks distinguished from pending Nix consumption; no deployment claim |
+
+Root directly applied the vpsFree English writing/fidelity pass and supplied the
+bounded final corrections before commit. Required design-doc audits passed in
+ci:quick. Historical unpublished39a1 GitHub-link availability was not assumed;
+its local provenance identity/ref is retained, while the existing publice311
+provenance link remains. Product EN/CS copy and terminology were not changed.
+
+A clean disposable detached merge target is prepared at
+`worktrees/2026-11-25-backup-disable-design/vpsadmin-webui-merge`, exactmain e311,
+with normal configured identities and the same no-declared-hook environment.
+No repository claim, merge, default push or integration driver ran. At that preparation checkpoint, root retained final comparison capture, fresh
+target/claim/hooks/FF push and remote proof; the integration above completes them.
+
+### Retained preparation receipt (actual result above)
+
+[Build packet](i4-logs/registry07-build-packet.json), SHA256
+`8ede91fce05b6fe2c8e89b9955602e14ccd1b560a78733eb2d33a39e367eae91`, binds
+cleaned4e67/tree385d, Git-aware expected five output paths, exactordinary
+`nix build` argv, jobs2/cores2, unique retained root prefix and log/timer/status.
+Evaluation succeeded; that prediction alone was **not actual build evidence**.
+The actual build and postproof above now establish the selected packages.
+Affected committed review precedes the first matching frontend/BFF/provenance/
+source/package-content build. Postproof must establish actual registry fetch
+identity/integrity, realized outputs, matching fullclean metadata, SDK/action
+markers, contents/NAR/roots and joined effects. No browser/OAuth/VM/runtime/deploy
+is part of adoption, and no full CI wait is requested. Feature publication and
+required PR follow root's affected review/check sequencing; root retains merge.
+
+Stable session: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-11-25-backup-disable-design/
+
+## Historical accepted defaults package
+
 Status: **The final React defaults package is accepted and parked with
 review-fix ownership retained.** Source/quick checks, all four review lanes,
 the actual five-target build, runtime health and the first37.712s real defaults
