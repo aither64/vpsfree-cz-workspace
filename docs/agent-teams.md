@@ -300,10 +300,14 @@ architect, implementer or reviewer prompts, or change existing rosters. Use
 explicit bounded assignments within saved role authority; prompt or roster
 reconfiguration still requires explicit user direction. Surface an actual conflict
 between saved instructions and an assignment to the lead for resolution; do not
-silently change settings or take over the work. Before a new progress
-check, recognized stock observer instructions are refreshed
-on the same idle native thread, preserving history, model and effort. Manual work
-or uncertain submissions defer the refresh. Custom instructions remain unchanged.
+silently change settings or take over the work. Before a new progress check,
+the runtime refreshes only recognized historical stock observer instructions to
+its specific migration targets on the same idle native thread, preserving
+history, model and effort. This does not copy the latest site-catalog prompt into
+retained observers. Catalog edits reach newly selected observers after separate
+package deployment; retained observers may keep their previous prompt. Manual
+work or uncertain submissions defer recognized refreshes. Custom instructions
+remain unchanged.
 
 ## Independent progress observation
 
@@ -365,14 +369,29 @@ runtime session guide for scheduling and recovery details and the
 [verification procedure](agent-instructions/verification.md#keep-verification-proportional)
 for batch limits. Observations and responses add no review or approval gate.
 
-The observer considers the cost of repeated test/fix cycles across the session.
-It should flag expensive runs that repeatedly expose basic type or fixture
-errors and suggest a focused check against the actual failing interface before
-another full run. Its recommendation states the expected cost, the evidence
-that check provides and the remaining integration requirement. It also
-challenges redundant evidence work and unnecessary approval checkpoints.
-Existing timestamps and results are sufficient; this guidance adds no timing
-collector and does not let the observer cancel checks or waive acceptance.
+The observer considers cumulative test/fix cost and new information across the
+session. It challenges costly runs that expose basic syntax, type, dependency or
+fixture errors one at a time, and verification infrastructure growth
+disproportionate to delivery risk. It asks the lead to reassess the implementation,
+design and verification strategy: distinguish product/design flaws from
+test-environment problems, simplify where warranted and name the uncertainty
+the next check resolves. Successive small fixes alone need not resolve a concern;
+necessary long checks with a concrete acceptance purpose remain legitimate.
+Before another expensive run, recommend bounded diagnosis of the shared cause
+and related affected paths, then batch related fixes; independent fixes may
+proceed. Prefer the smallest faithful existing check against the real failing
+interface or dependency, stating its expected cost, evidence and remaining
+integration limits. Use completed failed-job evidence promptly while the owner
+observes unrelated jobs, and reuse unchanged passing evidence within its proven
+scope. Avoid repeated unmodified runs and turning incidental environment trouble
+into a verification-infrastructure project. The observer also challenges
+redundant evidence work and unnecessary approval checkpoints. Use available
+timestamps and results without inventing timings or summing overlapping work;
+this adds no timing collector. Required independent review and full final
+acceptance checks remain. Faster diagnosis must preserve assertions, expose
+failures and report untested behavior honestly. The observer remains advisory
+and read-only, without authority to edit, run checks/builds, assign work, cancel
+development checks or waive requirements.
 
 For delegation concerns, identify the concrete work, assigned ownership and
 missing reason from existing assignments, reports, conversations or diffs. Flag
