@@ -1,0 +1,4 @@
+- **Result:** Failed, exit status 1; elapsed time 16 seconds. All 8 tests failed at browser launch because the specified Chromium executable does not exist at `/nix/store/7d79gfynv59x9lv4dd3n6haqw5kl4jcq-chromium-154.0.8037.57/bin/chromium`.
+- **Revision:** `a28c59c6ee5e62bf27f4858b266ea2e5ef5f62f2`. The exact requested batch ran once; no retry or diagnosis was performed.
+- **Evidence:** Full log at [c-browser.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-26-oauth-dark-theme/c-browser.log). No screenshots were captured.
+- **Operation accounting:** Command session 47461 completed. No other watcher cells or command sessions were started. The registered Vite service remains running as instructed.

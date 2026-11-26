@@ -1,0 +1,5 @@
+- **Result:** Failed, exit status 1. The script ran once and stopped at the first failing step.
+- **Elapsed:** About 70 seconds. Tested base: `1bf7c120beaf21f7fd30f4b75441d4b835bc57af`; the script verified the HaveAPI source archive hash before preparation.
+- **Failure:** Focused RSpec failed in `before(:suite)` with `HaveAPI::ClientExample::Profiles::Invalid: Documentation Go generator version mismatch`. Zero examples ran. The DB-free specs and lint did not run.
+- **Logs:** The script references [b-next-check.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-26-oauth-dark-theme/b-next-check.log), but that file was not created. Captured command output is in [b-next-check-native.jsonl](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-26-oauth-dark-theme/b-next-check-native.jsonl); the bounded failure excerpt is above.
+- **Remaining effects:** No test, Nix, or MariaDB process remained. The prepared HaveAPI source archive remains under `/tmp/oauth-haveapi-source.ctKvNH`. No retry or diagnosis was performed.

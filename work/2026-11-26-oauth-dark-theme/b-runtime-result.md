@@ -1,0 +1,6 @@
+- **Result:** Passed, exit status 0.
+- **Command:** `bash /home/aither/workspace/ai/vpsfree.cz/work/2026-11-26-oauth-dark-theme/b-runtime-check.sh` — one invocation; script SHA256 matched `9bd1e35e4bf20b9407379160e1b12a2def1a1bf243427ca5b1c3fb6a7c243371`.
+- **Input:** Owner-frozen vpsAdmin B runtime/spec/Gemfile tree based on `1bf7c120beaf21f7fd30f4b75441d4b835bc57af`; prepared HaveAPI `439beea801df3139b7154283a171f53c68295939` (`0.32.0`) and pinned generators `0.32.2`.
+- **Duration:** 139 seconds.
+- **Evidence:** [b-runtime-check.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-11-26-oauth-dark-theme/b-runtime-check.log). The five mounted provider examples passed (`5 examples, 0 failures`); the database-free checks passed (`15 examples, 0 failures`).
+- **Quiescence:** Command session `26113` exited; no other operation-owned cells or sessions were started.
