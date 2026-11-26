@@ -175,6 +175,23 @@ need them. For machine reservations and release, follow
 [machine retention](docs/coordination.md#machine-retention), preserving existing
 recovery contracts.
 
+## Existing UI conventions
+
+When changing an existing UI, inspect comparable forms and actions first. Reuse
+the owning UI’s established components, helpers and conventions for layout,
+defaults, validation, confirmation, submission, in-progress/success/error
+feedback, navigation and return-page content. Use its normal action-feedback
+mechanism, such as the PHP perex; do not add bespoke result pages, status polling,
+task/log screens or interaction patterns when an existing pattern covers the
+requested behavior.
+
+Preserve authorization, data safety and retry safeguards through the UI’s
+established mechanisms. A departure requires an explicit user requirement or a
+concrete limitation established before implementation; record the reason and use
+the smallest compatible extension. Include consistency with neighboring forms
+and actions in implementation acceptance and independent final review. Tests
+that prove a custom flow works do not establish that it fits the UI.
+
 ## Portal backend interfaces
 
 Before designing, implementing or reviewing portal/backend interfaces, read the
