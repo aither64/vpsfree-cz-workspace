@@ -406,3 +406,21 @@ messages queued until ordinary user-authorized execution resumes. Their model,
 effort, collaboration mode, instructions and task remain their own. See the
 [runtime communication guide](https://github.com/aither64/dev-workspace/blob/master/docs/session-communication.md)
 for CLI arguments, delivery status and recovery.
+
+### Autonomous session coordination
+
+Leads should resolve routine dependencies, scheduling conflicts and operational
+handoffs directly through approved communication channels. They may perform
+necessary, reversible coordination actions on resources they own without
+additional user confirmation, including when those actions support another
+session’s work.
+
+Do not request approval merely because an action crosses initiative boundaries
+or briefly interrupts development work. Prepare recovery, preserve user state,
+verify results and report material effects. Ask only when the action expands
+substantive scope, exceeds existing authority, creates significant disruption
+or irreversible consequences, or conflicts with an explicit user constraint.
+
+Each lead retains control of its own resources. Separate approval requirements
+for integration, publication, production changes and session lifecycle actions
+still apply.
