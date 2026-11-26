@@ -1,5 +1,5 @@
 ---
-lifecycle: archived
+lifecycle: active
 ---
 
 # Disable VPS backups: changes verified; TypeScript0.7 published; dev-cluster released
