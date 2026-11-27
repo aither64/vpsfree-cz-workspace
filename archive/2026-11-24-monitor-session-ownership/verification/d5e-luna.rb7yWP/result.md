@@ -1,0 +1,3 @@
+**Result: incomplete; exit status not applicable.** I did not launch the command.
+
+The pinned revision and script hash matched, and the current session identity matched the initiative. But I could not resolve the installed `verification_watcher` utility policy or a native utility launch receipt required by the watcher instructions. I therefore stopped before launching; there is no `batch.log` or `guest.log`, and no run is active. I did not retry or substitute another launcher.

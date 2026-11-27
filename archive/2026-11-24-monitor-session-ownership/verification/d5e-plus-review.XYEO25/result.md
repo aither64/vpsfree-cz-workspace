@@ -1,0 +1,14 @@
+No Blocking or Important findings in H+ `3965b0f3` on `9044ec0d`, or K+ `79478c47` on `00edc4c9`. High-risk general, architecture, scope, and risk lanes completed.
+
+- **Ownership and locking:** [workspace-host:1811](/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-11-24-monitor-session-ownership/dev-workspace-discard-bridge/libexec/workspace-host:1811) preserves unconditional `profile_claim!(…, native: true)` and the existing Codex native-proof branch. Threadless admission requires positive ready-Pi evidence: strict manifest, creation fence, tracking device/inode, binding/native identity, ready authority, and exact current generation. Issuer locking is nonblocking, avoiding a wait cycle with the already-locked target; the final snapshot check detects intervening changes. Unknown, mixed, stale, or foreign ownership fails closed.
+- **Composition:** independently confirmed K+ changes only the dated patch. Its SHA256 is `b656b944f5d318feb5a0f5366dac79fc8af5fa8294226eb2790543107b39d483`, and its bytes equal the complete O→H+ diff. Recipe, publisher, and locks are unchanged. No target or storage-format change.
+- **History:** each assigned range contains one focused additive commit. `00edc4c9` contains the same dated subtree as previously reviewed K. No obsolete approaches or redundant update streams appear in these deltas; **no migrations**. This supplements the prior review without redoing it.
+- **Documentation:** existing preparation and update guides retain the applicable grant, refusal, cleanup, and recovery contracts. The new issuer-lock comment explains the consequential distinction. No documentation move or loss of recovery guidance.
+- **F5→F6:** verified from Git objects because the supplied checkout is absent. The pin patches are identical apart from blob-index lines. F6 changes only `devWorkspace`; the baseline difference is solely `vpsadminServices`. F6 supersedes F5. Typed-mapping and pair-check success remain supplied evidence, not independently rerun results.
+
+Proof gaps remain operational: the [focused test](/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-11-24-monitor-session-ownership/dev-workspace-discard-bridge/test/workspace_host/profile_transition_test.rb:1881) acquires a stock typed claim but injects runtime projection and machine resolution. The reported 3/58 result and B+ `4d0iy6…` evaluation receipt do not establish actual B refusal→B+ acceptance/cleanup→normal T under the same Pi owner. No builds, tests, private/live-state inspection, mutations, or approval were performed.
+
+- [x] Final delta review complete; source whitespace check passed.
+- [ ] Next: bounded B+ guest proof, then separately authorized rollout. F6 integration remains conditional on verified live T.
+
+[Session portal](https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-11-24-monitor-session-ownership/)
