@@ -1,6 +1,6 @@
 # Implementation and verification brief
 
-Status: proposed implementation plan, not implemented or deployed.
+Status: accepted implementation brief; implementation authorized, not deployed.
 Design owner: the current conversation lead; this tracking-only session has no
 retained team roster. Scope and evidence are in [plan.md](plan.md) and
 [state.md](state.md).
@@ -56,6 +56,11 @@ The proposed unit runs the wrapper with its default enabled watchdog. Keep the
 wrapper as the service's main process and the daemon as its child. Retain the
 existing stdout/journal logging route and verify both wrapper diagnostics and
 child output reach the journal/central logs.
+
+The user explicitly clarified that this applies to every NixOS/systemd nodectld
+instance, including DNS servers. Make the change in the common NixOS module,
+without a mailer-role condition. Include both roles in service evaluation and
+real-service regression coverage, retaining DNS-specific update behavior.
 
 Use these service semantics:
 
@@ -178,3 +183,29 @@ but the old reliability defects return. Do not repair queues manually, claim
 exactly-once delivery, or infer that this remediation explains the original
 native hang. Capture `watchdog_debug` and relevant connection diagnostics on any
 recurrence; deeper mysql2 investigation is a separate evidence-driven task.
+
+## Review correction: intentional polling skips
+
+Independent review found that enabling the existing wrapper would treat
+`nodectl pause`, queue saturation and graceful draining as stale polling. A
+restart clears the in-memory pause and can resume work unexpectedly. This is
+within the new systemd supervision contract and must be corrected before tests
+or publication.
+
+Add a monotonic transaction-loop progress timestamp. Advance it in the main
+transaction thread only after a successful metadata poll or when `work` actually
+reaches an intentional return for full queues or pause/draining. Never refresh it
+from the control/status thread or at the start of a potentially blocking call.
+Keep the existing real-poll timestamps intact. Expose the additional progress
+field in watchdog status/debug; the wrapper uses it, falling back to the old
+poll field for older responses. Both absent still use the watchdog's startup
+baseline. No persisted state or API schema changes.
+
+Focused tests must distinguish pause, full queues and graceful draining from a
+failed/stuck DB check or a blocked worker-completion path. Add a packaged pause
+longer than the accelerated restart threshold, verify the same processes and a
+queued chain, then resume and verify delivery. Keep the stale-poll and SIGSTOP
+cases, which ensure a responsive control endpoint cannot manufacture progress.
+A fresh affected-lane review of this design is required after committed quick
+checks; retain the existing independent reviewer. This changes neither
+production thresholds nor transaction completion/retry semantics.

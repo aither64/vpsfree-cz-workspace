@@ -2,15 +2,15 @@
 
 ## Goal and authorized scope
 
-Prepare an implementation plan for the two defects exposed by the November 27
+Implement fixes for the two defects exposed by the November 27
 vpsadmin1 mail outage: minimal-mode nodectld starts functionality requiring
 osctld, and its NixOS service bypasses the existing transaction watchdog.
 
-The user initially requested a read-only investigation without tracking. After
-killing the stuck daemon, the user explicitly requested this implementation plan
-and authorized starting tracking. Implementation, production deployment and
-default-branch integration have not been requested. This turn prepares the plan
-and records the evidence; it makes no application or production changes.
+The user initially requested a read-only investigation without tracking, then
+authorized this plan and tracking. The follow-up "yeah implement it" authorizes
+implementation and explicitly requires the watchdog for DNS servers and all
+other NixOS/systemd nodectld setups. Production deployment has not been requested. The user later authorized master
+integration conditional on a passing specs workflow; that condition was met.
 
 ## Affected repositories
 
@@ -60,15 +60,22 @@ See [state.md](state.md) for the incident timeline and
 
 Use one implementer for this small, related change set. Packages A and B can be
 separate logical commits, followed by any shared integration coverage and docs.
-No implementer or reviewer has been assigned: this is a tracking-only session
-without a retained Codex team. Resolve the live roster when implementation starts;
-do not infer or create member settings from this plan.
+The current conversation lead owns implementation in this tracking-only session,
+which has no retained Codex team. A standalone independent reviewer and fresh
+verification utilities use the installed catalog settings; no team was created.
+
+Runtime verification also exposed a pre-existing typo in `nodectl stop` option
+parsing. A separate one-line fix restores the existing command, including its
+force flags and help output. Its shutdown semantics are unchanged.
 
 ## Compatibility and deployment
 
 Preserve existing configuration keys, standard-mode defaults, transaction
 formats, database state, watchdog timing and vpsAdminOS/runit behavior. Keep the
 process watchdog outside the daemon so a blocked daemon cannot disable it.
+The review correction adds a main-thread progress timestamp for deliberate
+polling skips (pause, full queues and draining), preserving actual poll timestamps
+and compatibility with older watchdog responses. See the design addendum.
 Use normal systemd stop/restart semantics and retain a service-level final kill
 deadline. Do not clear queues, change transaction completion flags or add an
 osctld service to minimal-mode machines.
@@ -117,5 +124,7 @@ session, not in configuration-repository documentation.
 
 ## Next action
 
-Present this plan. Await implementation direction; no application branch or
-production change has been made.
+All four local integration scenarios, broader GitHub CI and the exact-final-head
+specs workflow passed. The user-approved fast-forward into vpsadmin/master is
+complete. Normal post-merge workflows run on the same commit. Production
+deployment remains a separately authorized step.
