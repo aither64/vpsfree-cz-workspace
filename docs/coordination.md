@@ -30,7 +30,7 @@ turn when only waiting remains. Read `claim-status` before acting on any notice.
 A notice neither authorizes work nor proves command completion.
 
 Run the shared merge or deployment only while its claim is held. Independent
-feature commands remain available during a merge wait. Follow the runtime's
+feature commands remain available during a merge wait. Follow the workspace's
 [machine retention and release policy](#machine-retention) and the configuration
 repository's operations guide.
 Use `release SESSION --as-is --id UUID` after the applicable release requirements
@@ -162,14 +162,26 @@ the switch; never release or rewrite evidence merely to make it pass.
 
 ## Machine retention
 
-The runtime's [machine retention and release policy](https://github.com/aither64/dev-workspace/blob/master/docs/coordination.md#machine-retention)
-defines when the owner must release a deployed machine.
-Use `workspace-host coordination guide` to read the selected package's version.
-Release the deployed machine promptly after verifying deployment effects and
-integrating its complete deployed lineage into the approved remote defaults.
-Follow-up UI review can continue afterward. Failed or uncertain effects and
-missing integration proof keep ownership held until the original recovery
-procedure reconciles them. Deployment approval alone does not approve integration.
+This workspace's policy defines when the owner must release a deployed machine.
+Release promptly once deployment or rollback is verified, local and remote
+mutations have ended, and no unfinished recovery can still change the machine.
+Failed or uncertain effects retain ownership until reconciled or transferred
+under [administrative recovery](#administrative-recovery).
+
+Outstanding merges, review, CI, documentation or UI acceptance alone do not
+justify retaining an otherwise settled machine. Record the exact live revisions,
+recovery references and outstanding delivery work before releasing it. Keep the
+session active until its completion criteria are met; a later deployment needs
+a fresh reservation. Deployment approval alone does not approve integration.
+
+Read `workspace-host coordination guide` for the installed commands and recovery
+formats. This site policy supersedes the upstream
+[machine retention policy](https://github.com/aither64/dev-workspace/blob/master/docs/coordination.md#machine-retention)
+where it requires default-branch integration before release. Normal claim release
+already separates release from integration. For retained legacy operations whose
+commands enforce the older requirement, use administrative recovery while
+preserving their journals and unresolved effects; never invent merge proof or
+discard recovery state to unlock a machine.
 
 ## Git and deployment
 

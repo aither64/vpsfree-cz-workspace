@@ -39,7 +39,7 @@ class AgentInstructionsTest < Minitest::Test
     assert_match(/ready, awaiting merge approval/, sessions)
   end
 
-  def test_machine_release_routes_to_the_authoritative_runtime_policy
+  def test_machine_release_routes_to_the_workspace_policy
     coordination = File.read(File.join(ROOT, 'docs/coordination.md'), encoding: 'UTF-8')
     sections = coordination.scan(/^## Machine retention[ \t]*\r?\n(.*?)(?=^## |\z)/m)
     assert_equal(1, sections.length, 'Keep one authoritative Machine retention section')
@@ -50,14 +50,15 @@ class AgentInstructionsTest < Minitest::Test
     assert_includes(retention, "](#{canonical})")
     assert_includes(retention, 'defines when the owner must release a deployed machine')
     assert_includes(retention, '`workspace-host coordination guide`')
-    assert_match(/Release the deployed machine promptly after verifying deployment effects and integrating its complete deployed lineage into the approved remote defaults\./, retention)
-    assert_match(/Failed or uncertain effects and missing integration proof keep ownership held until the original recovery procedure reconciles them\./, retention)
+    assert_match(/Release promptly once deployment or rollback is verified, local and remote mutations have ended, and no unfinished recovery can still change the machine\./, retention)
+    assert_match(/Outstanding merges, review, CI, documentation or UI acceptance alone do not justify retaining an otherwise settled machine\./, retention)
+    assert_includes(retention, 'Failed or uncertain effects retain ownership until reconciled or transferred')
+    assert_includes(retention, 'This site policy supersedes the upstream')
+    assert_includes(retention, 'Keep the session active until its completion criteria are met')
     assert_includes(retention, 'Deployment approval alone does not approve integration.')
     refute_includes(retention, 'automatic release for all deployed physical machines')
     assert_includes(coordination, 'https://github.com/aither64/dev-workspace/blob/master/docs/coordination-operations.md')
     refute_match(/aitherdev/i, retention, 'The retention policy is generic; configured machine examples belong outside it')
-    refute_match(/Promptly release each deployed physical machine once both conditions/, retention,
-                 'Release prerequisites belong in the runtime guide')
 
     paths = %w[AGENTS.md docs/agent-instructions/deployment.md
                docs/agent-instructions/lifecycle.md docs/agent-instructions/git.md]

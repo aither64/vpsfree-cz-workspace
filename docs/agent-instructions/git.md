@@ -83,8 +83,8 @@ This gate does not apply to tracking-only coordination commits on the shared
 workspace `master`; stage only owned tracking paths and never include feature
 content in that exception.
 
-For deployed-lineage evidence and machine release, follow the authoritative
-runtime policy referenced by [machine retention](../coordination.md#machine-retention).
+For deployed-lineage evidence and machine release, follow the workspace policy
+in [machine retention](../coordination.md#machine-retention).
 Repository merge claims remain short and separate; release them before CI or
 records.
 

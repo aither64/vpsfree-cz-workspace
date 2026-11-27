@@ -6,7 +6,7 @@ to the coordination workspace unless the text specifies another repository.
 
 Read [coordination](../coordination.md) before a lifecycle/package mutation that
 affects queued work or a machine reservation. Running or uncertain operations
-fence lifecycle changes. Apply the runtime's
+fence lifecycle changes. Apply the workspace's
 [machine retention and release policy](../coordination.md#machine-retention)
 and preserve its original recovery contracts.
 

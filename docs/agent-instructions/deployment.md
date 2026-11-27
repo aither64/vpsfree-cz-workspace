@@ -4,16 +4,19 @@ Required workspace procedure, selected by the routing table in `AGENTS.md`.
 Its rules retain workspace scope and precedence. Paths and commands are relative
 to the coordination workspace unless the text specifies another repository.
 
-The selected package also provides the authoritative installed guides through
+The selected package provides implementation and recovery guides through
 `workspace-host coordination guide`, including before workspace integration.
+The workspace's administrative recovery and machine-retention policies govern
+where those guides impose conflicting workflow requirements.
 
 Before deployment activation or a workspace profile switch, read
-[coordination](../coordination.md) and its authoritative runtime
+[coordination](../coordination.md) and its workspace
 [machine retention and release policy](../coordination.md#machine-retention).
 Pass the held machine claim and exact session identity to ordinary workspace-host
 profile activation. Deployment and release supply no merge or lifecycle approval.
-Legacy jobs and reservations retain their original approval, integration-proof
-and recovery requirements through the runtime's operations guide.
+Legacy jobs and reservations retain their original approval, evidence and
+recovery requirements through the runtime's operations guide, subject to the
+workspace's machine-release exception above.
 
 For new or changed shared machine references in confctl configuration, use
 existing authoritative machine module fields through the established
