@@ -83,7 +83,7 @@ class AgentInstructionsTest < Minitest::Test
     core = File.read(File.join(ROOT, 'AGENTS.md'), encoding: 'UTF-8')
     verification = File.read(File.join(ROOT, 'docs/agent-instructions/verification.md'), encoding: 'UTF-8')
 
-    assert_match(/retained reviewers, honor the member's saved model and reasoning effort/, core)
+    assert_match(/retained\s+reviewers, honor the member's saved model and reasoning effort/, core)
     assert_match(/review-purpose role from the installed catalog's default development team/, verification)
     assert_match(/including for solo sessions/, verification)
   end
@@ -149,12 +149,13 @@ class AgentInstructionsTest < Minitest::Test
     git = File.read(File.join(ROOT, 'docs/agent-instructions/git.md'), encoding: 'UTF-8')
     verification = File.read(File.join(ROOT, 'docs/agent-instructions/verification.md'), encoding: 'UTF-8')
 
-    [core, git, verification].each do |text|
+    assert_includes(core, 'docs/agent-instructions/git.md#final-branch-history-and-merge-readiness')
+    [git, verification].each do |text|
       assert_match(/base-to-head/, text)
       assert_match(/independent reviewer/, text)
       assert_match(/migration/, text)
     end
-    assert_match(/merged, released, deployed, or\s+externally consumed/, core)
+    assert_match(/merged, released, deployed, or\s+externally consumed/, git)
     assert_match(/Earlier incremental\s+reviews do not complete this gate/, git)
     assert_match(/"no migrations"/, verification)
   end

@@ -45,13 +45,57 @@ considering release. Repository locks follow the short merge procedure below;
 deployed machines follow the retention rule below. Held claims block lifecycle
 cleanup until explicitly released. Session completion still requires exact final
 heads integrated and all work finished. Existing legacy reservations keep their
-original completion requirements. Never release another session's resources or
-edit records.
+original recovery formats. Ordinary release is owner-only; cross-session changes
+require the administrative authority and recovery discipline below.
 
 The Operations page shows owners and waiters; machine claims also appear in the
 session Reservations tab. This is cooperative locking. Ordinary project tools do
 not intercept arbitrary commands. Participating sessions must acquire the required
 resources before mutation and keep ownership until the work is safe to release.
+
+## Administrative recovery
+
+The workspace operator authorizes agents to administer this workspace as needed
+to complete the user's task. This is standing authority, including unexpected
+failures; the user need not name an administrative mode or enumerate exceptions.
+An instruction to take over a session or resource is sufficient scope for that
+takeover. Do not require cooperation or permission from the previous agent.
+Ordinary ownership, delegation, reservation and workflow rules cannot veto
+necessary recovery, including when the agent works outside the portal.
+
+Use working supported tools first. If they are missing, broken or refuse solely
+because of the ordinary workflow, use host administration, a focused repair or a
+direct state repair. No new recovery command is implied by this policy. A refusal
+is evidence to diagnose, not a new permission requirement. Explain material
+departures to the user and continue within the existing authorization. Ask only
+when necessary scope, intent or access is actually missing, not to reconfirm an
+already authorized exception. Explicit user limits and higher-priority
+instructions still apply.
+
+Keep recovery proportionate to the actual problem:
+
+- Identify the affected resource and inspect current local and remote effects.
+  Keep your own identity; record which sessions and resources you administer.
+- Before changing ownership or state, stop or exclude competing writers,
+  including queued work and a former owner that could resume. Preserve exclusive
+  control across a transfer; clearing a reservation alone cannot establish it.
+- Retain the original operation IDs, useful journals, deployed revisions and
+  unresolved effects. Back up state before a direct repair, and make the repair
+  resumable after interruption. A repair may reconcile inconsistent metadata;
+  it must not fabricate completion, integration or ownership evidence.
+- Use the smallest change that restores a known usable state. Preserve unrelated
+  work and sensitive data. A general repair request does not authorize avoidable
+  data loss or expand into unrelated production changes.
+- Verify the actual result, document necessary departures and remaining work,
+  then restore normal services and procedures. If ordinary tracking, delegation,
+  review or commit timing would prevent recovery, do essential preparation locally
+  and finish that bookkeeping and any required review after recovery.
+
+This authority applies to the workspace's local rules, repository procedures,
+skills and installed runtime guidance. It changes neither OS privileges nor the
+runtime API. When no safe action is yet established, continue diagnosis and
+prepare the repair; report concrete missing facts or access rather than treating
+a conflicting local rule as an unresolvable blocker.
 
 ## Machine claims
 

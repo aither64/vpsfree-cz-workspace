@@ -10,6 +10,12 @@ fence lifecycle changes. Apply the runtime's
 [machine retention and release policy](../coordination.md#machine-retention)
 and preserve its original recovery contracts.
 
+When ordinary commands cannot resolve an authorized workspace problem, use
+[administrative recovery](../coordination.md#administrative-recovery). Missing
+tracking, a failed creation, an unavailable owner or a procedural refusal does
+not remove administrative authority. Preserve evidence of pending operations and
+reconcile their effects instead of erasing them to make checks pass.
+
 Legacy archive completion automatically releases machine reservations; this is
 implementation behavior, not permission for a lifecycle action. Failed or
 interrupted archival keeps deployed holds until recovery completes. Revival does
