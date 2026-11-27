@@ -153,7 +153,7 @@ index 1e100c9ebc0169b9989f97570d804fe9701cefb9..de6d84506e7452479f4bfad498b8ab68
        operation = @lifecycle_access.fetch(:operation)
        path = lifecycle_journal_file(slug, operation)
 diff --git a/libexec/workspace-host b/libexec/workspace-host
-index a59edf72efc0a8a6cca49e1b69e0daf737d86dd7..b239e385ed96a3dfe5b7dd5757925a75e9911f55 100755
+index a59edf72efc0a8a6cca49e1b69e0daf737d86dd7..238e76299e7e17f72339b4f2f05e076df8e8931b 100755
 --- a/libexec/workspace-host
 +++ b/libexec/workspace-host
 @@ -450,6 +450,7 @@ module DevWorkspaceHost
@@ -164,7 +164,7 @@ index a59edf72efc0a8a6cca49e1b69e0daf737d86dd7..b239e385ed96a3dfe5b7dd5757925a75
        when 'run-codex' then run_codex(argv)
        when 'provider' then provider_command(argv)
        when 'maintenance' then maintenance_command(argv)
-@@ -1777,6 +1778,63 @@ module DevWorkspaceHost
+@@ -1777,6 +1778,146 @@ module DevWorkspaceHost
        )
      end
  
@@ -193,7 +193,8 @@ index a59edf72efc0a8a6cca49e1b69e0daf737d86dd7..b239e385ed96a3dfe5b7dd5757925a75
 +        verify_pi_discard_claim!(entry, request.fetch('owner'), request.fetch('claim'))
 +      end
 +      @out.puts '{"verified":true}'
-+    rescue Error, WorkspaceCoordination::Error, SystemCallError, Psych::Exception, KeyError, TypeError
++    rescue Error, WorkspaceCoordination::Error, WorkspaceSessionBackends::Error, SystemCallError,
++           Psych::Exception, JSON::ParserError, KeyError, TypeError
 +      raise Error, 'the original Pi discard authority could not be verified'
 +    end
 +
@@ -205,30 +206,112 @@ index a59edf72efc0a8a6cca49e1b69e0daf737d86dd7..b239e385ed96a3dfe5b7dd5757925a75
 +                         %w[selector adapter].all? { |key| claim[key].is_a?(String) && !claim[key].empty? }
 +      workspace = entry.fetch('root')
 +      runtime = instance_runtime(entry)
-+      engine = WorkspaceCoordination::Engine.new(state: @state, package: package_root, profile: @profile,
-+        workspace:, entry: entry.merge('socket' => runtime.fetch(:codex), 'authority' => runtime.fetch(:authority),
-+          'portalUrl' => "https://#{entry.fetch('hostname')}"), env: codex_environment(entry).merge(
-+          'DEV_WORKSPACE_NAME' => entry.fetch('name'), 'DEV_SESSION_SLUG' => owner['slug'], 'DEV_SESSION_WORKSPACE' => workspace))
++      engine = pi_discard_claim_engine(entry, runtime, owner.fetch('slug'))
 +      retained = engine.store.read.fetch('owners')[owner['id']]
 +      raise Error unless retained && retained['id'] == owner['id'] && retained['workspace'] == workspace &&
-+                         retained['workspaceName'] == entry.fetch('name') && retained['slug'] == owner['slug'] &&
-+                         retained['bootstrap'] == false && !retained['thread'].to_s.empty? && !retained['fence']
-+      resource = coordination_machine_policy.profile_resource
-+      raise Error unless resource
-+      held = engine.profile_claim!(claim['id'], resource, native: true)
-+      expected = claim.slice('repository', 'selector', 'adapter')
-+      raise Error unless held['id'] == claim['id'] && held['ownerId'] == owner['id'] && held['state'] == 'held' &&
-+                         held.dig('request', 'schema') == 2 && held.fetch('machineBindings', []).any? { |binding|
-+        binding.slice('repository', 'selector', 'adapter') == expected &&
-+          coordination_machine_policy.canonical(WorkspaceCoordination::MachineIdentity.resource(binding.fetch('identity'))) ==
-+            coordination_machine_policy.canonical(resource)
++                         retained['workspaceName'] == entry.fetch('name') && retained['slug'] == owner['slug'] && !retained['fence']
++      verify_claim = lambda do
++        resource = coordination_machine_policy.profile_resource
++        raise Error unless resource
++        held = engine.profile_claim!(claim['id'], resource, native: true)
++        expected = claim.slice('repository', 'selector', 'adapter')
++        raise Error unless held['id'] == claim['id'] && held['ownerId'] == owner['id'] && held['state'] == 'held' &&
++                           held.dig('request', 'schema') == 2 && held.fetch('machineBindings', []).any? { |binding|
++          binding.slice('repository', 'selector', 'adapter') == expected &&
++            coordination_machine_policy.canonical(WorkspaceCoordination::MachineIdentity.resource(binding.fetch('identity'))) ==
++              coordination_machine_policy.canonical(resource)
++        }
++        raise Error unless engine.store.read.fetch('owners')[owner['id']] == retained
++      end
++      if retained['bootstrap'] == false && !retained['thread'].to_s.empty?
++        verify_claim.call
++      elsif retained['bootstrap'] == true && retained['thread'].nil?
++        verify_pi_discard_ready_owner!(workspace, owner['slug'], runtime.fetch(:authority), &verify_claim)
++      else
++        raise Error
++      end
++    end
++
++    def pi_discard_claim_engine(entry, runtime, slug)
++      workspace = entry.fetch('root')
++      WorkspaceCoordination::Engine.new(state: @state, package: package_root, profile: @profile,
++        workspace:, entry: entry.merge('socket' => runtime.fetch(:codex), 'authority' => runtime.fetch(:authority),
++          'portalUrl' => "https://#{entry.fetch('hostname')}"), env: codex_environment(entry).merge(
++          'DEV_WORKSPACE_NAME' => entry.fetch('name'), 'DEV_SESSION_SLUG' => slug, 'DEV_SESSION_WORKSPACE' => workspace))
++    end
++
++    # The grant's issuer is not the discard target. Keep the ready issuer's
++    # ordinary runtime exclusion while proving its current identity and claim.
++    # Another slug's lock may already be held by the portal, so never wait here.
++    def verify_pi_discard_ready_owner!(workspace, slug, authority_directory)
++      WorkspaceSessionBackends.private_directory!(authority_directory)
++      lock = File.join(authority_directory, "#{slug}.lock")
++      File.open(lock, File::RDONLY | File::NOFOLLOW | File::NONBLOCK) do |file|
++        stat = file.stat
++        same_lock = lambda do
++          named = File.lstat(lock)
++          named.file? && named.dev == stat.dev && named.ino == stat.ino
++        end
++        raise Error unless stat.file? && stat.uid == Process.euid && stat.nlink == 1 && (stat.mode & 0o7777) == 0o600 &&
++                           file.flock(File::LOCK_EX | File::LOCK_NB) && same_lock.call
++        proof = pi_discard_ready_owner_snapshot(workspace, slug, authority_directory)
++        selected, journal, authority = proof.first(3)
++        # The stock reader inventories all registered preparations before it
++        # emits the runtime projection; only the exact issuer entry is proof.
++        roots = registry.entries.map { |entry| entry.fetch('root') }
++        raise Error unless roots.include?(workspace) && roots.all? { |root| File.directory?(root) && File.realpath(root) == root }
++        team = WorkspaceSessionBackends.team_preflight!(run_pi_team_preflight(roots), root: @state, workspaces: roots)
++        scope = {'workspace' => workspace, 'slug' => slug, 'incarnation' => selected.fetch('session_incarnation')}
++        reference = team.fetch('piRuntimes', []).find { |item| item.fetch('session') == scope }
++        raise Error unless reference && reference['generation'] == authority['generation'] && !reference.key?('teamConflictRecovery')
++        WorkspaceSessionBackends.current_runtime_projection!(selected, journal, reference, authority)
++        yield
++        raise Error unless pi_discard_ready_owner_snapshot(workspace, slug, authority_directory) == proof && same_lock.call
++      end
++    end
++
++    def pi_discard_ready_owner_snapshot(workspace, slug, authority_directory)
++      tracking = File.join(workspace, 'work', slug)
++      stat = File.lstat(tracking)
++      raise Error unless stat.directory? && File.realpath(tracking) == tracking
++      raise Error if %w[archive removal revive fork start pi-discard].any? { |kind|
++        WorkspaceSessionBackends.present?(File.join(workspace, 'worktrees', '.locks', "#{slug}.#{kind}.json"))
 +      }
++      manifest = read_portal_manifest(File.join(tracking, 'portal.yml'), strict: true)
++      selected = WorkspaceSessionBackends.binding(@state, workspace, slug)
++      raise Error unless selected && selected['state'] == 'ready' && selected['conversations'].first['state'] == 'ready'
++      fence = WorkspaceSessionBackends.retained_creation_fence!(@state, workspace, slug)
++      intent, journal, completion = fence.values_at(:intent, :journal, :completion)
++      expected_backend = {'kind' => 'pi', 'contract' => 1, 'session_incarnation' => intent.fetch('session_incarnation')}
++      expected_creation = {'state' => 'ready'}
++      required = %w[schema slug backend creation repositories]
++      if intent['schema'] == 4
++        expected_creation.merge!('goal_sha256' => intent.fetch('goal_sha256'), 'initial_goal_sent' => true)
++      else
++        required << 'forked_from'
++        raise Error unless manifest['forked_from'] == intent.dig('fork', 'source', 'Slug')
++      end
++      raise Error unless (manifest.keys - required - %w[sensitive artifacts]).empty? &&
++                         (!manifest.key?('sensitive') || manifest['sensitive'] == true) &&
++                         (manifest['sensitive'] == true) == (intent['sensitive'] == true) &&
++                         manifest.fetch('artifacts', []) == [] && manifest['schema'].eql?(intent['schema']) &&
++                         manifest['slug'] == slug && manifest['repositories'].is_a?(Array) &&
++                         manifest['backend'].eql?(expected_backend) && manifest['creation'] == expected_creation &&
++                         completion.values_at('trackingDevice', 'trackingInode') == [stat.dev, stat.ino] &&
++                         selected['session_incarnation'] == intent['session_incarnation'] &&
++                         selected['creation_receipt_id'] == intent['receipt_id'] &&
++                         selected['conversations'].first['native_id'] == journal.fetch('native').fetch('native_id') &&
++                         selected == WorkspaceSessionBackends.binding(@state, workspace, slug)
++      authority = WorkspaceSessionBackends.read!(File.join(authority_directory, "#{slug}.json"))
++      WorkspaceSessionBackends.runtime_authority!(authority, selected, workspace, slug)
++      raise Error unless authority['state'] == 'ready'
++      [selected, journal, authority, completion, manifest]
 +    end
 +
      def run_portal(argv)
        entry = instance_argument(argv, 'run-portal')
        runtime = instance_runtime(entry)
-@@ -2670,12 +2728,33 @@ module DevWorkspaceHost
+@@ -2670,12 +2811,33 @@ module DevWorkspaceHost
        File.symlink?(@profile) ? File.realpath(@profile) : package_root
      end
  
@@ -263,6 +346,27 @@ index a59edf72efc0a8a6cca49e1b69e0daf737d86dd7..b239e385ed96a3dfe5b7dd5757925a75
        operations = entries.flat_map do |entry|
          root = File.join(entry.fetch('root'), 'worktrees', '.locks')
          lifecycle = LIFECYCLE_JOURNALS.map { |journal| journal.fetch('name') }.flat_map do |kind|
+@@ -3804,11 +3966,19 @@ module DevWorkspaceHost
+       raise Error, 'candidate cannot preserve local sensitive sessions'
+     end
+ 
+-    def read_portal_manifest(path)
++    def read_portal_manifest(path, strict: false)
+       raise Error, "portal manifest is a symlink: #{path}" if File.symlink?(path)
+       raise Error, "portal manifest is not a file: #{path}" unless File.file?(path)
+       data = File.binread(path, 1024 * 1024 + 1)
+       raise Error, "portal manifest exceeds 1 MiB: #{path}" if data.bytesize > 1024 * 1024
++      if strict
++        stream = Psych.parse_stream(data)
++        raise Error unless stream.children.length == 1
++        stream.grep(Psych::Nodes::Mapping).each do |mapping|
++          keys = mapping.children.each_slice(2).map(&:first)
++          raise Error unless keys.all? { |key| key.is_a?(Psych::Nodes::Scalar) } && keys.map(&:value).uniq.length == keys.length
++        end
++      end
+       manifest = YAML.safe_load(data, permitted_classes: [], permitted_symbols: [], aliases: false)
+       unless manifest.is_a?(Hash) && manifest.fetch('codex', {}).is_a?(Hash) &&
+              manifest.fetch('creation', {}).is_a?(Hash)
 diff --git a/portal/cmd/workspace-portal/main.go b/portal/cmd/workspace-portal/main.go
 index 84e1ba376c547ca93988909e153deda754446c61..0165d49c7eea68f812c4ae14c70ee0d61b55bf62 100644
 --- a/portal/cmd/workspace-portal/main.go
@@ -3187,3 +3291,121 @@ index 1a2e58cf2d7670cd592abf18b1355c1500ef24f2..1d524b3751445d3ca40e33ead3bf4f74
    def test_collection_uses_strict_pending_parser_and_retries_legacy_roots_after_recovery
      with_ready_coordination_session do |host, _entry, _slug, _path, _journal, _manifest_path, engine|
        host.define_singleton_method(:coordination_engine) { |_selected| engine }
+diff --git a/test/workspace_host/profile_transition_test.rb b/test/workspace_host/profile_transition_test.rb
+index 2bd4701b552d893b971c0ffae703921ff094207b..718d9f7f46fea3b0feaf1fa1d3b7259d903acf36 100644
+--- a/test/workspace_host/profile_transition_test.rb
++++ b/test/workspace_host/profile_transition_test.rb
+@@ -1878,6 +1878,113 @@ class WorkspaceHostTest < Minitest::Test
+ end
+ 
+ class WorkspaceHostTest
++  def test_pi_discard_startup_requires_exact_ready_pi_claim_owner
++    with_transition_host do |host, paths|
++      assert_equal 0, host.run('workspace-host', ['switch', '--source', paths.fetch(:source)])
++      entry = host.send(:registry).entries.first
++      workspace = entry.fetch('root')
++      slug = 'ready-pi-owner'
++      state = host.instance_variable_get(:@state)
++      profile = host.instance_variable_get(:@profile)
++      runtime = host.send(:instance_runtime, entry)
++      authority_dir = runtime.fetch(:authority)
++      tracking = File.join(workspace, 'work', slug)
++      FileUtils.mkdir_p(tracking)
++      FileUtils.mkdir_p(authority_dir, mode: 0700)
++      File.write(File.join(tracking, 'state.md'), "---\nlifecycle: active\n---\n")
++      lock = File.join(authority_dir, slug + '.lock')
++      File.write(lock, '', mode: 'w', perm: 0600)
++      records = pi_creation_records(workspace, slug:)
++      stat = File.stat(tracking)
++      records.fetch(:completion).merge!('trackingDevice' => stat.dev, 'trackingInode' => stat.ino)
++      evidence = write_pi_creation_records(state, workspace, records)
++      manifest_path = File.join(tracking, 'portal.yml')
++      incarnation = records[:binding].fetch('session_incarnation')
++      manifest = {'schema' => 4, 'slug' => slug, 'repositories' => [],
++        'backend' => {'kind' => 'pi', 'contract' => 1, 'session_incarnation' => incarnation},
++        'creation' => {'state' => 'ready', 'goal_sha256' => records[:intent].fetch('goal_sha256'), 'initial_goal_sent' => true}}
++      File.write(manifest_path, YAML.dump(manifest))
++      # A valid successor can have a different generation from the initial
++      # journal. It must agree with the selected current runtime projection.
++      generation = '7' * 64
++      authority = File.join(authority_dir, slug + '.json')
++      File.write(authority, JSON.generate('schema' => 2, 'backend' => 'pi', 'backend_contract' => 1,
++        'workspace' => workspace, 'slug' => slug, 'session_incarnation' => incarnation, 'binding_revision' => 2,
++        'generation' => generation, 'state' => 'ready'), mode: 'w', perm: 0600)
++      projection = {'schema' => 3, 'required' => false, 'sessions' => [], 'piPreparations' => [],
++        'piRuntimes' => [{'session' => {'workspace' => workspace, 'slug' => slug, 'incarnation' => incarnation},
++          'generation' => generation, 'phase' => 'starting'}]}
++      host.team_preflight_output = JSON.generate(projection)
++
++      identity = {'kind' => 'repository', 'origin' => 'github.com/example/configuration', 'name' => 'test-machine'}
++      share = File.join(host.candidate, 'share/dev-workspace')
++      File.write(File.join(share, 'coordination.json'), JSON.generate('schema' => 1, 'repositories' => {}, 'adapters' => {}, 'machines' => {}, 'profileMachine' => nil))
++      File.write(File.join(share, 'machine-identity-policy.json'), JSON.generate('schema' => 1, 'profileTarget' => identity, 'legacyAliases' => []))
++      host.instance_variable_set(:@coordination_catalog, nil)
++      host.instance_variable_set(:@coordination_machine_policy, nil)
++      engine = WorkspaceCoordination::Engine.new(state:, package: host.candidate, profile:, workspace:,
++        entry: entry.merge('socket' => runtime[:codex], 'portalUrl' => 'https://workspace.example.test'),
++        env: {'DEV_SESSION_SLUG' => slug, 'DEV_SESSION_WORKSPACE' => workspace})
++      typed = {'repository' => 'configuration', 'selector' => 'test-machine', 'adapter' => 'confctl'}
++      engine.define_singleton_method(:resolve_machine_binding) do |_owner, requested, proofs:|
++        requested.merge('repositoryOrigin' => identity.fetch('origin'), 'sourceRevision' => '1' * 40, 'identity' => identity)
++      end
++      owner = engine.claim_owner(slug)
++      assert_equal true, owner['bootstrap']
++      assert_nil owner['thread']
++      claim = engine.acquire_claim(owner, {'schema' => 2, 'requestId' => SecureRandom.uuid, 'label' => 'Fixture',
++        'machines' => [typed], 'repositories' => []})
++      assert_equal 'held', claim['state']
++      owner = owner.slice('id', 'slug')
++      grant_claim = typed.merge('id' => claim.fetch('id'))
++      calls = []
++      engine.define_singleton_method(:profile_claim!) do |id, machine, native:|
++        calls << native
++        super(id, machine, native:)
++      end
++      verify = -> (authority = owner, supplied = grant_claim) { host.send(:verify_pi_discard_claim!, entry, authority, supplied) }
++      host.define_singleton_method(:pi_discard_claim_engine) { |_entry, _runtime, _slug| engine }
++      verify.call
++      assert_equal [true], calls
++      assert_raises(DevWorkspaceHost::Error) { verify.call(owner.merge('id' => SecureRandom.uuid)) }
++      assert_raises(WorkspaceCoordination::Error) { verify.call(owner, grant_claim.merge('id' => SecureRandom.uuid)) }
++      assert_raises(DevWorkspaceHost::Error) { verify.call(owner, grant_claim.merge('selector' => 'foreign')) }
++      edits = [
++        [manifest_path, YAML.dump(manifest.reject { |key, _| key == 'backend' })],
++        [manifest_path, YAML.dump(manifest.merge('codex' => {}))],
++        [manifest_path, YAML.dump(manifest.merge('archive_operation_id' => 'archived'))],
++        [manifest_path, YAML.dump(manifest.merge('sensitive' => true))],
++        [manifest_path, YAML.dump(manifest.merge('backend' => manifest['backend'].merge('session_incarnation' => '8' * 64)))],
++        [manifest_path, YAML.dump(manifest) + "slug: #{slug}\n"],
++        [evidence[:completion], JSON.generate(records[:completion].merge('trackingInode' => stat.ino + 1))],
++        [evidence[:binding], JSON.generate(records[:binding].merge('revision' => 3))],
++        [authority, File.read(authority).sub(generation, '6' * 64)],
++        [authority, File.read(authority).sub('ready', 'starting')]
++      ]
++      edits.each do |path, replacement|
++        original = File.binread(path)
++        File.binwrite(path, replacement)
++        assert_raises(DevWorkspaceHost::Error, WorkspaceSessionBackends::Error) { verify.call }
++        File.binwrite(path, original)
++      end
++      File.open(lock, 'r') do |busy|
++        assert busy.flock(File::LOCK_EX | File::LOCK_NB)
++        assert_raises(DevWorkspaceHost::Error) { verify.call }
++      end
++      host.team_preflight_output = JSON.generate(projection.merge('piRuntimes' => []))
++      assert_raises(DevWorkspaceHost::Error) { verify.call }
++      host.team_preflight_output = JSON.generate(projection)
++      File.rename(tracking, tracking + '-old')
++      FileUtils.cp_r(tracking + '-old', tracking)
++      assert_raises(DevWorkspaceHost::Error) { verify.call }
++      FileUtils.rm_r(tracking)
++      File.rename(tracking + '-old', tracking)
++      verify.call
++      assert calls.all? { |native| native == true }
++      assert_equal claim, engine.store.claims.fetch('claims').fetch(claim.fetch('id'))
++    end
++  end
++
+   def test_portal_delivery_fence_precedes_preparation_and_activation_effects
+     with_transition_host do |host, paths|
+       host.send(:root_codex, paths.fetch(:old_codex), paths.fetch(:current_root))
